@@ -19,7 +19,7 @@ Add the analyzer plugin to the top-level `plugins` section in
 ```yaml
 plugins:
   flutter_skill_lints:
-    version: ^0.1.0
+    version: ^0.1.1
   riverpod_lint: 3.1.4-dev.3
 ```
 
@@ -31,15 +31,14 @@ plugin configuration.
 
 The plugin registers:
 
-- 79 additional Dart/Flutter warning rules, 61 fixes, and 1 assist.
+- 80 additional Dart/Flutter warning rules, 61 fixes, and 1 assist.
 - 16 Flutter skill rules, including project config and scanner compatibility
   rules.
 
 Additional rule diagnostic IDs are preserved for compatibility with existing
 `analysis_options.yaml` files. Off-profile BLoC/Cubit, Equatable, destructuring,
-constant-switch, and style-preference rules are not shipped in the default
-package surface, so app repos do not need a diagnostics override block for the
-Flutter skill profile.
+style-preference rules are not shipped in the default package surface, so app
+repos do not need a diagnostics override block for the Flutter skill profile.
 
 ## Flutter Skill Rules
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.1] - 2026-05-07
+
+- Added `avoid_constant_switches`, a dead-logic warning for `switch`
+  statements and expressions that switch on literals, const variables, or
+  static const fields.
+- Re-ran the `many_lints 0.4.0` inventory audit and kept BLoC/Cubit,
+  Equatable, `gap`, shorthand, switch-expression, and destructuring preference
+  rules out of the default Flutter skill profile.
+
 ## [0.1.0] - 2026-05-06
 
 - Initial analyzer plugin scaffold.

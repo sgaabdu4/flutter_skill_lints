@@ -1,0 +1,102 @@
+name: Create Release Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version to release, for example 0.1.1'
+        required: true
+        type: string
+
+concurrency:
+  group: release-tag-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  create-tag:
+    name: Create release tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Require release token
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          if [ -z "$RELEASE_TOKEN" ]; then
+            echo "Set a RELEASE_TOKEN repository secret with contents read/write access."
+            echo "The default GITHUB_TOKEN cannot trigger the tag-push publish workflow."
+            exit 1
+          fi
+
+      - name: Require main branch
+        run: |
+          if [ "$GITHUB_REF_NAME" != "main" ]; then
+            echo "Run this workflow from the main branch."
+            exit 1
+          fi
+
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Validate requested version
+        id: release
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if echo "$VERSION" | grep -q '^v'; then
+            echo "Enter the bare package version, for example 0.1.1, not v0.1.1."
+            exit 1
+          fi
+
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'; then
+            echo "Invalid Dart package version: $VERSION"
+            exit 1
+          fi
+
+          PUBSPEC_VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//' | tr -d '\r')
+          CHANGELOG_VERSION=$(grep -m 1 '## \[' CHANGELOG.md | sed 's/.*\[\(.*\)\].*/\1/' | tr -d '\r')
+          echo "requested: $VERSION"
+          echo "pubspec.yaml: $PUBSPEC_VERSION"
+          echo "CHANGELOG.md: $CHANGELOG_VERSION"
+
+          if [ "$VERSION" != "$PUBSPEC_VERSION" ]; then
+            echo "Requested version does not match pubspec.yaml."
+            exit 1
+          fi
+
+          if [ "$VERSION" != "$CHANGELOG_VERSION" ]; then
+            echo "Requested version does not match the top CHANGELOG.md entry."
+            exit 1
+          fi
+
+          TAG_NAME="v$VERSION"
+          if git rev-parse -q --verify "refs/tags/$TAG_NAME" >/dev/null; then
+            echo "Tag already exists locally: $TAG_NAME"
+            exit 1
+          fi
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag already exists on origin: $TAG_NAME"
+            exit 1
+          fi
+
+          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        env:
+          TAG_NAME: ${{ steps.release.outputs.tag_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+          git push origin "$TAG_NAME"
+
+      - name: Report release trigger
+        env:
+          TAG_NAME: ${{ steps.release.outputs.tag_name }}
+        run: echo "Created $TAG_NAME. The Publish to pub.dev workflow will run from this tag."

@@ -71,15 +71,15 @@ This release supports the analyzer 12 line so it can co-resolve with
 
 ## Release
 
-After merging a version bump to `main`, push the matching tag:
+After merging a version bump to `main`, open GitHub Actions, run
+`Create Release Tag` from `main`, and enter the package version, for example
+`0.1.1`.
 
-```bash
-git tag v0.1.1
-git push origin v0.1.1
-```
-
-The tag workflow verifies the package, publishes it to pub.dev, and creates the
-matching GitHub Release after publishing succeeds.
+That workflow requires a `RELEASE_TOKEN` repository secret with contents
+read/write access. It validates `pubspec.yaml` and `CHANGELOG.md`, creates the
+matching `v0.1.1` tag, and then the tag workflow verifies the package,
+publishes it to pub.dev, and creates the matching GitHub Release after
+publishing succeeds.
 
 ## Attribution
 

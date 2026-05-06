@@ -137,3 +137,61 @@ jobs:
             jq '.suggestions' pana.json
             exit 1
           fi
+
+  release-tag:
+    name: Auto-Tag Release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [version-check, format, analyze, test, flutter-smoke, publish-dry-run, pana]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag_created: ${{ steps.tag.outputs.tag_created }}
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+      - name: Require release token
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          if [ -z "$RELEASE_TOKEN" ]; then
+            echo "Set a RELEASE_TOKEN repository secret with contents read/write access."
+            echo "The default GITHUB_TOKEN can create tags, but those tag pushes do not trigger the pub.dev publish workflow."
+            exit 1
+          fi
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Create tag if missing
+        id: tag
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//' | tr -d '\r')
+          CHANGELOG_VERSION=$(grep -m 1 '## \[' CHANGELOG.md | sed 's/.*\[\(.*\)\].*/\1/' | tr -d '\r')
+          TAG="v$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "$VERSION" != "$CHANGELOG_VERSION" ]; then
+            echo "Version mismatch: pubspec.yaml=$VERSION CHANGELOG.md=$CHANGELOG_VERSION"
+            exit 1
+          fi
+
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG already exists locally."
+            echo "tag_created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists on origin."
+            echo "tag_created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "tag_created=true" >> "$GITHUB_OUTPUT"

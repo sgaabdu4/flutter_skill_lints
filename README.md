@@ -71,15 +71,13 @@ This release supports the analyzer 12 line so it can co-resolve with
 
 ## Release
 
-After merging a version bump to `main`, open GitHub Actions, run
-`Create Release Tag` from `main`, and enter the package version, for example
-`0.1.1`.
+After a version bump is merged to `main`, `Dart CI` verifies the package and
+creates the matching `v0.1.1` tag automatically. That tag push triggers the
+publish workflow, which publishes to pub.dev and creates the GitHub Release.
 
-That workflow requires a `RELEASE_TOKEN` repository secret with contents
-read/write access. It validates `pubspec.yaml` and `CHANGELOG.md`, creates the
-matching `v0.1.1` tag, and then the tag workflow verifies the package,
-publishes it to pub.dev, and creates the matching GitHub Release after
-publishing succeeds.
+The auto-tag job requires a `RELEASE_TOKEN` repository secret with contents
+read/write access. GitHub's default `GITHUB_TOKEN` can create tags, but those
+tag pushes do not trigger the separate pub.dev publish workflow.
 
 ## Attribution
 

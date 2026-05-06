@@ -24,6 +24,7 @@ import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_map_keys_co
 import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_notifier_constructors_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_only_rethrow_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_ref_read_inside_build_fix.dart';
+import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_single_field_destructuring_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_state_constructors_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_throw_in_catch_block_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_unnecessary_consumer_widgets_fix.dart';
@@ -37,10 +38,12 @@ import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_wrapping_in
 import 'package:flutter_skill_lints/src/additional_lints/fixes/change_widget_name_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/dispose_fields_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/dispose_provided_instances_fix.dart';
+import 'package:flutter_skill_lints/src/additional_lints/fixes/list_all_equatable_fields_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_abstract_final_static_class_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_any_or_every_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_async_callback_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_center_over_align_fix.dart';
+import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_class_destructuring_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_compute_over_isolate_run_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_const_border_radius_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_constrained_box_over_container_fix.dart';
@@ -48,6 +51,7 @@ import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_container_
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_contains_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_correct_edge_insets_constructor_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_enums_by_name_fix.dart';
+import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_equatable_mixin_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_expect_later_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_explicit_function_type_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_for_loop_in_children_fix.dart';
@@ -66,6 +70,7 @@ import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_wildcard_p
 import 'package:flutter_skill_lints/src/additional_lints/fixes/proper_super_calls_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/use_closest_build_context_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/use_dedicated_media_query_methods_fix.dart';
+import 'package:flutter_skill_lints/src/additional_lints/fixes/use_existing_destructuring_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/use_existing_variable_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/use_ref_and_state_synchronously_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/use_ref_read_synchronously_fix.dart';
@@ -99,6 +104,7 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_ref_read_in
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_returning_widgets.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_shrink_wrap_in_lists.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_single_child_in_multi_child_widgets.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_single_field_destructuring.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_state_constructors.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_throw_in_catch_block.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unassigned_stream_subscriptions.dart';
@@ -112,11 +118,13 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_wrapping_in_padding.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/dispose_fields.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/dispose_provided_instances.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/list_all_equatable_fields.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_abstract_final_static_class.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_align_over_container.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_any_or_every.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_async_callback.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_center_over_align.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_class_destructuring.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_compute_over_isolate_run.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_const_border_radius.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_constrained_box_over_container.dart';
@@ -124,6 +132,7 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_container.
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_contains.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_correct_edge_insets_constructor.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_enums_by_name.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_equatable_mixin.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_expect_later.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_explicit_function_type.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_for_loop_in_children.dart';
@@ -146,6 +155,7 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_wildcard_p
 import 'package:flutter_skill_lints/src/additional_lints/rules/proper_super_calls.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_closest_build_context.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_dedicated_media_query_methods.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/use_existing_destructuring.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_existing_variable.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_notifier_suffix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_ref_and_state_synchronously.dart';
@@ -214,8 +224,11 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferSpacing());
     registry.registerWarningRule(PreferTestMatchers());
     registry.registerWarningRule(ProperSuperCalls());
+    registry.registerWarningRule(PreferClassDestructuring());
     registry.registerWarningRule(UseClosestBuildContext());
+    registry.registerWarningRule(UseExistingDestructuring());
     registry.registerWarningRule(UseExistingVariable());
+    registry.registerWarningRule(AvoidSingleFieldDestructuring());
     registry.registerWarningRule(AvoidBorderAll());
     registry.registerWarningRule(AvoidExpandedAsSpacer());
     registry.registerWarningRule(AvoidReturningWidgets());
@@ -240,6 +253,8 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferVoidCallback());
     registry.registerWarningRule(UseRefAndStateSynchronously());
     registry.registerWarningRule(UseRefReadSynchronously());
+    registry.registerWarningRule(ListAllEquatableFields());
+    registry.registerWarningRule(PreferEquatableMixin());
     registry.registerWarningRule(PreferUseCallback());
     registry.registerWarningRule(PreferUsePrefix());
     registry.registerWarningRule(UseSliverPrefix());
@@ -306,8 +321,14 @@ class AdditionalLintsPlugin extends Plugin {
     );
 
     registry.registerFixForRule(ProperSuperCalls.code, ProperSuperCallsFix.new);
+    registry.registerFixForRule(PreferClassDestructuring.code, PreferClassDestructuringFix.new);
     registry.registerFixForRule(UseClosestBuildContext.code, UseClosestBuildContextFix.new);
+    registry.registerFixForRule(UseExistingDestructuring.code, UseExistingDestructuringFix.new);
     registry.registerFixForRule(UseExistingVariable.code, UseExistingVariableFix.new);
+    registry.registerFixForRule(
+      AvoidSingleFieldDestructuring.code,
+      AvoidSingleFieldDestructuringFix.new,
+    );
     registry.registerFixForRule(AvoidBorderAll.code, AvoidBorderAllFix.new);
     registry.registerFixForRule(AvoidExpandedAsSpacer.code, AvoidExpandedAsSpacerFix.new);
     registry.registerFixForRule(AvoidNotifierConstructors.code, AvoidNotifierConstructorsFix.new);
@@ -343,6 +364,8 @@ class AdditionalLintsPlugin extends Plugin {
       UseRefAndStateSynchronouslyFix.new,
     );
     registry.registerFixForRule(UseRefReadSynchronously.code, UseRefReadSynchronouslyFix.new);
+    registry.registerFixForRule(ListAllEquatableFields.code, ListAllEquatableFieldsFix.new);
+    registry.registerFixForRule(PreferEquatableMixin.code, PreferEquatableMixinFix.new);
     registry.registerFixForRule(PreferUseCallback.code, PreferUseCallbackFix.new);
     registry.registerFixForRule(PreferUsePrefix.code, PreferUsePrefixFix.new);
     registry.registerFixForRule(UseSliverPrefix.code, UseSliverPrefixFix.new);

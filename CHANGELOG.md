@@ -9,9 +9,10 @@
   tag-based pub.dev publishing and GitHub Release creation.
 - Split the migrated scanner surface into one registered analyzer rule per
   diagnostic ID, matching `many_lints`' specific rule-registration style.
-- Re-ran the `many_lints 0.4.0` inventory audit and kept BLoC/Cubit,
-  Equatable, `gap`, shorthand, switch-expression, and destructuring preference
-  rules out of the default Flutter skill profile.
+- Re-ran the `many_lints 0.4.0` inventory audit, added the remaining allowed
+  rules from `many_lints`, including `prefer_class_destructuring`, and kept the
+  configured false-list diagnostics, including Cubit suffix checks, out of the
+  default Flutter skill profile.
 
 ## [0.1.0] - 2026-05-06
 

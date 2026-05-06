@@ -58,17 +58,16 @@ Dart-source rule IDs; those checks are analyzer-owned.
 
 The additional analyzer coverage is registered by `FlutterSkillLintsPlugin`.
 
-- 80 additional warning rules registered by default.
-- 61 quick fixes registered.
+- 85 additional warning rules registered by default.
+- 66 quick fixes registered.
 - 1 assist registered.
 - Existing diagnostic IDs are preserved under the
   `flutter_skill_lints` plugin.
 
-The current skill profile does not require app repos to carry a diagnostics
-override block for off-profile additional rules. BLoC/Cubit-only, Equatable,
-destructuring, and style-preference rules such as suffix, gap,
-shorthand-expression, switch expression, and class-destructuring preferences are
-excluded from the package source and default registration.
+The current skill profile ships the allowed `many_lints` surface and leaves out
+the configured false-list diagnostics: BLoC/Cubit-only rules, `use_gap`, shorthand
+preferences, `prefer_switch_expression`, and
+`prefer_overriding_parent_equality`. `prefer_class_destructuring` is included.
 
 ## Remaining Gaps
 

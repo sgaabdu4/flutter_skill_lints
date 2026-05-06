@@ -37,17 +37,20 @@ void main() {
     );
 
     expect(registry.warningRules.length, _enabledAdditionalRuleCount);
-    expect(registeredFixCount, 61);
+    expect(registeredFixCount, 66);
     expect(registry.assistKinds, hasLength(1));
     expect(registry.warningRules, containsPair('avoid_ref_read_inside_build', isNotNull));
     expect(registry.warningRules, containsPair('use_ref_and_state_synchronously', isNotNull));
     expect(registry.warningRules, containsPair('prefer_padding_over_container', isNotNull));
     expect(registry.warningRules, containsPair('avoid_constant_switches', isNotNull));
+    expect(registry.warningRules, containsPair('prefer_class_destructuring', isNotNull));
+    expect(registry.warningRules, containsPair('use_existing_destructuring', isNotNull));
+    expect(registry.warningRules, containsPair('list_all_equatable_fields', isNotNull));
+    expect(registry.warningRules, containsPair('prefer_equatable_mixin', isNotNull));
     expect(registry.warningRules, isNot(contains('use_bloc_suffix')));
+    expect(registry.warningRules, isNot(contains('use_cubit_suffix')));
     expect(registry.warningRules, isNot(contains('use_gap')));
     expect(registry.warningRules, isNot(contains('prefer_switch_expression')));
-    expect(registry.warningRules, isNot(contains('use_existing_destructuring')));
-    expect(registry.warningRules, isNot(contains('list_all_equatable_fields')));
   });
 
   test('registers every additional analyzer rule file', () {
@@ -87,12 +90,7 @@ void main() {
       'prefer_shorthands',
       'prefer_returning_shorthands',
       'prefer_switch_expression',
-      'prefer_class_destructuring',
       'prefer_overriding_parent_equality',
-      'use_existing_destructuring',
-      'avoid_single_field_destructuring',
-      'list_all_equatable_fields',
-      'prefer_equatable_mixin',
     ]) {
       expect(paths, isNot(contains(forbidden)));
     }
@@ -116,4 +114,4 @@ void main() {
   });
 }
 
-const _enabledAdditionalRuleCount = 80;
+const _enabledAdditionalRuleCount = 85;

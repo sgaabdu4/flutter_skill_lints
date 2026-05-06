@@ -1,0 +1,12 @@
+.codebase/
+.dart_tool/
+.github/
+.DS_Store
+.idea/
+.vscode/
+*.iml
+build/
+coverage/
+pubspec.lock
+TODO.md
+release.sh

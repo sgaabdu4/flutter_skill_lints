@@ -1,0 +1,139 @@
+name: Dart CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_call:
+
+jobs:
+  version-check:
+    name: Check Version Consistency
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check version consistency
+        run: |
+          PUBSPEC_VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//' | tr -d '\r')
+          CHANGELOG_VERSION=$(grep -m 1 '## \[' CHANGELOG.md | sed 's/.*\[\(.*\)\].*/\1/' | tr -d '\r')
+          echo "pubspec.yaml: $PUBSPEC_VERSION"
+          echo "CHANGELOG.md: $CHANGELOG_VERSION"
+          if [ "$PUBSPEC_VERSION" != "$CHANGELOG_VERSION" ]; then
+            echo "Version mismatch: pubspec.yaml=$PUBSPEC_VERSION CHANGELOG.md=$CHANGELOG_VERSION"
+            exit 1
+          fi
+
+  format:
+    name: Check Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Check formatting
+        run: dart format --set-exit-if-changed .
+
+  analyze:
+    name: Analyze Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Analyze code
+        run: dart analyze --fatal-infos
+
+  test:
+    name: Run Dart Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Run tests
+        run: dart test --reporter expanded
+
+  flutter-smoke:
+    name: Run Flutter Plugin Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Run real analyzer-server smoke
+        run: RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart --reporter expanded
+
+  publish-dry-run:
+    name: Publish Dry Run
+    runs-on: ubuntu-latest
+    needs: [version-check, format, analyze, test, flutter-smoke]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Dry run publish
+        run: dart pub publish --dry-run
+
+  pana:
+    name: Package Analysis
+    runs-on: ubuntu-latest
+    needs: [version-check, format, analyze, test, flutter-smoke]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Activate PANA
+        run: dart pub global activate pana
+
+      - name: Run PANA analysis
+        run: |
+          dart pub global run pana . --json > pana.json
+          SCORE=$(jq '.scores.grantedPoints' pana.json)
+          TOTAL=$(jq '.scores.maxPoints' pana.json)
+          echo "PANA Score: $SCORE/$TOTAL"
+          if [ "$SCORE" -lt "$TOTAL" ]; then
+            jq '.suggestions' pana.json
+            exit 1
+          fi

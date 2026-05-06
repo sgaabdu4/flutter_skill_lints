@@ -1,0 +1,12 @@
+.DS_Store
+.codebase/
+.dart_tool/
+.github/context-mode/
+.idea/
+.vscode/
+*.iml
+build/
+coverage/
+pubspec.lock
+TODO.md
+release.sh

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0] - 2026-05-07
+
+- Documentation pass: rewrote `README.md` for faster onboarding, added a Quick
+  Start with copy-paste `analysis_options.yaml`, a tighter rule-group table,
+  and a Troubleshooting section.
+- Fixed the license badge link in the README.
+
 ## [0.1.1] - 2026-05-07
 
 - Added `avoid_constant_switches`, a dead-logic warning for `switch`

@@ -1,0 +1,562 @@
+import 'package:analyzer/analysis_rule/analysis_rule.dart';
+import 'package:analyzer/analysis_rule/rule_context.dart';
+import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
+
+typedef ScannerRuleCallback =
+    void Function(ScannerRuleReporter reporter, SourceScannerContext context);
+
+final class ScannerRule extends AnalysisRule {
+  ScannerRule({
+    required super.name,
+    required super.description,
+    required LintCode code,
+    required ScannerRuleCallback scan,
+  }) : _code = code,
+       _scan = scan;
+
+  @override
+  LintCode get diagnosticCode => _code;
+
+  final LintCode _code;
+  final ScannerRuleCallback _scan;
+
+  @override
+  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+    if (isGeneratedRuleContext(context)) return;
+    registry.addCompilationUnit(this, _SourceScannerVisitor(this, context));
+  }
+
+  void scanContext(RuleContext context) {
+    _scan(ScannerRuleReporter._(this), SourceScannerContext.fromRuleContext(context));
+  }
+}
+
+ScannerRule scannerRule({
+  required LintCode code,
+  required String description,
+  required ScannerRuleCallback scan,
+}) => ScannerRule(name: code.lowerCaseName, description: description, code: code, scan: scan);
+
+final class ScannerRuleReporter {
+  const ScannerRuleReporter._(this._rule);
+
+  final ScannerRule _rule;
+
+  void report(SourceScannerContext context, int lineIndex, int column) {
+    final source = context.source;
+    final safeLine = lineIndex.clamp(0, source.length - 1);
+    final safeColumn = column < 0 ? 0 : column;
+    final lineLength = source.original[safeLine].length;
+    final offset = source.lineOffsets[safeLine] + safeColumn.clamp(0, lineLength);
+    final length = lineLength == 0 ? 1 : (lineLength - safeColumn).clamp(1, lineLength);
+    _rule.reportAtOffset(offset, length);
+  }
+}
+
+final class _SourceScannerVisitor extends SimpleAstVisitor<void> {
+  _SourceScannerVisitor(this.rule, this.ruleContext);
+
+  final ScannerRule rule;
+  final RuleContext ruleContext;
+
+  @override
+  void visitCompilationUnit(CompilationUnit node) {
+    rule.scanContext(ruleContext);
+  }
+}
+
+final class SourceScannerContext {
+  SourceScannerContext._({
+    required this.path,
+    required this.source,
+    required this.classes,
+    required this.methods,
+  });
+
+  factory SourceScannerContext.fromRuleContext(RuleContext context) {
+    final source = SourceScannerSource(context.definingUnit.content);
+    final classes = _classes(source);
+    final methods = <ScannerMethodSpan>[];
+    for (final classSpan in classes) {
+      methods.addAll(_methods(source, classSpan));
+    }
+
+    return SourceScannerContext._(
+      path: _relativePath(context.definingUnit.file.path),
+      source: source,
+      classes: classes,
+      methods: methods,
+    );
+  }
+
+  final String path;
+  final SourceScannerSource source;
+  final List<ScannerClassSpan> classes;
+  final List<ScannerMethodSpan> methods;
+
+  bool isRedirectWatch(int lineIndex) =>
+      source.masked[lineIndex].contains('ref.watch(') && near(lineIndex, 'redirect:', 12);
+
+  bool isRedirectLoadingBounce(int lineIndex, String code) {
+    if (!near(lineIndex, 'redirect:', 12)) return false;
+    if (!RegExp(r'''return\s+['"][^'"]*(?:splash|loading|home|/)''').hasMatch(code)) {
+      return false;
+    }
+    return near(lineIndex, 'isLoading', 8) || near(lineIndex, 'loading', 8);
+  }
+
+  bool isInitStateRead(int lineIndex) =>
+      source.masked[lineIndex].contains('ref.read(') && near(lineIndex, 'initState', 8);
+
+  bool hasStringNavigation(String code, String masked) {
+    final contextNav = RegExp(
+      r'''\bcontext\s*\.\s*(?:go|push|replace|pushReplacement)\s*\(\s*['"]''',
+    );
+    final routerNav = RegExp(
+      r'''\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*(?:go|push|replace|pushReplacement)\s*\(\s*['"]''',
+    );
+    return [...contextNav.allMatches(code), ...routerNav.allMatches(code)].any((match) {
+      if (match.start >= masked.length) return false;
+      return masked.substring(match.start, match.end).trim().isNotEmpty;
+    });
+  }
+
+  bool hasHardcodedUiString(String code) {
+    if (path.endsWith('_strings.dart') || path.contains('/l10n/')) return false;
+    if (isTestFile) return false;
+    return RegExp(r'''\b(?:Text|Tooltip|Semantics)\s*\(\s*['"][^'"]+['"]''').hasMatch(code) ||
+        RegExp(
+          r'''\b(?:title|label|tooltip|hintText|helperText|errorText)\s*:\s*['"][^'"]+['"]''',
+        ).hasMatch(code);
+  }
+
+  bool isMutableMixinField(int lineIndex) {
+    final line = source.masked[lineIndex];
+    if (!RegExp(
+      r'^\s*(?!final\b)(?!const\b)(?:var|int|double|num|bool|String|List|Map|Set)\b[^;=]*=',
+    ).hasMatch(line)) {
+      return false;
+    }
+    return near(lineIndex, 'mixin ', 8);
+  }
+
+  bool isMapDynamicReturn(String line) {
+    if (isDataPath) return false;
+    if (line.contains('toJson') || line.contains('fromJson') || line.contains('RequestBody')) {
+      return false;
+    }
+    return RegExp(r'\bMap\s*<\s*String\s*,\s*dynamic\s*>\s+\w+\s*\(').hasMatch(line);
+  }
+
+  bool dispatchesSnackbarFromUi(String line) =>
+      line.contains('ScaffoldMessenger.of(') ||
+      line.contains('ScaffoldMessenger.maybeOf(') ||
+      line.contains('SnackBarUtils.show');
+
+  bool clampsTextScaling(String line) =>
+      line.contains('withClampedTextScaling') ||
+      line.contains('maxScaleFactor') ||
+      line.contains('textScaleFactor:') ||
+      line.contains('TextScaler.linear(1');
+
+  bool hasConcreteLayerClass() {
+    for (final line in source.masked) {
+      if (RegExp(r'\bclass\s+\w+(?:Repository|Datasource)\b').hasMatch(line)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool hasConcreteLayerDependencyLine(String line) {
+    if (RegExp(r'^\s*(?:abstract\s+interface\s+)?class\b').hasMatch(line)) {
+      return false;
+    }
+    if (RegExp(
+      r'\b(?:final\s+)?(?!I)[A-Z]\w*(?:Repository|Datasource)\s+_\w+\s*;',
+    ).hasMatch(line)) {
+      return true;
+    }
+    if (RegExp(r'[(,]\s*(?!I)[A-Z]\w*(?:Repository|Datasource)\s+\w+').hasMatch(line)) {
+      return true;
+    }
+    return false;
+  }
+
+  bool isPrivateNamespaceConstructor(ScannerClassSpan classSpan) {
+    final text = source.masked.sublist(classSpan.start, classSpan.end + 1).join('\n');
+    final annotationStart = classSpan.start - 3 < 0 ? 0 : classSpan.start - 3;
+    final leadingText = source.masked.sublist(annotationStart, classSpan.start + 1).join('\n');
+    if (leadingText.contains('@freezed') || leadingText.contains('@Freezed')) return false;
+    if (!RegExp('${classSpan.name}._\\s*\\(\\s*\\)\\s*;').hasMatch(text)) return false;
+    return !RegExp(r'\babstract\s+final\s+class\b').hasMatch(source.masked[classSpan.start]);
+  }
+
+  bool hasImmediateGuard(int awaitLine, int methodEnd, String target) {
+    for (var i = awaitLine + 1; i <= methodEnd && i < source.length; i++) {
+      final line = source.masked[i].trim();
+      if (line.isEmpty) continue;
+      return line.contains('if (!$target.mounted)') && line.contains('return');
+    }
+    return false;
+  }
+
+  int firstLine(String needle) {
+    for (var i = 0; i < source.length; i++) {
+      if (source.masked[i].contains(needle)) return i;
+    }
+    return 0;
+  }
+
+  bool near(int lineIndex, String needle, int distance) {
+    final start = lineIndex - distance < 0 ? 0 : lineIndex - distance;
+    final end = lineIndex + distance >= source.length ? source.length - 1 : lineIndex + distance;
+    for (var i = start; i <= end; i++) {
+      if (source.masked[i].contains(needle)) return true;
+    }
+    return false;
+  }
+
+  bool isMutationMethod(String name) =>
+      RegExp(r'^(?:create|update|delete|set|reorder|save|add|remove)[A-Z_]?').hasMatch(name);
+
+  bool get isDataPath => path.contains('/data/') || path.contains('/repositories/');
+  bool get isDatasourcePath => path.contains('/data/datasources/');
+  bool get isRepositoryPath => path.contains('/repositories/');
+  bool get isDomainPath => path.contains('/domain/');
+
+  bool get isFeatureWidgetWrongPath =>
+      !isTestFile &&
+      path.contains('/features/') &&
+      path.contains('/widgets/') &&
+      !path.contains('/presentation/widgets/');
+
+  bool get isAtomicNoProviderPath =>
+      path.contains('/core/widgets/atoms/') ||
+      path.contains('/core/widgets/molecules/') ||
+      path.contains('/core/widgets/templates/');
+
+  bool get isUiFile {
+    final normalized = path.replaceAll('\\', '/');
+    return normalized.startsWith('lib/core/widgets/') ||
+        normalized.startsWith('lib/core/dialogs/') ||
+        normalized.startsWith('lib/core/sheets/') ||
+        normalized.contains('/presentation/widgets/') ||
+        normalized.contains('/presentation/screens/') ||
+        normalized.contains('/presentation/dialogs/') ||
+        normalized.contains('/presentation/sheets/');
+  }
+
+  bool get isAppRootFile {
+    final normalized = path.replaceAll('\\', '/');
+    return normalized == 'lib/main.dart' ||
+        normalized == 'lib/app.dart' ||
+        normalized.endsWith('/app.dart') ||
+        normalized.endsWith('/app_root.dart');
+  }
+
+  bool get isTestFile => path.startsWith('test/') || path.endsWith('_test.dart');
+
+  bool get isThemeDefFile =>
+      path.contains('/core/theme/') ||
+      path.endsWith('_tokens.dart') ||
+      path.endsWith('_theme.dart');
+
+  bool get isKeyRegistryFile {
+    final normalized = path.replaceAll('\\', '/').toLowerCase();
+    return normalized.endsWith('/app_widget_keys.dart') ||
+        normalized.endsWith('/widget_keys.dart') ||
+        normalized.endsWith('/e2e_keys.dart') ||
+        normalized.endsWith('/app_keys.dart') ||
+        normalized.endsWith('/keys.dart');
+  }
+
+  static List<ScannerClassSpan> _classes(SourceScannerSource source) {
+    final classes = <ScannerClassSpan>[];
+    for (var i = 0; i < source.length; i++) {
+      final line = source.masked[i];
+      final match = RegExp(r'\bclass\s+([A-Za-z_][A-Za-z0-9_]*)\b').firstMatch(line);
+      if (match == null) continue;
+
+      final name = match.group(1) ?? '';
+      final signature = StringBuffer(line);
+      var start = i;
+      var braceDepth = _braceDelta(line);
+      var foundOpenBrace = line.contains('{');
+
+      while (!foundOpenBrace && start + 1 < source.length) {
+        start++;
+        signature.write(' ${source.masked[start]}');
+        foundOpenBrace = source.masked[start].contains('{');
+        braceDepth += _braceDelta(source.masked[start]);
+      }
+
+      var end = start;
+      while (foundOpenBrace && braceDepth > 0 && end + 1 < source.length) {
+        end++;
+        braceDepth += _braceDelta(source.masked[end]);
+      }
+
+      final sig = signature.toString();
+      classes.add(
+        ScannerClassSpan(
+          name: name,
+          start: i,
+          end: end,
+          isNotifier:
+              name.endsWith('Notifier') ||
+              sig.contains(r'extends _$') ||
+              sig.contains('extends Notifier') ||
+              sig.contains('extends AsyncNotifier'),
+        ),
+      );
+      i = end;
+    }
+    return classes;
+  }
+
+  static List<ScannerMethodSpan> _methods(SourceScannerSource source, ScannerClassSpan classSpan) {
+    final methods = <ScannerMethodSpan>[];
+    final methodRegex = RegExp(
+      r'^\s*(?:@override\s+)?(?:static\s+)?(?:Future(?:<[^>]+>)?|Stream(?:<[^>]+>)?|void|[A-Za-z_][A-Za-z0-9_<>,? ]*)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(',
+    );
+
+    for (var i = classSpan.start + 1; i < classSpan.end; i++) {
+      final line = source.masked[i];
+      if (line.contains('factory ')) continue;
+      final match = methodRegex.firstMatch(line);
+      if (match == null) continue;
+      final name = match.group(1) ?? '';
+      if (_isControlKeyword(name)) continue;
+
+      if (line.contains('=>')) {
+        methods.add(ScannerMethodSpan(name: name, start: i, end: i));
+        continue;
+      }
+
+      var start = i;
+      var foundOpenBrace = line.contains('{');
+      var braceDepth = _braceDelta(line);
+      while (!foundOpenBrace && start + 1 < classSpan.end) {
+        start++;
+        foundOpenBrace = source.masked[start].contains('{');
+        braceDepth += _braceDelta(source.masked[start]);
+      }
+      if (!foundOpenBrace) continue;
+
+      var end = start;
+      while (braceDepth > 0 && end + 1 <= classSpan.end) {
+        end++;
+        braceDepth += _braceDelta(source.masked[end]);
+      }
+
+      methods.add(ScannerMethodSpan(name: name, start: i, end: end));
+      i = end;
+    }
+    return methods;
+  }
+
+  static bool _isControlKeyword(String name) =>
+      name == 'if' || name == 'for' || name == 'while' || name == 'switch' || name == 'catch';
+
+  static int _braceDelta(String line) => _count(line, '{') - _count(line, '}');
+
+  static int _count(String text, String char) {
+    var count = 0;
+    for (var i = 0; i < text.length; i++) {
+      if (text[i] == char) count++;
+    }
+    return count;
+  }
+
+  static String _relativePath(String path) {
+    final normalized = path.replaceAll('\\', '/');
+    for (final marker in ['/lib/', '/test/']) {
+      final index = normalized.lastIndexOf(marker);
+      if (index >= 0) return normalized.substring(index + 1);
+    }
+    return normalized;
+  }
+}
+
+final class SourceScannerSource {
+  SourceScannerSource(String text) {
+    original.addAll(text.split('\n'));
+    lineOffsets.addAll(_lineOffsets(text));
+    final scan = _scanText(text);
+    code.addAll(scan.code.split('\n'));
+    masked.addAll(scan.masked.split('\n'));
+  }
+
+  final original = <String>[];
+  final code = <String>[];
+  final masked = <String>[];
+  final lineOffsets = <int>[];
+
+  int get length => original.length;
+
+  List<int> _lineOffsets(String text) {
+    final result = <int>[0];
+    for (var i = 0; i < text.length; i++) {
+      if (text.codeUnitAt(i) == 10) result.add(i + 1);
+    }
+    return result;
+  }
+
+  _SourceScan _scanText(String text) {
+    final codeBuffer = StringBuffer();
+    final maskedBuffer = StringBuffer();
+    var inLineComment = false;
+    var inBlockComment = false;
+    var quote = '';
+    var inTripleString = false;
+    var inRawString = false;
+    var escaped = false;
+
+    void writeBoth(String value) {
+      codeBuffer.write(value);
+      maskedBuffer.write(value);
+    }
+
+    void writeSpaces(int count) {
+      codeBuffer.write(' ' * count);
+      maskedBuffer.write(' ' * count);
+    }
+
+    for (var i = 0; i < text.length; i++) {
+      final char = text[i];
+      final next = i + 1 < text.length ? text[i + 1] : '';
+
+      if (char == '\n') {
+        writeBoth(char);
+        inLineComment = false;
+        if (quote.isNotEmpty && !inTripleString) {
+          quote = '';
+          escaped = false;
+        }
+        continue;
+      }
+
+      if (quote.isNotEmpty) {
+        codeBuffer.write(inTripleString ? ' ' : char);
+        maskedBuffer.write(' ');
+        if (inTripleString) {
+          if (_startsTripleQuote(text, i, quote)) {
+            writeSpaces(2);
+            quote = '';
+            inTripleString = false;
+            inRawString = false;
+            i += 2;
+          }
+          continue;
+        }
+        if (escaped) {
+          escaped = false;
+        } else if (!inRawString && char == r'\') {
+          escaped = true;
+        } else if (char == quote) {
+          quote = '';
+          inRawString = false;
+        }
+        continue;
+      }
+
+      if (inLineComment) {
+        writeSpaces(1);
+        continue;
+      }
+
+      if (inBlockComment) {
+        if (char == '*' && next == '/') {
+          writeSpaces(2);
+          inBlockComment = false;
+          i++;
+          continue;
+        }
+        writeSpaces(1);
+        continue;
+      }
+
+      if (char == '/' && next == '/') {
+        writeSpaces(2);
+        inLineComment = true;
+        i++;
+        continue;
+      }
+      if (char == '/' && next == '*') {
+        writeSpaces(2);
+        inBlockComment = true;
+        i++;
+        continue;
+      }
+
+      final rawPrefix =
+          (char == 'r' || char == 'R') && i + 1 < text.length && _isQuote(text[i + 1]);
+      if (rawPrefix || _isQuote(char)) {
+        final quoteIndex = rawPrefix ? i + 1 : i;
+        quote = text[quoteIndex];
+        inRawString = rawPrefix;
+        inTripleString = _startsTripleQuote(text, quoteIndex, quote);
+        final prefixLength = rawPrefix ? 1 : 0;
+        final quoteLength = inTripleString ? 3 : 1;
+        if (inTripleString) {
+          writeSpaces(prefixLength + quoteLength);
+        } else {
+          codeBuffer.write(text.substring(i, quoteIndex + quoteLength));
+          maskedBuffer.write(' ' * (prefixLength + quoteLength));
+        }
+        i = quoteIndex + quoteLength - 1;
+        continue;
+      }
+
+      writeBoth(char);
+    }
+
+    return _SourceScan(codeBuffer.toString(), maskedBuffer.toString());
+  }
+
+  bool _isQuote(String char) => char == '\'' || char == '"';
+
+  bool _startsTripleQuote(String text, int index, String quote) =>
+      index + 2 < text.length &&
+      text[index] == quote &&
+      text[index + 1] == quote &&
+      text[index + 2] == quote;
+}
+
+final class _SourceScan {
+  const _SourceScan(this.code, this.masked);
+
+  final String code;
+  final String masked;
+}
+
+final class ScannerClassSpan {
+  const ScannerClassSpan({
+    required this.name,
+    required this.start,
+    required this.end,
+    required this.isNotifier,
+  });
+
+  static const none = ScannerClassSpan(name: '', start: -1, end: -1, isNotifier: false);
+
+  final String name;
+  final int start;
+  final int end;
+  final bool isNotifier;
+
+  bool contains(int line) => line >= start && line <= end;
+}
+
+final class ScannerMethodSpan {
+  const ScannerMethodSpan({required this.name, required this.start, required this.end});
+
+  final String name;
+  final int start;
+  final int end;
+}

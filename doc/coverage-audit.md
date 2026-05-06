@@ -35,7 +35,7 @@ server boundary.
 | No silent mutation no-op before repository init | `avoid_silent_repository_null_return` |
 | No sync `Notifier.build()` state read before initial state | `avoid_sync_notifier_state_read` |
 | Flutter skill analyzer config, prohibited old/local lint plugin wiring, and `build.yaml` JSON settings | `flutter_skill_project_config` |
-| Source checks inspired by the old supplemental scanner behavior | `flutter_skill_scanner_compat` |
+| Source checks inspired by the old supplemental scanner behavior | Exact diagnostic IDs such as `riverpod_read_init_state`, `router_string_nav`, `notifier_ensure_deps`, `data_log_rethrow`, and `test_provider_container` |
 
 `flutter_skill_project_config` reports stale Flutter skill analyzer setup,
 old lint plugin dependencies, local `git:`/`path:` plugin sources, and missing
@@ -43,11 +43,12 @@ old lint plugin dependencies, local `git:`/`path:` plugin sources, and missing
 anchored to a Dart source file. This lets `flutter analyze` replace the scanner
 for those installed-plugin config checks.
 
-`flutter_skill_scanner_compat` reports analyzer diagnostics for Riverpod
-init/watch/keepAlive/service-locator checks, Freezed/model checks, architecture
-layer checks, UI/style/performance/accessibility checks, notifier/router/
-showcase checks, test hygiene checks, service/mixin/domain/data checks, and
-crash-reporting checks.
+The scanner-migrated checks are registered as individual analyzer rules named
+after their exact diagnostic IDs. They cover Riverpod init/watch/keepAlive and
+service-locator checks, Freezed/model checks, architecture layer checks,
+UI/style/performance/accessibility checks, notifier/router/showcase checks,
+test hygiene checks, service/mixin/domain/data checks, and crash-reporting
+checks.
 
 The analyzer diagnostics use analyzer-friendly IDs, such as
 `riverpod_read_init_state`. The supplemental scanner no longer publishes
@@ -86,7 +87,7 @@ excluded from the package source and default registration.
 
 - `dart format`: formatted the edited analyzer/scanner files.
 - `dart analyze`: no issues.
-- `dart test`: 62 passing tests, 1 gated integration test skipped by default.
+- `dart test`: 106 passing tests, 1 gated integration test skipped by default.
 - `RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart --reporter expanded`: passed. The temp Flutter app loaded `flutter_skill_lints` and `riverpod_lint: 3.1.4-dev.3`, emitted `avoid_null_bang`, `avoid_ref_read_inside_build`, and `missing_provider_scope`, and did not emit `server.pluginError`.
 - Flutter skill scanner/docs regression suite:
   `dart test/flutter_skill_scan_test.dart` passed from the skill repo.

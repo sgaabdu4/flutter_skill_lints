@@ -4,3 +4,9 @@ updates:
     directory: /
     schedule:
       interval: daily
+    ignore:
+      # Analyzer 13 changes AST APIs used by this plugin. Stay on analyzer 12
+      # until riverpod_lint and the plugin implementation can move together.
+      - dependency-name: analyzer
+        update-types:
+          - version-update:semver-major

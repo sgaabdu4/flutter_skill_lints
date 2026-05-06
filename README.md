@@ -19,7 +19,7 @@ Add the analyzer plugin to the top-level `plugins` section in
 ```yaml
 plugins:
   flutter_skill_lints:
-    version: ^0.1.0
+    version: ^0.1.1
   riverpod_lint: 3.1.4-dev.3
 ```
 
@@ -31,15 +31,14 @@ plugin configuration.
 
 The plugin registers:
 
-- 79 additional Dart/Flutter warning rules, 61 fixes, and 1 assist.
+- 80 additional Dart/Flutter warning rules, 61 fixes, and 1 assist.
 - 16 Flutter skill rules, including project config and scanner compatibility
   rules.
 
 Additional rule diagnostic IDs are preserved for compatibility with existing
 `analysis_options.yaml` files. Off-profile BLoC/Cubit, Equatable, destructuring,
-constant-switch, and style-preference rules are not shipped in the default
-package surface, so app repos do not need a diagnostics override block for the
-Flutter skill profile.
+style-preference rules are not shipped in the default package surface, so app
+repos do not need a diagnostics override block for the Flutter skill profile.
 
 ## Flutter Skill Rules
 
@@ -69,6 +68,16 @@ This release supports the analyzer 12 line so it can co-resolve with
 `analysis_server_plugin 0.3.14`, `analyzer 12.1.0`, and
 `analyzer_plugin 0.14.8`. Recheck `riverpod_lint`,
 `analysis_server_plugin`, `analyzer`, and `analyzer_plugin` before publishing.
+
+## Release
+
+After a version bump is merged to `main`, `Dart CI` verifies the package and
+creates the matching `v0.1.1` tag automatically. That tag push triggers the
+publish workflow, which publishes to pub.dev and creates the GitHub Release.
+
+The auto-tag job requires a `RELEASE_TOKEN` repository secret with contents
+read/write access. GitHub's default `GITHUB_TOKEN` can create tags, but those
+tag pushes do not trigger the separate pub.dev publish workflow.
 
 ## Attribution
 

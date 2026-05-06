@@ -57,7 +57,7 @@ Dart-source rule IDs; those checks are analyzer-owned.
 
 The additional analyzer coverage is registered by `FlutterSkillLintsPlugin`.
 
-- 79 additional warning rules registered by default.
+- 80 additional warning rules registered by default.
 - 61 quick fixes registered.
 - 1 assist registered.
 - Existing diagnostic IDs are preserved under the
@@ -65,7 +65,7 @@ The additional analyzer coverage is registered by `FlutterSkillLintsPlugin`.
 
 The current skill profile does not require app repos to carry a diagnostics
 override block for off-profile additional rules. BLoC/Cubit-only, Equatable,
-destructuring, constant-switch, and style-preference rules such as suffix, gap,
+destructuring, and style-preference rules such as suffix, gap,
 shorthand-expression, switch expression, and class-destructuring preferences are
 excluded from the package source and default registration.
 
@@ -86,7 +86,7 @@ excluded from the package source and default registration.
 
 - `dart format`: formatted the edited analyzer/scanner files.
 - `dart analyze`: no issues.
-- `dart test`: 49 passing tests, 1 gated integration test skipped by default.
+- `dart test`: 62 passing tests, 1 gated integration test skipped by default.
 - `RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart --reporter expanded`: passed. The temp Flutter app loaded `flutter_skill_lints` and `riverpod_lint: 3.1.4-dev.3`, emitted `avoid_null_bang`, `avoid_ref_read_inside_build`, and `missing_provider_scope`, and did not emit `server.pluginError`.
 - Flutter skill scanner/docs regression suite:
   `dart test/flutter_skill_scan_test.dart` passed from the skill repo.
@@ -97,4 +97,5 @@ excluded from the package source and default registration.
 - `many_lints`-inspired reference inventory reviewed for compatible additional
   analyzer diagnostics.
 - `pana --no-warning --exit-code-threshold 0 .`: 160/160.
-- `dart pub publish --dry-run`: package validation completed with one warning because the package files are not committed in git. No dependency/path/custom-lint blocker was reported.
+- `dart pub publish --dry-run`: package validation completed. No
+  dependency/path/custom-lint blocker was reported.

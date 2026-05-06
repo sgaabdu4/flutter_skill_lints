@@ -80,6 +80,7 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_collection_
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_commented_out_code.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_conditional_hooks.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_constant_conditions.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_constant_switches.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_contradictory_expressions.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_duplicate_cascades.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_expanded_as_spacer.dart';
@@ -167,6 +168,7 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidCommentedOutCode());
     registry.registerWarningRule(AvoidDuplicateCascades());
     registry.registerWarningRule(AvoidConstantConditions());
+    registry.registerWarningRule(AvoidConstantSwitches());
     registry.registerWarningRule(AvoidContradictoryExpressions());
     registry.registerWarningRule(AvoidAccessingCollectionsByConstantIndex());
     registry.registerWarningRule(AvoidGenericsShadowing());

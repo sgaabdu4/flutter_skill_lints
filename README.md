@@ -69,6 +69,18 @@ This release supports the analyzer 12 line so it can co-resolve with
 `analyzer_plugin 0.14.8`. Recheck `riverpod_lint`,
 `analysis_server_plugin`, `analyzer`, and `analyzer_plugin` before publishing.
 
+## Release
+
+After merging a version bump to `main`, push the matching tag:
+
+```bash
+git tag v0.1.1
+git push origin v0.1.1
+```
+
+The tag workflow verifies the package, publishes it to pub.dev, and creates the
+matching GitHub Release after publishing succeeds.
+
 ## Attribution
 
 Inspired by `many_lints`. See `THIRD_PARTY_NOTICES.md` for license notices.

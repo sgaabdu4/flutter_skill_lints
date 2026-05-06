@@ -5,6 +5,7 @@
 - Added `avoid_constant_switches`, a dead-logic warning for `switch`
   statements and expressions that switch on literals, const variables, or
   static const fields.
+- Added GitHub Release creation after successful tag-based pub.dev publishing.
 - Re-ran the `many_lints 0.4.0` inventory audit and kept BLoC/Cubit,
   Equatable, `gap`, shorthand, switch-expression, and destructuring preference
   rules out of the default Flutter skill profile.

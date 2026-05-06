@@ -1,5 +1,3 @@
-# flutter_skill_lints
-
 [![pub package](https://img.shields.io/pub/v/flutter_skill_lints.svg)](https://pub.dev/packages/flutter_skill_lints)
 [![license](https://img.shields.io/github/license/sgaabdu4/flutter_skill_lints.svg)](https://github.com/sgaabdu4/flutter_skill_lints/blob/main/LICENSE)
 

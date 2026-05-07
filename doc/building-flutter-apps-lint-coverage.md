@@ -114,6 +114,7 @@ use_context_mounted_after_await
 use_ref_invalidate
 use_ref_mounted_after_await
 use_sealed_freezed_classes
+use_unawaited_for_fire_and_forget_futures
 ```
 
 Additional diagnostics in `lib/src/additional_lints/rules/**`:
@@ -212,7 +213,8 @@ Core skill rules already covered before this pass:
   `riverpod_keepalive_family`, `use_ref_invalidate`.
 - Async safety: `use_ref_mounted_after_await`,
   `use_context_mounted_after_await`, `async_context_mounted_style`,
-  `avoid_sync_notifier_state_read`.
+  `avoid_sync_notifier_state_read`,
+  `use_unawaited_for_fire_and_forget_futures`.
 - Notifiers: `avoid_silent_repository_null_return`, `notifier_ensure_deps`,
   `notifier_watch_method`.
 - Freezed/serialization: `use_sealed_freezed_classes`,
@@ -266,14 +268,14 @@ hover description and correction text.
 | `crashlytics.md` | `crash_direct_firebase_call`, `crash_init_before_run_app`, `crash_possible_pii`, runtime boundary for CI symbol upload |
 | `dart-mcp-e2e-testing.md` | `cfg_e2e_entrypoint`, `test_inline_value_key`, `test_tap_at`, `test_first_match_finder`, runtime boundary for real device, logs, source-of-truth, cleanup, and multi-actor proof |
 | `dart-patterns-records.md` | `records_map_return`, `typed_id_raw_id`, `avoid_null_bang`, `prefer_wildcard_pattern`, `prefer_class_destructuring`, `use_existing_destructuring` |
-| `extensions-utilities.md` | `ui_snackbar_boundary`, `dart_static_namespace`, `service_static_side_effect`, `fire_and_forget_missing_catch` |
+| `extensions-utilities.md` | `ui_snackbar_boundary`, `dart_static_namespace`, `service_static_side_effect`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures` |
 | `flutter-optimizations.md` | `avoid_shrink_wrap`, `perf_listview_children`, `perf_build_work`, `a11y_text_scale_clamp`, `flutter_key_created_in_build`, `flutter_unique_or_global_key`, `flutter_opacity_widget`, `flutter_save_layer_filter`, `flutter_clip_save_layer`, `flutter_intrinsic_layout`, `flutter_animated_builder_child`, `flutter_widget_operator_equals`, `use_dedicated_media_query_methods`, `prefer_compute_over_isolate_run` |
 | `freezed-sealed.md` | `use_sealed_freezed_classes`, `freezed_missing_private_constructor`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map`, `arch_domain_json_annotation`, `cfg_explicit_to_json` |
 | `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_test_close_missing`, runtime boundary for historical TypeId permanence |
 | `mixins.md` | `mixin_mixin_class`, `mixin_name_suffix`, `mixin_mutable_state` |
 | `performance.md` | `riverpod_watch_no_select`, `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `perf_listview_children`, `perf_build_work`, `state_raw_response`, `a11y_text_scale_clamp`, `flutter_*` optimization rules |
 | `riverpod-codegen.md` | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_watch_no_select`, `riverpod_keepalive_family`, `use_ref_invalidate`; Riverpod-owned dependency/scoping/provider-shape diagnostics stay with `riverpod_lint` |
-| `services-and-singletons.md` | `service_singleton`, `service_static_side_effect`, `service_random_per_call`, `fire_and_forget_missing_catch`, `fire_forget_in_tests` |
+| `services-and-singletons.md` | `service_singleton`, `service_static_side_effect`, `service_random_per_call`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures`, `fire_forget_in_tests` |
 | `showcase-tours.md` | `avoid_showcase_key_filtering`, `showcase_listen_manual_handle`, `showcase_prev_null_guard`, `showcase_default_scope`, `showcase_dispose_on_tap`, `showcase_v4_api`, `showcase_get_named_unhandled`, `showcase_scope_string_literal` |
 | `state-management.md` | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `async_context_mounted_style`, `avoid_sync_notifier_state_read`, `avoid_silent_repository_null_return`, `notifier_ensure_deps`, `notifier_watch_method`, `state_broad_invalidation`, runtime boundary for source-of-truth freshness |
 | `testing.md` | `cfg_e2e_entrypoint`, `test_provider_container`, `test_uncontrolled_scope`, `test_create_container`, `test_mock_concrete`, `test_pump_and_settle`, `test_tap_at`, `test_inline_value_key`, `test_first_match_finder`, runtime boundary for event-contract and cross-runtime drift proof |
@@ -315,6 +317,7 @@ Hive/Crash/services:
 - `crash_direct_firebase_call`
 - `crash_init_before_run_app`
 - `fire_and_forget_missing_catch`
+- `use_unawaited_for_fire_and_forget_futures`
 - `service_static_side_effect`
 - `service_random_per_call`
 - `fire_forget_in_tests`
@@ -343,7 +346,10 @@ so this plugin should not add duplicate reports:
   diagnostics already owned by Riverpod tooling.
 - Basic Dart lints already required by the canonical analysis options, such as
   `prefer_const_constructors`, `unawaited_futures`, `discarded_futures`,
-  `avoid_void_async`, `cancel_subscriptions`, and `close_sinks`.
+  `avoid_void_async`, `cancel_subscriptions`, and `close_sinks`. The package
+  only adds companion guidance for the `VoidCallback` fire-and-forget case
+  where `unawaited(...)` is the intended fix, while reusable helpers should
+  return `Future<void>` and let callers choose `await` or `unawaited(...)`.
 
 ## Riverpod Package Compatibility
 

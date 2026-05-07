@@ -32,6 +32,7 @@ import 'package:flutter_skill_lints/src/rules/use_context_mounted_after_await.da
 import 'package:flutter_skill_lints/src/rules/use_ref_invalidate.dart';
 import 'package:flutter_skill_lints/src/rules/use_ref_mounted_after_await.dart';
 import 'package:flutter_skill_lints/src/rules/use_sealed_freezed_classes.dart';
+import 'package:flutter_skill_lints/src/rules/use_unawaited_for_fire_and_forget_futures.dart';
 
 final List<AbstractAnalysisRule> flutterSkillRules = [
   UseRefMountedAfterAwait(),
@@ -44,6 +45,7 @@ final List<AbstractAnalysisRule> flutterSkillRules = [
   GuardContextPop(),
   UseRefInvalidate(),
   UseSealedFreezedClasses(),
+  UseUnawaitedForFireAndForgetFutures(),
   AvoidRouteParamThrowInBuild(),
   AvoidShowcaseKeyFiltering(),
   AvoidSilentRepositoryNullReturn(),

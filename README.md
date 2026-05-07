@@ -15,8 +15,8 @@ Designed for Riverpod + codegen Flutter apps.
 
 | Surface | Count |
 | --- | ---: |
-| Flutter skill warning rules | 93 |
-| Flutter skill diagnostic codes | 100 |
+| Flutter skill warning rules | 94 |
+| Flutter skill diagnostic codes | 101 |
 | Additional Dart/Flutter warning rules | 82 |
 | Quick fixes | 65 |
 | Assists | 1 |
@@ -101,7 +101,7 @@ Encode the architectural rules from `building-flutter-apps`.
 
 | Area | Diagnostic IDs |
 | --- | --- |
-| Async safety | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `async_context_mounted_style` |
+| Async safety | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `use_unawaited_for_fire_and_forget_futures`, `async_context_mounted_style` |
 | Riverpod | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_watch_no_select`, `riverpod_keepalive_family`, `use_ref_invalidate` |
 | Notifiers | `avoid_silent_repository_null_return`, `avoid_sync_notifier_state_read`, `notifier_ensure_deps`, `notifier_watch_method` |
 | Freezed and serialization | `use_sealed_freezed_classes`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map` |
@@ -165,6 +165,41 @@ import 'package:go_router/go_router.dart';
 
 void openDetails(BuildContext context) {
   context.go('/details'); // router_string_nav
+}
+```
+
+```dart
+import 'dart:async';
+import 'package:flutter/widgets.dart';
+
+Future<void> showDialogBottomSheet<T>() async {}
+
+void buildButton(VoidCallback onPressed) {}
+
+void build() {
+  buildButton(() {
+    showDialogBottomSheet<void>(); // use_unawaited_for_fire_and_forget_futures
+  });
+
+  buildButton(() {
+    unawaited(showDialogBottomSheet<void>());
+  });
+}
+
+Future<void> precacheCachedNetworkImages(
+  Iterable<ImageProvider<Object>> images,
+  BuildContext context,
+) async {
+  await Future.wait([
+    for (final image in images) precacheImage(image, context),
+  ]);
+}
+
+void setupImages(
+  Iterable<ImageProvider<Object>> images,
+  BuildContext context,
+) {
+  unawaited(precacheCachedNetworkImages(images, context));
 }
 ```
 

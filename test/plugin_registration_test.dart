@@ -50,6 +50,20 @@ void main() {
     }
   });
 
+  test('fire-and-forget diagnostic explains reusable utility contracts', () {
+    final rule = flutterSkillRules.singleWhere(
+      (rule) => rule.name == 'use_unawaited_for_fire_and_forget_futures',
+    );
+    final code = rule.diagnosticCodes.singleWhere(
+      (code) => code.lowerCaseName == 'use_unawaited_for_fire_and_forget_futures',
+    );
+    final message = code.correctionMessage ?? '';
+
+    expect(message, contains('unawaited'));
+    expect(message, contains('reusable utilities'));
+    expect(message, contains('Future.wait'));
+  });
+
   test('rule source files document every rule with API docs', () {
     final issues = <String>[];
     final ruleFiles = [
@@ -183,8 +197,8 @@ void main() {
   });
 }
 
-const _enabledFlutterSkillRuleCount = 93;
-const _enabledFlutterSkillDiagnosticCount = 100;
+const _enabledFlutterSkillRuleCount = 94;
+const _enabledFlutterSkillDiagnosticCount = 101;
 const _enabledAdditionalRuleCount = 82;
 
 List<String> _docBlockBefore(List<String> lines, int index) {

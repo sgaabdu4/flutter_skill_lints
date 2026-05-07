@@ -18,6 +18,7 @@ import 'package:flutter_skill_lints/src/rules/use_context_mounted_after_await.da
 import 'package:flutter_skill_lints/src/rules/use_ref_invalidate.dart';
 import 'package:flutter_skill_lints/src/rules/use_ref_mounted_after_await.dart';
 import 'package:flutter_skill_lints/src/rules/use_sealed_freezed_classes.dart';
+import 'package:flutter_skill_lints/src/rules/use_unawaited_for_fire_and_forget_futures.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
@@ -36,6 +37,7 @@ void main() {
     defineReflectiveTests(AvoidShowcaseKeyFilteringTest);
     defineReflectiveTests(AvoidSilentRepositoryNullReturnTest);
     defineReflectiveTests(AvoidSyncNotifierStateReadTest);
+    defineReflectiveTests(UseUnawaitedForFireAndForgetFuturesTest);
   });
 }
 
@@ -678,6 +680,69 @@ class TodosNotifier extends Notifier<int> {
   }
 
   void _load() {}
+}
+''');
+  }
+}
+
+@reflectiveTest
+final class UseUnawaitedForFireAndForgetFuturesTest extends _FlutterSkillRuleTest {
+  @override
+  void setUp() {
+    rule = UseUnawaitedForFireAndForgetFutures();
+    super.setUp();
+  }
+
+  Future<void> test_reportsFutureDroppedFromVoidCallback() async {
+    const source = r'''
+import 'dart:async';
+
+typedef VoidCallback = void Function();
+
+Future<void> showDialogBottomSheet<T>() async {}
+
+void build(VoidCallback onPressed) {}
+
+void example() {
+  build(() {
+    showDialogBottomSheet<void>();
+  });
+}
+''';
+
+    await assertDiagnostics(source, [lintFor(source, 'showDialogBottomSheet<void>()')]);
+  }
+
+  Future<void> test_allowsUnawaitedFutureFromVoidCallback() async {
+    await assertNoDiagnostics(r'''
+import 'dart:async';
+
+typedef VoidCallback = void Function();
+
+Future<void> showDialogBottomSheet<T>() async {}
+
+void build(VoidCallback onPressed) {}
+
+void example() {
+  build(() {
+    unawaited(showDialogBottomSheet<void>());
+  });
+}
+''');
+  }
+
+  Future<void> test_allowsAwaitedFutureFromAsyncCallback() async {
+    await assertNoDiagnostics(r'''
+typedef AsyncCallback = Future<void> Function();
+
+Future<void> showDialogBottomSheet<T>() async {}
+
+void build(AsyncCallback onPressed) {}
+
+void example() {
+  build(() async {
+    await showDialogBottomSheet<void>();
+  });
 }
 ''');
   }

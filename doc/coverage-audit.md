@@ -29,6 +29,7 @@ server boundary.
 | No `shrinkWrap: true` | `avoid_shrink_wrap` |
 | No unguarded `context.pop()` | `guard_context_pop` |
 | No ignored `ref.refresh()` | `use_ref_invalidate` |
+| Intentional fire-and-forget Futures in void callbacks are marked; reusable utility contracts stay awaitable | `use_unawaited_for_fire_and_forget_futures` |
 | No Freezed `abstract class` | `use_sealed_freezed_classes` |
 | No widget build route-param throw | `avoid_route_param_throw_in_build` |
 | No showcase key filtering | `avoid_showcase_key_filtering` |

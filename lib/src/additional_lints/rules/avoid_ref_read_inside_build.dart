@@ -12,14 +12,16 @@ import '../type_checker.dart';
 ///
 /// `ref.read` reads the provider value once and does not listen for changes.
 /// Using it inside `build()` means the widget won't rebuild when the
-/// provider's value changes. Use `ref.watch()` instead.
+/// provider's value changes. Use `ref.watch()` instead, or move
+/// `ref.read()` into callbacks/user interactions that intentionally read once.
 class AvoidRefReadInsideBuild extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_ref_read_inside_build',
     "Avoid using 'ref.read' inside the build method.",
     correctionMessage:
         "Use 'ref.watch' instead so the widget rebuilds when the "
-        "provider's value changes.",
+        "provider's value changes. If you only need a one-time read for "
+        "actions, keep 'ref.read' inside callbacks instead.",
   );
 
   AvoidRefReadInsideBuild()

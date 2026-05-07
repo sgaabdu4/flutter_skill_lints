@@ -64,6 +64,23 @@ void main() {
     expect(message, contains('Future.wait'));
   });
 
+  test('ref-read-in-build diagnostic explains callback reads', () {
+    final registry = PluginRegistryImpl('flutter_skill_lints_additional');
+    final plugin = AdditionalLintsPlugin();
+
+    plugin.register(registry);
+
+    final rule = registry.warningRules['avoid_ref_read_inside_build'];
+    final code = rule?.diagnosticCodes.singleWhere(
+      (code) => code.lowerCaseName == 'avoid_ref_read_inside_build',
+    );
+    final message = code?.correctionMessage ?? '';
+
+    expect(message, contains('ref.watch'));
+    expect(message, contains('callbacks'));
+    expect(message, contains('ref.read'));
+  });
+
   test('Freezed value-class diagnostic explains the no mental tax convention', () {
     final rule = flutterSkillRules.singleWhere(
       (rule) => rule.name == 'freezed_required_value_class',

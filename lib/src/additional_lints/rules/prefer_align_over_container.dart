@@ -8,12 +8,15 @@ import 'package:analyzer/error/error.dart';
 import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
-/// Suggests using Align widget instead of Container with only alignment.
+/// Suggests using `Align` instead of `Container` with only alignment.
+///
+/// The dedicated widget makes alignment intent explicit and avoids a generic
+/// `Container` when no decoration, constraints, or color are needed.
 class PreferAlignOverContainer extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_align_over_container',
     'Use Align widget instead of the Container widget with only the alignment parameter',
-    correctionMessage: 'Try using Align instead of Container.',
+    correctionMessage: 'Replace the Container with Align so the alignment intent is explicit.',
   );
 
   PreferAlignOverContainer()

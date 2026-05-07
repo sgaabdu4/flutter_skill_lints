@@ -2,6 +2,10 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> architectureSourceRules = [
+  /// Domain code must stay pure Dart.
+  ///
+  /// Why: Flags Flutter or package imports from domain files. Move Flutter/package
+  /// dependencies out of domain entities.
   scannerRule(
     code: const LintCode(
       'arch_domain_import',
@@ -9,7 +13,8 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Move Flutter/package dependencies out of domain entities.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports Flutter or package imports from domain files.',
+    description:
+        'Flags Flutter or package imports from domain files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final code = context.source.code[i];
@@ -22,6 +27,11 @@ final List<ScannerRule> architectureSourceRules = [
       }
     },
   ),
+
+  /// Domain code must not own JSON serialization.
+  ///
+  /// Why: Flags JSON serialization members in domain files. Move fromJson/toJson code to data
+  /// models.
   scannerRule(
     code: const LintCode(
       'arch_domain_serialization',
@@ -29,7 +39,8 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Move fromJson/toJson code to data models.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports JSON serialization members in domain files.',
+    description:
+        'Flags JSON serialization members in domain files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         if (context.isDomainPath &&
@@ -41,6 +52,11 @@ final List<ScannerRule> architectureSourceRules = [
       }
     },
   ),
+
+  /// Repositories and datasources need interface contracts.
+  ///
+  /// Why: Flags repository or datasource files without I* contracts. Add an abstract
+  /// interface class for this layer.
   scannerRule(
     code: const LintCode(
       'arch_interface_contract',
@@ -48,7 +64,8 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Add an abstract interface class for this layer.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports repository or datasource files without I* contracts.',
+    description:
+        'Flags repository or datasource files without I* contracts so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       final text = context.source.masked.join('\n');
       if ((context.isDatasourcePath || context.isRepositoryPath) &&
@@ -58,6 +75,11 @@ final List<ScannerRule> architectureSourceRules = [
       }
     },
   ),
+
+  /// Layer constructors should depend on interfaces.
+  ///
+  /// Why: Flags concrete repository or datasource constructor dependencies. Take
+  /// I*Repository/I*Datasource interfaces instead of concrete classes.
   scannerRule(
     code: const LintCode(
       'arch_concrete_dependency',
@@ -65,7 +87,8 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Take I*Repository/I*Datasource interfaces instead of concrete classes.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports concrete repository or datasource constructor dependencies.',
+    description:
+        'Flags concrete repository or datasource constructor dependencies so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isRepositoryPath && !context.isDatasourcePath) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -75,6 +98,11 @@ final List<ScannerRule> architectureSourceRules = [
       }
     },
   ),
+
+  /// Avoid try/catch in datasources.
+  ///
+  /// Why: Flags try/catch blocks inside datasource files. Let errors propagate and catch once
+  /// at the notifier boundary.
   scannerRule(
     code: const LintCode(
       'arch_datasource_try_catch',
@@ -82,7 +110,8 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Let errors propagate and catch once at the notifier boundary.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports try/catch blocks inside datasource files.',
+    description:
+        'Flags try/catch blocks inside datasource files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -92,6 +121,11 @@ final List<ScannerRule> architectureSourceRules = [
       }
     },
   ),
+
+  /// Feature widgets belong under presentation/widgets.
+  ///
+  /// Why: Flags feature widgets outside presentation/widgets. Move feature widgets into the
+  /// presentation layer.
   scannerRule(
     code: const LintCode(
       'arch_widget_path',
@@ -99,7 +133,8 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Move feature widgets into the presentation layer.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports feature widgets outside presentation/widgets.',
+    description:
+        'Flags feature widgets outside presentation/widgets so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isFeatureWidgetWrongPath) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -107,6 +142,11 @@ final List<ScannerRule> architectureSourceRules = [
       }
     },
   ),
+
+  /// Atomic design widgets should not access providers directly.
+  ///
+  /// Why: Flags provider access from atomic design widgets. Move provider access to the
+  /// presentation boundary.
   scannerRule(
     code: const LintCode(
       'atomic_provider_access',
@@ -114,7 +154,8 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Move provider access to the presentation boundary.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports provider access from atomic design widgets.',
+    description:
+        'Flags provider access from atomic design widgets so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -125,6 +166,11 @@ final List<ScannerRule> architectureSourceRules = [
       }
     },
   ),
+
+  /// Use typed IDs for entities with multiple String IDs.
+  ///
+  /// Why: Flags domain entities with multiple raw String ID fields. Use extension types or
+  /// value objects for IDs.
   scannerRule(
     code: const LintCode(
       'typed_id_raw_id',
@@ -132,7 +178,8 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Use extension types or value objects for IDs.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports domain entities with multiple raw String ID fields.',
+    description:
+        'Flags domain entities with multiple raw String ID fields so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isDomainPath) return;
       final idFields = <int>[];
@@ -146,6 +193,11 @@ final List<ScannerRule> architectureSourceRules = [
       }
     },
   ),
+
+  /// Avoid Map<String, dynamic> for non-data multi-value returns.
+  ///
+  /// Why: Flags non-data helpers returning Map<String, dynamic> tuples. Use records or typed
+  /// objects.
   scannerRule(
     code: const LintCode(
       'records_map_return',
@@ -153,7 +205,8 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Use records or typed objects.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports non-data helpers returning Map<String, dynamic> tuples.',
+    description:
+        'Flags non-data helpers returning Map<String, dynamic> tuples so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];

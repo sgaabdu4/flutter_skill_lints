@@ -36,7 +36,8 @@ abstract class ClassSuffixValidator extends AnalysisRule {
        _lintCode = LintCode(
          name,
          'Use $requiredSuffix suffix',
-         correctionMessage: 'Ex. {0}$requiredSuffix',
+         correctionMessage:
+             'Rename the class to {0}$requiredSuffix so its suffix matches the required role.',
        );
 
   @override

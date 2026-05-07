@@ -2,6 +2,9 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> uiSourceRules = [
+  /// Avoid raw spacing, radius, size, and color tokens.
+  ///
+  /// Why: Flags raw visual constants instead of design tokens. Use design tokens.
   scannerRule(
     code: const LintCode(
       'style_raw_token',
@@ -9,7 +12,8 @@ final List<ScannerRule> uiSourceRules = [
       correctionMessage: 'Use design tokens.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description: 'Reports raw visual constants instead of design tokens.',
+    description:
+        'Flags raw visual constants instead of design tokens so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -21,6 +25,10 @@ final List<ScannerRule> uiSourceRules = [
       }
     },
   ),
+
+  /// Avoid raw TextStyle construction.
+  ///
+  /// Why: Flags raw TextStyle construction. Use the app theme text styles.
   scannerRule(
     code: const LintCode(
       'style_raw_text_style',
@@ -28,7 +36,8 @@ final List<ScannerRule> uiSourceRules = [
       correctionMessage: 'Use the app theme text styles.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description: 'Reports raw TextStyle construction.',
+    description:
+        'Flags raw TextStyle construction so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -38,6 +47,10 @@ final List<ScannerRule> uiSourceRules = [
       }
     },
   ),
+
+  /// Avoid hardcoded UI strings.
+  ///
+  /// Why: Flags hardcoded UI strings. Move text into a *Strings constants class.
   scannerRule(
     code: const LintCode(
       'strings_hardcoded',
@@ -45,7 +58,8 @@ final List<ScannerRule> uiSourceRules = [
       correctionMessage: 'Move text into a *Strings constants class.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description: 'Reports hardcoded UI strings.',
+    description:
+        'Flags hardcoded UI strings so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         if (context.hasHardcodedUiString(context.source.code[i])) {
@@ -54,6 +68,11 @@ final List<ScannerRule> uiSourceRules = [
       }
     },
   ),
+
+  /// UI widgets should not directly show snackbars.
+  ///
+  /// Why: Flags direct snackbar dispatches from UI widgets. Dispatch a notifier action and
+  /// let the shell own snackbar presentation.
   scannerRule(
     code: const LintCode(
       'ui_snackbar_boundary',
@@ -61,7 +80,8 @@ final List<ScannerRule> uiSourceRules = [
       correctionMessage: 'Dispatch a notifier action and let the shell own snackbar presentation.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports direct snackbar dispatches from UI widgets.',
+    description:
+        'Flags direct snackbar dispatches from UI widgets so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -71,6 +91,11 @@ final List<ScannerRule> uiSourceRules = [
       }
     },
   ),
+
+  /// Do not globally clamp text scaling.
+  ///
+  /// Why: Flags app-level text scaling clamps. Fix responsive layout instead of clamping
+  /// accessibility text size.
   scannerRule(
     code: const LintCode(
       'a11y_text_scale_clamp',
@@ -78,7 +103,8 @@ final List<ScannerRule> uiSourceRules = [
       correctionMessage: 'Fix responsive layout instead of clamping accessibility text size.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports app-level text scaling clamps.',
+    description:
+        'Flags app-level text scaling clamps so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -88,6 +114,11 @@ final List<ScannerRule> uiSourceRules = [
       }
     },
   ),
+
+  /// Avoid expensive work in build().
+  ///
+  /// Why: Flags expensive collection or formatting work inside build methods. Move sorting,
+  /// filtering, formatting, and regex creation out of build.
   scannerRule(
     code: const LintCode(
       'perf_build_work',
@@ -95,7 +126,8 @@ final List<ScannerRule> uiSourceRules = [
       correctionMessage: 'Move sorting, filtering, formatting, and regex creation out of build.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description: 'Reports expensive collection or formatting work inside build methods.',
+    description:
+        'Flags expensive collection or formatting work inside build methods so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (final method in context.methods.where((method) => method.name == 'build')) {
         for (var i = method.start; i <= method.end; i++) {
@@ -108,6 +140,11 @@ final List<ScannerRule> uiSourceRules = [
       }
     },
   ),
+
+  /// Prefer ListView.builder for dynamic lists.
+  ///
+  /// Why: Flags ListView(children:...) usage. Use builder/sliver variants instead of
+  /// ListView(children:...).
   scannerRule(
     code: const LintCode(
       'perf_listview_children',
@@ -115,7 +152,8 @@ final List<ScannerRule> uiSourceRules = [
       correctionMessage: 'Use builder/sliver variants instead of ListView(children: ...).',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description: 'Reports ListView(children: ...) usage.',
+    description:
+        'Flags ListView(children: ...) usage so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];

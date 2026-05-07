@@ -17,7 +17,7 @@ class AvoidShrinkWrapInLists extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_shrink_wrap_in_lists',
     'Avoid using shrinkWrap in ListView.',
-    correctionMessage: 'Consider using CustomScrollView with SliverList instead.',
+    correctionMessage: 'Use CustomScrollView with SliverList or constrain the list height.',
   );
 
   AvoidShrinkWrapInLists()

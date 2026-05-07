@@ -2,6 +2,10 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> notifierSourceRules = [
+  /// Mutation methods must initialize dependencies before writes.
+  ///
+  /// Why: Flags Notifier mutation methods that write before dependency initialization. Call
+  /// an _ensure... helper before using repositories or ref.read dependencies.
   scannerRule(
     code: const LintCode(
       'notifier_ensure_deps',
@@ -10,7 +14,8 @@ final List<ScannerRule> notifierSourceRules = [
           'Call an _ensure... helper before using repositories or ref.read dependencies.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports Notifier mutation methods that write before dependency initialization.',
+    description:
+        'Flags Notifier mutation methods that write before dependency initialization so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (final classSpan in context.classes.where((span) => span.isNotifier)) {
         final classMethods = context.methods.where((method) => classSpan.contains(method.start));
@@ -44,6 +49,10 @@ final List<ScannerRule> notifierSourceRules = [
       }
     },
   ),
+
+  /// Avoid ref.watch inside notifier methods.
+  ///
+  /// Why: Flags ref.watch calls inside Notifier methods. Use ref.read in notifier methods.
   scannerRule(
     code: const LintCode(
       'notifier_watch_method',
@@ -51,7 +60,8 @@ final List<ScannerRule> notifierSourceRules = [
       correctionMessage: 'Use ref.read in notifier methods.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports ref.watch calls inside Notifier methods.',
+    description:
+        'Flags ref.watch calls inside Notifier methods so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (final classSpan in context.classes.where((span) => span.isNotifier)) {
         final classMethods = context.methods.where((method) => classSpan.contains(method.start));

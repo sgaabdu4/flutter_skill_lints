@@ -2,6 +2,10 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> servicesMixinsSourceRules = [
+  /// Avoid new singleton instance fields.
+  ///
+  /// Why: Flags singleton instance fields in services. Use Riverpod providers or injected
+  /// services.
   scannerRule(
     code: const LintCode(
       'service_singleton',
@@ -9,7 +13,8 @@ final List<ScannerRule> servicesMixinsSourceRules = [
       correctionMessage: 'Use Riverpod providers or injected services.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports singleton instance fields in services.',
+    description:
+        'Flags singleton instance fields in services so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -19,6 +24,11 @@ final List<ScannerRule> servicesMixinsSourceRules = [
       }
     },
   ),
+
+  /// Avoid mixin class for capability mixins.
+  ///
+  /// Why: Flags mixin class declarations for capability mixins. Use mixin for reusable
+  /// behavior.
   scannerRule(
     code: const LintCode(
       'mixin_mixin_class',
@@ -26,7 +36,8 @@ final List<ScannerRule> servicesMixinsSourceRules = [
       correctionMessage: 'Use mixin for reusable behavior.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports mixin class declarations for capability mixins.',
+    description:
+        'Flags mixin class declarations for capability mixins so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -36,6 +47,11 @@ final List<ScannerRule> servicesMixinsSourceRules = [
       }
     },
   ),
+
+  /// Mixin names should end with Mixin.
+  ///
+  /// Why: Flags capability mixins without the Mixin suffix. Suffix capability mixins with
+  /// Mixin.
   scannerRule(
     code: const LintCode(
       'mixin_name_suffix',
@@ -43,7 +59,8 @@ final List<ScannerRule> servicesMixinsSourceRules = [
       correctionMessage: 'Suffix capability mixins with Mixin.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports capability mixins without the Mixin suffix.',
+    description:
+        'Flags capability mixins without the Mixin suffix so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -54,6 +71,10 @@ final List<ScannerRule> servicesMixinsSourceRules = [
       }
     },
   ),
+
+  /// Mixins should not carry mutable state.
+  ///
+  /// Why: Flags mutable fields inside mixins. Keep mixins stateless.
   scannerRule(
     code: const LintCode(
       'mixin_mutable_state',
@@ -61,7 +82,8 @@ final List<ScannerRule> servicesMixinsSourceRules = [
       correctionMessage: 'Keep mixins stateless.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports mutable fields inside mixins.',
+    description:
+        'Flags mutable fields inside mixins so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         if (context.isMutableMixinField(i)) {

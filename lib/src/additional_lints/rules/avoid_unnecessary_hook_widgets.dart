@@ -10,17 +10,20 @@ import '../hook_detection.dart';
 import '../type_checker.dart';
 
 /// Warns when a HookWidget does not use any hooks in the build method.
+///
+/// A widget without hook calls does not need hook lifecycle wiring, so a
+/// StatelessWidget is clearer.
 class AvoidUnnecessaryHookWidgets extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_hook_widgets',
     'This HookWidget does not use hooks.',
-    correctionMessage: 'Convert it to a StatelessWidget',
+    correctionMessage: 'Convert it to a StatelessWidget because no hooks are used.',
   );
 
   AvoidUnnecessaryHookWidgets()
     : super(
         name: 'avoid_unnecessary_hook_widgets',
-        description: 'Warns when HookWidget does not use hooks.',
+        description: 'Warns when HookWidget does not use hooks and can be a StatelessWidget.',
       );
 
   @override

@@ -2,6 +2,9 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> riverpodSourceRules = [
+  /// Avoid ref.read in initState.
+  ///
+  /// Why: Flags ref.read calls made from initState. Defer reads with a post-frame callback.
   scannerRule(
     code: const LintCode(
       'riverpod_read_init_state',
@@ -9,7 +12,8 @@ final List<ScannerRule> riverpodSourceRules = [
       correctionMessage: 'Defer reads with a post-frame callback.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports ref.read calls made from initState.',
+    description:
+        'Flags ref.read calls made from initState so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -19,6 +23,10 @@ final List<ScannerRule> riverpodSourceRules = [
       }
     },
   ),
+
+  /// Avoid service locator classes in Riverpod apps.
+  ///
+  /// Why: Flags service locator classes in Riverpod apps. Model dependencies with providers.
   scannerRule(
     code: const LintCode(
       'riverpod_service_locator',
@@ -26,7 +34,8 @@ final List<ScannerRule> riverpodSourceRules = [
       correctionMessage: 'Model dependencies with providers.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports service locator classes in Riverpod apps.',
+    description:
+        'Flags service locator classes in Riverpod apps so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -38,6 +47,11 @@ final List<ScannerRule> riverpodSourceRules = [
       }
     },
   ),
+
+  /// Prefer select when watching state in leaf widgets.
+  ///
+  /// Why: Flags broad ref.watch calls that do not use select. Use
+  /// ref.watch(provider.select((value) => value.field)).
   scannerRule(
     code: const LintCode(
       'riverpod_watch_no_select',
@@ -45,7 +59,8 @@ final List<ScannerRule> riverpodSourceRules = [
       correctionMessage: 'Use ref.watch(provider.select((value) => value.field)).',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description: 'Reports broad ref.watch calls that do not use select.',
+    description:
+        'Flags broad ref.watch calls that do not use select so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       // Only fire inside widget build() methods. Computed providers and
       // service factories legitimately call ref.watch without .select.
@@ -62,6 +77,11 @@ final List<ScannerRule> riverpodSourceRules = [
       }
     },
   ),
+
+  /// Avoid keepAlive family providers.
+  ///
+  /// Why: Flags keepAlive Riverpod families with required parameters. Use auto-dispose
+  /// families unless the cache is bounded.
   scannerRule(
     code: const LintCode(
       'riverpod_keepalive_family',
@@ -69,7 +89,8 @@ final List<ScannerRule> riverpodSourceRules = [
       correctionMessage: 'Use auto-dispose families unless the cache is bounded.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description: 'Reports keepAlive Riverpod families with required parameters.',
+    description:
+        'Flags keepAlive Riverpod families with required parameters so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];

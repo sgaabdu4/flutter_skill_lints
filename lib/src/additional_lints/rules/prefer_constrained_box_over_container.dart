@@ -8,12 +8,15 @@ import 'package:analyzer/error/error.dart';
 import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
-/// Suggests using ConstrainedBox widget instead of Container with only constraints.
+/// Suggests using `ConstrainedBox` instead of `Container` with only constraints.
+///
+/// The dedicated widget makes constraint intent explicit and avoids a generic
+/// `Container` when no decoration, padding, or color is needed.
 class PreferConstrainedBoxOverContainer extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_constrained_box_over_container',
     'Use ConstrainedBox widget instead of the Container widget with only the constraints parameter.',
-    correctionMessage: 'Replace with ConstrainedBox.',
+    correctionMessage: 'Replace the Container with ConstrainedBox so constraints are explicit.',
   );
 
   PreferConstrainedBoxOverContainer()

@@ -2,6 +2,10 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> showcaseSourceRules = [
+  /// Store listenManual subscriptions.
+  ///
+  /// Why: Flags listenManual calls whose subscription handle is not stored. Keep and close
+  /// the ProviderSubscription handle.
   scannerRule(
     code: const LintCode(
       'showcase_listen_manual_handle',
@@ -9,7 +13,8 @@ final List<ScannerRule> showcaseSourceRules = [
       correctionMessage: 'Keep and close the ProviderSubscription handle.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports listenManual calls whose subscription handle is not stored.',
+    description:
+        'Flags listenManual calls whose subscription handle is not stored so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -19,6 +24,11 @@ final List<ScannerRule> showcaseSourceRules = [
       }
     },
   ),
+
+  /// Avoid prev != null showcase replay guards.
+  ///
+  /// Why: Flags prev != null showcase replay guards. Compare previous and next values
+  /// instead.
   scannerRule(
     code: const LintCode(
       'showcase_prev_null_guard',
@@ -26,7 +36,8 @@ final List<ScannerRule> showcaseSourceRules = [
       correctionMessage: 'Compare previous and next values instead.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports prev != null showcase replay guards.',
+    description:
+        'Flags prev != null showcase replay guards so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -36,6 +47,10 @@ final List<ScannerRule> showcaseSourceRules = [
       }
     },
   ),
+
+  /// Avoid default ShowcaseView scope registration.
+  ///
+  /// Why: Flags default ShowcaseView scope registration. Use a named ShowcaseView scope.
   scannerRule(
     code: const LintCode(
       'showcase_default_scope',
@@ -43,7 +58,8 @@ final List<ScannerRule> showcaseSourceRules = [
       correctionMessage: 'Use a named ShowcaseView scope.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports default ShowcaseView scope registration.',
+    description:
+        'Flags default ShowcaseView scope registration so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -53,6 +69,11 @@ final List<ScannerRule> showcaseSourceRules = [
       }
     },
   ),
+
+  /// disposeOnTap requires explicit target click handling.
+  ///
+  /// Why: Flags disposeOnTap usage without nearby onTargetClick handling. Add onTargetClick
+  /// when disposeOnTap is true.
   scannerRule(
     code: const LintCode(
       'showcase_dispose_on_tap',
@@ -60,7 +81,8 @@ final List<ScannerRule> showcaseSourceRules = [
       correctionMessage: 'Add onTargetClick when disposeOnTap is true.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports disposeOnTap usage without nearby onTargetClick handling.',
+    description:
+        'Flags disposeOnTap usage without nearby onTargetClick handling so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];

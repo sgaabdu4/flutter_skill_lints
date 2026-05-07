@@ -32,7 +32,8 @@ class PreferExplicitFunctionType extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_explicit_function_type',
     "This 'Function' type does not specify a return type or parameter list.",
-    correctionMessage: 'Try adding explicit return type and parameter list.',
+    correctionMessage:
+        'Add an explicit return type and parameter list to avoid an untyped Function.',
   );
 
   PreferExplicitFunctionType()

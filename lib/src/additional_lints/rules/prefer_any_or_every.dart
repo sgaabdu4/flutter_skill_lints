@@ -8,6 +8,9 @@ import 'package:analyzer/error/error.dart';
 import '../type_checker.dart';
 
 /// Suggests using .any() or .every() instead of .where().isEmpty/.isNotEmpty.
+///
+/// The direct predicate methods are easier to read and avoid creating an
+/// intermediate filtered iterable.
 class PreferAnyOrEvery extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_any_or_every',

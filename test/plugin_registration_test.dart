@@ -21,8 +21,74 @@ void main() {
     plugin.register(registry);
 
     expect(registry.warningRules.length, _enabledAdditionalRuleCount + flutterSkillRules.length);
+    expect(flutterSkillRules, hasLength(_enabledFlutterSkillRuleCount));
+    expect(
+      flutterSkillRules
+          .expand((rule) => rule.diagnosticCodes.map((code) => code.lowerCaseName))
+          .toSet(),
+      hasLength(_enabledFlutterSkillDiagnosticCount),
+    );
     expect(registry.lintRules, isEmpty);
     expect(registry.warningRules.keys, hasLength(registry.warningRules.keys.toSet().length));
+  });
+
+  test('registered diagnostics have hover descriptions and correction messages', () {
+    final registry = PluginRegistryImpl('flutter_skill_lints');
+    final plugin = FlutterSkillLintsPlugin();
+
+    plugin.register(registry);
+
+    for (final rule in registry.warningRules.values) {
+      expect(rule.description.trim(), isNotEmpty, reason: '${rule.name} description');
+      for (final code in rule.diagnosticCodes) {
+        expect(
+          code.correctionMessage?.trim(),
+          isNotEmpty,
+          reason: '${code.lowerCaseName} correctionMessage',
+        );
+      }
+    }
+  });
+
+  test('rule source files document every rule with API docs', () {
+    final issues = <String>[];
+    final ruleFiles = [
+      ...Directory(
+        'lib/src/rules',
+      ).listSync().whereType<File>().where((file) => file.path.endsWith('.dart')),
+      ...Directory(
+        'lib/src/additional_lints/rules',
+      ).listSync().whereType<File>().where((file) => file.path.endsWith('.dart')),
+    ];
+
+    for (final file in ruleFiles) {
+      final path = file.path.replaceAll('\\', '/');
+      final lines = file.readAsLinesSync();
+      for (var i = 0; i < lines.length; i++) {
+        final line = lines[i];
+        final classMatch = RegExp(
+          r'^(?:final\s+)?class\s+(\w+)\s+extends\s+(?:Multi)?AnalysisRule\b',
+        ).firstMatch(line);
+        if (classMatch != null) {
+          final docs = _docBlockBefore(lines, i);
+          if (docs.isEmpty) {
+            issues.add('$path:${i + 1} ${classMatch.group(1)} is missing /// docs');
+          }
+          continue;
+        }
+
+        if (path.endsWith('/source_scanner_rule.dart')) continue;
+        if (line.trimLeft().startsWith('scannerRule(')) {
+          final codeName = _scannerRuleCodeName(lines.skip(i).take(12).join('\n'));
+          final docs = _docBlockBefore(lines, i);
+          if (docs.isEmpty) {
+            issues.add('$path:${i + 1} $codeName is missing /// docs');
+          }
+        }
+      }
+    }
+
+    expect(issues, isEmpty, reason: issues.join('\n'));
   });
 
   test('registers the additional analyzer surface inspired by many_lints', () {
@@ -37,7 +103,7 @@ void main() {
     );
 
     expect(registry.warningRules.length, _enabledAdditionalRuleCount);
-    expect(registeredFixCount, 66);
+    expect(registeredFixCount, 65);
     expect(registry.assistKinds, hasLength(1));
     expect(registry.warningRules, containsPair('avoid_ref_read_inside_build', isNotNull));
     expect(registry.warningRules, containsPair('use_ref_and_state_synchronously', isNotNull));
@@ -50,6 +116,9 @@ void main() {
     expect(registry.warningRules, isNot(contains('use_bloc_suffix')));
     expect(registry.warningRules, isNot(contains('use_cubit_suffix')));
     expect(registry.warningRules, isNot(contains('use_gap')));
+    expect(registry.warningRules, isNot(contains('prefer_contains')));
+    expect(registry.warningRules, isNot(contains('avoid_public_notifier_properties')));
+    expect(registry.warningRules, isNot(contains('avoid_ref_inside_state_dispose')));
     expect(registry.warningRules, isNot(contains('prefer_switch_expression')));
   });
 
@@ -114,4 +183,27 @@ void main() {
   });
 }
 
-const _enabledAdditionalRuleCount = 85;
+const _enabledFlutterSkillRuleCount = 93;
+const _enabledFlutterSkillDiagnosticCount = 100;
+const _enabledAdditionalRuleCount = 82;
+
+List<String> _docBlockBefore(List<String> lines, int index) {
+  var cursor = index - 1;
+  while (cursor >= 0 && lines[cursor].trim().isEmpty) {
+    cursor--;
+  }
+
+  final docs = <String>[];
+  while (cursor >= 0) {
+    final line = lines[cursor].trimLeft();
+    if (!line.startsWith('///')) break;
+    docs.insert(0, line.substring(3).trim());
+    cursor--;
+  }
+  return docs;
+}
+
+String _scannerRuleCodeName(String source) {
+  final match = RegExp(r"LintCode\(\s*'([^']+)'", dotAll: true).firstMatch(source);
+  return match == null ? 'scannerRule' : match.group(1)!;
+}

@@ -6,6 +6,10 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
+/// Don't read state or run immediate loading work in sync Notifier.build().
+///
+/// Why: Bans sync Notifier.build() state reads and immediate loading/listening traps. Return
+/// initial state from build() and defer loading with Future.microtask.
 final class AvoidSyncNotifierStateRead extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_sync_notifier_state_read',

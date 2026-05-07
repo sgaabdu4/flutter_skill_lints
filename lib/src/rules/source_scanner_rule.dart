@@ -9,6 +9,10 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 typedef ScannerRuleCallback =
     void Function(ScannerRuleReporter reporter, SourceScannerContext context);
 
+/// ScannerRule enforces a Flutter skill lint contract.
+///
+/// Why: The analyzer rule keeps the corresponding Flutter skill guidance visible during
+/// development. Follow the diagnostic correction for the reported Flutter skill requirement.
 final class ScannerRule extends AnalysisRule {
   ScannerRule({
     required super.name,
@@ -272,6 +276,7 @@ final class SourceScannerContext {
         normalized.endsWith('/widget_keys.dart') ||
         normalized.endsWith('/e2e_keys.dart') ||
         normalized.endsWith('/app_keys.dart') ||
+        normalized.endsWith('/test_keys.dart') ||
         normalized.endsWith('/keys.dart');
   }
 

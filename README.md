@@ -15,9 +15,10 @@ Designed for Riverpod + codegen Flutter apps.
 
 | Surface | Count |
 | --- | ---: |
-| Flutter skill warning rules | 66 |
-| Additional Dart/Flutter warning rules | 85 |
-| Quick fixes | 66 |
+| Flutter skill warning rules | 93 |
+| Flutter skill diagnostic codes | 100 |
+| Additional Dart/Flutter warning rules | 82 |
+| Quick fixes | 65 |
 | Assists | 1 |
 
 ## Quick Start
@@ -32,6 +33,44 @@ Designed for Riverpod + codegen Flutter apps.
      flutter_skill_lints:
        version: ^0.2.0
      riverpod_lint: 3.1.4-dev.3
+
+   analyzer:
+     exclude:
+       - "**/*.g.dart"
+       - "**/*.freezed.dart"
+       - "**/*.gr.dart"
+       - "**/*.arb"
+     language:
+       strict-casts: true
+       strict-inference: true
+       strict-raw-types: true
+     errors:
+       missing_required_param: error
+       missing_return: error
+       invalid_annotation_target: ignore
+
+   formatter:
+     page_width: 100
+
+   linter:
+     rules:
+       - always_use_package_imports
+       - require_trailing_commas
+       - prefer_single_quotes
+       - directives_ordering
+       - avoid_multiple_declarations_per_line
+       - prefer_const_constructors
+       - prefer_const_declarations
+       - prefer_const_literals_to_create_immutables
+       - prefer_final_locals
+       - avoid_redundant_argument_values
+       - avoid_dynamic_calls
+       - avoid_print
+       - avoid_void_async
+       - cancel_subscriptions
+       - close_sinks
+       - discarded_futures
+       - unawaited_futures
    ```
 
 2. Restart the Dart Analysis Server (most editors expose
@@ -76,6 +115,10 @@ Encode the architectural rules from `building-flutter-apps`.
 | Data and crash reporting | `data_log_rethrow`, `crash_possible_pii` |
 | Tests | `test_provider_container`, `test_uncontrolled_scope`, `test_create_container`, `test_mock_concrete`, `test_pump_and_settle`, `test_tap_at`, `test_inline_value_key`, `test_first_match_finder` |
 | Project config | `flutter_skill_project_config` |
+| Extended architecture and Freezed | `arch_model_missing_to_entity`, `arch_model_extends_entity`, `arch_domain_json_annotation`, `freezed_missing_private_constructor` |
+| Extended navigation and ShowcaseView | `router_impure_redirect`, `router_shell_tab_push`, `showcase_v4_api`, `showcase_get_named_unhandled`, `showcase_scope_string_literal` |
+| Extended Flutter optimization | `flutter_key_created_in_build`, `flutter_unique_or_global_key`, `flutter_opacity_widget`, `flutter_save_layer_filter`, `flutter_clip_save_layer`, `flutter_intrinsic_layout`, `flutter_animated_builder_child`, `flutter_widget_operator_equals` |
+| Hive, Crash, and services | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_test_close_missing`, `crash_direct_firebase_call`, `crash_init_before_run_app`, `fire_and_forget_missing_catch`, `service_static_side_effect`, `service_random_per_call`, `fire_forget_in_tests` |
 
 ### Additional Analyzer Coverage
 

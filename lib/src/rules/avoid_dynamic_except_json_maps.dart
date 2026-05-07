@@ -6,11 +6,18 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
+/// Avoid dynamic except at JSON map boundaries.
+///
+/// Why: `dynamic` disables static checking in normal app code and hides runtime errors. The only
+/// built-in allowance is `Map<String, dynamic>` because JSON payloads commonly need that shape.
+/// For untyped runtime APIs, keep the lint visible and add a targeted ignore with a local reason.
 final class AvoidDynamicExceptJsonMaps extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_dynamic_except_json_maps',
     'Avoid dynamic except at JSON map boundaries.',
-    correctionMessage: 'Use Object?, a precise type, or Map<String, dynamic> for JSON.',
+    correctionMessage:
+        'Use Object?, a precise type, or Map<String, dynamic> for JSON. '
+        'For untyped runtime boundaries, add a targeted ignore with a local reason.',
   );
 
   AvoidDynamicExceptJsonMaps()

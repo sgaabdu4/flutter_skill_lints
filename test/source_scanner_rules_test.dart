@@ -291,6 +291,25 @@ class User {
 
 class Union {}
 ''';
+
+  Future<void> test_allowsBareMocktailWhenCall() async {
+    await assertNoDiagnostics(r'''
+dynamic when(Object callback) => _Stub();
+
+class _Stub {
+  void thenReturn(Object value) {}
+}
+
+class Repository {
+  int load() => 1;
+}
+
+void main() {
+  final repository = Repository();
+  when(() => repository.load()).thenReturn(1);
+}
+''');
+  }
 }
 
 abstract class _ArchitectureRuleTest extends _SourceRuleTest {
@@ -404,6 +423,13 @@ final class ArchWidgetPathTest extends _ArchitectureRuleTest {
   String get path => '$testPackageLibPath/features/todos/widgets/todo_widget.dart';
   @override
   String get source => 'class TodoWidget {}';
+
+  Future<void> test_allowsFeatureWidgetTestFiles() async {
+    final filePath = '$testPackageRootPath/test/features/todos/widgets/todo_widget_test.dart';
+    newFile(filePath, 'class TodoWidgetTest {}');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
 }
 
 @reflectiveTest
@@ -496,6 +522,19 @@ class Text {
 
 final text = Text('Save');
 ''';
+
+  Future<void> test_allowsStringsDefinitionFiles() async {
+    final filePath = '$testPackageLibPath/features/settings/settings_strings.dart';
+    newFile(filePath, r'''
+class Text {
+  Text(String data);
+}
+
+final text = Text('Save');
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
 }
 
 @reflectiveTest
@@ -941,6 +980,17 @@ final class TestPumpAndSettleTest extends _TestFileRuleTest {
   String get needle => 'pumpAndSettle()';
   @override
   String get source => 'void main(tester) { tester.pumpAndSettle(); }';
+
+  Future<void> test_allowsExplicitDurationArgument() async {
+    final filePath = '$testPackageRootPath/test/widget_test.dart';
+    newFile(filePath, r'''
+void main(tester) {
+  tester.pumpAndSettle(const Duration(seconds: 10));
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
 }
 
 @reflectiveTest
@@ -981,4 +1031,17 @@ final class TestFirstMatchFinderTest extends _TestFileRuleTest {
   bool get lineStart => true;
   @override
   String get source => 'void main() { find.byIcon(Object()); }';
+
+  Future<void> test_allowsIterableFirstAccess() async {
+    final filePath = '$testPackageRootPath/test/widget_test.dart';
+    newFile(filePath, r'''
+void main() {
+  final values = [1, 2, 3];
+  final first = values.first;
+  first.toString();
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
 }

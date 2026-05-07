@@ -9,6 +9,9 @@ import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
 /// Warns when a ConsumerWidget does not use WidgetRef.
+///
+/// A widget that never reads providers does not need Riverpod wiring, so it can
+/// be a regular StatelessWidget.
 class AvoidUnnecessaryConsumerWidgets extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_consumer_widgets',
@@ -19,7 +22,8 @@ class AvoidUnnecessaryConsumerWidgets extends AnalysisRule {
   AvoidUnnecessaryConsumerWidgets()
     : super(
         name: 'avoid_unnecessary_consumer_widgets',
-        description: 'Warns when ConsumerWidget does not use WidgetRef.',
+        description:
+            'Warns when ConsumerWidget does not use WidgetRef and can be a StatelessWidget.',
       );
 
   @override

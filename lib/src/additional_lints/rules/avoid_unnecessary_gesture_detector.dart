@@ -13,7 +13,7 @@ class AvoidUnnecessaryGestureDetector extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_gesture_detector',
     "This 'GestureDetector' has no event handlers.",
-    correctionMessage: 'Try passing an event handler (e.g. onTap) or removing this widget.',
+    correctionMessage: 'Add a gesture callback such as onTap, or remove the inert GestureDetector.',
   );
 
   AvoidUnnecessaryGestureDetector()

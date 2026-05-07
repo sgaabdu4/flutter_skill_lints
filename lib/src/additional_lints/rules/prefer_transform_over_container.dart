@@ -8,12 +8,15 @@ import 'package:analyzer/error/error.dart';
 import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
-/// Suggests using Transform widget instead of Container with only transform.
+/// Suggests using `Transform` instead of `Container` with only `transform`.
+///
+/// The dedicated widget states the layout intent directly and avoids treating
+/// `Container` as a generic wrapper.
 class PreferTransformOverContainer extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_transform_over_container',
     'Use Transform widget instead of the Container widget with only the transform parameter',
-    correctionMessage: 'Try using Transform instead of Container.',
+    correctionMessage: 'Replace the Container with Transform so the transform intent is explicit.',
   );
 
   PreferTransformOverContainer()

@@ -11,19 +11,21 @@ import '../type_checker.dart';
 
 /// Warns when a class extending `Equatable` or using `EquatableMixin` does not
 /// include all of its declared instance fields in the `props` getter.
+///
+/// Missing fields make equality ignore state, which can break Riverpod rebuilds,
+/// collections, and tests.
 class ListAllEquatableFields extends AnalysisRule {
   static const LintCode code = LintCode(
     'list_all_equatable_fields',
     'Not all fields are listed in props. Missing: {0}.',
-    correctionMessage: 'Add the missing fields to the props list.',
+    correctionMessage: 'Add the missing fields to props so equality includes all state.',
   );
 
   ListAllEquatableFields()
     : super(
         name: 'list_all_equatable_fields',
         description:
-            'Warns when an Equatable class does not list all instance '
-            'fields in props.',
+            'Warns when Equatable props omit instance fields that equality should include.',
       );
 
   @override

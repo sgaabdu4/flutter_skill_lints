@@ -7,6 +7,11 @@ import 'package:analyzer/error/error.dart';
 import 'package:analyzer/file_system/file_system.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
+/// Validates package-level Flutter skill configuration.
+///
+/// Why: the skill depends on analyzer plugins, strict language checks, generated-file
+/// exclusions, JSON serialization settings, and deterministic E2E entrypoints. This rule
+/// reports configuration drift before the app relies on missing runtime proof.
 final class FlutterSkillProjectConfig extends MultiAnalysisRule {
   FlutterSkillProjectConfig()
     : super(
@@ -23,16 +28,17 @@ final class FlutterSkillProjectConfig extends MultiAnalysisRule {
     ),
     'cfg_strict_analysis': LintCode(
       'cfg_strict_analysis',
-      'Enable strict analyzer language options.',
-      correctionMessage: 'Set strict-casts, strict-inference, and strict-raw-types to true.',
+      'Enable strict analyzer language options and required analyzer errors.',
+      correctionMessage:
+          'Set strict-casts, strict-inference, strict-raw-types, '
+          'missing_required_param, and missing_return.',
       severity: DiagnosticSeverity.ERROR,
     ),
     'cfg_required_lints': LintCode(
       'cfg_required_lints',
       'Enable the required Flutter skill Dart lints.',
       correctionMessage:
-          'Enable avoid_dynamic_calls, unawaited_futures, discarded_futures, '
-          'avoid_void_async, avoid_print, cancel_subscriptions, and close_sinks.',
+          'Enable the complete Flutter skill linter.rules list from analysis_options.yaml.',
       severity: DiagnosticSeverity.ERROR,
     ),
     'cfg_generated_exclude': LintCode(
@@ -61,6 +67,13 @@ final class FlutterSkillProjectConfig extends MultiAnalysisRule {
       'Set json_serializable explicit_to_json in build.yaml.',
       correctionMessage:
           'Add build.yaml with json_serializable options and explicit_to_json: true.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    'cfg_e2e_entrypoint': LintCode(
+      'cfg_e2e_entrypoint',
+      'Add a deterministic Flutter Driver E2E entrypoint.',
+      correctionMessage:
+          'Create lib/main_dev.dart and call enableFlutterDriverExtension() before runApp.',
       severity: DiagnosticSeverity.ERROR,
     ),
   };
@@ -155,6 +168,9 @@ final class _ProjectConfigScanner {
     final pubspecText = _read(root.getChildAssumingFile('pubspec.yaml'));
     if (pubspecText != null) {
       _scanPubspec(pubspecText, issues);
+      if (_isFlutterPackage(pubspecText)) {
+        _scanFlutterE2eEntrypoint(issues);
+      }
     }
 
     final analysisOptions = root.getChildAssumingFile('analysis_options.yaml');
@@ -185,6 +201,19 @@ final class _ProjectConfigScanner {
     }
   }
 
+  bool _isFlutterPackage(String text) =>
+      RegExp(r'(^|\n)\s*flutter\s*:\s*\n\s*sdk\s*:\s*flutter\b').hasMatch(text) ||
+      RegExp(r'(^|\n)\s*flutter\s*:', multiLine: true).hasMatch(text);
+
+  void _scanFlutterE2eEntrypoint(Set<String> issues) {
+    final mainDev = _read(root.getChildAssumingFile('lib/main_dev.dart'));
+    if (mainDev == null ||
+        !mainDev.contains('enableFlutterDriverExtension') ||
+        !RegExp(r'\brunApp(?:\s*<[^>]+>)?\s*\(').hasMatch(mainDev)) {
+      issues.add('cfg_e2e_entrypoint');
+    }
+  }
+
   void _scanAnalysisOptions(String text, Set<String> issues) {
     if (!RegExp(r'(^|\n)plugins\s*:', multiLine: true).hasMatch(text) ||
         !RegExp(r'(^|\n)\s*flutter_skill_lints\s*:', multiLine: true).hasMatch(text) ||
@@ -204,15 +233,30 @@ final class _ProjectConfigScanner {
         issues.add('cfg_strict_analysis');
       }
     }
+    for (final error in ['missing_required_param', 'missing_return']) {
+      if (!RegExp('(^|\\n)\\s*$error\\s*:\\s*error\\b').hasMatch(text)) {
+        issues.add('cfg_strict_analysis');
+      }
+    }
 
     const requiredLints = [
+      'always_use_package_imports',
+      'require_trailing_commas',
+      'prefer_single_quotes',
+      'directives_ordering',
+      'avoid_multiple_declarations_per_line',
+      'prefer_const_constructors',
+      'prefer_const_declarations',
+      'prefer_const_literals_to_create_immutables',
+      'prefer_final_locals',
+      'avoid_redundant_argument_values',
       'avoid_dynamic_calls',
-      'unawaited_futures',
-      'discarded_futures',
-      'avoid_void_async',
       'avoid_print',
+      'avoid_void_async',
       'cancel_subscriptions',
       'close_sinks',
+      'discarded_futures',
+      'unawaited_futures',
     ];
     for (final lint in requiredLints) {
       final enabledList = RegExp('^\\s*-\\s*$lint\\b', multiLine: true);

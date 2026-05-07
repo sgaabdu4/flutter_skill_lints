@@ -6,6 +6,10 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
+/// Use sealed class for Freezed declarations.
+///
+/// Why: Bans @freezed abstract class declarations. Replace abstract class with sealed class for
+/// Freezed types.
 final class UseSealedFreezedClasses extends AnalysisRule {
   static const LintCode code = LintCode(
     'use_sealed_freezed_classes',

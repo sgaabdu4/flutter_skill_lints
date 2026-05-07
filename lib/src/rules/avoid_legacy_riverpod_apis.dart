@@ -6,6 +6,10 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
+/// Avoid legacy Riverpod provider and ref APIs.
+///
+/// Why: Bans legacy Riverpod provider constructors and legacy generated Ref types. Use Riverpod
+/// codegen providers and the unified Ref type.
 final class AvoidLegacyRiverpodApis extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_legacy_riverpod_apis',

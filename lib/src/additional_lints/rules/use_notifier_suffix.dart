@@ -2,18 +2,22 @@ import 'package:analyzer/error/error.dart';
 
 import '../class_suffix_validator.dart';
 
-/// Warns if a Notifier class does not have the `Notifier` suffix.
+/// Warns when a Riverpod Notifier class does not use the `Notifier` suffix.
+///
+/// Riverpod codegen strips the suffix when creating provider names, so
+/// consistent class names keep generated providers predictable.
 class UseNotifierSuffix extends ClassSuffixValidator {
   static const LintCode code = LintCode(
     'use_notifier_suffix',
     'Use Notifier suffix',
-    correctionMessage: 'Ex. {0}Notifier',
+    correctionMessage:
+        'Rename the class to {0}Notifier so Riverpod codegen names stay predictable.',
   );
 
   UseNotifierSuffix()
     : super(
         name: 'use_notifier_suffix',
-        description: 'Warns if a Notifier class does not have the Notifier suffix.',
+        description: 'Warns when a Riverpod Notifier class lacks the suffix that codegen expects.',
         requiredSuffix: 'Notifier',
         baseClassName: 'Notifier',
         packageName: 'riverpod',

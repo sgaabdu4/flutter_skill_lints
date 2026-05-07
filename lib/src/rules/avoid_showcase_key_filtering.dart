@@ -6,6 +6,10 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
+/// Don't filter Showcase keys by currentContext before startShowCase().
+///
+/// Why: Bans startShowCase calls that filter keys by currentContext. Pass the full ordered key
+/// list to startShowCase().
 final class AvoidShowcaseKeyFiltering extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_showcase_key_filtering',

@@ -9,6 +9,9 @@ import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
 /// Warns when multi-child widgets have only a single child.
+///
+/// Dedicated single-child widgets keep the widget tree simpler and avoid a
+/// misleading `children` collection when only one child is present.
 class AvoidSingleChildInMultiChildWidgets extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_single_child_in_multi_child_widgets',
@@ -19,7 +22,8 @@ class AvoidSingleChildInMultiChildWidgets extends AnalysisRule {
   AvoidSingleChildInMultiChildWidgets()
     : super(
         name: 'avoid_single_child_in_multi_child_widgets',
-        description: 'Warns when multi-child widgets have only a single child.',
+        description:
+            'Warns when a multi-child widget has one child and a simpler widget can express it.',
       );
 
   @override

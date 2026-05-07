@@ -6,6 +6,10 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
+/// Avoid null assertion operators.
+///
+/// Why: Bans null assertion expressions. Use pattern matching, early returns, or explicit null
+/// handling instead.
 final class AvoidNullBang extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_null_bang',

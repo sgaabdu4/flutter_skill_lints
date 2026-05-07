@@ -287,6 +287,9 @@ final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
   }
 
   @override
+  void visitBlock(Block node) {}
+
+  @override
   void visitFunctionExpression(FunctionExpression node) {}
 
   @override

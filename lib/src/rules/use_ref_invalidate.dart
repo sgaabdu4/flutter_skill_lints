@@ -6,6 +6,10 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
+/// Use ref.invalidate when the result of ref.refresh is ignored.
+///
+/// Why: Bans ref.refresh when its return value is unused. Replace the ignored ref.refresh(...)
+/// call with ref.invalidate(...).
 final class UseRefInvalidate extends AnalysisRule {
   static const LintCode code = LintCode(
     'use_ref_invalidate',

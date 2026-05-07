@@ -6,6 +6,10 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
+/// Guard context.pop() with context.canPop().
+///
+/// Why: Requires context.canPop() guards before context.pop(). Check context.canPop() and
+/// navigate to a typed fallback when it is false.
 final class GuardContextPop extends AnalysisRule {
   static const LintCode code = LintCode(
     'guard_context_pop',

@@ -72,6 +72,45 @@ class User {
     );
   }
 
+  Future<void> test_reportsFlutterAppMissingDeterministicE2eEntrypoint() async {
+    newFile('$testPackageRootPath/pubspec.yaml', r'''
+name: test
+environment:
+  sdk: ^3.10.0
+dependencies:
+  flutter:
+    sdk: flutter
+''');
+    _writeCanonicalAnalysisOptions();
+
+    await assertDiagnostics('void main() {}', [projectLint('cfg_e2e_entrypoint')]);
+  }
+
+  Future<void> test_allowsFlutterAppWithDeterministicE2eEntrypoint() async {
+    newFile('$testPackageRootPath/pubspec.yaml', r'''
+name: test
+environment:
+  sdk: ^3.10.0
+dependencies:
+  flutter:
+    sdk: flutter
+''');
+    _writeCanonicalAnalysisOptions();
+    newFile('$testPackageRootPath/lib/main_dev.dart', r'''
+import 'package:flutter_driver/driver_extension.dart';
+
+void main() {
+  enableFlutterDriverExtension();
+  runApp(App());
+}
+
+void runApp(Object app) {}
+Object App() => Object();
+''');
+
+    await assertNoDiagnostics('void main() {}');
+  }
+
   Future<void> test_reportsProhibitedPubspecLintPackages() async {
     newFile('$testPackageRootPath/pubspec.yaml', r'''
 name: test
@@ -84,6 +123,19 @@ dev_dependencies: {"custom_lint": ^0.8.1}
     await assertDiagnostics('void main() {}', [projectLint('cfg_prohibited_lint_plugins')]);
   }
 
+  Future<void> test_allowsNestedFunctionAnalysisOptionsWithoutPluginBlock() async {
+    _writeCanonicalAnalysisOptions();
+    newFile('$testPackageRootPath/functions/shared/analysis_options.yaml', r'''
+linter:
+  rules:
+    avoid_dynamic_calls: false
+''');
+    final filePath = '$testPackageRootPath/functions/shared/lib/http.dart';
+    newFile(filePath, 'void main() {}');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
   Future<void> test_reportsProhibitedLocalPluginPathSources() async {
     newFile('$testPackageRootPath/analysis_options.yaml', r'''
 include: package:flutter_lints/flutter.yaml
@@ -91,6 +143,55 @@ include: package:flutter_lints/flutter.yaml
 plugins:
   flutter_skill_lints:
     "path": ../flutter_skill_lints
+  riverpod_lint: 3.1.4-dev.3
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.gr.dart"
+    - "**/*.arb"
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    missing_required_param: error
+    missing_return: error
+    invalid_annotation_target: ignore
+
+linter:
+  rules:
+    - always_use_package_imports
+    - require_trailing_commas
+    - prefer_single_quotes
+    - directives_ordering
+    - avoid_multiple_declarations_per_line
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_const_literals_to_create_immutables
+    - prefer_final_locals
+    - avoid_redundant_argument_values
+    - flutter_skill_project_config
+    - avoid_dynamic_calls
+    - unawaited_futures
+    - discarded_futures
+    - avoid_void_async
+    - avoid_print
+    - cancel_subscriptions
+    - close_sinks
+''');
+
+    await assertDiagnostics('void main() {}', [projectLint('cfg_prohibited_lint_plugins')]);
+  }
+
+  Future<void> test_reportsCanonicalErrorAndLintGaps() async {
+    newFile('$testPackageRootPath/analysis_options.yaml', r'''
+include: package:flutter_lints/flutter.yaml
+
+plugins:
+  flutter_skill_lints:
+    version: ^0.1.0
   riverpod_lint: 3.1.4-dev.3
 
 analyzer:
@@ -118,7 +219,10 @@ linter:
     - close_sinks
 ''');
 
-    await assertDiagnostics('void main() {}', [projectLint('cfg_prohibited_lint_plugins')]);
+    await assertDiagnostics('void main() {}', [
+      projectLint('cfg_strict_analysis'),
+      projectLint('cfg_required_lints'),
+    ]);
   }
 
   Future<void> test_reportsProhibitedLocalPluginGitSources() async {
@@ -143,10 +247,22 @@ analyzer:
     strict-inference: true
     strict-raw-types: true
   errors:
+    missing_required_param: error
+    missing_return: error
     invalid_annotation_target: ignore
 
 linter:
   rules:
+    - always_use_package_imports
+    - require_trailing_commas
+    - prefer_single_quotes
+    - directives_ordering
+    - avoid_multiple_declarations_per_line
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_const_literals_to_create_immutables
+    - prefer_final_locals
+    - avoid_redundant_argument_values
     - flutter_skill_project_config
     - avoid_dynamic_calls
     - unawaited_futures
@@ -177,10 +293,22 @@ analyzer:
     strict-inference: true
     strict-raw-types: true
   errors:
+    missing_required_param: error
+    missing_return: error
     invalid_annotation_target: ignore
 
 linter:
   rules:
+    - always_use_package_imports
+    - require_trailing_commas
+    - prefer_single_quotes
+    - directives_ordering
+    - avoid_multiple_declarations_per_line
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_const_literals_to_create_immutables
+    - prefer_final_locals
+    - avoid_redundant_argument_values
     - flutter_skill_project_config
     - avoid_dynamic_calls
     - unawaited_futures
@@ -218,10 +346,22 @@ analyzer:
     strict-inference: true
     strict-raw-types: true
   errors:
+    missing_required_param: error
+    missing_return: error
     invalid_annotation_target: ignore
 
 linter:
   rules:
+    - always_use_package_imports
+    - require_trailing_commas
+    - prefer_single_quotes
+    - directives_ordering
+    - avoid_multiple_declarations_per_line
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_const_literals_to_create_immutables
+    - prefer_final_locals
+    - avoid_redundant_argument_values
     - flutter_skill_project_config
     - avoid_dynamic_calls
     - unawaited_futures
@@ -274,10 +414,22 @@ analyzer:
     strict-inference: true
     strict-raw-types: true
   errors:
+    missing_required_param: error
+    missing_return: error
     invalid_annotation_target: ignore
 
 linter:
   rules:
+    - always_use_package_imports
+    - require_trailing_commas
+    - prefer_single_quotes
+    - directives_ordering
+    - avoid_multiple_declarations_per_line
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_const_literals_to_create_immutables
+    - prefer_final_locals
+    - avoid_redundant_argument_values
     - flutter_skill_project_config
     - avoid_dynamic_calls
     - unawaited_futures

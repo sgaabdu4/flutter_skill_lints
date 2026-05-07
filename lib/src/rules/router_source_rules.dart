@@ -2,6 +2,9 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> routerSourceRules = [
+  /// Avoid string route navigation.
+  ///
+  /// Why: Flags string-based GoRouter navigation. Use typed GoRouter routes.
   scannerRule(
     code: const LintCode(
       'router_string_nav',
@@ -9,7 +12,8 @@ final List<ScannerRule> routerSourceRules = [
       correctionMessage: 'Use typed GoRouter routes.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports string-based GoRouter navigation.',
+    description:
+        'Flags string-based GoRouter navigation so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -19,6 +23,11 @@ final List<ScannerRule> routerSourceRules = [
       }
     },
   ),
+
+  /// Do not pop and push in the same synchronous flow.
+  ///
+  /// Why: Flags synchronous context.pop followed by push navigation. Wait for modal dismissal
+  /// before pushing the next route.
   scannerRule(
     code: const LintCode(
       'router_pop_then_push',
@@ -26,7 +35,8 @@ final List<ScannerRule> routerSourceRules = [
       correctionMessage: 'Wait for modal dismissal before pushing the next route.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports synchronous context.pop followed by push navigation.',
+    description:
+        'Flags synchronous context.pop followed by push navigation so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -36,6 +46,11 @@ final List<ScannerRule> routerSourceRules = [
       }
     },
   ),
+
+  /// Avoid ref.watch in router redirects.
+  ///
+  /// Why: Flags ref.watch calls inside router redirects. Use a read/listenable bridge for
+  /// redirect state.
   scannerRule(
     code: const LintCode(
       'router_redirect_watch',
@@ -43,7 +58,8 @@ final List<ScannerRule> routerSourceRules = [
       correctionMessage: 'Use a read/listenable bridge for redirect state.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports ref.watch calls inside router redirects.',
+    description:
+        'Flags ref.watch calls inside router redirects so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -53,6 +69,11 @@ final List<ScannerRule> routerSourceRules = [
       }
     },
   ),
+
+  /// Do not redirect to loading routes while auth/router state is loading.
+  ///
+  /// Why: Flags redirects to loading routes while auth/router state is loading. Return null
+  /// while loading to stay on the current route.
   scannerRule(
     code: const LintCode(
       'router_redirect_loading_bounce',
@@ -60,7 +81,8 @@ final List<ScannerRule> routerSourceRules = [
       correctionMessage: 'Return null while loading to stay on the current route.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Reports redirects to loading routes while auth/router state is loading.',
+    description:
+        'Flags redirects to loading routes while auth/router state is loading so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         if (context.isRedirectLoadingBounce(i, context.source.code[i])) {

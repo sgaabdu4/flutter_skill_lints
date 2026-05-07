@@ -48,7 +48,6 @@ import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_compute_ov
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_const_border_radius_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_constrained_box_over_container_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_container_fix.dart';
-import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_contains_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_correct_edge_insets_constructor_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_enums_by_name_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_equatable_mixin_fix.dart';
@@ -98,8 +97,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_misused_tes
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_mounted_in_setstate.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_notifier_constructors.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_only_rethrow.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_public_notifier_properties.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_ref_inside_state_dispose.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_ref_read_inside_build.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_returning_widgets.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_shrink_wrap_in_lists.dart';
@@ -129,7 +126,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_compute_ov
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_const_border_radius.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_constrained_box_over_container.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_container.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_contains.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_correct_edge_insets_constructor.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_enums_by_name.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_equatable_mixin.dart';
@@ -210,7 +206,6 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferWildcardPattern());
     registry.registerWarningRule(PreferTypeOverVar());
     registry.registerWarningRule(PreferAnyOrEvery());
-    registry.registerWarningRule(PreferContains());
     registry.registerWarningRule(PreferEnumsByName());
     registry.registerWarningRule(PreferExpectLater());
     registry.registerWarningRule(PreferIterableOf());
@@ -234,8 +229,6 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidReturningWidgets());
     registry.registerWarningRule(AvoidShrinkWrapInLists());
     registry.registerWarningRule(AvoidNotifierConstructors());
-    registry.registerWarningRule(AvoidPublicNotifierProperties());
-    registry.registerWarningRule(AvoidRefInsideStateDispose());
     registry.registerWarningRule(AvoidRefReadInsideBuild());
     registry.registerWarningRule(AvoidStateConstructors());
     registry.registerWarningRule(PreferAsyncCallback());
@@ -275,7 +268,6 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerFixForRule(PreferExplicitFunctionType.code, PreferExplicitFunctionTypeFix.new);
     registry.registerFixForRule(PreferPaddingOverContainer.code, PreferPaddingOverContainerFix.new);
     registry.registerFixForRule(PreferAnyOrEvery.code, PreferAnyOrEveryFix.new);
-    registry.registerFixForRule(PreferContains.code, PreferContainsFix.new);
     registry.registerFixForRule(PreferEnumsByName.code, PreferEnumsByNameFix.new);
     registry.registerFixForRule(PreferExpectLater.code, PreferExpectLaterFix.new);
     registry.registerFixForRule(PreferIterableOf.code, PreferIterableOfFix.new);

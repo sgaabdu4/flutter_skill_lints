@@ -8,6 +8,9 @@ import 'package:analyzer/error/error.dart';
 import '../ast_node_analysis.dart';
 
 /// Suggests using MediaQuery dedicated methods instead of MediaQuery.of().property.
+///
+/// Aspect-specific methods rebuild only when the requested property changes,
+/// avoiding broad MediaQuery dependencies.
 class UseDedicatedMediaQueryMethods extends AnalysisRule {
   static const LintCode code = LintCode(
     'use_dedicated_media_query_methods',

@@ -307,6 +307,23 @@ Map<String, dynamic> json = {};
 Map<String, dynamic> fromJson(Map<String, dynamic> json) => json;
 ''');
   }
+
+  Future<void> test_reportsUntypedRuntimeBoundaryDynamic() async {
+    final filePath = '$testPackageRootPath/functions/shared/lib/http.dart';
+    const source = r'''
+Object handle(dynamic req, dynamic context) {
+  final dynamic body = req.bodyJson;
+  return context.res.json(body);
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      lint(source.indexOf('dynamic req'), 'dynamic'.length),
+      lint(source.indexOf('dynamic context'), 'dynamic'.length),
+      lint(source.indexOf('dynamic body'), 'dynamic'.length),
+    ]);
+  }
 }
 
 @reflectiveTest

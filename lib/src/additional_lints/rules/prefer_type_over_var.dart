@@ -43,7 +43,7 @@ class PreferTypeOverVar extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_type_over_var',
     "Prefer an explicit type annotation over 'var'.",
-    correctionMessage: 'Try replacing var with an explicit type annotation.',
+    correctionMessage: 'Replace var with the inferred type so the declaration stays explicit.',
   );
 
   PreferTypeOverVar()

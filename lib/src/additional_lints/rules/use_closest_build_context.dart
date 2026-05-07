@@ -10,6 +10,9 @@ import '../type_checker.dart';
 
 /// Warns when an outer BuildContext is used inside a nested builder callback
 /// that has its own BuildContext parameter available.
+///
+/// Using the closest context keeps inherited lookups and navigation tied to the
+/// subtree created by the builder.
 class UseClosestBuildContext extends AnalysisRule {
   static const LintCode code = LintCode(
     'use_closest_build_context',

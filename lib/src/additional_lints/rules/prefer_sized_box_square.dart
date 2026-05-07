@@ -15,7 +15,7 @@ class PreferSizedBoxSquare extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_sized_box_square',
     'Use SizedBox.square instead of SizedBox with equal width and height.',
-    correctionMessage: 'Try using SizedBox.square(dimension: ...) instead.',
+    correctionMessage: 'Replace equal width and height with SizedBox.square(dimension: ...).',
   );
 
   PreferSizedBoxSquare()

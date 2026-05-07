@@ -8,18 +8,21 @@ import 'package:analyzer/error/error.dart';
 import '../type_checker.dart';
 
 /// Warns when a file contains more than one public widget class.
+///
+/// One public widget per file keeps imports, ownership, and test targets clear.
 /// Private widgets (prefixed with underscore) are ignored.
 class PreferSingleWidgetPerFile extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_single_widget_per_file',
     'Only one public widget per file. Move additional widgets to separate files.',
-    correctionMessage: 'Move this widget to its own file.',
+    correctionMessage: 'Move this public widget to its own file so ownership stays clear.',
   );
 
   PreferSingleWidgetPerFile()
     : super(
         name: 'prefer_single_widget_per_file',
-        description: 'Warns when a file contains more than one public widget class.',
+        description:
+            'Warns when multiple public widget classes share one file and ownership is unclear.',
       );
 
   @override

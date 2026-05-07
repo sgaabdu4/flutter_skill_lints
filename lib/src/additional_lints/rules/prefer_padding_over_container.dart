@@ -8,12 +8,15 @@ import 'package:analyzer/error/error.dart';
 import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
-/// Suggests using Padding widget instead of Container with only padding or margin.
+/// Suggests using `Padding` instead of `Container` with only padding or margin.
+///
+/// Dedicated layout widgets make spacing intent explicit and avoid a generic
+/// `Container` when decoration, constraints, or color are not needed.
 class PreferPaddingOverContainer extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_padding_over_container',
     'Use Padding widget instead of the Container widget with only the padding or margin parameter',
-    correctionMessage: 'Try using Padding instead of Container.',
+    correctionMessage: 'Replace the Container with Padding so the spacing intent is explicit.',
   );
 
   PreferPaddingOverContainer()

@@ -6,6 +6,10 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
+/// Don't use BuildContext after an await without checking context.mounted.
+///
+/// Why: Requires context.mounted guards before BuildContext use after async gaps. Add 'if
+/// (!context.mounted) return;' before using context after an await.
 final class UseContextMountedAfterAwait extends AnalysisRule {
   static const LintCode code = LintCode(
     'use_context_mounted_after_await',

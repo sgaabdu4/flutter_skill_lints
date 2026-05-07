@@ -8,12 +8,15 @@ import 'package:analyzer/error/error.dart';
 import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
-/// Suggests using Center widget instead of Align with center alignment.
+/// Suggests using `Center` instead of `Align` with center alignment.
+///
+/// `Center` communicates the common centered-layout case directly and avoids a
+/// more general alignment wrapper.
 class PreferCenterOverAlign extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_center_over_align',
     'Use the Center widget instead of the Align widget with alignment set to Alignment.center',
-    correctionMessage: 'Try using Center instead of Align.',
+    correctionMessage: 'Replace Align with Center so centered layout is explicit.',
   );
 
   PreferCenterOverAlign()

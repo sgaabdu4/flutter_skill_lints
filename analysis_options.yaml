@@ -11,6 +11,8 @@ analyzer:
     strict-inference: true
     strict-raw-types: true
   errors:
+    missing_required_param: error
+    missing_return: error
     invalid_annotation_target: ignore
 
 formatter:
@@ -20,6 +22,7 @@ linter:
   rules:
     - always_use_package_imports
     - avoid_dynamic_calls
+    - avoid_multiple_declarations_per_line
     - avoid_print
     - avoid_redundant_argument_values
     - avoid_void_async

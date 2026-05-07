@@ -63,6 +63,8 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _check(String name, Token nameToken, FunctionBody body) {
+    if (name == 'main') return;
+
     // Already has the use prefix — nothing to report
     if (_hasUsePrefix.hasMatch(name)) return;
 

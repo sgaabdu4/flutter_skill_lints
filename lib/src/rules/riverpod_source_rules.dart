@@ -68,9 +68,7 @@ final List<ScannerRule> riverpodSourceRules = [
       for (final method in context.methods.where((m) => m.name == 'build')) {
         for (var i = method.start; i <= method.end; i++) {
           final line = context.source.masked[i];
-          if (RegExp(r'\bref\s*\.\s*watch\s*\(').hasMatch(line) &&
-              !line.contains('.select(') &&
-              !line.contains('.notifier)')) {
+          if (_hasBroadRefWatch(context, i, method.end)) {
             reporter.report(context, i, line.indexOf('ref'));
           }
         }
@@ -102,3 +100,65 @@ final List<ScannerRule> riverpodSourceRules = [
     },
   ),
 ];
+
+bool _hasBroadRefWatch(SourceScannerContext context, int lineIndex, int methodEnd) {
+  for (final invocation in _refWatchInvocations(context, lineIndex, methodEnd)) {
+    if (!RegExp(r'\.\s*select\s*\(').hasMatch(invocation) &&
+        !RegExp(r'\.\s*notifier\b').hasMatch(invocation)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+List<String> _refWatchInvocations(SourceScannerContext context, int lineIndex, int methodEnd) {
+  final firstLine = context.source.masked[lineIndex];
+  final matches = RegExp(r'\bref\s*\.\s*watch\s*\(').allMatches(firstLine).toList();
+  if (matches.isEmpty) return const [];
+
+  return [
+    for (final match in matches) _refWatchInvocation(context, lineIndex, methodEnd, match.start),
+  ];
+}
+
+String _refWatchInvocation(
+  SourceScannerContext context,
+  int startLine,
+  int methodEnd,
+  int startColumn,
+) {
+  final buffer = StringBuffer();
+  var depth = 0;
+  var sawOpenParen = false;
+
+  for (
+    var lineIndex = startLine;
+    lineIndex <= methodEnd && lineIndex < context.source.length;
+    lineIndex++
+  ) {
+    final line = context.source.masked[lineIndex];
+    final scanStart = lineIndex == startLine ? startColumn : 0;
+
+    for (var column = scanStart; column < line.length; column++) {
+      final char = line[column];
+      buffer.write(char);
+
+      if (char == '(') {
+        sawOpenParen = true;
+        depth++;
+        continue;
+      }
+
+      if (char == ')' && sawOpenParen) {
+        depth--;
+        if (depth == 0) {
+          return buffer.toString();
+        }
+      }
+    }
+
+    buffer.write('\n');
+  }
+
+  return buffer.toString();
+}

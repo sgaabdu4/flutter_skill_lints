@@ -38,7 +38,6 @@ import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_wrapping_in
 import 'package:flutter_skill_lints/src/additional_lints/fixes/change_widget_name_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/dispose_fields_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/dispose_provided_instances_fix.dart';
-import 'package:flutter_skill_lints/src/additional_lints/fixes/list_all_equatable_fields_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_abstract_final_static_class_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_any_or_every_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_async_callback_fix.dart';
@@ -50,7 +49,6 @@ import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_constraine
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_container_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_correct_edge_insets_constructor_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_enums_by_name_fix.dart';
-import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_equatable_mixin_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_expect_later_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_explicit_function_type_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_for_loop_in_children_fix.dart';
@@ -115,7 +113,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_wrapping_in_padding.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/dispose_fields.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/dispose_provided_instances.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/list_all_equatable_fields.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_abstract_final_static_class.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_align_over_container.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_any_or_every.dart';
@@ -128,7 +125,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_constraine
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_container.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_correct_edge_insets_constructor.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_enums_by_name.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_equatable_mixin.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_expect_later.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_explicit_function_type.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_for_loop_in_children.dart';
@@ -246,8 +242,6 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferVoidCallback());
     registry.registerWarningRule(UseRefAndStateSynchronously());
     registry.registerWarningRule(UseRefReadSynchronously());
-    registry.registerWarningRule(ListAllEquatableFields());
-    registry.registerWarningRule(PreferEquatableMixin());
     registry.registerWarningRule(PreferUseCallback());
     registry.registerWarningRule(PreferUsePrefix());
     registry.registerWarningRule(UseSliverPrefix());
@@ -356,8 +350,6 @@ class AdditionalLintsPlugin extends Plugin {
       UseRefAndStateSynchronouslyFix.new,
     );
     registry.registerFixForRule(UseRefReadSynchronously.code, UseRefReadSynchronouslyFix.new);
-    registry.registerFixForRule(ListAllEquatableFields.code, ListAllEquatableFieldsFix.new);
-    registry.registerFixForRule(PreferEquatableMixin.code, PreferEquatableMixinFix.new);
     registry.registerFixForRule(PreferUseCallback.code, PreferUseCallbackFix.new);
     registry.registerFixForRule(PreferUsePrefix.code, PreferUsePrefixFix.new);
     registry.registerFixForRule(UseSliverPrefix.code, UseSliverPrefixFix.new);

@@ -84,14 +84,17 @@ final List<ScannerRule> testSourceRules = [
     description:
         'Flags mocks that implement concrete classes so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
+      final concreteMockPattern = RegExp(
+        r'class\s+Mock\w+\s+extends\s+Mock\s+implements\s+((?!I)[A-Z]\w+)',
+      );
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (context.isTestFile &&
-            RegExp(
-              r'class\s+Mock\w+\s+extends\s+Mock\s+implements\s+(?!I)[A-Z]\w+',
-            ).hasMatch(line)) {
-          reporter.report(context, i, line.indexOf('class'));
-        }
+        if (!context.isTestFile) continue;
+        final match = concreteMockPattern.firstMatch(line);
+        if (match == null) continue;
+        final mockedType = match.group(1);
+        if (mockedType == null || _isAllowedExternalMockBoundary(mockedType)) continue;
+        reporter.report(context, i, line.indexOf('class'));
       }
     },
   ),
@@ -193,3 +196,14 @@ final List<ScannerRule> testSourceRules = [
     },
   ),
 ];
+
+const Set<String> _allowedExternalMockBoundaryTypes = {
+  'Account',
+  'TablesDB',
+  'Teams',
+  'YoutubePlayerController',
+  'YoutubePlayerValue',
+};
+
+bool _isAllowedExternalMockBoundary(String typeName) =>
+    _allowedExternalMockBoundaryTypes.contains(typeName);

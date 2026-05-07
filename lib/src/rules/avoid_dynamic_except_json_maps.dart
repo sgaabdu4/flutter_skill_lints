@@ -45,6 +45,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   void visitNamedType(NamedType node) {
     if (node.name.lexeme != 'dynamic') return;
     if (_isAllowedJsonMapDynamic(node)) return;
+    if (_isAllowedJsonMapCastDynamic(node)) return;
     rule.reportAtNode(node);
   }
 
@@ -57,5 +58,17 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (arguments.length != 2) return false;
     final keyType = arguments.first;
     return keyType is NamedType && keyType.name.lexeme == 'String' && arguments.last == node;
+  }
+
+  bool _isAllowedJsonMapCastDynamic(NamedType node) {
+    final parent = node.parent;
+    if (parent is! TypeArgumentList) return false;
+    final invocation = parent.parent;
+    if (invocation is! MethodInvocation || invocation.methodName.name != 'cast') return false;
+
+    final arguments = parent.arguments;
+    if (arguments.length != 2 || arguments.last != node) return false;
+    final keyType = arguments.first;
+    return keyType is NamedType && keyType.name.lexeme == 'String';
   }
 }

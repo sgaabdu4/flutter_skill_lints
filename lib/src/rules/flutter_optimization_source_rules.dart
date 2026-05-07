@@ -43,7 +43,10 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (_containsConstructor(line, 'UniqueKey') || _containsConstructor(line, 'GlobalKey')) {
+        final containsUniqueKey = _containsConstructor(line, 'UniqueKey');
+        final containsGlobalKey = _containsConstructor(line, 'GlobalKey');
+        if (containsGlobalKey && context.isTestFile && !containsUniqueKey) continue;
+        if (containsUniqueKey || containsGlobalKey) {
           reporter.report(
             context,
             i,

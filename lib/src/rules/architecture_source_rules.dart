@@ -18,6 +18,7 @@ final List<ScannerRule> architectureSourceRules = [
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final code = context.source.code[i];
+        if (_isAllowedDomainImport(code)) continue;
         if (context.isDomainPath &&
             RegExp(
               r'''^\s*import\s+['"](?:package:flutter|dart:ui|package:[^'"]+)''',
@@ -217,3 +218,12 @@ final List<ScannerRule> architectureSourceRules = [
     },
   ),
 ];
+
+bool _isAllowedDomainImport(String line) {
+  final packageImport = RegExp(r'''^\s*import\s+['"]package:([^'"]+)['"]''').firstMatch(line);
+  if (packageImport == null) return false;
+
+  final importedPath = packageImport.group(1) ?? '';
+  return importedPath == 'freezed_annotation/freezed_annotation.dart' ||
+      importedPath.contains('/domain/');
+}

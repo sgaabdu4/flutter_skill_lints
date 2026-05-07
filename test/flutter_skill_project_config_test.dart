@@ -86,6 +86,22 @@ dependencies:
     await assertDiagnostics('void main() {}', [projectLint('cfg_e2e_entrypoint')]);
   }
 
+  Future<void> test_skipsProjectConfigDiagnosticsForNonAnchorFiles() async {
+    newFile('$testPackageRootPath/pubspec.yaml', r'''
+name: test
+environment:
+  sdk: ^3.10.0
+dependencies:
+  flutter:
+    sdk: flutter
+''');
+    newFile('$testPackageRootPath/lib/main.dart', 'void main() {}');
+    final filePath = '$testPackageRootPath/lib/feature.dart';
+    newFile(filePath, 'void helper() {}');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
   Future<void> test_allowsFlutterAppWithDeterministicE2eEntrypoint() async {
     newFile('$testPackageRootPath/pubspec.yaml', r'''
 name: test
@@ -106,6 +122,31 @@ void main() {
 
 void runApp(Object app) {}
 Object App() => Object();
+''');
+
+    await assertNoDiagnostics('void main() {}');
+  }
+
+  Future<void> test_allowsFlutterAppWithQualifiedDeterministicE2eEntrypoint() async {
+    newFile('$testPackageRootPath/pubspec.yaml', r'''
+name: test
+environment:
+  sdk: ^3.10.0
+dependencies:
+  flutter:
+    sdk: flutter
+''');
+    _writeCanonicalAnalysisOptions();
+    newFile('$testPackageRootPath/lib/main_dev.dart', r'''
+import 'package:flutter_driver/driver_extension.dart';
+import 'package:test/main.dart' as app;
+
+Future<void> main() async {
+  enableFlutterDriverExtension();
+  await app.runSampleApp(overrides: _e2eOverrides);
+}
+
+const _e2eOverrides = <Object>[];
 ''');
 
     await assertNoDiagnostics('void main() {}');

@@ -160,7 +160,6 @@ avoid_unnecessary_stateful_widgets
 avoid_wrapping_in_padding
 dispose_fields
 dispose_provided_instances
-list_all_equatable_fields
 prefer_abstract_final_static_class
 prefer_align_over_container
 prefer_any_or_every
@@ -173,7 +172,6 @@ prefer_constrained_box_over_container
 prefer_container
 prefer_correct_edge_insets_constructor
 prefer_enums_by_name
-prefer_equatable_mixin
 prefer_expect_later
 prefer_explicit_function_type
 prefer_for_loop_in_children

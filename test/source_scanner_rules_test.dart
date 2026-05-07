@@ -30,6 +30,7 @@ void main() {
     defineReflectiveTests(FreezedPerClassExplicitToJsonTest);
     defineReflectiveTests(FreezedToJsonWithFromJsonTest);
     defineReflectiveTests(FreezedLegacyWhenMapTest);
+    defineReflectiveTests(FreezedRequiredValueClassTest);
     defineReflectiveTests(ArchDomainImportTest);
     defineReflectiveTests(ArchDomainSerializationTest);
     defineReflectiveTests(ArchInterfaceContractTest);
@@ -196,6 +197,46 @@ class TodoList {
   }
 }
 ''';
+
+  Future<void> test_allowsMultilineFamilyProviderSelect() async {
+    await assertNoDiagnostics(r'''
+final workoutByIdProvider = WorkoutFamily();
+
+class ProviderArg<T> {
+  Object select(Object Function(T? value) selector) => Object();
+}
+
+class Workout {
+  const Workout(this.name);
+
+  final String name;
+}
+
+class WorkoutFamily {
+  ProviderArg<Workout> call(String id) => ProviderArg<Workout>();
+}
+
+class WorkoutConfig {
+  const WorkoutConfig(this.workoutId);
+
+  final String workoutId;
+}
+
+class WidgetRef {
+  Object watch(Object provider) => Object();
+}
+
+class TodoList {
+  Object build(WorkoutConfig config) {
+    final ref = WidgetRef();
+    final isNewWorkout = ref.watch(
+      workoutByIdProvider(config.workoutId).select((w) => w?.name.isEmpty ?? true),
+    );
+    return isNewWorkout;
+  }
+}
+''');
+  }
 }
 
 @reflectiveTest
@@ -312,6 +353,144 @@ void main() {
   }
 }
 
+@reflectiveTest
+final class FreezedRequiredValueClassTest extends _FreezedRuleTest {
+  @override
+  String get ruleName => 'freezed_required_value_class';
+  @override
+  String get needle => 'class User';
+  @override
+  bool get lineStart => true;
+  @override
+  String get path => '$testPackageLibPath/features/users/domain/user.dart';
+  @override
+  String get source => r'''
+class User {
+  const User({required this.id});
+
+  final String id;
+}
+''';
+
+  @override
+  void setUp() {
+    newPackage('freezed_annotation').addFile('lib/freezed_annotation.dart', r'''
+class Freezed {
+  const Freezed();
+}
+
+const freezed = Freezed();
+''');
+    newPackage('equatable').addFile('lib/equatable.dart', r'''
+class Equatable {}
+''');
+    super.setUp();
+  }
+
+  Future<void> test_reportsEquatableDataModel() async {
+    final filePath = '$testPackageLibPath/features/users/data/models/user_model.dart';
+    const source = r'''
+// ignore_for_file: uri_does_not_exist, unused_import
+import 'package:equatable/equatable.dart';
+
+class UserModel extends Equatable {
+  UserModel(this.id);
+
+  final String id;
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'class UserModel extends Equatable', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsFreezedDomainEntity() async {
+    final filePath = '$testPackageLibPath/features/users/domain/user.dart';
+    newFile('$testPackageLibPath/features/users/domain/user.freezed.dart', r'''
+part of 'user.dart';
+
+mixin _$User {}
+
+final class _User implements User {
+  const _User({
+    required this.id,
+  });
+
+  final String id;
+}
+''');
+    newFile(filePath, r'''
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'user.freezed.dart';
+
+@freezed
+sealed class User with _$User {
+  const factory User({
+    required String id,
+  }) = _User;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsFreezedDataModel() async {
+    final filePath = '$testPackageLibPath/features/users/data/models/user_model.dart';
+    newFile('$testPackageLibPath/features/users/data/models/user_model.freezed.dart', r'''
+part of 'user_model.dart';
+
+mixin _$UserModel {}
+
+final class _UserModel implements UserModel {
+  const _UserModel({
+    required this.id,
+  });
+
+  final String id;
+}
+''');
+    newFile(filePath, r'''
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'user_model.freezed.dart';
+
+@freezed
+sealed class UserModel with _$UserModel {
+  const factory UserModel({
+    required String id,
+  }) = _UserModel;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsDomainInterfaceContracts() async {
+    final filePath = '$testPackageLibPath/features/users/domain/user_repository.dart';
+    newFile(filePath, r'''
+abstract interface class IUserRepository {
+  Future<void> save();
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsNonModelDataClassOutsideModelsFolder() async {
+    final filePath = '$testPackageLibPath/features/users/data/datasources/user_datasource.dart';
+    newFile(filePath, r'''
+class UserDatasource {
+  Future<void> load() async {}
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+}
+
 abstract class _ArchitectureRuleTest extends _SourceRuleTest {
   @override
   List<ScannerRule> get rules => architectureSourceRules;
@@ -327,6 +506,19 @@ final class ArchDomainImportTest extends _ArchitectureRuleTest {
   String get path => '$testPackageLibPath/features/users/domain/user.dart';
   @override
   bool get addIgnorePrefix => false;
+
+  @override
+  void setUp() {
+    newPackage('freezed_annotation').addFile('lib/freezed_annotation.dart', r'''
+class Freezed {
+  const Freezed();
+}
+
+const freezed = Freezed();
+''');
+    super.setUp();
+  }
+
   @override
   String get source => r'''
 import 'package:flutter/widgets.dart';
@@ -335,6 +527,67 @@ class User {
   Widget? widget;
 }
 ''';
+
+  Future<void> test_allowsFreezedAnnotationDomainEntity() async {
+    final filePath = '$testPackageLibPath/features/workouts/domain/workout.dart';
+    newFile('$testPackageLibPath/features/workouts/domain/workout.freezed.dart', r'''
+part of 'workout.dart';
+
+mixin _$Workout {}
+
+final class _Workout implements Workout {
+  const _Workout({
+    required this.id,
+    required this.name,
+  });
+
+  final String id;
+  final String name;
+}
+''');
+    newFile(filePath, r'''
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'workout.freezed.dart';
+
+@freezed
+sealed class Workout with _$Workout {
+  const factory Workout({
+    required String id,
+    required String name,
+  }) = _Workout;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsDomainToDomainPackageImport() async {
+    final filePath = '$testPackageLibPath/features/workouts/domain/workout.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, unused_import
+import 'package:repem/features/shared/domain/enums.dart';
+
+final class Workout {}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsCoreConstantsImportFromDomain() async {
+    final filePath = '$testPackageLibPath/features/auth/domain/auth_error.dart';
+    const source = r'''
+// ignore_for_file: uri_does_not_exist, unused_import
+import 'package:repem/core/constants/auth_strings.dart';
+
+final class AuthError {}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, "import 'package:repem/core/constants/auth_strings.dart';", ruleName),
+    ]);
+  }
 }
 
 @reflectiveTest
@@ -477,6 +730,31 @@ final class RecordsMapReturnTest extends _ArchitectureRuleTest {
   String get path => '$testPackageLibPath/core/geometry.dart';
   @override
   String get source => 'Map<String, dynamic> coordinates() => {};';
+
+  Future<void> test_allowsToMapPayloadBoundary() async {
+    await assertNoDiagnostics(r'''
+final class RestTimerActivityData {
+  const RestTimerActivityData({
+    required this.exerciseName,
+    required this.currentSet,
+    required this.totalSets,
+    required this.endTime,
+  });
+
+  final String exerciseName;
+  final int currentSet;
+  final int totalSets;
+  final DateTime endTime;
+
+  Map<String, dynamic> toMap() => {
+    'exerciseName': exerciseName,
+    'currentSet': currentSet,
+    'totalSets': totalSets,
+    'endTimeEpoch': endTime.millisecondsSinceEpoch ~/ 1000,
+  };
+}
+''');
+  }
 }
 
 abstract class _UiRuleTest extends _SourceRuleTest {
@@ -868,6 +1146,55 @@ mixin class Trackable {
   var count = 0;
 }
 ''';
+
+  Future<void> test_allowsPrivateLifecycleFieldsInConsumerStateMixin() async {
+    final filePath = '$testPackageLibPath/core/mixins/showcase_screen_mixin.dart';
+    newFile(filePath, r'''
+class StatefulWidget {}
+class State<T extends StatefulWidget> {}
+class ConsumerStatefulWidget extends StatefulWidget {}
+class ConsumerState<T extends ConsumerStatefulWidget> extends State<T> {}
+
+mixin ShowcaseScreenMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
+  bool _hasAttemptedTour = false;
+  bool _needsShowcaseRetry = false;
+  bool _dependenciesInitialised = false;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsPublicMutableFieldInStateMixin() async {
+    final filePath = '$testPackageLibPath/core/mixins/scroll_mixin.dart';
+    const source = r'''
+class StatefulWidget {}
+class State<T extends StatefulWidget> {}
+
+mixin ScrollMixin<T extends StatefulWidget> on State<T> {
+  bool isReady = false;
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'bool isReady = false', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_reportsPrivateMutableFieldInUnconstrainedMixin() async {
+    final filePath = '$testPackageLibPath/core/mixins/cache_mixin.dart';
+    const source = r'''
+mixin CacheMixin {
+  bool _isReady = false;
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'bool _isReady = false', ruleName, lineStart: true),
+    ]);
+  }
 }
 
 abstract class _DataCrashRuleTest extends _SourceRuleTest {
@@ -970,6 +1297,34 @@ final class TestMockConcreteTest extends _TestFileRuleTest {
   String get needle => 'class MockUserRepository';
   @override
   String get source => 'class MockUserRepository extends Mock implements UserRepository {}';
+
+  Future<void> test_allowsExternalSdkBoundaryMocks() async {
+    final filePath = '$testPackageRootPath/test/helpers/appwrite_test_utils.dart';
+    newFile(filePath, r'''
+class Mock {}
+class TablesDB {}
+class Account {}
+class Teams {}
+class MockTablesDB extends Mock implements TablesDB {}
+class MockAccount extends Mock implements Account {}
+class MockTeams extends Mock implements Teams {}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsExternalPluginControllerMocks() async {
+    final filePath = '$testPackageRootPath/test/core/widgets/exercise_demo_sheet_test.dart';
+    newFile(filePath, r'''
+class Mock {}
+class YoutubePlayerController {}
+class YoutubePlayerValue {}
+class MockYoutubePlayerController extends Mock implements YoutubePlayerController {}
+class MockYoutubePlayerValue extends Mock implements YoutubePlayerValue {}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
 }
 
 @reflectiveTest

@@ -89,10 +89,12 @@ final class FlutterSkillProjectConfig extends MultiAnalysisRule {
     final root = context.package?.root ?? _findPackageRoot(currentUnit.file.parent);
     if (root == null) return;
 
+    final anchorPath = _anchorPath(root);
+    if (anchorPath != null && currentUnit.file.path != anchorPath) return;
+
     final issues = _ProjectConfigScanner(root).scan();
     if (issues.isEmpty) return;
 
-    final anchorPath = _anchorPath(root);
     registry.addCompilationUnit(this, _Visitor(this, issues, anchorPath));
   }
 
@@ -207,9 +209,7 @@ final class _ProjectConfigScanner {
 
   void _scanFlutterE2eEntrypoint(Set<String> issues) {
     final mainDev = _read(root.getChildAssumingFile('lib/main_dev.dart'));
-    if (mainDev == null ||
-        !mainDev.contains('enableFlutterDriverExtension') ||
-        !RegExp(r'\brunApp(?:\s*<[^>]+>)?\s*\(').hasMatch(mainDev)) {
+    if (mainDev == null || !_hasDeterministicFlutterE2eEntrypoint(mainDev)) {
       issues.add('cfg_e2e_entrypoint');
     }
   }
@@ -321,6 +321,15 @@ final class _ProjectConfigScanner {
     }
     return false;
   }
+}
+
+bool _hasDeterministicFlutterE2eEntrypoint(String text) {
+  final extensionCall = RegExp(r'\benableFlutterDriverExtension\s*\(').firstMatch(text);
+  if (extensionCall == null) return false;
+
+  final afterExtension = text.substring(extensionCall.end);
+  return RegExp(r'\brunApp(?:\s*<[^>]+>)?\s*\(').hasMatch(afterExtension) ||
+      RegExp(r'\b[A-Za-z_]\w*\.run[A-Z][A-Za-z0-9_]*\s*\(').hasMatch(afterExtension);
 }
 
 String? _read(File file) {

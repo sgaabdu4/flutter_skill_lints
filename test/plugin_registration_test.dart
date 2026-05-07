@@ -64,6 +64,20 @@ void main() {
     expect(message, contains('Future.wait'));
   });
 
+  test('Freezed value-class diagnostic explains the no mental tax convention', () {
+    final rule = flutterSkillRules.singleWhere(
+      (rule) => rule.name == 'freezed_required_value_class',
+    );
+    final code = rule.diagnosticCodes.singleWhere(
+      (code) => code.lowerCaseName == 'freezed_required_value_class',
+    );
+    final message = code.correctionMessage ?? '';
+
+    expect(message, contains('@freezed sealed classes'));
+    expect(message, contains('mental tax'));
+    expect(message, contains('do not use Equatable'));
+  });
+
   test('rule source files document every rule with API docs', () {
     final issues = <String>[];
     final ruleFiles = [
@@ -117,7 +131,7 @@ void main() {
     );
 
     expect(registry.warningRules.length, _enabledAdditionalRuleCount);
-    expect(registeredFixCount, 65);
+    expect(registeredFixCount, 63);
     expect(registry.assistKinds, hasLength(1));
     expect(registry.warningRules, containsPair('avoid_ref_read_inside_build', isNotNull));
     expect(registry.warningRules, containsPair('use_ref_and_state_synchronously', isNotNull));
@@ -125,8 +139,6 @@ void main() {
     expect(registry.warningRules, containsPair('avoid_constant_switches', isNotNull));
     expect(registry.warningRules, containsPair('prefer_class_destructuring', isNotNull));
     expect(registry.warningRules, containsPair('use_existing_destructuring', isNotNull));
-    expect(registry.warningRules, containsPair('list_all_equatable_fields', isNotNull));
-    expect(registry.warningRules, containsPair('prefer_equatable_mixin', isNotNull));
     expect(registry.warningRules, isNot(contains('use_bloc_suffix')));
     expect(registry.warningRules, isNot(contains('use_cubit_suffix')));
     expect(registry.warningRules, isNot(contains('use_gap')));
@@ -174,6 +186,8 @@ void main() {
       'prefer_returning_shorthands',
       'prefer_switch_expression',
       'prefer_overriding_parent_equality',
+      'list_all_equatable_fields',
+      'prefer_equatable_mixin',
     ]) {
       expect(paths, isNot(contains(forbidden)));
     }
@@ -197,9 +211,9 @@ void main() {
   });
 }
 
-const _enabledFlutterSkillRuleCount = 94;
-const _enabledFlutterSkillDiagnosticCount = 101;
-const _enabledAdditionalRuleCount = 82;
+const _enabledFlutterSkillRuleCount = 95;
+const _enabledFlutterSkillDiagnosticCount = 102;
+const _enabledAdditionalRuleCount = 80;
 
 List<String> _docBlockBefore(List<String> lines, int index) {
   var cursor = index - 1;

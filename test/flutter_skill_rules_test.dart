@@ -310,6 +310,18 @@ Map<String, dynamic> fromJson(Map<String, dynamic> json) => json;
 ''');
   }
 
+  Future<void> test_allowsJsonMapCastDynamic() async {
+    await assertNoDiagnostics(r'''
+Map<String, Object?> normalize(Map<String, Object?> json) {
+  return json.cast<String, dynamic>();
+}
+
+Map<String, dynamic> emptyPrefs() {
+  return const <String, Object?>{}.cast<String, dynamic>();
+}
+''');
+  }
+
   Future<void> test_reportsUntypedRuntimeBoundaryDynamic() async {
     final filePath = '$testPackageRootPath/functions/shared/lib/http.dart';
     const source = r'''

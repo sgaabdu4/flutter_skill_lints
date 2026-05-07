@@ -140,17 +140,32 @@ final class SourceScannerContext {
 
   bool isMutableMixinField(int lineIndex) {
     final line = source.masked[lineIndex];
-    if (!RegExp(
-      r'^\s*(?!final\b)(?!const\b)(?:var|int|double|num|bool|String|List|Map|Set)\b[^;=]*=',
-    ).hasMatch(line)) {
+    final fieldMatch = RegExp(
+      r'^\s*(?!final\b)(?!const\b)(?:late\s+)?(?:var|int|double|num|bool|String|Object|List|Map|Set|[A-Z]\w*(?:<[^;=]+>)?\??)\s+([A-Za-z_]\w*)\b[^;=]*=',
+    ).firstMatch(line);
+    if (fieldMatch == null) {
       return false;
     }
-    return near(lineIndex, 'mixin ', 8);
+    if (!near(lineIndex, 'mixin ', 16)) {
+      return false;
+    }
+    final mixin = _enclosingMixin(lineIndex);
+    if (mixin == null || !_isDirectMixinMember(mixin, lineIndex)) {
+      return false;
+    }
+
+    final fieldName = fieldMatch.group(1) ?? '';
+    if (fieldName.startsWith('_') && _isStateLifecycleMixin(mixin.signature)) {
+      return false;
+    }
+
+    return true;
   }
 
   bool isMapDynamicReturn(String line) {
     if (isDataPath) return false;
-    if (line.contains('toJson') || line.contains('fromJson') || line.contains('RequestBody')) {
+    if (RegExp(r'\b(?:toJson|fromJson|toMap)\s*\(').hasMatch(line) ||
+        line.contains('RequestBody')) {
       return false;
     }
     return RegExp(r'\bMap\s*<\s*String\s*,\s*dynamic\s*>\s+\w+\s*\(').hasMatch(line);
@@ -200,6 +215,26 @@ final class SourceScannerContext {
     return !RegExp(r'\babstract\s+final\s+class\b').hasMatch(source.masked[classSpan.start]);
   }
 
+  bool requiresFreezedValueClass(ScannerClassSpan classSpan) {
+    if (isTestFile) return false;
+    if (classSpan.name.startsWith('_') || classSpan.isNotifier) return false;
+    if (_isAbstractInterfaceClass(classSpan)) return false;
+    if (_isGeneratedOrPartOfFile) return false;
+    if (isDomainPath) return true;
+    return isDataModelPath || (isDataPath && classSpan.name.endsWith('Model'));
+  }
+
+  bool hasFreezedAnnotation(ScannerClassSpan classSpan) {
+    final start = classSpan.start - 8 < 0 ? 0 : classSpan.start - 8;
+    for (var i = classSpan.start - 1; i >= start; i--) {
+      final line = source.masked[i].trim();
+      if (line.isEmpty) continue;
+      if (line.startsWith('@freezed') || line.startsWith('@Freezed')) return true;
+      if (!line.startsWith('@')) break;
+    }
+    return false;
+  }
+
   bool hasImmediateGuard(int awaitLine, int methodEnd, String target) {
     for (var i = awaitLine + 1; i <= methodEnd && i < source.length; i++) {
       final line = source.masked[i].trim();
@@ -230,6 +265,7 @@ final class SourceScannerContext {
 
   bool get isDataPath => path.contains('/data/') || path.contains('/repositories/');
   bool get isDatasourcePath => path.contains('/data/datasources/');
+  bool get isDataModelPath => path.contains('/data/models/') || path.contains('/data/model/');
   bool get isRepositoryPath => path.contains('/repositories/');
   bool get isDomainPath => path.contains('/domain/');
 
@@ -279,6 +315,59 @@ final class SourceScannerContext {
         normalized.endsWith('/test_keys.dart') ||
         normalized.endsWith('/keys.dart');
   }
+
+  bool get _isGeneratedOrPartOfFile {
+    final normalized = path.replaceAll('\\', '/');
+    if (normalized.endsWith('.g.dart') || normalized.endsWith('.freezed.dart')) return true;
+    return source.masked.any((line) => RegExp(r'^\s*part\s+of\b').hasMatch(line));
+  }
+
+  bool _isAbstractInterfaceClass(ScannerClassSpan classSpan) {
+    final line = source.masked[classSpan.start];
+    return RegExp(r'\babstract\s+interface\s+class\b').hasMatch(line);
+  }
+
+  _ScannerMixinSpan? _enclosingMixin(int lineIndex) {
+    for (var start = lineIndex; start >= 0; start--) {
+      final line = source.masked[start];
+      if (!RegExp(r'^\s*mixin(?:\s+class)?\s+\w+\b').hasMatch(line)) continue;
+
+      final signature = StringBuffer(line);
+      var openBraceLine = start;
+      var foundOpenBrace = line.contains('{');
+      while (!foundOpenBrace && openBraceLine + 1 < source.length) {
+        openBraceLine++;
+        signature.write(' ${source.masked[openBraceLine]}');
+        foundOpenBrace = source.masked[openBraceLine].contains('{');
+      }
+      if (!foundOpenBrace || lineIndex < openBraceLine) return null;
+
+      var depth = 0;
+      var end = openBraceLine;
+      for (var i = start; i < source.length; i++) {
+        depth += _braceDelta(source.masked[i]);
+        if (i >= openBraceLine && depth <= 0) {
+          end = i;
+          break;
+        }
+      }
+      if (lineIndex <= end) {
+        return _ScannerMixinSpan(start: start, end: end, signature: signature.toString());
+      }
+    }
+    return null;
+  }
+
+  bool _isDirectMixinMember(_ScannerMixinSpan mixin, int lineIndex) {
+    var depth = 0;
+    for (var i = mixin.start; i < lineIndex; i++) {
+      depth += _braceDelta(source.masked[i]);
+    }
+    return depth == 1;
+  }
+
+  bool _isStateLifecycleMixin(String signature) =>
+      RegExp(r'\bon\s+(?:\w+\.)?(?:State|ConsumerState|HookConsumerState)\b').hasMatch(signature);
 
   static List<ScannerClassSpan> _classes(SourceScannerSource source) {
     final classes = <ScannerClassSpan>[];
@@ -564,4 +653,12 @@ final class ScannerMethodSpan {
   final String name;
   final int start;
   final int end;
+}
+
+final class _ScannerMixinSpan {
+  const _ScannerMixinSpan({required this.start, required this.end, required this.signature});
+
+  final int start;
+  final int end;
+  final String signature;
 }

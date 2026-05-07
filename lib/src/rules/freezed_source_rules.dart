@@ -92,4 +92,32 @@ final List<ScannerRule> freezedSourceRules = [
       }
     },
   ),
+
+  /// Use Freezed for domain entities and data models.
+  ///
+  /// Why: Flags domain entity and data model classes that are manual or Equatable-based.
+  /// Freezed is the project-wide value-class convention, chosen to remove the mental tax
+  /// of picking between equality/copy/serialization patterns.
+  scannerRule(
+    code: const LintCode(
+      'freezed_required_value_class',
+      'Use Freezed for domain entities and data models.',
+      correctionMessage:
+          'Use @freezed sealed classes only. This project chooses one value-class pattern to remove mental tax; do not use Equatable or manual equality here.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags non-Freezed domain entities and data models so value classes use one consistent immutable pattern with no Equatable/manual-equality choice.',
+    scan: (reporter, context) {
+      for (final classSpan in context.classes) {
+        if (!context.requiresFreezedValueClass(classSpan)) continue;
+        if (context.hasFreezedAnnotation(classSpan)) continue;
+        reporter.report(
+          context,
+          classSpan.start,
+          context.source.masked[classSpan.start].indexOf('class'),
+        );
+      }
+    },
+  ),
 ];

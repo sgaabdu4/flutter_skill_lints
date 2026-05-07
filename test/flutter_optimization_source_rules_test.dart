@@ -80,7 +80,7 @@ class UniqueKey extends LocalKey {
   UniqueKey() : super('');
 }
 class GlobalKey<T> extends Key {
-  GlobalKey() : super('');
+  GlobalKey({String? debugLabel}) : super('');
 }
 class Widget {
   const Widget({Key? key});
@@ -190,6 +190,21 @@ import 'package:flutter/widgets.dart';
 
 final formKey = GlobalKey();
 ''', 'GlobalKey');
+  }
+
+  Future<void> test_allowsGlobalKeyInTests() async {
+    final filePath = '$testPackageRootPath/test/core/mixins/showcase_screen_mixin_test.dart';
+    newFile(
+      filePath,
+      _withIgnorePrefix(r'''
+import 'package:flutter/widgets.dart';
+
+final firstKey = GlobalKey(debugLabel: 'first-showcase-target');
+final missingKey = GlobalKey(debugLabel: 'missing-showcase-target');
+'''),
+    );
+
+    await assertNoDiagnosticsInFile(filePath);
   }
 
   Future<void> test_reportsUniqueKey() async {

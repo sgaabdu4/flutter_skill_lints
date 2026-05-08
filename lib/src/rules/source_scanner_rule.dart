@@ -313,6 +313,7 @@ final class SourceScannerContext {
         normalized.endsWith('/e2e_keys.dart') ||
         normalized.endsWith('/app_keys.dart') ||
         normalized.endsWith('/test_keys.dart') ||
+        normalized.endsWith('_keys.dart') ||
         normalized.endsWith('/keys.dart');
   }
 

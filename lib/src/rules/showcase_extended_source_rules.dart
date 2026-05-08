@@ -63,6 +63,8 @@ final List<ScannerRule> showcaseExtendedSourceRules = [
     description:
         'Flags inline string showcase scopes so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
+      if (context.isTestFile) return;
+
       for (var i = 0; i < context.source.length; i++) {
         final code = context.source.code[i];
         final line = context.source.masked[i];

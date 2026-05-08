@@ -57,9 +57,10 @@ final class FlutterSkillProjectConfig extends MultiAnalysisRule {
       'cfg_prohibited_lint_plugins',
       'Remove old lint plugin dependencies and local plugin sources.',
       correctionMessage:
-          'Use top-level plugins.flutter_skill_lints.version and '
-          'plugins.riverpod_lint; do not add many_lints, freezed_lint, '
-          'custom_lint, or local plugin path/git sources.',
+          'Use top-level plugins.flutter_skill_lints.version, or a local '
+          'plugins.flutter_skill_lints.path while testing a checkout, and '
+          'plugins.riverpod_lint. Do not add many_lints, freezed_lint, '
+          'custom_lint, or other local plugin path/git sources.',
       severity: DiagnosticSeverity.ERROR,
     ),
     'cfg_explicit_to_json': LintCode(
@@ -285,27 +286,69 @@ final class _ProjectConfigScanner {
   bool _hasLocalPluginSource(String text) {
     var inPlugins = false;
     var pluginsIndent = 0;
+    String? currentPlugin;
+    var currentPluginIndent = 0;
+
     for (final line in text.split('\n')) {
       if (line.trim().isEmpty || line.trimLeft().startsWith('#')) continue;
       final indent = line.length - line.trimLeft().length;
       final pluginsMatch = RegExp(r'^\s*plugins\s*:(.*)$').firstMatch(line);
       if (pluginsMatch != null) {
         final inlinePlugins = pluginsMatch.group(1) ?? '';
-        if (_hasYamlKey(inlinePlugins, 'git') || _hasYamlKey(inlinePlugins, 'path')) {
-          return true;
-        }
-        inPlugins = true;
+        if (_flowStyleHasProhibitedLocalSource(inlinePlugins)) return true;
+        inPlugins = inlinePlugins.trim().isEmpty;
         pluginsIndent = indent;
+        currentPlugin = null;
         continue;
       }
       if (inPlugins && indent <= pluginsIndent) {
         inPlugins = false;
+        currentPlugin = null;
       }
-      if (inPlugins && (_hasYamlKey(line, 'git') || _hasYamlKey(line, 'path'))) {
-        return true;
+      if (inPlugins) {
+        if (currentPlugin != null && indent <= currentPluginIndent) {
+          currentPlugin = null;
+        }
+
+        final pluginMatch = RegExp(r'''^\s*['"]?([A-Za-z_]\w*)['"]?\s*:(.*)$''').firstMatch(line);
+        if (pluginMatch != null && indent > pluginsIndent) {
+          final candidate = pluginMatch.group(1);
+          if (candidate == 'path' || candidate == 'git') {
+            if (!_allowsLocalPluginSource(currentPlugin, line)) {
+              return true;
+            }
+            continue;
+          } else {
+            currentPlugin = candidate;
+            currentPluginIndent = indent;
+          }
+          final rest = pluginMatch.group(2) ?? '';
+          if (_lineHasLocalSource(rest) && !_allowsLocalPluginSource(currentPlugin, rest)) {
+            return true;
+          }
+          continue;
+        }
+
+        if (_lineHasLocalSource(line) && !_allowsLocalPluginSource(currentPlugin, line)) {
+          return true;
+        }
       }
     }
     return false;
+  }
+
+  bool _lineHasLocalSource(String text) => _hasYamlKey(text, 'git') || _hasYamlKey(text, 'path');
+
+  bool _allowsLocalPluginSource(String? plugin, String text) =>
+      plugin == 'flutter_skill_lints' && _hasYamlKey(text, 'path') && !_hasYamlKey(text, 'git');
+
+  bool _flowStyleHasProhibitedLocalSource(String text) {
+    if (!_lineHasLocalSource(text)) return false;
+    final withoutAllowedFlutterSkillPath = text.replaceAll(
+      RegExp(r'''['"]?flutter_skill_lints['"]?\s*:\s*\{[^}]*['"]?path['"]?\s*:[^}]*\}'''),
+      '',
+    );
+    return _lineHasLocalSource(withoutAllowedFlutterSkillPath);
   }
 
   bool _hasJsonModels() {

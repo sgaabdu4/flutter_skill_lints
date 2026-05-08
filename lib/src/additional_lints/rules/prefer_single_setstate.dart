@@ -55,16 +55,12 @@ class _Visitor extends SimpleAstVisitor<void> {
     final element = classDecl.declaredFragment?.element;
     if (element == null || !_stateChecker.isSuperOf(element)) return;
 
-    // Collect all setState calls in this method (not inside nested closures)
+    // Collect mergeable setState calls in this method (not inside nested closures).
     final collector = _SetStateCollector();
-    node.body.visitChildren(collector);
+    node.body.accept(collector);
 
-    final calls = collector.calls;
-    if (calls.length < 2) return;
-
-    // Report on the second and subsequent setState calls
-    for (var i = 1; i < calls.length; i++) {
-      rule.reportAtNode(calls[i]);
+    for (final call in collector.violations) {
+      rule.reportAtNode(call);
     }
   }
 }
@@ -72,18 +68,68 @@ class _Visitor extends SimpleAstVisitor<void> {
 /// Collects `setState` calls at the current method level,
 /// stopping at function boundaries (closures, local functions).
 class _SetStateCollector extends RecursiveAstVisitor<void> {
-  final List<MethodInvocation> calls = [];
+  final List<MethodInvocation> violations = [];
 
   @override
-  void visitMethodInvocation(MethodInvocation node) {
-    if (node.methodName.name == 'setState') {
-      calls.add(node);
+  void visitBlock(Block node) {
+    var segmentSetStateCount = 0;
+
+    for (final statement in node.statements) {
+      final directSetState = _directSetState(statement);
+      if (directSetState != null) {
+        if (segmentSetStateCount > 0) {
+          violations.add(directSetState);
+        }
+        segmentSetStateCount += 1;
+      } else {
+        statement.accept(this);
+      }
+
+      if (_isControlFlowBoundary(statement) || _containsAwait(statement)) {
+        segmentSetStateCount = 0;
+      }
     }
-    super.visitMethodInvocation(node);
   }
 
   // Stop at nested function boundaries — setState inside closures
   // belongs to a different logical scope.
+  @override
+  void visitFunctionExpression(FunctionExpression node) {}
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {}
+
+  MethodInvocation? _directSetState(Statement statement) {
+    if (statement is! ExpressionStatement) return null;
+    final expression = statement.expression;
+    if (expression is MethodInvocation && expression.methodName.name == 'setState') {
+      return expression;
+    }
+    return null;
+  }
+
+  bool _isControlFlowBoundary(Statement statement) {
+    return statement is ReturnStatement ||
+        statement is BreakStatement ||
+        statement is ContinueStatement ||
+        statement is ExpressionStatement && statement.expression is ThrowExpression;
+  }
+
+  bool _containsAwait(Statement statement) {
+    final finder = _AwaitFinder();
+    statement.accept(finder);
+    return finder.found;
+  }
+}
+
+class _AwaitFinder extends RecursiveAstVisitor<void> {
+  bool found = false;
+
+  @override
+  void visitAwaitExpression(AwaitExpression node) {
+    found = true;
+  }
+
   @override
   void visitFunctionExpression(FunctionExpression node) {}
 

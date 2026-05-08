@@ -32,7 +32,7 @@ final List<ScannerRule> routerExtendedSourceRules = [
 
   /// Do not push shell tab routes.
   ///
-  /// Why: Flags typed route push/go calls in shell navigation widgets. Use
+  /// Why: Flags typed route push calls in shell navigation widgets. Use
   /// StatefulNavigationShell.goBranch() for tab changes.
   scannerRule(
     code: const LintCode(
@@ -42,16 +42,22 @@ final List<ScannerRule> routerExtendedSourceRules = [
       severity: DiagnosticSeverity.WARNING,
     ),
     description:
-        'Flags typed route push/go calls in shell navigation widgets so the Flutter skill violation is shown during analysis.',
+        'Flags typed route push calls in shell navigation widgets so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      final text = context.source.masked.join('\n');
-      if (!text.contains('StatefulNavigationShell') && !text.contains('goBranch')) return;
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(
-          r'\b[A-Z]\w*Route\s*\([^)]*\)\s*\.\s*(?:push|go)\s*(?:<[^>]+>)?\s*\(',
-        ).hasMatch(line)) {
-          reporter.report(context, i, 0);
+      final shellTabPush = RegExp(
+        r'\bconst\s+[A-Z]\w*Route\s*'
+        r'\([^)]*\)\s*\.\s*push\s*(?:<[^>]+>)?\s*\(',
+      );
+
+      for (final method in context.methods) {
+        final body = context.source.masked.sublist(method.start, method.end + 1).join('\n');
+        if (!body.contains('StatefulNavigationShell') && !body.contains('goBranch')) continue;
+
+        for (var i = method.start; i <= method.end; i++) {
+          final line = context.source.masked[i];
+          if (shellTabPush.hasMatch(line)) {
+            reporter.report(context, i, 0);
+          }
         }
       }
     },

@@ -75,7 +75,31 @@ class _Visitor extends SimpleAstVisitor<void> {
     final library = element.library;
     if (library?.isDartCore != true) return;
 
+    if (_isFrameworkCompatibleOverrideParameter(node)) return;
+
     // This is the non-explicit Function type, report it
     rule.reportAtNode(node);
+  }
+
+  bool _isFrameworkCompatibleOverrideParameter(NamedType node) {
+    var isParameterType = false;
+    AstNode? current = node.parent;
+    while (current != null) {
+      if (current is FormalParameter) {
+        isParameterType = true;
+      }
+      if (current is MethodDeclaration) {
+        return isParameterType && _hasOverrideAnnotation(current.metadata);
+      }
+      if (current is FunctionDeclaration || current is ClassDeclaration) {
+        return false;
+      }
+      current = current.parent;
+    }
+    return false;
+  }
+
+  bool _hasOverrideAnnotation(NodeList<Annotation> metadata) {
+    return metadata.any((annotation) => annotation.name.name == 'override');
   }
 }

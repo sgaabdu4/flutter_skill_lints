@@ -10,21 +10,21 @@ import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
 /// Warns when a widget's build method returns a sliver widget but the class
-/// name does not start with 'Sliver'.
+/// name does not include 'Sliver'.
 ///
-/// Consistent naming with a 'Sliver' prefix helps developers quickly identify
+/// Consistent sliver naming helps developers quickly identify
 /// which widgets are sliver-based and can be used inside CustomScrollView.
 class UseSliverPrefix extends AnalysisRule {
   static const LintCode code = LintCode(
     'use_sliver_prefix',
-    "Widget returns a sliver but its name does not start with 'Sliver'.",
-    correctionMessage: "Add the 'Sliver' prefix to the class name.",
+    "Widget returns a sliver but its name does not include 'Sliver'.",
+    correctionMessage: "Include 'Sliver' in the class name.",
   );
 
   UseSliverPrefix()
     : super(
         name: 'use_sliver_prefix',
-        description: 'Warns when a widget returns a sliver but lacks the Sliver prefix.',
+        description: 'Warns when a widget returns a sliver but lacks Sliver in its name.',
       );
 
   @override
@@ -69,7 +69,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       if (_statelessWidgetChecker.isSuperOf(element)) {
         // StatelessWidget: check build() directly
-        if (!className.startsWith('Sliver') && _buildReturnsSliverWidget(declaration)) {
+        if (!_hasSliverName(className) && _buildReturnsSliverWidget(declaration)) {
           rule.reportAtToken(declaration.namePart.typeName);
         }
       } else if (_statefulWidgetChecker.isSuperOf(element)) {
@@ -82,7 +82,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     // For StatefulWidgets, find companion State and check its build()
     for (final widget in statefulWidgets) {
       final widgetName = widget.namePart.typeName.lexeme;
-      if (widgetName.startsWith('Sliver')) continue;
+      if (_hasSliverName(widgetName)) continue;
 
       final stateClass = _findStateClass(stateClasses, widgetName);
       if (stateClass == null) continue;
@@ -92,6 +92,8 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     }
   }
+
+  static bool _hasSliverName(String name) => name.toLowerCase().contains('sliver');
 
   /// Checks if a class has a `build()` method that returns a sliver widget.
   static bool _buildReturnsSliverWidget(ClassDeclaration node) {

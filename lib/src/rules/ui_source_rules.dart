@@ -15,11 +15,11 @@ final List<ScannerRule> uiSourceRules = [
     description:
         'Flags raw visual constants instead of design tokens so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
+      if (context.isThemeDefFile || context.isTestFile) return;
+
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (RegExp(r'\b(?:EdgeInsets|BorderRadius|Radius|SizedBox)\s*\([^)]*\d').hasMatch(line) ||
-            RegExp(r'\b(?:EdgeInsets|BorderRadius|Radius)\.\w+\s*\([^)]*\d').hasMatch(line) ||
-            RegExp(r'\bColor\s*\(\s*0x[0-9A-Fa-f]+').hasMatch(line)) {
+        if (_hasRawStyleToken(line)) {
           reporter.report(context, i, 0);
         }
       }
@@ -39,6 +39,8 @@ final List<ScannerRule> uiSourceRules = [
     description:
         'Flags raw TextStyle construction so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
+      if (context.isThemeDefFile || context.isTestFile) return;
+
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
         if (RegExp(r'\bTextStyle\s*\(').hasMatch(line)) {
@@ -164,3 +166,44 @@ final List<ScannerRule> uiSourceRules = [
     },
   ),
 ];
+
+bool _hasRawStyleToken(String line) {
+  if (RegExp(r'\bColor\s*\(\s*0x[0-9A-Fa-f]+').hasMatch(line)) {
+    return true;
+  }
+
+  final visualConstructor = RegExp(
+    r'\b(?:EdgeInsets|BorderRadius|Radius|SizedBox)(?:\.\w+)?\s*\([^)]*',
+  );
+  for (final match in visualConstructor.allMatches(line)) {
+    if (_hasMeaningfulNumericLiteral(line.substring(match.start))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool _hasMeaningfulNumericLiteral(String line) {
+  final numericLiteral = RegExp(r'(?<![A-Za-z_])(?:\d+(?:\.\d+)?|\.\d+)');
+  for (final match in numericLiteral.allMatches(line)) {
+    final literal = match.group(0);
+    if (literal == null) continue;
+
+    final value = double.tryParse(literal);
+    if (value == null || value == 0) continue;
+
+    final previous = _previousNonWhitespace(line, match.start);
+    if (previous != null && '+-*/'.contains(previous)) continue;
+
+    return true;
+  }
+  return false;
+}
+
+String? _previousNonWhitespace(String text, int beforeIndex) {
+  for (var i = beforeIndex - 1; i >= 0; i--) {
+    final char = text[i];
+    if (char.trim().isNotEmpty) return char;
+  }
+  return null;
+}

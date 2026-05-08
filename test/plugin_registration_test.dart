@@ -81,6 +81,22 @@ void main() {
     expect(message, contains('ref.read'));
   });
 
+  test('avoid-returning-widgets diagnostic explains framework override boundary', () {
+    final registry = PluginRegistryImpl('flutter_skill_lints_additional');
+    final plugin = AdditionalLintsPlugin();
+
+    plugin.register(registry);
+
+    final rule = registry.warningRules['avoid_returning_widgets'];
+    final code = rule?.diagnosticCodes.singleWhere(
+      (code) => code.lowerCaseName == 'avoid_returning_widgets',
+    );
+    final message = code?.correctionMessage ?? '';
+
+    expect(message, contains('named Widget class'));
+    expect(message, contains('framework build/builder overrides'));
+  });
+
   test('Freezed value-class diagnostic explains the no mental tax convention', () {
     final rule = flutterSkillRules.singleWhere(
       (rule) => rule.name == 'freezed_required_value_class',

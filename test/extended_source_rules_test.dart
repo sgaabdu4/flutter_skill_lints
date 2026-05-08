@@ -48,11 +48,7 @@ abstract class _ExtendedSourceRuleTest extends AnalysisRuleTest {
   }
 
   Future<void> test_reportsDiagnostic() async {
-    final analyzedSource = addIgnorePrefix
-        ? '''
-// ignore_for_file: const_with_non_type, creation_with_non_type, extends_non_class, final_not_initialized, implements_non_class, mixin_of_non_class, redirect_to_non_class, undefined_annotation, undefined_class, undefined_function, undefined_identifier, undefined_method, unused_import
-$source'''
-        : source;
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
     final expected = compatLint(analyzedSource, needle, ruleName, lineStart: lineStart);
     final filePath = path;
     if (filePath == null) {
@@ -62,6 +58,24 @@ $source'''
 
     newFile(filePath, analyzedSource);
     await assertDiagnosticsInFile(filePath, [expected]);
+  }
+
+  Future<void> assertAllows(String source, {String? path, bool addIgnorePrefix = true}) async {
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    if (path == null) {
+      await assertNoDiagnostics(analyzedSource);
+      return;
+    }
+
+    newFile(path, analyzedSource);
+    await assertNoDiagnosticsInFile(path);
+  }
+
+  String _analyzedSource(String source, {required bool addIgnorePrefix}) {
+    if (!addIgnorePrefix) return source;
+    return '''
+// ignore_for_file: const_with_non_type, creation_with_non_type, extends_non_class, final_not_initialized, implements_non_class, mixin_of_non_class, redirect_to_non_class, undefined_annotation, undefined_class, undefined_function, undefined_identifier, undefined_method, unused_import
+$source''';
   }
 
   ExpectedDiagnostic compatLint(
@@ -200,15 +214,66 @@ final class RouterShellTabPushTest extends _RouterExtendedRuleTest {
 class Shell {
   final StatefulNavigationShell navigationShell;
   void open() {
-    const ExercisesRoute().push<void>(context);
+    const ReportsRoute().push<void>(context);
     navigationShell.goBranch(1);
   }
 }
 ''';
   @override
-  String get needle => 'const ExercisesRoute';
+  String get needle => 'const ReportsRoute';
   @override
   bool get lineStart => true;
+
+  Future<void> test_allowsStandaloneRoutePushInFileWithShellRoute() async {
+    await assertAllows('''
+class MainShellRoute {
+  final StatefulNavigationShell navigationShell;
+}
+
+class HostCard {
+  void openDetails() {
+    unawaited(DetailFlowRoute().push<void>(context));
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsRoutePushInSiblingCallbackWhenMethodUsesShell() async {
+    await assertAllows('''
+class HostCard {
+  Widget build(BuildContext context) {
+    final startButton = Button(
+      onTap: () {
+        unawaited(DetailFlowRoute().push<void>(context));
+      },
+    );
+
+    return Button(
+      onTap: () {
+        final navigationShell = StatefulNavigationShell.of(context);
+        navigationShell.goBranch(1);
+      },
+      child: startButton,
+    );
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsTypedGoFallbackWhenShellMissing() async {
+    await assertAllows('''
+class HostCard {
+  void openPlan(BuildContext context) {
+    final navigationShell = StatefulNavigationShell.maybeOf(context);
+    if (navigationShell != null) {
+      navigationShell.goBranch(1);
+      return;
+    }
+    const ReportsRoute().go(context);
+  }
+}
+''');
+  }
 }
 
 abstract class _ShowcaseExtendedRuleTest extends _ExtendedSourceRuleTest {
@@ -253,6 +318,14 @@ final target = AppShowcaseTarget(
 ''';
   @override
   String get needle => 'scope:';
+
+  Future<void> test_allowsLiteralScopeInTests() async {
+    await assertAllows('''
+void main() {
+  service.markAllToursCompleted(scope: 'test-scope');
+}
+''', path: '$testPackageRootPath/test/showcase_service_test.dart');
+  }
 }
 
 abstract class _ServicesExtendedRuleTest extends _ExtendedSourceRuleTest {

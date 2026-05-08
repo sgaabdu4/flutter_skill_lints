@@ -56,7 +56,37 @@ class Demo extends ConsumerWidget {
     ref.read(counterProvider);
     final value = ref.watch(counterProvider);
     final label = value == 0 ? null : value.toString();
-    return Text(label!, textDirection: TextDirection.ltr);
+    return Column(
+      textDirection: TextDirection.ltr,
+      children: [
+        Text(label!, textDirection: TextDirection.ltr),
+        const _DemoContent(),
+        const _DemoSheet(),
+      ],
+    );
+  }
+}
+
+class _DemoContent extends StatelessWidget {
+  const _DemoContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('content', textDirection: TextDirection.ltr);
+  }
+}
+
+class _DemoSheet extends ConsumerStatefulWidget {
+  const _DemoSheet();
+
+  @override
+  ConsumerState<_DemoSheet> createState() => _DemoSheetState();
+}
+
+class _DemoSheetState extends ConsumerState<_DemoSheet> {
+  @override
+  Widget build(BuildContext context) {
+    return const Text('sheet', textDirection: TextDirection.ltr);
   }
 }
 ''');
@@ -74,6 +104,7 @@ class Demo extends ConsumerWidget {
         expect(output, contains('avoid_null_bang'));
         expect(output, contains('avoid_ref_read_inside_build'));
         expect(output, contains('missing_provider_scope'));
+        expect(output, contains('prefer_single_widget_per_file'));
         expect(output, isNot(contains('server.pluginError')));
       } finally {
         await app.delete(recursive: true);

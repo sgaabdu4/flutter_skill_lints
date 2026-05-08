@@ -120,6 +120,7 @@ class _NestedContextFinder extends RecursiveAstVisitor<void> {
     // If the inner param has the same name as the outer one, the outer is
     // shadowed and can't be referenced — no issue.
     if (innerContextName == outerContextName) return;
+    if (innerContextName == '_') return;
 
     // Search the closure body for references to the outer context name
     final body = node.body;

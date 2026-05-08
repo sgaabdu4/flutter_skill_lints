@@ -71,7 +71,7 @@ class TypeChecker {
     if (isExactly(element)) return true;
 
     // Check all supertypes
-    for (final supertype in element.allSupertypes) {
+    for (final supertype in _safeAllSupertypes(element)) {
       if (isExactlyType(supertype)) return true;
     }
 
@@ -90,7 +90,7 @@ class TypeChecker {
     if (isExactlyType(type)) return true;
 
     // Check all supertypes
-    for (final supertype in type.element.allSupertypes) {
+    for (final supertype in _safeAllSupertypes(type.element)) {
       if (isExactlyType(supertype)) return true;
     }
 
@@ -112,6 +112,14 @@ class TypeChecker {
 
     final libraryUri = element.library.identifier;
     return libraryUri.startsWith(expectedUri);
+  }
+
+  Iterable<InterfaceType> _safeAllSupertypes(InterfaceElement element) {
+    try {
+      return element.allSupertypes;
+    } on Object {
+      return const <InterfaceType>[];
+    }
   }
 
   bool _isFromPackage(InterfaceElement element) {

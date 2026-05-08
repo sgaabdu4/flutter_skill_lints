@@ -45,7 +45,9 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
         final line = context.source.masked[i];
         final containsUniqueKey = _containsConstructor(line, 'UniqueKey');
         final containsGlobalKey = _containsConstructor(line, 'GlobalKey');
-        if (containsGlobalKey && context.isTestFile && !containsUniqueKey) continue;
+        if (containsGlobalKey && !containsUniqueKey && _isAllowedGlobalKeyUse(context, line)) {
+          continue;
+        }
         if (containsUniqueKey || containsGlobalKey) {
           reporter.report(
             context,
@@ -222,6 +224,18 @@ void _reportConstructors(
 }
 
 bool _containsConstructor(String line, String name) => _constructorColumn(line, name) >= 0;
+
+bool _isAllowedGlobalKeyUse(SourceScannerContext context, String line) {
+  if (context.isTestFile || context.isKeyRegistryFile) return true;
+  if (RegExp(
+    r'\bGlobalKey\s*<[^>]*(?:State|NavigatorState|ScaffoldMessengerState)[^>]*>',
+  ).hasMatch(line)) {
+    return true;
+  }
+  return RegExp(
+    r'\b_?(?:scaffoldMessengerKey|navigatorKey|repaintBoundaryKey|chartKey|shareableCardKey)\b',
+  ).hasMatch(line);
+}
 
 int _firstConstructorColumn(String line, List<String> names) {
   var result = -1;

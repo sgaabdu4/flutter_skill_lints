@@ -70,6 +70,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
           variables.add((name: variable.name.lexeme, initializerSource: source));
         }
+      } else if (_MayHaveSideEffect.check(statement)) {
+        variables.clear();
       }
     }
   }
@@ -235,5 +237,49 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
       }
     }
     return false;
+  }
+}
+
+class _MayHaveSideEffect extends RecursiveAstVisitor<void> {
+  bool found = false;
+
+  static bool check(Statement statement) {
+    final visitor = _MayHaveSideEffect();
+    statement.accept(visitor);
+    return visitor.found;
+  }
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    found = true;
+  }
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {}
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {}
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    found = true;
+  }
+
+  @override
+  void visitPostfixExpression(PostfixExpression node) {
+    if (node.operator.lexeme == '++' || node.operator.lexeme == '--') {
+      found = true;
+      return;
+    }
+    super.visitPostfixExpression(node);
+  }
+
+  @override
+  void visitPrefixExpression(PrefixExpression node) {
+    if (node.operator.lexeme == '++' || node.operator.lexeme == '--') {
+      found = true;
+      return;
+    }
+    super.visitPrefixExpression(node);
   }
 }

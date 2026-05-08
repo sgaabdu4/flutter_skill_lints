@@ -22,7 +22,9 @@ class AvoidReturningWidgets extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_returning_widgets',
     'Avoid returning widgets from functions, methods, or getters.',
-    correctionMessage: 'Extract the widget into a separate widget class.',
+    correctionMessage:
+        'Extract this into a named Widget class. Only framework build/builder '
+        'overrides should return widgets directly.',
   );
 
   AvoidReturningWidgets()
@@ -50,11 +52,11 @@ class _Visitor extends SimpleAstVisitor<void> {
   _Visitor(this.rule);
 
   static const _widgetChecker = TypeChecker.fromName('Widget', packageName: 'flutter');
+  static const _frameworkWidgetOverrideNames = {'builder', 'pageBuilder', 'buildPage'};
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
-    // Exempt build() overrides
-    if (node.name.lexeme == 'build') return;
+    if (_isAllowedFrameworkWidgetMethod(node)) return;
 
     _checkReturnType(node.returnType, node.name);
   }
@@ -77,5 +79,28 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (_widgetChecker.isAssignableFromType(effectiveType)) {
       rule.reportAtToken(nameToken);
     }
+  }
+
+  bool _isAllowedFrameworkWidgetMethod(MethodDeclaration node) {
+    final name = node.name.lexeme;
+    if (name == 'build') return true;
+    if (_frameworkWidgetOverrideNames.contains(name) && _hasOverrideAnnotation(node.metadata)) {
+      return true;
+    }
+    return _isFrameworkBuilderCallback(node);
+  }
+
+  bool _hasOverrideAnnotation(NodeList<Annotation> metadata) {
+    return metadata.any((annotation) => annotation.name.name == 'override');
+  }
+
+  bool _isFrameworkBuilderCallback(MethodDeclaration node) {
+    final name = node.name.lexeme;
+    final normalizedName = name.startsWith('_') ? name.substring(1) : name;
+    if (!normalizedName.endsWith('Builder')) return false;
+
+    final parameters = node.parameters?.parameters;
+    if (parameters == null) return false;
+    return parameters.any((parameter) => parameter.toSource().contains('BuildContext'));
   }
 }

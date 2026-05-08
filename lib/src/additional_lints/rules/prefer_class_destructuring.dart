@@ -49,8 +49,15 @@ class PreferClassDestructuring extends AnalysisRule {
 
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+    if (_isTestFile(context)) return;
+
     final visitor = _Visitor(this);
     registry.addBlock(this, visitor);
+  }
+
+  bool _isTestFile(RuleContext context) {
+    final path = context.definingUnit.file.path.replaceAll('\\', '/');
+    return path.contains('/test/') || path.endsWith('_test.dart');
   }
 }
 

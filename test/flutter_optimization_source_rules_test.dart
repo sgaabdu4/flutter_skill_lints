@@ -43,6 +43,11 @@ abstract class _FlutterOptimizationRuleTest extends AnalysisRuleTest {
     await assertNoDiagnostics(_withIgnorePrefix(source));
   }
 
+  Future<void> assertAllowsInFile(String filePath, String source) async {
+    newFile(filePath, _withIgnorePrefix(source));
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
   ExpectedDiagnostic lintFor(String source, String needle, {bool lineStart = false}) {
     var offset = source.indexOf(needle);
     if (offset < 0) {
@@ -128,6 +133,10 @@ class IntrinsicHeight extends Widget {
 class SizedBox extends Widget {
   const SizedBox({double? height, Widget? child});
 }
+class ScaffoldMessengerState {}
+class RepaintBoundary extends Widget {
+  const RepaintBoundary({Key? key, Widget? child}) : super(key: key);
+}
 ''');
   }
 }
@@ -188,8 +197,40 @@ final rowKey = ValueKey('row');
     await assertReports(r'''
 import 'package:flutter/widgets.dart';
 
-final formKey = GlobalKey();
+final rowKey = GlobalKey();
 ''', 'GlobalKey');
+  }
+
+  Future<void> test_allowsGlobalKeyInKeyRegistry() async {
+    await assertAllowsInFile('$testPackageLibPath/core/showcase/showcase_keys.dart', r'''
+import 'package:flutter/widgets.dart';
+
+abstract final class ShowcaseKeys {
+  static final homeHeader = GlobalKey();
+}
+''');
+  }
+
+  Future<void> test_allowsTypedStateAccessGlobalKey() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+
+abstract final class SnackBarUtils {
+  static final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+}
+''');
+  }
+
+  Future<void> test_allowsRepaintBoundaryCaptureGlobalKey() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+
+class SharePreviewSheet {
+  SharePreviewSheet() : _shareableCardKey = GlobalKey();
+
+  final GlobalKey _shareableCardKey;
+}
+''');
   }
 
   Future<void> test_allowsGlobalKeyInTests() async {

@@ -177,7 +177,7 @@ linter:
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsProhibitedLocalPluginPathSources() async {
+  Future<void> test_allowsFlutterSkillLintsLocalPluginPathSource() async {
     newFile('$testPackageRootPath/analysis_options.yaml', r'''
 include: package:flutter_lints/flutter.yaml
 
@@ -185,6 +185,56 @@ plugins:
   flutter_skill_lints:
     "path": ../flutter_skill_lints
   riverpod_lint: 3.1.4-dev.3
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.gr.dart"
+    - "**/*.arb"
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    missing_required_param: error
+    missing_return: error
+    invalid_annotation_target: ignore
+
+linter:
+  rules:
+    - always_use_package_imports
+    - require_trailing_commas
+    - prefer_single_quotes
+    - directives_ordering
+    - avoid_multiple_declarations_per_line
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_const_literals_to_create_immutables
+    - prefer_final_locals
+    - avoid_redundant_argument_values
+    - flutter_skill_project_config
+    - avoid_dynamic_calls
+    - unawaited_futures
+    - discarded_futures
+    - avoid_void_async
+    - avoid_print
+    - cancel_subscriptions
+    - close_sinks
+''');
+
+    await assertNoDiagnostics('void main() {}');
+  }
+
+  Future<void> test_reportsProhibitedOtherLocalPluginPathSources() async {
+    newFile('$testPackageRootPath/analysis_options.yaml', r'''
+include: package:flutter_lints/flutter.yaml
+
+plugins:
+  flutter_skill_lints:
+    version: ^0.1.0
+  riverpod_lint:
+    "path": ../riverpod_lint
 
 analyzer:
   exclude:
@@ -360,10 +410,7 @@ linter:
     - close_sinks
 ''');
 
-    await assertDiagnostics('void main() {}', [
-      projectLint('cfg_analysis_options_canonical'),
-      projectLint('cfg_prohibited_lint_plugins'),
-    ]);
+    await assertDiagnostics('void main() {}', [projectLint('cfg_analysis_options_canonical')]);
   }
 
   Future<void> test_reportsQuotedProhibitedAnalysisOptionPlugins() async {

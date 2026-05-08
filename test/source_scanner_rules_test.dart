@@ -94,11 +94,7 @@ abstract class _SourceRuleTest extends AnalysisRuleTest {
   }
 
   Future<void> test_reportsDiagnostic() async {
-    final analyzedSource = addIgnorePrefix
-        ? '''
-// ignore_for_file: extends_non_class, final_not_initialized, implements_non_class, undefined_function, undefined_identifier, undefined_method, unused_import
-$source'''
-        : source;
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
     final expected = compatLint(analyzedSource, needle, ruleName, lineStart: lineStart);
     final filePath = path;
     if (filePath == null) {
@@ -108,6 +104,24 @@ $source'''
 
     newFile(filePath, analyzedSource);
     await assertDiagnosticsInFile(filePath, [expected]);
+  }
+
+  Future<void> assertAllows(String source, {String? path, bool addIgnorePrefix = true}) async {
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    if (path == null) {
+      await assertNoDiagnostics(analyzedSource);
+      return;
+    }
+
+    newFile(path, analyzedSource);
+    await assertNoDiagnosticsInFile(path);
+  }
+
+  String _analyzedSource(String source, {required bool addIgnorePrefix}) {
+    if (!addIgnorePrefix) return source;
+    return '''
+// ignore_for_file: extends_non_class, final_not_initialized, implements_non_class, undefined_function, undefined_identifier, undefined_method, unused_import
+$source''';
   }
 
   ExpectedDiagnostic compatLint(
@@ -566,7 +580,7 @@ sealed class Workout with _$Workout {
     final filePath = '$testPackageLibPath/features/workouts/domain/workout.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import
-import 'package:repem/features/shared/domain/enums.dart';
+import 'package:test_package/features/shared/domain/enums.dart';
 
 final class Workout {}
 ''');
@@ -578,14 +592,18 @@ final class Workout {}
     final filePath = '$testPackageLibPath/features/auth/domain/auth_error.dart';
     const source = r'''
 // ignore_for_file: uri_does_not_exist, unused_import
-import 'package:repem/core/constants/auth_strings.dart';
+import 'package:test_package/core/constants/auth_strings.dart';
 
 final class AuthError {}
 ''';
     newFile(filePath, source);
 
     await assertDiagnosticsInFile(filePath, [
-      compatLint(source, "import 'package:repem/core/constants/auth_strings.dart';", ruleName),
+      compatLint(
+        source,
+        "import 'package:test_package/core/constants/auth_strings.dart';",
+        ruleName,
+      ),
     ]);
   }
 }
@@ -772,6 +790,104 @@ final class StyleRawTokenTest extends _UiRuleTest {
   bool get lineStart => true;
   @override
   String get source => 'final inset = EdgeInsets.all(8);';
+
+  Future<void> test_allowsRawTokensInThemeDefinitions() async {
+    await assertAllows('''
+class Color {
+  const Color(int value);
+}
+
+abstract final class AppTheme {
+  static const surface = Color(0xFF070707);
+}
+''', path: '$testPackageLibPath/core/theme/app_theme.dart');
+  }
+
+  Future<void> test_allowsRawTokensInTests() async {
+    await assertAllows('''
+class EdgeInsets {
+  const EdgeInsets.all(double value);
+}
+
+void main() {
+  expect(segment.padding, equals(const EdgeInsets.all(8)));
+}
+''', path: '$testPackageRootPath/test/core/theme/app_theme_test.dart');
+  }
+
+  Future<void> test_allowsDesignTokensWithDigits() async {
+    await assertAllows('''
+abstract final class DesignTokens {
+  static const spacing0 = 0.0;
+  static const spacingMd2 = 14.0;
+  static const spacing3xl = 32.0;
+}
+
+class EdgeInsets {
+  const EdgeInsets.symmetric({double? horizontal, double? vertical});
+}
+
+class SizedBox extends Widget {
+  const SizedBox({double? height});
+}
+
+final padding = EdgeInsets.symmetric(vertical: DesignTokens.spacingMd2);
+final spacer = SizedBox(height: DesignTokens.spacing3xl);
+final empty = SizedBox(height: DesignTokens.spacing0);
+''');
+  }
+
+  Future<void> test_allowsZeroAndDerivedGeometry() async {
+    await assertAllows('''
+abstract final class DesignTokens {
+  static const spacingSm = 8.0;
+}
+
+class EdgeInsets {
+  const EdgeInsets.only({double? left});
+}
+
+class Radius {
+  const Radius.circular(double value);
+}
+
+final leadingPadding = EdgeInsets.only(left: index == 0 ? 0 : DesignTokens.spacingSm);
+final pillRadius = Radius.circular(height / 2);
+''');
+  }
+
+  Future<void> test_allowsSwitchArmIndicesNearTokenConstructors() async {
+    await assertAllows('''
+abstract final class DesignTokens {
+  static const spacingSm = 8.0;
+}
+
+class SizedBox extends Widget {
+  const SizedBox({double? height});
+}
+
+Object itemBuilder(int index) => switch (index) {
+  0 => const SizedBox(height: DesignTokens.spacingSm),
+  1 => const SizedBox(height: DesignTokens.spacingSm),
+  2 => const Object(),
+  _ => const Object(),
+};
+''');
+  }
+
+  Future<void> test_allowsCollectionBoundArithmeticNearTokenConstructors() async {
+    await assertAllows('''
+abstract final class DesignTokens {
+  static const spacingLg = 16.0;
+}
+
+class EdgeInsets {
+  const EdgeInsets.only({double? right});
+}
+
+final padding = EdgeInsets.only(right: i < labels.length - 1 ? DesignTokens.spacingLg : 0);
+''');
+  }
 }
 
 @reflectiveTest
@@ -782,6 +898,28 @@ final class StyleRawTextStyleTest extends _UiRuleTest {
   String get needle => 'TextStyle()';
   @override
   String get source => 'final style = TextStyle();';
+
+  Future<void> test_allowsTextStyleInThemeDefinitions() async {
+    await assertAllows('''
+class TextStyle {
+  const TextStyle({double? fontSize});
+}
+
+TextStyle appTextStyle({double fontSize = 14}) => TextStyle(fontSize: fontSize);
+''', path: '$testPackageLibPath/core/theme/bento_tokens.dart');
+  }
+
+  Future<void> test_allowsTextStyleInTests() async {
+    await assertAllows('''
+class TextStyle {
+  const TextStyle({double? fontSize});
+}
+
+void main() {
+  expect(style, equals(const TextStyle(fontSize: 14)));
+}
+''', path: '$testPackageRootPath/test/core/theme/app_theme_test.dart');
+  }
 }
 
 @reflectiveTest

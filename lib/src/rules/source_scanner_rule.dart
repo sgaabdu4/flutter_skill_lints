@@ -235,6 +235,19 @@ final class SourceScannerContext {
     return false;
   }
 
+  bool hasNearbyAnnotation(int lineIndex, Set<String> names) {
+    final start = lineIndex - 8 < 0 ? 0 : lineIndex - 8;
+    for (var i = lineIndex - 1; i >= start; i--) {
+      final line = source.masked[i].trim();
+      if (line.isEmpty) continue;
+      if (!line.startsWith('@')) break;
+      for (final name in names) {
+        if (RegExp('^@${RegExp.escape(name)}\\b').hasMatch(line)) return true;
+      }
+    }
+    return false;
+  }
+
   bool hasImmediateGuard(int awaitLine, int methodEnd, String target) {
     for (var i = awaitLine + 1; i <= methodEnd && i < source.length; i++) {
       final line = source.masked[i].trim();
@@ -256,6 +269,15 @@ final class SourceScannerContext {
     final end = lineIndex + distance >= source.length ? source.length - 1 : lineIndex + distance;
     for (var i = start; i <= end; i++) {
       if (source.masked[i].contains(needle)) return true;
+    }
+    return false;
+  }
+
+  bool nearOriginal(int lineIndex, RegExp pattern, int distance) {
+    final start = lineIndex - distance < 0 ? 0 : lineIndex - distance;
+    final end = lineIndex + distance >= source.length ? source.length - 1 : lineIndex + distance;
+    for (var i = start; i <= end; i++) {
+      if (pattern.hasMatch(source.original[i])) return true;
     }
     return false;
   }

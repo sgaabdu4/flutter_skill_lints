@@ -23,9 +23,15 @@ server boundary.
 | Riverpod async safety / `ref.mounted` after `await` | `use_ref_mounted_after_await` |
 | `context.mounted` after `await` | `use_context_mounted_after_await` |
 | No legacy Riverpod APIs | `avoid_legacy_riverpod_apis` |
+| `select()` callbacks use arrow syntax in Dart source | `riverpod_select_arrow_syntax` |
+| `Mutation<T>` usage has nearby experimental context in Dart source | `riverpod_mutation_experimental_warning` |
+| Computed auto-dispose providers whose watched dependencies are all known `keepAlive` become keepAlive too | `riverpod_auto_dispose_keepalive_dependencies` |
 | No `dynamic` except JSON maps | `avoid_dynamic_except_json_maps` |
+| No `as Map<String, Object?>` runtime map casts | `avoid_object_map_cast` |
+| Repositories do not extend generated `_$*Repository` bases | `arch_repository_generated_extends` |
 | No null bang | `avoid_null_bang` |
 | No `_buildXxx()` widget helpers | `avoid_widget_build_helpers` |
+| No private widget classes | `avoid_private_widget_classes` |
 | No `shrinkWrap: true` | `avoid_shrink_wrap` |
 | No unguarded `context.pop()` | `guard_context_pop` |
 | No ignored `ref.refresh()` | `use_ref_invalidate` |
@@ -35,6 +41,9 @@ server boundary.
 | No showcase key filtering | `avoid_showcase_key_filtering` |
 | No silent mutation no-op before repository init | `avoid_silent_repository_null_return` |
 | No sync `Notifier.build()` state read before initial state | `avoid_sync_notifier_state_read` |
+| No raw `e.toString()` state errors | `state_raw_error_to_string` |
+| No nullable `String? error` field in Freezed state | `state_freezed_nullable_error` |
+| `runZonedGuarded` has nearby legacy context in Dart source | `crash_run_zoned_guarded_legacy` |
 | Flutter skill analyzer config, prohibited old/local lint plugin wiring, deterministic E2E entrypoint, and `build.yaml` JSON settings | `flutter_skill_project_config` |
 | Source checks inspired by the old supplemental scanner behavior | Exact diagnostic IDs such as `riverpod_read_init_state`, `router_string_nav`, `notifier_ensure_deps`, `data_log_rethrow`, and `test_provider_container` |
 
@@ -55,6 +64,9 @@ checks.
 The analyzer diagnostics use analyzer-friendly IDs, such as
 `riverpod_read_init_state`. The supplemental scanner no longer publishes
 Dart-source rule IDs; those checks are analyzer-owned.
+
+Non-Dart drift checks remain scanner/CI owned because the analyzer plugin can
+only report diagnostics against Dart analysis units.
 
 ## Implemented Additional Analyzer Coverage
 

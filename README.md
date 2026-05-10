@@ -5,8 +5,8 @@
 
 Analyzer plugin that turns the
 [`building-flutter-apps`](https://skills.sh/sgaabdu4/building-flutter-apps/building-flutter-apps)
-skill's architecture and code-quality rules into Dart analyzer diagnostics —
-plus a curated `many_lints`-inspired surface — so feedback shows up in your
+skill's architecture and code-quality rules into Dart analyzer diagnostics,
+plus a curated `many_lints`-inspired surface, so feedback shows up in your
 IDE, `dart analyze`, and `flutter analyze`.
 
 Designed for Riverpod + codegen Flutter apps.
@@ -15,10 +15,10 @@ Designed for Riverpod + codegen Flutter apps.
 
 | Surface | Count |
 | --- | ---: |
-| Flutter skill warning rules | 94 |
-| Flutter skill diagnostic codes | 101 |
-| Additional Dart/Flutter warning rules | 82 |
-| Quick fixes | 65 |
+| Flutter skill warning rules | 104 |
+| Flutter skill diagnostic codes | 111 |
+| Additional Dart/Flutter warning rules | 80 |
+| Quick fixes | 63 |
 | Assists | 1 |
 
 ## Quick Start
@@ -31,7 +31,7 @@ Designed for Riverpod + codegen Flutter apps.
 
    plugins:
      flutter_skill_lints:
-       version: ^0.3.0
+       version: ^0.4.0
      riverpod_lint: 3.1.4-dev.3
 
    analyzer:
@@ -102,17 +102,17 @@ Encode the architectural rules from `building-flutter-apps`.
 | Area | Diagnostic IDs |
 | --- | --- |
 | Async safety | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `use_unawaited_for_fire_and_forget_futures`, `async_context_mounted_style` |
-| Riverpod | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_watch_no_select`, `riverpod_keepalive_family`, `use_ref_invalidate` |
+| Riverpod | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_watch_no_select`, `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`, `riverpod_auto_dispose_keepalive_dependencies`, `riverpod_keepalive_family`, `use_ref_invalidate` |
 | Notifiers | `avoid_silent_repository_null_return`, `avoid_sync_notifier_state_read`, `notifier_ensure_deps`, `notifier_watch_method` |
 | Freezed and serialization | `use_sealed_freezed_classes`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map` |
-| Architecture | `arch_domain_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_concrete_dependency`, `arch_datasource_try_catch`, `arch_widget_path`, `atomic_provider_access`, `typed_id_raw_id`, `records_map_return` |
+| Architecture | `arch_domain_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_repository_generated_extends`, `arch_concrete_dependency`, `arch_datasource_try_catch`, `arch_widget_path`, `atomic_provider_access`, `typed_id_raw_id`, `records_map_return`, `avoid_object_map_cast` |
 | Navigation | `guard_context_pop`, `avoid_route_param_throw_in_build`, `router_string_nav`, `router_pop_then_push`, `router_redirect_watch`, `router_redirect_loading_bounce` |
-| UI and accessibility | `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`, `ui_snackbar_boundary`, `a11y_text_scale_clamp` |
+| UI and accessibility | `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`, `ui_snackbar_boundary`, `a11y_text_scale_clamp` |
 | Performance | `perf_build_work`, `perf_listview_children` |
-| State | `state_raw_response`, `state_broad_invalidation` |
+| State | `state_raw_response`, `state_raw_error_to_string`, `state_freezed_nullable_error`, `state_broad_invalidation` |
 | ShowcaseView | `avoid_showcase_key_filtering`, `showcase_listen_manual_handle`, `showcase_prev_null_guard`, `showcase_default_scope`, `showcase_dispose_on_tap` |
 | Services and mixins | `service_singleton`, `mixin_mixin_class`, `mixin_name_suffix`, `mixin_mutable_state`, `dart_static_namespace` |
-| Data and crash reporting | `data_log_rethrow`, `crash_possible_pii` |
+| Data and crash reporting | `data_log_rethrow`, `crash_possible_pii`, `crash_run_zoned_guarded_legacy` |
 | Tests | `test_provider_container`, `test_uncontrolled_scope`, `test_create_container`, `test_mock_concrete`, `test_pump_and_settle`, `test_tap_at`, `test_inline_value_key`, `test_first_match_finder` |
 | Project config | `flutter_skill_project_config` |
 | Extended architecture and Freezed | `arch_model_missing_to_entity`, `arch_model_extends_entity`, `arch_domain_json_annotation`, `freezed_missing_private_constructor` |
@@ -241,7 +241,7 @@ analyzer:
 `analysis_options.yaml`. The plugin loads only at server start.
 
 **Plugin fails to load.** Check that your project resolves the analyzer
-versions listed under [Compatibility](#compatibility) — analyzer plugin APIs
+versions listed under [Compatibility](#compatibility). Analyzer plugin APIs
 are not stable across major versions.
 
 **Conflict with `riverpod_lint`.** Both plugins are designed to coexist; pin

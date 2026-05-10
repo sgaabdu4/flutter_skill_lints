@@ -7,6 +7,7 @@ import 'package:analyzer_testing/src/analysis_rule/pub_package_resolution.dart'
 import 'package:flutter_skill_lints/src/rules/avoid_dynamic_except_json_maps.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_legacy_riverpod_apis.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_null_bang.dart';
+import 'package:flutter_skill_lints/src/rules/avoid_private_widget_classes.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_route_param_throw_in_build.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_showcase_key_filtering.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_shrink_wrap.dart';
@@ -28,6 +29,7 @@ void main() {
     defineReflectiveTests(AvoidLegacyRiverpodApisTest);
     defineReflectiveTests(AvoidDynamicExceptJsonMapsTest);
     defineReflectiveTests(AvoidNullBangTest);
+    defineReflectiveTests(AvoidPrivateWidgetClassesTest);
     defineReflectiveTests(AvoidWidgetBuildHelpersTest);
     defineReflectiveTests(AvoidShrinkWrapTest);
     defineReflectiveTests(GuardContextPopTest);
@@ -96,6 +98,12 @@ abstract class StatelessWidget extends Widget {
   const StatelessWidget();
   Widget build(BuildContext context);
 }
+
+abstract class StatefulWidget extends Widget {
+  const StatefulWidget();
+}
+
+abstract class State<T extends StatefulWidget> {}
 ''');
   }
 
@@ -179,6 +187,85 @@ class ShowCaseWidget {
   void startShowCase(List<GlobalKey> keys) {}
 }
 ''');
+  }
+}
+
+@reflectiveTest
+final class AvoidPrivateWidgetClassesTest extends _FlutterSkillRuleTest {
+  @override
+  void setUp() {
+    rule = AvoidPrivateWidgetClasses();
+    super.setUp();
+  }
+
+  Future<void> test_reportsPrivateStatelessWidget() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class _PrivateCard extends StatelessWidget {
+  const _PrivateCard();
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+''';
+
+    await assertDiagnostics(source, [lintFor(source, '_PrivateCard')]);
+  }
+
+  Future<void> test_allowsPublicWidgetClasses() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class PublicCard extends StatelessWidget {
+  const PublicCard();
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+''');
+  }
+
+  Future<void> test_allowsPrivateStateSubclasses() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class PublicCard extends StatefulWidget {
+  const PublicCard();
+}
+
+class _PublicCardState extends State<PublicCard> {}
+''');
+  }
+
+  Future<void> test_reportsPrivateWidgetClassesInPartFiles() async {
+    newFile('$testPackageLibPath/widgets/sheet.dart', r'''
+import 'package:flutter/widgets.dart';
+
+part 'sheet_content.dart';
+
+class Sheet extends StatelessWidget {
+  const Sheet();
+
+  @override
+  Widget build(BuildContext context) => const _SheetContent();
+}
+''');
+
+    const source = r'''
+part of 'sheet.dart';
+
+class _SheetContent extends StatelessWidget {
+  const _SheetContent();
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+''';
+    final partPath = '$testPackageLibPath/widgets/sheet_content.dart';
+    newFile(partPath, source);
+
+    await assertDiagnosticsInFile(partPath, [lintFor(source, '_SheetContent')]);
   }
 }
 

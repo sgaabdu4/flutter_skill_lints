@@ -25,6 +25,9 @@ void main() {
     defineReflectiveTests(RiverpodReadInitStateTest);
     defineReflectiveTests(RiverpodServiceLocatorTest);
     defineReflectiveTests(RiverpodWatchNoSelectTest);
+    defineReflectiveTests(RiverpodSelectArrowSyntaxTest);
+    defineReflectiveTests(RiverpodMutationExperimentalWarningTest);
+    defineReflectiveTests(RiverpodAutoDisposeKeepAliveDependenciesTest);
     defineReflectiveTests(RiverpodKeepaliveFamilyTest);
     defineReflectiveTests(DartStaticNamespaceTest);
     defineReflectiveTests(FreezedPerClassExplicitToJsonTest);
@@ -34,12 +37,14 @@ void main() {
     defineReflectiveTests(ArchDomainImportTest);
     defineReflectiveTests(ArchDomainSerializationTest);
     defineReflectiveTests(ArchInterfaceContractTest);
+    defineReflectiveTests(ArchRepositoryGeneratedExtendsTest);
     defineReflectiveTests(ArchConcreteDependencyTest);
     defineReflectiveTests(ArchDatasourceTryCatchTest);
     defineReflectiveTests(ArchWidgetPathTest);
     defineReflectiveTests(AtomicProviderAccessTest);
     defineReflectiveTests(TypedIdRawIdTest);
     defineReflectiveTests(RecordsMapReturnTest);
+    defineReflectiveTests(ObjectMapCastTest);
     defineReflectiveTests(StyleRawTokenTest);
     defineReflectiveTests(StyleRawTextStyleTest);
     defineReflectiveTests(StringsHardcodedTest);
@@ -48,6 +53,8 @@ void main() {
     defineReflectiveTests(PerfBuildWorkTest);
     defineReflectiveTests(PerfListviewChildrenTest);
     defineReflectiveTests(StateRawResponseTest);
+    defineReflectiveTests(StateRawErrorToStringTest);
+    defineReflectiveTests(StateFreezedNullableErrorTest);
     defineReflectiveTests(StateBroadInvalidationTest);
     defineReflectiveTests(AsyncContextMountedStyleTest);
     defineReflectiveTests(RouterStringNavTest);
@@ -66,6 +73,7 @@ void main() {
     defineReflectiveTests(MixinMutableStateTest);
     defineReflectiveTests(DataLogRethrowTest);
     defineReflectiveTests(CrashPossiblePiiTest);
+    defineReflectiveTests(CrashRunZonedGuardedLegacyTest);
     defineReflectiveTests(TestProviderContainerTest);
     defineReflectiveTests(TestUncontrolledScopeTest);
     defineReflectiveTests(TestCreateContainerTest);
@@ -254,6 +262,471 @@ class TodoList {
 }
 
 @reflectiveTest
+final class RiverpodSelectArrowSyntaxTest extends _RiverpodRuleTest {
+  @override
+  String get ruleName => 'riverpod_select_arrow_syntax';
+  @override
+  String get needle => '.select((todo)';
+  @override
+  String get source => r'''
+class ProviderArg<T> {
+  Object select(Object Function(T value) selector) => Object();
+}
+
+class Todo {
+  const Todo(this.title);
+
+  final String title;
+}
+
+class WidgetRef {
+  Object watch(Object provider) => Object();
+}
+
+final provider = ProviderArg<Todo>();
+
+class TodoTitle {
+  Object build() {
+    final ref = WidgetRef();
+    return ref.watch(provider.select((todo) {
+      return todo.title;
+    }));
+  }
+}
+''';
+
+  Future<void> test_allowsArrowSelect() async {
+    await assertAllows(r'''
+class ProviderArg<T> {
+  Object select(Object Function(T value) selector) => Object();
+}
+
+class Todo {
+  const Todo(this.title);
+
+  final String title;
+}
+
+class WidgetRef {
+  Object watch(Object provider) => Object();
+}
+
+final provider = ProviderArg<Todo>();
+
+class TodoTitle {
+  Object build() {
+    final ref = WidgetRef();
+    return ref.watch(provider.select((todo) => todo.title));
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsNonRiverpodSelectApi() async {
+    await assertAllows(r'''
+class Query<T> {
+  Object select(Object Function(T value) selector) => Object();
+}
+
+final query = Query<int>();
+
+final selected = query.select((value) {
+  return value.isEven;
+});
+''');
+  }
+
+  Future<void> test_allowsUnrelatedSelectNearRefWatch() async {
+    await assertAllows(r'''
+class Query<T> {
+  Object select(Object Function(T value) selector) => Object();
+}
+
+class WidgetRef {
+  Object watch(Object provider) => Object();
+}
+
+final provider = Object();
+final query = Query<int>();
+
+class TodoTitle {
+  Object build() {
+    final ref = WidgetRef();
+    ref.watch(provider);
+    return query.select((value) {
+      return value.isEven;
+    });
+  }
+}
+''');
+  }
+
+  Future<void> test_reportsTypedBlockSelect() async {
+    final analyzedSource = _analyzedSource(r'''
+class ProviderArg<T> {
+  Object select(Object Function(T value) selector) => Object();
+}
+
+class Todo {
+  const Todo(this.title);
+
+  final String title;
+}
+
+class WidgetRef {
+  Object watch(Object provider) => Object();
+}
+
+final provider = ProviderArg<Todo>();
+
+class TodoTitle {
+  Object build() {
+    final ref = WidgetRef();
+    return ref.watch(provider.select((Todo todo) {
+      return todo.title;
+    }));
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '.select((Todo todo)', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsTrailingCommaBlockSelect() async {
+    final analyzedSource = _analyzedSource(r'''
+class ProviderArg<T> {
+  Object select(Object Function(T value) selector) => Object();
+}
+
+class Todo {
+  const Todo(this.title);
+
+  final String title;
+}
+
+class WidgetRef {
+  Object watch(Object provider) => Object();
+}
+
+final provider = ProviderArg<Todo>();
+
+class TodoTitle {
+  Object build() {
+    final ref = WidgetRef();
+    return ref.watch(provider.select((todo,) {
+      return todo.title;
+    }));
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '.select((todo,)', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsMultilineBlockSelect() async {
+    final analyzedSource = _analyzedSource(r'''
+class ProviderArg<T> {
+  Object select(Object Function(T value) selector) => Object();
+}
+
+class Todo {
+  const Todo(this.title);
+
+  final String title;
+}
+
+class WidgetRef {
+  Object watch(Object provider) => Object();
+}
+
+final provider = ProviderArg<Todo>();
+
+class TodoTitle {
+  Object build() {
+    final ref = WidgetRef();
+    return ref.watch(
+      provider.select(
+        (todo) {
+          return todo.title;
+        },
+      ),
+    );
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.select', ruleName)]);
+  }
+}
+
+@reflectiveTest
+final class RiverpodMutationExperimentalWarningTest extends _RiverpodRuleTest {
+  @override
+  String get ruleName => 'riverpod_mutation_experimental_warning';
+  @override
+  String get needle => 'Mutation<int>()';
+  @override
+  String get path =>
+      '$testPackageLibPath/features/todos/presentation/notifiers/todos_notifier.dart';
+  @override
+  String get source => r'''
+class Mutation<T> {
+  const Mutation();
+}
+
+final saveMutation = Mutation<int>();
+''';
+
+  Future<void> test_allowsNearbyExperimentalWarning() async {
+    await assertAllows(r'''
+class Mutation<T> {
+  const Mutation();
+}
+
+// experimental API while Riverpod finalizes mutation support.
+final saveMutation = Mutation<int>();
+''', path: path);
+  }
+
+  Future<void> test_allowsMutationClassDeclaration() async {
+    await assertAllows(r'''
+class Mutation<T> {
+  const Mutation();
+}
+''', path: path);
+  }
+
+  Future<void> test_allowsTypedefDeclaration() async {
+    await assertAllows(r'''
+typedef Mutation<T> = Object;
+''', path: path);
+  }
+
+  Future<void> test_allowsQualifiedNonRiverpodMutation() async {
+    await assertAllows(r'''
+class Graphql {
+  const Graphql();
+
+  Object Mutation<T>() => Object();
+}
+
+const graphql = Graphql();
+
+final saveMutation = graphql.Mutation<int>();
+''', path: path);
+  }
+
+  Future<void> test_allowsGraphqlMutationWidgetOutsideNotifier() async {
+    await assertAllows(r'''
+class Mutation<T> {
+  const Mutation();
+}
+
+final widget = Mutation<int>();
+''', path: '$testPackageLibPath/features/todos/presentation/widgets/mutation_widget.dart');
+  }
+}
+
+@reflectiveTest
+final class RiverpodAutoDisposeKeepAliveDependenciesTest extends _RiverpodRuleTest {
+  @override
+  String get ruleName => 'riverpod_auto_dispose_keepalive_dependencies';
+  @override
+  String get needle => '@riverpod';
+  @override
+  String get source => r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+const riverpod = Object();
+
+class Ref {
+  Object watch(Object provider) => Object();
+}
+
+@Riverpod(keepAlive: true)
+Object activeWorkout(Ref ref) => Object();
+
+@Riverpod(keepAlive: true)
+Object exercises(Ref ref) => Object();
+
+@riverpod
+Object workoutSummary(Ref ref) {
+  ref.watch(activeWorkoutProvider);
+  ref.watch(exercisesProvider.select((value) => value));
+  return Object();
+}
+''';
+
+  Future<void> test_reportsClassProvider() async {
+    final analyzedSource = _analyzedSource(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+const riverpod = Object();
+
+class Ref {
+  Object watch(Object provider) => Object();
+}
+
+@Riverpod(keepAlive: true)
+Object activeWorkout(Ref ref) => Object();
+
+@riverpod
+class WorkoutSummaryNotifier {
+  Object build() {
+    ref.watch(activeWorkoutProvider);
+    return Object();
+  }
+}
+''', addIgnorePrefix: true);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '@riverpod', ruleName)]);
+  }
+
+  Future<void> test_allowsAlreadyKeepAlive() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Ref {
+  Object watch(Object provider) => Object();
+}
+
+@Riverpod(keepAlive: true)
+Object activeWorkout(Ref ref) => Object();
+
+@Riverpod(keepAlive: true)
+Object workoutSummary(Ref ref) {
+  ref.watch(activeWorkoutProvider);
+  return Object();
+}
+''');
+  }
+
+  Future<void> test_allowsMixedKeepAliveAndAutoDisposeDependencies() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+const riverpod = Object();
+
+class Ref {
+  Object watch(Object provider) => Object();
+}
+
+@Riverpod(keepAlive: true)
+Object activeWorkout(Ref ref) => Object();
+
+@riverpod
+Object transientSelection(Ref ref) => Object();
+
+@riverpod
+Object workoutSummary(Ref ref) {
+  ref.watch(activeWorkoutProvider);
+  ref.watch(transientSelectionProvider);
+  return Object();
+}
+''');
+  }
+
+  Future<void> test_allowsUnknownExternalDependency() async {
+    await assertAllows(r'''
+const riverpod = Object();
+
+class Ref {
+  Object watch(Object provider) => Object();
+}
+
+@riverpod
+Object workoutSummary(Ref ref) {
+  ref.watch(externalProvider);
+  return Object();
+}
+''');
+  }
+
+  Future<void> test_allowsFamilyProviderTarget() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+const riverpod = Object();
+
+class Ref {
+  Object watch(Object provider) => Object();
+}
+
+@Riverpod(keepAlive: true)
+Object activeWorkout(Ref ref) => Object();
+
+@riverpod
+Object workoutSummary(Ref ref, String workoutId) {
+  ref.watch(activeWorkoutProvider);
+  return Object();
+}
+''');
+  }
+
+  Future<void> test_allowsFamilyNotifierTarget() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+const riverpod = Object();
+
+class Ref {
+  Object watch(Object provider) => Object();
+}
+
+@Riverpod(keepAlive: true)
+Object activeWorkout(Ref ref) => Object();
+
+@riverpod
+class WorkoutSummaryNotifier {
+  Object build(String workoutId) {
+    ref.watch(activeWorkoutProvider);
+    return Object();
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsReadOnlyKeepAliveProviderUse() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+const riverpod = Object();
+
+class Ref {
+  Object read(Object provider) => Object();
+}
+
+@Riverpod(keepAlive: true)
+Object activeWorkout(Ref ref) => Object();
+
+@riverpod
+Object workoutSummary(Ref ref) {
+  ref.read(activeWorkoutProvider);
+  return Object();
+}
+''');
+  }
+}
+
+@reflectiveTest
 final class RiverpodKeepaliveFamilyTest extends _RiverpodRuleTest {
   @override
   String get ruleName => 'riverpod_keepalive_family';
@@ -268,6 +741,91 @@ class Riverpod {
 @Riverpod(keepAlive: true)
 Object todoProvider({required String todoId}) => Object();
 ''';
+
+  Future<void> test_reportsRefFamilyParameter() async {
+    final analyzedSource = _analyzedSource(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Ref {}
+
+@Riverpod(keepAlive: true)
+Object todoProvider(Ref ref, String todoId) => Object();
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, needle, ruleName)]);
+  }
+
+  Future<void> test_allowsKeepAliveProviderWithoutFamilyArgument() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Ref {}
+
+@Riverpod(keepAlive: true)
+Object repositoryProvider(Ref ref) => Object();
+''');
+  }
+
+  Future<void> test_allowsKeepAliveClassProviderWithoutBuildArgument() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+@Riverpod(keepAlive: true)
+class RepositoryNotifier {
+  Object build() => Object();
+}
+''');
+  }
+
+  Future<void> test_reportsMultilineKeepAliveFamilyAnnotation() async {
+    final analyzedSource = _analyzedSource(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Ref {}
+
+@Riverpod(
+  keepAlive: true,
+)
+Object todoProvider(Ref ref, String todoId) => Object();
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, needle, ruleName)]);
+  }
+
+  Future<void> test_reportsKeepAliveClassBuildFamily() async {
+    final analyzedSource = _analyzedSource(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+@Riverpod(keepAlive: true)
+class TodoNotifier {
+  Object build(String todoId) => Object();
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, needle, ruleName)]);
+  }
+
+  Future<void> test_allowsTickerModeKeepAliveWorkaround() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Ref {}
+
+/// keepAlive: all deps are keepAlive.
+/// Auto-dispose triggers Riverpod 3.2.x TickerMode assertion (rrousselGit/riverpod#4709).
+@Riverpod(keepAlive: true)
+Object todoProvider(Ref ref, String todoId) => Object();
+''');
+  }
 }
 
 abstract class _FreezedRuleTest extends _SourceRuleTest {
@@ -639,6 +1197,47 @@ final class ArchInterfaceContractTest extends _ArchitectureRuleTest {
 }
 
 @reflectiveTest
+final class ArchRepositoryGeneratedExtendsTest extends _ArchitectureRuleTest {
+  @override
+  String get ruleName => 'arch_repository_generated_extends';
+  @override
+  String get needle => r'extends _$OrderRepository';
+  @override
+  String get source => r'''
+abstract class _$OrderRepository {}
+
+class OrderRepository extends _$OrderRepository {}
+''';
+
+  Future<void> test_allowsRepositoryInterfaceImplementation() async {
+    await assertAllows(r'''
+abstract interface class IOrderRepository {}
+
+class HiveOrderRepository implements IOrderRepository {}
+''');
+  }
+
+  Future<void> test_allowsGeneratedNotifierClasses() async {
+    await assertAllows(r'''
+abstract class _$OrderRepositoryNotifier {}
+
+class OrderRepositoryNotifier extends _$OrderRepositoryNotifier {}
+''');
+  }
+
+  Future<void> test_allowsRiverpodGeneratedProviderClass() async {
+    await assertAllows(r'''
+const riverpod = Object();
+
+abstract class _$OrderRepository {}
+
+@riverpod
+class OrderRepository extends _$OrderRepository {}
+''');
+  }
+}
+
+@reflectiveTest
 final class ArchConcreteDependencyTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'arch_concrete_dependency';
@@ -770,6 +1369,36 @@ final class RestTimerActivityData {
     'totalSets': totalSets,
     'endTimeEpoch': endTime.millisecondsSinceEpoch ~/ 1000,
   };
+}
+''');
+  }
+}
+
+@reflectiveTest
+final class ObjectMapCastTest extends _ArchitectureRuleTest {
+  @override
+  String get ruleName => 'avoid_object_map_cast';
+  @override
+  String get needle => 'as Map<String, Object?>';
+  @override
+  String get source => r'''
+void read(Object? value) {
+  final payload = value as Map<String, Object?>;
+}
+''';
+
+  Future<void> test_allowsObjectMapDeclarations() async {
+    await assertAllows(r'''
+void read(Map<String, Object?> payload) {
+  payload['ok'];
+}
+''');
+  }
+
+  Future<void> test_allowsDynamicMapCasts() async {
+    await assertAllows(r'''
+void read(Object? value) {
+  final payload = value as Map<String, dynamic>;
 }
 ''');
   }
@@ -1029,6 +1658,83 @@ void f(state) {
   state = state.copyWith(response: Object());
 }
 ''';
+}
+
+@reflectiveTest
+final class StateRawErrorToStringTest extends _StateRuleTest {
+  @override
+  String get ruleName => 'state_raw_error_to_string';
+  @override
+  String get needle => 'error: e.toString()';
+  @override
+  String get source => r'''
+void fail(state, Object e) {
+  state = state.copyWith(error: e.toString());
+}
+''';
+
+  Future<void> test_allowsStructuredErrorMessage() async {
+    await assertAllows(r'''
+void fail(state, String message) {
+  state = state.copyWith(error: message);
+}
+''');
+  }
+}
+
+@reflectiveTest
+final class StateFreezedNullableErrorTest extends _StateRuleTest {
+  @override
+  String get ruleName => 'state_freezed_nullable_error';
+  @override
+  String get needle => 'String? error';
+  @override
+  String get source => r'''
+const freezed = Object();
+
+@freezed
+class LoginState {
+  const LoginState({this.error});
+
+  final String? error;
+}
+''';
+
+  Future<void> test_allowsStructuredFailure() async {
+    await assertAllows(r'''
+const freezed = Object();
+
+@freezed
+class LoginState {
+  const LoginState({this.failure});
+
+  final Object? failure;
+}
+''');
+  }
+
+  Future<void> test_allowsNullableErrorOutsideFreezedState() async {
+    await assertAllows(r'''
+class LegacyState {
+  const LegacyState({this.error});
+
+  final String? error;
+}
+''');
+  }
+
+  Future<void> test_allowsFreezedDtoWithNullableErrorField() async {
+    await assertAllows(r'''
+const freezed = Object();
+
+@freezed
+class ApiErrorModel {
+  const ApiErrorModel({this.error});
+
+  final String? error;
+}
+''');
+  }
 }
 
 @reflectiveTest
@@ -1385,6 +2091,48 @@ void recordCrash() {
   Crash.error(email);
 }
 ''';
+}
+
+@reflectiveTest
+final class CrashRunZonedGuardedLegacyTest extends _DataCrashRuleTest {
+  @override
+  String get ruleName => 'crash_run_zoned_guarded_legacy';
+  @override
+  String get needle => 'runZonedGuarded';
+  @override
+  String get source => r'''
+void main() {
+  runZonedGuarded(() {}, (error, stack) {});
+}
+''';
+
+  Future<void> test_allowsNearbyLegacyContext() async {
+    await assertAllows(r'''
+void main() {
+  // legacy bridge while older crash wiring is removed.
+  runZonedGuarded(() {}, (error, stack) {});
+}
+''');
+  }
+
+  Future<void> test_allowsRunZonedGuardedDeclaration() async {
+    await assertAllows(r'''
+void runZonedGuarded(Object body, Object onError) {}
+''');
+  }
+
+  Future<void> test_allowsGenericRunZonedGuardedDeclaration() async {
+    await assertAllows(r'''
+R? runZonedGuarded<R>(Object body, Object onError) => null;
+''');
+  }
+
+  Future<void> test_allowsRunZonedGuardedInCommentAndString() async {
+    await assertAllows(r'''
+// runZonedGuarded(() {}, (error, stack) {});
+final text = 'runZonedGuarded';
+''');
+  }
 }
 
 abstract class _TestRuleTest extends _SourceRuleTest {

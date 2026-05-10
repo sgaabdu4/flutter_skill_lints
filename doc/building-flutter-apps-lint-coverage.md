@@ -4,10 +4,10 @@ Status: 2026-05-07.
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 93 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 100 `building-flutter-apps` diagnostic codes.
-- `lib/src/additional_lints/rules/**`: 82 additional diagnostics.
-- Total unique diagnostics: 182.
+- `lib/src/rules/**`: 104 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 111 `building-flutter-apps` diagnostic codes.
+- `lib/src/additional_lints/rules/**`: 80 additional diagnostics.
+- Total unique diagnostics: 191.
 
 ## Full Rule Inventory
 
@@ -23,12 +23,15 @@ arch_domain_serialization
 arch_interface_contract
 arch_model_extends_entity
 arch_model_missing_to_entity
+arch_repository_generated_extends
 arch_widget_path
 async_context_mounted_style
 atomic_provider_access
 avoid_dynamic_except_json_maps
 avoid_legacy_riverpod_apis
 avoid_null_bang
+avoid_object_map_cast
+avoid_private_widget_classes
 avoid_route_param_throw_in_build
 avoid_showcase_key_filtering
 avoid_shrink_wrap
@@ -46,6 +49,7 @@ cfg_strict_analysis
 crash_direct_firebase_call
 crash_init_before_run_app
 crash_possible_pii
+crash_run_zoned_guarded_legacy
 dart_static_namespace
 data_log_rethrow
 fire_and_forget_missing_catch
@@ -75,8 +79,11 @@ notifier_watch_method
 perf_build_work
 perf_listview_children
 records_map_return
+riverpod_auto_dispose_keepalive_dependencies
 riverpod_keepalive_family
+riverpod_mutation_experimental_warning
 riverpod_read_init_state
+riverpod_select_arrow_syntax
 riverpod_service_locator
 riverpod_watch_no_select
 router_impure_redirect
@@ -96,6 +103,8 @@ showcase_prev_null_guard
 showcase_scope_string_literal
 showcase_v4_api
 state_broad_invalidation
+state_freezed_nullable_error
+state_raw_error_to_string
 state_raw_response
 strings_hardcoded
 style_raw_text_style
@@ -208,6 +217,8 @@ Core skill rules already covered before this pass:
 
 - Riverpod/codegen: `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`,
   `riverpod_service_locator`, `riverpod_watch_no_select`,
+  `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`,
+  `riverpod_auto_dispose_keepalive_dependencies`,
   `riverpod_keepalive_family`, `use_ref_invalidate`.
 - Async safety: `use_ref_mounted_after_await`,
   `use_context_mounted_after_await`, `async_context_mounted_style`,
@@ -221,14 +232,16 @@ Core skill rules already covered before this pass:
 - Architecture: `arch_domain_import`, `arch_domain_serialization`,
   `arch_interface_contract`, `arch_concrete_dependency`,
   `arch_datasource_try_catch`, `arch_widget_path`, `atomic_provider_access`,
-  `typed_id_raw_id`, `records_map_return`.
+  `typed_id_raw_id`, `records_map_return`, `avoid_object_map_cast`.
 - Navigation: `guard_context_pop`, `avoid_route_param_throw_in_build`,
   `router_string_nav`, `router_pop_then_push`, `router_redirect_watch`,
   `router_redirect_loading_bounce`.
 - UI/performance: `avoid_widget_build_helpers`, `avoid_shrink_wrap`,
   `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`,
-  `ui_snackbar_boundary`, `a11y_text_scale_clamp`, `perf_build_work`,
-  `perf_listview_children`, `state_raw_response`, `state_broad_invalidation`.
+  `ui_snackbar_boundary`, `a11y_text_scale_clamp`,
+  `avoid_private_widget_classes`, `perf_build_work`, `perf_listview_children`,
+  `state_raw_response`, `state_raw_error_to_string`,
+  `state_broad_invalidation`.
 - Showcase: `avoid_showcase_key_filtering`, `showcase_listen_manual_handle`,
   `showcase_prev_null_guard`, `showcase_default_scope`,
   `showcase_dispose_on_tap`.
@@ -260,10 +273,10 @@ hover description and correction text.
 | --- | --- |
 | `analysis-options.md` | `cfg_analysis_options_canonical`, `cfg_strict_analysis`, `cfg_required_lints`, `cfg_generated_exclude`, `cfg_freezed_annotation_ignore`, `cfg_prohibited_lint_plugins` |
 | `analysis_options.yaml` | Canonical include/plugins/analyzer/linter block; duplicate checks leave `flutter_lints` and `riverpod_lint` owned rules to those packages |
-| `architecture.md` | `arch_domain_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_concrete_dependency`, `arch_datasource_try_catch`, `arch_widget_path`, `arch_model_missing_to_entity`, `arch_model_extends_entity`, `atomic_provider_access`, runtime boundary for dual persistence owners |
+| `architecture.md` | `arch_domain_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_repository_generated_extends`, `arch_concrete_dependency`, `arch_datasource_try_catch`, `arch_widget_path`, `arch_model_missing_to_entity`, `arch_model_extends_entity`, `atomic_provider_access`, `avoid_object_map_cast`, runtime boundary for dual persistence owners |
 | `atomic-design.md` | `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`, `atomic_provider_access`, `arch_widget_path`, runtime boundary for cross-feature widget promotion |
 | `common-patterns.md` | `router_string_nav`, `router_pop_then_push`, `router_redirect_watch`, `router_redirect_loading_bounce`, `router_impure_redirect`, `router_shell_tab_push`, `guard_context_pop`, `avoid_route_param_throw_in_build`, `state_broad_invalidation`, runtime boundary for UX-specific debounce duration |
-| `crashlytics.md` | `crash_direct_firebase_call`, `crash_init_before_run_app`, `crash_possible_pii`, runtime boundary for CI symbol upload |
+| `crashlytics.md` | `crash_direct_firebase_call`, `crash_init_before_run_app`, `crash_possible_pii`, `crash_run_zoned_guarded_legacy`, runtime boundary for CI symbol upload |
 | `dart-mcp-e2e-testing.md` | `cfg_e2e_entrypoint`, `test_inline_value_key`, `test_tap_at`, `test_first_match_finder`, runtime boundary for real device, logs, source-of-truth, cleanup, and multi-actor proof |
 | `dart-patterns-records.md` | `records_map_return`, `typed_id_raw_id`, `avoid_null_bang`, `prefer_wildcard_pattern`, `prefer_class_destructuring`, `use_existing_destructuring` |
 | `extensions-utilities.md` | `ui_snackbar_boundary`, `dart_static_namespace`, `service_static_side_effect`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures` |
@@ -271,14 +284,23 @@ hover description and correction text.
 | `freezed-sealed.md` | `use_sealed_freezed_classes`, `freezed_missing_private_constructor`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map`, `arch_domain_json_annotation`, `cfg_explicit_to_json` |
 | `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_test_close_missing`, runtime boundary for historical TypeId permanence |
 | `mixins.md` | `mixin_mixin_class`, `mixin_name_suffix`, `mixin_mutable_state` |
-| `performance.md` | `riverpod_watch_no_select`, `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `perf_listview_children`, `perf_build_work`, `state_raw_response`, `a11y_text_scale_clamp`, `flutter_*` optimization rules |
-| `riverpod-codegen.md` | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_watch_no_select`, `riverpod_keepalive_family`, `use_ref_invalidate`; Riverpod-owned dependency/scoping/provider-shape diagnostics stay with `riverpod_lint` |
+| `performance.md` | `riverpod_watch_no_select`, `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `perf_listview_children`, `perf_build_work`, `state_raw_response`, `state_raw_error_to_string`, `a11y_text_scale_clamp`, `flutter_*` optimization rules |
+| `riverpod-codegen.md` | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_watch_no_select`, `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`, `riverpod_auto_dispose_keepalive_dependencies`, `riverpod_keepalive_family`, `use_ref_invalidate`; Riverpod-owned dependency/scoping/provider-shape diagnostics stay with `riverpod_lint` |
 | `services-and-singletons.md` | `service_singleton`, `service_static_side_effect`, `service_random_per_call`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures`, `fire_forget_in_tests` |
 | `showcase-tours.md` | `avoid_showcase_key_filtering`, `showcase_listen_manual_handle`, `showcase_prev_null_guard`, `showcase_default_scope`, `showcase_dispose_on_tap`, `showcase_v4_api`, `showcase_get_named_unhandled`, `showcase_scope_string_literal` |
-| `state-management.md` | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `async_context_mounted_style`, `avoid_sync_notifier_state_read`, `avoid_silent_repository_null_return`, `notifier_ensure_deps`, `notifier_watch_method`, `state_broad_invalidation`, runtime boundary for source-of-truth freshness |
+| `state-management.md` | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `async_context_mounted_style`, `avoid_sync_notifier_state_read`, `avoid_silent_repository_null_return`, `notifier_ensure_deps`, `notifier_watch_method`, `state_broad_invalidation`, `state_freezed_nullable_error`, runtime boundary for source-of-truth freshness |
 | `testing.md` | `cfg_e2e_entrypoint`, `test_provider_container`, `test_uncontrolled_scope`, `test_create_container`, `test_mock_concrete`, `test_pump_and_settle`, `test_tap_at`, `test_inline_value_key`, `test_first_match_finder`, runtime boundary for event-contract and cross-runtime drift proof |
 
 ## Added In This Pass
+
+Dart-source drift parity:
+
+- `arch_repository_generated_extends`
+- `riverpod_auto_dispose_keepalive_dependencies`
+- `riverpod_select_arrow_syntax`
+- `riverpod_mutation_experimental_warning`
+- `state_freezed_nullable_error`
+- `crash_run_zoned_guarded_legacy`
 
 Architecture/Freezed:
 

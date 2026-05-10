@@ -27,6 +27,58 @@ final List<ScannerRule> stateSourceRules = [
     },
   ),
 
+  /// Do not surface raw exception strings in state.
+  ///
+  /// Why: Flags `error: e.toString()` state updates. Convert failures to
+  /// structured app exceptions or user-safe messages before they enter UI state.
+  scannerRule(
+    code: const LintCode(
+      'state_raw_error_to_string',
+      'Do not surface raw exception strings in state.',
+      correctionMessage: 'Use AppException or another structured, user-safe error message.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags raw error toString state updates so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      final rawErrorString = RegExp(r'\berror\s*:\s*[A-Za-z_]\w*\.toString\(\)');
+      for (var i = 0; i < context.source.length; i++) {
+        final match = rawErrorString.firstMatch(context.source.masked[i]);
+        if (match != null) {
+          reporter.report(context, i, match.start);
+        }
+      }
+    },
+  ),
+
+  /// Freezed state should not carry nullable raw error strings.
+  ///
+  /// Why: Flags String? error fields in Freezed state classes. Model failures as
+  /// AsyncError, failure unions, or structured app exceptions.
+  scannerRule(
+    code: const LintCode(
+      'state_freezed_nullable_error',
+      'Do not store nullable raw error strings in Freezed state.',
+      correctionMessage: 'Use AsyncError, a failure union, or a structured app exception.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags String? error fields in Freezed state classes so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      final nullableError = RegExp(r'\bString\?\s+error\b');
+      for (final classSpan in context.classes) {
+        if (!context.hasFreezedAnnotation(classSpan)) continue;
+        if (!classSpan.name.endsWith('State')) continue;
+        for (var i = classSpan.start; i <= classSpan.end; i++) {
+          final match = nullableError.firstMatch(context.source.masked[i]);
+          if (match != null) {
+            reporter.report(context, i, match.start);
+          }
+        }
+      }
+    },
+  ),
+
   /// Avoid broad invalidation before navigation-critical route changes.
   ///
   /// Why: Flags broad invalidation before navigation-critical route changes. Persist,

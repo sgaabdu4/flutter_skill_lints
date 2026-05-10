@@ -77,6 +77,31 @@ final List<ScannerRule> architectureSourceRules = [
     },
   ),
 
+  /// Repositories should implement contracts, not generated bases.
+  ///
+  /// Why: Flags repository classes extending generated _$Repository bases. Keep
+  /// generated Riverpod classes on notifiers; concrete repositories implement I* contracts.
+  scannerRule(
+    code: const LintCode(
+      'arch_repository_generated_extends',
+      'Repositories must implement interfaces instead of extending generated bases.',
+      correctionMessage:
+          'Use a concrete repository that implements I*Repository, not extends _\$*Repository.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags repositories extending generated classes so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      final generatedRepository = RegExp(r'\bclass\s+\w+Repository\s+extends\s+_\$\w+Repository\b');
+      for (var i = 0; i < context.source.length; i++) {
+        final match = generatedRepository.firstMatch(context.source.masked[i]);
+        if (match != null && !context.hasNearbyAnnotation(i, const {'riverpod', 'Riverpod'})) {
+          reporter.report(context, i, context.source.masked[i].indexOf('extends'));
+        }
+      }
+    },
+  ),
+
   /// Layer constructors should depend on interfaces.
   ///
   /// Why: Flags concrete repository or datasource constructor dependencies. Take
@@ -213,6 +238,30 @@ final List<ScannerRule> architectureSourceRules = [
         final line = context.source.masked[i];
         if (context.isMapDynamicReturn(line)) {
           reporter.report(context, i, line.indexOf('Map'));
+        }
+      }
+    },
+  ),
+
+  /// Cast untyped map boundaries to Map<String, dynamic>.
+  ///
+  /// Why: Flags `as Map<String, Object?>` casts. JSON/runtime map casts need
+  /// `dynamic` values so downstream JSON access stays explicit and consistent.
+  scannerRule(
+    code: const LintCode(
+      'avoid_object_map_cast',
+      'Cast untyped map boundaries to Map<String, dynamic>.',
+      correctionMessage: 'Use `as Map<String, dynamic>` at runtime map boundaries.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags Map<String, Object?> casts so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      final objectMapCast = RegExp(r'\bas\s+Map\s*<\s*String\s*,\s*Object\?\s*>');
+      for (var i = 0; i < context.source.length; i++) {
+        final match = objectMapCast.firstMatch(context.source.masked[i]);
+        if (match != null) {
+          reporter.report(context, i, match.start);
         }
       }
     },

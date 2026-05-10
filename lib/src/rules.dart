@@ -4,6 +4,7 @@ import 'package:flutter_skill_lints/src/rules/architecture_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_dynamic_except_json_maps.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_legacy_riverpod_apis.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_null_bang.dart';
+import 'package:flutter_skill_lints/src/rules/avoid_private_widget_classes.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_route_param_throw_in_build.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_showcase_key_filtering.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_shrink_wrap.dart';
@@ -40,6 +41,7 @@ final List<AbstractAnalysisRule> flutterSkillRules = [
   AvoidLegacyRiverpodApis(),
   AvoidDynamicExceptJsonMaps(),
   AvoidNullBang(),
+  AvoidPrivateWidgetClasses(),
   AvoidWidgetBuildHelpers(),
   AvoidShrinkWrap(),
   GuardContextPop(),

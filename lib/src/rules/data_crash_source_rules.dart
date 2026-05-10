@@ -53,4 +53,34 @@ final List<ScannerRule> dataCrashSourceRules = [
       }
     },
   ),
+
+  /// runZonedGuarded should be marked as legacy crash wiring.
+  ///
+  /// Why: Prefer FlutterError.onError and PlatformDispatcher hooks for current crash
+  /// reporting. If runZonedGuarded remains, require local legacy context.
+  scannerRule(
+    code: const LintCode(
+      'crash_run_zoned_guarded_legacy',
+      'runZonedGuarded must have nearby legacy context.',
+      correctionMessage:
+          'Add a nearby legacy note, or replace with FlutterError.onError and PlatformDispatcher.',
+      severity: DiagnosticSeverity.WARNING,
+    ),
+    description:
+        'Flags runZonedGuarded without nearby legacy context so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      final legacy = RegExp(r'\blegacy\b', caseSensitive: false);
+      for (var i = 0; i < context.source.length; i++) {
+        final line = context.source.masked[i];
+        if (RegExp(
+          r'^\s*(?:[A-Za-z_]\w*(?:<[^>]+>)?\??|void)\s+runZonedGuarded(?:<[^>]+>)?\s*\(',
+        ).hasMatch(line)) {
+          continue;
+        }
+        final column = line.indexOf('runZonedGuarded');
+        if (column < 0 || context.nearOriginal(i, legacy, 10)) continue;
+        reporter.report(context, i, column);
+      }
+    },
+  ),
 ];

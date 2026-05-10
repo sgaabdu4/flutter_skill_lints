@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.4.0] - 2026-05-10
+
+- Added analyzer diagnostics for the remaining Dart-source drift checks:
+  `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`,
+  `arch_repository_generated_extends`, `state_freezed_nullable_error`, and
+  `crash_run_zoned_guarded_legacy`.
+- Tightened `riverpod_keepalive_family` so codegen family providers with
+  positional `Ref ref, value` parameters are reported, not only providers with
+  `required` named parameters.
+- Added `riverpod_auto_dispose_keepalive_dependencies` to flag computed
+  auto-dispose providers whose same-file watched dependencies are all known
+  `keepAlive`, matching the `building-flutter-apps` provider decision tree.
+- Allowed documented `@Riverpod(keepAlive: true)` family workarounds for the
+  open Riverpod TickerMode assertion issue `rrousselGit/riverpod#4709`.
+- Added extra false-positive coverage for non-Riverpod `select` APIs,
+  keep-alive providers without family arguments, generated notifier classes,
+  Riverpod-generated provider classes named `*Repository`, Freezed DTOs with
+  nullable error fields, non-notifier/qualified `Mutation<T>` usages,
+  `Mutation<T>` declarations, and `runZonedGuarded` declarations/comments.
+- Documented that non-Dart drift checks remain owned by `check_drift.sh`/CI
+  because analyzer plugin diagnostics attach to Dart analysis units.
+
 ## [0.3.0] - 2026-05-10
 
 - Expanded the Flutter skill analyzer surface with extended architecture,

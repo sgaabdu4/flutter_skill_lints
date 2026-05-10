@@ -31,7 +31,7 @@ Designed for Riverpod + codegen Flutter apps.
 
    plugins:
      flutter_skill_lints:
-       version: ^0.2.0
+       version: ^0.3.0
      riverpod_lint: 3.1.4-dev.3
 
    analyzer:

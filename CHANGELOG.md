@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0] - 2026-05-10
+
+- Expanded the Flutter skill analyzer surface with extended architecture,
+  Freezed, routing, ShowcaseView, Flutter optimization, persistence, crash
+  reporting, service, mixin, state, UI, and test diagnostics.
+- Added `use_unawaited_for_fire_and_forget_futures` and broadened project
+  configuration checks for analyzer plugins, strict analysis, generated-file
+  excludes, Freezed annotation ignores, `explicit_to_json`, prohibited lint
+  plugin dependencies, and deterministic Flutter Driver entrypoints.
+- Tightened migrated `many_lints`-style coverage with additional false-positive
+  tests, source scanner regression tests, and updated rule registration.
+- Refreshed README rule counts, example configuration, and lint coverage
+  documentation for the expanded diagnostic set.
+
 ## [0.2.0] - 2026-05-07
 
 - Documentation pass: rewrote `README.md` for faster onboarding, added a Quick

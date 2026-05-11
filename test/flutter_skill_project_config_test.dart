@@ -32,7 +32,6 @@ environment:
     newFile('$testPackageRootPath/analysis_options.yaml', r'''
 plugins:
   flutter_skill_lints:
-    version: ^0.1.0
   many_lints:
     path: ../many_lints
 
@@ -184,6 +183,9 @@ include: package:flutter_lints/flutter.yaml
 plugins:
   flutter_skill_lints:
     "path": ../flutter_skill_lints
+  # Pre-release pin: lift when riverpod_lint 3.2.0 stable lands.
+  # Verify pub.dev before ship. Promote to latest stable when possible.
+  # Pre-release silently adopts dev behavior - review.
   riverpod_lint: 3.1.4-dev.3
 
 analyzer:
@@ -232,7 +234,6 @@ include: package:flutter_lints/flutter.yaml
 
 plugins:
   flutter_skill_lints:
-    version: ^0.1.0
   riverpod_lint:
     "path": ../riverpod_lint
 
@@ -282,7 +283,9 @@ include: package:flutter_lints/flutter.yaml
 
 plugins:
   flutter_skill_lints:
-    version: ^0.1.0
+  # Pre-release pin: lift when riverpod_lint 3.2.0 stable lands.
+  # Verify pub.dev before ship. Promote to latest stable when possible.
+  # Pre-release silently adopts dev behavior - review.
   riverpod_lint: 3.1.4-dev.3
 
 analyzer:
@@ -322,7 +325,6 @@ include: package:flutter_lints/flutter.yaml
 
 plugins:
   flutter_skill_lints:
-    version: ^0.1.0
   riverpod_lint:
     "git":
       url: https://example.invalid/riverpod_lint.git
@@ -419,7 +421,9 @@ include: package:flutter_lints/flutter.yaml
 
 plugins:
   flutter_skill_lints:
-    version: ^0.1.0
+  # Pre-release pin: lift when riverpod_lint 3.2.0 stable lands.
+  # Verify pub.dev before ship. Promote to latest stable when possible.
+  # Pre-release silently adopts dev behavior - review.
   riverpod_lint: 3.1.4-dev.3
   "many_lints": ^0.4.0
 
@@ -488,7 +492,9 @@ include: package:flutter_lints/flutter.yaml
 
 plugins:
   flutter_skill_lints:
-    version: ^0.1.0
+  # Pre-release pin: lift when riverpod_lint 3.2.0 stable lands.
+  # Verify pub.dev before ship. Promote to latest stable when possible.
+  # Pre-release silently adopts dev behavior - review.
   riverpod_lint: 3.1.4-dev.3
 
 analyzer:

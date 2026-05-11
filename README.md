@@ -7,7 +7,7 @@ Analyzer plugin that turns the
 [`building-flutter-apps`](https://skills.sh/sgaabdu4/building-flutter-apps/building-flutter-apps)
 skill's architecture and code-quality rules into Dart analyzer diagnostics,
 plus a curated `many_lints`-inspired surface, so feedback shows up in your
-IDE, `dart analyze`, and `flutter analyze`.
+IDE, `dart analyze`, and full-project Flutter analyzer runs.
 
 Designed for Riverpod + codegen Flutter apps.
 
@@ -31,7 +31,9 @@ Designed for Riverpod + codegen Flutter apps.
 
    plugins:
      flutter_skill_lints:
-       version: ^0.4.0
+     # Pre-release pin: lift when riverpod_lint 3.2.0 stable lands.
+     # Verify pub.dev before ship. Promote to latest stable when possible.
+     # Pre-release silently adopts dev behavior - review.
      riverpod_lint: 3.1.4-dev.3
 
    analyzer:
@@ -79,9 +81,16 @@ Designed for Riverpod + codegen Flutter apps.
 3. Run analysis:
 
    ```bash
-   flutter analyze    # or: dart analyze
-   flutter test       # or: dart test
+   dart analyze       # CLI/CI gate; do not path-scope analysis
+   dart test
    ```
+
+   Full-project `flutter analyze` can be useful locally, but the
+   `building-flutter-apps` skill uses `dart analyze` for CLI/CI because
+   path-scoped Flutter analysis can drop plugin diagnostics.
+   `flutter_skill_lints` can read project files and report configuration drift
+   through Dart-analysis diagnostics, but it does not replace `flutter pub get`
+   or pub.dev publish validation.
 
 ### Optional: install the companion skill
 
@@ -245,7 +254,8 @@ versions listed under [Compatibility](#compatibility). Analyzer plugin APIs
 are not stable across major versions.
 
 **Conflict with `riverpod_lint`.** Both plugins are designed to coexist; pin
-`riverpod_lint: 3.1.4-dev.3` to match the version we test against.
+`riverpod_lint` to prerelease `3.1.4-dev.3` to match the version we test
+against.
 
 ## Compatibility
 

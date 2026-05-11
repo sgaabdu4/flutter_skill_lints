@@ -31,6 +31,9 @@ dependencies:
 plugins:
   flutter_skill_lints:
     path: $packageRoot
+  # Pre-release pin: lift when riverpod_lint 3.2.0 stable lands.
+  # Verify pub.dev before ship. Promote to latest stable when possible.
+  # Pre-release silently adopts dev behavior - review.
   riverpod_lint: 3.1.4-dev.3
 
 analyzer:

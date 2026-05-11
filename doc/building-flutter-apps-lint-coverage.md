@@ -1,13 +1,13 @@
 # building-flutter-apps Lint Coverage
 
-Status: 2026-05-07.
+Status: 2026-05-11.
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 104 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 111 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 105 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 112 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 80 additional diagnostics.
-- Total unique diagnostics: 191.
+- Total unique diagnostics: 192.
 
 ## Full Rule Inventory
 
@@ -359,7 +359,7 @@ so this plugin should not add duplicate reports:
 - `prefer_contains` is already enabled by `package:flutter_lints/flutter.yaml`
   through `package:lints/recommended.yaml`.
 - `avoid_public_notifier_properties` and `avoid_ref_inside_state_dispose` are
-  owned by `riverpod_lint: 3.1.4-dev.3`. Verified against
+  owned by `riverpod_lint` prerelease `3.1.4-dev.3`. Verified against
   `/tmp/riverpod-lint-8e393e4e` at
   `8e393e4e44cea3ca919db6bb5c68a012e132ab59`.
 - Missing `part` files or generated `.g.dart` wiring.

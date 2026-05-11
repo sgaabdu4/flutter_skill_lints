@@ -1,10 +1,10 @@
 # Coverage Audit
 
-Status after the 2026-05-07 compatibility pass: the package now provides one public
-analyzer plugin for the Flutter skill setup and owns the practical Dart-source
-and installed-plugin config checks. The supplemental scanner has been narrowed
-to bootstrap, agent-hook, and runtime proof records outside the analysis
-server boundary.
+Status: 2026-05-11. The package provides one public analyzer plugin for the
+Flutter skill setup and reports practical Dart-source and installed-plugin
+project-config drift through diagnostics anchored to Dart analysis units. The
+supplemental scanner has been narrowed to bootstrap, agent-hook, and runtime
+proof records outside the analysis server boundary.
 
 ## Verified Inputs
 
@@ -27,7 +27,7 @@ server boundary.
 | `Mutation<T>` usage has nearby experimental context in Dart source | `riverpod_mutation_experimental_warning` |
 | Computed auto-dispose providers whose watched dependencies are all known `keepAlive` become keepAlive too | `riverpod_auto_dispose_keepalive_dependencies` |
 | No `dynamic` except JSON maps | `avoid_dynamic_except_json_maps` |
-| No `as Map<String, Object?>` runtime map casts | `avoid_object_map_cast` |
+| No object-valued runtime map casts | `avoid_object_map_cast` |
 | Repositories do not extend generated `_$*Repository` bases | `arch_repository_generated_extends` |
 | No null bang | `avoid_null_bang` |
 | No `_buildXxx()` widget helpers | `avoid_widget_build_helpers` |
@@ -44,15 +44,18 @@ server boundary.
 | No raw `e.toString()` state errors | `state_raw_error_to_string` |
 | No nullable `String? error` field in Freezed state | `state_freezed_nullable_error` |
 | `runZonedGuarded` has nearby legacy context in Dart source | `crash_run_zoned_guarded_legacy` |
-| Flutter skill analyzer config, prohibited old/local lint plugin wiring, deterministic E2E entrypoint, and `build.yaml` JSON settings | `flutter_skill_project_config` |
+| Flutter skill analyzer config, prohibited old/local lint plugin wiring, deterministic E2E entrypoint, and `build.yaml` JSON settings | `flutter_skill_project_config` reports project-config drift through a Dart analysis unit |
 | Source checks inspired by the old supplemental scanner behavior | Exact diagnostic IDs such as `riverpod_read_init_state`, `router_string_nav`, `notifier_ensure_deps`, `data_log_rethrow`, and `test_provider_container` |
 
-`flutter_skill_project_config` reports stale Flutter skill analyzer setup,
-old lint plugin dependencies, local `git:`/`path:` plugin sources, missing
-`json_serializable` `explicit_to_json: true`, and missing Flutter app
-`lib/main_dev.dart` driver entrypoints through analyzer diagnostics anchored to
-a Dart source file. This lets `flutter analyze` replace the scanner for those
-installed-plugin config checks.
+`flutter_skill_project_config` reads project files and reports stale Flutter
+skill analyzer setup, old lint plugin dependencies, local `git:`/`path:` plugin
+sources, missing `json_serializable` `explicit_to_json: true`, and missing
+Flutter app `lib/main_dev.dart` driver entrypoints through analyzer diagnostics
+anchored to Dart analysis units. This lets analyzer plugin diagnostics replace
+the scanner for installed-plugin config drift that can be inferred from project
+files. Use `dart analyze` for the CLI/CI gate; full-project `flutter analyze`
+remains useful for local Flutter checks. This does not make `dart analyze` a
+complete `pubspec.yaml` validator.
 
 The scanner-migrated checks are registered as individual analyzer rules named
 after their exact diagnostic IDs. They cover Riverpod init/watch/keepAlive and
@@ -72,8 +75,8 @@ only report diagnostics against Dart analysis units.
 
 The additional analyzer coverage is registered by `FlutterSkillLintsPlugin`.
 
-- 82 additional warning rules registered by default.
-- 65 quick fixes registered.
+- 80 additional warning rules registered by default.
+- 63 quick fixes registered.
 - 1 assist registered.
 - Existing diagnostic IDs are preserved under the
   `flutter_skill_lints` plugin.
@@ -104,8 +107,8 @@ preferences, `prefer_switch_expression`, and
 
 - `dart format`: formatted the edited analyzer/scanner files.
 - `dart analyze`: no issues.
-- `dart test`: 154 passing tests, 1 gated integration test skipped by default.
-- `RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart --reporter expanded`: passed. The temp Flutter app loaded `flutter_skill_lints` and `riverpod_lint: 3.1.4-dev.3`, emitted `avoid_null_bang`, `avoid_ref_read_inside_build`, and `missing_provider_scope`, and did not emit `server.pluginError`.
+- `dart test`: 283 passing tests, 1 gated integration test skipped by default.
+- `RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart --reporter expanded`: passed. The temp Flutter app loaded `flutter_skill_lints` and `riverpod_lint` prerelease `3.1.4-dev.3`, emitted `avoid_null_bang`, `avoid_ref_read_inside_build`, and `missing_provider_scope`, and did not emit `server.pluginError`.
 - Flutter skill scanner/docs regression suite:
   `dart test/flutter_skill_scan_test.dart` passed from the skill repo.
 - Scanner catalog remains limited to bootstrap/agent-hook checks:

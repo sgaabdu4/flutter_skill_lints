@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.1] - 2026-05-11
+
+- Removed stale `flutter_skill_lints` version pins from README, example
+  analysis options, and project-config test fixtures. The plugin block now
+  matches the companion skill's unpinned `flutter_skill_lints` setup while
+  keeping the documented `riverpod_lint` prerelease pin.
+- Clarified that `dart analyze` is the analyzer/plugin gate and can report
+  project-config drift through Dart analysis units, but does not replace
+  `flutter pub get` or pub.dev package validation for complete `pubspec.yaml`
+  checks.
+- Refreshed coverage docs to the current registered surface: 105 Flutter-skill
+  warning rules, 112 Flutter-skill diagnostic codes, 80 additional warning
+  rules, 63 fixes, and 1 assist.
+- Updated `flutter_skill_project_config` wording from validation language to
+  drift-reporting language; behavior is unchanged.
+
 ## [0.5.0] - 2026-05-11
 
 - Added `router_complex_extra` to flag GoRouter typed-route `$extra`,

@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.0] - 2026-05-11
+
+- Added `router_complex_extra` to flag GoRouter typed-route `$extra`,
+  `GoRouterState.extra` reads, and direct `extra:` navigation payloads.
+  Route state must survive serialization, redirects, reloads, and modal
+  pops; pass stable IDs or configure an explicit `extraCodec` instead.
+- Bumped Flutter skill warning rule count to 105 and diagnostic code
+  count to 112, and refreshed README plus
+  `doc/building-flutter-apps-lint-coverage.md` to list the new rule.
+
 ## [0.4.0] - 2026-05-10
 
 - Added analyzer diagnostics for the remaining Dart-source drift checks:

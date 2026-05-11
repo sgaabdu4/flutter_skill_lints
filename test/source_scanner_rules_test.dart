@@ -61,6 +61,7 @@ void main() {
     defineReflectiveTests(RouterPopThenPushTest);
     defineReflectiveTests(RouterRedirectWatchTest);
     defineReflectiveTests(RouterRedirectLoadingBounceTest);
+    defineReflectiveTests(RouterComplexExtraTest);
     defineReflectiveTests(ShowcaseListenManualHandleTest);
     defineReflectiveTests(ShowcasePrevNullGuardTest);
     defineReflectiveTests(ShowcaseDefaultScopeTest);
@@ -1839,6 +1840,103 @@ final router = GoRouter(
   },
 );
 ''';
+}
+
+@reflectiveTest
+final class RouterComplexExtraTest extends _RouterRuleTest {
+  @override
+  String get ruleName => 'router_complex_extra';
+  @override
+  String get needle => r'this.$extra';
+  @override
+  String get source => r'''
+class Workout {}
+
+class ActiveWorkoutRoute extends GoRouteData {
+  const ActiveWorkoutRoute({this.$extra});
+
+  final Workout? $extra;
+}
+''';
+
+  @override
+  Future<void> test_reportsDiagnostic() async {
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, r'$extra});', ruleName),
+      compatLint(analyzedSource, r'$extra;', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsTypedRouteExtraCall() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(workout) {
+  ActiveWorkoutRoute($extra: workout);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, r'$extra:', ruleName)]);
+  }
+
+  Future<void> test_reportsGoRouterStateExtraRead() async {
+    final analyzedSource = _analyzedSource(r'''
+class Workout {}
+
+void build(context) {
+  final routeWorkout = GoRouterState.of(context).extra as Workout?;
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'GoRouterState.of(context).extra', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsContextNavigationExtraArgument() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(context, workout) {
+  context.push('/active_workout', extra: workout);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'extra: workout', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsTypedRouteWithoutExtra() async {
+    await assertAllows(r'''
+class ActiveWorkoutRoute extends GoRouteData {
+  const ActiveWorkoutRoute();
+}
+
+void open(context) {
+  const ActiveWorkoutRoute().push<void>(context);
+}
+''');
+  }
+
+  Future<void> test_allowsTestFixtureExtraRead() async {
+    await assertAllows(r'''
+void build(state) {
+  final text = state.extra == null ? 'active:no-extra' : 'active:has-extra';
+}
+''', path: '$testPackageRootPath/test/features/home/home_screen_auto_resume_test.dart');
+  }
+
+  Future<void> test_allowsUnrelatedNamedExtraArgument() async {
+    await assertAllows(r'''
+class DetailPanel {
+  const DetailPanel({required this.extra});
+
+  final Object extra;
+}
+
+void build(value) {
+  DetailPanel(extra: value);
+}
+''');
+  }
 }
 
 abstract class _ShowcaseRuleTest extends _SourceRuleTest {

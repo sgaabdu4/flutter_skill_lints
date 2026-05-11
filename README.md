@@ -15,8 +15,8 @@ Designed for Riverpod + codegen Flutter apps.
 
 | Surface | Count |
 | --- | ---: |
-| Flutter skill warning rules | 104 |
-| Flutter skill diagnostic codes | 111 |
+| Flutter skill warning rules | 105 |
+| Flutter skill diagnostic codes | 112 |
 | Additional Dart/Flutter warning rules | 80 |
 | Quick fixes | 63 |
 | Assists | 1 |
@@ -106,7 +106,7 @@ Encode the architectural rules from `building-flutter-apps`.
 | Notifiers | `avoid_silent_repository_null_return`, `avoid_sync_notifier_state_read`, `notifier_ensure_deps`, `notifier_watch_method` |
 | Freezed and serialization | `use_sealed_freezed_classes`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map` |
 | Architecture | `arch_domain_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_repository_generated_extends`, `arch_concrete_dependency`, `arch_datasource_try_catch`, `arch_widget_path`, `atomic_provider_access`, `typed_id_raw_id`, `records_map_return`, `avoid_object_map_cast` |
-| Navigation | `guard_context_pop`, `avoid_route_param_throw_in_build`, `router_string_nav`, `router_pop_then_push`, `router_redirect_watch`, `router_redirect_loading_bounce` |
+| Navigation | `guard_context_pop`, `avoid_route_param_throw_in_build`, `router_string_nav`, `router_pop_then_push`, `router_redirect_watch`, `router_redirect_loading_bounce`, `router_complex_extra` |
 | UI and accessibility | `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`, `ui_snackbar_boundary`, `a11y_text_scale_clamp` |
 | Performance | `perf_build_work`, `perf_listview_children` |
 | State | `state_raw_response`, `state_raw_error_to_string`, `state_freezed_nullable_error`, `state_broad_invalidation` |

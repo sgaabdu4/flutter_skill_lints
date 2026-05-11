@@ -91,4 +91,66 @@ final List<ScannerRule> routerSourceRules = [
       }
     },
   ),
+
+  /// Avoid GoRouter extra for route state.
+  ///
+  /// Why: Flags typed route `$extra`, GoRouterState.extra reads, and direct navigation
+  /// `extra:` payloads. Route state must survive serialization, redirects, reloads, and
+  /// modal pops; pass stable IDs or configure an explicit codec instead.
+  scannerRule(
+    code: const LintCode(
+      'router_complex_extra',
+      'Avoid GoRouter extra for route state.',
+      correctionMessage:
+          'Pass stable route IDs/path params, or configure and test an explicit GoRouter extraCodec.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags GoRouter extra route state so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+
+      for (var i = 0; i < context.source.length; i++) {
+        final column = _routerExtraColumn(context, i);
+        if (column != null) {
+          reporter.report(context, i, column);
+        }
+      }
+    },
+  ),
 ];
+
+int? _routerExtraColumn(SourceScannerContext context, int lineIndex) {
+  final line = context.source.masked[lineIndex];
+
+  final typedRouteExtraColumn = line.indexOf(r'$extra');
+  if (typedRouteExtraColumn >= 0) {
+    return typedRouteExtraColumn;
+  }
+
+  final stateExtra = RegExp(
+    r'\b(?:state|GoRouterState\s*\.\s*of\s*\([^)]*\))\s*\.\s*extra\b',
+  ).firstMatch(line);
+  if (stateExtra != null) {
+    return stateExtra.start;
+  }
+
+  final extraArgument = RegExp(r'\bextra\s*:').firstMatch(line);
+  if (extraArgument != null && _nearGoRouterNavigationCall(context, lineIndex)) {
+    return extraArgument.start;
+  }
+
+  return null;
+}
+
+bool _nearGoRouterNavigationCall(SourceScannerContext context, int lineIndex) {
+  final start = lineIndex - 8 < 0 ? 0 : lineIndex - 8;
+  final window = context.source.masked.sublist(start, lineIndex + 1).join('\n');
+  final contextNavigation = RegExp(
+    r'\b(?:context|router)\s*\.\s*(?:go|push|replace|pushReplacement|goNamed|pushNamed|replaceNamed)\s*(?:<[^>]+>)?\s*\(',
+  );
+  final goRouterNavigation = RegExp(
+    r'\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*(?:go|push|replace|pushReplacement|goNamed|pushNamed|replaceNamed)\s*(?:<[^>]+>)?\s*\(',
+  );
+  return contextNavigation.hasMatch(window) || goRouterNavigation.hasMatch(window);
+}

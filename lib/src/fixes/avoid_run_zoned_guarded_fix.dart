@@ -104,11 +104,7 @@ class AvoidRunZonedGuardedFix extends ResolvedCorrectionProducer {
     return ' ' * (location.columnNumber - 1);
   }
 
-  String _scaffold({
-    required String reporter,
-    required String indent,
-    required String innerBody,
-  }) {
+  String _scaffold({required String reporter, required String indent, required String innerBody}) {
     final indentedBody = innerBody
         .split('\n')
         .map((line) => line.isEmpty ? line : '$indent$line')

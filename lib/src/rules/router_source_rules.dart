@@ -102,8 +102,7 @@ final List<ScannerRule> routerSourceRules = [
     code: const LintCode(
       'router_gorouter_of',
       'Avoid GoRouter.of(context) navigation.',
-      correctionMessage:
-          'Use a typed route: const FooRoute(...).push<T>(context) or .go(context).',
+      correctionMessage: 'Use a typed route: const FooRoute(...).push<T>(context) or .go(context).',
       severity: DiagnosticSeverity.ERROR,
     ),
     description:
@@ -134,8 +133,7 @@ final List<ScannerRule> routerSourceRules = [
     code: const LintCode(
       'router_untyped_navigator_push',
       'Avoid Navigator push with untyped page routes.',
-      correctionMessage:
-          'Define a @TypedGoRoute, then call const FooRoute(...).push<T>(context).',
+      correctionMessage: 'Define a @TypedGoRoute, then call const FooRoute(...).push<T>(context).',
       severity: DiagnosticSeverity.ERROR,
     ),
     description:

@@ -42,8 +42,9 @@ analyzer:
     - "**/*.g.dart"
 ''');
         await Directory('${app.path}/lib').create(recursive: true);
-        await Directory('${app.path}/lib/features/history/presentation/notifiers')
-            .create(recursive: true);
+        await Directory(
+          '${app.path}/lib/features/history/presentation/notifiers',
+        ).create(recursive: true);
         await _writeFile('${app.path}/lib/main.dart', r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

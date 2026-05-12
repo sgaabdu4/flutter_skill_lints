@@ -700,7 +700,6 @@ void main() {
 }
 ''');
   }
-
 }
 
 @reflectiveTest

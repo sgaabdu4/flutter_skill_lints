@@ -4,13 +4,21 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 final List<ScannerRule> architectureSourceRules = [
   /// Domain code must stay pure Dart.
   ///
-  /// Why: Flags Flutter or package imports from domain files. Move Flutter/package
-  /// dependencies out of domain entities.
+  /// Why: Flags Flutter or package imports from domain files. Domain may only
+  /// import freezed_annotation and other /domain/ paths (other entities or Value
+  /// Objects). For shared primitive logic, create a Value Object (sealed Freezed
+  /// class) in /domain/value_objects/. For one-off derivation, add an entity
+  /// getter. Never import core/extensions/ — that violates the Clean Architecture
+  /// Dependency Rule (inner layer must not depend on outer).
   scannerRule(
     code: const LintCode(
       'arch_domain_import',
       'Domain code must stay pure Dart.',
-      correctionMessage: 'Move Flutter/package dependencies out of domain entities.',
+      correctionMessage:
+          'Domain may only import freezed_annotation and other /domain/ paths. '
+          'For shared primitive logic, create a Value Object in '
+          '/domain/value_objects/ (sealed Freezed class). For one-off derivation, '
+          'add an entity getter. See building-flutter-apps SKILL.md Critical Rule 11 + 12.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description:

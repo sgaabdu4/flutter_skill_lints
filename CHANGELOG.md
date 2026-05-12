@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.6] - 2026-05-13
+
+- Rewrote `arch_domain_import` correction message to guide users toward
+  Value Objects (sealed Freezed class in `/domain/value_objects/`) for
+  shared primitive logic and entity getters for one-off derivations.
+  Old message ("Move Flutter/package dependencies out of domain
+  entities") was misleading — pure-Dart `core/extensions/` imports are
+  also blocked, by design. Cross-references SKILL.md Critical Rules 11
+  and 12.
+
 ## [0.5.5] - 2026-05-12
 
 - Added `avoid_run_zoned_guarded` (AST rule) to flag `runZonedGuarded(...)`

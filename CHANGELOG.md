@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.3] - 2026-05-12
+
+- Added `riverpod_feature_notifier_keepalive` to flag non-family feature
+  presentation notifiers that auto-dispose without an explicit ephemeral-state
+  rationale.
+- Extended the gated plugin smoke to assert the new diagnostic in a temporary
+  Flutter app loaded through the Dart analyzer plugin system.
+
 ## [0.5.2] - 2026-05-12
 
 - Added `avoid_mounted_check_in_finally` to flag

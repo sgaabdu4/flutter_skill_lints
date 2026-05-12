@@ -26,6 +26,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_riverpod: ^3.0.0
+  riverpod_annotation: ^3.0.0
 ''');
         await _writeFile('${app.path}/analysis_options.yaml', '''
 plugins:
@@ -41,6 +42,8 @@ analyzer:
     - "**/*.g.dart"
 ''');
         await Directory('${app.path}/lib').create(recursive: true);
+        await Directory('${app.path}/lib/features/history/presentation/notifiers')
+            .create(recursive: true);
         await _writeFile('${app.path}/lib/main.dart', r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -93,6 +96,17 @@ class _DemoSheetState extends ConsumerState<_DemoSheet> {
   }
 }
 ''');
+        await _writeFile(
+          '${app.path}/lib/features/history/presentation/notifiers/history_calendar_notifier.dart',
+          r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+@riverpod
+class HistoryCalendarNotifier {
+  Object build() => Object();
+}
+''',
+        );
 
         final pubGet = await _run('flutter', ['pub', 'get'], app);
         expect(
@@ -108,6 +122,7 @@ class _DemoSheetState extends ConsumerState<_DemoSheet> {
         expect(output, contains('avoid_ref_read_inside_build'));
         expect(output, contains('missing_provider_scope'));
         expect(output, contains('prefer_single_widget_per_file'));
+        expect(output, contains('riverpod_feature_notifier_keepalive'));
         expect(output, isNot(contains('server.pluginError')));
       } finally {
         await app.delete(recursive: true);

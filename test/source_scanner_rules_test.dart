@@ -28,6 +28,7 @@ void main() {
     defineReflectiveTests(RiverpodSelectArrowSyntaxTest);
     defineReflectiveTests(RiverpodMutationExperimentalWarningTest);
     defineReflectiveTests(RiverpodAutoDisposeKeepAliveDependenciesTest);
+    defineReflectiveTests(RiverpodFeatureNotifierKeepaliveTest);
     defineReflectiveTests(RiverpodKeepaliveFamilyTest);
     defineReflectiveTests(DartStaticNamespaceTest);
     defineReflectiveTests(FreezedPerClassExplicitToJsonTest);
@@ -724,6 +725,134 @@ Object workoutSummary(Ref ref) {
   return Object();
 }
 ''');
+  }
+}
+
+@reflectiveTest
+final class RiverpodFeatureNotifierKeepaliveTest extends _RiverpodRuleTest {
+  @override
+  String get ruleName => 'riverpod_feature_notifier_keepalive';
+  @override
+  String get needle => '@riverpod';
+  @override
+  String get path =>
+      '$testPackageLibPath/features/history/presentation/notifiers/history_calendar_notifier.dart';
+  @override
+  String get source => r'''
+const riverpod = Object();
+
+@riverpod
+class HistoryCalendarNotifier {
+  Object build() => Object();
+}
+''';
+
+  Future<void> test_reportsExplicitKeepAliveFalse() async {
+    final analyzedSource = _analyzedSource(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+@Riverpod(keepAlive: false)
+class HistoryCalendarNotifier {
+  Object build() => Object();
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, '@Riverpod(keepAlive: false)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsKeepAliveFeatureNotifier() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+@Riverpod(keepAlive: true)
+class HistoryCalendarNotifier {
+  Object build() => Object();
+}
+''', path: path);
+  }
+
+  Future<void> test_allowsFamilyFeatureNotifier() async {
+    await assertAllows(
+      r'''
+const riverpod = Object();
+
+@riverpod
+class WorkoutEditorNotifier {
+  Object build(String workoutId) => Object();
+}
+''',
+      path:
+          '$testPackageLibPath/features/workouts/presentation/notifiers/workout_editor_notifier.dart',
+    );
+  }
+
+  Future<void> test_allowsComputedFunctionProviderInNotifierFile() async {
+    await assertAllows(r'''
+const riverpod = Object();
+
+class Ref {}
+
+@riverpod
+Object historyCalendarSessions(Ref ref) => Object();
+''', path: path);
+  }
+
+  Future<void> test_allowsDocumentedEphemeralNotifier() async {
+    await assertAllows(
+      r'''
+const riverpod = Object();
+
+// autoDispose: route-local draft should reset when the editor closes.
+@riverpod
+class WorkoutDraftNotifier {
+  Object build() => Object();
+}
+''',
+      path:
+          '$testPackageLibPath/features/workouts/presentation/notifiers/workout_draft_notifier.dart',
+    );
+  }
+
+  Future<void> test_allowsLifecycleCleanupNotifier() async {
+    await assertAllows(
+      r'''
+const riverpod = Object();
+
+class Ref {
+  void onDispose(Object callback) {}
+}
+
+@riverpod
+class CardioTimerNotifier {
+  final ref = Ref();
+
+  Object build() {
+    ref.onDispose(() {});
+    return Object();
+  }
+}
+''',
+      path:
+          '$testPackageLibPath/features/active_workout/presentation/notifiers/cardio_timer_notifier.dart',
+    );
+  }
+
+  Future<void> test_allowsNotifierOutsideFeaturePresentationNotifiers() async {
+    await assertAllows(r'''
+const riverpod = Object();
+
+@riverpod
+class DraftNotifier {
+  Object build() => Object();
+}
+''', path: '$testPackageLibPath/core/notifiers/draft_notifier.dart');
   }
 }
 

@@ -178,6 +178,36 @@ final List<ScannerRule> riverpodSourceRules = [
     },
   ),
 
+  /// Feature notifiers should be keepAlive by default.
+  ///
+  /// Why: Class-based feature notifiers own mutable screen/feature state. In
+  /// presentation notifier files, accidental auto-dispose resets that state when
+  /// a subtree temporarily unmounts. Family notifiers stay auto-dispose by
+  /// default because keepAlive would cache every argument variant.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_feature_notifier_keepalive',
+      'Feature notifiers should use keepAlive.',
+      correctionMessage:
+          'Change @riverpod to @Riverpod(keepAlive: true), or add an autoDispose rationale comment.',
+      severity: DiagnosticSeverity.WARNING,
+    ),
+    description:
+        'Flags non-family feature presentation notifiers that auto-dispose without rationale.',
+    scan: (reporter, context) {
+      if (!_isFeaturePresentationNotifierPath(context)) return;
+
+      for (final definition in _providerDefinitions(context)) {
+        if (!definition.isClassBased) continue;
+        if (!definition.className.endsWith('Notifier')) continue;
+        if (definition.keepAlive || definition.hasParameters) continue;
+        if (_registersDisposeCleanup(context, definition)) continue;
+        if (_hasAutoDisposeRationale(context, definition.annotationLine)) continue;
+        reporter.report(context, definition.annotationLine, 0);
+      }
+    },
+  ),
+
   /// Avoid keepAlive family providers.
   ///
   /// Why: Flags keepAlive Riverpod families with required parameters. Use auto-dispose
@@ -226,6 +256,8 @@ final class _RiverpodProviderDefinition {
     required this.bodyEnd,
     required this.keepAlive,
     required this.hasParameters,
+    required this.isClassBased,
+    required this.className,
   });
 
   final String providerName;
@@ -234,6 +266,8 @@ final class _RiverpodProviderDefinition {
   final int bodyEnd;
   final bool keepAlive;
   final bool hasParameters;
+  final bool isClassBased;
+  final String className;
 }
 
 List<_RiverpodProviderDefinition> _providerDefinitions(SourceScannerContext context) {
@@ -263,6 +297,8 @@ List<_RiverpodProviderDefinition> _providerDefinitions(SourceScannerContext cont
           bodyEnd: bodyEnd,
           keepAlive: annotation.keepAlive,
           hasParameters: _classBuildHasParameters(context, declarationLine, bodyEnd),
+          isClassBased: true,
+          className: className,
         ),
       );
       i = declarationLine;
@@ -279,6 +315,8 @@ List<_RiverpodProviderDefinition> _providerDefinitions(SourceScannerContext cont
         bodyEnd: _functionProviderEnd(context, declarationLine),
         keepAlive: annotation.keepAlive,
         hasParameters: _functionHasProviderParameters(context, declarationLine),
+        isClassBased: false,
+        className: '',
       ),
     );
     i = declarationLine;
@@ -465,6 +503,34 @@ bool _hasFamilySignatureAfterKeepAlive(SourceScannerContext context, int annotat
     }
   }
   return false;
+}
+
+bool _isFeaturePresentationNotifierPath(SourceScannerContext context) {
+  final normalized = context.path.replaceAll('\\', '/').toLowerCase();
+  return normalized.startsWith('lib/features/') &&
+      normalized.contains('/presentation/notifiers/') &&
+      normalized.endsWith('_notifier.dart');
+}
+
+bool _hasAutoDisposeRationale(SourceScannerContext context, int annotationLine) {
+  return context.nearOriginal(
+    annotationLine,
+    RegExp(
+      r'\b(?:auto[- ]?dispose|ephemeral|transient|route[- ]?local|screen[- ]?local|reset when|dispose when unused)\b',
+      caseSensitive: false,
+    ),
+    6,
+  );
+}
+
+bool _registersDisposeCleanup(
+  SourceScannerContext context,
+  _RiverpodProviderDefinition definition,
+) {
+  final body = context.source.masked
+      .sublist(definition.bodyStart, definition.bodyEnd + 1)
+      .join('\n');
+  return RegExp(r'\bref\s*\.\s*onDispose\s*\(').hasMatch(body);
 }
 
 bool _hasBroadRefWatch(SourceScannerContext context, int lineIndex, int methodEnd) {

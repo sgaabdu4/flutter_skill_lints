@@ -4,7 +4,9 @@ library;
 import 'package:analysis_server_plugin/plugin.dart';
 import 'package:analysis_server_plugin/registry.dart';
 import 'package:flutter_skill_lints/src/additional_lints/additional_lints.dart';
+import 'package:flutter_skill_lints/src/fixes/avoid_run_zoned_guarded_fix.dart';
 import 'package:flutter_skill_lints/src/rules.dart';
+import 'package:flutter_skill_lints/src/rules/avoid_run_zoned_guarded.dart';
 
 /// Top-level plugin variable required by `analysis_server_plugin`.
 final plugin = FlutterSkillLintsPlugin();
@@ -21,5 +23,7 @@ final class FlutterSkillLintsPlugin extends Plugin {
     for (final rule in flutterSkillRules) {
       registry.registerWarningRule(rule);
     }
+
+    registry.registerFixForRule(AvoidRunZonedGuarded.code, AvoidRunZonedGuardedFix.new);
   }
 }

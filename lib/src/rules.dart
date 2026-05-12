@@ -6,6 +6,7 @@ import 'package:flutter_skill_lints/src/rules/avoid_legacy_riverpod_apis.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_null_bang.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_private_widget_classes.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_route_param_throw_in_build.dart';
+import 'package:flutter_skill_lints/src/rules/avoid_run_zoned_guarded.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_showcase_key_filtering.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_shrink_wrap.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_silent_repository_null_return.dart';
@@ -19,6 +20,7 @@ import 'package:flutter_skill_lints/src/rules/freezed_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/guard_context_pop.dart';
 import 'package:flutter_skill_lints/src/rules/notifier_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/persistence_crash_source_rules.dart';
+import 'package:flutter_skill_lints/src/rules/require_main_error_hooks.dart';
 import 'package:flutter_skill_lints/src/rules/riverpod_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/router_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/router_source_rules.dart';
@@ -49,9 +51,11 @@ final List<AbstractAnalysisRule> flutterSkillRules = [
   UseSealedFreezedClasses(),
   UseUnawaitedForFireAndForgetFutures(),
   AvoidRouteParamThrowInBuild(),
+  AvoidRunZonedGuarded(),
   AvoidShowcaseKeyFiltering(),
   AvoidSilentRepositoryNullReturn(),
   AvoidSyncNotifierStateRead(),
+  RequireMainErrorHooks(),
   FlutterSkillProjectConfig(),
   ...riverpodSourceRules,
   ...freezedSourceRules,

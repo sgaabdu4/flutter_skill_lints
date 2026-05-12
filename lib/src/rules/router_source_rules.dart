@@ -92,6 +92,85 @@ final List<ScannerRule> routerSourceRules = [
     },
   ),
 
+  /// Avoid GoRouter.of(context).* navigation.
+  ///
+  /// Why: Flags `GoRouter.of(context).{go,push,replace,pushReplacement,goNamed,
+  /// pushNamed,replaceNamed}` calls. Typed routes (`go_router_builder`) are the
+  /// SSOT — `const FooRoute(...).push<T>(context)` / `.go(context)` keeps
+  /// navigation refactor-safe and survives route renames.
+  scannerRule(
+    code: const LintCode(
+      'router_gorouter_of',
+      'Avoid GoRouter.of(context) navigation.',
+      correctionMessage:
+          'Use a typed route: const FooRoute(...).push<T>(context) or .go(context).',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags GoRouter.of(context) push/go/replace calls so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      final pattern = RegExp(
+        r'\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*'
+        r'(?:go|push|replace|pushReplacement|goNamed|pushNamed|replaceNamed)\s*'
+        r'(?:<[^>]+>)?\s*\(',
+      );
+      for (var i = 0; i < context.source.length; i++) {
+        final line = context.source.masked[i];
+        final match = pattern.firstMatch(line);
+        if (match != null) {
+          reporter.report(context, i, match.start);
+        }
+      }
+    },
+  ),
+
+  /// Avoid Navigator push with untyped page routes.
+  ///
+  /// Why: Flags `Navigator.{push,pushReplacement,pushAndRemoveUntil}` with
+  /// `MaterialPageRoute` / `CupertinoPageRoute` / `PageRouteBuilder`. Use a
+  /// typed GoRouter route — `const FooRoute(...).push<T>(context)` —
+  /// for refactor-safe, declarative navigation.
+  scannerRule(
+    code: const LintCode(
+      'router_untyped_navigator_push',
+      'Avoid Navigator push with untyped page routes.',
+      correctionMessage:
+          'Define a @TypedGoRoute, then call const FooRoute(...).push<T>(context).',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags Navigator push with MaterialPageRoute/CupertinoPageRoute/PageRouteBuilder so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      final navigatorCall = RegExp(
+        r'\bNavigator\s*\.\s*(?:of\s*\([^)]*\)\s*\.\s*)?'
+        r'(?:push|pushReplacement|pushAndRemoveUntil)\s*'
+        r'(?:<[^>]+>)?\s*\(',
+      );
+      final pageRouteCtor = RegExp(
+        r'\b(?:MaterialPageRoute|CupertinoPageRoute|PageRouteBuilder)\s*'
+        r'(?:<[^>]+>)?\s*\(',
+      );
+      for (var i = 0; i < context.source.length; i++) {
+        final line = context.source.masked[i];
+        final navMatch = navigatorCall.firstMatch(line);
+        if (navMatch != null && pageRouteCtor.hasMatch(line)) {
+          reporter.report(context, i, navMatch.start);
+          continue;
+        }
+        if (navMatch != null) {
+          final start = i + 1;
+          final end = (i + 5).clamp(0, context.source.length);
+          for (var j = start; j < end; j++) {
+            if (pageRouteCtor.hasMatch(context.source.masked[j])) {
+              reporter.report(context, i, navMatch.start);
+              break;
+            }
+          }
+        }
+      }
+    },
+  ),
+
   /// Avoid GoRouter extra for route state.
   ///
   /// Why: Flags typed route `$extra`, GoRouterState.extra reads, and direct navigation

@@ -9,12 +9,14 @@ import 'package:flutter_skill_lints/src/rules/avoid_legacy_riverpod_apis.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_null_bang.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_private_widget_classes.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_route_param_throw_in_build.dart';
+import 'package:flutter_skill_lints/src/rules/avoid_run_zoned_guarded.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_showcase_key_filtering.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_shrink_wrap.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_silent_repository_null_return.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_sync_notifier_state_read.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_widget_build_helpers.dart';
 import 'package:flutter_skill_lints/src/rules/guard_context_pop.dart';
+import 'package:flutter_skill_lints/src/rules/require_main_error_hooks.dart';
 import 'package:flutter_skill_lints/src/rules/use_context_mounted_after_await.dart';
 import 'package:flutter_skill_lints/src/rules/use_ref_invalidate.dart';
 import 'package:flutter_skill_lints/src/rules/use_ref_mounted_after_await.dart';
@@ -36,6 +38,8 @@ void main() {
     defineReflectiveTests(UseRefInvalidateTest);
     defineReflectiveTests(UseSealedFreezedClassesTest);
     defineReflectiveTests(AvoidRouteParamThrowInBuildTest);
+    defineReflectiveTests(AvoidRunZonedGuardedTest);
+    defineReflectiveTests(RequireMainErrorHooksTest);
     defineReflectiveTests(AvoidShowcaseKeyFilteringTest);
     defineReflectiveTests(AvoidSilentRepositoryNullReturnTest);
     defineReflectiveTests(AvoidSyncNotifierStateReadTest);
@@ -661,6 +665,167 @@ class Screen extends StatelessWidget {
   }
 }
 ''');
+  }
+}
+
+@reflectiveTest
+final class AvoidRunZonedGuardedTest extends _FlutterSkillRuleTest {
+  @override
+  void setUp() {
+    rule = AvoidRunZonedGuarded();
+    super.setUp();
+  }
+
+  Future<void> test_reportsDirectRunZonedGuardedCall() async {
+    const source = r'''
+R runZonedGuarded<R>(R Function() body, void Function(Object, StackTrace) onError) {
+  return body();
+}
+
+void main() {
+  runZonedGuarded(() {}, (e, s) {});
+}
+''';
+    await assertDiagnostics(source, [lintForLast(source, 'runZonedGuarded')]);
+  }
+
+  Future<void> test_ignoresUserMethodWithSameName() async {
+    await assertNoDiagnostics(r'''
+class Zone {
+  void runZonedGuarded() {}
+}
+
+void main() {
+  Zone().runZonedGuarded();
+}
+''');
+  }
+
+}
+
+@reflectiveTest
+final class RequireMainErrorHooksTest extends _FlutterSkillRuleTest {
+  @override
+  void setUp() {
+    rule = RequireMainErrorHooks();
+    super.setUp();
+  }
+
+  static const _stubs = r'''
+class FlutterError {
+  static void Function(Object)? onError;
+}
+class PlatformDispatcher {
+  static final PlatformDispatcher instance = PlatformDispatcher();
+  bool Function(Object, StackTrace)? onError;
+}
+class Isolate {
+  static final Isolate current = Isolate();
+  void addErrorListener(Object port) {}
+}
+void runApp(Object? app) {}
+''';
+
+  Future<void> test_reportsMissingAllHooks() async {
+    const source =
+        '$_stubs\n'
+        r'''
+void main() {
+  runApp(null);
+}
+''';
+    await assertDiagnostics(source, [lintForLast(source, 'main')]);
+  }
+
+  Future<void> test_reportsMissingPlatformDispatcherOnError() async {
+    const source =
+        '$_stubs\n'
+        r'''
+void main() {
+  FlutterError.onError = (d) {};
+  Isolate.current.addErrorListener('port');
+  runApp(null);
+}
+''';
+    await assertDiagnostics(source, [lintForLast(source, 'main')]);
+  }
+
+  Future<void> test_reportsMissingIsolateListener() async {
+    const source =
+        '$_stubs\n'
+        r'''
+void main() {
+  FlutterError.onError = (d) {};
+  PlatformDispatcher.instance.onError = (e, s) => true;
+  runApp(null);
+}
+''';
+    await assertDiagnostics(source, [lintForLast(source, 'main')]);
+  }
+
+  Future<void> test_allowsAllThreeHooksWired() async {
+    const source =
+        '$_stubs\n'
+        r'''
+void main() {
+  FlutterError.onError = (d) {};
+  PlatformDispatcher.instance.onError = (e, s) => true;
+  Isolate.current.addErrorListener('port');
+  runApp(null);
+}
+''';
+    await assertNoDiagnostics(source);
+  }
+
+  Future<void> test_allowsOptOutMarker() async {
+    const source =
+        '$_stubs\n'
+        r'''
+void setupCrashReporting() {}
+
+void main() {
+  // flutter_skill_lints:configure_error_hooks_elsewhere
+  setupCrashReporting();
+  runApp(null);
+}
+''';
+    await assertNoDiagnostics(source);
+  }
+
+  Future<void> test_ignoresMainWithoutRunApp() async {
+    const source =
+        '$_stubs\n'
+        r'''
+void main() {
+  print('cli');
+}
+''';
+    await assertNoDiagnostics(source);
+  }
+
+  Future<void> test_reportsRunAppWrapperWithoutHooks() async {
+    const source =
+        '$_stubs\n'
+        r'''
+Future<void> runRepem() async {
+  runApp(null);
+}
+''';
+    await assertDiagnostics(source, [lintForLast(source, 'runRepem')]);
+  }
+
+  Future<void> test_allowsRunAppWrapperWithAllHooks() async {
+    const source =
+        '$_stubs\n'
+        r'''
+Future<void> runRepem() async {
+  FlutterError.onError = (d) {};
+  PlatformDispatcher.instance.onError = (e, s) => true;
+  Isolate.current.addErrorListener('port');
+  runApp(null);
+}
+''';
+    await assertNoDiagnostics(source);
   }
 }
 

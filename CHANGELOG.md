@@ -1,5 +1,43 @@
 # Changelog
 
+## [0.5.5] - 2026-05-12
+
+- Added `avoid_run_zoned_guarded` (AST rule) to flag `runZonedGuarded(...)`
+  calls. Per Flutter 3.3+ guidance (docs.flutter.dev/testing/errors),
+  replace with the three-hook pattern: `FlutterError.onError`,
+  `PlatformDispatcher.instance.onError`, and
+  `Isolate.current.addErrorListener`. `runZonedGuarded` misses
+  platform-channel async errors. Catches direct calls and aliased
+  `import 'dart:async' as a;` calls. Complements the existing
+  `crash_run_zoned_guarded_legacy` scanner rule (which permits a "legacy"
+  escape hatch); enable `avoid_run_zoned_guarded` for a hard ban.
+- Registered a quick-fix that rewrites `runZonedGuarded(body, onError)`
+  into the canonical three-hook scaffold + inlined body. The fix infers
+  the reporter call from the original `onError` body (defaults to `print`
+  when unknown). User customizes the reporter after applying.
+- Added `require_main_error_hooks` rule. Any top-level function whose
+  body calls `runApp(...)` must wire all three hooks. Covers `main()`
+  AND bootstrap wrappers (e.g. `runRepem`, `bootstrap`, `mainCommon`).
+  Escape hatch: add `// flutter_skill_lints:configure_error_hooks_elsewhere`
+  inside the body to opt out when hooks live in an extracted helper.
+- Bumped Flutter skill rule count to 110 and diagnostic count to 117.
+
+## [0.5.4] - 2026-05-12
+
+- Added `router_gorouter_of` to flag `GoRouter.of(context).{go,push,replace,
+  pushReplacement,goNamed,pushNamed,replaceNamed}` calls. Typed routes
+  (`const FooRoute(...).push<T>(context)` / `.go(context)`) are the SSOT
+  for navigation — they survive route renames and stay refactor-safe.
+- Added `router_untyped_navigator_push` to flag
+  `Navigator.{push,pushReplacement,pushAndRemoveUntil}` (incl.
+  `Navigator.of(context).…`) when paired with `MaterialPageRoute`,
+  `CupertinoPageRoute`, or `PageRouteBuilder`. Use a typed `@TypedGoRoute`
+  then `const FooRoute(...).push<T>(context)`.
+- Bumped Flutter skill rule count to 108 and diagnostic count to 115.
+- Refreshed README example, `doc/building-flutter-apps-lint-coverage.md`,
+  and `references/common-patterns.md` Critical Rules + Navigation
+  anti-pattern block.
+
 ## [0.5.3] - 2026-05-12
 
 - Added `riverpod_feature_notifier_keepalive` to flag non-family feature

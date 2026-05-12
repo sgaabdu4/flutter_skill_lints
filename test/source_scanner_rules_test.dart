@@ -63,6 +63,8 @@ void main() {
     defineReflectiveTests(RouterRedirectWatchTest);
     defineReflectiveTests(RouterRedirectLoadingBounceTest);
     defineReflectiveTests(RouterComplexExtraTest);
+    defineReflectiveTests(RouterGoRouterOfTest);
+    defineReflectiveTests(RouterUntypedNavigatorPushTest);
     defineReflectiveTests(ShowcaseListenManualHandleTest);
     defineReflectiveTests(ShowcasePrevNullGuardTest);
     defineReflectiveTests(ShowcaseDefaultScopeTest);
@@ -2063,6 +2065,186 @@ class DetailPanel {
 
 void build(value) {
   DetailPanel(extra: value);
+}
+''');
+  }
+}
+
+@reflectiveTest
+final class RouterGoRouterOfTest extends _RouterRuleTest {
+  @override
+  String get ruleName => 'router_gorouter_of';
+  @override
+  String get needle => 'GoRouter.of(context).push';
+  @override
+  String get source => r'''
+void open(context) {
+  GoRouter.of(context).push('/detail');
+}
+''';
+
+  Future<void> test_reportsGoCall() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(context) {
+  GoRouter.of(context).go('/home');
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'GoRouter.of(context).go', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsPushNamed() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(context) {
+  GoRouter.of(context).pushNamed('detail');
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'GoRouter.of(context).pushNamed', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsTypedGenericPush() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(context) {
+  GoRouter.of(context).push<bool>('/detail');
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'GoRouter.of(context).push', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsTypedRoutePush() async {
+    await assertAllows(r'''
+class ActiveWorkoutRoute {
+  const ActiveWorkoutRoute();
+  Future<T?> push<T>(context) async => null;
+}
+
+void open(context) {
+  const ActiveWorkoutRoute().push<void>(context);
+}
+''');
+  }
+}
+
+@reflectiveTest
+final class RouterUntypedNavigatorPushTest extends _RouterRuleTest {
+  @override
+  String get ruleName => 'router_untyped_navigator_push';
+  @override
+  String get needle => 'Navigator.of(context).push';
+  @override
+  String get source => r'''
+class Navigator {
+  static Navigator of(Object context) => Navigator();
+  Future<T?> push<T>(Object route) async => null;
+  Future<T?> pushReplacement<T>(Object route) async => null;
+  Future<T?> pushAndRemoveUntil<T>(Object route, Object predicate) async => null;
+  void pop() {}
+}
+
+class MaterialPageRoute {
+  MaterialPageRoute({required Object builder});
+}
+
+void open(context) {
+  Navigator.of(context).push(MaterialPageRoute(builder: (_) => null));
+}
+''';
+
+  Future<void> test_reportsCupertinoPageRoute() async {
+    final analyzedSource = _analyzedSource(r'''
+class Navigator {
+  static Navigator of(Object context) => Navigator();
+  Future<T?> push<T>(Object route) async => null;
+}
+
+class CupertinoPageRoute {
+  CupertinoPageRoute({required Object builder});
+}
+
+void open(context) {
+  Navigator.of(context).push(CupertinoPageRoute(builder: (_) => null));
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'Navigator.of(context).push', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsPageRouteBuilder() async {
+    final analyzedSource = _analyzedSource(r'''
+class Navigator {
+  static Navigator of(Object context) => Navigator();
+  Future<T?> push<T>(Object route) async => null;
+}
+
+class PageRouteBuilder {
+  PageRouteBuilder({required Object pageBuilder});
+}
+
+void open(context) {
+  Navigator.of(context).push(PageRouteBuilder(pageBuilder: (_, __, ___) => null));
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'Navigator.of(context).push', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsPushReplacement() async {
+    final analyzedSource = _analyzedSource(r'''
+class Navigator {
+  static Navigator of(Object context) => Navigator();
+  Future<T?> pushReplacement<T>(Object route) async => null;
+}
+
+class MaterialPageRoute {
+  MaterialPageRoute({required Object builder});
+}
+
+void open(context) {
+  Navigator.of(context).pushReplacement(
+    MaterialPageRoute(builder: (_) => null),
+  );
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'Navigator.of(context).pushReplacement', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsNavigatorPop() async {
+    await assertAllows(r'''
+class Navigator {
+  static Navigator of(Object context) => Navigator();
+  void pop() {}
+}
+
+void close(context) {
+  Navigator.of(context).pop();
+}
+''');
+  }
+
+  Future<void> test_allowsTypedRoutePush() async {
+    await assertAllows(r'''
+class ActiveWorkoutRoute {
+  const ActiveWorkoutRoute();
+  Future<T?> push<T>(Object context) async => null;
+}
+
+void open(context) {
+  const ActiveWorkoutRoute().push<void>(context);
 }
 ''');
   }

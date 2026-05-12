@@ -290,10 +290,7 @@ class AdditionalLintsPlugin extends Plugin {
     );
     registry.registerFixForRule(AvoidGenericsShadowing.code, AvoidGenericsShadowingFix.new);
     registry.registerFixForRule(AvoidMapKeysContains.code, AvoidMapKeysContainsFix.new);
-    registry.registerFixForRule(
-      AvoidMountedCheckInFinally.code,
-      AvoidMountedCheckInFinallyFix.new,
-    );
+    registry.registerFixForRule(AvoidMountedCheckInFinally.code, AvoidMountedCheckInFinallyFix.new);
     registry.registerFixForRule(AvoidOnlyRethrow.code, AvoidOnlyRethrowFix.new);
     registry.registerFixForRule(AvoidThrowInCatchBlock.code, AvoidThrowInCatchBlockFix.new);
     registry.registerFixForRule(AvoidIncompleteCopyWith.code, AvoidIncompleteCopyWithFix.new);

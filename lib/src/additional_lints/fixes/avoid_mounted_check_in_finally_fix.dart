@@ -49,8 +49,7 @@ class AvoidMountedCheckInFinallyFix extends ResolvedCorrectionProducer {
         .map((s) => '$innerIndent${content.substring(s.offset, s.end)}')
         .join('\n');
 
-    final replacement =
-        'if ($positiveExprSource) {\n$body\n$blockIndent}';
+    final replacement = 'if ($positiveExprSource) {\n$body\n$blockIndent}';
 
     final replaceRange = range.startEnd(ifNode, trailing.last);
 

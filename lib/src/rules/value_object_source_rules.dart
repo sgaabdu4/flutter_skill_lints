@@ -33,7 +33,7 @@ final List<ScannerRule> valueObjectSourceRules = [
     description:
         'Flags public raw redirecting factories on Value Objects so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      if (!context.path.contains('/domain/value_objects/')) return;
+      if (!context.path.contains('/domain/values/')) return;
       final full = context.source.masked.join('\n');
       final lineOffsets = <int>[0];
       for (var i = 0; i < context.source.masked.length; i++) {
@@ -94,7 +94,7 @@ final List<ScannerRule> valueObjectSourceRules = [
         'Flags named factories on Freezed domain entities so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isDomainPath) return;
-      if (context.path.contains('/domain/value_objects/')) return;
+      if (context.path.contains('/domain/values/')) return;
       for (final classSpan in context.classes) {
         if (!context.hasFreezedAnnotation(classSpan)) continue;
         if (classSpan.name.startsWith('_')) continue;
@@ -142,7 +142,7 @@ final List<ScannerRule> valueObjectSourceRules = [
     description:
         'Flags sealed Freezed Value Objects whose annotation does not disable .map()/.when() generation.',
     scan: (reporter, context) {
-      if (!context.path.contains('/domain/value_objects/')) return;
+      if (!context.path.contains('/domain/values/')) return;
       for (final classSpan in context.classes) {
         if (!context.hasFreezedAnnotation(classSpan)) continue;
         if (classSpan.name.startsWith('_')) continue;

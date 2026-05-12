@@ -53,7 +53,7 @@ final List<ScannerRule> hivePersistenceSourceRules = [
       };
       final imported = <String>{...baseline};
       final importPattern = RegExp(
-        r'''^\s*import\s+['"][^'"]*?/domain/value_objects/([a-z_][a-z0-9_]*)\.dart['"]([^;]*);''',
+        r'''^\s*import\s+['"][^'"]*?/domain/values/([a-z_][a-z0-9_]*)\.dart['"]([^;]*);''',
       );
       final showClausePattern = RegExp(r'\bshow\s+([A-Za-z_][\w,\s]*)');
       for (var i = 0; i < context.source.length; i++) {

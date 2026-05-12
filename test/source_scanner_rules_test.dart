@@ -2715,7 +2715,7 @@ final class VoPublicRawConstructorTest extends _ValueObjectRuleTest {
   @override
   String get needle => 'const factory Distance.meters';
   @override
-  String get path => '$testPackageLibPath/core/domain/value_objects/distance.dart';
+  String get path => '$testPackageLibPath/core/domain/values/distance.dart';
   @override
   String get source => r'''
 class Distance {
@@ -2729,7 +2729,7 @@ class _Meters extends Distance {
 ''';
 
   Future<void> test_allowsPrivateRawRedirect() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     newFile(filePath, r'''
 class Distance {
   const factory Distance._meters(double value) = _Meters;
@@ -2749,7 +2749,7 @@ class _Meters extends Distance {
   }
 
   Future<void> test_allowsValidatedFactoryWithoutRedirect() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/email.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/email.dart';
     newFile(filePath, r'''
 // ignore_for_file: undefined_method, undefined_identifier
 class Email {
@@ -2781,7 +2781,7 @@ class _User extends User {
   }
 
   Future<void> test_allowsParameterlessPublicRedirect() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     newFile(filePath, r'''
 class Distance {
   const factory Distance.zero() = _DistanceZero;
@@ -2796,7 +2796,7 @@ class _DistanceZero extends Distance {
   }
 
   Future<void> test_reportsAnonymousPublicRawRedirect() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/email.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/email.dart';
     const source = r'''
 // ignore_for_file: undefined_method
 class Email {
@@ -2816,7 +2816,7 @@ class _Email extends Email {
   }
 
   Future<void> test_reportsNullablePrimitiveParam() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/email.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/email.dart';
     const source = r'''
 // ignore_for_file: undefined_method
 class Email {
@@ -2836,7 +2836,7 @@ class _Email extends Email {
   }
 
   Future<void> test_reportsMultiParamPublicRawRedirect() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/money.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/money.dart';
     const source = r'''
 // ignore_for_file: undefined_method, undefined_class
 class Money {
@@ -2861,7 +2861,7 @@ class _UsdMoney extends Money {
   }
 
   Future<void> test_reportsPassthroughPublicFactory() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/weight_adjustment.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/weight_adjustment.dart';
     const source = r'''
 // ignore_for_file: undefined_method
 class WeightAdjustment {
@@ -2882,7 +2882,7 @@ class _Kg extends WeightAdjustment {
   }
 
   Future<void> test_allowsValidatedFactoryWithAssert() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/weight.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/weight.dart';
     newFile(filePath, r'''
 // ignore_for_file: undefined_method
 class Weight {
@@ -2903,7 +2903,7 @@ class _Kg extends Weight {
   }
 
   Future<void> test_allowsTransformingFactory() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/email.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/email.dart';
     newFile(filePath, r'''
 // ignore_for_file: undefined_method
 class Email {
@@ -2921,7 +2921,7 @@ class _Email extends Email {
   }
 
   Future<void> test_reportsMultiLinePublicRawRedirect() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     const source = r'''
 // ignore_for_file: undefined_method
 class Distance {
@@ -3002,7 +3002,7 @@ class _User implements User {
   }
 
   Future<void> test_allowsNamedFactoryInValueObjectsPath() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -3250,7 +3250,7 @@ final class FreezedDisableMapWhenRequiredTest extends _ValueObjectRuleTest {
   @override
   String get needle => 'sealed class Distance';
   @override
-  String get path => '$testPackageLibPath/core/domain/value_objects/distance.dart';
+  String get path => '$testPackageLibPath/core/domain/values/distance.dart';
   @override
   bool get addIgnorePrefix => false;
 
@@ -3284,7 +3284,7 @@ sealed class Distance with _$Distance {
 ''';
 
   Future<void> test_allowsFullOptOut() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -3300,7 +3300,7 @@ sealed class Distance with _$Distance {
   }
 
   Future<void> test_reportsPartialOptOutMissingWhen() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     const partialSource = r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -3319,7 +3319,7 @@ sealed class Distance with _$Distance {
   }
 
   Future<void> test_reportsPartialOptOutMissingMap() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     const partialSource = r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -3338,7 +3338,7 @@ sealed class Distance with _$Distance {
   }
 
   Future<void> test_allowsNonSealedFreezedClass() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/money.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/money.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -3370,7 +3370,7 @@ sealed class User with _$User {
   }
 
   Future<void> test_allowsMultilineFullOptOut() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -3389,7 +3389,7 @@ sealed class Distance with _$Distance {
   }
 
   Future<void> test_allowsNoFreezedAnnotation() async {
-    final filePath = '$testPackageLibPath/core/domain/value_objects/state.dart';
+    final filePath = '$testPackageLibPath/core/domain/values/state.dart';
     newFile(filePath, r'''
 sealed class AppState {
   const AppState();
@@ -3483,7 +3483,7 @@ class _WorkoutSetModel implements WorkoutSetModel {
     const source = r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:test_package/features/cycling/domain/value_objects/cadence.dart';
+import 'package:test_package/features/cycling/domain/values/cadence.dart';
 
 @freezed
 sealed class RideModel {
@@ -3494,7 +3494,7 @@ class _RideModel implements RideModel {
   final Cadence cadence;
 }
 ''';
-    newFile('$testPackageLibPath/features/cycling/domain/value_objects/cadence.dart', r'''
+    newFile('$testPackageLibPath/features/cycling/domain/values/cadence.dart', r'''
 class Cadence {
   const Cadence._(this.rpm);
   final int rpm;
@@ -3603,7 +3603,7 @@ class _WorkoutSetModel implements WorkoutSetModel {
     const source = r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:test_package/features/cycling/domain/value_objects/units.dart' show Cadence, Tempo;
+import 'package:test_package/features/cycling/domain/values/units.dart' show Cadence, Tempo;
 
 @freezed
 sealed class RideModel {
@@ -3618,7 +3618,7 @@ class _RideModel implements RideModel {
   final Tempo tempo;
 }
 ''';
-    newFile('$testPackageLibPath/features/cycling/domain/value_objects/units.dart', r'''
+    newFile('$testPackageLibPath/features/cycling/domain/values/units.dart', r'''
 class Cadence { const Cadence._(this.rpm); final int rpm; }
 class Tempo { const Tempo._(this.bpm); final int bpm; }
 ''');

@@ -7,7 +7,7 @@ final List<ScannerRule> architectureSourceRules = [
   /// Why: Flags Flutter or package imports from domain files. Domain may only
   /// import freezed_annotation and other /domain/ paths (other entities or Value
   /// Objects). For shared primitive logic, create a Value Object (sealed Freezed
-  /// class) in /domain/value_objects/. For one-off derivation, add an entity
+  /// class) in /domain/values/. For one-off derivation, add an entity
   /// getter. Never import core/extensions/ — that violates the Clean Architecture
   /// Dependency Rule (inner layer must not depend on outer).
   scannerRule(
@@ -17,7 +17,7 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage:
           'Domain may only import freezed_annotation and other /domain/ paths. '
           'For shared primitive logic, create a Value Object in '
-          '/domain/value_objects/ (sealed Freezed class). For one-off derivation, '
+          '/domain/values/ (sealed Freezed class). For one-off derivation, '
           'add an entity getter. See building-flutter-apps SKILL.md Critical Rule 11 + 12.',
       severity: DiagnosticSeverity.ERROR,
     ),

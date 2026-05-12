@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.6.0] - 2026-05-13
+
+- **BREAKING — VO subfolder renamed `/domain/value_objects/` → `/domain/values/`.**
+  Path gates in 4 source-scanner rules (`vo_public_raw_constructor`,
+  `domain_entity_primitive_factory`, `domain_custom_copy_with`,
+  `freezed_disable_map_when_required`) and the `hive_field_no_vo_type`
+  import-regex auto-extension now match `/domain/values/`. Consumers
+  upgrading from 0.5.x MUST migrate:
+  1. `mv lib/**/domain/value_objects lib/**/domain/values` per feature
+     and `lib/core/domain/value_objects` → `lib/core/domain/values`.
+  2. Rewrite imports: `domain/value_objects/` → `domain/values/`.
+  3. Re-run `dart analyze`.
+  Without the rename:
+  - `vo_public_raw_constructor`, `domain_custom_copy_with`,
+    `freezed_disable_map_when_required` silently stop firing on existing VOs
+    (3 guards regress).
+  - `hive_field_no_vo_type` loses auto-extension from the old import path
+    (Hive Model VO leak undetected).
+  - `domain_entity_primitive_factory` starts erroring on every public
+    primitive factory in old-path VOs (false positives across the board).
+  Caret `^0.5.x` does NOT auto-pick this release — bump constraint to `^0.6.0`
+  after migrating.
+
 ## [0.5.7] - 2026-05-13
 
 - Doc drift fix (tvly-verified vs hive_ce + pub.dev):
@@ -12,14 +35,14 @@
     ^3.1.0` floor (options removed in 3.0.0, re-added in 3.1.0).
 - Added `freezed_disable_map_when_required` (ERROR) in
   `lib/src/rules/value_object_source_rules.dart`: sealed Freezed Value
-  Objects in `/domain/value_objects/` must annotate
+  Objects in `/domain/values/` must annotate
   `@Freezed(map: FreezedMapOptions.none, when: FreezedWhenOptions.none)`
   to disable codegen of legacy `.map()`/`.maybeMap()`/`.when()`/`.maybeWhen()`
   methods. Those APIs bypass the sealed exhaustiveness check and are
   forbidden by Critical Rule 7. Native Dart 3 `switch` becomes the only
   pattern-matching surface. Catches bare `@freezed`, partial opt-out
   (one of map/when missing), and multi-line annotations. Non-sealed
-  Freezed classes and files outside `/domain/value_objects/` are
+  Freezed classes and files outside `/domain/values/` are
   unaffected.
 - Bumped Flutter skill rule count to 115 and diagnostic count to 122.
 - Added Hive persistence boundary rule in
@@ -66,13 +89,13 @@
     with shipped user data; expose VOs via entity getter instead.
 - Added three Value Object boundary rules in
   `lib/src/rules/value_object_source_rules.dart`:
-  - `vo_public_raw_constructor` (ERROR): in `/domain/value_objects/`, a
+  - `vo_public_raw_constructor` (ERROR): in `/domain/values/`, a
     redirecting factory of the form `const factory X.<name>(...) = _Impl;`
     must use a private redirect name (`._meters`, `._raw`). Public callers
     skip validation otherwise — every VO must travel through a validated
     factory.
   - `domain_entity_primitive_factory` (ERROR): in `/domain/` outside
-    `/domain/value_objects/`, a `@freezed` entity must not own named
+    `/domain/values/`, a `@freezed` entity must not own named
     factories (`factory User.fromPrimitives(...)`). Primitive → VO
     conversion lives in data models, notifiers, or import services so
     the entity remains unrepresentable in invalid state.
@@ -86,7 +109,7 @@
 ## [0.5.6] - 2026-05-13
 
 - Rewrote `arch_domain_import` correction message to guide users toward
-  Value Objects (sealed Freezed class in `/domain/value_objects/`) for
+  Value Objects (sealed Freezed class in `/domain/values/`) for
   shared primitive logic and entity getters for one-off derivations.
   Old message ("Move Flutter/package dependencies out of domain
   entities") was misleading — pure-Dart `core/extensions/` imports are

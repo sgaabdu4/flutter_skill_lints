@@ -4,10 +4,10 @@ Status: 2026-05-11.
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 105 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 112 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 115 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 122 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 81 additional diagnostics.
-- Total unique diagnostics: 192.
+- Total unique diagnostics: 193.
 
 ## Full Rule Inventory
 
@@ -125,6 +125,11 @@ ui_snackbar_boundary
 use_context_mounted_after_await
 use_ref_invalidate
 use_ref_mounted_after_await
+vo_public_raw_constructor
+domain_entity_primitive_factory
+domain_custom_copy_with
+freezed_disable_map_when_required
+hive_field_no_vo_type
 use_sealed_freezed_classes
 use_unawaited_for_fire_and_forget_futures
 ```
@@ -236,7 +241,10 @@ Core skill rules already covered before this pass:
 - Architecture: `arch_domain_import`, `arch_domain_serialization`,
   `arch_interface_contract`, `arch_concrete_dependency`,
   `arch_datasource_try_catch`, `arch_widget_path`, `atomic_provider_access`,
-  `typed_id_raw_id`, `records_map_return`, `avoid_object_map_cast`.
+  `typed_id_raw_id`, `records_map_return`, `avoid_object_map_cast`,
+  `vo_public_raw_constructor`, `domain_entity_primitive_factory`,
+  `domain_custom_copy_with`, `freezed_disable_map_when_required`,
+  `hive_field_no_vo_type`.
 - Navigation: `guard_context_pop`, `avoid_route_param_throw_in_build`,
   `router_string_nav`, `router_gorouter_of`,
   `router_untyped_navigator_push`, `router_pop_then_push`,

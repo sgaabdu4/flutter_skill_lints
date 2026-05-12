@@ -1,5 +1,88 @@
 # Changelog
 
+## [0.5.7] - 2026-05-13
+
+- Doc drift fix (tvly-verified vs hive_ce + pub.dev):
+  - `hive-persistence.md`: replaced "infers HiveField(N) from ctor order"
+    with `hive_adapters.g.yaml` SSOT mechanism. Migration table: rename =
+    `⚠️ manual yaml edit` (was wrongly `✅`). Added rows for reorder + type
+    change (both ❌, per official docs).
+  - `value-objects.md` Hive-collision: same correction + link to hive_ce docs.
+  - `freezed_disable_map_when_required` message now states `freezed_annotation
+    ^3.1.0` floor (options removed in 3.0.0, re-added in 3.1.0).
+- Added `freezed_disable_map_when_required` (ERROR) in
+  `lib/src/rules/value_object_source_rules.dart`: sealed Freezed Value
+  Objects in `/domain/value_objects/` must annotate
+  `@Freezed(map: FreezedMapOptions.none, when: FreezedWhenOptions.none)`
+  to disable codegen of legacy `.map()`/`.maybeMap()`/`.when()`/`.maybeWhen()`
+  methods. Those APIs bypass the sealed exhaustiveness check and are
+  forbidden by Critical Rule 7. Native Dart 3 `switch` becomes the only
+  pattern-matching surface. Catches bare `@freezed`, partial opt-out
+  (one of map/when missing), and multi-line annotations. Non-sealed
+  Freezed classes and files outside `/domain/value_objects/` are
+  unaffected.
+- Bumped Flutter skill rule count to 115 and diagnostic count to 122.
+- Added Hive persistence boundary rule in
+  `lib/src/rules/hive_persistence_source_rules.dart`:
+  - `hive_field_no_vo_type` (ERROR): in `/data/models/`, `@freezed`
+    constructor parameters must not be typed as a Value Object. Catches
+    nullable (`Distance?`), generic (`List<Distance>`,
+    `Map<String, Money>`), and `show`-clause-imported VOs. Persistence
+    Models hold primitives; VOs live on the domain Entity; the mapper
+    bridges via `Distance.fromMeters(...)` in `toEntity()`.
+- Extended `vo_public_raw_constructor` to also catch zero-touch
+  passthrough public factories
+  (`factory X.kilograms(double v) => X._kilograms(v);`) — same risk as a
+  raw redirect: caller skips validation. Validated factories (`assert`,
+  transform, throw) and parameterless redirects (`Distance.zero()`) stay
+  legal.
+- Sharpened `vo_public_raw_constructor` correction message: now shows
+  the concrete `throw ArgumentError.value(...)` guard shape inline and
+  explicitly calls out that passthrough factories are rejected.
+  Previous message ("expose a validated public factory") was too soft —
+  LLMs ticked the "private redirect" box and added a passthrough,
+  thinking the diagnostic was about naming. New message bakes the
+  validation requirement into the example. Title rephrased from "Value
+  Object raw constructors must be private" to "Value Object public
+  factory must validate, not just forward."
+- `references/value-objects.md` Forbidden section gains an explicit
+  passthrough anti-pattern block + two corrective shapes: inline
+  guards in the factory body, and an extracted `_guard()` helper (still
+  passes the lint because the body is a function call, not bare arg).
+- `SKILL.md` Critical Rule 12 rewritten to require explicit guards in
+  the public factory body and to call out passthrough as rejected.
+
+- Skill doc fixes:
+  - `references/value-objects.md` Forbidden section gains a Hive collision
+    block + corrective shapes (Option A: entity stays primitive, VO via
+    getter; Option B: separate persistence Model + domain Entity with
+    mapper).
+  - `references/hive-persistence.md` adds a *VO Interop* section, includes
+    it in the Contents TOC, and corrects the `@GenerateAdapters` example
+    to register persistence Models (`UserModel`/`OrderModel`) rather than
+    domain entities. Aligns with the file's own Recap rule #3.
+  - `SKILL.md` Critical Rule 12 gains a Hive collision caveat: do not
+    change ctor param types on `@GenerateAdapters`-registered classes
+    with shipped user data; expose VOs via entity getter instead.
+- Added three Value Object boundary rules in
+  `lib/src/rules/value_object_source_rules.dart`:
+  - `vo_public_raw_constructor` (ERROR): in `/domain/value_objects/`, a
+    redirecting factory of the form `const factory X.<name>(...) = _Impl;`
+    must use a private redirect name (`._meters`, `._raw`). Public callers
+    skip validation otherwise — every VO must travel through a validated
+    factory.
+  - `domain_entity_primitive_factory` (ERROR): in `/domain/` outside
+    `/domain/value_objects/`, a `@freezed` entity must not own named
+    factories (`factory User.fromPrimitives(...)`). Primitive → VO
+    conversion lives in data models, notifiers, or import services so
+    the entity remains unrepresentable in invalid state.
+  - `domain_custom_copy_with` (ERROR): no hand-written `copyWith` in
+    `/domain/`. Let Freezed generate it from the redirect — drift
+    between author intent and generated semantics (nullability,
+    sentinels, equality) silently breaks callers otherwise.
+- Cross-references SKILL.md Critical Rule 12 and
+  `references/value-objects.md`.
+
 ## [0.5.6] - 2026-05-13
 
 - Rewrote `arch_domain_import` correction message to guide users toward

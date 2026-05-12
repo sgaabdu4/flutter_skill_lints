@@ -9,6 +9,7 @@ import 'package:analyzer_testing/src/analysis_rule/pub_package_resolution.dart'
 import 'package:flutter_skill_lints/src/rules/architecture_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/data_crash_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/freezed_source_rules.dart';
+import 'package:flutter_skill_lints/src/rules/hive_persistence_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/notifier_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/riverpod_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/router_source_rules.dart';
@@ -18,6 +19,7 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 import 'package:flutter_skill_lints/src/rules/state_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/test_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/ui_source_rules.dart';
+import 'package:flutter_skill_lints/src/rules/value_object_source_rules.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
@@ -86,6 +88,11 @@ void main() {
     defineReflectiveTests(TestTapAtTest);
     defineReflectiveTests(TestInlineValueKeyTest);
     defineReflectiveTests(TestFirstMatchFinderTest);
+    defineReflectiveTests(VoPublicRawConstructorTest);
+    defineReflectiveTests(DomainEntityPrimitiveFactoryTest);
+    defineReflectiveTests(DomainCustomCopyWithTest);
+    defineReflectiveTests(FreezedDisableMapWhenRequiredTest);
+    defineReflectiveTests(HiveFieldNoVoTypeTest);
   });
 }
 
@@ -2693,5 +2700,939 @@ void main() {
 ''');
 
     await assertNoDiagnosticsInFile(filePath);
+  }
+}
+
+abstract class _ValueObjectRuleTest extends _SourceRuleTest {
+  @override
+  List<ScannerRule> get rules => valueObjectSourceRules;
+}
+
+@reflectiveTest
+final class VoPublicRawConstructorTest extends _ValueObjectRuleTest {
+  @override
+  String get ruleName => 'vo_public_raw_constructor';
+  @override
+  String get needle => 'const factory Distance.meters';
+  @override
+  String get path => '$testPackageLibPath/core/domain/value_objects/distance.dart';
+  @override
+  String get source => r'''
+class Distance {
+  const factory Distance.meters(double value) = _Meters;
+  const Distance._();
+}
+class _Meters extends Distance {
+  const _Meters(this.value) : super._();
+  final double value;
+}
+''';
+
+  Future<void> test_allowsPrivateRawRedirect() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    newFile(filePath, r'''
+class Distance {
+  const factory Distance._meters(double value) = _Meters;
+  const Distance._();
+  factory Distance.fromMeters(double m) {
+    assert(m >= 0);
+    return Distance._meters(m);
+  }
+}
+class _Meters extends Distance {
+  const _Meters(this.value) : super._();
+  final double value;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsValidatedFactoryWithoutRedirect() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/email.dart';
+    newFile(filePath, r'''
+// ignore_for_file: undefined_method, undefined_identifier
+class Email {
+  const Email._raw(this.value);
+  factory Email(String input) {
+    return Email._raw(input);
+  }
+  final String value;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsRedirectOutsideValueObjectsPath() async {
+    final filePath = '$testPackageLibPath/features/users/domain/user.dart';
+    newFile(filePath, r'''
+class User {
+  const factory User.empty(double placeholder) = _User;
+  const User._();
+}
+class _User extends User {
+  const _User(this.placeholder) : super._();
+  final double placeholder;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsParameterlessPublicRedirect() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    newFile(filePath, r'''
+class Distance {
+  const factory Distance.zero() = _DistanceZero;
+  const Distance._();
+}
+class _DistanceZero extends Distance {
+  const _DistanceZero() : super._();
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsAnonymousPublicRawRedirect() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/email.dart';
+    const source = r'''
+// ignore_for_file: undefined_method
+class Email {
+  const factory Email(String value) = _Email;
+  const Email._();
+}
+class _Email extends Email {
+  const _Email(this.value) : super._();
+  final String value;
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'const factory Email(String value) = _Email;', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsNullablePrimitiveParam() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/email.dart';
+    const source = r'''
+// ignore_for_file: undefined_method
+class Email {
+  const factory Email.raw(String? value) = _Email;
+  const Email._();
+}
+class _Email extends Email {
+  const _Email(this.value) : super._();
+  final String? value;
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'const factory Email.raw(String? value) = _Email;', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsMultiParamPublicRawRedirect() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/money.dart';
+    const source = r'''
+// ignore_for_file: undefined_method, undefined_class
+class Money {
+  const factory Money.usd(int cents, Currency currency) = _UsdMoney;
+  const Money._();
+}
+class _UsdMoney extends Money {
+  const _UsdMoney(this.cents, this.currency) : super._();
+  final int cents;
+  final Currency currency;
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'const factory Money.usd(int cents, Currency currency) = _UsdMoney;', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsPassthroughPublicFactory() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/weight_adjustment.dart';
+    const source = r'''
+// ignore_for_file: undefined_method
+class WeightAdjustment {
+  const factory WeightAdjustment._kilograms(double value) = _Kg;
+  const WeightAdjustment._();
+  factory WeightAdjustment.kilograms(double value) => WeightAdjustment._kilograms(value);
+}
+class _Kg extends WeightAdjustment {
+  const _Kg(this.value) : super._();
+  final double value;
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'factory WeightAdjustment.kilograms', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsValidatedFactoryWithAssert() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/weight.dart';
+    newFile(filePath, r'''
+// ignore_for_file: undefined_method
+class Weight {
+  const factory Weight._kilograms(double value) = _Kg;
+  const Weight._();
+  factory Weight.kilograms(double value) {
+    assert(value >= 0, 'Weight cannot be negative');
+    return Weight._kilograms(value);
+  }
+}
+class _Kg extends Weight {
+  const _Kg(this.value) : super._();
+  final double value;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsTransformingFactory() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/email.dart';
+    newFile(filePath, r'''
+// ignore_for_file: undefined_method
+class Email {
+  const factory Email._raw(String value) = _Email;
+  const Email._();
+  factory Email(String input) => Email._raw(input.trim());
+}
+class _Email extends Email {
+  const _Email(this.value) : super._();
+  final String value;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsMultiLinePublicRawRedirect() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    const source = r'''
+// ignore_for_file: undefined_method
+class Distance {
+  const factory Distance.meters(
+    double value,
+  ) = _Meters;
+  const Distance._();
+}
+class _Meters extends Distance {
+  const _Meters(this.value) : super._();
+  final double value;
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'const factory Distance.meters(', ruleName),
+    ]);
+  }
+}
+
+@reflectiveTest
+final class DomainEntityPrimitiveFactoryTest extends _ValueObjectRuleTest {
+  @override
+  String get ruleName => 'domain_entity_primitive_factory';
+  @override
+  String get needle => 'factory User.fromPrimitives';
+  @override
+  String get path => '$testPackageLibPath/features/users/domain/user.dart';
+  @override
+  bool get addIgnorePrefix => false;
+
+  @override
+  void setUp() {
+    newPackage('freezed_annotation').addFile('lib/freezed_annotation.dart', r'''
+class Freezed {
+  const Freezed();
+}
+
+const freezed = Freezed();
+''');
+    super.setUp();
+  }
+
+  @override
+  String get source => r'''
+// ignore_for_file: uri_does_not_exist, unused_import, redirect_to_invalid_function_type
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class User {
+  const factory User({required String id}) = _User;
+  factory User.fromPrimitives(String id, int age) => User(id: id);
+}
+class _User implements User {
+  const _User({required this.id});
+  final String id;
+}
+''';
+
+  Future<void> test_allowsAnonymousFreezedRedirect() async {
+    final filePath = '$testPackageLibPath/features/users/domain/user.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, unused_import
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class User {
+  const factory User({required String id}) = _User;
+}
+class _User implements User {
+  const _User({required this.id});
+  final String id;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsNamedFactoryInValueObjectsPath() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, unused_import
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class Distance {
+  factory Distance.fromMeters(double m) {
+    return _Meters(m);
+  }
+}
+class _Meters implements Distance {
+  const _Meters(this.value);
+  final double value;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsNamedFactoryInDataPath() async {
+    final filePath = '$testPackageLibPath/features/users/data/models/user_model.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, unused_import
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class UserModel {
+  const factory UserModel({required String id}) = _UserModel;
+  factory UserModel.fromPrimitives(String id) => UserModel(id: id);
+}
+class _UserModel implements UserModel {
+  const _UserModel({required this.id});
+  final String id;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsPrivateNamedFactory() async {
+    final filePath = '$testPackageLibPath/features/users/domain/user.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, unused_import
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class User {
+  const factory User({required String id}) = _User;
+  factory User._fromInternal(String id) => User(id: id);
+}
+class _User implements User {
+  const _User({required this.id});
+  final String id;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsClassWithoutFreezedAnnotation() async {
+    final filePath = '$testPackageLibPath/features/users/domain/user.dart';
+    newFile(filePath, r'''
+class User {
+  const User._();
+  factory User.fromPrimitives(String id) => const User._();
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsFromJsonFactoryInDomain() async {
+    final filePath = '$testPackageLibPath/features/users/domain/user.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_method, redirect_to_invalid_function_type
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class User {
+  const factory User({required String id}) = _User;
+  factory User.fromJson(Map<String, Object?> json) => const _User();
+}
+class _User implements User {
+  const _User({this.id = ''});
+  final String id;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsConstFactoryNamedVariant() async {
+    final filePath = '$testPackageLibPath/features/users/domain/user.dart';
+    const source = r'''
+// ignore_for_file: uri_does_not_exist, unused_import, redirect_to_invalid_function_type
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class User {
+  const factory User({required String id}) = _User;
+  const factory User.empty(String placeholder) = _EmptyUser;
+}
+class _User implements User {
+  const _User({required this.id});
+  final String id;
+}
+class _EmptyUser implements User {
+  const _EmptyUser(this.placeholder);
+  final String placeholder;
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'factory User.empty', ruleName),
+    ]);
+  }
+}
+
+@reflectiveTest
+final class DomainCustomCopyWithTest extends _ValueObjectRuleTest {
+  @override
+  String get ruleName => 'domain_custom_copy_with';
+  @override
+  String get needle => 'copyWith';
+  @override
+  String get path => '$testPackageLibPath/features/users/domain/user.dart';
+  @override
+  String get source => r'''
+class User {
+  const User({required this.id});
+  final String id;
+  User copyWith({String? id}) => User(id: id ?? this.id);
+}
+''';
+
+  Future<void> test_allowsCopyWithCallSite() async {
+    final filePath = '$testPackageLibPath/features/users/domain/user.dart';
+    newFile(filePath, r'''
+// ignore_for_file: undefined_method
+class User {
+  const User({required this.id});
+  final String id;
+}
+
+void use(User u) {
+  final next = u.copyWith();
+  next.toString();
+}
+
+extension on User {
+  User copyAgain() => this;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsCopyWithOutsideDomain() async {
+    final filePath = '$testPackageLibPath/features/users/presentation/user_state.dart';
+    newFile(filePath, r'''
+class UserState {
+  const UserState({required this.id});
+  final String id;
+  UserState copyWith({String? id}) => UserState(id: id ?? this.id);
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsCopyWithCommentInDomain() async {
+    final filePath = '$testPackageLibPath/features/users/domain/user.dart';
+    newFile(filePath, r'''
+class User {
+  const User({required this.id});
+  final String id;
+  // Note: Freezed generates copyWith automatically; do not declare manually.
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsCopyWithInGeneratedMixin() async {
+    final filePath = '$testPackageLibPath/features/users/domain/user.dart';
+    newFile(filePath, r'''
+// ignore_for_file: undefined_class, undefined_method
+mixin _$User {
+  User copyWith({String? id}) => throw UnimplementedError();
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsGenericCopyWith() async {
+    final filePath = '$testPackageLibPath/features/users/domain/user.dart';
+    const source = r'''
+class User {
+  const User({required this.id});
+  final String id;
+  User copyWith<T>({String? id}) => User(id: id ?? this.id);
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'copyWith<T>', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsAbstractCopyWithSignature() async {
+    final filePath = '$testPackageLibPath/features/users/domain/user.dart';
+    const source = r'''
+abstract class User {
+  const User();
+  User copyWith({String? id});
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'copyWith({String? id})', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsCopyWithInExtensionOutsideClass() async {
+    final filePath = '$testPackageLibPath/features/users/domain/user.dart';
+    newFile(filePath, r'''
+class User {
+  const User({required this.id});
+  final String id;
+}
+
+extension UserCopy on User {
+  User copyWith({String? id}) => User(id: id ?? this.id);
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+}
+
+@reflectiveTest
+final class FreezedDisableMapWhenRequiredTest extends _ValueObjectRuleTest {
+  @override
+  String get ruleName => 'freezed_disable_map_when_required';
+  @override
+  String get needle => 'sealed class Distance';
+  @override
+  String get path => '$testPackageLibPath/core/domain/value_objects/distance.dart';
+  @override
+  bool get addIgnorePrefix => false;
+
+  @override
+  void setUp() {
+    newPackage('freezed_annotation').addFile('lib/freezed_annotation.dart', r'''
+class Freezed {
+  const Freezed({Object? map, Object? when});
+}
+class FreezedMapOptions {
+  static const Object none = Object();
+}
+class FreezedWhenOptions {
+  static const Object none = Object();
+}
+const freezed = Freezed();
+''');
+    super.setUp();
+  }
+
+  @override
+  String get source => r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class Distance with _$Distance {
+  const Distance._();
+  const factory Distance._meters(double value) = _Meters;
+}
+''';
+
+  Future<void> test_allowsFullOptOut() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@Freezed(map: FreezedMapOptions.none, when: FreezedWhenOptions.none)
+sealed class Distance with _$Distance {
+  const Distance._();
+  const factory Distance._meters(double value) = _Meters;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsPartialOptOutMissingWhen() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    const partialSource = r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@Freezed(map: FreezedMapOptions.none)
+sealed class Distance with _$Distance {
+  const Distance._();
+  const factory Distance._meters(double value) = _Meters;
+}
+''';
+    newFile(filePath, partialSource);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(partialSource, 'sealed class Distance', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsPartialOptOutMissingMap() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    const partialSource = r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@Freezed(when: FreezedWhenOptions.none)
+sealed class Distance with _$Distance {
+  const Distance._();
+  const factory Distance._meters(double value) = _Meters;
+}
+''';
+    newFile(filePath, partialSource);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(partialSource, 'sealed class Distance', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsNonSealedFreezedClass() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/money.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+class Money with _$Money {
+  const Money._();
+  const factory Money({required int cents}) = _Money;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsOutsideValueObjectsPath() async {
+    final filePath = '$testPackageLibPath/features/users/domain/entities/user.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class User with _$User {
+  const User._();
+  const factory User({required String id}) = _User;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsMultilineFullOptOut() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/distance.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@Freezed(
+  map: FreezedMapOptions.none,
+  when: FreezedWhenOptions.none,
+)
+sealed class Distance with _$Distance {
+  const Distance._();
+  const factory Distance._meters(double value) = _Meters;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsNoFreezedAnnotation() async {
+    final filePath = '$testPackageLibPath/core/domain/value_objects/state.dart';
+    newFile(filePath, r'''
+sealed class AppState {
+  const AppState();
+}
+class IdleState extends AppState {
+  const IdleState();
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+}
+
+abstract class _HivePersistenceRuleTest extends _SourceRuleTest {
+  @override
+  List<ScannerRule> get rules => hivePersistenceSourceRules;
+}
+
+@reflectiveTest
+final class HiveFieldNoVoTypeTest extends _HivePersistenceRuleTest {
+  @override
+  String get ruleName => 'hive_field_no_vo_type';
+  @override
+  String get needle => 'Distance distance';
+  @override
+  String get path => '$testPackageLibPath/features/workouts/data/models/workout_set_model.dart';
+  @override
+  bool get addIgnorePrefix => false;
+
+  @override
+  void setUp() {
+    newPackage('freezed_annotation').addFile('lib/freezed_annotation.dart', r'''
+class Freezed {
+  const Freezed();
+}
+
+const freezed = Freezed();
+''');
+    super.setUp();
+  }
+
+  @override
+  String get source => r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class WorkoutSetModel {
+  const factory WorkoutSetModel({
+    required String id,
+    required Distance distance,
+  }) = _WorkoutSetModel;
+}
+class _WorkoutSetModel implements WorkoutSetModel {
+  const _WorkoutSetModel({required this.id, required this.distance});
+  final String id;
+  final Distance distance;
+}
+''';
+
+  Future<void> test_allowsPrimitiveTypedParams() async {
+    final filePath = '$testPackageLibPath/features/workouts/data/models/workout_set_model.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, unused_import
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class WorkoutSetModel {
+  const factory WorkoutSetModel({
+    /// HiveField(0)
+    required String id,
+    /// HiveField(1)
+    required double distanceMeters,
+    /// HiveField(2)
+    required int durationSeconds,
+  }) = _WorkoutSetModel;
+}
+class _WorkoutSetModel implements WorkoutSetModel {
+  const _WorkoutSetModel({required this.id, required this.distanceMeters, required this.durationSeconds});
+  final String id;
+  final double distanceMeters;
+  final int durationSeconds;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsImportedVoNotInBaselineList() async {
+    final filePath = '$testPackageLibPath/features/cycling/data/models/ride_model.dart';
+    const source = r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:test_package/features/cycling/domain/value_objects/cadence.dart';
+
+@freezed
+sealed class RideModel {
+  const factory RideModel({required Cadence cadence}) = _RideModel;
+}
+class _RideModel implements RideModel {
+  const _RideModel({required this.cadence});
+  final Cadence cadence;
+}
+''';
+    newFile('$testPackageLibPath/features/cycling/domain/value_objects/cadence.dart', r'''
+class Cadence {
+  const Cadence._(this.rpm);
+  final int rpm;
+}
+''');
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'Cadence cadence', 'hive_field_no_vo_type'),
+    ]);
+  }
+
+  Future<void> test_allowsVoTypeOutsideDataModelsPath() async {
+    final filePath = '$testPackageLibPath/features/workouts/domain/entities/workout_set.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class WorkoutSet {
+  const factory WorkoutSet({
+    required String id,
+    required Distance distance,
+  }) = _WorkoutSet;
+}
+class _WorkoutSet implements WorkoutSet {
+  const _WorkoutSet({required this.id, required this.distance});
+  final String id;
+  final Distance distance;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsNullableVoParam() async {
+    final filePath = '$testPackageLibPath/features/workouts/data/models/workout_set_model.dart';
+    const source = r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class WorkoutSetModel {
+  const factory WorkoutSetModel({
+    required String id,
+    Distance? distance,
+  }) = _WorkoutSetModel;
+}
+class _WorkoutSetModel implements WorkoutSetModel {
+  const _WorkoutSetModel({required this.id, this.distance});
+  final String id;
+  final Distance? distance;
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'Distance? distance', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsVoInsideListGeneric() async {
+    final filePath = '$testPackageLibPath/features/workouts/data/models/workout_set_model.dart';
+    const source = r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class, non_type_as_type_argument
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class WorkoutSetModel {
+  const factory WorkoutSetModel({
+    required List<Distance> distances,
+  }) = _WorkoutSetModel;
+}
+class _WorkoutSetModel implements WorkoutSetModel {
+  const _WorkoutSetModel({required this.distances});
+  final List distances;
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'Distance> distances', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsVoInsideMapGeneric() async {
+    final filePath = '$testPackageLibPath/features/workouts/data/models/workout_set_model.dart';
+    const source = r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class, non_type_as_type_argument
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class WorkoutSetModel {
+  const factory WorkoutSetModel({
+    required Map<String, Money> totals,
+  }) = _WorkoutSetModel;
+}
+class _WorkoutSetModel implements WorkoutSetModel {
+  const _WorkoutSetModel({required this.totals});
+  final Map totals;
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'Money> totals', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsMultiVoFromShowClause() async {
+    final filePath = '$testPackageLibPath/features/cycling/data/models/ride_model.dart';
+    const source = r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:test_package/features/cycling/domain/value_objects/units.dart' show Cadence, Tempo;
+
+@freezed
+sealed class RideModel {
+  const factory RideModel({
+    required Cadence cadence,
+    required Tempo tempo,
+  }) = _RideModel;
+}
+class _RideModel implements RideModel {
+  const _RideModel({required this.cadence, required this.tempo});
+  final Cadence cadence;
+  final Tempo tempo;
+}
+''';
+    newFile('$testPackageLibPath/features/cycling/domain/value_objects/units.dart', r'''
+class Cadence { const Cadence._(this.rpm); final int rpm; }
+class Tempo { const Tempo._(this.bpm); final int bpm; }
+''');
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'Cadence cadence', ruleName),
+      compatLint(source, 'Tempo tempo', ruleName),
+    ]);
   }
 }

@@ -18,6 +18,7 @@ import 'package:flutter_skill_lints/src/rules/flutter_skill_project_config.dart'
 import 'package:flutter_skill_lints/src/rules/freezed_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/freezed_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/guard_context_pop.dart';
+import 'package:flutter_skill_lints/src/rules/hive_persistence_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/notifier_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/persistence_crash_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/require_main_error_hooks.dart';
@@ -36,6 +37,7 @@ import 'package:flutter_skill_lints/src/rules/use_ref_invalidate.dart';
 import 'package:flutter_skill_lints/src/rules/use_ref_mounted_after_await.dart';
 import 'package:flutter_skill_lints/src/rules/use_sealed_freezed_classes.dart';
 import 'package:flutter_skill_lints/src/rules/use_unawaited_for_fire_and_forget_futures.dart';
+import 'package:flutter_skill_lints/src/rules/value_object_source_rules.dart';
 
 final List<AbstractAnalysisRule> flutterSkillRules = [
   UseRefMountedAfterAwait(),
@@ -75,4 +77,6 @@ final List<AbstractAnalysisRule> flutterSkillRules = [
   ...dataCrashSourceRules,
   ...persistenceCrashSourceRules,
   ...testSourceRules,
+  ...valueObjectSourceRules,
+  ...hivePersistenceSourceRules,
 ];

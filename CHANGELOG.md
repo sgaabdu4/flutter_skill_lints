@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.2] - 2026-05-12
+
+- Added `avoid_mounted_check_in_finally` to flag
+  `if (!ref.mounted) return;` (and `context.mounted` / bare `mounted`)
+  shapes inside `finally` blocks. `return;` in `finally` swallows
+  in-flight exceptions from the `try` body. Ships a quick-fix that
+  rewrites the early-return into an `if (mounted) { ... }` guard around
+  the trailing statements.
+- Bumped additional analyzer rule count to 81 and quick-fix count to 64.
+- Refreshed README counts and `doc/building-flutter-apps-lint-coverage.md`
+  to list the new rule.
+
 ## [0.5.1] - 2026-05-11
 
 - Removed stale `flutter_skill_lints` version pins from README, example

@@ -164,7 +164,7 @@ void main() {
     );
 
     expect(registry.warningRules.length, _enabledAdditionalRuleCount);
-    expect(registeredFixCount, 63);
+    expect(registeredFixCount, 64);
     expect(registry.assistKinds, hasLength(1));
     expect(registry.warningRules, containsPair('avoid_ref_read_inside_build', isNotNull));
     expect(registry.warningRules, containsPair('use_ref_and_state_synchronously', isNotNull));
@@ -246,7 +246,7 @@ void main() {
 
 const _enabledFlutterSkillRuleCount = 105;
 const _enabledFlutterSkillDiagnosticCount = 112;
-const _enabledAdditionalRuleCount = 80;
+const _enabledAdditionalRuleCount = 81;
 
 List<String> _docBlockBefore(List<String> lines, int index) {
   var cursor = index - 1;

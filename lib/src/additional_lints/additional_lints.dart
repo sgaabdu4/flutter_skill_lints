@@ -21,6 +21,7 @@ import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_generics_sh
 import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_incomplete_copy_with_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_incorrect_image_opacity_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_map_keys_contains_fix.dart';
+import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_mounted_check_in_finally_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_notifier_constructors_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_only_rethrow_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/avoid_ref_read_inside_build_fix.dart';
@@ -92,6 +93,7 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_incomplete_
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_incorrect_image_opacity.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_map_keys_contains.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_misused_test_matchers.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_mounted_check_in_finally.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_mounted_in_setstate.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_notifier_constructors.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_only_rethrow.dart';
@@ -176,6 +178,7 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidGenericsShadowing());
     registry.registerWarningRule(AvoidMapKeysContains());
     registry.registerWarningRule(AvoidMisusedTestMatchers());
+    registry.registerWarningRule(AvoidMountedCheckInFinally());
     registry.registerWarningRule(AvoidOnlyRethrow());
     registry.registerWarningRule(AvoidThrowInCatchBlock());
     registry.registerWarningRule(AvoidUnassignedStreamSubscriptions());
@@ -287,6 +290,10 @@ class AdditionalLintsPlugin extends Plugin {
     );
     registry.registerFixForRule(AvoidGenericsShadowing.code, AvoidGenericsShadowingFix.new);
     registry.registerFixForRule(AvoidMapKeysContains.code, AvoidMapKeysContainsFix.new);
+    registry.registerFixForRule(
+      AvoidMountedCheckInFinally.code,
+      AvoidMountedCheckInFinallyFix.new,
+    );
     registry.registerFixForRule(AvoidOnlyRethrow.code, AvoidOnlyRethrowFix.new);
     registry.registerFixForRule(AvoidThrowInCatchBlock.code, AvoidThrowInCatchBlockFix.new);
     registry.registerFixForRule(AvoidIncompleteCopyWith.code, AvoidIncompleteCopyWithFix.new);

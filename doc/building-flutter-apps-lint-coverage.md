@@ -6,7 +6,7 @@ This audit covers both plugin surfaces:
 
 - `lib/src/rules/**`: 105 registered `building-flutter-apps` warning rules.
 - `lib/src/rules/**`: 112 `building-flutter-apps` diagnostic codes.
-- `lib/src/additional_lints/rules/**`: 80 additional diagnostics.
+- `lib/src/additional_lints/rules/**`: 81 additional diagnostics.
 - Total unique diagnostics: 192.
 
 ## Full Rule Inventory
@@ -149,6 +149,7 @@ avoid_incomplete_copy_with
 avoid_incorrect_image_opacity
 avoid_map_keys_contains
 avoid_misused_test_matchers
+avoid_mounted_check_in_finally
 avoid_mounted_in_setstate
 avoid_notifier_constructors
 avoid_only_rethrow
@@ -289,7 +290,7 @@ hover description and correction text.
 | `riverpod-codegen.md` | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_watch_no_select`, `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`, `riverpod_auto_dispose_keepalive_dependencies`, `riverpod_keepalive_family`, `use_ref_invalidate`; Riverpod-owned dependency/scoping/provider-shape diagnostics stay with `riverpod_lint` |
 | `services-and-singletons.md` | `service_singleton`, `service_static_side_effect`, `service_random_per_call`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures`, `fire_forget_in_tests` |
 | `showcase-tours.md` | `avoid_showcase_key_filtering`, `showcase_listen_manual_handle`, `showcase_prev_null_guard`, `showcase_default_scope`, `showcase_dispose_on_tap`, `showcase_v4_api`, `showcase_get_named_unhandled`, `showcase_scope_string_literal` |
-| `state-management.md` | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `async_context_mounted_style`, `avoid_sync_notifier_state_read`, `avoid_silent_repository_null_return`, `notifier_ensure_deps`, `notifier_watch_method`, `state_broad_invalidation`, `state_freezed_nullable_error`, runtime boundary for source-of-truth freshness |
+| `state-management.md` | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `async_context_mounted_style`, `avoid_mounted_check_in_finally`, `avoid_sync_notifier_state_read`, `avoid_silent_repository_null_return`, `notifier_ensure_deps`, `notifier_watch_method`, `state_broad_invalidation`, `state_freezed_nullable_error`, runtime boundary for source-of-truth freshness |
 | `testing.md` | `cfg_e2e_entrypoint`, `test_provider_container`, `test_uncontrolled_scope`, `test_create_container`, `test_mock_concrete`, `test_pump_and_settle`, `test_tap_at`, `test_inline_value_key`, `test_first_match_finder`, runtime boundary for event-contract and cross-runtime drift proof |
 
 ## Added In This Pass

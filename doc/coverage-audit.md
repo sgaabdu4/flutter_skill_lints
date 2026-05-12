@@ -75,8 +75,8 @@ only report diagnostics against Dart analysis units.
 
 The additional analyzer coverage is registered by `FlutterSkillLintsPlugin`.
 
-- 80 additional warning rules registered by default.
-- 63 quick fixes registered.
+- 81 additional warning rules registered by default.
+- 64 quick fixes registered.
 - 1 assist registered.
 - Existing diagnostic IDs are preserved under the
   `flutter_skill_lints` plugin.

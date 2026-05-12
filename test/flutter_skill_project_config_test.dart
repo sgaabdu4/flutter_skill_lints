@@ -183,8 +183,8 @@ include: package:flutter_lints/flutter.yaml
 plugins:
   flutter_skill_lints:
     "path": ../flutter_skill_lints
-  # Pre-release pin: lift when riverpod_lint 3.2.0 stable lands.
-  # Verify pub.dev before ship. Promote to latest stable when possible.
+  # Pre-release pin: latest stable is 3.1.3; use 3.1.4-dev.3 for Riverpod 3.3-era lint coverage.
+  # Verify pub.dev before ship. Promote to a stable release when compatible.
   # Pre-release silently adopts dev behavior - review.
   riverpod_lint: 3.1.4-dev.3
 
@@ -283,8 +283,8 @@ include: package:flutter_lints/flutter.yaml
 
 plugins:
   flutter_skill_lints:
-  # Pre-release pin: lift when riverpod_lint 3.2.0 stable lands.
-  # Verify pub.dev before ship. Promote to latest stable when possible.
+  # Pre-release pin: latest stable is 3.1.3; use 3.1.4-dev.3 for Riverpod 3.3-era lint coverage.
+  # Verify pub.dev before ship. Promote to a stable release when compatible.
   # Pre-release silently adopts dev behavior - review.
   riverpod_lint: 3.1.4-dev.3
 
@@ -421,8 +421,8 @@ include: package:flutter_lints/flutter.yaml
 
 plugins:
   flutter_skill_lints:
-  # Pre-release pin: lift when riverpod_lint 3.2.0 stable lands.
-  # Verify pub.dev before ship. Promote to latest stable when possible.
+  # Pre-release pin: latest stable is 3.1.3; use 3.1.4-dev.3 for Riverpod 3.3-era lint coverage.
+  # Verify pub.dev before ship. Promote to a stable release when compatible.
   # Pre-release silently adopts dev behavior - review.
   riverpod_lint: 3.1.4-dev.3
   "many_lints": ^0.4.0
@@ -492,8 +492,8 @@ include: package:flutter_lints/flutter.yaml
 
 plugins:
   flutter_skill_lints:
-  # Pre-release pin: lift when riverpod_lint 3.2.0 stable lands.
-  # Verify pub.dev before ship. Promote to latest stable when possible.
+  # Pre-release pin: latest stable is 3.1.3; use 3.1.4-dev.3 for Riverpod 3.3-era lint coverage.
+  # Verify pub.dev before ship. Promote to a stable release when compatible.
   # Pre-release silently adopts dev behavior - review.
   riverpod_lint: 3.1.4-dev.3
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.1] - 2026-05-13
+
+- Patch release for packaging/documentation alignment:
+  - Updated README, example, and project-config test snippets to state the
+    current `riverpod_lint` prerelease pin accurately: latest stable is
+    `3.1.3`; this package still tests against `3.1.4-dev.3` for Riverpod
+    3.3-era lint coverage.
+  - No lint rule behavior changes.
+
 ## [0.6.0] - 2026-05-13
 
 - **BREAKING — VO subfolder renamed `/domain/value_objects/` → `/domain/values/`.**

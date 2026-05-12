@@ -149,15 +149,9 @@ final List<ScannerRule> valueObjectSourceRules = [
         final declLine = context.source.masked[classSpan.start];
         if (!RegExp(r'\bsealed\s+class\b').hasMatch(declLine)) continue;
         final windowStart = classSpan.start - 10 < 0 ? 0 : classSpan.start - 10;
-        final window = context.source.masked
-            .sublist(windowStart, classSpan.start)
-            .join('\n');
-        final hasMapNone = RegExp(
-          r'map\s*:\s*FreezedMapOptions\.none',
-        ).hasMatch(window);
-        final hasWhenNone = RegExp(
-          r'when\s*:\s*FreezedWhenOptions\.none',
-        ).hasMatch(window);
+        final window = context.source.masked.sublist(windowStart, classSpan.start).join('\n');
+        final hasMapNone = RegExp(r'map\s*:\s*FreezedMapOptions\.none').hasMatch(window);
+        final hasWhenNone = RegExp(r'when\s*:\s*FreezedWhenOptions\.none').hasMatch(window);
         if (hasMapNone && hasWhenNone) continue;
         final col = declLine.indexOf('sealed');
         reporter.report(context, classSpan.start, col < 0 ? 0 : col);

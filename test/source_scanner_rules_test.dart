@@ -2852,7 +2852,11 @@ class _UsdMoney extends Money {
     newFile(filePath, source);
 
     await assertDiagnosticsInFile(filePath, [
-      compatLint(source, 'const factory Money.usd(int cents, Currency currency) = _UsdMoney;', ruleName),
+      compatLint(
+        source,
+        'const factory Money.usd(int cents, Currency currency) = _UsdMoney;',
+        ruleName,
+      ),
     ]);
   }
 
@@ -3112,9 +3116,7 @@ class _EmptyUser implements User {
 ''';
     newFile(filePath, source);
 
-    await assertDiagnosticsInFile(filePath, [
-      compatLint(source, 'factory User.empty', ruleName),
-    ]);
+    await assertDiagnosticsInFile(filePath, [compatLint(source, 'factory User.empty', ruleName)]);
   }
 }
 
@@ -3206,9 +3208,7 @@ class User {
 ''';
     newFile(filePath, source);
 
-    await assertDiagnosticsInFile(filePath, [
-      compatLint(source, 'copyWith<T>', ruleName),
-    ]);
+    await assertDiagnosticsInFile(filePath, [compatLint(source, 'copyWith<T>', ruleName)]);
   }
 
   Future<void> test_reportsAbstractCopyWithSignature() async {
@@ -3551,9 +3551,7 @@ class _WorkoutSetModel implements WorkoutSetModel {
 ''';
     newFile(filePath, source);
 
-    await assertDiagnosticsInFile(filePath, [
-      compatLint(source, 'Distance? distance', ruleName),
-    ]);
+    await assertDiagnosticsInFile(filePath, [compatLint(source, 'Distance? distance', ruleName)]);
   }
 
   Future<void> test_reportsVoInsideListGeneric() async {
@@ -3575,9 +3573,7 @@ class _WorkoutSetModel implements WorkoutSetModel {
 ''';
     newFile(filePath, source);
 
-    await assertDiagnosticsInFile(filePath, [
-      compatLint(source, 'Distance> distances', ruleName),
-    ]);
+    await assertDiagnosticsInFile(filePath, [compatLint(source, 'Distance> distances', ruleName)]);
   }
 
   Future<void> test_reportsVoInsideMapGeneric() async {
@@ -3599,9 +3595,7 @@ class _WorkoutSetModel implements WorkoutSetModel {
 ''';
     newFile(filePath, source);
 
-    await assertDiagnosticsInFile(filePath, [
-      compatLint(source, 'Money> totals', ruleName),
-    ]);
+    await assertDiagnosticsInFile(filePath, [compatLint(source, 'Money> totals', ruleName)]);
   }
 
   Future<void> test_reportsMultiVoFromShowClause() async {

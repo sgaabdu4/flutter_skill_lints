@@ -37,13 +37,19 @@ final List<ScannerRule> hivePersistenceSourceRules = [
     description:
         'Flags VO-typed constructor parameters on Hive Model classes so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      if (!context.path.contains('/data/models/') &&
-          !context.path.contains('/data/model/')) {
+      if (!context.path.contains('/data/models/') && !context.path.contains('/data/model/')) {
         return;
       }
       const baseline = {
-        'Distance', 'Money', 'Email', 'Slug', 'PhoneNumber',
-        'HeartRate', 'Weight', 'Pace', 'Username',
+        'Distance',
+        'Money',
+        'Email',
+        'Slug',
+        'PhoneNumber',
+        'HeartRate',
+        'Weight',
+        'Pace',
+        'Username',
       };
       final imported = <String>{...baseline};
       final importPattern = RegExp(

@@ -82,7 +82,8 @@ final class SourceScannerContext {
   });
 
   factory SourceScannerContext.fromRuleContext(RuleContext context) {
-    final source = SourceScannerSource(context.definingUnit.content);
+    final unit = context.currentUnit ?? context.definingUnit;
+    final source = SourceScannerSource(unit.content);
     final classes = _classes(source);
     final methods = <ScannerMethodSpan>[];
     for (final classSpan in classes) {
@@ -90,7 +91,7 @@ final class SourceScannerContext {
     }
 
     return SourceScannerContext._(
-      path: _relativePath(context.definingUnit.file.path),
+      path: _relativePath(unit.file.path),
       source: source,
       classes: classes,
       methods: methods,
@@ -117,16 +118,39 @@ final class SourceScannerContext {
       source.masked[lineIndex].contains('ref.read(') && near(lineIndex, 'initState', 8);
 
   bool hasStringNavigation(String code, String masked) {
-    final contextNav = RegExp(
-      r'''\bcontext\s*\.\s*(?:go|push|replace|pushReplacement)\s*\(\s*['"]''',
-    );
-    final routerNav = RegExp(
-      r'''\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*(?:go|push|replace|pushReplacement)\s*\(\s*['"]''',
-    );
-    return [...contextNav.allMatches(code), ...routerNav.allMatches(code)].any((match) {
-      if (match.start >= masked.length) return false;
-      return masked.substring(match.start, match.end).trim().isNotEmpty;
-    });
+    return stringNavigationColumn(code, masked) != null;
+  }
+
+  int? stringNavigationColumn(String code, String masked) {
+    final patterns = [
+      RegExp(
+        r'''\bcontext\s*\.\s*(?:go|push|replace|pushReplacement)\s*(?:<[^>]+>)?\s*\(\s*r?['"]''',
+      ),
+      RegExp(r'''\bcontext\s*\.\s*(?:goNamed|pushNamed|replaceNamed)\s*(?:<[^>]+>)?\s*\('''),
+      RegExp(
+        r'''\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*(?:go|push|replace|pushReplacement)\s*(?:<[^>]+>)?\s*\(\s*r?['"]''',
+      ),
+      RegExp(
+        r'''\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*(?:goNamed|pushNamed|replaceNamed)\s*(?:<[^>]+>)?\s*\(''',
+      ),
+      RegExp(
+        r'''\b(?:_?router|[A-Za-z_]\w*Router\w*)\s*\.\s*(?:go|push|replace|pushReplacement)\s*(?:<[^>]+>)?\s*\(\s*r?['"]''',
+      ),
+      RegExp(
+        r'''\b(?:_?router|[A-Za-z_]\w*Router\w*)\s*\.\s*(?:goNamed|pushNamed|replaceNamed)\s*(?:<[^>]+>)?\s*\(''',
+      ),
+      RegExp(r'''\binitialLocation\s*:\s*r?['"]'''),
+    ];
+
+    for (final pattern in patterns) {
+      final match = pattern.firstMatch(code);
+      if (match == null) continue;
+      if (match.start >= masked.length) return null;
+      if (masked.substring(match.start, match.end).trim().isNotEmpty) {
+        return match.start;
+      }
+    }
+    return null;
   }
 
   bool hasHardcodedUiString(String code) {

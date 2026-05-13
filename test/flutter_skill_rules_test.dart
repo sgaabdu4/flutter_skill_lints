@@ -598,14 +598,21 @@ void close(BuildContext context) {
     await assertDiagnostics(source, [lintFor(source, 'context.pop()')]);
   }
 
-  Future<void> test_allowsCanPopGuard() async {
+  Future<void> test_allowsCanPopGuardWithTypedFallback() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
+
+class ProductListRoute {
+  const ProductListRoute();
+  void go(BuildContext context) {}
+}
 
 void close(BuildContext context) {
   if (context.canPop()) {
     context.pop();
+    return;
   }
+  const ProductListRoute().go(context);
 }
 ''');
   }

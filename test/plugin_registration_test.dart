@@ -244,8 +244,8 @@ void main() {
   });
 }
 
-const _enabledFlutterSkillRuleCount = 115;
-const _enabledFlutterSkillDiagnosticCount = 122;
+const _enabledFlutterSkillRuleCount = 122;
+const _enabledFlutterSkillDiagnosticCount = 129;
 const _enabledAdditionalRuleCount = 81;
 
 List<String> _docBlockBefore(List<String> lines, int index) {

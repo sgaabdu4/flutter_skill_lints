@@ -8,13 +8,15 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Guard context.pop() with context.canPop().
 ///
-/// Why: Requires context.canPop() guards before context.pop(). Check context.canPop() and
-/// navigate to a typed fallback when it is false.
+/// Why: Page back actions must account for direct deep links. Check
+/// context.canPop() before context.pop(), then route to a generated typed
+/// fallback when there is nothing to pop.
 final class GuardContextPop extends AnalysisRule {
   static const LintCode code = LintCode(
     'guard_context_pop',
     'Guard context.pop() with context.canPop().',
-    correctionMessage: 'Check context.canPop() and navigate to a typed fallback when it is false.',
+    correctionMessage:
+        'Check context.canPop() before context.pop(), then navigate to a typed fallback when false.',
   );
 
   GuardContextPop()
@@ -47,7 +49,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
     final prefix = body.toSource().substring(0, node.offset - body.offset);
-    if (!prefix.contains('context.canPop')) {
+    if (!RegExp(r'\bcontext\s*\.\s*canPop\s*\(').hasMatch(prefix)) {
       rule.reportAtNode(node);
     }
   }

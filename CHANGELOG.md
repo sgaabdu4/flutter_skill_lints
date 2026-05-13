@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.3] - 2026-05-13
+
+- Added route SSOT diagnostics for generated typed route helpers:
+  `router_direct_route_call`, `router_raw_route_definition`,
+  `router_context_navigation_extension`,
+  `router_navigation_wrapper_api`, `router_modal_local_helpers`, and
+  `router_container_navigation_escape`. App code calls generated typed route
+  helpers directly; raw route definitions stay in the router boundary or the
+  shared test router helper.
+- Tightened `router_string_nav` so raw string and named route navigation are
+  blocked outside test-host string-route fixtures.
+- Added `riverpod_manual_provider` to enforce `@riverpod` / `@Riverpod`
+  codegen over manual provider declarations.
+- Bumped Flutter skill rule count to 122 and diagnostic count to 129.
+
 ## [0.6.2] - 2026-05-13
 
 - Tightened `use_context_mounted_after_await` so `context.mounted` after an

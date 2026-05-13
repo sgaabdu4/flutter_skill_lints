@@ -32,13 +32,14 @@ final List<ScannerRule> routerExtendedSourceRules = [
 
   /// Do not push shell tab routes.
   ///
-  /// Why: Flags typed route push calls in shell navigation widgets. Use
-  /// StatefulNavigationShell.goBranch() for tab changes.
+  /// Why: Flags typed route push calls in shell navigation widgets. Route tab
+  /// changes use StatefulNavigationShell.goBranch; pushing a tab root creates
+  /// the wrong stack shape.
   scannerRule(
     code: const LintCode(
       'router_shell_tab_push',
       'Do not push shell tab routes.',
-      correctionMessage: 'Use StatefulNavigationShell.goBranch() for tab changes.',
+      correctionMessage: 'Use StatefulNavigationShell.goBranch for tab changes.',
       severity: DiagnosticSeverity.WARNING,
     ),
     description:

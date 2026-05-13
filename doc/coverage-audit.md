@@ -34,7 +34,7 @@ proof records outside the analysis server boundary.
 | No `_buildXxx()` widget helpers | `avoid_widget_build_helpers` |
 | No private widget classes | `avoid_private_widget_classes` |
 | No `shrinkWrap: true` | `avoid_shrink_wrap` |
-| No unguarded `context.pop()` | `guard_context_pop` |
+| Typed fallback behavior for page pops | `guard_context_pop` |
 | No ignored `ref.refresh()` | `use_ref_invalidate` |
 | Intentional fire-and-forget Futures in void callbacks are marked; reusable utility contracts stay awaitable | `use_unawaited_for_fire_and_forget_futures` |
 | No Freezed `abstract class` | `use_sealed_freezed_classes` |

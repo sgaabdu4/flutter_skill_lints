@@ -48,6 +48,30 @@ final List<ScannerRule> riverpodSourceRules = [
     },
   ),
 
+  /// Use Riverpod code generation for providers.
+  ///
+  /// Why: Flags manual Riverpod provider constructors. The Flutter skill keeps
+  /// providers generated through `@riverpod` / `@Riverpod` so provider names,
+  /// lifetimes, and generated APIs stay as the single source of truth.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_manual_provider',
+      'Use Riverpod code generation for providers.',
+      correctionMessage: 'Replace manual Provider(...) declarations with @riverpod codegen.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags manual Riverpod provider declarations so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      for (var i = 0; i < context.source.length; i++) {
+        final line = context.source.masked[i];
+        final match = _manualProviderDeclaration.firstMatch(line);
+        if (match == null) continue;
+        reporter.report(context, i, match.start);
+      }
+    },
+  ),
+
   /// Prefer select when watching state in leaf widgets.
   ///
   /// Why: Flags broad ref.watch calls that do not use select. Use
@@ -233,6 +257,13 @@ final List<ScannerRule> riverpodSourceRules = [
     },
   ),
 ];
+
+final _manualProviderDeclaration = RegExp(
+  r'\b(?:final|var|const)\s+[A-Za-z_]\w*\s*=\s*'
+  r'(?:AutoDispose)?(?:Provider|FutureProvider|StreamProvider|StateProvider|'
+  r'NotifierProvider|AsyncNotifierProvider|StateNotifierProvider|ChangeNotifierProvider)'
+  r'(?:\s*[<(]|\s*\.)',
+);
 
 final class _ProviderAnnotation {
   const _ProviderAnnotation({

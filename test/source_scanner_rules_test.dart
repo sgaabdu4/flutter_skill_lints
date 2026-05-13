@@ -26,6 +26,7 @@ void main() {
   defineReflectiveSuite(() {
     defineReflectiveTests(RiverpodReadInitStateTest);
     defineReflectiveTests(RiverpodServiceLocatorTest);
+    defineReflectiveTests(RiverpodManualProviderTest);
     defineReflectiveTests(RiverpodWatchNoSelectTest);
     defineReflectiveTests(RiverpodSelectArrowSyntaxTest);
     defineReflectiveTests(RiverpodMutationExperimentalWarningTest);
@@ -67,6 +68,12 @@ void main() {
     defineReflectiveTests(RouterComplexExtraTest);
     defineReflectiveTests(RouterGoRouterOfTest);
     defineReflectiveTests(RouterUntypedNavigatorPushTest);
+    defineReflectiveTests(RouterContextNavigationExtensionTest);
+    defineReflectiveTests(RouterNavigationWrapperApiTest);
+    defineReflectiveTests(RouterDirectRouteCallTest);
+    defineReflectiveTests(RouterRawRouteDefinitionTest);
+    defineReflectiveTests(RouterModalLocalHelpersTest);
+    defineReflectiveTests(RouterProviderScopeNavigationReadTest);
     defineReflectiveTests(ShowcaseListenManualHandleTest);
     defineReflectiveTests(ShowcasePrevNullGuardTest);
     defineReflectiveTests(ShowcaseDefaultScopeTest);
@@ -207,6 +214,94 @@ final class RiverpodServiceLocatorTest extends _RiverpodRuleTest {
   String get needle => 'class ServiceLocator';
   @override
   String get source => 'class ServiceLocator {}';
+}
+
+@reflectiveTest
+final class RiverpodManualProviderTest extends _RiverpodRuleTest {
+  @override
+  String get ruleName => 'riverpod_manual_provider';
+  @override
+  String get needle => 'final appNavigationCoordinatorProvider';
+  @override
+  String get source => r'''
+class Provider<T> {
+  const Provider(T Function(Ref ref) create);
+}
+
+class Ref {}
+
+final appNavigationCoordinatorProvider = Provider((ref) => Object());
+''';
+
+  Future<void> test_reportsTypedManualProvider() async {
+    final analyzedSource = _analyzedSource(r'''
+class Provider<T> {
+  const Provider(T Function(Ref ref) create);
+}
+
+class Ref {}
+
+final workoutRepositoryProvider = Provider<Object>((ref) => Object());
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'final workoutRepositoryProvider', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsFamilyProvider() async {
+    final analyzedSource = _analyzedSource(r'''
+class Provider {
+  static Object family(Object create) => Object();
+}
+
+final workoutByIdProvider = Provider.family((ref, id) => Object());
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'final workoutByIdProvider', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsOtherManualProviderTypes() async {
+    final analyzedSource = _analyzedSource(r'''
+class FutureProvider<T> {
+  const FutureProvider(Object create);
+}
+
+class StreamProvider<T> {
+  const StreamProvider(Object create);
+}
+
+final workoutFutureProvider = FutureProvider<Object>((ref) => Object());
+final workoutStreamProvider = StreamProvider<Object>((ref) => Object());
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'final workoutFutureProvider', ruleName),
+      compatLint(analyzedSource, 'final workoutStreamProvider', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsGeneratedProviderDeclaration() async {
+    await assertAllows(r'''
+final appNavigationCoordinatorProvider = AppNavigationCoordinatorProvider._();
+
+final class AppNavigationCoordinatorProvider {
+  AppNavigationCoordinatorProvider._();
+}
+''');
+  }
+
+  Future<void> test_allowsProviderScope() async {
+    await assertAllows(r'''
+class ProviderScope {
+  const ProviderScope({required Object child});
+}
+
+final scope = ProviderScope(child: Object());
+''');
+  }
 }
 
 @reflectiveTest
@@ -1455,6 +1550,18 @@ void build(ref, provider) {
   ref.read(provider);
 }
 ''';
+
+  Future<void> test_reportsNavigationProviderRead() async {
+    final analyzedSource = _analyzedSource(r'''
+void build(ref, context) {
+  ref.read(appNavigationCoordinatorProvider).present(context, NumberPickerModalRoute());
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/widgets/molecules/number_stepper.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'ref.read', ruleName)]);
+  }
 }
 
 @reflectiveTest
@@ -1927,6 +2034,154 @@ void navigate(context) {
   context.go('/home');
 }
 ''';
+
+  Future<void> test_allowsTestHostStringRoutes() async {
+    await assertAllows(r'''
+void navigate(context) {
+  context.go('/host');
+}
+''', path: '$testPackageRootPath/test/features/home/home_screen_test.dart');
+  }
+
+  Future<void> test_reportsRouterStringInsideCoreRouter() async {
+    final analyzedSource = _analyzedSource(r'''
+class GoRouter {
+  void go(String location) {}
+}
+
+final class RouterBridge {
+  RouterBridge(this._router);
+  final GoRouter _router;
+
+  void showHome() {
+    _router.go('/home');
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/router/app_router.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, "_router.go('/home')", ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsRouterPushNamedInsideCoreRouter() async {
+    final analyzedSource = _analyzedSource(r'''
+class GoRouter {
+  Future<T?> pushNamed<T>(String name) async => null;
+}
+
+final class RouterBridge {
+  RouterBridge(this._router);
+  final GoRouter _router;
+
+  Future<T?> showDetail<T>() {
+    return _router.pushNamed<T>('detail');
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/router/app_router.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, '_router.pushNamed', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsCamelCaseRouterVariableInsideCoreRouter() async {
+    final analyzedSource = _analyzedSource(r'''
+class GoRouter {
+  void go(String location) {}
+}
+
+void open(GoRouter appRouter) {
+  appRouter.go('/home');
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/router/app_router.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, "appRouter.go('/home')", ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsRawInitialLocationInsideCoreRouter() async {
+    final analyzedSource = _analyzedSource(r'''
+class GoRouter {
+  GoRouter({required String initialLocation});
+}
+
+GoRouter router() {
+  return GoRouter(initialLocation: '/home');
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/router/app_router.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, "initialLocation: '/home'", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsTypedLocationsForStringNavRule() async {
+    await assertAllows(r'''
+class GoRouter {
+  GoRouter({required String initialLocation});
+  void go(String location) {}
+  Future<T?> push<T>(String location) async => null;
+}
+
+class HomeRoute {
+  const HomeRoute();
+  String get location => '/home';
+}
+
+class ProductDetailRoute {
+  const ProductDetailRoute({required this.id});
+  final String id;
+  String get location => '/products/$id';
+}
+
+final class RouterBridge {
+  RouterBridge(this._router);
+  final GoRouter _router;
+
+  void showHome() {
+    _router.go(const HomeRoute().location);
+  }
+
+  Future<T?> pushProduct<T>(String id) {
+    return _router.push<T>(ProductDetailRoute(id: id).location);
+  }
+}
+
+GoRouter router() {
+  return GoRouter(initialLocation: const HomeRoute().location);
+}
+''', path: '$testPackageLibPath/core/router/app_router.dart');
+  }
+
+  Future<void> test_allowsTypedRouteDefinitions() async {
+    await assertAllows(r'''
+class TypedGoRoute<T> {
+  const TypedGoRoute({required String path, List<Object> routes = const []});
+}
+
+class GoRouteData {}
+
+@TypedGoRoute<HomeRoute>(
+  path: '/',
+  routes: [
+    TypedGoRoute<ProductRoute>(path: 'products'),
+  ],
+)
+class HomeRoute extends GoRouteData {}
+
+class ProductRoute extends GoRouteData {}
+''', path: '$testPackageLibPath/core/router/app_routes.dart');
+  }
 }
 
 @reflectiveTest
@@ -2138,6 +2393,37 @@ void open(context) {
 }
 ''');
   }
+
+  Future<void> test_reportsGoRouterOfInsideCoreRouter() async {
+    final analyzedSource = _analyzedSource(r'''
+class GoRouter {
+  static GoRouter of(Object context) => GoRouter();
+  Future<T?> push<T>(String location) async => null;
+}
+
+void open(context) {
+  GoRouter.of(context).push<void>('/active_workout');
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/router/router_provider.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, 'GoRouter.of(context).push', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsMultilineGoRouterOfPush() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(context) {
+  GoRouter
+      .of(context)
+      .push<void>('/active_workout');
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'GoRouter', ruleName)]);
+  }
 }
 
 @reflectiveTest
@@ -2230,6 +2516,30 @@ void open(context) {
     ]);
   }
 
+  Future<void> test_reportsPushAndRemoveUntil() async {
+    final analyzedSource = _analyzedSource(r'''
+class Navigator {
+  static Navigator of(Object context) => Navigator();
+  Future<T?> pushAndRemoveUntil<T>(Object route, Object predicate) async => null;
+}
+
+class MaterialPageRoute {
+  MaterialPageRoute({required Object builder});
+}
+
+void open(context) {
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(builder: (_) => null),
+    (_) => false,
+  );
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'Navigator.of(context).pushAndRemoveUntil', ruleName),
+    ]);
+  }
+
   Future<void> test_allowsNavigatorPop() async {
     await assertAllows(r'''
 class Navigator {
@@ -2252,6 +2562,633 @@ class ActiveWorkoutRoute {
 
 void open(context) {
   const ActiveWorkoutRoute().push<void>(context);
+}
+''', path: '$testPackageLibPath/core/router/app_routes.dart');
+  }
+}
+
+@reflectiveTest
+final class RouterContextNavigationExtensionTest extends _RouterRuleTest {
+  @override
+  String get ruleName => 'router_context_navigation_extension';
+  @override
+  String get needle => 'ProductDetailRoute(id: id).go';
+  @override
+  String get source => r'''
+class BuildContext {}
+
+class ProductDetailRoute {
+  ProductDetailRoute({required String id});
+  void go(BuildContext context) {}
+}
+
+extension ProductNavigationX on BuildContext {
+  void showProduct(String id) {
+    ProductDetailRoute(id: id).go(this);
+  }
+}
+''';
+
+  Future<void> test_allowsBottomSheetExtension() async {
+    await assertAllows(r'''
+class BuildContext {}
+
+extension BottomSheetX on BuildContext {
+  Future<T?> showScrollableBottomSheet<T>({required Object builder}) async => null;
+}
+''');
+  }
+
+  Future<void> test_allowsTypedFallbackContextExtension() async {
+    await assertAllows(r'''
+class BuildContext {}
+
+class GoRouteData {
+  void go(BuildContext context) {}
+}
+
+extension ContextNavigationX on BuildContext {
+  bool popIfCan<T>([T? result]) => false;
+  void popOrGo<T>(GoRouteData fallbackRoute, [T? result]) {
+    if (popIfCan<T>(result)) return;
+    fallbackRoute.go(this);
+  }
+}
+''');
+  }
+
+  Future<void> test_reportsMultilineContextExtensionDeclaration() async {
+    final analyzedSource = _analyzedSource(r'''
+class BuildContext {}
+
+class ProductDetailRoute {
+  ProductDetailRoute({required String id});
+  void go(BuildContext context) {}
+}
+
+extension ProductNavigationX
+    on BuildContext {
+  void showProduct(String id) {
+    ProductDetailRoute(id: id).go(this);
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ProductDetailRoute(id: id).go', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsPrefixedContextExtensionDeclaration() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/widgets.dart' as widgets;
+
+class ProductDetailRoute {
+  ProductDetailRoute({required String id});
+  void go(Object context) {}
+}
+
+extension ProductNavigationX on widgets.BuildContext {
+  void showProduct(String id) {
+    ProductDetailRoute(id: id).go(this);
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ProductDetailRoute(id: id).go', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsContextExtensionCallingTopLevelFallbackHelper() async {
+    final analyzedSource = _analyzedSource(r'''
+class BuildContext {}
+
+class HomeRoute {
+  const HomeRoute();
+}
+
+void popOrGo(BuildContext context, HomeRoute route) {}
+
+extension ContextNavigationX on BuildContext {
+  void closeToHome() {
+    popOrGo(this, const HomeRoute());
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'popOrGo(this', ruleName)]);
+  }
+
+  Future<void> test_reportsRouteVariableContextExtension() async {
+    final analyzedSource = _analyzedSource(r'''
+class BuildContext {}
+
+class ProductDetailRoute {
+  ProductDetailRoute({required String id});
+  void go(BuildContext context) {}
+}
+
+extension ProductNavigationX on BuildContext {
+  void showProduct(String id) {
+    final productRoute = ProductDetailRoute(id: id);
+    productRoute.go(this);
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'productRoute.go(this)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsNonNavigationContextExtension() async {
+    await assertAllows(r'''
+class BuildContext {}
+
+extension ContextThemeX on BuildContext {
+  Object get colors => Object();
+}
+''');
+  }
+
+  Future<void> test_allowsTopLevelFallbackHelperAfterContextExtension() async {
+    await assertAllows(r'''
+class BuildContext {}
+
+class GoRouteData {
+  void go(BuildContext context) {}
+}
+
+extension ContextThemeX on BuildContext {
+  Object get colors => Object();
+}
+
+bool popIfCan<T>(BuildContext context, [T? result]) => false;
+
+void popOrGo<T>(BuildContext context, GoRouteData fallbackRoute, [T? result]) {
+  if (popIfCan<T>(context, result)) return;
+  fallbackRoute.go(context);
+}
+''');
+  }
+}
+
+@reflectiveTest
+final class RouterNavigationWrapperApiTest extends _RouterRuleTest {
+  @override
+  String get ruleName => 'router_navigation_wrapper_api';
+  @override
+  String get needle => 'class AppNavigationCoordinator';
+  @override
+  String get source => r'''
+class AppNavigationCoordinator {}
+''';
+
+  Future<void> test_reportsPrivateNavigationCoordinatorImplementation() async {
+    final analyzedSource = _analyzedSource(r'''
+final class _AppNavigationCoordinator {}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'final class _AppNavigationCoordinator', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsAppNavigationInterface() async {
+    final analyzedSource = _analyzedSource(r'''
+abstract interface class AppNavigation {}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'abstract interface class AppNavigation', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsFeatureNavigationCoordinator() async {
+    final analyzedSource = _analyzedSource(r'''
+final class ProductNavigationCoordinator {}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'final class ProductNavigationCoordinator', ruleName),
+    ]);
+  }
+}
+
+@reflectiveTest
+final class RouterDirectRouteCallTest extends _RouterRuleTest {
+  @override
+  String get ruleName => 'router_direct_route_call';
+  @override
+  String get needle => 'context.go';
+  @override
+  String get source => r'''
+void open(context, String id) {
+  context.go(ProductDetailRoute(id: id).location);
+}
+''';
+
+  Future<void> test_allowsGeneratedTypedRouteGo() async {
+    await assertAllows(r'''
+class ProductDetailRoute {
+  ProductDetailRoute({required String id});
+  void go(Object context) {}
+}
+
+void open(context, String id) {
+  ProductDetailRoute(id: id).go(context);
+}
+''');
+  }
+
+  Future<void> test_allowsConstTypedRoutePush() async {
+    await assertAllows(r'''
+class ProductCreateRoute {
+  const ProductCreateRoute();
+  Future<T?> push<T>(Object context) async => null;
+}
+
+void open(context) {
+  const ProductCreateRoute().push<void>(context);
+}
+''');
+  }
+
+  Future<void> test_reportsContextGoWithTypedLocation() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(context, String id) {
+  context.go(ProductDetailRoute(id: id).location);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'context.go', ruleName)]);
+  }
+
+  Future<void> test_reportsInjectedRouterGo() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(router, String id) {
+  router.go(ProductDetailRoute(id: id).location);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'router.go', ruleName)]);
+  }
+
+  Future<void> test_reportsCamelCaseInjectedRouterGo() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(appRouter, String id) {
+  appRouter.go(ProductDetailRoute(id: id).location);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'appRouter.go', ruleName)]);
+  }
+
+  Future<void> test_reportsMultilineContextGo() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(context, String id) {
+  context
+      .go(ProductDetailRoute(id: id).location);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'context\n      .go', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsMultilineInjectedRouterGo() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(router, String id) {
+  router
+      .go(ProductDetailRoute(id: id).location);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'router\n      .go', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsContextPopHelperCall() async {
+    await assertAllows(r'''
+void close(context) {
+  context.popIfCan();
+  context.popOrGo(const HomeRoute());
+}
+
+class HomeRoute {
+  const HomeRoute();
+}
+''');
+  }
+
+  Future<void> test_allowsNavigatorMaybePopForLocalDismissal() async {
+    await assertAllows(r'''
+void close(context) {
+  Navigator.of(context).maybePop().then((_) {});
+}
+''');
+  }
+
+  Future<void> test_allowsShellGoBranch() async {
+    await assertAllows(r'''
+void selectTab(navigationShell) {
+  navigationShell.goBranch(1);
+}
+''');
+  }
+
+  Future<void> test_allowsLocalModalApi() async {
+    await assertAllows(r'''
+void confirm(context) {
+  showDialog<bool>(context: context, builder: (_) => null);
+}
+''');
+  }
+
+  Future<void> test_reportsPublicStaticCoordinatorCallOutsideCoreNavigation() async {
+    final analyzedSource = _analyzedSource(r'''
+void close(context) {
+  AppNavigationCoordinator.popIfCan(context);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'AppNavigationCoordinator.popIfCan', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsRouterGoEvenInCoreRouter() async {
+    final analyzedSource = _analyzedSource(r'''
+class GoRouter {
+  void go(String location) {}
+}
+
+class ProductDetailRoute {
+  ProductDetailRoute({required String id});
+  String get location => '';
+}
+
+final class RouterBridge {
+  RouterBridge(this._router);
+  final GoRouter _router;
+
+  void showProduct(String id) {
+    _router.go(ProductDetailRoute(id: id).location);
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/router/router_provider.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [compatLint(analyzedSource, '_router.go', ruleName)]);
+  }
+
+  Future<void> test_allowsFallbackRouteGoHelper() async {
+    await assertAllows(r'''
+final class FeatureNavigation {
+  void popOrGo(fallbackRoute) {
+    fallbackRoute.go(this);
+  }
+}
+''');
+  }
+
+  Future<void> test_reportsTestFileRawNavigation() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(context, String id) {
+  context.pushNamed('detail');
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageRootPath/test/navigation_test.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, 'context.pushNamed', ruleName),
+    ]);
+  }
+
+  Future<void> test_scansPartFileSourceInsteadOfDefiningLibrary() async {
+    final libraryPath = '$testPackageLibPath/core/widgets/organisms/next_up_card.dart';
+    final partPath = '$testPackageLibPath/core/widgets/organisms/start_button.dart';
+    final librarySource = _analyzedSource(r'''
+part 'start_button.dart';
+
+void open(context) {
+  context.go(ProductDetailRoute().location);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final partSource = _analyzedSource(r'''
+part of 'next_up_card.dart';
+
+class StartButton {
+  void build() {}
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    newFile(libraryPath, librarySource);
+    newFile(partPath, partSource);
+
+    await assertDiagnosticsInFile(libraryPath, [compatLint(librarySource, 'context.go', ruleName)]);
+    await assertNoDiagnosticsInFile(partPath);
+  }
+}
+
+@reflectiveTest
+final class RouterRawRouteDefinitionTest extends _RouterRuleTest {
+  @override
+  String get ruleName => 'router_raw_route_definition';
+  @override
+  String get needle => 'GoRoute(';
+  @override
+  String get source => r'''
+void build() {
+  GoRoute(path: '/detail', builder: (_, _) => null);
+}
+''';
+
+  Future<void> test_reportsRawGoRouteOutsideRouterBoundary() async {
+    final analyzedSource = _analyzedSource(r'''
+void build() {
+  GoRoute(path: '/detail', builder: (_, _) => null);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/features/products/product_screen.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'GoRoute(', ruleName)]);
+  }
+
+  Future<void> test_reportsRawGoRouteWithSeparatedCallParen() async {
+    final analyzedSource = _analyzedSource(r'''
+void build() {
+  GoRoute
+      (path: '/detail', builder: (_, _) => null);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/features/products/product_screen.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'GoRoute', ruleName)]);
+  }
+
+  Future<void> test_reportsRawShellRouteOutsideRouterBoundary() async {
+    final analyzedSource = _analyzedSource(r'''
+void build() {
+  StatefulShellRoute.indexedStack(branches: const []);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/features/home/home_shell.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, 'StatefulShellRoute.indexedStack', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsRawGoRouterOutsideRouterBoundary() async {
+    final analyzedSource = _analyzedSource(r'''
+void build() {
+  GoRouter(routes: const []);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/features/products/product_screen.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'GoRouter(', ruleName)]);
+  }
+
+  Future<void> test_allowsRouterBoundary() async {
+    await assertAllows(r'''
+void build() {
+  GoRoute(path: '/detail', builder: (_, _) => null);
+}
+''', path: '$testPackageLibPath/core/router/app_routes.dart');
+  }
+
+  Future<void> test_reportsTestHarnessRouterOutsideHelper() async {
+    final analyzedSource = _analyzedSource(r'''
+void build() {
+  GoRoute(path: '/detail', builder: (_, _) => null);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageRootPath/test/product_screen_test.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'GoRoute(', ruleName)]);
+  }
+
+  Future<void> test_allowsSharedTestRouterHelper() async {
+    await assertAllows(r'''
+void build() {
+  GoRoute(path: '/detail', builder: (_, _) => null);
+}
+''', path: '$testPackageRootPath/test/helpers/router_test_utils.dart');
+  }
+}
+
+@reflectiveTest
+final class RouterModalLocalHelpersTest extends _RouterRuleTest {
+  @override
+  String get ruleName => 'router_modal_local_helpers';
+  @override
+  String get needle => 'appNavigationCoordinatorProvider';
+  @override
+  String get source => r'''
+void open(ref, context) {
+  ref.read(appNavigationCoordinatorProvider).showScrollableBottomSheet<int>(
+    context: context,
+    builder: (_) => null,
+  );
+}
+''';
+
+  Future<void> test_reportsAppModalRouteType() async {
+    final analyzedSource = _analyzedSource(r'''
+abstract class NumberPickerModalRoute<T> extends AppModalRoute<T> {}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'AppModalRoute', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsProviderPresent() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(ref, context) {
+  ref.read(appNavigationCoordinatorProvider).present(
+    context,
+    NumberPickerModalRoute(value: 1),
+  );
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'appNavigationCoordinatorProvider', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsLocalBottomSheetHelper() async {
+    await assertAllows(r'''
+void open(context) {
+  context.showScrollableBottomSheet<int>(builder: (_) => null);
+}
+''');
+  }
+
+  Future<void> test_allowsAppThemeDialogHelper() async {
+    await assertAllows(r'''
+void open(context) {
+  AppTheme.showBlurredDialog<bool>(context: context, builder: (_) => null);
+}
+''');
+  }
+}
+
+@reflectiveTest
+final class RouterProviderScopeNavigationReadTest extends _RouterRuleTest {
+  @override
+  String get ruleName => 'router_container_navigation_escape';
+  @override
+  String get needle => 'ProviderScope.containerOf';
+  @override
+  String get source => r'''
+void open(context) {
+  final selected = ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(appNavigationCoordinatorProvider).present(context, NumberPickerModalRoute());
+}
+''';
+
+  Future<void> test_reportsMultilineReadAfterContainerLookup() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(context) {
+  final container = ProviderScope.containerOf(context, listen: false);
+  container.read(appNavigationCoordinatorProvider).present(context, NumberPickerModalRoute());
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ProviderScope.containerOf', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsUnrelatedProviderScopeRead() async {
+    await assertAllows(r'''
+void open(context) {
+  final container = ProviderScope.containerOf(context, listen: false);
+  container.read(workoutRepositoryProvider);
+}
+''');
+  }
+
+  Future<void> test_allowsWidgetRefNavigationRead() async {
+    await assertAllows(r'''
+void open(ref, context) {
+  ref.read(appNavigationCoordinatorProvider).present(context, NumberPickerModalRoute());
 }
 ''');
   }

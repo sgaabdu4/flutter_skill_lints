@@ -15,8 +15,8 @@ Designed for Riverpod + codegen Flutter apps.
 
 | Surface | Count |
 | --- | ---: |
-| Flutter skill warning rules | 115 |
-| Flutter skill diagnostic codes | 122 |
+| Flutter skill warning rules | 122 |
+| Flutter skill diagnostic codes | 129 |
 | Additional Dart/Flutter warning rules | 81 |
 | Quick fixes | 64 |
 | Assists | 1 |
@@ -115,7 +115,7 @@ Encode the architectural rules from `building-flutter-apps`.
 | Notifiers | `avoid_silent_repository_null_return`, `avoid_sync_notifier_state_read`, `notifier_ensure_deps`, `notifier_watch_method` |
 | Freezed and serialization | `use_sealed_freezed_classes`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map` |
 | Architecture | `arch_domain_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_repository_generated_extends`, `arch_concrete_dependency`, `arch_datasource_try_catch`, `arch_widget_path`, `atomic_provider_access`, `typed_id_raw_id`, `records_map_return`, `avoid_object_map_cast`, `vo_public_raw_constructor`, `domain_entity_primitive_factory`, `domain_custom_copy_with`, `hive_field_no_vo_type` |
-| Navigation | `guard_context_pop`, `avoid_route_param_throw_in_build`, `router_string_nav`, `router_gorouter_of`, `router_untyped_navigator_push`, `router_pop_then_push`, `router_redirect_watch`, `router_redirect_loading_bounce`, `router_complex_extra` |
+| Navigation | `guard_context_pop`, `avoid_route_param_throw_in_build`, `router_string_nav`, `router_gorouter_of`, `router_untyped_navigator_push`, `router_direct_route_call`, `router_raw_route_definition`, `router_modal_local_helpers`, `router_container_navigation_escape`, `router_context_navigation_extension`, `router_navigation_wrapper_api`, `router_pop_then_push`, `router_redirect_watch`, `router_redirect_loading_bounce`, `router_complex_extra` |
 | UI and accessibility | `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`, `ui_snackbar_boundary`, `a11y_text_scale_clamp` |
 | Performance | `perf_build_work`, `perf_listview_children` |
 | State | `state_raw_response`, `state_raw_error_to_string`, `state_freezed_nullable_error`, `state_broad_invalidation` |
@@ -168,37 +168,34 @@ class CounterNotifier extends _$CounterNotifier {
 }
 ```
 
-```dart
-import 'package:flutter/widgets.dart';
-import 'package:go_router/go_router.dart';
-
-void openDetails(BuildContext context) {
-  context.go('/details'); // router_string_nav
-}
-```
-
-Also flagged: `GoRouter.of(context).push|go|pushNamed|...` (`router_gorouter_of`) and `Navigator.of(context).push(MaterialPageRoute(...))` / `CupertinoPageRoute` / `PageRouteBuilder` (`router_untyped_navigator_push`). Fix in all three cases:
+Also flagged: raw string or named route calls (`router_string_nav`), direct
+`GoRouter.of(context)` usage (`router_gorouter_of`), injected router/context
+route calls that bypass generated helpers (`router_direct_route_call`), raw
+router or route definitions outside the router boundary or shared test router
+helper (`router_raw_route_definition`), and direct page-route `Navigator` APIs
+(`router_untyped_navigator_push`). Fix by
+calling generated typed route helpers:
 
 ```dart
-const DetailRoute().go(context);
-const DetailRoute().push<void>(context);
+ProductDetailRoute(id: id).go(context);
+await ProductCreateRoute(parentId: id).push<void>(context);
 ```
 
 ```dart
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 
-Future<void> showDialogBottomSheet<T>() async {}
+Future<void> saveLater<T>() async {}
 
 void buildButton(VoidCallback onPressed) {}
 
 void build() {
   buildButton(() {
-    showDialogBottomSheet<void>(); // use_unawaited_for_fire_and_forget_futures
+    saveLater<void>(); // use_unawaited_for_fire_and_forget_futures
   });
 
   buildButton(() {
-    unawaited(showDialogBottomSheet<void>());
+    unawaited(saveLater<void>());
   });
 }
 

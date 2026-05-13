@@ -107,7 +107,9 @@ abstract class StatefulWidget extends Widget {
   const StatefulWidget();
 }
 
-abstract class State<T extends StatefulWidget> {}
+abstract class State<T extends StatefulWidget> {
+  BuildContext get context => BuildContext();
+}
 ''');
   }
 
@@ -348,6 +350,60 @@ Future<void> close(BuildContext context) async {
   await Future<void>.value();
   if (!context.mounted) return;
   context.pop();
+}
+''');
+  }
+
+  Future<void> test_reportsStateContextMountedGuardAfterAwait() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class Demo extends StatefulWidget {
+  const Demo();
+}
+
+class DemoState extends State<Demo> {
+  Future<void> load() async {
+    await Future<void>.value();
+    if (!context.mounted) return;
+  }
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, 'context.mounted')]);
+  }
+
+  Future<void> test_reportsExplicitStateContextMountedGuardAfterAwait() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class Demo extends StatefulWidget {
+  const Demo();
+}
+
+class DemoState extends State<Demo> {
+  Future<void> load() async {
+    await Future<void>.value();
+    if (!this.context.mounted) return;
+  }
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, 'this.context.mounted')]);
+  }
+
+  Future<void> test_allowsCapturedStateContextMountedGuardAfterAwait() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class Demo extends StatefulWidget {
+  const Demo();
+}
+
+class DemoState extends State<Demo> {
+  Future<void> load() async {
+    final context = this.context;
+    await Future<void>.value();
+    if (!context.mounted) return;
+  }
 }
 ''');
   }

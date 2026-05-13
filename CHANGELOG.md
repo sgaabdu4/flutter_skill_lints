@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.2] - 2026-05-13
+
+- Tightened `use_context_mounted_after_await` so `context.mounted` after an
+  async gap only satisfies the guard when `context` is a function parameter or
+  local variable captured before the gap. This catches `State.context` getter
+  reads such as `if (!context.mounted) return;` after `await`, which can throw
+  when the `State` has already been disposed. Capture with
+  `final context = this.context;` before awaiting.
+
 ## [0.6.1] - 2026-05-13
 
 - Patch release for packaging/documentation alignment:

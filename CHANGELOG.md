@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.6.5] - 2026-05-14
+
+- Added `riverpod_consumer_state_derived_cache` to block mutable
+  `ConsumerState` cache/source/day-start fields when the state class also
+  watches providers. Provider-derived data belongs in generated `@riverpod`
+  providers or build-local derivation, not widget-state caches.
+- Added `avoid_magic_literals` to flag raw executable strings and numbers in
+  ownership-sensitive contexts such as map/JSON keys, file/path/key/id
+  arguments, collection limits, date windows, thresholds, and comparisons.
+- Bumped Flutter skill rule count to 123 and diagnostic count to 130.
+- Bumped additional analyzer warning rule count to 82.
+
+## [0.6.4] - 2026-05-14
+
+- Extended direct-route API diagnostics to catch route-specific wrapper methods
+  such as `router.goHome()`.
+- Extended navigation wrapper/context escape diagnostics to catch helper calls
+  such as `navigateToHomeRoute(router)` and router `navigatorKey.currentContext`.
+- Extended manual provider detection to multiline and generic
+  `Provider.family<...>` declarations.
+
 ## [0.6.3] - 2026-05-13
 
 - Added route SSOT diagnostics for generated typed route helpers:

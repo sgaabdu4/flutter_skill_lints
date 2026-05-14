@@ -27,6 +27,7 @@ void main() {
     defineReflectiveTests(RiverpodReadInitStateTest);
     defineReflectiveTests(RiverpodServiceLocatorTest);
     defineReflectiveTests(RiverpodManualProviderTest);
+    defineReflectiveTests(RiverpodConsumerStateDerivedCacheTest);
     defineReflectiveTests(RiverpodWatchNoSelectTest);
     defineReflectiveTests(RiverpodSelectArrowSyntaxTest);
     defineReflectiveTests(RiverpodMutationExperimentalWarningTest);
@@ -52,8 +53,10 @@ void main() {
     defineReflectiveTests(StyleRawTokenTest);
     defineReflectiveTests(StyleRawTextStyleTest);
     defineReflectiveTests(StringsHardcodedTest);
+    defineReflectiveTests(L10nContextDirectAccessTest);
     defineReflectiveTests(UiSnackbarBoundaryTest);
     defineReflectiveTests(A11yTextScaleClampTest);
+    defineReflectiveTests(DateTimeNowRequiresTimezoneIntentTest);
     defineReflectiveTests(PerfBuildWorkTest);
     defineReflectiveTests(PerfListviewChildrenTest);
     defineReflectiveTests(StateRawResponseTest);
@@ -263,6 +266,47 @@ final workoutByIdProvider = Provider.family((ref, id) => Object());
     ]);
   }
 
+  Future<void> test_reportsGenericFamilyProvider() async {
+    final analyzedSource = _analyzedSource(r'''
+class Provider {
+  static Object family<T, Arg>(Object create) => Object();
+}
+
+class Exercise {
+  const Exercise();
+}
+
+final availableExercisesProvider = Provider.family<List<Exercise>, String>((ref, workoutId) {
+  return const <Exercise>[];
+});
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'final availableExercisesProvider', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsMultilineGenericFamilyProvider() async {
+    final analyzedSource = _analyzedSource(r'''
+class Provider {
+  static Object family<T, Arg>(Object create) => Object();
+}
+
+class Exercise {
+  const Exercise();
+}
+
+final availableExercisesProvider =
+    Provider.family<List<Exercise>, String>((ref, workoutId) {
+  return const <Exercise>[];
+});
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'final availableExercisesProvider', ruleName),
+    ]);
+  }
+
   Future<void> test_reportsOtherManualProviderTypes() async {
     final analyzedSource = _analyzedSource(r'''
 class FutureProvider<T> {
@@ -300,6 +344,75 @@ class ProviderScope {
 }
 
 final scope = ProviderScope(child: Object());
+''');
+  }
+}
+
+@reflectiveTest
+final class RiverpodConsumerStateDerivedCacheTest extends _RiverpodRuleTest {
+  @override
+  String get ruleName => 'riverpod_consumer_state_derived_cache';
+  @override
+  String get needle => '_historySource';
+  @override
+  String get source => r'''
+class MemberDetailHistoryCard extends ConsumerStatefulWidget {}
+
+class _MemberDetailHistoryCardState extends ConsumerState<MemberDetailHistoryCard> {
+  List<Object>? _historySource;
+
+  Object build(Object context) {
+    final async = ref.watch(memberDetailProvider.select((value) => value));
+    return async;
+  }
+}
+''';
+
+  Future<void> test_reportsDayStartMemoizationField() async {
+    final analyzedSource = _analyzedSource(r'''
+class MemberDetailTopLiftsCard extends ConsumerStatefulWidget {}
+
+class _MemberDetailTopLiftsCardState extends ConsumerState<MemberDetailTopLiftsCard> {
+  DateTime? _topLiftsDayStart;
+  List<Object> _topLiftsCache = const [];
+
+  Object build(Object context) {
+    final async = ref.watch(memberDetailProvider.select((value) => value));
+    return async;
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '_topLiftsDayStart', ruleName),
+      compatLint(analyzedSource, '_topLiftsCache', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsControllerStateWithProviderWatch() async {
+    await assertAllows(r'''
+class TextEditingController {}
+
+class SearchSheet extends ConsumerStatefulWidget {}
+
+class _SearchSheetState extends ConsumerState<SearchSheet> {
+  late final TextEditingController _controller;
+  String _query = '';
+
+  Object build(Object context) {
+    final items = ref.watch(itemsProvider.select((state) => state.items));
+    return items;
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsNonConsumerStateMemoizationHelper() async {
+    await assertAllows(r'''
+class HistoryPresenter {
+  List<Object>? _historySource;
+  List<bool> _heatmapCache = const [];
+}
 ''');
   }
 }
@@ -1829,6 +1942,75 @@ final text = Text('Save');
 }
 
 @reflectiveTest
+final class L10nContextDirectAccessTest extends _UiRuleTest {
+  @override
+  String get ruleName => 'l10n_context_direct_access';
+  @override
+  String get needle => 'context.l10n.deleteTitle';
+  @override
+  String get source => r'''
+class Text {
+  Text(String data);
+}
+
+void build(context) {
+  Text(context.l10n.deleteTitle);
+}
+''';
+
+  Future<void> test_allowsLocalBinding() async {
+    await assertAllows(r'''
+class Text {
+  Text(String data);
+}
+
+void build(context) {
+  final l10n = context.l10n;
+  Text(l10n.deleteTitle);
+}
+''');
+  }
+
+  Future<void> test_reportsSplitAccess() async {
+    final analyzedSource = _analyzedSource(r'''
+class Text {
+  Text(String data);
+}
+
+void build(context) {
+  Text(
+    context
+        .l10n
+        .deleteTitle,
+  );
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'context\n        .l10n', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsTests() async {
+    final filePath = '$testPackageRootPath/test/widgets/delete_button_test.dart';
+    newFile(
+      filePath,
+      _analyzedSource(r'''
+class Text {
+  Text(String data);
+}
+
+void build(context) {
+  Text(context.l10n.deleteTitle);
+}
+''', addIgnorePrefix: addIgnorePrefix),
+    );
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+}
+
+@reflectiveTest
 final class UiSnackbarBoundaryTest extends _UiRuleTest {
   @override
   String get ruleName => 'ui_snackbar_boundary';
@@ -1855,6 +2037,248 @@ final class A11yTextScaleClampTest extends _UiRuleTest {
   bool get lineStart => true;
   @override
   String get source => 'final scaler = TextScaler.linear(1);';
+}
+
+@reflectiveTest
+final class DateTimeNowRequiresTimezoneIntentTest extends _UiRuleTest {
+  @override
+  String get ruleName => 'datetime_now_requires_timezone_intent';
+  @override
+  String get needle => 'DateTime.now()';
+  @override
+  String get source => 'final now = DateTime.now();';
+
+  Future<void> test_reportsUtcIntentOutsideExtensionBoundary() async {
+    final analyzedSource = _analyzedSource(
+      'final savedAt = DateTime.now().toUtc();',
+      addIgnorePrefix: addIgnorePrefix,
+    );
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'DateTime.now()', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsTimestampOutsideExtensionBoundary() async {
+    final analyzedSource = _analyzedSource(
+      'final savedAt = DateTime.timestamp();',
+      addIgnorePrefix: addIgnorePrefix,
+    );
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'DateTime.timestamp()', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsLocalIntentAcrossLinesOutsideExtensionBoundary() async {
+    final analyzedSource = _analyzedSource(r'''
+final today = DateTime.now()
+    .toLocal();
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'DateTime.now()', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsDateTimeXNowUtcForPersistedTimestamp() async {
+    await assertAllows('final savedAt = DateTimeX.nowUtc();');
+  }
+
+  Future<void> test_reportsLocalNowForPersistedTimestamp() async {
+    final analyzedSource = _analyzedSource(r'''
+class WorkoutLog {
+  const WorkoutLog({required this.timestamp});
+  final Object timestamp;
+}
+
+final log = WorkoutLog(timestamp: DateTimeX.nowLocal());
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'DateTimeX.nowLocal()', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsMultilineLocalNowForPersistedTimestamp() async {
+    final analyzedSource = _analyzedSource(r'''
+class WorkoutLog {
+  const WorkoutLog({required this.timestamp});
+  final Object timestamp;
+}
+
+final log = WorkoutLog(
+  timestamp:
+      DateTimeX.nowLocal(),
+);
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'DateTimeX.nowLocal()', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsDateTimeNowToLocalForPersistedTimestamp() async {
+    final analyzedSource = _analyzedSource(r'''
+class SquadCheckIn {
+  const SquadCheckIn({required this.checkedInAt});
+  final Object checkedInAt;
+}
+
+final checkIn = SquadCheckIn(checkedInAt: DateTime.now().toLocal());
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'DateTime.now().toLocal()', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsInlineCurrentDayBoundary() async {
+    final analyzedSource = _analyzedSource(
+      'final today = DateTimeX.nowLocal().startOfDay;',
+      addIgnorePrefix: addIgnorePrefix,
+    );
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'DateTimeX.nowLocal()', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsInlineCurrentUtcDayBoundary() async {
+    final analyzedSource = _analyzedSource(
+      'final today = DateTimeX.nowUtc().startOfDay;',
+      addIgnorePrefix: addIgnorePrefix,
+    );
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'DateTimeX.nowUtc()', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsNamedCurrentDayBoundaryHelper() async {
+    await assertAllows('final today = DateTimeX.nowLocalStartOfDay();');
+  }
+
+  Future<void> test_reportsInlineCurrentDateWindow() async {
+    final analyzedSource = _analyzedSource(
+      'final since = DateTimeX.nowLocal().daysBefore(60);',
+      addIgnorePrefix: addIgnorePrefix,
+    );
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'DateTimeX.nowLocal()', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsInlineCurrentCalendarDateWindow() async {
+    final analyzedSource = _analyzedSource(
+      'final since = DateTimeX.nowLocal().calendarDaysBefore(60);',
+      addIgnorePrefix: addIgnorePrefix,
+    );
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'DateTimeX.nowLocal()', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsMultilineInlineCurrentDateWindow() async {
+    final analyzedSource = _analyzedSource(r'''
+final since = DateTimeX.nowLocal()
+    .daysBefore(60);
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'DateTimeX.nowLocal()', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsInlineCurrentDateWindowFromStartOfDay() async {
+    final analyzedSource = _analyzedSource(
+      'final cutoff = DateTimeX.nowLocal().startOfDay.daysBefore(30);',
+      addIgnorePrefix: addIgnorePrefix,
+    );
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'DateTimeX.nowLocal()', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsEpochIntentOutsideExtensionBoundary() async {
+    final analyzedSource = _analyzedSource(
+      'final id = DateTime.now().millisecondsSinceEpoch.toString();',
+      addIgnorePrefix: addIgnorePrefix,
+    );
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'DateTime.now()', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsInterpolatedEpochIntentOutsideExtensionBoundary() async {
+    final analyzedSource = _analyzedSource(
+      r"final id = 'draft-${DateTime.now().millisecondsSinceEpoch}';",
+      addIgnorePrefix: addIgnorePrefix,
+    );
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'DateTime.now()', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsRawStringThatMentionsDateTimeNow() async {
+    final analyzedSource = _analyzedSource(
+      r"final sample = r'${DateTime.now()}';",
+      addIgnorePrefix: addIgnorePrefix,
+    );
+
+    await assertNoDiagnostics(analyzedSource);
+  }
+
+  Future<void> test_allowsDateTimeXEpochIntent() async {
+    await assertAllows('final id = DateTimeX.nowUtc().millisecondsSinceEpoch.toString();');
+  }
+
+  Future<void> test_allowsDateTimeExtensionCurrentBoundary() async {
+    final filePath = '$testPackageLibPath/core/extensions/date_time_extensions.dart';
+    newFile(
+      filePath,
+      _analyzedSource(r'''
+abstract final class DateTimeX {
+  static DateTime nowUtc() => DateTime.timestamp();
+  static DateTime nowLocal() => nowUtc().toLocal();
+}
+''', addIgnorePrefix: addIgnorePrefix),
+    );
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsRawNowInsideDateTimeExtensionHelper() async {
+    final filePath = '$testPackageLibPath/core/extensions/date_time_extensions.dart';
+    final analyzedSource = _analyzedSource(r'''
+extension DateTimeExtensions on DateTime {
+  bool get isToday {
+    final now = DateTime.now();
+    return identical(now, now);
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(filePath, analyzedSource);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, 'DateTime.now()', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsTests() async {
+    final filePath = '$testPackageRootPath/test/widgets/date_time_test.dart';
+    newFile(
+      filePath,
+      _analyzedSource('final now = DateTime.now();', addIgnorePrefix: addIgnorePrefix),
+    );
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
 }
 
 @reflectiveTest
@@ -2774,6 +3198,28 @@ final class ProductNavigationCoordinator {}
       compatLint(analyzedSource, 'final class ProductNavigationCoordinator', ruleName),
     ]);
   }
+
+  Future<void> test_reportsRouteWrapperFunctionCall() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(router) {
+  navigateToHomeRoute(router);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'navigateToHomeRoute', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsRouteWrapperFunctionDeclaration() async {
+    final analyzedSource = _analyzedSource(r'''
+void navigateToHomeRoute(router) {}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'navigateToHomeRoute', ruleName),
+    ]);
+  }
 }
 
 @reflectiveTest
@@ -2843,6 +3289,42 @@ void open(appRouter, String id) {
 ''', addIgnorePrefix: addIgnorePrefix);
 
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'appRouter.go', ruleName)]);
+  }
+
+  Future<void> test_reportsRouterConvenienceGoHome() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(router) {
+  router.goHome();
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'router.goHome', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsCamelCaseRouterConveniencePush() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(appRouter, String workoutId) {
+  appRouter.pushWorkout(workoutId);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'appRouter.pushWorkout', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsContextConvenienceGoHome() async {
+    final analyzedSource = _analyzedSource(r'''
+void open(context) {
+  context.goHome();
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'context.goHome', ruleName),
+    ]);
   }
 
   Future<void> test_reportsMultilineContextGo() async {
@@ -3173,6 +3655,44 @@ void open(context) {
 
     await assertDiagnostics(analyzedSource, [
       compatLint(analyzedSource, 'ProviderScope.containerOf', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsRouterDelegateNavigatorContext() async {
+    final analyzedSource = _analyzedSource(r'''
+class HomeRoute {
+  const HomeRoute();
+  void go(Object context) {}
+}
+
+void open(router) {
+  final navigatorContext = router.routerDelegate.navigatorKey.currentContext;
+  if (navigatorContext == null) return;
+  const HomeRoute().go(navigatorContext);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'router.routerDelegate.navigatorKey.currentContext', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsNavigatorKeyCurrentContext() async {
+    final analyzedSource = _analyzedSource(r'''
+class HomeRoute {
+  const HomeRoute();
+  void go(Object context) {}
+}
+
+void open(navigatorKey) {
+  final navigatorContext = navigatorKey.currentContext;
+  if (navigatorContext == null) return;
+  const HomeRoute().go(navigatorContext);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'navigatorKey.currentContext', ruleName),
     ]);
   }
 

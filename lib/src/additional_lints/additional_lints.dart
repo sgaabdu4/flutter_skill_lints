@@ -88,9 +88,13 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_contradicto
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_duplicate_cascades.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_expanded_as_spacer.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_flexible_outside_flex.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_flutter_skill_lint_suppression.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_generics_shadowing.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_incomplete_copy_with.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_incorrect_image_opacity.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_inline_error_codes.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_local_contract_key_constants.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_magic_literals.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_map_keys_contains.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_misused_test_matchers.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_mounted_check_in_finally.dart';
@@ -183,8 +187,12 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidThrowInCatchBlock());
     registry.registerWarningRule(AvoidUnassignedStreamSubscriptions());
     registry.registerWarningRule(AvoidFlexibleOutsideFlex());
+    registry.registerWarningRule(AvoidFlutterSkillLintSuppression());
     registry.registerWarningRule(AvoidIncompleteCopyWith());
     registry.registerWarningRule(AvoidIncorrectImageOpacity());
+    registry.registerWarningRule(AvoidInlineErrorCodes());
+    registry.registerWarningRule(AvoidLocalContractKeyConstants());
+    registry.registerWarningRule(AvoidMagicLiterals());
     registry.registerWarningRule(AvoidUnnecessaryGestureDetector());
     registry.registerWarningRule(AvoidUnnecessaryOverrides());
     registry.registerWarningRule(AvoidUnnecessaryOverridesInState());

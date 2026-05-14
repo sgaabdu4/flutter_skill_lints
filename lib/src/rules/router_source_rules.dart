@@ -238,7 +238,7 @@ final List<ScannerRule> routerSourceRules = [
 
   /// Use typed route helpers as the navigation API.
   ///
-  /// Why: Flags wrapper classes around navigation. Generated typed route
+  /// Why: Flags wrapper classes/functions around navigation. Generated typed route
   /// classes are the navigation SSOT.
   scannerRule(
     code: const LintCode(
@@ -248,16 +248,26 @@ final List<ScannerRule> routerSourceRules = [
       severity: DiagnosticSeverity.ERROR,
     ),
     description:
-        'Flags navigation wrapper classes so the Flutter skill violation is shown during analysis.',
+        'Flags navigation wrapper APIs so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        final match = RegExp(
+        final classMatch = RegExp(
           r'\b(?:abstract\s+interface\s+class|abstract\s+class|final\s+class|class)\s+'
           r'(?:_?AppNavigationCoordinator|AppNavigation|[A-Z]\w*NavigationCoordinator)\b',
         ).firstMatch(line);
-        if (match == null) continue;
-        reporter.report(context, i, match.start);
+        if (classMatch != null) {
+          reporter.report(context, i, classMatch.start);
+          continue;
+        }
+
+        final functionMatch = RegExp(
+          r'\b(?:navigateTo|goTo|pushTo|replaceWith)[A-Z]\w*'
+          r'(?:Route|Screen|Page)\w*\s*(?:<[^>]+>)?\s*\(',
+        ).firstMatch(line);
+        if (functionMatch != null) {
+          reporter.report(context, i, functionMatch.start);
+        }
       }
     },
   ),
@@ -340,22 +350,31 @@ final List<ScannerRule> routerSourceRules = [
     },
   ),
 
-  /// Keep navigation out of BuildContext container lookups.
+  /// Keep navigation out of context escape hatches.
   ///
   /// Why: Navigation should stay at the UI event boundary through generated
   /// route helpers or local modal helpers.
   scannerRule(
     code: const LintCode(
       'router_container_navigation_escape',
-      'Keep navigation out of BuildContext container lookups.',
+      'Keep navigation out of context escape hatches.',
       correctionMessage:
           'Call generated typed route helpers or local modal helpers at the UI event boundary.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags container lookup navigation escape hatches.',
+    description: 'Flags container and navigatorKey context navigation escape hatches.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
+        final navigatorContext = RegExp(
+          r'\b(?:[A-Za-z_]\w*\s*\.\s*)?routerDelegate\s*\.\s*navigatorKey\s*\.\s*'
+          r'currentContext\b|\bnavigatorKey\s*\.\s*currentContext\b',
+        ).firstMatch(line);
+        if (navigatorContext != null) {
+          reporter.report(context, i, navigatorContext.start);
+          continue;
+        }
+
         final match = RegExp(r'\bProviderScope\s*\.\s*containerOf\s*\(').firstMatch(line);
         if (match == null) continue;
 
@@ -504,6 +523,20 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
   );
   if (contextNavigationCall != null) return contextNavigationCall.column;
 
+  final contextConvenienceNavigation = RegExp(
+    r'\bcontext\s*\.\s*(?:go|push|replace|pushReplacement)[A-Z]\w*\s*'
+    r'(?:<[^>]+>)?\s*\(',
+  );
+  final contextConvenienceNavigationCall = _windowMatchStartingOnLine(
+    context,
+    lineIndex,
+    contextConvenienceNavigation,
+    maxLines: 4,
+  );
+  if (contextConvenienceNavigationCall != null) {
+    return contextConvenienceNavigationCall.column;
+  }
+
   final routerVariableNavigation = RegExp(
     r'\b(?:_?router|[A-Za-z_]\w*Router\w*)\s*\.\s*'
     r'(?:go|push|replace|pushReplacement|goNamed|pushNamed|replaceNamed)\s*'
@@ -516,6 +549,21 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
     maxLines: 4,
   );
   if (routerVariableNavigationCall != null) return routerVariableNavigationCall.column;
+
+  final routerConvenienceNavigation = RegExp(
+    r'\b(?:_?router|[A-Za-z_]\w*Router\w*)\s*\.\s*'
+    r'(?:go|push|replace|pushReplacement)[A-Z]\w*\s*'
+    r'(?:<[^>]+>)?\s*\(',
+  );
+  final routerConvenienceNavigationCall = _windowMatchStartingOnLine(
+    context,
+    lineIndex,
+    routerConvenienceNavigation,
+    maxLines: 4,
+  );
+  if (routerConvenienceNavigationCall != null) {
+    return routerConvenienceNavigationCall.column;
+  }
 
   final navigatorNavigation = RegExp(
     r'\bNavigator\s*(?:\.\s*of\s*\([^)]*\)\s*)?\.\s*'

@@ -11,6 +11,7 @@ bool isGeneratedRuleContext(RuleContext context) {
       path.endsWith('.generated.dart') ||
       path.endsWith('.mocks.dart') ||
       path.endsWith('.mock.dart') ||
+      path.contains('/l10n/app_localizations') ||
       path.contains('/generated/');
 }
 

@@ -117,6 +117,17 @@ Widget tile() => const Widget();
     await assertDiagnostics(source, [lint(source.indexOf('tile'), 'tile'.length)]);
   }
 
+  Future<void> test_allowsTestHelperReturningWidget() async {
+    final filePath = '$testPackageRootPath/test/core/widgets/app_dialog_test.dart';
+    newFile(filePath, r'''
+import 'package:flutter/widgets.dart';
+
+Widget _testApp(Widget child) => child;
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
   Future<void> test_allowsFrameworkBuilderOverride() async {
     await assertNoDiagnostics(r'''
 // ignore_for_file: override_on_non_overriding_member
@@ -494,6 +505,44 @@ void main() {
 ''');
 
     await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsL10nLocalBinding() async {
+    await assertNoDiagnostics(r'''
+class AppLocalizations {
+  const AppLocalizations();
+
+  String get save => '';
+  String get cancel => '';
+  String get delete => '';
+}
+
+void build() {
+  final l10n = const AppLocalizations();
+  print(l10n.save);
+  print(l10n.cancel);
+  print(l10n.delete);
+}
+''');
+  }
+
+  Future<void> test_allowsAppLocalizationsVariableWithDifferentName() async {
+    await assertNoDiagnostics(r'''
+class AppLocalizations {
+  const AppLocalizations();
+
+  String get save => '';
+  String get cancel => '';
+  String get delete => '';
+}
+
+void build() {
+  final strings = const AppLocalizations();
+  print(strings.save);
+  print(strings.cancel);
+  print(strings.delete);
+}
+''');
   }
 }
 

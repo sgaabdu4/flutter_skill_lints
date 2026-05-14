@@ -485,6 +485,21 @@ Object handle(dynamic req, dynamic context) {
       lint(source.indexOf('dynamic body'), 'dynamic'.length),
     ]);
   }
+
+  Future<void> test_allowsGeneratedLocalizationsDynamic() async {
+    final filePath = '$testPackageLibPath/l10n/app_localizations.dart';
+    const source = r'''
+class LocalizationsDelegate<T> {}
+
+abstract class AppLocalizations {
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[];
+}
+''';
+    newFile(filePath, source);
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
 }
 
 @reflectiveTest

@@ -11,13 +11,19 @@ IDE, `dart analyze`, and full-project Flutter analyzer runs.
 
 Designed for Riverpod + codegen Flutter apps.
 
+> **Highly opinionated by design:** This plugin enforces the accompanying
+> `building-flutter-apps` skill's preferred architecture and code style. Treat
+> it as a project policy package, not a neutral Dart/Flutter lint preset.
+> Until v1.0.0, assume every release may include breaking changes as the lint
+> surface is refined.
+
 ## Highlights
 
 | Surface | Count |
 | --- | ---: |
-| Flutter skill warning rules | 122 |
-| Flutter skill diagnostic codes | 129 |
-| Additional Dart/Flutter warning rules | 81 |
+| Flutter skill warning rules | 125 |
+| Flutter skill diagnostic codes | 132 |
+| Additional Dart/Flutter warning rules | 85 |
 | Quick fixes | 64 |
 | Assists | 1 |
 
@@ -111,12 +117,13 @@ Encode the architectural rules from `building-flutter-apps`.
 | Area | Diagnostic IDs |
 | --- | --- |
 | Async safety | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `use_unawaited_for_fire_and_forget_futures`, `async_context_mounted_style` |
-| Riverpod | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_watch_no_select`, `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`, `riverpod_auto_dispose_keepalive_dependencies`, `riverpod_feature_notifier_keepalive`, `riverpod_keepalive_family`, `use_ref_invalidate` |
+| Riverpod | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_manual_provider`, `riverpod_consumer_state_derived_cache`, `riverpod_watch_no_select`, `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`, `riverpod_auto_dispose_keepalive_dependencies`, `riverpod_feature_notifier_keepalive`, `riverpod_keepalive_family`, `use_ref_invalidate` |
 | Notifiers | `avoid_silent_repository_null_return`, `avoid_sync_notifier_state_read`, `notifier_ensure_deps`, `notifier_watch_method` |
 | Freezed and serialization | `use_sealed_freezed_classes`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map` |
 | Architecture | `arch_domain_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_repository_generated_extends`, `arch_concrete_dependency`, `arch_datasource_try_catch`, `arch_widget_path`, `atomic_provider_access`, `typed_id_raw_id`, `records_map_return`, `avoid_object_map_cast`, `vo_public_raw_constructor`, `domain_entity_primitive_factory`, `domain_custom_copy_with`, `hive_field_no_vo_type` |
 | Navigation | `guard_context_pop`, `avoid_route_param_throw_in_build`, `router_string_nav`, `router_gorouter_of`, `router_untyped_navigator_push`, `router_direct_route_call`, `router_raw_route_definition`, `router_modal_local_helpers`, `router_container_navigation_escape`, `router_context_navigation_extension`, `router_navigation_wrapper_api`, `router_pop_then_push`, `router_redirect_watch`, `router_redirect_loading_bounce`, `router_complex_extra` |
-| UI and accessibility | `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`, `ui_snackbar_boundary`, `a11y_text_scale_clamp` |
+| UI and accessibility | `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`, `l10n_context_direct_access`, `ui_snackbar_boundary`, `a11y_text_scale_clamp` |
+| Date and time | `datetime_now_requires_timezone_intent` |
 | Performance | `perf_build_work`, `perf_listview_children` |
 | State | `state_raw_response`, `state_raw_error_to_string`, `state_freezed_nullable_error`, `state_broad_invalidation` |
 | ShowcaseView | `avoid_showcase_key_filtering`, `showcase_listen_manual_handle`, `showcase_prev_null_guard`, `showcase_default_scope`, `showcase_dispose_on_tap` |
@@ -141,6 +148,10 @@ Covers:
 - Riverpod and hook-specific mistakes.
 - Test matcher hygiene.
 - Naming and modern Dart style checks.
+- Magic literal checks via `avoid_magic_literals` for raw executable strings and numbers.
+- Error/status code owner checks via `avoid_inline_error_codes`.
+- Contract key owner checks via `avoid_local_contract_key_constants`.
+- Local suppression guards via `avoid_flutter_skill_lint_suppression`.
 - Class destructuring guidance, including `prefer_class_destructuring`.
 
 Implementations live under
@@ -246,6 +257,7 @@ To disable a rule project-wide, add it to `analysis_options.yaml`:
 analyzer:
   errors:
     avoid_shrink_wrap: ignore
+    datetime_now_requires_timezone_intent: ignore
 ```
 
 ## Troubleshooting

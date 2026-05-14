@@ -1,13 +1,13 @@
 # building-flutter-apps Lint Coverage
 
-Status: 2026-05-13.
+Status: 2026-05-14.
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 122 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 129 `building-flutter-apps` diagnostic codes.
-- `lib/src/additional_lints/rules/**`: 81 additional diagnostics.
-- Total unique diagnostics: 210.
+- `lib/src/rules/**`: 123 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 130 `building-flutter-apps` diagnostic codes.
+- `lib/src/additional_lints/rules/**`: 85 additional diagnostics.
+- Total unique diagnostics: 215.
 
 ## Full Rule Inventory
 
@@ -80,6 +80,7 @@ perf_build_work
 perf_listview_children
 records_map_return
 riverpod_auto_dispose_keepalive_dependencies
+riverpod_consumer_state_derived_cache
 riverpod_keepalive_family
 riverpod_manual_provider
 riverpod_mutation_experimental_warning
@@ -158,9 +159,13 @@ avoid_contradictory_expressions
 avoid_duplicate_cascades
 avoid_expanded_as_spacer
 avoid_flexible_outside_flex
+avoid_flutter_skill_lint_suppression
 avoid_generics_shadowing
 avoid_incomplete_copy_with
 avoid_incorrect_image_opacity
+avoid_inline_error_codes
+avoid_local_contract_key_constants
+avoid_magic_literals
 avoid_map_keys_contains
 avoid_misused_test_matchers
 avoid_mounted_check_in_finally
@@ -232,7 +237,8 @@ use_sliver_prefix
 Core skill rules already covered before this pass:
 
 - Riverpod/codegen: `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`,
-  `riverpod_service_locator`, `riverpod_watch_no_select`,
+  `riverpod_service_locator`, `riverpod_manual_provider`,
+  `riverpod_consumer_state_derived_cache`, `riverpod_watch_no_select`,
   `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`,
   `riverpod_auto_dispose_keepalive_dependencies`,
   `riverpod_keepalive_family`, `use_ref_invalidate`.
@@ -311,7 +317,7 @@ hover description and correction text.
 | `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_test_close_missing`, runtime boundary for historical TypeId permanence |
 | `mixins.md` | `mixin_mixin_class`, `mixin_name_suffix`, `mixin_mutable_state` |
 | `performance.md` | `riverpod_watch_no_select`, `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `perf_listview_children`, `perf_build_work`, `state_raw_response`, `state_raw_error_to_string`, `a11y_text_scale_clamp`, `flutter_*` optimization rules |
-| `riverpod-codegen.md` | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_watch_no_select`, `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`, `riverpod_auto_dispose_keepalive_dependencies`, `riverpod_feature_notifier_keepalive`, `riverpod_keepalive_family`, `use_ref_invalidate`; Riverpod-owned dependency/scoping/provider-shape diagnostics stay with `riverpod_lint` |
+| `riverpod-codegen.md` | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_manual_provider`, `riverpod_consumer_state_derived_cache`, `riverpod_watch_no_select`, `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`, `riverpod_auto_dispose_keepalive_dependencies`, `riverpod_feature_notifier_keepalive`, `riverpod_keepalive_family`, `use_ref_invalidate`; Riverpod-owned dependency/scoping/provider-shape diagnostics stay with `riverpod_lint` |
 | `services-and-singletons.md` | `service_singleton`, `service_static_side_effect`, `service_random_per_call`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures`, `fire_forget_in_tests` |
 | `showcase-tours.md` | `avoid_showcase_key_filtering`, `showcase_listen_manual_handle`, `showcase_prev_null_guard`, `showcase_default_scope`, `showcase_dispose_on_tap`, `showcase_v4_api`, `showcase_get_named_unhandled`, `showcase_scope_string_literal` |
 | `state-management.md` | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `async_context_mounted_style`, `avoid_mounted_check_in_finally`, `avoid_sync_notifier_state_read`, `avoid_silent_repository_null_return`, `notifier_ensure_deps`, `notifier_watch_method`, `state_broad_invalidation`, `state_freezed_nullable_error`, runtime boundary for source-of-truth freshness |

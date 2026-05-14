@@ -162,6 +162,33 @@ final class SourceScannerContext {
         ).hasMatch(code);
   }
 
+  int? directContextL10nColumn(int lineIndex) {
+    if (path.contains('/l10n/') || isTestFile) return null;
+
+    final line = source.masked[lineIndex];
+    final sameLine = RegExp(r'\bcontext\s*\.\s*l10n\s*\.').firstMatch(line);
+    if (sameLine != null) return sameLine.start;
+
+    final l10nEndLine = RegExp(r'\bcontext\s*\.\s*l10n\s*$').firstMatch(line);
+    if (l10nEndLine != null && _nextCodeLineStartsWith(lineIndex, RegExp(r'^\s*\.\s*\w'))) {
+      return l10nEndLine.start;
+    }
+
+    if (!RegExp(r'\bcontext\s*$').hasMatch(line)) return null;
+
+    final nextIndex = _nextCodeLineIndex(lineIndex);
+    if (nextIndex == null) return null;
+
+    final nextLine = source.masked[nextIndex];
+    if (RegExp(r'^\s*\.\s*l10n\s*\.').hasMatch(nextLine)) return line.indexOf('context');
+    if (RegExp(r'^\s*\.\s*l10n\s*$').hasMatch(nextLine) &&
+        _nextCodeLineStartsWith(nextIndex, RegExp(r'^\s*\.\s*\w'))) {
+      return line.indexOf('context');
+    }
+
+    return null;
+  }
+
   bool isMutableMixinField(int lineIndex) {
     final line = source.masked[lineIndex];
     final fieldMatch = RegExp(
@@ -308,6 +335,18 @@ final class SourceScannerContext {
 
   bool isMutationMethod(String name) =>
       RegExp(r'^(?:create|update|delete|set|reorder|save|add|remove)[A-Z_]?').hasMatch(name);
+
+  int? _nextCodeLineIndex(int lineIndex) {
+    for (var i = lineIndex + 1; i < source.length; i++) {
+      if (source.masked[i].trim().isNotEmpty) return i;
+    }
+    return null;
+  }
+
+  bool _nextCodeLineStartsWith(int lineIndex, RegExp pattern) {
+    final nextIndex = _nextCodeLineIndex(lineIndex);
+    return nextIndex != null && pattern.hasMatch(source.masked[nextIndex]);
+  }
 
   bool get isDataPath => path.contains('/data/') || path.contains('/repositories/');
   bool get isDatasourcePath => path.contains('/data/datasources/');

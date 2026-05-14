@@ -71,6 +71,30 @@ final List<ScannerRule> uiSourceRules = [
     },
   ),
 
+  /// Bind localizations once before reading localized strings.
+  ///
+  /// Why: Keeps widget localization access consistent. Bind `final l10n = context.l10n;`
+  /// at the top of `build`, then read keys from `l10n`.
+  scannerRule(
+    code: const LintCode(
+      'l10n_context_direct_access',
+      'Bind localizations before reading localized strings.',
+      correctionMessage:
+          'Use `final l10n = context.l10n;` and then read localized keys from `l10n`.',
+      severity: DiagnosticSeverity.WARNING,
+    ),
+    description:
+        'Flags direct context.l10n key access so widgets bind localizations once before use.',
+    scan: (reporter, context) {
+      for (var i = 0; i < context.source.length; i++) {
+        final column = context.directContextL10nColumn(i);
+        if (column != null) {
+          reporter.report(context, i, column);
+        }
+      }
+    },
+  ),
+
   /// UI widgets should not directly show snackbars.
   ///
   /// Why: Flags direct snackbar dispatches from UI widgets. Dispatch a notifier action and
@@ -113,6 +137,75 @@ final List<ScannerRule> uiSourceRules = [
         if (context.isAppRootFile && context.clampsTextScaling(line)) {
           reporter.report(context, i, 0);
         }
+      }
+    },
+  ),
+
+  /// Make `DateTime.now()` timezone intent explicit.
+  ///
+  /// Why: Raw current-time calls spread timezone and calendar-window policy through
+  /// app code. Keep current-time helpers and semantic date windows in
+  /// `core/extensions/date_time_extensions.dart`.
+  scannerRule(
+    code: const LintCode(
+      'datetime_now_requires_timezone_intent',
+      'Make current DateTime timezone intent explicit.',
+      correctionMessage:
+          'Use DateTimeX.nowUtc()/nowLocal(), and move repeated current-date windows into a DateTimeX helper.',
+      severity: DiagnosticSeverity.WARNING,
+    ),
+    description:
+        'Flags raw current DateTime calls and inline current-date math so timestamp persistence and local calendar bucketing stay behind DateTimeX helpers.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+      final isDateTimeExtensionsFile = context.path.endsWith(
+        '/core/extensions/date_time_extensions.dart',
+      );
+
+      final maskedSource = context.source.masked.join('\n');
+      final codeSource = context.source.code.join('\n');
+      final reportedOffsets = <int>{};
+
+      void reportOffset(int offset) {
+        if (!reportedOffsets.add(offset)) return;
+        final location = _lineColumnForOffset(context.source, offset);
+        reporter.report(context, location.lineIndex, location.column);
+      }
+
+      if (!isDateTimeExtensionsFile) {
+        for (final match in _currentTimeHelperDateMath.allMatches(maskedSource)) {
+          reportOffset(match.start);
+        }
+
+        for (final match in _currentTimeBoundary.allMatches(maskedSource)) {
+          reportOffset(match.start);
+        }
+
+        for (final match in _persistedLocalNowExpression.allMatches(maskedSource)) {
+          final localNowMatch = _localNowExpression.firstMatch(match.group(0)!);
+          if (localNowMatch == null) continue;
+          reportOffset(match.start + localNowMatch.start);
+        }
+      }
+
+      for (final match in _currentDateTimeCall.allMatches(maskedSource)) {
+        if (_isAllowedDateTimeExtensionCurrentBoundary(context, match.start)) {
+          continue;
+        }
+        reportOffset(match.start);
+      }
+
+      for (final match in _interpolatedCurrentDateTimeCall.allMatches(codeSource)) {
+        final callText = match.group(0);
+        if (callText == null) continue;
+        final callIndex = callText.indexOf('DateTime');
+        if (callIndex < 0) continue;
+        final callOffset = match.start + callIndex;
+        if (_isRawStringLiteralText(context, match.start)) continue;
+        if (_isAllowedDateTimeExtensionCurrentBoundary(context, callOffset)) {
+          continue;
+        }
+        reportOffset(callOffset);
       }
     },
   ),
@@ -167,6 +260,26 @@ final List<ScannerRule> uiSourceRules = [
   ),
 ];
 
+final _currentDateTimeCall = RegExp(r'\bDateTime\s*\.\s*(?:now|timestamp)\s*\(\s*\)');
+final _interpolatedCurrentDateTimeCall = RegExp(
+  r'\$\{\s*DateTime\s*\.\s*(?:now|timestamp)\s*\(\s*\)',
+);
+final _localNowExpression = RegExp(
+  r'\bDateTime\s*\.\s*now\s*\(\s*\)\s*\.\s*toLocal\s*\('
+  r'|\b(?:[A-Za-z_]\w*\s*\.\s*)?nowLocal\s*\(',
+);
+final _persistedLocalNowExpression = RegExp(
+  r'\b(?:createdAt|updatedAt|deletedAt|savedAt|syncedAt|lastSyncedAt|timestamp|checkedInAt)\b\s*(?::|=)\s*\(?\s*(?:'
+  r'\bDateTime\s*\.\s*now\s*\(\s*\)\s*\.\s*toLocal\s*\('
+  r'|\b(?:[A-Za-z_]\w*\s*\.\s*)?nowLocal\s*\()',
+);
+final _currentTimeHelperDateMath = RegExp(
+  r'\b(?:DateTimeX\s*\.\s*)?nowLocal\s*\(\s*\)(?:\s*\.\s*startOfDay)?\s*\.\s*(?:calendarDaysBefore|calendarDaysAfter|daysBefore|daysAfter|add|subtract)\s*\(',
+);
+final _currentTimeBoundary = RegExp(
+  r'\b(?:DateTimeX\s*\.\s*)?now(?:Local|Utc)\s*\(\s*\)\s*\.\s*(?:startOfDay|endOfDay)\b',
+);
+
 bool _hasRawStyleToken(String line) {
   if (RegExp(r'\bColor\s*\(\s*0x[0-9A-Fa-f]+').hasMatch(line)) {
     return true;
@@ -196,6 +309,50 @@ bool _hasMeaningfulNumericLiteral(String line) {
     if (previous != null && '+-*/'.contains(previous)) continue;
 
     return true;
+  }
+  return false;
+}
+
+({int lineIndex, int column}) _lineColumnForOffset(SourceScannerSource source, int offset) {
+  var lineIndex = 0;
+  while (lineIndex + 1 < source.lineOffsets.length && source.lineOffsets[lineIndex + 1] <= offset) {
+    lineIndex++;
+  }
+
+  return (lineIndex: lineIndex, column: offset - source.lineOffsets[lineIndex]);
+}
+
+bool _isAllowedDateTimeExtensionCurrentBoundary(SourceScannerContext context, int offset) {
+  if (!context.path.endsWith('/core/extensions/date_time_extensions.dart')) {
+    return false;
+  }
+
+  final (:lineIndex, :column) = _lineColumnForOffset(context.source, offset);
+  final line = context.source.masked[lineIndex];
+  final call = _currentDateTimeCall.matchAsPrefix(line, column);
+  if (call == null || !call.group(0)!.contains('timestamp')) return false;
+
+  final start = lineIndex < 3 ? 0 : lineIndex - 3;
+  final window = context.source.masked.sublist(start, lineIndex + 1).join('\n');
+  return RegExp(
+    r'\bstatic\s+DateTime\s+nowUtc\s*\(\s*\)\s*=>\s*DateTime\s*\.\s*timestamp\s*\(',
+  ).hasMatch(window);
+}
+
+bool _isRawStringLiteralText(SourceScannerContext context, int offset) {
+  final (:lineIndex, :column) = _lineColumnForOffset(context.source, offset);
+  final line = context.source.code[lineIndex];
+  for (var i = column - 1; i >= 0; i--) {
+    final char = line[i];
+    if (char != '\'' && char != '"') continue;
+
+    var quoteStart = i;
+    while (quoteStart > 0 && line[quoteStart - 1] == char) {
+      quoteStart--;
+    }
+
+    final prefixIndex = quoteStart - 1;
+    return prefixIndex >= 0 && (line[prefixIndex] == 'r' || line[prefixIndex] == 'R');
   }
   return false;
 }

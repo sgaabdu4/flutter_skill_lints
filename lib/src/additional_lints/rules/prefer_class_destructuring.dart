@@ -79,6 +79,10 @@ class _Visitor extends SimpleAstVisitor<void> {
       final variableName = entry.key;
       final info = entry.value;
 
+      if (_isLocalizationAccess(variableName, info.targetType)) {
+        continue;
+      }
+
       if (info.properties.length < PreferClassDestructuring._minOccurrences) {
         continue;
       }
@@ -92,6 +96,14 @@ class _Visitor extends SimpleAstVisitor<void> {
         arguments: [info.properties.length.toString(), variableName],
       );
     }
+  }
+
+  bool _isLocalizationAccess(String variableName, DartType? targetType) {
+    if (variableName == 'l10n') return true;
+    if (targetType is! InterfaceType) return false;
+
+    final typeName = targetType.element.name ?? '';
+    return typeName == 'AppLocalizations' || typeName.endsWith('Localizations');
   }
 }
 

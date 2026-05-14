@@ -40,9 +40,17 @@ class AvoidReturningWidgets extends AnalysisRule {
 
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+    if (_isTestFile(context)) return;
+
     final visitor = _Visitor(this);
     registry.addMethodDeclaration(this, visitor);
     registry.addFunctionDeclaration(this, visitor);
+  }
+
+  bool _isTestFile(RuleContext context) {
+    if (context.isInTestDirectory) return true;
+    final path = context.definingUnit.file.path.replaceAll('\\', '/');
+    return path.endsWith('_test.dart');
   }
 }
 

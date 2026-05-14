@@ -64,10 +64,41 @@ final List<ScannerRule> riverpodSourceRules = [
         'Flags manual Riverpod provider declarations so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        final match = _manualProviderDeclaration.firstMatch(line);
+        final match = _manualProviderDeclarationMatch(context, i);
         if (match == null) continue;
-        reporter.report(context, i, match.start);
+        reporter.report(context, i, match.column);
+      }
+    },
+  ),
+
+  /// Keep provider-derived data in providers, not ConsumerState caches.
+  ///
+  /// Why: Flags manual cache/source fields in ConsumerState classes that also
+  /// watch providers. Derived provider data belongs in a generated @riverpod
+  /// provider or in pure build-local derivation, not mutable widget state.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_consumer_state_derived_cache',
+      'Do not cache provider-derived data in ConsumerState.',
+      correctionMessage:
+          'Move the derived data to an @riverpod provider or compute it locally without mutable cache fields.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags ConsumerState cache/source fields used with ref.watch so provider-derived data stays in Riverpod.',
+    scan: (reporter, context) {
+      for (final classSpan in context.classes) {
+        if (!_isConsumerStateClass(context, classSpan)) continue;
+        if (!_classContainsRefWatch(context, classSpan)) continue;
+
+        for (final lineIndex in _directClassMemberLines(context, classSpan)) {
+          final line = context.source.masked[lineIndex];
+          final match = _derivedCacheField.firstMatch(line);
+          if (match == null) continue;
+          final fieldName = match.group(1);
+          final column = fieldName == null ? match.start : line.indexOf(fieldName, match.start);
+          reporter.report(context, lineIndex, column);
+        }
       }
     },
   ),
@@ -264,6 +295,77 @@ final _manualProviderDeclaration = RegExp(
   r'NotifierProvider|AsyncNotifierProvider|StateNotifierProvider|ChangeNotifierProvider)'
   r'(?:\s*[<(]|\s*\.)',
 );
+
+final _derivedCacheField = RegExp(
+  r'^\s*(?:late\s+)?(?:final\s+)?'
+  r'(?:[A-Za-z_]\w*(?:<[^;=]+>)?\??)\s+'
+  r'(_[A-Za-z_]\w*(?:Cache|Source|DayStart|TodayStart))\b',
+);
+final _refWatchCall = RegExp(r'\bref\s*\.\s*watch\s*\(');
+
+({RegExpMatch match, int column})? _manualProviderDeclarationMatch(
+  SourceScannerContext context,
+  int lineIndex,
+) {
+  final end = lineIndex + 4 > context.source.masked.length
+      ? context.source.masked.length
+      : lineIndex + 4;
+  final window = context.source.masked.sublist(lineIndex, end).join('\n');
+  final match = _manualProviderDeclaration.firstMatch(window);
+  if (match == null) return null;
+
+  final beforeMatch = window.substring(0, match.start);
+  if (beforeMatch.contains('\n')) return null;
+  return (match: match, column: beforeMatch.length);
+}
+
+bool _isConsumerStateClass(SourceScannerContext context, ScannerClassSpan classSpan) {
+  final signature = _classSignature(context, classSpan);
+  return RegExp(r'\bextends\s+(?:[A-Za-z_]\w*\.)?ConsumerState\s*<').hasMatch(signature);
+}
+
+String _classSignature(SourceScannerContext context, ScannerClassSpan classSpan) {
+  final buffer = StringBuffer();
+  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
+    final line = context.source.masked[i];
+    buffer.write(' ');
+    buffer.write(line);
+    if (line.contains('{')) break;
+  }
+  return buffer.toString();
+}
+
+bool _classContainsRefWatch(SourceScannerContext context, ScannerClassSpan classSpan) {
+  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
+    if (_refWatchCall.hasMatch(context.source.masked[i])) return true;
+  }
+  return false;
+}
+
+Iterable<int> _directClassMemberLines(
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+) sync* {
+  var depth = 0;
+  var sawClassOpenBrace = false;
+
+  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
+    final line = context.source.masked[i];
+    if (i > classSpan.start && sawClassOpenBrace && depth == 1) {
+      yield i;
+    }
+
+    for (var j = 0; j < line.length; j++) {
+      final char = line[j];
+      if (char == '{') {
+        depth++;
+        sawClassOpenBrace = true;
+      } else if (char == '}') {
+        depth--;
+      }
+    }
+  }
+}
 
 final class _ProviderAnnotation {
   const _ProviderAnnotation({

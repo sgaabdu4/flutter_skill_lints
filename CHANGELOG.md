@@ -2,15 +2,16 @@
 
 ## [0.6.5] - 2026-05-14
 
-- Added `riverpod_consumer_state_derived_cache` to block mutable
-  `ConsumerState` cache/source/day-start fields when the state class also
-  watches providers. Provider-derived data belongs in generated `@riverpod`
-  providers or build-local derivation, not widget-state caches.
-- Added `avoid_magic_literals` to flag raw executable strings and numbers in
-  ownership-sensitive contexts such as map/JSON keys, file/path/key/id
-  arguments, collection limits, date windows, thresholds, and comparisons.
-- Bumped Flutter skill rule count to 123 and diagnostic count to 130.
-- Bumped additional analyzer warning rule count to 82.
+- Added `riverpod_consumer_state_derived_cache` for provider-derived
+  `ConsumerState` cache/source/day-start fields.
+- Added `l10n_context_direct_access` and `datetime_now_requires_timezone_intent`
+  for l10n binding and `DateTimeX` current-time intent.
+- Added `avoid_magic_literals` for raw key/path/id/limit/date-window/threshold
+  literals and comparisons.
+- Added `avoid_inline_error_codes`, `avoid_local_contract_key_constants`, and
+  `avoid_flutter_skill_lint_suppression` for contracts and suppressions.
+- Bumped Flutter skill rule count to 125 and diagnostic count to 132.
+- Bumped additional analyzer warning rule count to 85.
 
 ## [0.6.4] - 2026-05-14
 

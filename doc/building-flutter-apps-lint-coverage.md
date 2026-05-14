@@ -4,10 +4,10 @@ Status: 2026-05-14.
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 123 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 130 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 125 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 132 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 85 additional diagnostics.
-- Total unique diagnostics: 215.
+- Total unique diagnostics: 217.
 
 ## Full Rule Inventory
 
@@ -52,6 +52,7 @@ crash_possible_pii
 crash_run_zoned_guarded_legacy
 dart_static_namespace
 data_log_rethrow
+datetime_now_requires_timezone_intent
 fire_and_forget_missing_catch
 fire_forget_in_tests
 flutter_animated_builder_child
@@ -71,6 +72,7 @@ hive_duplicate_field_id
 hive_duplicate_type_id
 hive_reserved_type_ids_missing
 hive_test_close_missing
+l10n_context_direct_access
 mixin_mixin_class
 mixin_mutable_state
 mixin_name_suffix
@@ -268,9 +270,10 @@ Core skill rules already covered before this pass:
   `router_navigation_wrapper_api`, `router_pop_then_push`,
   `router_redirect_watch`, `router_redirect_loading_bounce`,
   `router_complex_extra`.
-- UI/performance: `avoid_widget_build_helpers`, `avoid_shrink_wrap`,
+- UI/performance/date: `avoid_widget_build_helpers`, `avoid_shrink_wrap`,
   `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`,
-  `ui_snackbar_boundary`, `a11y_text_scale_clamp`,
+  `l10n_context_direct_access`, `ui_snackbar_boundary`,
+  `a11y_text_scale_clamp`, `datetime_now_requires_timezone_intent`,
   `avoid_private_widget_classes`, `perf_build_work`, `perf_listview_children`,
   `state_raw_response`, `state_raw_error_to_string`,
   `state_broad_invalidation`.
@@ -303,18 +306,19 @@ hover description and correction text.
 
 | Skill reference | Analyzer-backed coverage or recorded boundary |
 | --- | --- |
-| `analysis-options.md` | `cfg_analysis_options_canonical`, `cfg_strict_analysis`, `cfg_required_lints`, `cfg_generated_exclude`, `cfg_freezed_annotation_ignore`, `cfg_prohibited_lint_plugins` |
+| `analysis-options.md` | `cfg_analysis_options_canonical`, `cfg_strict_analysis`, `cfg_required_lints`, `cfg_generated_exclude`, `cfg_freezed_annotation_ignore`, `cfg_prohibited_lint_plugins`, `avoid_flutter_skill_lint_suppression` |
 | `analysis_options.yaml` | Canonical include/plugins/analyzer/linter block; duplicate checks leave `flutter_lints` and `riverpod_lint` owned rules to those packages |
-| `architecture.md` | `arch_domain_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_repository_generated_extends`, `arch_concrete_dependency`, `arch_datasource_try_catch`, `arch_widget_path`, `arch_model_missing_to_entity`, `arch_model_extends_entity`, `atomic_provider_access`, `avoid_object_map_cast`, runtime boundary for dual persistence owners |
+| `architecture.md` | `arch_domain_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_repository_generated_extends`, `arch_concrete_dependency`, `arch_datasource_try_catch`, `arch_widget_path`, `arch_model_missing_to_entity`, `arch_model_extends_entity`, `atomic_provider_access`, `avoid_object_map_cast`, `avoid_inline_error_codes`, `avoid_local_contract_key_constants`, runtime boundary for dual persistence owners |
 | `atomic-design.md` | `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`, `atomic_provider_access`, `arch_widget_path`, runtime boundary for cross-feature widget promotion |
 | `common-patterns.md` | `router_string_nav`, `router_gorouter_of`, `router_untyped_navigator_push`, `router_direct_route_call`, `router_raw_route_definition`, `router_modal_local_helpers`, `router_container_navigation_escape`, `router_context_navigation_extension`, `router_navigation_wrapper_api`, `router_pop_then_push`, `router_redirect_watch`, `router_redirect_loading_bounce`, `router_complex_extra`, `router_impure_redirect`, `router_shell_tab_push`, `guard_context_pop`, `avoid_route_param_throw_in_build`, `state_broad_invalidation`, runtime boundary for UX-specific debounce duration |
 | `crashlytics.md` | `crash_direct_firebase_call`, `crash_init_before_run_app`, `crash_possible_pii`, `crash_run_zoned_guarded_legacy`, runtime boundary for CI symbol upload |
 | `dart-mcp-e2e-testing.md` | `cfg_e2e_entrypoint`, `test_inline_value_key`, `test_tap_at`, `test_first_match_finder`, runtime boundary for real device, logs, source-of-truth, cleanup, and multi-actor proof |
 | `dart-patterns-records.md` | `records_map_return`, `typed_id_raw_id`, `avoid_null_bang`, `prefer_wildcard_pattern`, `prefer_class_destructuring`, `use_existing_destructuring` |
-| `extensions-utilities.md` | `ui_snackbar_boundary`, `dart_static_namespace`, `service_static_side_effect`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures` |
+| `extensions-utilities.md` | `ui_snackbar_boundary`, `datetime_now_requires_timezone_intent`, `avoid_magic_literals`, `dart_static_namespace`, `service_static_side_effect`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures` |
 | `flutter-optimizations.md` | `avoid_shrink_wrap`, `perf_listview_children`, `perf_build_work`, `a11y_text_scale_clamp`, `flutter_key_created_in_build`, `flutter_unique_or_global_key`, `flutter_opacity_widget`, `flutter_save_layer_filter`, `flutter_clip_save_layer`, `flutter_intrinsic_layout`, `flutter_animated_builder_child`, `flutter_widget_operator_equals`, `use_dedicated_media_query_methods`, `prefer_compute_over_isolate_run` |
 | `freezed-sealed.md` | `use_sealed_freezed_classes`, `freezed_missing_private_constructor`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map`, `arch_domain_json_annotation`, `cfg_explicit_to_json` |
 | `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_test_close_missing`, runtime boundary for historical TypeId permanence |
+| `localization.md` | `strings_hardcoded`, `l10n_context_direct_access` |
 | `mixins.md` | `mixin_mixin_class`, `mixin_name_suffix`, `mixin_mutable_state` |
 | `performance.md` | `riverpod_watch_no_select`, `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `perf_listview_children`, `perf_build_work`, `state_raw_response`, `state_raw_error_to_string`, `a11y_text_scale_clamp`, `flutter_*` optimization rules |
 | `riverpod-codegen.md` | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_manual_provider`, `riverpod_consumer_state_derived_cache`, `riverpod_watch_no_select`, `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`, `riverpod_auto_dispose_keepalive_dependencies`, `riverpod_feature_notifier_keepalive`, `riverpod_keepalive_family`, `use_ref_invalidate`; Riverpod-owned dependency/scoping/provider-shape diagnostics stay with `riverpod_lint` |

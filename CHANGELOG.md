@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.7.0] - 2026-06-14
 
 - Added `full_collection_load_in_loop`: flags an awaited
   `getAll`/`fetchAll`/`loadAll`-style full-collection load inside a `for`/`while`
@@ -11,9 +11,6 @@
   `seekTo`, ...) that are neither awaited, captured, returned, nor error-handled.
   Their rejections escape to `PlatformDispatcher.onError` and are commonly
   misreported as fatal crashes; route them through an error-handling helper.
-
-## [0.7.0] - 2026-06-14
-
 - Kept the analyzer stack on the Riverpod-compatible analyzer 12 line while
   promoting lint docs, tests, and examples to stable `riverpod_lint 3.1.4`.
 - Reconciled additional-lint AST usage with the analyzer 12 APIs loaded by the

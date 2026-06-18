@@ -47,7 +47,7 @@ class PreferPaddingOverContainerFix extends ResolvedCorrectionProducer {
       builder.addSimpleReplacement(range.node(targetNode), 'Padding');
       // Rename margin to padding if needed (padding is already correct)
       if (marginArgument != null) {
-        builder.addSimpleReplacement(range.node(marginArgument.name.label), 'padding');
+        builder.addSimpleReplacement(range.node(marginArgument.name), 'padding');
       }
     });
   }

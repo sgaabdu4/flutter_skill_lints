@@ -96,6 +96,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (expression is PrefixExpression) {
       return _isTrivialExpression(expression.operand);
     }
+    // Collection literals create fresh mutable objects. Reusing another variable
+    // with the same initializer would alias state instead of removing duplication.
+    if (expression is ListLiteral || expression is SetOrMapLiteral) return true;
     return false;
   }
 }

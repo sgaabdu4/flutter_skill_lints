@@ -78,6 +78,24 @@ final class FlutterSkillProjectConfig extends MultiAnalysisRule {
           'Create lib/main_dev.dart and call enableFlutterDriverExtension() before runApp.',
       severity: DiagnosticSeverity.ERROR,
     ),
+    'avoid_any_version': LintCode(
+      'avoid_any_version',
+      'Avoid using any as a pubspec dependency version.',
+      correctionMessage: 'Pin the dependency to a concrete version constraint.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    'avoid_dependency_overrides': LintCode(
+      'avoid_dependency_overrides',
+      'Avoid dependency_overrides in pubspec.yaml.',
+      correctionMessage: 'Remove dependency_overrides before shipping the package.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    'prefer_publish_to_none': LintCode(
+      'prefer_publish_to_none',
+      'Use publish_to: none for non-published package configs.',
+      correctionMessage: 'Set publish_to: none when this package should not be published.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
   };
 
   @override
@@ -203,6 +221,16 @@ final class _ProjectConfigScanner {
         return;
       }
     }
+
+    if (_hasAnyDependencyVersion(text)) {
+      issues.add('avoid_any_version');
+    }
+    if (_hasPubspecSectionEntries(text, 'dependency_overrides')) {
+      issues.add('avoid_dependency_overrides');
+    }
+    if (_hasNonNonePublishTarget(text)) {
+      issues.add('prefer_publish_to_none');
+    }
   }
 
   bool _isFlutterPackage(String text) =>
@@ -251,7 +279,16 @@ final class _ProjectConfigScanner {
       'prefer_const_declarations',
       'prefer_const_literals_to_create_immutables',
       'prefer_final_locals',
-      'avoid_redundant_argument_values',
+      'always_declare_return_types',
+      'type_annotate_public_apis',
+      'avoid_positional_boolean_parameters',
+      'avoid_equals_and_hash_code_on_mutable_classes',
+      'avoid_null_checks_in_equality_operators',
+      'avoid_private_typedef_functions',
+      'avoid_returning_this',
+      'avoid_setters_without_getters',
+      'prefer_mixin',
+      'use_to_and_as_if_applicable',
       'avoid_dynamic_calls',
       'avoid_print',
       'avoid_void_async',
@@ -282,6 +319,69 @@ final class _ProjectConfigScanner {
   bool _hasYamlKey(String text, String key) {
     final escaped = RegExp.escape(key);
     return RegExp('(^|[\\n{,])\\s*[\'"]?$escaped[\'"]?\\s*:', multiLine: true).hasMatch(text);
+  }
+
+  bool _hasAnyDependencyVersion(String text) {
+    const dependencySections = ['dependencies', 'dev_dependencies', 'dependency_overrides'];
+    for (final section in dependencySections) {
+      for (final line in _sectionLines(text, section)) {
+        if (RegExp(r'''^\s*['"]?[\w-]+['"]?\s*:\s*['"]?any['"]?\s*(?:#.*)?$''').hasMatch(line)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool _hasPubspecSectionEntries(String text, String section) {
+    final sectionMatch = RegExp(
+      '^\\s*${RegExp.escape(section)}\\s*:(.*)\$',
+      multiLine: true,
+    ).firstMatch(text);
+    if (sectionMatch == null) return false;
+
+    final inline = sectionMatch.group(1) ?? '';
+    if (inline.trim().isNotEmpty && inline.trim() != '{}') return true;
+
+    return _sectionLines(
+      text,
+      section,
+    ).any((line) => RegExp(r'''^\s*['"]?[\w-]+['"]?\s*:''').hasMatch(line));
+  }
+
+  bool _hasNonNonePublishTarget(String text) {
+    for (final line in text.split('\n')) {
+      if (line.trimLeft().startsWith('#')) continue;
+      final match = RegExp(
+        r'''^\s*publish_to\s*:\s*['"]?([^'"#\s]+)['"]?\s*(?:#.*)?$''',
+      ).firstMatch(line);
+      if (match == null) continue;
+      return match.group(1) != 'none';
+    }
+    return false;
+  }
+
+  Iterable<String> _sectionLines(String text, String section) sync* {
+    final lines = text.split('\n');
+    var inSection = false;
+    var sectionIndent = 0;
+
+    for (final line in lines) {
+      if (line.trim().isEmpty || line.trimLeft().startsWith('#')) continue;
+      final indent = line.length - line.trimLeft().length;
+      final sectionMatch = RegExp('^\\s*${RegExp.escape(section)}\\s*:(.*)\$').firstMatch(line);
+      if (sectionMatch != null) {
+        sectionIndent = indent;
+        inSection = (sectionMatch.group(1) ?? '').trim().isEmpty;
+        continue;
+      }
+      if (!inSection) continue;
+      if (indent <= sectionIndent) {
+        inSection = false;
+        continue;
+      }
+      yield line;
+    }
   }
 
   bool _hasLocalPluginSource(String text) {

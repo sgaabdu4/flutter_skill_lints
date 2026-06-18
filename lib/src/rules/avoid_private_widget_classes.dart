@@ -32,7 +32,14 @@ final class AvoidPrivateWidgetClasses extends AnalysisRule {
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
     if (isGeneratedRuleContext(context)) return;
+    if (_isTestFile(context)) return;
     registry.addClassDeclaration(this, _Visitor(this));
+  }
+
+  bool _isTestFile(RuleContext context) {
+    final path = context.definingUnit.file.path.replaceAll('\\', '/');
+    return !path.contains('/lib/') &&
+        (path.contains('/test/') || path.contains('/integration_test/'));
   }
 }
 

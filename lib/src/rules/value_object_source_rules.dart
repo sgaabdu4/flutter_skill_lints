@@ -9,6 +9,33 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 /// copyWith on domain types (drift from Freezed-generated semantics). These
 /// rules close all three.
 final List<ScannerRule> valueObjectSourceRules = [
+  /// Domain strings must not use empty-string sentinels.
+  ///
+  /// Why: `''` does not prove a required domain string is valid, and it hides
+  /// absence when the value is optional. Required domain strings should be
+  /// validated Value Objects; optional domain strings should be nullable and
+  /// normalized at the boundary.
+  scannerRule(
+    code: const LintCode(
+      'domain_empty_string_sentinel',
+      'Do not use empty strings as domain sentinels.',
+      correctionMessage:
+          'Use a validated Value Object for required text, or String? for optional text after normalizing blank input to null at the boundary.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags empty-string defaults in domain code so blank text is not used as a missing-value sentinel.',
+    scan: (reporter, context) {
+      if (!context.isDomainPath) return;
+      for (var i = 0; i < context.source.length; i++) {
+        final line = context.source.code[i];
+        final match = _domainEmptyStringDefault.firstMatch(line);
+        if (match == null) continue;
+        reporter.report(context, i, match.start);
+      }
+    },
+  ),
+
   /// Value Object raw constructors must be private.
   ///
   /// Why: A raw VO constructor (`const factory Distance.meters(double value) =
@@ -195,3 +222,9 @@ final List<ScannerRule> valueObjectSourceRules = [
     },
   ),
 ];
+
+final _domainEmptyStringDefault = RegExp(
+  r'''@Default\s*\(\s*r?['"]\s*['"]\s*\)\s*(?:final\s+)?String\s+[A-Za-z_]\w*|'''
+  r'''\b(?:final\s+)?String\s+[A-Za-z_]\w*\s*=\s*r?['"]\s*['"]|'''
+  r'''\bthis\s*\.\s*[A-Za-z_]\w*\s*=\s*r?['"]\s*['"]''',
+);

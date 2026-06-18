@@ -101,7 +101,7 @@ final class _ContextAsyncStatementScanner {
         }
       }
 
-      final nested = _NestedContextBlockScanner(this, contextIsBound);
+      final nested = _NestedContextBlockScanner(this, hasContextBinding: contextIsBound);
       statement.accept(nested);
 
       if (_declaresContextLocal(statement)) {
@@ -184,7 +184,7 @@ final class _ContextMountedAccessFinder extends RecursiveAstVisitor<void> {
 }
 
 final class _NestedContextBlockScanner extends RecursiveAstVisitor<void> {
-  _NestedContextBlockScanner(this.scanner, this.hasContextBinding);
+  _NestedContextBlockScanner(this.scanner, {required this.hasContextBinding});
 
   final _ContextAsyncStatementScanner scanner;
   final bool hasContextBinding;

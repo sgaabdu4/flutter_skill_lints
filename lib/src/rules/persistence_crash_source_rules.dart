@@ -94,21 +94,21 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     },
   ),
 
-  /// Avoid direct FirebaseCrashlytics calls outside crash backends.
+  /// Avoid direct FirebaseCrashlytics calls outside crash_service.dart.
   ///
-  /// Why: Flags FirebaseCrashlytics.instance usage outside crash backend files. Route feature
-  /// code through the Crash facade or ICrashBackend.
+  /// Why: Flags FirebaseCrashlytics.instance usage outside the Crash facade. Route feature
+  /// code through Crash.init/error/log.
   scannerRule(
     code: const LintCode(
       'crash_direct_firebase_call',
-      'Avoid direct FirebaseCrashlytics calls outside crash backends.',
-      correctionMessage: 'Route feature code through the Crash facade or ICrashBackend.',
+      'Avoid direct FirebaseCrashlytics calls outside crash_service.dart.',
+      correctionMessage: 'Route feature code through Crash.init/error/log.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description:
-        'Flags FirebaseCrashlytics.instance usage outside crash backend files so the Flutter skill violation is shown during analysis.',
+        'Flags FirebaseCrashlytics.instance usage outside crash_service.dart so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      if (_isCrashBackendContext(context)) return;
+      if (_isCrashServiceContext(context)) return;
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
         final column = line.indexOf('FirebaseCrashlytics.instance');
@@ -163,7 +163,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
         if (column < 0) continue;
         final statement = _statementFrom(context, i);
         if (!_isFeasibleFireAndForgetRisk(statement)) continue;
-        if (_hasCatchGuard(statement)) continue;
+        if (_hasCatchGuard(statement) || _usesKnownGuardedFireAndForgetHelper(statement)) continue;
         reporter.report(context, i, column);
       }
     },
@@ -230,18 +230,11 @@ bool _containsMatch(SourceScannerContext context, RegExp pattern) {
   return false;
 }
 
-bool _isCrashBackendContext(SourceScannerContext context) {
+bool _isCrashServiceContext(SourceScannerContext context) {
   final normalized = context.path.replaceAll('\\', '/').toLowerCase();
-  if (normalized.contains('/core/crash/') ||
+  return normalized.endsWith('/crash_service.dart') ||
       normalized.endsWith('/crash.dart') ||
-      normalized.endsWith('_crash_backend.dart') ||
-      normalized.endsWith('_crashlytics_backend.dart')) {
-    return true;
-  }
-
-  final source = context.source.masked.join('\n');
-  return RegExp(r'\bclass\s+FirebaseCrashBackend\b').hasMatch(source) ||
-      RegExp(r'\bimplements\s+ICrashBackend\b').hasMatch(source);
+      normalized.contains('/core/crash/');
 }
 
 bool _isMainEntrypoint(SourceScannerContext context) {
@@ -289,6 +282,10 @@ bool _hasCatchGuard(String statement) {
   if (statement.contains('.catchError(')) return true;
   if (!RegExp(r'\btry\s*\{').hasMatch(statement)) return false;
   return RegExp(r'\b(?:catch|on\s+[A-Za-z_][A-Za-z0-9_]*)\b').hasMatch(statement);
+}
+
+bool _usesKnownGuardedFireAndForgetHelper(String statement) {
+  return RegExp(r'\bunawaited\s*\(\s*_(?:send|runCrashOperation)\s*\(').hasMatch(statement);
 }
 
 int _parenDelta(String line) => _count(line, '(') - _count(line, ')');

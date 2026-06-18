@@ -181,12 +181,11 @@ linter:
 include: package:flutter_lints/flutter.yaml
 
 plugins:
+  # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
+  # Re-check pub.dev before release when Riverpod or analyzer versions move.
+  riverpod_lint: 3.1.4
   flutter_skill_lints:
     "path": ../flutter_skill_lints
-  # Pre-release pin: latest stable is 3.1.3; use 3.1.4-dev.3 for Riverpod 3.3-era lint coverage.
-  # Verify pub.dev before ship. Promote to a stable release when compatible.
-  # Pre-release silently adopts dev behavior - review.
-  riverpod_lint: 3.1.4-dev.3
 
 analyzer:
   exclude:
@@ -214,7 +213,16 @@ linter:
     - prefer_const_declarations
     - prefer_const_literals_to_create_immutables
     - prefer_final_locals
-    - avoid_redundant_argument_values
+    - always_declare_return_types
+    - type_annotate_public_apis
+    - avoid_positional_boolean_parameters
+    - avoid_equals_and_hash_code_on_mutable_classes
+    - avoid_null_checks_in_equality_operators
+    - avoid_private_typedef_functions
+    - avoid_returning_this
+    - avoid_setters_without_getters
+    - prefer_mixin
+    - use_to_and_as_if_applicable
     - flutter_skill_project_config
     - avoid_dynamic_calls
     - unawaited_futures
@@ -263,7 +271,16 @@ linter:
     - prefer_const_declarations
     - prefer_const_literals_to_create_immutables
     - prefer_final_locals
-    - avoid_redundant_argument_values
+    - always_declare_return_types
+    - type_annotate_public_apis
+    - avoid_positional_boolean_parameters
+    - avoid_equals_and_hash_code_on_mutable_classes
+    - avoid_null_checks_in_equality_operators
+    - avoid_private_typedef_functions
+    - avoid_returning_this
+    - avoid_setters_without_getters
+    - prefer_mixin
+    - use_to_and_as_if_applicable
     - flutter_skill_project_config
     - avoid_dynamic_calls
     - unawaited_futures
@@ -282,11 +299,10 @@ linter:
 include: package:flutter_lints/flutter.yaml
 
 plugins:
+  # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
+  # Re-check pub.dev before release when Riverpod or analyzer versions move.
+  riverpod_lint: 3.1.4
   flutter_skill_lints:
-  # Pre-release pin: latest stable is 3.1.3; use 3.1.4-dev.3 for Riverpod 3.3-era lint coverage.
-  # Verify pub.dev before ship. Promote to a stable release when compatible.
-  # Pre-release silently adopts dev behavior - review.
-  riverpod_lint: 3.1.4-dev.3
 
 analyzer:
   exclude:
@@ -355,7 +371,16 @@ linter:
     - prefer_const_declarations
     - prefer_const_literals_to_create_immutables
     - prefer_final_locals
-    - avoid_redundant_argument_values
+    - always_declare_return_types
+    - type_annotate_public_apis
+    - avoid_positional_boolean_parameters
+    - avoid_equals_and_hash_code_on_mutable_classes
+    - avoid_null_checks_in_equality_operators
+    - avoid_private_typedef_functions
+    - avoid_returning_this
+    - avoid_setters_without_getters
+    - prefer_mixin
+    - use_to_and_as_if_applicable
     - flutter_skill_project_config
     - avoid_dynamic_calls
     - unawaited_futures
@@ -373,7 +398,7 @@ linter:
     newFile('$testPackageRootPath/analysis_options.yaml', r'''
 include: package:flutter_lints/flutter.yaml
 
-plugins: {flutter_skill_lints: {path: ../flutter_skill_lints}, riverpod_lint: 3.1.4-dev.3}
+plugins: {flutter_skill_lints: {path: ../flutter_skill_lints}, riverpod_lint: 3.1.4}
 
 analyzer:
   exclude:
@@ -401,7 +426,16 @@ linter:
     - prefer_const_declarations
     - prefer_const_literals_to_create_immutables
     - prefer_final_locals
-    - avoid_redundant_argument_values
+    - always_declare_return_types
+    - type_annotate_public_apis
+    - avoid_positional_boolean_parameters
+    - avoid_equals_and_hash_code_on_mutable_classes
+    - avoid_null_checks_in_equality_operators
+    - avoid_private_typedef_functions
+    - avoid_returning_this
+    - avoid_setters_without_getters
+    - prefer_mixin
+    - use_to_and_as_if_applicable
     - flutter_skill_project_config
     - avoid_dynamic_calls
     - unawaited_futures
@@ -420,11 +454,10 @@ linter:
 include: package:flutter_lints/flutter.yaml
 
 plugins:
+  # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
+  # Re-check pub.dev before release when Riverpod or analyzer versions move.
+  riverpod_lint: 3.1.4
   flutter_skill_lints:
-  # Pre-release pin: latest stable is 3.1.3; use 3.1.4-dev.3 for Riverpod 3.3-era lint coverage.
-  # Verify pub.dev before ship. Promote to a stable release when compatible.
-  # Pre-release silently adopts dev behavior - review.
-  riverpod_lint: 3.1.4-dev.3
   "many_lints": ^0.4.0
 
 analyzer:
@@ -453,7 +486,16 @@ linter:
     - prefer_const_declarations
     - prefer_const_literals_to_create_immutables
     - prefer_final_locals
-    - avoid_redundant_argument_values
+    - always_declare_return_types
+    - type_annotate_public_apis
+    - avoid_positional_boolean_parameters
+    - avoid_equals_and_hash_code_on_mutable_classes
+    - avoid_null_checks_in_equality_operators
+    - avoid_private_typedef_functions
+    - avoid_returning_this
+    - avoid_setters_without_getters
+    - prefer_mixin
+    - use_to_and_as_if_applicable
     - flutter_skill_project_config
     - avoid_dynamic_calls
     - unawaited_futures
@@ -491,11 +533,10 @@ class User {
 include: package:flutter_lints/flutter.yaml
 
 plugins:
+  # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
+  # Re-check pub.dev before release when Riverpod or analyzer versions move.
+  riverpod_lint: 3.1.4
   flutter_skill_lints:
-  # Pre-release pin: latest stable is 3.1.3; use 3.1.4-dev.3 for Riverpod 3.3-era lint coverage.
-  # Verify pub.dev before ship. Promote to a stable release when compatible.
-  # Pre-release silently adopts dev behavior - review.
-  riverpod_lint: 3.1.4-dev.3
 
 analyzer:
   exclude:
@@ -523,7 +564,16 @@ linter:
     - prefer_const_declarations
     - prefer_const_literals_to_create_immutables
     - prefer_final_locals
-    - avoid_redundant_argument_values
+    - always_declare_return_types
+    - type_annotate_public_apis
+    - avoid_positional_boolean_parameters
+    - avoid_equals_and_hash_code_on_mutable_classes
+    - avoid_null_checks_in_equality_operators
+    - avoid_private_typedef_functions
+    - avoid_returning_this
+    - avoid_setters_without_getters
+    - prefer_mixin
+    - use_to_and_as_if_applicable
     - flutter_skill_project_config
     - avoid_dynamic_calls
     - unawaited_futures

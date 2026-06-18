@@ -48,7 +48,9 @@ final class _Visitor extends SimpleAstVisitor<void> {
       rule.reportAtNode(node);
       return;
     }
-    final prefix = body.toSource().substring(0, node.offset - body.offset);
+    final bodySource = body.toSource();
+    final relativeOffset = node.offset - body.offset;
+    final prefix = bodySource.substring(0, relativeOffset.clamp(0, bodySource.length));
     if (!RegExp(r'\bcontext\s*\.\s*canPop\s*\(').hasMatch(prefix)) {
       rule.reportAtNode(node);
     }

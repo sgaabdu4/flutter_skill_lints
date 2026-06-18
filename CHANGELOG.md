@@ -1,5 +1,81 @@
 # Changelog
 
+## [Unreleased]
+
+- Added `full_collection_load_in_loop`: flags an awaited
+  `getAll`/`fetchAll`/`loadAll`-style full-collection load inside a `for`/`while`
+  loop body (an O(items × rows) N+1). Load once before the loop or add a batched
+  lookup that resolves all keys in a single pass.
+- Added `unguarded_fire_and_forget_platform_command`: flags fire-and-forget
+  native/webview/media controller commands (`runJavaScript`, `playVideo`,
+  `seekTo`, ...) that are neither awaited, captured, returned, nor error-handled.
+  Their rejections escape to `PlatformDispatcher.onError` and are commonly
+  misreported as fatal crashes; route them through an error-handling helper.
+
+## [0.7.0] - 2026-06-14
+
+- Kept the analyzer stack on the Riverpod-compatible analyzer 12 line while
+  promoting lint docs, tests, and examples to stable `riverpod_lint 3.1.4`.
+- Reconciled additional-lint AST usage with the analyzer 12 APIs loaded by the
+  shared plugin environment used with `riverpod_lint 3.1.4`.
+- Fixed `avoid_unassigned_fields` and `avoid_unassigned_late_fields` so
+  analyzer-12 field-formal wrappers and redirecting constructors do not create
+  false positives.
+- Removed ShowcaseView guided-tour lint support and docs, including
+  `avoid_showcase_key_filtering`, `showcase_default_scope`,
+  `showcase_dispose_on_tap`, `showcase_get_named_unhandled`,
+  `showcase_prev_null_guard`, and `showcase_scope_string_literal`.
+- Split large source-scanner rule/test files and the lint inventory docs while
+  preserving 183 core diagnostics, 279 additional diagnostics, and 459 unique
+  diagnostic codes.
+
+- Added `app_shell_bootstrap_side_effects` to keep `MaterialApp` /
+  `CupertinoApp` / `WidgetsApp` shell widgets declarative and move bootstrap
+  `ref.listen` orchestration into a dedicated root bootstrap widget.
+- Added `riverpod_listen_manual_forbidden`; `ref.listenManual` is now banned
+  outright, replacing stale manual-listener lifecycle guidance.
+
+- Added 9 dialog/sheet rules in `dialog_source_rules.dart`:
+  `dialog_widget_subscribes_to_mutable_provider`,
+  `modal_high_frequency_watch_not_leaf`,
+  `dialog_button_pop_then_state_mutation`,
+  `select_returns_unstable_record_identity`,
+  `build_method_assigns_to_field`,
+  `build_calls_mutating_instance_method`,
+  `widget_calls_notifier_teardown_after_await`,
+  `popscope_bypass_uses_go_not_pop`,
+  `modal_helper_requires_route_settings`.
+- Added `pop_fallback_helper_must_check_navigator_stack` for generic
+  `BuildContext` pop fallback helpers that check only GoRouter's `canPop` and
+  miss mounted/root/local Navigator checks.
+- Added 20 runtime-bug rules in `runtime_bug_source_rules.dart`:
+  `sync_save_all_no_dirty_guard`,
+  `save_all_full_collection_after_subset_mutation`,
+  `collection_getter_allocates_each_access`,
+  `expando_derived_cache_forbidden`, `ad_hoc_id_index_lookup`,
+  `linear_id_lookup_in_hot_path`, `nested_linear_lookup_by_id`,
+  `appwrite_blocking_function_execution_in_client`,
+  `destructive_failure_logged_before_reconcile`,
+  `storage_clear_preserves_migration_state`,
+  `notifier_persistence_no_debounce`, `webview_init_in_build_no_gate`,
+  `service_storage_read_no_memo`,
+  `keepalive_watches_unbounded_collection`,
+  `datasource_missing_batch_loader`, `notifier_zero_value_save_no_guard`,
+  `notifier_param_requires_value_object`, `text_field_on_changed_no_debounce`,
+  `slider_on_changed_no_debounce`, `scroll_listener_no_throttle`.
+- `service_singleton` now allows only plain fire-and-forget singletons (private
+  constructor + `static final instance` / trivial getter + `void` / `Future<void>`
+  public methods) and flags state/data APIs plus debug/fake/backend seams.
+- `service_static_side_effect` now allows only tiny direct fire-and-forget SDK
+  facades and flags returned data/state, clock/random helpers, wide facades, or
+  backend/fake/debug/provider seams.
+- Source scanner now blanks `debugPrint(...)` / `print(...)` call bodies before
+  pattern matching so identifiers buried inside a log string never trigger a
+  downstream rule. Diagnostic offsets stay aligned.
+- Bumped Flutter skill rule count to 177, Flutter skill diagnostic count to 187,
+  additional analyzer warning rule count to 238, and total unique diagnostic
+  count to 463 after removing the obsolete `require_main_error_hooks` rule.
+
 ## [0.6.5] - 2026-05-14
 
 - Added `riverpod_consumer_state_derived_cache` for provider-derived
@@ -174,24 +250,10 @@
 ## [0.5.5] - 2026-05-12
 
 - Added `avoid_run_zoned_guarded` (AST rule) to flag `runZonedGuarded(...)`
-  calls. Per Flutter 3.3+ guidance (docs.flutter.dev/testing/errors),
-  replace with the three-hook pattern: `FlutterError.onError`,
-  `PlatformDispatcher.instance.onError`, and
-  `Isolate.current.addErrorListener`. `runZonedGuarded` misses
-  platform-channel async errors. Catches direct calls and aliased
-  `import 'dart:async' as a;` calls. Complements the existing
-  `crash_run_zoned_guarded_legacy` scanner rule (which permits a "legacy"
-  escape hatch); enable `avoid_run_zoned_guarded` for a hard ban.
-- Registered a quick-fix that rewrites `runZonedGuarded(body, onError)`
-  into the canonical three-hook scaffold + inlined body. The fix infers
-  the reporter call from the original `onError` body (defaults to `print`
-  when unknown). User customizes the reporter after applying.
-- Added `require_main_error_hooks` rule. Any top-level function whose
-  body calls `runApp(...)` must wire all three hooks. Covers `main()`
-  AND bootstrap wrappers (e.g. `runRepem`, `bootstrap`, `mainCommon`).
-  Escape hatch: add `// flutter_skill_lints:configure_error_hooks_elsewhere`
-  inside the body to opt out when hooks live in an extracted helper.
-- Bumped Flutter skill rule count to 110 and diagnostic count to 117.
+  calls. Startup should stay simple: initialize Firebase/Crash with
+  `await Crash.init()` before `runApp(...)`, not by wrapping the app in a
+  zone. Catches direct calls and aliased `import 'dart:async' as a;` calls.
+- Bumped Flutter skill rule count to 109 and diagnostic count to 116.
 
 ## [0.5.4] - 2026-05-12
 
@@ -259,8 +321,7 @@
 
 - Added analyzer diagnostics for the remaining Dart-source drift checks:
   `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`,
-  `arch_repository_generated_extends`, `state_freezed_nullable_error`, and
-  `crash_run_zoned_guarded_legacy`.
+  `arch_repository_generated_extends`, and `state_freezed_nullable_error`.
 - Tightened `riverpod_keepalive_family` so codegen family providers with
   positional `Ref ref, value` parameters are reported, not only providers with
   `required` named parameters.
@@ -280,8 +341,8 @@
 ## [0.3.0] - 2026-05-10
 
 - Expanded the Flutter skill analyzer surface with extended architecture,
-  Freezed, routing, ShowcaseView, Flutter optimization, persistence, crash
-  reporting, service, mixin, state, UI, and test diagnostics.
+  Freezed, routing, Flutter optimization, persistence, crash reporting,
+  service, mixin, state, UI, and test diagnostics.
 - Added `use_unawaited_for_fire_and_forget_futures` and broadened project
   configuration checks for analyzer plugins, strict analysis, generated-file
   excludes, Freezed annotation ignores, `explicit_to_json`, prohibited lint
@@ -317,9 +378,8 @@
 - Initial analyzer plugin scaffold.
 - Added Flutter skill rules for Riverpod async safety, mounted guards,
   legacy Riverpod APIs, dynamic/null-bang usage, widget helper methods,
-  `shrinkWrap`, GoRouter pop guards, Freezed class shape, showcase key
-  filtering, route-param throws, repository initialization, and synchronous
-  notifier initialization.
+  `shrinkWrap`, GoRouter pop guards, Freezed class shape, route-param
+  throws, repository initialization, and synchronous notifier initialization.
 - Added additional Dart/Flutter analyzer coverage inspired by `many_lints`: 79
   default warning rules, 61 fixes, and 1 assist.
 - Added migrated Dart-source checks from the Flutter skill scanner.

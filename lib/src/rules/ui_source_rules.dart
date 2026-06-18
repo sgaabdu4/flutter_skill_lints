@@ -1,264 +1,8 @@
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
+part 'ui_source_rules/ui_source_rules_part_01.dart';
 
-final List<ScannerRule> uiSourceRules = [
-  /// Avoid raw spacing, radius, size, and color tokens.
-  ///
-  /// Why: Flags raw visual constants instead of design tokens. Use design tokens.
-  scannerRule(
-    code: const LintCode(
-      'style_raw_token',
-      'Avoid raw spacing, radius, size, and color tokens.',
-      correctionMessage: 'Use design tokens.',
-      severity: DiagnosticSeverity.WARNING,
-    ),
-    description:
-        'Flags raw visual constants instead of design tokens so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      if (context.isThemeDefFile || context.isTestFile) return;
-
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (_hasRawStyleToken(line)) {
-          reporter.report(context, i, 0);
-        }
-      }
-    },
-  ),
-
-  /// Avoid raw TextStyle construction.
-  ///
-  /// Why: Flags raw TextStyle construction. Use the app theme text styles.
-  scannerRule(
-    code: const LintCode(
-      'style_raw_text_style',
-      'Avoid raw TextStyle construction.',
-      correctionMessage: 'Use the app theme text styles.',
-      severity: DiagnosticSeverity.WARNING,
-    ),
-    description:
-        'Flags raw TextStyle construction so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      if (context.isThemeDefFile || context.isTestFile) return;
-
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(r'\bTextStyle\s*\(').hasMatch(line)) {
-          reporter.report(context, i, line.indexOf('TextStyle'));
-        }
-      }
-    },
-  ),
-
-  /// Avoid hardcoded UI strings.
-  ///
-  /// Why: Flags hardcoded UI strings. Move text into a *Strings constants class.
-  scannerRule(
-    code: const LintCode(
-      'strings_hardcoded',
-      'Avoid hardcoded UI strings.',
-      correctionMessage: 'Move text into a *Strings constants class.',
-      severity: DiagnosticSeverity.WARNING,
-    ),
-    description:
-        'Flags hardcoded UI strings so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        if (context.hasHardcodedUiString(context.source.code[i])) {
-          reporter.report(context, i, 0);
-        }
-      }
-    },
-  ),
-
-  /// Bind localizations once before reading localized strings.
-  ///
-  /// Why: Keeps widget localization access consistent. Bind `final l10n = context.l10n;`
-  /// at the top of `build`, then read keys from `l10n`.
-  scannerRule(
-    code: const LintCode(
-      'l10n_context_direct_access',
-      'Bind localizations before reading localized strings.',
-      correctionMessage:
-          'Use `final l10n = context.l10n;` and then read localized keys from `l10n`.',
-      severity: DiagnosticSeverity.WARNING,
-    ),
-    description:
-        'Flags direct context.l10n key access so widgets bind localizations once before use.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final column = context.directContextL10nColumn(i);
-        if (column != null) {
-          reporter.report(context, i, column);
-        }
-      }
-    },
-  ),
-
-  /// UI widgets should not directly show snackbars.
-  ///
-  /// Why: Flags direct snackbar dispatches from UI widgets. Dispatch a notifier action and
-  /// let the shell own snackbar presentation.
-  scannerRule(
-    code: const LintCode(
-      'ui_snackbar_boundary',
-      'UI widgets should not directly show snackbars.',
-      correctionMessage: 'Dispatch a notifier action and let the shell own snackbar presentation.',
-      severity: DiagnosticSeverity.ERROR,
-    ),
-    description:
-        'Flags direct snackbar dispatches from UI widgets so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (context.isUiFile && context.dispatchesSnackbarFromUi(line)) {
-          reporter.report(context, i, 0);
-        }
-      }
-    },
-  ),
-
-  /// Do not globally clamp text scaling.
-  ///
-  /// Why: Flags app-level text scaling clamps. Fix responsive layout instead of clamping
-  /// accessibility text size.
-  scannerRule(
-    code: const LintCode(
-      'a11y_text_scale_clamp',
-      'Do not globally clamp text scaling.',
-      correctionMessage: 'Fix responsive layout instead of clamping accessibility text size.',
-      severity: DiagnosticSeverity.ERROR,
-    ),
-    description:
-        'Flags app-level text scaling clamps so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (context.isAppRootFile && context.clampsTextScaling(line)) {
-          reporter.report(context, i, 0);
-        }
-      }
-    },
-  ),
-
-  /// Make `DateTime.now()` timezone intent explicit.
-  ///
-  /// Why: Raw current-time calls spread timezone and calendar-window policy through
-  /// app code. Keep current-time helpers and semantic date windows in
-  /// `core/extensions/date_time_extensions.dart`.
-  scannerRule(
-    code: const LintCode(
-      'datetime_now_requires_timezone_intent',
-      'Make current DateTime timezone intent explicit.',
-      correctionMessage:
-          'Use DateTimeX.nowUtc()/nowLocal(), and move repeated current-date windows into a DateTimeX helper.',
-      severity: DiagnosticSeverity.WARNING,
-    ),
-    description:
-        'Flags raw current DateTime calls and inline current-date math so timestamp persistence and local calendar bucketing stay behind DateTimeX helpers.',
-    scan: (reporter, context) {
-      if (context.isTestFile) return;
-      final isDateTimeExtensionsFile = context.path.endsWith(
-        '/core/extensions/date_time_extensions.dart',
-      );
-
-      final maskedSource = context.source.masked.join('\n');
-      final codeSource = context.source.code.join('\n');
-      final reportedOffsets = <int>{};
-
-      void reportOffset(int offset) {
-        if (!reportedOffsets.add(offset)) return;
-        final location = _lineColumnForOffset(context.source, offset);
-        reporter.report(context, location.lineIndex, location.column);
-      }
-
-      if (!isDateTimeExtensionsFile) {
-        for (final match in _currentTimeHelperDateMath.allMatches(maskedSource)) {
-          reportOffset(match.start);
-        }
-
-        for (final match in _currentTimeBoundary.allMatches(maskedSource)) {
-          reportOffset(match.start);
-        }
-
-        for (final match in _persistedLocalNowExpression.allMatches(maskedSource)) {
-          final localNowMatch = _localNowExpression.firstMatch(match.group(0)!);
-          if (localNowMatch == null) continue;
-          reportOffset(match.start + localNowMatch.start);
-        }
-      }
-
-      for (final match in _currentDateTimeCall.allMatches(maskedSource)) {
-        if (_isAllowedDateTimeExtensionCurrentBoundary(context, match.start)) {
-          continue;
-        }
-        reportOffset(match.start);
-      }
-
-      for (final match in _interpolatedCurrentDateTimeCall.allMatches(codeSource)) {
-        final callText = match.group(0);
-        if (callText == null) continue;
-        final callIndex = callText.indexOf('DateTime');
-        if (callIndex < 0) continue;
-        final callOffset = match.start + callIndex;
-        if (_isRawStringLiteralText(context, match.start)) continue;
-        if (_isAllowedDateTimeExtensionCurrentBoundary(context, callOffset)) {
-          continue;
-        }
-        reportOffset(callOffset);
-      }
-    },
-  ),
-
-  /// Avoid expensive work in build().
-  ///
-  /// Why: Flags expensive collection or formatting work inside build methods. Move sorting,
-  /// filtering, formatting, and regex creation out of build.
-  scannerRule(
-    code: const LintCode(
-      'perf_build_work',
-      'Avoid expensive work in build().',
-      correctionMessage: 'Move sorting, filtering, formatting, and regex creation out of build.',
-      severity: DiagnosticSeverity.WARNING,
-    ),
-    description:
-        'Flags expensive collection or formatting work inside build methods so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (final method in context.methods.where((method) => method.name == 'build')) {
-        for (var i = method.start; i <= method.end; i++) {
-          final line = context.source.masked[i];
-          if (RegExp(r'\.(?:sort|where|map|toList)\s*\(').hasMatch(line) ||
-              RegExp(r'\b(?:DateFormat|RegExp)\s*\(').hasMatch(line)) {
-            reporter.report(context, i, 0);
-          }
-        }
-      }
-    },
-  ),
-
-  /// Prefer ListView.builder for dynamic lists.
-  ///
-  /// Why: Flags ListView(children:...) usage. Use builder/sliver variants instead of
-  /// ListView(children:...).
-  scannerRule(
-    code: const LintCode(
-      'perf_listview_children',
-      'Prefer ListView.builder for dynamic lists.',
-      correctionMessage: 'Use builder/sliver variants instead of ListView(children: ...).',
-      severity: DiagnosticSeverity.WARNING,
-    ),
-    description:
-        'Flags ListView(children: ...) usage so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(r'\bListView\s*\([^)]*\bchildren\s*:').hasMatch(line)) {
-          reporter.report(context, i, line.indexOf('ListView'));
-        }
-      }
-    },
-  ),
-];
+final List<ScannerRule> uiSourceRules = [..._uiSourceRulesPart1];
 
 final _currentDateTimeCall = RegExp(r'\bDateTime\s*\.\s*(?:now|timestamp)\s*\(\s*\)');
 final _interpolatedCurrentDateTimeCall = RegExp(
@@ -364,3 +108,242 @@ String? _previousNonWhitespace(String text, int beforeIndex) {
   }
   return null;
 }
+
+final _widgetSurface = RegExp(
+  r'\bextends\s+(?:ConsumerWidget|ConsumerStatefulWidget|HookConsumerWidget|StatelessWidget|StatefulWidget|HookWidget|ConsumerState\b|HookConsumerState\b|State\s*<)',
+);
+
+final _topLevelFunction = RegExp(
+  r'^\s*(?:Future(?:<[^;{=]+>)?|Stream(?:<[^;{=]+>)?|void|bool|int|double|num|String|Widget|[A-Z]\w*(?:<[^;{=]+>)?)\s+'
+  r'(_?[A-Za-z_]\w*)\s*(?:<[^;{=]+>)?\s*\(',
+);
+
+final _awaitedNotifierResultStart = RegExp(
+  r'\b(?:final|var|bool|int|double|num|String|[A-Za-z_]\w*(?:<[^;=]+>)?)\s+'
+  r'\w+\s*=\s*await\b|\b(?:if|switch)\s*\(\s*await\b|\breturn\s+await\b',
+);
+
+final _notifierReadInWindow = RegExp(
+  r'\bref\s*\.\s*read\s*\([\s\S]*?\.\s*notifier\s*\)\s*\.\s*[A-Za-z_]\w*\s*\(',
+);
+
+final _notifierThenInWindow = RegExp(
+  r'\bref\s*\.\s*read\s*\([\s\S]*?\.\s*notifier\s*\)[\s\S]*?\.then\s*\(',
+);
+
+final _widgetLocalMutationFlagField = RegExp(
+  r'^\s*bool\s+(_is(?:Saving|Submitting|Creating|Deleting|Importing|Exporting|Selecting|Continuing|Processing|Syncing))\b\s*=',
+);
+
+final _directNotifierMutationDispatch = RegExp(
+  r'\bref\s*\.\s*read\s*\([\s\S]*?\.notifier\s*\)[\s\S]{0,180}?\.\s*'
+  r'(?:save|create|update|delete|set|add|remove|import|export|submit|select|continue|start)[A-Za-z0-9_]*\s*\(',
+);
+
+final _notifierGetterDeclaration = RegExp(
+  r'\b[A-Za-z_]\w*Notifier\s+get\s+(_[A-Za-z_]\w*)\s*=>\s*ref\s*\.\s*read\s*\([\s\S]*?\.notifier\s*\)',
+);
+
+final _collectionReturnHelper = RegExp(
+  r'\b(?:List|Iterable|Map|Set)(?:\s*<[^;{]+>)?\s+_[A-Za-z_]\w*\s*\(',
+);
+
+final _anyCollectionReturnHelper = RegExp(
+  r'\b(?:List|Iterable|Map|Set)(?:\s*<[^;{]+>)?\s+[A-Za-z_]\w*\s*\(',
+);
+
+final _collectionWork = RegExp(
+  r'\.(?:where|map|sort|toList|firstWhere|indexWhere|fold|add|addAll)\s*\(',
+);
+
+final _topLevelCollectionVariable = RegExp(
+  r'^\s*(?:final|var)\s+_?[A-Za-z_]\w*(?:\s*=\s*|(?:\s*<[^;=]+>)?\s*=)',
+);
+
+final _infraTypeName = RegExp(
+  r'\b(?:BaseCacheManager|[A-Z]\w*(?:CacheManager|Client|Plugin|Storage|Repository|Datasource|DataSource|Service|Queue|Manager))\b',
+);
+
+final _widgetInfraNamedConstructorArg = RegExp(
+  r'\b[A-Za-z_]\w*\s*:\s*(?:const\s+)?[A-Z]\w*(?:CacheManager|Client|Plugin|Storage|Repository|Datasource|DataSource|Service|Queue|Manager)\s*\(',
+);
+
+final _widgetInfraLocalConstructor = RegExp(
+  r'\b(?:final|var)\s+[A-Za-z_]\w*\s*=\s*(?:const\s+)?[A-Z]\w*(?:CacheManager|Client|Plugin|Storage|Repository|Datasource|DataSource|Service|Queue|Manager)\s*\(',
+);
+
+int _topLevelFunctionColumn(String line) {
+  if (RegExp(
+    r'^\s*(?:class|mixin|enum|extension|typedef|sealed\s+class|abstract\s+class)\b',
+  ).hasMatch(line)) {
+    return -1;
+  }
+  final match = _topLevelFunction.firstMatch(line);
+  if (match == null) return -1;
+  final name = match.group(1) ?? '';
+  if (name == 'build' || name == 'main') return -1;
+  return match.start;
+}
+
+int _widgetInfraDependencyColumn(String line) {
+  final namedArg = _widgetInfraNamedConstructorArg.firstMatch(line);
+  if (namedArg != null) return namedArg.start;
+
+  final localConstructor = _widgetInfraLocalConstructor.firstMatch(line);
+  if (localConstructor != null) return localConstructor.start;
+
+  final typeMatch = _infraTypeName.firstMatch(line);
+  if (typeMatch == null) return -1;
+  final before = line.substring(0, typeMatch.start);
+  final after = line.substring(typeMatch.end);
+
+  if (RegExp(r'^\s*(?:late\s+)?final\s+$').hasMatch(before) &&
+      RegExp(r'(?:<[^;=]+>)?\??\s+[A-Za-z_]\w*\s*;').hasMatch(after)) {
+    return typeMatch.start;
+  }
+
+  if (RegExp(r'[({,]\s*(?:required\s+)?(?:final\s+)?$').hasMatch(before) &&
+      RegExp(r'(?:<[^;=]+>)?\??\s+[A-Za-z_]\w*[,)}]').hasMatch(after)) {
+    return typeMatch.start;
+  }
+
+  return -1;
+}
+
+bool _isWidgetSurfaceClass(SourceScannerContext context, ScannerClassSpan classSpan) {
+  final signature = _classSignature(context, classSpan);
+  return _widgetSurface.hasMatch(signature);
+}
+
+bool _isWidgetDataHelperClass(ScannerClassSpan classSpan) => classSpan.name.endsWith('Data');
+
+bool _classDispatchesNotifierMutation(SourceScannerContext context, ScannerClassSpan classSpan) {
+  final body = context.source.masked.sublist(classSpan.start, classSpan.end + 1).join('\n');
+  if (_directNotifierMutationDispatch.hasMatch(body)) return true;
+
+  for (final match in _notifierGetterDeclaration.allMatches(body)) {
+    final getterName = match.group(1);
+    if (getterName == null) continue;
+    final getterMutation = RegExp(
+      r'\b' +
+          RegExp.escape(getterName) +
+          r'\s*\.\s*(?:save|create|update|delete|set|add|remove|import|export|submit|select|continue|start)[A-Za-z0-9_]*\s*\(',
+    );
+    if (getterMutation.hasMatch(body)) return true;
+  }
+
+  return false;
+}
+
+String _classSignature(SourceScannerContext context, ScannerClassSpan classSpan) {
+  final buffer = StringBuffer();
+  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
+    final line = context.source.masked[i];
+    buffer.write(' ');
+    buffer.write(line);
+    if (line.contains('{')) break;
+  }
+  return buffer.toString();
+}
+
+int? _awaitedNotifierResultColumn(SourceScannerContext context, int lineIndex, int methodEnd) {
+  final line = context.source.masked[lineIndex];
+  final start = _awaitedNotifierResultStart.firstMatch(line);
+  if (start == null) return null;
+
+  final window = _lineWindow(context, lineIndex, methodEnd, 8);
+  if (!_notifierReadInWindow.hasMatch(window)) return null;
+  final awaitColumn = line.indexOf('await');
+  return awaitColumn >= 0 ? awaitColumn : start.start;
+}
+
+int _notifierThenResultColumn(SourceScannerContext context, int lineIndex, int methodEnd) {
+  final line = context.source.masked[lineIndex];
+  if (!line.contains('ref.read') && !line.contains('ref')) return -1;
+
+  final window = _lineWindow(context, lineIndex, methodEnd, 12);
+  if (!_notifierThenInWindow.hasMatch(window)) return -1;
+  final refColumn = line.indexOf('ref.read');
+  if (refColumn >= 0) return refColumn;
+  return line.indexOf('ref');
+}
+
+bool _isCollectionHelper(
+  SourceScannerContext context,
+  ScannerMethodSpan method, {
+  required bool requirePrivate,
+}) {
+  if (requirePrivate && !method.name.startsWith('_')) return false;
+  final window = _lineWindow(context, method.start, method.end, 4).replaceAll('\n', ' ');
+  final pattern = requirePrivate ? _collectionReturnHelper : _anyCollectionReturnHelper;
+  return pattern.hasMatch(window);
+}
+
+bool _isTopLevelDerivedCollection(SourceScannerContext context, int lineIndex) {
+  final line = context.source.masked[lineIndex];
+  if (!_topLevelCollectionVariable.hasMatch(line)) return false;
+  final window = _lineWindow(context, lineIndex, context.source.length - 1, 6);
+  return _collectionWork.hasMatch(window);
+}
+
+int _firstNonWhitespaceColumn(String line) {
+  for (var i = 0; i < line.length; i++) {
+    if (line[i].trim().isNotEmpty) return i;
+  }
+  return 0;
+}
+
+String _lineWindow(SourceScannerContext context, int startLine, int endLine, int maxLines) {
+  final end = startLine + maxLines > endLine ? endLine : startLine + maxLines;
+  final buffer = StringBuffer();
+  for (var i = startLine; i <= end && i < context.source.length; i++) {
+    if (i > startLine) buffer.write('\n');
+    buffer.write(context.source.masked[i]);
+  }
+  return buffer.toString();
+}
+
+Iterable<int> _directClassMemberLines(
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+) sync* {
+  var depth = 0;
+  var sawClassOpenBrace = false;
+
+  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
+    final line = context.source.masked[i];
+    if (i > classSpan.start && sawClassOpenBrace && depth == 1) {
+      yield i;
+    }
+
+    depth += _braceDelta(line);
+    if (line.contains('{')) sawClassOpenBrace = true;
+  }
+}
+
+int _braceDelta(String line) {
+  var delta = 0;
+  for (var i = 0; i < line.length; i++) {
+    final char = line[i];
+    if (char == '{') {
+      delta++;
+    } else if (char == '}') {
+      delta--;
+    }
+  }
+  return delta;
+}
+
+bool _buildContainsAppShell(SourceScannerContext context, ScannerMethodSpan method) {
+  for (var i = method.start; i <= method.end; i++) {
+    if (RegExp(
+      r'\b(?:MaterialApp|CupertinoApp|WidgetsApp)(?:\.router)?\s*\(',
+    ).hasMatch(context.source.masked[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+int _refListenColumn(String line) =>
+    RegExp(r'\bref\s*\.\s*listen\s*(?:<[^>]+>)?\s*\(').firstMatch(line)?.start ?? -1;

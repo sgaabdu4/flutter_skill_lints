@@ -6,13 +6,10 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Avoid `runZonedGuarded` for crash wiring.
+/// Avoid `runZonedGuarded` for app startup.
 ///
-/// Why: Flutter 3.3+ guidance (docs.flutter.dev/testing/errors) routes async errors via
-/// `PlatformDispatcher.instance.onError`. `runZonedGuarded` misses platform-channel errors
-/// and forks the zone for the entire app. Use the three-hook pattern instead:
-/// `FlutterError.onError` (widget errors), `PlatformDispatcher.instance.onError`
-/// (platform/async errors), and `Isolate.current.addErrorListener` (background isolates).
+/// Why: keep startup simple. Call `WidgetsFlutterBinding.ensureInitialized()`,
+/// `await Crash.init()`, then `runApp(...)`. Do not wrap the app in a zone.
 ///
 /// Catches direct calls (`runZonedGuarded(...)`) and aliased imports
 /// (`import 'dart:async' as a; a.runZonedGuarded(...)`). Skips method calls whose
@@ -20,18 +17,15 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 final class AvoidRunZonedGuarded extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_run_zoned_guarded',
-    'Avoid `runZonedGuarded` — legacy crash wiring (Flutter 3.3+).',
-    correctionMessage:
-        'Replace with FlutterError.onError + PlatformDispatcher.instance.onError + '
-        'Isolate.current.addErrorListener. See docs.flutter.dev/testing/errors.',
+    'Avoid `runZonedGuarded` for app startup.',
+    correctionMessage: 'Call Crash.init() before runApp instead of wrapping runApp in a zone.',
   );
 
   AvoidRunZonedGuarded()
     : super(
         name: 'avoid_run_zoned_guarded',
         description:
-            'Bans runZonedGuarded for crash wiring. Use the three-hook pattern from '
-            'docs.flutter.dev/testing/errors instead.',
+            'Bans runZonedGuarded for app startup. Use Crash.init() before runApp instead.',
       );
 
   @override

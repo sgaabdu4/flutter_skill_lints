@@ -69,15 +69,8 @@ class UseClosestBuildContextFix extends ResolvedCorrectionProducer {
   }
 
   static bool _isBuildContextType(FormalParameter param) {
-    DartType? type;
-    if (param is SimpleFormalParameter) {
-      type = param.type?.type;
-    } else if (param is DefaultFormalParameter) {
-      final innerParam = param.parameter;
-      if (innerParam is SimpleFormalParameter) {
-        type = innerParam.type?.type;
-      }
-    }
+    final normal = param is DefaultFormalParameter ? param.parameter : param;
+    final type = normal is SimpleFormalParameter ? normal.type?.type : null;
     if (type == null) return false;
     return _buildContextChecker.isExactlyType(type);
   }

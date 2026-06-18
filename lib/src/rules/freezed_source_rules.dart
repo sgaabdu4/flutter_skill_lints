@@ -120,4 +120,62 @@ final List<ScannerRule> freezedSourceRules = [
       }
     },
   ),
+
+  /// Use Freezed instead of manual @immutable value classes.
+  ///
+  /// Why: @immutable only checks field mutability. Freezed owns equality, copyWith,
+  /// exhaustiveness, and serialization conventions, so value/state classes do not drift into
+  /// one-off hand-written models.
+  scannerRule(
+    code: const LintCode(
+      'use_freezed_instead_of_immutable',
+      'Use Freezed instead of @immutable.',
+      correctionMessage:
+          'Remove @immutable and rewrite the value/state class as a @freezed sealed class in its own file.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags manual @immutable annotations so immutable value/state classes use the project-wide Freezed pattern.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+      for (var i = 0; i < context.source.length; i++) {
+        final line = context.source.masked[i];
+        final index = line.indexOf('@immutable');
+        if (index < 0) continue;
+        reporter.report(context, i, index);
+      }
+    },
+  ),
+
+  /// Keep one Freezed declaration per file.
+  ///
+  /// Why: Freezed generates a part file and a private implementation per declaration. Keeping
+  /// each declaration in its own source file keeps generated output, imports, serialization,
+  /// and ownership boundaries obvious.
+  scannerRule(
+    code: const LintCode(
+      'freezed_one_class_per_file',
+      'Keep one Freezed declaration per file.',
+      correctionMessage: 'Move each @freezed/@Freezed class into its own Dart file.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags files containing multiple Freezed declarations so each generated value class has one source owner.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+      final freezedClasses = [
+        for (final classSpan in context.classes)
+          if (context.hasFreezedAnnotation(classSpan)) classSpan,
+      ];
+      if (freezedClasses.length <= 1) return;
+
+      for (final classSpan in freezedClasses.skip(1)) {
+        reporter.report(
+          context,
+          classSpan.start,
+          context.source.masked[classSpan.start].indexOf('class'),
+        );
+      }
+    },
+  ),
 ];

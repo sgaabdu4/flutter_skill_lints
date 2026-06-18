@@ -9,7 +9,7 @@ import 'package:analyzer/error/error.dart';
 
 import '../type_checker.dart';
 
-/// Warns when a function, method, or getter returns a Widget or Widget subclass.
+/// Warns when a function, method, or getter returns a Widget or Widget collection.
 ///
 /// Extracting widgets to helper methods is a Flutter anti-pattern because
 /// Flutter rebuilds the widget tree by calling the function every time,
@@ -31,8 +31,8 @@ class AvoidReturningWidgets extends AnalysisRule {
     : super(
         name: 'avoid_returning_widgets',
         description:
-            'Warns when a function, method, or getter returns a Widget '
-            'or Widget subclass instead of using a dedicated widget class.',
+            'Warns when a function, method, or getter returns a Widget, Widget subclass, '
+            'or Widget collection instead of using a dedicated widget class.',
       );
 
   @override
@@ -84,9 +84,28 @@ class _Visitor extends SimpleAstVisitor<void> {
     final effectiveType = type is InterfaceType ? type : null;
     if (effectiveType == null) return;
 
-    if (_widgetChecker.isAssignableFromType(effectiveType)) {
+    if (_returnsWidget(effectiveType) || _returnsWidgetCollection(effectiveType)) {
       rule.reportAtToken(nameToken);
     }
+  }
+
+  bool _returnsWidget(InterfaceType type) => _widgetChecker.isAssignableFromType(type);
+
+  bool _returnsWidgetCollection(InterfaceType type) {
+    if (!_isCollectionType(type)) return false;
+    if (type.typeArguments.length != 1) return false;
+
+    final itemType = type.typeArguments.single;
+    if (itemType is! InterfaceType) return false;
+    return _returnsWidget(itemType);
+  }
+
+  bool _isCollectionType(InterfaceType type) {
+    const collectionTypeNames = {'Iterable', 'List', 'Set'};
+    if (collectionTypeNames.contains(type.element.name)) return true;
+    return type.allSupertypes.any(
+      (supertype) => collectionTypeNames.contains(supertype.element.name),
+    );
   }
 
   bool _isAllowedFrameworkWidgetMethod(MethodDeclaration node) {

@@ -30,12 +30,11 @@ dependencies:
 ''');
         await _writeFile('${app.path}/analysis_options.yaml', '''
 plugins:
+  # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
+  # Re-check pub.dev before release when Riverpod or analyzer versions move.
+  riverpod_lint: 3.1.4
   flutter_skill_lints:
     path: $packageRoot
-  # Pre-release pin: latest stable is 3.1.3; use 3.1.4-dev.3 for Riverpod 3.3-era lint coverage.
-  # Verify pub.dev before ship. Promote to a stable release when compatible.
-  # Pre-release silently adopts dev behavior - review.
-  riverpod_lint: 3.1.4-dev.3
 
 analyzer:
   exclude:
@@ -60,6 +59,7 @@ class Demo extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    var hasMore = true;
     ref.read(counterProvider);
     final value = ref.watch(counterProvider);
     final label = value == 0 ? null : value.toString();
@@ -67,6 +67,7 @@ class Demo extends ConsumerWidget {
       textDirection: TextDirection.ltr,
       children: [
         Text(label!, textDirection: TextDirection.ltr),
+        Text(hasMore.toString(), textDirection: TextDirection.ltr),
         const _DemoContent(),
         const _DemoSheet(),
       ],
@@ -123,6 +124,7 @@ class HistoryCalendarNotifier {
         expect(output, contains('avoid_ref_read_inside_build'));
         expect(output, contains('missing_provider_scope'));
         expect(output, contains('prefer_single_widget_per_file'));
+        expect(output, contains('prefer_type_over_var'));
         expect(output, contains('riverpod_feature_notifier_keepalive'));
         expect(output, isNot(contains('server.pluginError')));
       } finally {

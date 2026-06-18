@@ -202,10 +202,10 @@ final rowKey = GlobalKey();
   }
 
   Future<void> test_allowsGlobalKeyInKeyRegistry() async {
-    await assertAllowsInFile('$testPackageLibPath/core/showcase/showcase_keys.dart', r'''
+    await assertAllowsInFile('$testPackageLibPath/core/navigation/app_widget_keys.dart', r'''
 import 'package:flutter/widgets.dart';
 
-abstract final class ShowcaseKeys {
+abstract final class AppWidgetKeys {
   static final homeHeader = GlobalKey();
 }
 ''');
@@ -234,14 +234,14 @@ class SharePreviewSheet {
   }
 
   Future<void> test_allowsGlobalKeyInTests() async {
-    final filePath = '$testPackageRootPath/test/core/mixins/showcase_screen_mixin_test.dart';
+    final filePath = '$testPackageRootPath/test/core/mixins/lifecycle_mixin_test.dart';
     newFile(
       filePath,
       _withIgnorePrefix(r'''
 import 'package:flutter/widgets.dart';
 
-final firstKey = GlobalKey(debugLabel: 'first-showcase-target');
-final missingKey = GlobalKey(debugLabel: 'missing-showcase-target');
+final firstKey = GlobalKey(debugLabel: 'first-target');
+final missingKey = GlobalKey(debugLabel: 'missing-target');
 '''),
     );
 

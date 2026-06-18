@@ -82,21 +82,19 @@ Future<void> submit() async {
     );
   }
 
-  Future<void> test_backend_noDiagnostic() async {
+  Future<void> test_crashService_noDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
-abstract interface class ICrashBackend {}
-
 class FirebaseCrashlytics {
   static final instance = FirebaseCrashlytics();
   Future<void> recordError(Object error, StackTrace stack) async {}
 }
 
-final class FirebaseCrashBackend implements ICrashBackend {
-  Future<void> report(Object error, StackTrace stack) async {
-    await FirebaseCrashlytics.instance.recordError(error, stack);
+abstract final class Crash {
+  static Future<void> init() async {
+    await FirebaseCrashlytics.instance.recordError(Exception('x'), StackTrace.current);
   }
 }
-''', path: '$testPackageLibPath/core/crash/firebase_crash_backend.dart');
+''', path: '$testPackageLibPath/core/services/crash_service.dart');
   }
 }
 
@@ -172,6 +170,28 @@ void mirror(Client client) {
       // handled
     }
   }());
+}
+''');
+  }
+
+  Future<void> test_guardedHelper_noDiagnostic() async {
+    await assertRuleNoDiagnostics(r'''
+import 'dart:async';
+
+class Client {
+  Future<void> sync() async {}
+}
+
+void mirror(Client client) {
+  unawaited(_send(() => client.sync(), 'Client.sync'));
+}
+
+Future<void> _send(Future<void> Function() operation, String operationName) async {
+  try {
+    await operation();
+  } on Exception {
+    // handled
+  }
 }
 ''');
   }

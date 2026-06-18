@@ -16,6 +16,7 @@ class AvoidMapKeysContains extends AnalysisRule {
     'avoid_map_keys_contains',
     'Use containsKey() instead of .keys.contains().',
     correctionMessage: 'Replace with containsKey() for better performance.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidMapKeysContains()

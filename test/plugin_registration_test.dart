@@ -50,6 +50,53 @@ void main() {
     }
   });
 
+  test('skill lint references resolve to registered diagnostics', () {
+    final skillRegistry = PluginRegistryImpl('flutter_skill_lints');
+    final additionalRegistry = PluginRegistryImpl('flutter_skill_lints_additional');
+
+    FlutterSkillLintsPlugin().register(skillRegistry);
+    AdditionalLintsPlugin().register(additionalRegistry);
+
+    final registeredCodes = {
+      ...skillRegistry.warningRules.values.expand(
+        (rule) => rule.diagnosticCodes.map((code) => code.lowerCaseName),
+      ),
+      ...additionalRegistry.warningRules.values.expand(
+        (rule) => rule.diagnosticCodes.map((code) => code.lowerCaseName),
+      ),
+    };
+    final skillFiles = [
+      File('../building-flutter-apps/SKILL.md'),
+      ...Directory(
+        '../building-flutter-apps/references',
+      ).listSync(recursive: true).whereType<File>().where((file) => file.path.endsWith('.md')),
+    ];
+    final issues = <String>[];
+    final refs = <String>{};
+
+    for (final file in skillFiles) {
+      final normalizedPath = file.path.replaceAll('\\', '/');
+      final lines = file.readAsLinesSync();
+      for (var i = 0; i < lines.length; i++) {
+        final lintMarker = RegExp(r'\bLints?:\s*', caseSensitive: false).firstMatch(lines[i]);
+        if (lintMarker == null) continue;
+
+        final lintList = lines[i].substring(lintMarker.end);
+        for (final match in RegExp(r'`([a-z][a-z0-9_]+)`').allMatches(lintList)) {
+          final code = match.group(1)!;
+          refs.add(code);
+          if (!registeredCodes.contains(code)) {
+            issues.add('$normalizedPath:${i + 1} references missing lint `$code`');
+          }
+        }
+      }
+    }
+
+    expect(refs, isNotEmpty);
+    expect(refs, contains('bare_state_mounted_forbidden'));
+    expect(issues, isEmpty, reason: issues.join('\n'));
+  });
+
   test('fire-and-forget diagnostic explains reusable utility contracts', () {
     final rule = flutterSkillRules.singleWhere(
       (rule) => rule.name == 'use_unawaited_for_fire_and_forget_futures',
@@ -152,6 +199,26 @@ void main() {
     expect(issues, isEmpty, reason: issues.join('\n'));
   });
 
+  test('rule source files avoid app-specific symbols', () {
+    final ruleSource = Directory('lib/src/rules')
+        .listSync()
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'))
+        .map((file) => MapEntry(file.path.replaceAll('\\', '/'), file.readAsStringSync()))
+        .toList();
+    final issues = <String>[];
+
+    for (final entry in ruleSource) {
+      for (final forbidden in _appSpecificRuleSymbols) {
+        if (entry.value.contains(forbidden)) {
+          issues.add('${entry.key} contains $forbidden');
+        }
+      }
+    }
+
+    expect(issues, isEmpty, reason: issues.join('\n'));
+  });
+
   test('registers the additional analyzer surface inspired by many_lints', () {
     final registry = PluginRegistryImpl('flutter_skill_lints_additional');
     final plugin = AdditionalLintsPlugin();
@@ -164,7 +231,7 @@ void main() {
     );
 
     expect(registry.warningRules.length, _enabledAdditionalRuleCount);
-    expect(registeredFixCount, 64);
+    expect(registeredFixCount, 63);
     expect(registry.assistKinds, hasLength(1));
     expect(registry.warningRules, containsPair('avoid_ref_read_inside_build', isNotNull));
     expect(registry.warningRules, containsPair('use_ref_and_state_synchronously', isNotNull));
@@ -176,8 +243,9 @@ void main() {
     expect(registry.warningRules, isNot(contains('use_cubit_suffix')));
     expect(registry.warningRules, isNot(contains('use_gap')));
     expect(registry.warningRules, isNot(contains('prefer_contains')));
-    expect(registry.warningRules, isNot(contains('avoid_public_notifier_properties')));
-    expect(registry.warningRules, isNot(contains('avoid_ref_inside_state_dispose')));
+    expect(registry.warningRules, containsPair('avoid_public_notifier_properties', isNotNull));
+    expect(registry.warningRules, containsPair('avoid_ref_inside_state_dispose', isNotNull));
+    expect(registry.warningRules, containsPair('prefer_type_over_var', isNotNull));
     expect(registry.warningRules, isNot(contains('prefer_switch_expression')));
   });
 
@@ -244,9 +312,27 @@ void main() {
   });
 }
 
-const _enabledFlutterSkillRuleCount = 125;
-const _enabledFlutterSkillDiagnosticCount = 132;
-const _enabledAdditionalRuleCount = 85;
+const _enabledFlutterSkillRuleCount = 178;
+const _enabledFlutterSkillDiagnosticCount = 188;
+const _enabledAdditionalRuleCount = 279;
+
+const _appSpecificRuleSymbols = [
+  'run'
+      'Repem',
+  'pop'
+      'Or'
+      'Go',
+  'show'
+      'Blurred'
+      'Dialog',
+  'App'
+      'Navigation',
+  'App'
+      'Modal',
+  'app'
+      'Navigation'
+      'CoordinatorProvider',
+];
 
 List<String> _docBlockBefore(List<String> lines, int index) {
   var cursor = index - 1;

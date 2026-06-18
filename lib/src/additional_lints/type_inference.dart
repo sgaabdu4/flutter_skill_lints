@@ -29,7 +29,7 @@ DartType? inferContextType(Expression node) {
     NamedExpression(:final element) => element?.type,
 
     // Default formal parameter: `{Type value = defaultValue}`
-    DefaultFormalParameter(parameter: SimpleFormalParameter(:final type?)) => type.type,
+    DefaultFormalParameter(parent: FormalParameter(:final type?)) => type.type,
 
     // Binary expression (comparison): `e == value`
     BinaryExpression(:final leftOperand, :final rightOperand) =>

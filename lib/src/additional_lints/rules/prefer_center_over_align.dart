@@ -78,7 +78,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     };
   }
 
-  bool _isEveryValueZero(List<Expression> arguments) => arguments.every(
+  bool _isEveryValueZero(Iterable<Expression> arguments) => arguments.every(
     (argument) => switch (argument) {
       IntegerLiteral(value: 0) || DoubleLiteral(value: 0) => true,
       _ => false,

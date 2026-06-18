@@ -121,6 +121,62 @@ Object? read(Map<String, Object?> data) => data['active-workout'];
     await assertDiagnostics(source, [lint(source.indexOf("'active-workout'"), 16)]);
   }
 
+  Future<void> test_reportsInlineDateFormatPatternArgument() async {
+    const source = r'''
+class DateLike {
+  String formatted({required String pattern}) => pattern;
+}
+
+String label(DateLike timestamp) => timestamp.formatted(pattern: 'MM/dd');
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf("'MM/dd'"), 7)]);
+  }
+
+  Future<void> test_reportsInlineDateFormatConstructorPattern() async {
+    const source = r'''
+class DateFormat {
+  DateFormat(String pattern);
+}
+
+DateFormat formatter() => DateFormat('MM/dd');
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf("'MM/dd'"), 7)]);
+  }
+
+  Future<void> test_reportsNamedDateFormatPatternReference() async {
+    const source = r'''
+const memberHistoryDatePattern = 'MM/dd';
+
+class DateLike {
+  String formatted({required String pattern}) => pattern;
+}
+
+String label(DateLike timestamp) => timestamp.formatted(pattern: memberHistoryDatePattern);
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('memberHistoryDatePattern);'), 'memberHistoryDatePattern'.length),
+    ]);
+  }
+
+  Future<void> test_reportsNamedDateFormatConstructorPatternReference() async {
+    const source = r'''
+const memberHistoryDatePattern = 'MM/dd';
+
+class DateFormat {
+  DateFormat(String pattern);
+}
+
+DateFormat formatter() => DateFormat(memberHistoryDatePattern);
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('memberHistoryDatePattern);'), 'memberHistoryDatePattern'.length),
+    ]);
+  }
+
   Future<void> test_reportsStringInterpolationWithRawText() async {
     const source = r'''
 class File {

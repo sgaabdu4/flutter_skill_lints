@@ -6,6 +6,7 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
+import '../ast_node_analysis.dart';
 
 /// Warns when executable code uses raw string or numeric literals instead of
 /// named constants, value objects, or semantic helpers.
@@ -57,6 +58,16 @@ class _Visitor extends RecursiveAstVisitor<void> {
       rule.reportAtNode(node);
     }
     super.visitStringInterpolation(node);
+  }
+
+  @override
+  void visitArgumentList(ArgumentList node) {
+    for (final expression in _dateFormatPatternExpressions(node)) {
+      if (expression is SimpleStringLiteral || expression is StringInterpolation) continue;
+      rule.reportAtNode(expression);
+    }
+
+    super.visitArgumentList(node);
   }
 
   @override
@@ -218,12 +229,40 @@ bool _isStringBoundaryArgument(AstNode node) {
 
   final namedExpression = node.thisOrAncestorOfType<NamedExpression>();
   if (namedExpression != null && _containsNode(namedExpression.expression, node)) {
-    final label = namedExpression.name.label.name.toLowerCase();
+    final label = namedExpression.name.lexeme.toLowerCase();
     if (_stringOwnershipNames.any(label.contains)) return true;
   }
 
   final ownerName = _argumentOwnerName(argumentList).toLowerCase();
+  if (ownerName == 'dateformat') return true;
+
   return _stringOwnershipNames.any(ownerName.contains);
+}
+
+Iterable<Expression> _dateFormatPatternExpressions(ArgumentList argumentList) sync* {
+  final ownerName = _argumentOwnerName(argumentList).toLowerCase();
+
+  if (ownerName == 'formatted') {
+    for (final argument in argumentList.arguments) {
+      if (argument is NamedExpression && argument.name.lexeme == 'pattern') {
+        yield argument.expression;
+      }
+    }
+    return;
+  }
+
+  if (ownerName != 'dateformat') return;
+
+  for (final argument in argumentList.arguments) {
+    if (argument is NamedExpression) {
+      if (argument.name.lexeme == 'pattern') yield argument.expression;
+      continue;
+    }
+    if (argument is Expression) {
+      yield argument;
+      return;
+    }
+  }
 }
 
 bool _isNumericBoundaryArgument(AstNode node) {
@@ -232,7 +271,7 @@ bool _isNumericBoundaryArgument(AstNode node) {
 
   final namedExpression = node.thisOrAncestorOfType<NamedExpression>();
   if (namedExpression != null && _containsNode(namedExpression.expression, node)) {
-    final label = namedExpression.name.label.name.toLowerCase();
+    final label = namedExpression.name.lexeme.toLowerCase();
     if (_matchesNumericOwnershipName(label)) return true;
   }
 
@@ -369,6 +408,7 @@ const _stringOwnershipNames = {
   'id',
   'key',
   'location',
+  'pattern',
   'path',
   'prefix',
   'route',

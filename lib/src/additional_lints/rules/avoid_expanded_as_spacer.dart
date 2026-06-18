@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import '../ast_node_analysis.dart';
 
 import '../type_checker.dart';
 
@@ -66,7 +67,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     // Find the child argument
     Expression? childExpr;
     for (final arg in arguments.whereType<NamedExpression>()) {
-      if (arg.name.label.name == 'child') {
+      if (arg.name.lexeme == 'child') {
         childExpr = arg.expression;
         break;
       }
@@ -100,7 +101,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     for (final arg in argumentList.arguments) {
       if (arg is NamedExpression) {
-        if (arg.name.label.name != 'key') return false;
+        if (arg.name.lexeme != 'key') return false;
       } else {
         return false;
       }

@@ -24,6 +24,7 @@ final List<ScannerRule> architectureSourceRules = [
     description:
         'Flags Flutter or package imports from domain files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
+      if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
         final code = context.source.code[i];
         if (_isAllowedDomainImport(code)) continue;
@@ -76,6 +77,7 @@ final List<ScannerRule> architectureSourceRules = [
     description:
         'Flags repository or datasource files without I* contracts so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
+      if (context.isTestFile) return;
       final text = context.source.masked.join('\n');
       if ((context.isDatasourcePath || context.isRepositoryPath) &&
           context.hasConcreteLayerClass() &&

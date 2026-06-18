@@ -4,6 +4,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
+import '../ast_node_analysis.dart';
 
 import '../type_checker.dart';
 
@@ -124,7 +125,7 @@ class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {
     String? bottom;
 
     for (final arg in args.whereType<NamedExpression>()) {
-      switch (arg.name.label.name) {
+      switch (arg.name.lexeme) {
         case 'left':
           left = arg.expression.toSource();
         case 'top':
@@ -171,7 +172,7 @@ class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {
     String? vertical;
 
     for (final arg in args.whereType<NamedExpression>()) {
-      switch (arg.name.label.name) {
+      switch (arg.name.lexeme) {
         case 'horizontal':
           horizontal = arg.expression.toSource();
         case 'vertical':

@@ -5,41 +5,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-/// Warns when a variable is declared with the `var` keyword instead of an
-/// explicit type.
-///
-/// Although `var` is shorter to write, the use of this keyword makes it
-/// difficult to understand the type of the declared variable, especially
-/// when the initializer is complex or not immediately visible.
-///
-/// ## Example
-///
-/// ❌ Bad:
-/// ```dart
-/// class SomeClass {
-///   void method() {
-///     var variable = nullableMethod();
-///   }
-/// }
-///
-/// var topLevelVariable = nullableMethod();
-///
-/// String? nullableMethod() => null;
-/// ```
-///
-/// ✅ Good:
-/// ```dart
-/// class SomeClass {
-///   void method() {
-///     String? variable = nullableMethod();
-///   }
-/// }
-///
-/// String? topLevelVariable = nullableMethod();
-///
-/// String? nullableMethod() => null;
-/// ```
-class PreferTypeOverVar extends AnalysisRule {
+/// Warns when a declaration uses `var` instead of an explicit type.
+final class PreferTypeOverVar extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_type_over_var',
     "Prefer an explicit type annotation over 'var'.",
@@ -49,7 +16,7 @@ class PreferTypeOverVar extends AnalysisRule {
   PreferTypeOverVar()
     : super(
         name: 'prefer_type_over_var',
-        description: 'Warns when a variable is declared with the var keyword instead of a type.',
+        description: 'Warns when variables are declared with var instead of an explicit type.',
       );
 
   @override
@@ -58,43 +25,39 @@ class PreferTypeOverVar extends AnalysisRule {
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
     final visitor = _Visitor(this);
-    registry.addVariableDeclarationStatement(this, visitor);
-    registry.addTopLevelVariableDeclaration(this, visitor);
-    registry.addForStatement(this, visitor);
+    registry
+      ..addVariableDeclarationList(this, visitor)
+      ..addPatternVariableDeclaration(this, visitor)
+      ..addDeclaredVariablePattern(this, visitor);
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
+final class _Visitor extends SimpleAstVisitor<void> {
+  const _Visitor(this.rule);
+
   final PreferTypeOverVar rule;
 
-  _Visitor(this.rule);
-
   @override
-  void visitVariableDeclarationStatement(VariableDeclarationStatement node) {
-    _checkVariableDeclarationList(node.variables);
+  void visitVariableDeclarationList(VariableDeclarationList node) {
+    final keyword = node.keyword;
+    if (keyword == null || keyword.lexeme != 'var') return;
+
+    rule.reportAtToken(keyword);
   }
 
   @override
-  void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
-    _checkVariableDeclarationList(node.variables);
+  void visitPatternVariableDeclaration(PatternVariableDeclaration node) {
+    final keyword = node.keyword;
+    if (keyword == null || keyword.lexeme != 'var') return;
+
+    rule.reportAtToken(keyword);
   }
 
   @override
-  void visitForStatement(ForStatement node) {
-    // Check for-loop variable declarations
-    final forParts = node.forLoopParts;
-    if (forParts is ForPartsWithDeclarations) {
-      _checkVariableDeclarationList(forParts.variables);
-    }
-  }
+  void visitDeclaredVariablePattern(DeclaredVariablePattern node) {
+    final keyword = node.keyword;
+    if (keyword == null || keyword.lexeme != 'var') return;
 
-  void _checkVariableDeclarationList(VariableDeclarationList variables) {
-    // Check if the keyword is 'var'
-    final keyword = variables.keyword;
-    if (keyword == null) return;
-    if (keyword.lexeme != 'var') return;
-
-    // Report at the var keyword
     rule.reportAtToken(keyword);
   }
 }

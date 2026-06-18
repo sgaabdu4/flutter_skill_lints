@@ -10,7 +10,6 @@ import 'package:flutter_skill_lints/src/rules/architecture_extended_source_rules
 import 'package:flutter_skill_lints/src/rules/freezed_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/router_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/services_extended_source_rules.dart';
-import 'package:flutter_skill_lints/src/rules/showcase_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -22,11 +21,10 @@ void main() {
     defineReflectiveTests(FreezedMissingPrivateConstructorTest);
     defineReflectiveTests(RouterImpureRedirectTest);
     defineReflectiveTests(RouterShellTabPushTest);
-    defineReflectiveTests(ShowcaseV4ApiTest);
-    defineReflectiveTests(ShowcaseGetNamedUnhandledTest);
-    defineReflectiveTests(ShowcaseScopeStringLiteralTest);
     defineReflectiveTests(ServiceStaticSideEffectTest);
     defineReflectiveTests(ServiceRandomPerCallTest);
+    defineReflectiveTests(HiddenDependencyFallbackTest);
+    defineReflectiveTests(ImplicitNullFallbackTest);
     defineReflectiveTests(FireForgetInTestsTest);
   });
 }
@@ -276,58 +274,6 @@ class HostCard {
   }
 }
 
-abstract class _ShowcaseExtendedRuleTest extends _ExtendedSourceRuleTest {
-  @override
-  List<ScannerRule> get rules => showcaseExtendedSourceRules;
-}
-
-@reflectiveTest
-final class ShowcaseV4ApiTest extends _ShowcaseExtendedRuleTest {
-  @override
-  String get ruleName => 'showcase_v4_api';
-  @override
-  String get source => 'void start(context) => ShowCaseWidget.of(context).startShowCase([]);';
-  @override
-  String get needle => 'ShowCaseWidget';
-}
-
-@reflectiveTest
-final class ShowcaseGetNamedUnhandledTest extends _ShowcaseExtendedRuleTest {
-  @override
-  String get ruleName => 'showcase_get_named_unhandled';
-  @override
-  String get source => '''
-void start() {
-  ShowcaseView.getNamed(scope).startShowCase(keys);
-}
-''';
-  @override
-  String get needle => 'ShowcaseView';
-}
-
-@reflectiveTest
-final class ShowcaseScopeStringLiteralTest extends _ShowcaseExtendedRuleTest {
-  @override
-  String get ruleName => 'showcase_scope_string_literal';
-  @override
-  String get source => '''
-final target = AppShowcaseTarget(
-  scope: 'profile',
-  child: child,
-);
-''';
-  @override
-  String get needle => 'scope:';
-
-  Future<void> test_allowsLiteralScopeInTests() async {
-    await assertAllows('''
-void main() {
-  service.markAllToursCompleted(scope: 'test-scope');
-}
-''', path: '$testPackageRootPath/test/showcase_service_test.dart');
-  }
-}
-
 abstract class _ServicesExtendedRuleTest extends _ExtendedSourceRuleTest {
   @override
   List<ScannerRule> get rules => servicesExtendedSourceRules;
@@ -345,6 +291,72 @@ abstract final class TokenUtils {
 ''';
   @override
   String get needle => 'abstract final class TokenUtils';
+
+  Future<void> test_allowsTinyDirectSdkFacade() async {
+    await assertAllows('''
+abstract final class AnalyticsLog {
+  static FirebaseAnalytics get _analytics => FirebaseAnalytics.instance;
+
+  static Future<void> event(String name) {
+    return _analytics.logEvent(name: name);
+  }
+
+  static Future<void> breadcrumb(String message) {
+    return FirebaseCrashlytics.instance.log(message);
+  }
+}
+''');
+  }
+
+  Future<void> test_reportsDataReturningStaticFacade() async {
+    const source = '''
+abstract final class AnalyticsLog {
+  static FirebaseAnalytics get _analytics => FirebaseAnalytics.instance;
+
+  static Future<String> userId() async => 'id';
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'abstract final class AnalyticsLog', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsPublicStaticGetter() async {
+    const source = '''
+abstract final class AnalyticsLog {
+  static FirebaseAnalytics get analytics => FirebaseAnalytics.instance;
+
+  static Future<void> event(String name) {
+    return analytics.logEvent(name: name);
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'abstract final class AnalyticsLog', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsOverbuiltDebugBackendFacade() async {
+    const source = '''
+abstract final class AnalyticsLog {
+  static IAnalyticsBackend _backend = FirebaseAnalyticsBackend();
+
+  static void debugUseBackend(IAnalyticsBackend backend) {
+    _backend = backend;
+  }
+
+  static Future<void> event(String name) {
+    return FirebaseAnalytics.instance.logEvent(name: name);
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'abstract final class AnalyticsLog', ruleName),
+    ]);
+  }
 }
 
 @reflectiveTest
@@ -362,6 +374,139 @@ class RetryDelay {
 ''';
   @override
   String get needle => 'Random';
+}
+
+@reflectiveTest
+final class HiddenDependencyFallbackTest extends _ServicesExtendedRuleTest {
+  @override
+  String get ruleName => 'hidden_dependency_fallback';
+  @override
+  String get source => '''
+class NotificationServiceHost {
+  NotificationServiceHost({FlutterLocalNotificationsPlugin? plugin})
+    : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+
+  final FlutterLocalNotificationsPlugin _plugin;
+}
+''';
+  @override
+  String get needle => '?? FlutterLocalNotificationsPlugin';
+
+  Future<void> test_reportsRepositoryFallback() async {
+    const source = '''
+class ExerciseRepository {
+  ExerciseRepository([IRemoteMutationQueue? queue])
+    : _queue = queue ?? RemoteMutationQueue();
+
+  final IRemoteMutationQueue _queue;
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '?? RemoteMutationQueue', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsFunctionDependencyFallback() async {
+    const source = '''
+typedef DeleteAccountPollDelay = Future<void> Function(Duration duration);
+
+class AuthRemoteDatasource {
+  AuthRemoteDatasource({DeleteAccountPollDelay? deleteAccountPollDelay})
+    : _delay = deleteAccountPollDelay ?? ((duration) => Future<void>.delayed(duration));
+
+  final DeleteAccountPollDelay _delay;
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'deleteAccountPollDelay ??', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsNullableDomainValueFallback() async {
+    await assertAllows('''
+class FormState {
+  final String? title;
+  String get displayTitle => title ?? 'Untitled';
+}
+''');
+  }
+
+  Future<void> test_allowsFallbacksInTests() async {
+    await assertAllows('''
+void main() {
+  final service = overrideService ?? FakeNotificationService();
+}
+''', path: '$testPackageRootPath/test/service_test.dart');
+  }
+}
+
+@reflectiveTest
+final class ImplicitNullFallbackTest extends _ServicesExtendedRuleTest {
+  @override
+  String get ruleName => 'implicit_null_fallback';
+  @override
+  String get source => '''
+class PermissionState {
+  bool resolve(bool? granted) => granted ?? false;
+}
+''';
+  @override
+  String get needle => '?? false';
+
+  Future<void> test_reportsChainedPrimitiveFallback() async {
+    const source = '''
+class Insets {
+  double resolve(double? bottom, double? vertical) => bottom ?? vertical ?? 0;
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '?? vertical ??', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsNullableCallbackToStringFallback() async {
+    const source = '''
+class ChipGroup<T> {
+  String label(T item, String Function(T)? labelBuilder) =>
+      labelBuilder?.call(item) ?? item.toString();
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '?.call(item) ??', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsCopyWithFallback() async {
+    await assertAllows('''
+class FormState {
+  const FormState(this.title);
+  final String title;
+
+  FormState copyWith({String? title}) => FormState(title ?? this.title);
+}
+''');
+  }
+
+  Future<void> test_allowsThrowFallback() async {
+    await assertAllows('''
+class RequiredLookup {
+  String read(Map<String, String> values) =>
+      values['id'] ?? (throw StateError('missing id'));
+}
+''');
+  }
+
+  Future<void> test_allowsFallbacksInTests() async {
+    await assertAllows('''
+void main() {
+  final granted = overrideGranted ?? false;
+}
+''', path: '$testPackageRootPath/test/permission_test.dart');
+  }
 }
 
 @reflectiveTest

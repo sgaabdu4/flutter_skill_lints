@@ -67,7 +67,8 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (match.$1.isEmpty) {
         // handle positional (first argument)
         if (node.argumentList.arguments.isNotEmpty) {
-          children = node.argumentList.arguments.first;
+          final argument = node.argumentList.arguments.first;
+          if (argument is Expression) children = argument;
         }
       } else {
         // handle named argument
@@ -103,6 +104,7 @@ class _Visitor extends SimpleAstVisitor<void> {
         IfElement(:final thenElement, :final elseElement) =>
           checkExpression(thenElement) && (elseElement == null || checkExpression(elseElement)),
         NullAwareElement(:final value) => checkExpression(value),
+        _ => false,
       };
     }
 

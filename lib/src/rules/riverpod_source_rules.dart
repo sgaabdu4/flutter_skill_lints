@@ -1,293 +1,8 @@
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
+part 'riverpod_source_rules/riverpod_source_rules_part_01.dart';
 
-final List<ScannerRule> riverpodSourceRules = [
-  /// Avoid ref.read in initState.
-  ///
-  /// Why: Flags ref.read calls made from initState. Defer reads with a post-frame callback.
-  scannerRule(
-    code: const LintCode(
-      'riverpod_read_init_state',
-      'Avoid ref.read in initState.',
-      correctionMessage: 'Defer reads with a post-frame callback.',
-      severity: DiagnosticSeverity.ERROR,
-    ),
-    description:
-        'Flags ref.read calls made from initState so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (context.isInitStateRead(i)) {
-          reporter.report(context, i, line.indexOf('ref.read'));
-        }
-      }
-    },
-  ),
-
-  /// Avoid service locator classes in Riverpod apps.
-  ///
-  /// Why: Flags service locator classes in Riverpod apps. Model dependencies with providers.
-  scannerRule(
-    code: const LintCode(
-      'riverpod_service_locator',
-      'Avoid service locator classes in Riverpod apps.',
-      correctionMessage: 'Model dependencies with providers.',
-      severity: DiagnosticSeverity.ERROR,
-    ),
-    description:
-        'Flags service locator classes in Riverpod apps so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(
-          r'\bclass\s+(?:ServiceFactory|ServiceLocator|BackendProvider)\b',
-        ).hasMatch(line)) {
-          reporter.report(context, i, line.indexOf('class'));
-        }
-      }
-    },
-  ),
-
-  /// Use Riverpod code generation for providers.
-  ///
-  /// Why: Flags manual Riverpod provider constructors. The Flutter skill keeps
-  /// providers generated through `@riverpod` / `@Riverpod` so provider names,
-  /// lifetimes, and generated APIs stay as the single source of truth.
-  scannerRule(
-    code: const LintCode(
-      'riverpod_manual_provider',
-      'Use Riverpod code generation for providers.',
-      correctionMessage: 'Replace manual Provider(...) declarations with @riverpod codegen.',
-      severity: DiagnosticSeverity.ERROR,
-    ),
-    description:
-        'Flags manual Riverpod provider declarations so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final match = _manualProviderDeclarationMatch(context, i);
-        if (match == null) continue;
-        reporter.report(context, i, match.column);
-      }
-    },
-  ),
-
-  /// Keep provider-derived data in providers, not ConsumerState caches.
-  ///
-  /// Why: Flags manual cache/source fields in ConsumerState classes that also
-  /// watch providers. Derived provider data belongs in a generated @riverpod
-  /// provider or in pure build-local derivation, not mutable widget state.
-  scannerRule(
-    code: const LintCode(
-      'riverpod_consumer_state_derived_cache',
-      'Do not cache provider-derived data in ConsumerState.',
-      correctionMessage:
-          'Move the derived data to an @riverpod provider or compute it locally without mutable cache fields.',
-      severity: DiagnosticSeverity.ERROR,
-    ),
-    description:
-        'Flags ConsumerState cache/source fields used with ref.watch so provider-derived data stays in Riverpod.',
-    scan: (reporter, context) {
-      for (final classSpan in context.classes) {
-        if (!_isConsumerStateClass(context, classSpan)) continue;
-        if (!_classContainsRefWatch(context, classSpan)) continue;
-
-        for (final lineIndex in _directClassMemberLines(context, classSpan)) {
-          final line = context.source.masked[lineIndex];
-          final match = _derivedCacheField.firstMatch(line);
-          if (match == null) continue;
-          final fieldName = match.group(1);
-          final column = fieldName == null ? match.start : line.indexOf(fieldName, match.start);
-          reporter.report(context, lineIndex, column);
-        }
-      }
-    },
-  ),
-
-  /// Prefer select when watching state in leaf widgets.
-  ///
-  /// Why: Flags broad ref.watch calls that do not use select. Use
-  /// ref.watch(provider.select((value) => value.field)).
-  scannerRule(
-    code: const LintCode(
-      'riverpod_watch_no_select',
-      'Prefer select when watching state in leaf widgets.',
-      correctionMessage: 'Use ref.watch(provider.select((value) => value.field)).',
-      severity: DiagnosticSeverity.WARNING,
-    ),
-    description:
-        'Flags broad ref.watch calls that do not use select so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      // Only fire inside widget build() methods. Computed providers and
-      // service factories legitimately call ref.watch without .select.
-      // Exempt .notifier) — caller wants the whole notifier, no field to select.
-      for (final method in context.methods.where((m) => m.name == 'build')) {
-        for (var i = method.start; i <= method.end; i++) {
-          final line = context.source.masked[i];
-          if (_hasBroadRefWatch(context, i, method.end)) {
-            reporter.report(context, i, line.indexOf('ref'));
-          }
-        }
-      }
-    },
-  ),
-
-  /// select() callbacks should use expression-body syntax.
-  ///
-  /// Why: Keeps Riverpod select examples concise and avoids block callbacks in leaf
-  /// widget watches. Use ref.watch(provider.select((value) => value.field)).
-  scannerRule(
-    code: const LintCode(
-      'riverpod_select_arrow_syntax',
-      'Use arrow syntax for select() callbacks.',
-      correctionMessage: 'Change select((value) { ... }) to select((value) => value.field).',
-      severity: DiagnosticSeverity.ERROR,
-    ),
-    description:
-        'Flags select() callbacks without arrow syntax so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (final method in context.methods.where((method) => method.name == 'build')) {
-        for (var i = method.start; i <= method.end; i++) {
-          for (final invocation in _refWatchInvocations(context, i, method.end)) {
-            if (!_hasBlockSelectCallback(invocation)) continue;
-            final selectLine = _firstSelectLine(context, i, method.end);
-            reporter.report(
-              context,
-              selectLine,
-              context.source.masked[selectLine].indexOf('.select'),
-            );
-          }
-        }
-      }
-    },
-  ),
-
-  /// Mutation<T> usage should carry an experimental warning.
-  ///
-  /// Why: Riverpod Mutation is still experimental. Keep a nearby note so code reviewers
-  /// see the API stability boundary at the call site.
-  scannerRule(
-    code: const LintCode(
-      'riverpod_mutation_experimental_warning',
-      'Mutation<T> usage must have nearby experimental context.',
-      correctionMessage: 'Add a nearby comment that says Mutation is experimental.',
-      severity: DiagnosticSeverity.WARNING,
-    ),
-    description:
-        'Flags Mutation<T> usage without nearby experimental context so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      if (!context.path.contains('/notifiers/') && !context.path.endsWith('_notifier.dart')) {
-        return;
-      }
-      final mutationUsage = RegExp(r'\bMutation\s*<');
-      final experimental = RegExp(r'\bexperimental\b', caseSensitive: false);
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(r'^\s*class\s+Mutation\s*<').hasMatch(line)) continue;
-        if (RegExp(r'^\s*typedef\s+Mutation\s*<').hasMatch(line)) continue;
-        if (RegExp(r'^\s*Mutation\s*<[^>]+>\s+\w+(?:<[^>]+>)?\s*\(').hasMatch(line)) {
-          continue;
-        }
-        if (RegExp(
-          r'^\s*(?:[A-Za-z_]\w*(?:<[^>]+>)?\??|void)\s+Mutation(?:<[^>]+>)?\s*\(',
-        ).hasMatch(line)) {
-          continue;
-        }
-        final match = mutationUsage.firstMatch(line);
-        if (match != null && match.start > 0 && line[match.start - 1] == '.') continue;
-        if (match == null || context.nearOriginal(i, experimental, 5)) continue;
-        reporter.report(context, i, match.start);
-      }
-    },
-  ),
-
-  /// Keep derived providers alive when all watched dependencies are keepAlive.
-  ///
-  /// Why: Follows the building-flutter-apps provider decision tree for computed or
-  /// one-time providers. If every watched dependency is keepAlive, make the derived
-  /// non-family provider keepAlive too.
-  scannerRule(
-    code: const LintCode(
-      'riverpod_auto_dispose_keepalive_dependencies',
-      'Use keepAlive when all watched dependencies are keepAlive.',
-      correctionMessage:
-          'Change @riverpod to @Riverpod(keepAlive: true), unless this provider has parameters.',
-      severity: DiagnosticSeverity.WARNING,
-    ),
-    description:
-        'Flags auto-dispose providers whose same-file watched dependencies are all keepAlive.',
-    scan: (reporter, context) {
-      final definitions = _providerDefinitions(context);
-      final definitionsByName = {
-        for (final definition in definitions) definition.providerName: definition,
-      };
-
-      for (final definition in definitions) {
-        if (definition.keepAlive || definition.hasParameters) continue;
-        final watchedProviders = _watchedProviderNames(context, definition);
-        if (watchedProviders.isEmpty) continue;
-        if (!watchedProviders.every((name) => definitionsByName[name]?.keepAlive ?? false)) {
-          continue;
-        }
-        reporter.report(context, definition.annotationLine, 0);
-      }
-    },
-  ),
-
-  /// Feature notifiers should be keepAlive by default.
-  ///
-  /// Why: Class-based feature notifiers own mutable screen/feature state. In
-  /// presentation notifier files, accidental auto-dispose resets that state when
-  /// a subtree temporarily unmounts. Family notifiers stay auto-dispose by
-  /// default because keepAlive would cache every argument variant.
-  scannerRule(
-    code: const LintCode(
-      'riverpod_feature_notifier_keepalive',
-      'Feature notifiers should use keepAlive.',
-      correctionMessage:
-          'Change @riverpod to @Riverpod(keepAlive: true), or add an autoDispose rationale comment.',
-      severity: DiagnosticSeverity.WARNING,
-    ),
-    description:
-        'Flags non-family feature presentation notifiers that auto-dispose without rationale.',
-    scan: (reporter, context) {
-      if (!_isFeaturePresentationNotifierPath(context)) return;
-
-      for (final definition in _providerDefinitions(context)) {
-        if (!definition.isClassBased) continue;
-        if (!definition.className.endsWith('Notifier')) continue;
-        if (definition.keepAlive || definition.hasParameters) continue;
-        if (_registersDisposeCleanup(context, definition)) continue;
-        if (_hasAutoDisposeRationale(context, definition.annotationLine)) continue;
-        reporter.report(context, definition.annotationLine, 0);
-      }
-    },
-  ),
-
-  /// Avoid keepAlive family providers.
-  ///
-  /// Why: Flags keepAlive Riverpod families with required parameters. Use auto-dispose
-  /// families unless the cache is bounded.
-  scannerRule(
-    code: const LintCode(
-      'riverpod_keepalive_family',
-      'Avoid keepAlive family providers.',
-      correctionMessage: 'Use auto-dispose families unless the cache is bounded.',
-      severity: DiagnosticSeverity.WARNING,
-    ),
-    description:
-        'Flags keepAlive Riverpod families with required parameters so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (_isKeepAliveRiverpodAnnotation(context, i) &&
-            !_hasKeepAliveTickerModeWorkaround(context, i) &&
-            (context.near(i, 'required ', 5) || _hasFamilySignatureAfterKeepAlive(context, i))) {
-          reporter.report(context, i, line.indexOf('@Riverpod'));
-        }
-      }
-    },
-  ),
-];
+final List<ScannerRule> riverpodSourceRules = [..._riverpodSourceRulesPart1];
 
 final _manualProviderDeclaration = RegExp(
   r'\b(?:final|var|const)\s+[A-Za-z_]\w*\s*=\s*'
@@ -299,9 +14,29 @@ final _manualProviderDeclaration = RegExp(
 final _derivedCacheField = RegExp(
   r'^\s*(?:late\s+)?(?:final\s+)?'
   r'(?:[A-Za-z_]\w*(?:<[^;=]+>)?\??)\s+'
-  r'(_[A-Za-z_]\w*(?:Cache|Source|DayStart|TodayStart))\b',
+  r'(_[A-Za-z_]\w*(?:Cache|Source|Snapshot|Memo|DayStart|TodayStart|Filtered|Sorted|Grouped|Lookup|ById))\b',
 );
+final _providerSubscriptionField = RegExp(
+  r'^\s*(?:late\s+)?(?:final\s+)?'
+  r'(?:[A-Za-z_]\w*\.)?ProviderSubscription\s*<[^;=]+>\??\s+(_[A-Za-z_]\w*)\b',
+);
+final _providerArgWrapperMember = RegExp(
+  r'^\s*(?:late\s+)?(?:final\s+)?'
+  r'(?:[A-Za-z_]\w*(?:<[^;=]+>)?\??)\s+'
+  r'(?:get\s+)?(_(?:config|args?|params?|providerArgs?|providerParams?))\b',
+);
+final _providerArgWrapperLocal = RegExp(
+  r'^\s*final\s+(?:[A-Za-z_]\w*(?:<[^;=]+>)?\??\s+)?'
+  r'(config|args?|params?|providerArgs?|providerParams?)\s*=\s*'
+  r'[A-Z]\w*(?:Config|Args|Params)\s*\(',
+);
+final _inlineProviderArgWrapper = RegExp(
+  r'\b[A-Za-z_]\w*Provider\s*\(\s*[A-Z]\w*(?:Config|Args|Params)\s*\(',
+);
+final _refListenManual = RegExp(r'\bref\s*\.\s*listenManual\s*[<(]');
 final _refWatchCall = RegExp(r'\bref\s*\.\s*watch\s*\(');
+final _overrideWithValueStart = RegExp(r'\b([a-z]\w*Provider)\s*\.\s*overrideWithValue\s*\(');
+final _stateValueConstructor = RegExp(r'\b(?:const\s+)?([A-Z]\w*State)\s*\(');
 
 ({RegExpMatch match, int column})? _manualProviderDeclarationMatch(
   SourceScannerContext context,
@@ -317,6 +52,38 @@ final _refWatchCall = RegExp(r'\bref\s*\.\s*watch\s*\(');
   final beforeMatch = window.substring(0, match.start);
   if (beforeMatch.contains('\n')) return null;
   return (match: match, column: beforeMatch.length);
+}
+
+({int column, String providerName})? _notifierStateOverrideWithValueMatch(
+  SourceScannerContext context,
+  int lineIndex,
+) {
+  if (context.isTestFile) return null;
+
+  final end = lineIndex + 6 > context.source.masked.length
+      ? context.source.masked.length
+      : lineIndex + 6;
+  final window = context.source.masked.sublist(lineIndex, end).join('\n');
+  final overrideMatch = _overrideWithValueStart.firstMatch(window);
+  if (overrideMatch == null) return null;
+
+  final beforeMatch = window.substring(0, overrideMatch.start);
+  if (beforeMatch.contains('\n')) return null;
+
+  final providerName = overrideMatch.group(1) ?? '';
+  final stateMatch = _stateValueConstructor.firstMatch(window.substring(overrideMatch.end));
+  final stateType = stateMatch?.group(1);
+  if (stateType == null) return null;
+  if (!_isGeneratedNotifierStateOverride(providerName, stateType)) return null;
+
+  return (column: beforeMatch.length, providerName: providerName);
+}
+
+bool _isGeneratedNotifierStateOverride(String providerName, String stateType) {
+  if (!providerName.endsWith('Provider') || !stateType.endsWith('State')) return false;
+  final providerBase = providerName.substring(0, providerName.length - 'Provider'.length);
+  final stateBase = stateType.substring(0, stateType.length - 'State'.length);
+  return providerBase == _lowerFirst(stateBase);
 }
 
 bool _isConsumerStateClass(SourceScannerContext context, ScannerClassSpan classSpan) {
@@ -340,6 +107,28 @@ bool _classContainsRefWatch(SourceScannerContext context, ScannerClassSpan class
     if (_refWatchCall.hasMatch(context.source.masked[i])) return true;
   }
   return false;
+}
+
+bool _classPassesProviderArgName(
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+  String name,
+) {
+  final body = context.source.masked.sublist(classSpan.start, classSpan.end + 1).join('\n');
+  return _providerCallWithArgName(name).hasMatch(body);
+}
+
+bool _methodPassesProviderArgName(
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+  String name,
+) {
+  final body = context.source.masked.sublist(method.start, method.end + 1).join('\n');
+  return _providerCallWithArgName(name).hasMatch(body);
+}
+
+RegExp _providerCallWithArgName(String name) {
+  return RegExp(r'\b[A-Za-z_]\w*Provider\s*\(\s*' + RegExp.escape(name) + r'\b');
 }
 
 Iterable<int> _directClassMemberLines(
@@ -512,15 +301,14 @@ bool _classBuildHasParameters(SourceScannerContext context, int classStart, int 
 }
 
 String? _functionProviderName(SourceScannerContext context, int declarationLine) {
-  final declaration = _declarationText(context, declarationLine);
-  final match = RegExp(
-    r'^\s*(?:[A-Za-z_]\w*(?:<[^>]+>)?\??\s+)+([A-Za-z_]\w*)\s*\(',
-  ).firstMatch(declaration);
-  return match?.group(1);
+  final declaration = _declarationWindow(context, declarationLine);
+  final matches = RegExp(r'\b([A-Za-z_]\w*)\s*\(').allMatches(declaration).toList();
+  if (matches.isEmpty) return null;
+  return matches.last.group(1);
 }
 
 bool _functionHasProviderParameters(SourceScannerContext context, int declarationLine) =>
-    _parameterListHasProviderArgs(_declarationText(context, declarationLine));
+    _parameterTextHasProviderArgs(_functionParameterText(context, declarationLine));
 
 String _declarationText(SourceScannerContext context, int startLine) {
   final buffer = StringBuffer();
@@ -548,12 +336,48 @@ bool _parameterListHasProviderArgs(String declaration) {
   final end = declaration.indexOf(')', start + 1);
   if (start < 0 || end < 0) return false;
   final parameters = declaration.substring(start + 1, end).trim();
+  return _parameterTextHasProviderArgs(parameters);
+}
+
+bool _parameterTextHasProviderArgs(String parameters) {
   if (parameters.isEmpty) return false;
   final withoutRef = parameters
       .replaceFirst(RegExp(r'^(?:[A-Za-z_]\w*)?Ref\s+ref\s*,?\s*'), '')
       .replaceFirst(RegExp(r'^WidgetRef\s+ref\s*,?\s*'), '')
       .trim();
   return withoutRef.isNotEmpty;
+}
+
+String _functionParameterText(SourceScannerContext context, int declarationLine) {
+  final declaration = _declarationWindow(context, declarationLine);
+  final matches = RegExp(r'\b[A-Za-z_]\w*\s*\(([^)]*)\)').allMatches(declaration).toList();
+  if (matches.isEmpty) return '';
+  return matches.last.group(1)?.trim() ?? '';
+}
+
+String _declarationWindow(SourceScannerContext context, int startLine) {
+  final buffer = StringBuffer();
+  for (var i = startLine; i < context.source.length && i < startLine + 8; i++) {
+    final line = context.source.masked[i];
+    final bodyStart = _declarationBodyStart(line);
+    buffer.write(' ');
+    if (bodyStart == null) {
+      buffer.write(line);
+      continue;
+    }
+    buffer.write(line.substring(0, bodyStart));
+    break;
+  }
+  return buffer.toString();
+}
+
+int? _declarationBodyStart(String line) {
+  final blockMatch = RegExp(r'\)\s*(?:async\s*\*?|sync\s*\*)?\s*\{').firstMatch(line);
+  final blockIndex = blockMatch == null ? -1 : line.indexOf('{', blockMatch.start);
+  final arrowIndex = line.indexOf('=>');
+  if (blockIndex < 0) return arrowIndex < 0 ? null : arrowIndex;
+  if (arrowIndex < 0) return blockIndex;
+  return blockIndex < arrowIndex ? blockIndex : arrowIndex;
 }
 
 int _functionProviderEnd(SourceScannerContext context, int declarationLine) {
@@ -595,6 +419,13 @@ int _count(String text, String char) {
 bool _hasBlockSelectCallback(String invocation) =>
     RegExp(r'\.\s*select\s*\(\s*\([^)]*\)\s*\{').hasMatch(invocation);
 
+bool _hasIdentitySelectCallback(String invocation) {
+  final match = RegExp(
+    r'\.\s*select\s*\(\s*\(\s*(?:(?:final|var|[A-Za-z_]\w*(?:<[^>]+>)?\??)\s+)?([A-Za-z_]\w*)\s*\)\s*=>\s*\1\s*(?:,|\))',
+  ).firstMatch(invocation);
+  return match != null;
+}
+
 int _firstSelectLine(SourceScannerContext context, int startLine, int methodEnd) {
   for (var i = startLine; i <= methodEnd && i < context.source.length; i++) {
     if (context.source.masked[i].contains('.select')) return i;
@@ -627,15 +458,21 @@ bool _hasKeepAliveTickerModeWorkaround(SourceScannerContext context, int annotat
 }
 
 bool _hasFamilySignatureAfterKeepAlive(SourceScannerContext context, int annotationLine) {
-  final end = (annotationLine + 8).clamp(0, context.source.length - 1);
-  for (var i = annotationLine + 1; i <= end; i++) {
-    final line = context.source.masked[i];
-    if (RegExp(r'\bRef\b[^)]*,').hasMatch(line)) return true;
-    if (RegExp(r'\bbuild\s*\(\s*[^)]*[A-Za-z_]\w*(?:<[^>]+>)?\??\s+\w+').hasMatch(line)) {
-      return true;
-    }
+  final annotation = _riverpodAnnotationAt(context, annotationLine);
+  if (annotation == null) return false;
+  final declarationLine = _nextNonEmptyLine(context, annotation.endLine + 1);
+  if (declarationLine == null) return false;
+
+  final declaration = _declarationText(context, declarationLine);
+  if (RegExp(r'\bclass\s+[A-Za-z_]\w*\b').hasMatch(declaration)) {
+    final classSpan = context.classes
+        .where((classSpan) => classSpan.start == declarationLine)
+        .cast<ScannerClassSpan?>()
+        .firstOrNull;
+    return _classBuildHasParameters(context, declarationLine, classSpan?.end ?? declarationLine);
   }
-  return false;
+
+  return _functionHasProviderParameters(context, declarationLine);
 }
 
 bool _isFeaturePresentationNotifierPath(SourceScannerContext context) {
@@ -669,10 +506,89 @@ bool _registersDisposeCleanup(
 bool _hasBroadRefWatch(SourceScannerContext context, int lineIndex, int methodEnd) {
   for (final invocation in _refWatchInvocations(context, lineIndex, methodEnd)) {
     if (!RegExp(r'\.\s*select\s*\(').hasMatch(invocation) &&
-        !RegExp(r'\.\s*notifier\b').hasMatch(invocation)) {
+        !RegExp(r'\.\s*notifier\b').hasMatch(invocation) &&
+        !_isProjectionProviderWatch(invocation)) {
       return true;
     }
   }
+  return false;
+}
+
+final _eventSignalProviderName = RegExp(
+  r'(?:Signal|Signals|Event|Events|Pulse|Pulses|Serial|Serials)$',
+);
+final _eventSignalFunctionProvider = RegExp(
+  r'^\s*(?:Future\s*<[^>]+>|Stream\s*<[^>]+>|[A-Za-z_]\w*(?:<[^>]+>)?\??)\s+'
+  r'([A-Za-z_]\w*)\s*\(\s*Ref\s+ref\b',
+);
+
+bool _hasRiverpodAnnotation(SourceScannerContext context, ScannerClassSpan classSpan) {
+  for (var i = classSpan.start - 1; i >= 0 && i >= classSpan.start - 6; i--) {
+    final line = context.source.masked[i].trim();
+    if (line.isEmpty) continue;
+    if (line.startsWith('@riverpod') || line.startsWith('@Riverpod')) return true;
+    if (!line.startsWith('//')) return false;
+  }
+  return false;
+}
+
+bool _isProjectionProviderWatch(String invocation) {
+  final providerName = _watchedProviderName(invocation);
+  if (providerName == null) return false;
+  return _isProjectionProviderName(providerName);
+}
+
+String? _watchedProviderName(String invocation) {
+  final match = RegExp(
+    r'\bref\s*\.\s*watch\s*\(\s*([A-Za-z_]\w*Provider)\b',
+  ).firstMatch(invocation);
+  return match?.group(1);
+}
+
+bool _isProjectionProviderName(String providerName) {
+  final base = providerName.endsWith('Provider')
+      ? providerName.substring(0, providerName.length - 'Provider'.length)
+      : providerName;
+  final normalized = base.toLowerCase();
+
+  if (normalized.endsWith('byid') ||
+      normalized.endsWith('category') ||
+      normalized.endsWith('categories') ||
+      normalized.endsWith('count') ||
+      normalized.endsWith('data') ||
+      normalized.endsWith('date') ||
+      normalized.endsWith('dates') ||
+      normalized.endsWith('days') ||
+      normalized.endsWith('direction') ||
+      normalized.endsWith('enabled') ||
+      normalized.endsWith('entries') ||
+      normalized.endsWith('entry') ||
+      normalized.endsWith('ids') ||
+      normalized.endsWith('indices') ||
+      normalized.endsWith('map') ||
+      normalized.endsWith('mode') ||
+      normalized.endsWith('name') ||
+      normalized.endsWith('reminder') ||
+      normalized.endsWith('router') ||
+      normalized.endsWith('session') ||
+      normalized.endsWith('sessions') ||
+      normalized.endsWith('share') ||
+      normalized.endsWith('sound') ||
+      normalized.endsWith('summary') ||
+      normalized.endsWith('timer') ||
+      normalized.endsWith('unit') ||
+      normalized.endsWith('value') ||
+      normalized.endsWith('vibration') ||
+      normalized.endsWith('version')) {
+    return true;
+  }
+
+  if (RegExp(
+    r'(?:count|data|dates|days|entries|entry|ids|indices|list|map|sets|summary|value)for[a-z0-9]+$',
+  ).hasMatch(normalized)) {
+    return true;
+  }
+
   return false;
 }
 

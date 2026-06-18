@@ -157,6 +157,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (args.isEmpty) return;
 
     final separatorArg = args.first;
+    if (separatorArg is! Expression) return;
     if (_extractSizedBoxSpacingFromExpr(separatorArg) == null) return;
 
     rule.reportAtNode(node);

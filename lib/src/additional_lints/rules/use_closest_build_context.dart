@@ -73,15 +73,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   static bool _isBuildContextType(FormalParameter param) {
     // First try the explicit type annotation
-    DartType? type;
-    if (param is SimpleFormalParameter) {
-      type = param.type?.type;
-    } else if (param is DefaultFormalParameter) {
-      final innerParam = param.parameter;
-      if (innerParam is SimpleFormalParameter) {
-        type = innerParam.type?.type;
-      }
-    }
+    final normal = param is DefaultFormalParameter ? param.parameter : param;
+    final type = normal is SimpleFormalParameter ? normal.type?.type : null;
     if (type != null) return _buildContextChecker.isExactlyType(type);
 
     // Fall back to the resolved element type (for untyped params like `_`)

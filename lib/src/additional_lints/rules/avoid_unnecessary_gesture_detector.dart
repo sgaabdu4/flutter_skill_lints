@@ -4,6 +4,7 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import '../ast_node_analysis.dart';
 
 import '../type_checker.dart';
 
@@ -65,7 +66,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   static bool _hasEventHandler(ArgumentList argumentList) {
     return argumentList.arguments.whereType<NamedExpression>().any(
-      (arg) => arg.name.label.name.startsWith('on'),
+      (arg) => arg.name.lexeme.startsWith('on'),
     );
   }
 }

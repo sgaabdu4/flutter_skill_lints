@@ -102,10 +102,7 @@ class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
   }
 
   static (String?, String?) _extractParamInfo(FormalParameter param) {
-    final actual = switch (param) {
-      DefaultFormalParameter(:final parameter) => parameter,
-      _ => param,
-    };
+    final actual = param;
 
     final name = actual.name?.lexeme;
     String? type;

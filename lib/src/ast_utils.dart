@@ -183,7 +183,7 @@ final class _NestedBlockScanner extends RecursiveAstVisitor<void> {
 }
 
 final class _ReturnFinder extends RecursiveAstVisitor<void> {
-  var found = false;
+  bool found = false;
 
   @override
   void visitReturnStatement(ReturnStatement node) {
@@ -198,7 +198,7 @@ final class _ReturnFinder extends RecursiveAstVisitor<void> {
 }
 
 final class _AwaitFinder extends RecursiveAstVisitor<void> {
-  var found = false;
+  bool found = false;
 
   @override
   void visitAwaitExpression(AwaitExpression node) {
@@ -213,7 +213,7 @@ final class _AwaitFinder extends RecursiveAstVisitor<void> {
 }
 
 final class _ThrowFinder extends RecursiveAstVisitor<void> {
-  var found = false;
+  bool found = false;
 
   @override
   void visitThrowExpression(ThrowExpression node) {
@@ -298,11 +298,12 @@ final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
 }
 
 final class _EnsureCallFinder extends RecursiveAstVisitor<void> {
-  var found = false;
+  bool found = false;
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (node.methodName.name.startsWith('_ensure')) {
+    final name = node.methodName.name;
+    if (name.startsWith('_ensure') || RegExp(r'^ensure[A-Z]\w*').hasMatch(name)) {
       found = true;
       return;
     }

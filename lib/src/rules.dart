@@ -7,28 +7,27 @@ import 'package:flutter_skill_lints/src/rules/avoid_null_bang.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_private_widget_classes.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_route_param_throw_in_build.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_run_zoned_guarded.dart';
-import 'package:flutter_skill_lints/src/rules/avoid_showcase_key_filtering.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_shrink_wrap.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_silent_repository_null_return.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_sync_notifier_state_read.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_widget_build_helpers.dart';
 import 'package:flutter_skill_lints/src/rules/data_crash_source_rules.dart';
+import 'package:flutter_skill_lints/src/rules/dialog_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/flutter_optimization_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/flutter_skill_project_config.dart';
 import 'package:flutter_skill_lints/src/rules/freezed_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/freezed_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/guard_context_pop.dart';
 import 'package:flutter_skill_lints/src/rules/hive_persistence_source_rules.dart';
+import 'package:flutter_skill_lints/src/rules/material_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/notifier_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/persistence_crash_source_rules.dart';
-import 'package:flutter_skill_lints/src/rules/require_main_error_hooks.dart';
 import 'package:flutter_skill_lints/src/rules/riverpod_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/router_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/router_source_rules.dart';
+import 'package:flutter_skill_lints/src/rules/runtime_bug_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/services_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/services_mixins_source_rules.dart';
-import 'package:flutter_skill_lints/src/rules/showcase_extended_source_rules.dart';
-import 'package:flutter_skill_lints/src/rules/showcase_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/state_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/test_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/ui_source_rules.dart';
@@ -54,10 +53,8 @@ final List<AbstractAnalysisRule> flutterSkillRules = [
   UseUnawaitedForFireAndForgetFutures(),
   AvoidRouteParamThrowInBuild(),
   AvoidRunZonedGuarded(),
-  AvoidShowcaseKeyFiltering(),
   AvoidSilentRepositoryNullReturn(),
   AvoidSyncNotifierStateRead(),
-  RequireMainErrorHooks(),
   FlutterSkillProjectConfig(),
   ...riverpodSourceRules,
   ...freezedSourceRules,
@@ -65,16 +62,17 @@ final List<AbstractAnalysisRule> flutterSkillRules = [
   ...architectureSourceRules,
   ...architectureExtendedSourceRules,
   ...uiSourceRules,
+  ...materialSourceRules,
   ...flutterOptimizationSourceRules,
   ...stateSourceRules,
   ...routerSourceRules,
   ...routerExtendedSourceRules,
-  ...showcaseSourceRules,
-  ...showcaseExtendedSourceRules,
+  ...runtimeBugSourceRules,
   ...notifierSourceRules,
   ...servicesMixinsSourceRules,
   ...servicesExtendedSourceRules,
   ...dataCrashSourceRules,
+  ...dialogSourceRules,
   ...persistenceCrashSourceRules,
   ...testSourceRules,
   ...valueObjectSourceRules,

@@ -4,6 +4,7 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import '../ast_node_analysis.dart';
 
 import '../type_checker.dart';
 
@@ -144,7 +145,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     String? bottom;
 
     for (final arg in args.whereType<NamedExpression>()) {
-      switch (arg.name.label.name) {
+      switch (arg.name.lexeme) {
         case 'left':
           left = arg.expression.toSource();
         case 'top':
@@ -194,7 +195,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     String? vertical;
 
     for (final arg in args.whereType<NamedExpression>()) {
-      switch (arg.name.label.name) {
+      switch (arg.name.lexeme) {
         case 'horizontal':
           horizontal = arg.expression.toSource();
         case 'vertical':

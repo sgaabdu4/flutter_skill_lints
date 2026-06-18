@@ -4,7 +4,7 @@ import 'package:analyzer/dart/element/nullability_suffix.dart';
 
 import './type_checker.dart';
 
-/// Analyzer 12 exposes named-argument names as [Label] nodes.
+/// Analyzer exposes labels as AST nodes with a name token.
 extension LabelNameExtension on Label {
   String get lexeme => label.name;
 }

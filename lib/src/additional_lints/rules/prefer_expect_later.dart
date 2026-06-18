@@ -57,6 +57,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (args.isEmpty) return;
 
     final actualExpr = args[0];
+    if (actualExpr is! Expression) return;
+
     final actualType = actualExpr.staticType;
     if (actualType == null || actualType is DynamicType) return;
 

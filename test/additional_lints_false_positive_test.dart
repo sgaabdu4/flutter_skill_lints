@@ -117,6 +117,37 @@ Widget tile() => const Widget();
     await assertDiagnostics(source, [lint(source.indexOf('tile'), 'tile'.length)]);
   }
 
+  Future<void> test_reportsHelperReturningWidgetList() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+List<Widget> headerChildren() => const <Widget>[];
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('headerChildren'), 'headerChildren'.length),
+    ]);
+  }
+
+  Future<void> test_reportsPrivateMethodReturningWidgetList() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class BentoSheet extends StatelessWidget {
+  const BentoSheet();
+
+  @override
+  Widget build(BuildContext context) => const Widget();
+
+  List<Widget> _headerChildren() => const <Widget>[];
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('_headerChildren'), '_headerChildren'.length),
+    ]);
+  }
+
   Future<void> test_allowsTestHelperReturningWidget() async {
     final filePath = '$testPackageRootPath/test/core/widgets/app_dialog_test.dart';
     newFile(filePath, r'''
@@ -470,6 +501,19 @@ void run(Container container, Notifier notifier) {
   notifier.updateSet(initial);
   final afterUpdate = container.read(provider);
   print(afterUpdate);
+}
+''');
+  }
+
+  Future<void> test_allowsFreshCollectionRecorders() async {
+    await assertNoDiagnostics(r'''
+void run() {
+  final deletedIds = <String>[];
+  final createdRows = <Map<String, Object?>>[];
+  final permissions = <List<String>>[];
+  deletedIds.add('one');
+  createdRows.add({'id': 'row-1'});
+  permissions.add(['read']);
 }
 ''');
   }

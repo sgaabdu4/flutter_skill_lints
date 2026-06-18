@@ -72,6 +72,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (matcherArg is NamedExpression) return;
 
     final matcherExpr = matcherArg;
+    if (matcherExpr is! Expression) return;
+
     final matcherType = matcherExpr.staticType;
     if (matcherType == null || matcherType is DynamicType) return;
 

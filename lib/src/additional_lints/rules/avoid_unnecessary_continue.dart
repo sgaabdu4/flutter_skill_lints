@@ -59,7 +59,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
       _ => null,
     };
 
-    if (lastStatement case ContinueStatement(:final label?)) return;
+    if (lastStatement case ContinueStatement(label: != null)) return;
     if (lastStatement case ContinueStatement(:final continueKeyword)) {
       rule.reportAtToken(continueKeyword);
     }

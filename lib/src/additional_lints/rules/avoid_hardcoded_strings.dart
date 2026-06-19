@@ -71,10 +71,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
 }
 
 Expression? _firstPositional(NodeList<Expression> arguments) {
-  for (final argument in arguments) {
-    if (argument is Expression) return argument;
-  }
-  return null;
+  return arguments.isEmpty ? null : arguments.first;
 }
 
 bool _isExcludedContext(RuleContext context) {

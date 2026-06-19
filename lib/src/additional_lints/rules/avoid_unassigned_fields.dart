@@ -140,7 +140,6 @@ final class _ConstructorAssignments extends RecursiveAstVisitor<void> {
 String? _fieldNameFromTarget(Expression expression) {
   return switch (expression.unParenthesized) {
     SimpleIdentifier(:final name) => name,
-    PrefixedIdentifier(prefix: ThisExpression(), :final identifier) => identifier.name,
     PropertyAccess(target: ThisExpression(), :final propertyName) => propertyName.name,
     _ => null,
   };

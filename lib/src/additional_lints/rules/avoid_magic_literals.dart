@@ -258,10 +258,8 @@ Iterable<Expression> _dateFormatPatternExpressions(ArgumentList argumentList) sy
       if (argument.name.lexeme == 'pattern') yield argument.expression;
       continue;
     }
-    if (argument is Expression) {
-      yield argument;
-      return;
-    }
+    yield argument;
+    return;
   }
 }
 

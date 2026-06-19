@@ -134,7 +134,7 @@ class _CleanupCollector extends RecursiveAstVisitor<void> {
     final methodName = node.methodName.name;
     if (methodName == 'addTearDown' || methodName == 'tearDown') {
       for (final argument in node.argumentList.arguments) {
-        if (argument is Expression) _collectCleanupTearOff(argument);
+        _collectCleanupTearOff(argument);
       }
     }
     if (cleanupMethods.contains(methodName)) {

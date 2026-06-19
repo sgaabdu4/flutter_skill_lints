@@ -48,7 +48,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitPatternVariableDeclaration(PatternVariableDeclaration node) {
     final keyword = node.keyword;
-    if (keyword == null || keyword.lexeme != 'var') return;
+    if (keyword.lexeme != 'var') return;
 
     rule.reportAtToken(keyword);
   }

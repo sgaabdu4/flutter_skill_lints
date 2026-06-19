@@ -99,7 +99,6 @@ bool _isNotifierRead(MethodInvocation node) {
   if (node.argumentList.arguments.length != 1) return false;
 
   final argument = node.argumentList.arguments.single;
-  if (argument is! Expression) return false;
   return _isNotifierSelector(argument);
 }
 

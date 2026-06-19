@@ -93,7 +93,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
 
     // Get the source argument's static type
-    if (sourceArg is! Expression) return;
     final sourceType = sourceArg.staticType;
     if (sourceType is! InterfaceType) return;
 

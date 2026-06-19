@@ -5,7 +5,6 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
 import '../hook_detection.dart';
 import '../type_checker.dart';
 
@@ -142,11 +141,6 @@ class _MisusedHookFinder extends RecursiveAstVisitor<void> {
   @override
   void visitForElement(ForElement node) {
     _withMisuse(node.body);
-  }
-
-  @override
-  void visitForEachPartsWithDeclaration(ForEachPartsWithDeclaration node) {
-    super.visitForEachPartsWithDeclaration(node);
   }
 
   @override

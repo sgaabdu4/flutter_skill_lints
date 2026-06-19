@@ -48,7 +48,6 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (arguments.length != 1) return;
 
     final argument = arguments.single;
-    if (argument is! Expression) return;
 
     final type = argument.staticType;
     if (type == null) return;

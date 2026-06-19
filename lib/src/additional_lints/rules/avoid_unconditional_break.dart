@@ -75,7 +75,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _checkBreak(Statement statement) {
-    if (statement case BreakStatement(:final label?)) return;
+    if (statement case BreakStatement(label: != null)) return;
     if (statement case BreakStatement(:final breakKeyword)) {
       rule.reportAtToken(breakKeyword);
     }

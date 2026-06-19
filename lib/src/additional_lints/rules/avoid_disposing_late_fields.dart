@@ -78,7 +78,6 @@ final class _DisposedLateFieldCollector extends RecursiveAstVisitor<void> {
     final target = node.realTarget;
     final fieldName = switch (target) {
       SimpleIdentifier(:final name) => name,
-      PrefixedIdentifier(prefix: ThisExpression(), :final identifier) => identifier.name,
       PropertyAccess(target: ThisExpression(), :final propertyName) => propertyName.name,
       _ => null,
     };

@@ -68,7 +68,6 @@ bool _isNotifierRead(Expression expression) {
   if (unwrapped.argumentList.arguments.length != 1) return false;
 
   final argument = unwrapped.argumentList.arguments.single;
-  if (argument is! Expression) return false;
   return _isNotifierSelector(argument);
 }
 

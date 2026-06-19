@@ -40,7 +40,6 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (arguments.length != 1) return;
 
     final future = arguments.single;
-    if (future is! Expression) return;
     final inlineBody = _inlineAsyncBody(future);
     if (inlineBody == null) return;
     if (_containsTryStatement(inlineBody)) return;

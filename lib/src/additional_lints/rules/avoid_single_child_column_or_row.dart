@@ -66,9 +66,8 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
     return switch (list.elements.single) {
       Expression() => true,
-      NullAwareElement(:final value) => value is Expression,
+      NullAwareElement() => true,
       IfElement() || ForElement() || SpreadElement() || MapLiteralEntry() => false,
-      _ => false,
     };
   }
 }

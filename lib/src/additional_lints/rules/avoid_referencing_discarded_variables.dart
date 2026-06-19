@@ -39,11 +39,11 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (node.inDeclarationContext() || !node.inGetterContext()) return;
 
     final parent = node.parent;
-    if (parent is DeclaredIdentifier && parent.name == node) return;
-    if (parent is VariableDeclaration && parent.name == node) return;
-    if (parent is FormalParameter && parent.name == node) return;
-    if (parent is FieldFormalParameter && parent.name == node) return;
-    if (parent is SuperFormalParameter && parent.name == node) return;
+    if (parent is DeclaredIdentifier && parent.name.lexeme == node.name) return;
+    if (parent is VariableDeclaration && parent.name.lexeme == node.name) return;
+    if (parent is FormalParameter && parent.name?.lexeme == node.name) return;
+    if (parent is FieldFormalParameter && parent.name.lexeme == node.name) return;
+    if (parent is SuperFormalParameter && parent.name.lexeme == node.name) return;
 
     rule.reportAtNode(node);
   }

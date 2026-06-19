@@ -71,6 +71,9 @@ jobs:
       - name: Install dependencies
         run: dart pub get
 
+      - name: Checkout Flutter skill docs
+        run: git clone --depth 1 --branch master https://github.com/sgaabdu4/building-flutter-apps.git ../building-flutter-apps
+
       - name: Run tests
         run: dart test --reporter expanded
 

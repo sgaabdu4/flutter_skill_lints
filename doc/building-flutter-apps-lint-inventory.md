@@ -138,6 +138,7 @@ router_raw_route_definition
 router_redirect_loading_bounce
 router_redirect_watch
 router_shell_tab_push
+router_splash_waits_for_initial_sync
 router_string_nav
 router_untyped_navigator_push
 save_all_full_collection_after_subset_mutation

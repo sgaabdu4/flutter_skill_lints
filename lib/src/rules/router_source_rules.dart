@@ -11,6 +11,7 @@ final _popFallbackHelperDeclaration = RegExp(
 final _contextMountedReturnFalseGuard = RegExp(
   r'\bif\s*\(\s*!\s*(?:(?:this\.)?mounted|[A-Za-z_]\w*\.mounted)\s*\)\s*return\s+false\s*;',
 );
+final _initialSyncStatusSyncing = RegExp(r'\b[A-Za-z_]\w*SyncStatus\s*\.\s*syncing\b');
 
 bool _popFallbackBodyLooksLikeHelper(String body) {
   if (!RegExp(r'\bcanPop\s*\(').hasMatch(body)) return false;
@@ -132,6 +133,44 @@ int _blockEndLine(List<String> lines, int startLine) {
   }
 
   return lines.length;
+}
+
+int? _splashInitialSyncGateColumn(SourceScannerContext context, int lineIndex) {
+  if (context.isTestFile) return null;
+  if (!_isRouterRedirectContext(context)) return null;
+
+  final line = context.source.masked[lineIndex];
+  final match = _initialSyncStatusSyncing.firstMatch(line);
+  if (match == null) return null;
+
+  final window = _routerWindow(context, lineIndex, before: 8, after: 8).toLowerCase();
+  if (!window.contains('splash')) return null;
+  if (!RegExp(
+    r'\bredirect\b|\bgorouter\b|\bcurrent(?:path|location)\b|location\b',
+  ).hasMatch(window)) {
+    return null;
+  }
+
+  return match.start;
+}
+
+bool _isRouterRedirectContext(SourceScannerContext context) {
+  if (_isRouterBoundaryPath(context.path)) return true;
+  final source = context.source.masked.join('\n');
+  return RegExp(r'\bGoRouter\b|\bresolve[A-Za-z0-9_]*Redirect\b').hasMatch(source);
+}
+
+String _routerWindow(
+  SourceScannerContext context,
+  int lineIndex, {
+  required int before,
+  required int after,
+}) {
+  final start = lineIndex - before < 0 ? 0 : lineIndex - before;
+  final end = lineIndex + after >= context.source.length
+      ? context.source.length - 1
+      : lineIndex + after;
+  return context.source.masked.sublist(start, end + 1).join('\n');
 }
 
 int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {

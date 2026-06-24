@@ -464,6 +464,53 @@ final router = GoRouter(
 }
 
 @reflectiveTest
+final class RouterSplashWaitsForInitialSyncTest extends _RouterRuleTest {
+  @override
+  String get ruleName => 'router_splash_waits_for_initial_sync';
+  @override
+  String get needle => 'InitialSyncStatus.syncing';
+  @override
+  String get source => r'''
+String? resolveAppRedirect({
+  required String currentPath,
+  required AuthState authState,
+  required InitialSyncStatus syncStatus,
+}) {
+  if (_shouldStayOnSplash(currentPath, authState, syncStatus)) return null;
+  return null;
+}
+
+bool _shouldStayOnSplash(String currentPath, AuthState authState, InitialSyncStatus syncStatus) {
+  if (currentPath != '/splash') return false;
+  final awaitingInitialSync = authState.isAuthenticated && syncStatus == InitialSyncStatus.syncing;
+  return authState.isLoading || awaitingInitialSync;
+}
+''';
+
+  Future<void> test_allowsAuthLoadingSplashGate() async {
+    await assertAllows(r'''
+String? resolveAppRedirect({
+  required String currentPath,
+  required AuthState authState,
+}) {
+  if (currentPath == '/splash' && authState.isLoading) return null;
+  return currentPath == '/splash' ? '/home' : null;
+}
+''');
+  }
+
+  Future<void> test_allowsInitialSyncStatusOutsideSplashRedirect() async {
+    await assertAllows(r'''
+void logSyncStatus(InitialSyncStatus status) {
+  if (status == InitialSyncStatus.syncing) {
+    print('syncing');
+  }
+}
+''');
+  }
+}
+
+@reflectiveTest
 final class RouterComplexExtraTest extends _RouterRuleTest {
   @override
   String get ruleName => 'router_complex_extra';

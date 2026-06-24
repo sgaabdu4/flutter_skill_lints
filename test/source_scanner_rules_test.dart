@@ -110,6 +110,7 @@ void main() {
     defineReflectiveTests(PopFallbackHelperMustCheckNavigatorStackTest);
     defineReflectiveTests(RouterRedirectWatchTest);
     defineReflectiveTests(RouterRedirectLoadingBounceTest);
+    defineReflectiveTests(RouterSplashWaitsForInitialSyncTest);
     defineReflectiveTests(RouterComplexExtraTest);
     defineReflectiveTests(RouterGoRouterOfTest);
     defineReflectiveTests(RouterUntypedNavigatorPushTest);

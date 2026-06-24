@@ -134,6 +134,31 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     },
   ),
 
+  /// Do not hold splash while initial sync runs.
+  ///
+  /// Why: Initial data sync is a background/domain concern. Once auth and setup
+  /// state are known, route to the authenticated shell and let local data hydrate
+  /// instead of keeping the user on the cover screen.
+  scannerRule(
+    code: const LintCode(
+      'router_splash_waits_for_initial_sync',
+      'Do not hold splash while initial sync runs.',
+      correctionMessage:
+          'Route to the authenticated shell once auth/setup are resolved; keep initial sync in the background.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags splash redirect gates that wait for InitialSyncStatus.syncing so startup stays responsive.',
+    scan: (reporter, context) {
+      for (var i = 0; i < context.source.length; i++) {
+        final column = _splashInitialSyncGateColumn(context, i);
+        if (column != null) {
+          reporter.report(context, i, column);
+        }
+      }
+    },
+  ),
+
   /// Avoid GoRouter.of(context).* navigation.
   ///
   /// Why: Flags `GoRouter.of(context).{go,push,replace,pushReplacement,goNamed,

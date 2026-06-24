@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.1] - 2026-06-24
+
+- Added `router_splash_waits_for_initial_sync`: flags splash redirect gates that
+  hold the cover screen while `InitialSyncStatus.syncing` is in progress. Initial
+  data sync is a background concern—once auth and setup state are known, route to
+  the authenticated shell and let local data hydrate instead of blocking startup
+  on the splash screen.
+
 ## [0.7.0] - 2026-06-14
 
 - Added `full_collection_load_in_loop`: flags an awaited

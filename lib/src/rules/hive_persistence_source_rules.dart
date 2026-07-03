@@ -16,6 +16,39 @@ String _pascalCase(String snake) => snake
     .join();
 
 final List<ScannerRule> hivePersistenceSourceRules = [
+  /// Flutter app source should import Hive through hive_ce_flutter.
+  ///
+  /// Why: `hive_ce_flutter` is the Flutter-facing package for Hive CE. It
+  /// re-exports the core Hive API and adds Flutter helpers such as
+  /// `Hive.initFlutter`, Color/TimeOfDay adapters, and platform setup. Keeping
+  /// production Flutter code on that import surface prevents an app from
+  /// depending on the core Dart package while bypassing the Flutter integration
+  /// package declared in the stack. Tests can still use temp directories and
+  /// manual `Hive.init(path)` setup.
+  scannerRule(
+    code: const LintCode(
+      'use_hive_ce_flutter_import',
+      'Flutter app source must import Hive CE through hive_ce_flutter.',
+      correctionMessage:
+          'Replace `package:hive_ce/hive_ce.dart` with '
+          '`package:hive_ce_flutter/hive_ce_flutter.dart` in production Flutter source. '
+          'Use manual `Hive.init(path)` only for explicit custom paths or test temp boxes.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags direct hive_ce imports in production Flutter lib/ files so apps use the Flutter package surface.',
+    scan: (reporter, context) {
+      if (context.isTestFile || !context.path.startsWith('lib/')) return;
+      for (var i = 0; i < context.source.length; i++) {
+        final line = context.source.code[i];
+        final match = RegExp(
+          r'''^\s*import\s+['"]package:hive_ce/hive_ce\.dart['"]''',
+        ).firstMatch(line);
+        if (match != null) reporter.report(context, i, match.start);
+      }
+    },
+  ),
+
   /// Hive Models must not carry Value Object types.
   ///
   /// Why: `/data/models/` classes are persistence-layer adapters; their

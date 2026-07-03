@@ -176,6 +176,7 @@ ui_snackbar_boundary
 unguarded_fire_and_forget_platform_command
 use_context_mounted_after_await
 use_freezed_instead_of_immutable
+use_hive_ce_flutter_import
 use_ref_invalidate
 use_ref_mounted_after_await
 use_sealed_freezed_classes

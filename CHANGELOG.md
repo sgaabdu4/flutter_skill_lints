@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.2] - 2026-07-03
+
+- Added `use_hive_ce_flutter_import`: production Flutter `lib/` files now
+  import Hive through `package:hive_ce_flutter/hive_ce_flutter.dart` instead of
+  `package:hive_ce/hive_ce.dart`, while tests can still use direct `hive_ce`
+  imports for temp-box setup.
+- Updated the building-flutter-apps Hive guidance and diagnostic counts for the
+  new rule.
+
 ## [0.7.1] - 2026-06-24
 
 - Added `router_splash_waits_for_initial_sync`: flags splash redirect gates that

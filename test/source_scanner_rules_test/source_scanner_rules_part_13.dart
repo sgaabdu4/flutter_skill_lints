@@ -291,6 +291,68 @@ abstract class _HivePersistenceRuleTest extends _SourceRuleTest {
 }
 
 @reflectiveTest
+final class HiveFlutterImportTest extends _HivePersistenceRuleTest {
+  @override
+  String get ruleName => 'use_hive_ce_flutter_import';
+  @override
+  String get needle => "import 'package:hive_ce/hive_ce.dart'";
+  @override
+  String get path => '$testPackageLibPath/core/hive/hive_boxes.dart';
+
+  @override
+  void setUp() {
+    newPackage('hive_ce').addFile('lib/hive_ce.dart', r'''
+abstract final class Hive {
+  static void init(String path) {}
+}
+''');
+    newPackage('hive_ce_flutter').addFile('lib/hive_ce_flutter.dart', r'''
+abstract final class Hive {
+  static Future<void> initFlutter([String? subDir]) async {}
+}
+''');
+    super.setUp();
+  }
+
+  @override
+  String get source => r'''
+import 'package:hive_ce/hive_ce.dart';
+
+Future<void> initStorage() async {
+  Hive.init('path');
+}
+''';
+
+  Future<void> test_allowsHiveCeFlutterImportInLib() async {
+    final filePath = '$testPackageLibPath/core/hive/hive_boxes.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, undefined_identifier
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
+
+Future<void> initStorage() async {
+  await Hive.initFlutter();
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsHiveCeImportInTests() async {
+    final filePath = '$testPackageRootPath/test/core/hive/hive_boxes_test.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, undefined_identifier
+import 'package:hive_ce/hive_ce.dart';
+
+Future<void> initTempStorage() async {
+  Hive.init('tmp');
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+}
+
+@reflectiveTest
 final class HiveFieldNoVoTypeTest extends _HivePersistenceRuleTest {
   @override
   String get ruleName => 'hive_field_no_vo_type';

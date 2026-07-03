@@ -4,10 +4,10 @@ Status: 2026-06-14.
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 178 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 188 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 180 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 190 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 279 additional diagnostics.
-- Total unique diagnostics: 464.
+- Total unique diagnostics: 466.
 
 ## Full Rule Inventory
 
@@ -39,7 +39,7 @@ Core skill rules already covered before this pass:
   `typed_id_raw_id`, `records_map_return`, `avoid_object_map_cast`,
   `vo_public_raw_constructor`, `domain_entity_primitive_factory`,
   `domain_custom_copy_with`, `freezed_disable_map_when_required`,
-  `hive_field_no_vo_type`.
+  `use_hive_ce_flutter_import`, `hive_field_no_vo_type`.
 - Navigation: `guard_context_pop`, `pop_fallback_helper_must_check_navigator_stack`,
   `avoid_route_param_throw_in_build`, `router_string_nav`, `router_gorouter_of`,
   `router_untyped_navigator_push`, `router_direct_route_call`,

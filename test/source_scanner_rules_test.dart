@@ -145,6 +145,7 @@ void main() {
     defineReflectiveTests(DomainEntityPrimitiveFactoryTest);
     defineReflectiveTests(DomainCustomCopyWithTest);
     defineReflectiveTests(FreezedDisableMapWhenRequiredTest);
+    defineReflectiveTests(HiveFlutterImportTest);
     defineReflectiveTests(HiveFieldNoVoTypeTest);
     defineReflectiveTests(DialogWidgetSubscribesToMutableProviderTest);
     defineReflectiveTests(ModalHighFrequencyWatchNotLeafTest);

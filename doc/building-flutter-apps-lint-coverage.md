@@ -1,13 +1,13 @@
 # building-flutter-apps Lint Coverage
 
-Status: 2026-06-14.
+Status: 2026-07-15.
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 180 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 190 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 183 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 193 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 279 additional diagnostics.
-- Total unique diagnostics: 466.
+- Total unique diagnostics: 469.
 
 ## Full Rule Inventory
 
@@ -51,6 +51,9 @@ Core skill rules already covered before this pass:
   `router_redirect_watch`, `router_redirect_loading_bounce`,
   `router_splash_waits_for_initial_sync`,
   `router_complex_extra`.
+- Reusable presentation widgets: `presentation_widget_navigation_forbidden`,
+  `presentation_widget_controller_state`,
+  `presentation_widget_infrastructure_dependency`.
 - UI/performance/date: `avoid_widget_build_helpers`, `avoid_shrink_wrap`,
   `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`,
   `l10n_context_direct_access`, `ui_snackbar_boundary`,
@@ -116,6 +119,7 @@ hover description and correction text.
 | `localization.md` | `strings_hardcoded`, `l10n_context_direct_access` |
 | `mixins.md` | `mixin_mixin_class`, `mixin_name_suffix`, `mixin_mutable_state` |
 | `performance.md` | `riverpod_watch_no_select`, `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `perf_listview_children`, `perf_build_work`, `state_empty_string_sentinel`, `state_bool_string_sentinel`, `state_raw_response`, `state_raw_error_to_string`, `a11y_text_scale_clamp`, `flutter_*` optimization rules |
+| `presentation-widgets.md` | `presentation_widget_navigation_forbidden`, `presentation_widget_controller_state`, `presentation_widget_infrastructure_dependency` |
 | `riverpod-codegen.md` | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_manual_provider`, `riverpod_consumer_state_derived_cache`, `riverpod_consumer_state_provider_subscription`, `riverpod_listen_manual_forbidden`, `riverpod_event_counter_signal_forbidden`, `service_provider_watch_dependency`, `riverpod_watch_no_select`, `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`, `riverpod_auto_dispose_keepalive_dependencies`, `riverpod_feature_notifier_keepalive`, `riverpod_keepalive_family`, `use_ref_invalidate`; Riverpod-owned dependency/scoping/provider-shape diagnostics stay with `riverpod_lint` |
 	| `services-and-singletons.md` | `service_singleton`, `service_static_side_effect`, `service_random_per_call`, `hidden_dependency_fallback`, `hidden_dependency_default_param`, `service_inline_concrete_dependency`, `service_provider_watch_dependency`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures`, `fire_forget_in_tests`, `appwrite_blocking_function_execution_in_client` |
 | `state-management.md` | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `async_context_mounted_style`, `avoid_mounted_check_in_finally`, `avoid_sync_notifier_state_read`, `avoid_silent_repository_null_return`, `notifier_ensure_deps`, `notifier_watch_method`, `riverpod_event_counter_signal_forbidden`, `widget_awaits_notifier_result`, `widget_local_mutation_flag`, `state_empty_string_sentinel`, `state_bool_string_sentinel`, `state_broad_invalidation`, `state_freezed_nullable_error`, runtime boundary for source-of-truth freshness |

@@ -44,6 +44,10 @@ analyzer:
         await Directory(
           '${app.path}/lib/features/history/presentation/notifiers',
         ).create(recursive: true);
+        await Directory(
+          '${app.path}/lib/features/content/presentation/widgets',
+        ).create(recursive: true);
+        await Directory('${app.path}/lib/features/content/repositories').create(recursive: true);
         await _writeFile('${app.path}/lib/main.dart', r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -109,6 +113,35 @@ class HistoryCalendarNotifier {
 }
 ''',
         );
+        await _writeFile(
+          '${app.path}/lib/features/content/repositories/content_repository.dart',
+          'abstract interface class ContentRepository {}',
+        );
+        await _writeFile(
+          '${app.path}/lib/features/content/presentation/widgets/content_view.dart',
+          r'''
+import 'package:flutter/widgets.dart';
+
+import '../../repositories/content_repository.dart';
+
+class ContentView extends StatefulWidget {
+  const ContentView({super.key});
+
+  @override
+  State<ContentView> createState() => _ContentViewState();
+}
+
+class _ContentViewState extends State<ContentView> {
+  final List<Object> _pageStack = [];
+
+  @override
+  Widget build(BuildContext context) {
+    Navigator.of(context).pop();
+    return const SizedBox.shrink();
+  }
+}
+''',
+        );
 
         final pubGet = await _run('flutter', ['pub', 'get'], app);
         expect(
@@ -126,6 +159,9 @@ class HistoryCalendarNotifier {
         expect(output, contains('prefer_single_widget_per_file'));
         expect(output, contains('prefer_type_over_var'));
         expect(output, contains('riverpod_feature_notifier_keepalive'));
+        expect(output, contains('presentation_widget_navigation_forbidden'));
+        expect(output, contains('presentation_widget_controller_state'));
+        expect(output, contains('presentation_widget_infrastructure_dependency'));
         expect(output, isNot(contains('server.pluginError')));
       } finally {
         await app.delete(recursive: true);

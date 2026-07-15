@@ -65,10 +65,11 @@ void main() {
         (rule) => rule.diagnosticCodes.map((code) => code.lowerCaseName),
       ),
     };
+    final companionSkill = Directory('../building-flutter-apps/skills/building-flutter-apps');
     final skillFiles = [
-      File('../building-flutter-apps/SKILL.md'),
+      File('${companionSkill.path}/SKILL.md'),
       ...Directory(
-        '../building-flutter-apps/references',
+        '${companionSkill.path}/references',
       ).listSync(recursive: true).whereType<File>().where((file) => file.path.endsWith('.md')),
     ];
     final issues = <String>[];
@@ -93,7 +94,7 @@ void main() {
     }
 
     expect(refs, isNotEmpty);
-    expect(refs, contains('bare_state_mounted_forbidden'));
+    expect(refs, contains('presentation_widget_controller_state'));
     expect(issues, isEmpty, reason: issues.join('\n'));
   });
 
@@ -312,8 +313,8 @@ void main() {
   });
 }
 
-const _enabledFlutterSkillRuleCount = 180;
-const _enabledFlutterSkillDiagnosticCount = 190;
+const _enabledFlutterSkillRuleCount = 183;
+const _enabledFlutterSkillDiagnosticCount = 193;
 const _enabledAdditionalRuleCount = 279;
 
 const _appSpecificRuleSymbols = [

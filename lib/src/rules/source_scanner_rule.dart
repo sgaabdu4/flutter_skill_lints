@@ -379,6 +379,11 @@ final class SourceScannerContext {
       path.contains('/core/widgets/molecules/') ||
       path.contains('/core/widgets/templates/');
 
+  bool get isPresentationWidgetFile {
+    final normalized = path.replaceAll('\\', '/');
+    return normalized.startsWith('lib/') && normalized.contains('/presentation/widgets/');
+  }
+
   bool get isUiFile {
     final normalized = path.replaceAll('\\', '/');
     return normalized.startsWith('lib/core/widgets/') ||

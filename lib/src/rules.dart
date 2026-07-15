@@ -22,6 +22,7 @@ import 'package:flutter_skill_lints/src/rules/hive_persistence_source_rules.dart
 import 'package:flutter_skill_lints/src/rules/material_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/notifier_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/persistence_crash_source_rules.dart';
+import 'package:flutter_skill_lints/src/rules/presentation_widget_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/riverpod_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/router_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/router_source_rules.dart';
@@ -74,6 +75,7 @@ final List<AbstractAnalysisRule> flutterSkillRules = [
   ...dataCrashSourceRules,
   ...dialogSourceRules,
   ...persistenceCrashSourceRules,
+  ...presentationWidgetSourceRules,
   ...testSourceRules,
   ...valueObjectSourceRules,
   ...hivePersistenceSourceRules,

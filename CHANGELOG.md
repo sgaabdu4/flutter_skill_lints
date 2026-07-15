@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.8.0] - 2026-07-15
+
+- Added `presentation_widget_navigation_forbidden` to reject GoRouter imports,
+  BuildContext routing extensions, typed-route calls, and Navigator calls from
+  reusable files under `presentation/widgets/`.
+- Added `presentation_widget_controller_state` to reject navigation stacks,
+  selected domain records, workflow status, and provider-derived caches in
+  reusable widget State while allowing UI lifecycle controllers and timers.
+- Added `presentation_widget_infrastructure_dependency` to reject provider
+  reads and direct repository, datasource, service, client, persistence, and
+  backend SDK dependencies in reusable presentation widgets.
+- Added valid and invalid analyzer fixtures for typed callback widgets, screen
+  orchestration, UI lifecycle state, navigation, workflow state, and
+  infrastructure access.
+
 ## [0.7.2] - 2026-07-03
 
 - Added `use_hive_ce_flutter_import`: production Flutter `lib/` files now

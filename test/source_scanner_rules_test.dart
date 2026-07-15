@@ -12,6 +12,7 @@ import 'package:flutter_skill_lints/src/rules/dialog_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/freezed_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/hive_persistence_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/notifier_source_rules.dart';
+import 'package:flutter_skill_lints/src/rules/presentation_widget_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/riverpod_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/router_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/runtime_bug_source_rules.dart';
@@ -42,6 +43,7 @@ part 'source_scanner_rules_test/source_scanner_rules_part_16.dart';
 part 'source_scanner_rules_test/source_scanner_rules_part_17.dart';
 part 'source_scanner_rules_test/source_scanner_rules_part_18.dart';
 part 'source_scanner_rules_test/source_scanner_rules_part_19.dart';
+part 'source_scanner_rules_test/source_scanner_rules_part_20.dart';
 
 void main() {
   defineReflectiveSuite(() {
@@ -218,6 +220,9 @@ void main() {
     defineReflectiveTests(DebugPrintMultilineBlankingTest);
     defineReflectiveTests(DatasourceBoundaryFourGettersAllowedTest);
     defineReflectiveTests(DatasourceBoundaryFiveGettersFiresTest);
+    defineReflectiveTests(PresentationWidgetNavigationForbiddenTest);
+    defineReflectiveTests(PresentationWidgetControllerStateTest);
+    defineReflectiveTests(PresentationWidgetInfrastructureDependencyTest);
   });
 }
 

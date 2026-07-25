@@ -71,7 +71,6 @@ Core skill rules already covered before this pass:
   `always_declare_return_types`, `type_annotate_public_apis`,
   `avoid_positional_boolean_parameters`,
   `avoid_equals_and_hash_code_on_mutable_classes`,
-  `avoid_null_checks_in_equality_operators`,
   `avoid_private_typedef_functions`, `avoid_returning_this`,
   `avoid_setters_without_getters`, `prefer_mixin`, and
   `use_to_and_as_if_applicable`. `prefer_type_over_var` was removed because it

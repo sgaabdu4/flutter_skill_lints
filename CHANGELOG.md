@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Removed the deprecated `avoid_null_checks_in_equality_operators` lint from
+  the required Flutter skill configuration and shipped configuration examples.
+
 ## [0.8.0] - 2026-07-15
 
 - Added `presentation_widget_navigation_forbidden` to reject GoRouter imports,

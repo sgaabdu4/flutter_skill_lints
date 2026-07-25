@@ -217,7 +217,6 @@ linter:
     - type_annotate_public_apis
     - avoid_positional_boolean_parameters
     - avoid_equals_and_hash_code_on_mutable_classes
-    - avoid_null_checks_in_equality_operators
     - avoid_private_typedef_functions
     - avoid_returning_this
     - avoid_setters_without_getters
@@ -275,7 +274,6 @@ linter:
     - type_annotate_public_apis
     - avoid_positional_boolean_parameters
     - avoid_equals_and_hash_code_on_mutable_classes
-    - avoid_null_checks_in_equality_operators
     - avoid_private_typedef_functions
     - avoid_returning_this
     - avoid_setters_without_getters
@@ -375,7 +373,6 @@ linter:
     - type_annotate_public_apis
     - avoid_positional_boolean_parameters
     - avoid_equals_and_hash_code_on_mutable_classes
-    - avoid_null_checks_in_equality_operators
     - avoid_private_typedef_functions
     - avoid_returning_this
     - avoid_setters_without_getters
@@ -430,7 +427,6 @@ linter:
     - type_annotate_public_apis
     - avoid_positional_boolean_parameters
     - avoid_equals_and_hash_code_on_mutable_classes
-    - avoid_null_checks_in_equality_operators
     - avoid_private_typedef_functions
     - avoid_returning_this
     - avoid_setters_without_getters
@@ -490,7 +486,6 @@ linter:
     - type_annotate_public_apis
     - avoid_positional_boolean_parameters
     - avoid_equals_and_hash_code_on_mutable_classes
-    - avoid_null_checks_in_equality_operators
     - avoid_private_typedef_functions
     - avoid_returning_this
     - avoid_setters_without_getters
@@ -509,7 +504,7 @@ linter:
     await assertDiagnostics('void main() {}', [projectLint('cfg_prohibited_lint_plugins')]);
   }
 
-  Future<void> test_allowsCanonicalConfig() async {
+  Future<void> test_allowsCanonicalConfigWithoutDeprecatedLints() async {
     _writeCanonicalAnalysisOptions();
     newFile('$testPackageRootPath/build.yaml', r'''
 targets:
@@ -568,7 +563,6 @@ linter:
     - type_annotate_public_apis
     - avoid_positional_boolean_parameters
     - avoid_equals_and_hash_code_on_mutable_classes
-    - avoid_null_checks_in_equality_operators
     - avoid_private_typedef_functions
     - avoid_returning_this
     - avoid_setters_without_getters

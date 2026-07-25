@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.8.1] - 2026-07-25
 
 - Removed the deprecated `avoid_null_checks_in_equality_operators` lint from
   the required Flutter skill configuration and shipped configuration examples.

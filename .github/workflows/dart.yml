@@ -137,7 +137,7 @@ jobs:
           TOTAL=$(jq '.scores.maxPoints' pana.json)
           MIN_SCORE=$((TOTAL - 10))
           echo "PANA Score: $SCORE/$TOTAL"
-          # Analyzer is intentionally held on the analyzer 12 line for
+          # Analyzer is intentionally held on the analyzer 13 line for
           # riverpod_lint compatibility; keep every other PANA category clean.
           if [ "$SCORE" -lt "$MIN_SCORE" ]; then
             jq '.suggestions' pana.json

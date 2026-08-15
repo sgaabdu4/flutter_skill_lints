@@ -5,7 +5,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a file contains more than one top-level widget class.
 ///
@@ -31,14 +32,8 @@ class PreferSingleWidgetPerFile extends AnalysisRule {
 
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this, isTestFile: _isTestFile(context));
+    final visitor = _Visitor(this, isTestFile: isTestSourceContext(context));
     registry.addCompilationUnit(this, visitor);
-  }
-
-  bool _isTestFile(RuleContext context) {
-    if (context.isInTestDirectory) return true;
-    final path = context.definingUnit.file.path.replaceAll('\\', '/');
-    return path.endsWith('_test.dart');
   }
 }
 

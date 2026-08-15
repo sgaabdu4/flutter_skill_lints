@@ -37,6 +37,33 @@ bool isMountedGuardWithReturn(Statement statement) {
   return false;
 }
 
+void scanStatementsAfterAwait(
+  NodeList<Statement> statements,
+  void Function(Statement statement) onUnsafeStatement, {
+  bool inspectStatementsContainingAwait = false,
+}) {
+  var seenAwait = false;
+
+  for (final statement in statements) {
+    if (!seenAwait) {
+      seenAwait = containsAwait(statement);
+      continue;
+    }
+
+    if (isMountedGuardWithReturn(statement)) {
+      seenAwait = false;
+      continue;
+    }
+
+    if (inspectStatementsContainingAwait && containsAwait(statement)) {
+      onUnsafeStatement(statement);
+      continue;
+    }
+
+    onUnsafeStatement(statement);
+  }
+}
+
 /// Finds `await` expressions, stopping at function boundaries.
 class _AwaitFinder extends RecursiveAstVisitor<void> {
   bool found = false;

@@ -1,13 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import '../ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/firebase_name_utils.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a literal Firebase Analytics parameter name is invalid.
-class IncorrectFirebaseParameterName extends AnalysisRule {
+class IncorrectFirebaseParameterName extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'incorrect_firebase_parameter_name',
     'Use a valid Firebase Analytics parameter name.',
@@ -18,17 +16,13 @@ class IncorrectFirebaseParameterName extends AnalysisRule {
 
   IncorrectFirebaseParameterName()
     : super(
+        code: code,
         name: 'incorrect_firebase_parameter_name',
         description: 'Warns when Firebase Analytics logEvent uses invalid literal parameter names.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodInvocation(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -45,31 +39,18 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
     for (final entry in parameters.elements.whereType<MapLiteralEntry>()) {
       final key = entry.key;
-      if (key is! SimpleStringLiteral || _isValidFirebaseName(key.value)) continue;
+      if (key is! SimpleStringLiteral || isValidFirebaseName(key.value)) continue;
       rule.reportAtNode(key);
     }
   }
 }
 
 SetOrMapLiteral? _parametersArgument(ArgumentList argumentList) {
-  for (final argument in argumentList.arguments.whereType<NamedExpression>()) {
+  for (final argument in argumentList.arguments.whereType<NamedArgument>()) {
     if (argument.name.lexeme != 'parameters') continue;
-    final expression = argument.expression;
+    final expression = argument.argumentExpression;
     return expression is SetOrMapLiteral ? expression : null;
   }
 
   return null;
-}
-
-bool _isValidFirebaseName(String name) {
-  if (name.isEmpty || name.length > 40) return false;
-  if (_hasReservedPrefix(name)) return false;
-  return RegExp(r'^[A-Za-z][A-Za-z0-9_]*$').hasMatch(name);
-}
-
-bool _hasReservedPrefix(String name) {
-  final normalized = name.toLowerCase();
-  return normalized.startsWith('firebase_') ||
-      normalized.startsWith('google_') ||
-      normalized.startsWith('ga_');
 }

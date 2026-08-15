@@ -89,49 +89,48 @@ class _Visitor extends SimpleAstVisitor<void> {
     PatternVariableDeclaration decl,
     int statementOffset,
   ) {
-    final pattern = decl.pattern;
-    final expression = decl.expression;
-
-    // Get the source variable name and element
-    final String sourceName;
-    final Element? sourceElement;
-
-    if (expression is SimpleIdentifier) {
-      sourceName = expression.name;
-      sourceElement = expression.element;
-    } else {
-      // Only support simple identifier sources (not method calls, etc.)
-      return null;
-    }
-
-    // Only handle local variables and parameters
-    if (sourceElement is! LocalElement) return null;
-
-    // Extract destructured field names
-    final fields = <String>{};
-
-    if (pattern is ObjectPattern) {
-      for (final field in pattern.fields) {
-        final name = field.effectiveName;
-        if (name != null) fields.add(name);
-      }
-    } else if (pattern is RecordPattern) {
-      for (final field in pattern.fields) {
-        final name = field.effectiveName;
-        if (name != null) fields.add(name);
-      }
-    } else {
-      return null;
-    }
-
+    final source = _localDestructuringSource(decl.expression);
+    if (source == null) return null;
+    final fields = _destructuredFieldNames(decl.pattern);
     if (fields.isEmpty) return null;
 
     return (
-      sourceName: sourceName,
-      sourceElement: sourceElement,
+      sourceName: source.name,
+      sourceElement: source.element,
       destructuredFields: fields,
       statementOffset: statementOffset,
     );
+  }
+
+  static ({String name, LocalElement element})? _localDestructuringSource(Expression? expression) {
+    if (expression is! SimpleIdentifier || expression.element is! LocalElement) {
+      return null;
+    }
+    return (name: expression.name, element: expression.element! as LocalElement);
+  }
+
+  static Set<String> _destructuredFieldNames(DartPattern pattern) {
+    if (pattern is ObjectPattern) return _objectPatternFieldNames(pattern);
+    if (pattern is RecordPattern) return _recordPatternFieldNames(pattern);
+    return const {};
+  }
+
+  static Set<String> _objectPatternFieldNames(ObjectPattern pattern) {
+    final names = <String>{};
+    for (final field in pattern.fields) {
+      final name = field.effectiveName;
+      if (name != null) names.add(name);
+    }
+    return names;
+  }
+
+  static Set<String> _recordPatternFieldNames(RecordPattern pattern) {
+    final names = <String>{};
+    for (final field in pattern.fields) {
+      final name = field.effectiveName;
+      if (name != null) names.add(name);
+    }
+    return names;
   }
 }
 

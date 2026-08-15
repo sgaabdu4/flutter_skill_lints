@@ -130,6 +130,24 @@ dependency_overrides: {}
     await assertNoDiagnostics('library;');
   }
 
+  Future<void> test_allowsResolvedLockfileWithoutOverride_noLint() async {
+    newFile('$testPackageRootPath/pubspec.yaml', _pubspec());
+    newFile('$testPackageRootPath/pubspec.lock', '''
+packages:
+  analyzer:
+    dependency: "direct main"
+    description:
+      name: analyzer
+      url: https://pub.dev
+    source: hosted
+    version: 14.1.0
+sdks:
+  dart: ">=3.10.0 <4.0.0"
+''');
+
+    await assertNoDiagnostics('library;');
+  }
+
   Future<void> test_reportsDependencyOverrides_lint() async {
     newFile(
       '$testPackageRootPath/pubspec.yaml',
@@ -157,11 +175,80 @@ dependency_overrides: { analyzer: ^12.0.0 }
     await assertDiagnostics('library;', [lint(0, 'library'.length)]);
   }
 
+  Future<void> test_allowsEmptyPubspecOverrides_noLint() async {
+    newFile('$testPackageRootPath/pubspec.yaml', _pubspec());
+    newFile('$testPackageRootPath/pubspec_overrides.yaml', 'dependency_overrides: {}\n');
+
+    await assertNoDiagnostics('library;');
+  }
+
+  Future<void> test_reportsPubspecOverrides_lint() async {
+    newFile('$testPackageRootPath/pubspec.yaml', _pubspec());
+    newFile('$testPackageRootPath/pubspec_overrides.yaml', '''
+dependency_overrides:
+  analyzer: 14.1.0
+''');
+
+    await assertDiagnostics('library;', [lint(0, 'library'.length)]);
+  }
+
+  Future<void> test_reportsAuditedPubspecOverride_lint() async {
+    newFile('$testPackageRootPath/pubspec.yaml', _pubspec());
+    newFile('$testPackageRootPath/pubspec_overrides.yaml', '''
+dependency_overrides:
+  analyzer: 14.1.0
+''');
+    newFile('$testPackageRootPath/tool/dependency_override_audit.yaml', '''
+dependency_overrides:
+  analyzer: 14.1.0
+proof:
+  - dart run build_runner build
+  - dart test
+''');
+
+    await assertDiagnostics('library;', [lint(0, 'library'.length)]);
+  }
+
+  Future<void> test_reportsWorkspaceMemberOverride_lint() async {
+    newFile(
+      '$testPackageRootPath/pubspec.yaml',
+      _pubspec(workspace: 'workspace:\n  - packages/member'),
+    );
+    newFile('$testPackageRootPath/packages/member/pubspec.yaml', '''
+name: member
+resolution: workspace
+environment:
+  sdk: ^3.10.0
+''');
+    newFile('$testPackageRootPath/packages/member/pubspec_overrides.yaml', '''
+dependency_overrides:
+  analyzer: 14.1.0
+''');
+
+    await assertDiagnostics('library;', [lint(0, 'library'.length)]);
+  }
+
+  Future<void> test_reportsWorkspaceGlobMemberOverride_lint() async {
+    newFile('$testPackageRootPath/pubspec.yaml', _pubspec(workspace: 'workspace:\n  - packages/*'));
+    newFile('$testPackageRootPath/packages/member/pubspec.yaml', '''
+name: member
+resolution: workspace
+environment:
+  sdk: ^3.10.0
+''');
+    newFile('$testPackageRootPath/packages/member/pubspec_overrides.yaml', '''
+dependency_overrides:
+  analyzer: 14.1.0
+''');
+
+    await assertDiagnostics('library;', [lint(0, 'library'.length)]);
+  }
+
   Future<void> test_usesErrorSeverity() async {
     expect(AvoidDependencyOverrides.code.severity, DiagnosticSeverity.ERROR);
   }
 
-  String _pubspec({String overrides = ''}) {
+  String _pubspec({String overrides = '', String workspace = ''}) {
     return '''
 name: test
 publish_to: none
@@ -171,6 +258,7 @@ dependencies:
   analyzer: ^12.1.0
 dev_dependencies:
   test: ^1.30.0
+$workspace
 $overrides
 ''';
   }

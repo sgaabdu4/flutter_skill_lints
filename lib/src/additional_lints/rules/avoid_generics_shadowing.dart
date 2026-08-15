@@ -1,16 +1,14 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a generic type parameter shadows a top-level type declaration
 /// in the same file (class, mixin, enum, typedef, or extension type).
 ///
 /// Shadowing can be confusing when a parameter or variable annotated with the
 /// generic looks like it refers to the real class.
-class AvoidGenericsShadowing extends AnalysisRule {
+class AvoidGenericsShadowing extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_generics_shadowing',
     "The type parameter '{0}' shadows the top-level declaration '{0}'.",
@@ -24,16 +22,11 @@ class AvoidGenericsShadowing extends AnalysisRule {
         description:
             'Warns when a generic type parameter shadows a top-level '
             'declaration in the same file.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addCompilationUnit(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -57,8 +50,8 @@ class _Visitor extends SimpleAstVisitor<void> {
           topLevelNames.add(name.lexeme);
         case FunctionTypeAlias(:final name):
           topLevelNames.add(name.lexeme);
-        case ExtensionTypeDeclaration(:final primaryConstructor):
-          topLevelNames.add(primaryConstructor.typeName.lexeme);
+        case ExtensionTypeDeclaration(:final namePart):
+          topLevelNames.add(namePart.typeName.lexeme);
         default:
           break;
       }

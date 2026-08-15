@@ -1,20 +1,16 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
-import '../hook_detection.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/hook_detection.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when hooks are called inside conditional branches.
 ///
 /// Hooks rely on call order to maintain state correctly. Calling hooks
 /// conditionally can cause hooks to be called in a different order between
 /// builds, leading to unexpected behavior.
-class AvoidConditionalHooks extends AnalysisRule {
+class AvoidConditionalHooks extends ClassAndInstanceCreationCheckRule {
   static const LintCode code = LintCode(
     'avoid_conditional_hooks',
     'Hooks should not be called conditionally.',
@@ -25,50 +21,19 @@ class AvoidConditionalHooks extends AnalysisRule {
     : super(
         name: 'avoid_conditional_hooks',
         description: 'Warns when hooks are called inside conditional branches.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addClassDeclaration(this, visitor);
-    registry.addInstanceCreationExpression(this, visitor);
-  }
-}
-
-class _Visitor extends SimpleAstVisitor<void> {
-  final AvoidConditionalHooks rule;
-
-  _Visitor(this.rule);
-
-  static const _hookWidgetChecker = TypeChecker.any([
-    TypeChecker.fromName('HookWidget', packageName: 'flutter_hooks'),
-    TypeChecker.fromName('HookConsumerWidget', packageName: 'hooks_riverpod'),
-  ]);
-
-  @override
-  void visitClassDeclaration(ClassDeclaration node) {
-    final superclass = node.extendsClause?.superclass;
-    final superclassElement = superclass?.element;
-    if (superclass == null || superclassElement == null) return;
-
-    if (!_hookWidgetChecker.isExactly(superclassElement)) return;
-
-    final body = node.body;
-    if (body is! BlockClassBody) return;
-
-    final buildMethod = body.members.whereType<MethodDeclaration>().firstWhereOrNull(
-      (member) => member.name.lexeme == 'build',
-    );
+  void checkClassDeclaration(ClassDeclaration node) {
+    final buildMethod = hookWidgetBuildMethod(node);
     if (buildMethod == null) return;
 
     _checkBody(buildMethod.body);
   }
 
   @override
-  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+  void checkInstanceCreationExpression(InstanceCreationExpression node) {
     final body = maybeHookBuilderBody(node);
     if (body == null) return;
 
@@ -76,7 +41,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _checkBody(AstNode body) {
-    final finder = _ConditionalHookFinder(rule);
+    final finder = _ConditionalHookFinder(this);
     body.accept(finder);
   }
 }

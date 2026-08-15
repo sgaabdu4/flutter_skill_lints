@@ -1,12 +1,31 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 
-import './ast_node_analysis.dart';
-import './type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Matches hook function names: starts with `use` (or `_use`) followed by
 /// an uppercase letter or digit (to avoid matching words like "user").
 final hookNameRegex = RegExp('^_?use[0-9A-Z]');
+
+const hookWidgetChecker = TypeChecker.any([
+  TypeChecker.fromName('HookWidget', packageName: 'flutter_hooks'),
+  TypeChecker.fromName('HookConsumerWidget', packageName: 'hooks_riverpod'),
+]);
+
+MethodDeclaration? hookWidgetBuildMethod(ClassDeclaration node) {
+  final superclass = node.extendsClause?.superclass;
+  final superclassElement = superclass?.element;
+  if (superclass == null || superclassElement == null) return null;
+  if (!hookWidgetChecker.isExactly(superclassElement)) return null;
+
+  final body = node.body;
+  if (body is! BlockClassBody) return null;
+
+  return body.members.whereType<MethodDeclaration>().firstWhereOrNull(
+    (member) => member.name.lexeme == 'build',
+  );
+}
 
 /// Collects hook invocations from AST nodes.
 class _HookExpressionsGatherer extends GeneralizingAstVisitor<void> {
@@ -59,10 +78,10 @@ FunctionBody? maybeHookBuilderBody(InstanceCreationExpression node) {
 
   if (!hookBuilderChecker.isExactly(classElement)) return null;
 
-  final builderParameter = node.argumentList.arguments
-      .whereType<NamedExpression>()
-      .firstWhereOrNull((e) => e.name.lexeme == 'builder');
-  if (builderParameter?.expression case FunctionExpression(:final body)) {
+  final builderParameter = node.argumentList.arguments.whereType<NamedArgument>().firstWhereOrNull(
+    (e) => e.name.lexeme == 'builder',
+  );
+  if (builderParameter?.argumentExpression case FunctionExpression(:final body)) {
     return body;
   }
 

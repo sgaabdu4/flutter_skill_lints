@@ -1,12 +1,9 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a try statement is nested in another try statement.
-class AvoidNestedTryStatements extends AnalysisRule {
+class AvoidNestedTryStatements extends TryStatementCheckRule {
   static const LintCode code = LintCode(
     'avoid_nested_try_statements',
     'Avoid nested try statements.',
@@ -17,26 +14,13 @@ class AvoidNestedTryStatements extends AnalysisRule {
     : super(
         name: 'avoid_nested_try_statements',
         description: 'Warns when a try statement is nested in another try statement.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addTryStatement(this, _Visitor(this));
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  const _Visitor(this.rule);
-
-  final AvoidNestedTryStatements rule;
-
-  @override
-  void visitTryStatement(TryStatement node) {
+  void checkTryStatement(TryStatement node) {
     if (_hasEnclosingTryStatement(node)) {
-      rule.reportAtNode(node);
+      reportAtNode(node);
     }
   }
 }

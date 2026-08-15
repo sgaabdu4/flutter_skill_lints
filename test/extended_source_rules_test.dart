@@ -3,9 +3,6 @@
 import 'dart:math' as math;
 
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
-// ignore: implementation_imports
-import 'package:analyzer_testing/src/analysis_rule/pub_package_resolution.dart'
-    show ExpectedDiagnostic;
 import 'package:flutter_skill_lints/src/rules/architecture_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/freezed_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/router_extended_source_rules.dart';
@@ -47,15 +44,18 @@ abstract class _ExtendedSourceRuleTest extends AnalysisRuleTest {
 
   Future<void> test_reportsDiagnostic() async {
     final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    final expected = compatLint(analyzedSource, needle, ruleName, lineStart: lineStart);
     final filePath = path;
     if (filePath == null) {
-      await assertDiagnostics(analyzedSource, [expected]);
+      await assertDiagnostics(analyzedSource, [
+        compatLint(analyzedSource, needle, ruleName, lineStart: lineStart),
+      ]);
       return;
     }
 
     newFile(filePath, analyzedSource);
-    await assertDiagnosticsInFile(filePath, [expected]);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, needle, ruleName, lineStart: lineStart),
+    ]);
   }
 
   Future<void> assertAllows(String source, {String? path, bool addIgnorePrefix = true}) async {
@@ -76,12 +76,7 @@ abstract class _ExtendedSourceRuleTest extends AnalysisRuleTest {
 $source''';
   }
 
-  ExpectedDiagnostic compatLint(
-    String source,
-    String needle,
-    String name, {
-    bool lineStart = false,
-  }) {
+  T compatLint<T>(String source, String needle, String name, {bool lineStart = false}) {
     var offset = source.indexOf(needle);
     if (offset < 0) {
       throw StateError('Needle not found: $needle');
@@ -92,7 +87,7 @@ $source''';
 
     final lineEnd = source.indexOf('\n', offset);
     final end = lineEnd < 0 ? source.length : lineEnd;
-    return lint(offset, math.max(1, end - offset), name: name);
+    return lint(offset, math.max(1, end - offset), name: name) as T;
   }
 
   void _addFlutterPackage() {

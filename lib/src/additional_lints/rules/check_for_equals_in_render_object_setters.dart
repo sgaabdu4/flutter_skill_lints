@@ -1,16 +1,13 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when RenderObject setters invalidate layout or paint without an
 /// equality guard.
-final class CheckForEqualsInRenderObjectSetters extends AnalysisRule {
+final class CheckForEqualsInRenderObjectSetters extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'check_for_equals_in_render_object_setters',
     'Check for equality before invalidating a RenderObject setter.',
@@ -23,15 +20,11 @@ final class CheckForEqualsInRenderObjectSetters extends AnalysisRule {
         description:
             'Warns when RenderObject setters assign backing fields and call '
             'markNeeds* without first checking equality.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addClassDeclaration(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -166,8 +159,8 @@ bool _isEqualityCheck(Expression expression, String fieldName, String parameterN
     return false;
   }
 
-  final left = _expressionName(unwrapped.leftOperand);
-  final right = _expressionName(unwrapped.rightOperand);
+  final left = _fieldName(unwrapped.leftOperand);
+  final right = _fieldName(unwrapped.rightOperand);
 
   return left == fieldName && right == parameterName || left == parameterName && right == fieldName;
 }
@@ -192,17 +185,6 @@ Expression _unwrapParentheses(Expression expression) {
 
 String? _fieldName(Expression expression) {
   return switch (expression) {
-    SimpleIdentifier(:final name) => name,
-    PropertyAccess(target: ThisExpression(), :final propertyName) => propertyName.name,
-    PrefixedIdentifier(prefix: SimpleIdentifier(name: 'this'), :final identifier) =>
-      identifier.name,
-    _ => null,
-  };
-}
-
-String? _expressionName(Expression expression) {
-  final unwrapped = _unwrapParentheses(expression);
-  return switch (unwrapped) {
     SimpleIdentifier(:final name) => name,
     PropertyAccess(target: ThisExpression(), :final propertyName) => propertyName.name,
     PrefixedIdentifier(prefix: SimpleIdentifier(name: 'this'), :final identifier) =>

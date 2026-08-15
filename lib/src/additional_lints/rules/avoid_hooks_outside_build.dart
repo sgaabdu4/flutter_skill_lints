@@ -5,9 +5,9 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
-import '../hook_detection.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/hook_detection.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when hook calls are made outside a hook build context.
 ///
@@ -104,7 +104,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   bool _isHookBuilderFunction(FunctionExpression node) {
     final parent = node.parent;
-    if (parent is! NamedExpression || parent.name.lexeme != 'builder') {
+    if (parent is! NamedArgument || parent.name.lexeme != 'builder') {
       return false;
     }
 

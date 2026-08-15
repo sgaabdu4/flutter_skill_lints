@@ -1,12 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when one `if` / `else if` chain has more than three branches.
-class AvoidIfWithManyBranches extends AnalysisRule {
+class AvoidIfWithManyBranches extends IfStatementRule {
   static const int maxBranches = 3;
 
   static const LintCode code = LintCode(
@@ -19,15 +17,11 @@ class AvoidIfWithManyBranches extends AnalysisRule {
     : super(
         name: 'avoid_if_with_many_branches',
         description: 'Warns when an if chain has more than three branches.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addIfStatement(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {

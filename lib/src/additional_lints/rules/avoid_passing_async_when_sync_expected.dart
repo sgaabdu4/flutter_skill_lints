@@ -52,13 +52,13 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
 AstNode? _callbackArgument(FunctionExpression node) {
   final parent = node.parent;
-  if (parent is NamedExpression && parent.expression == node) return parent;
+  if (parent is NamedArgument && parent.argumentExpression == node) return parent;
   if (parent is ArgumentList) return node;
   return null;
 }
 
 DartType? _parameterType(AstNode argument) {
-  if (argument case NamedExpression(:final correspondingParameter)) {
+  if (argument case NamedArgument(:final correspondingParameter)) {
     return correspondingParameter?.type;
   }
 

@@ -5,7 +5,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Fix that renames the inner closure's BuildContext parameter to match the
 /// outer context name, so the closest BuildContext is used.
@@ -13,7 +13,7 @@ class UseClosestBuildContextFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.useClosestBuildContext',
     DartFixKindPriority.standard,
-    "Rename inner parameter to use the closest BuildContext",
+    'Rename inner parameter to use the closest BuildContext',
   );
 
   UseClosestBuildContextFix({required super.context});
@@ -50,26 +50,28 @@ class UseClosestBuildContextFix extends ResolvedCorrectionProducer {
   /// Walk up the AST to find the nearest FunctionExpression ancestor
   /// that has a BuildContext parameter.
   FormalParameter? _findEnclosingBuildContextParam(AstNode node) {
-    AstNode? current = node.parent;
-    while (current != null) {
-      if (current is FunctionExpression) {
-        final parameters = current.parameters?.parameters;
-        if (parameters != null) {
-          for (final param in parameters) {
-            if (_isBuildContextType(param)) return param;
-          }
-        }
-        return null;
-      }
+    final function = _enclosingFunctionExpression(node);
+    if (function == null) return null;
+    return _buildContextParameter(function);
+  }
+
+  FunctionExpression? _enclosingFunctionExpression(AstNode node) {
+    for (AstNode? current = node.parent; current != null; current = current.parent) {
+      if (current is FunctionExpression) return current;
       if (current is MethodDeclaration) return null;
-      current = current.parent;
+    }
+    return null;
+  }
+
+  FormalParameter? _buildContextParameter(FunctionExpression function) {
+    for (final parameter in function.parameters?.parameters ?? const <FormalParameter>[]) {
+      if (_isBuildContextType(parameter)) return parameter;
     }
     return null;
   }
 
   static bool _isBuildContextType(FormalParameter param) {
-    final normal = param is DefaultFormalParameter ? param.parameter : param;
-    final type = normal is SimpleFormalParameter ? normal.type?.type : null;
+    final type = param.type?.type;
     if (type == null) return false;
     return _buildContextChecker.isExactlyType(type);
   }

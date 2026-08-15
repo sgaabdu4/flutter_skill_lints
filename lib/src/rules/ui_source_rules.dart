@@ -211,7 +211,7 @@ int _widgetInfraDependencyColumn(String line) {
 }
 
 bool _isWidgetSurfaceClass(SourceScannerContext context, ScannerClassSpan classSpan) {
-  final signature = _classSignature(context, classSpan);
+  final signature = sourceClassSignature(context, classSpan);
   return _widgetSurface.hasMatch(signature);
 }
 
@@ -235,23 +235,12 @@ bool _classDispatchesNotifierMutation(SourceScannerContext context, ScannerClass
   return false;
 }
 
-String _classSignature(SourceScannerContext context, ScannerClassSpan classSpan) {
-  final buffer = StringBuffer();
-  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-    final line = context.source.masked[i];
-    buffer.write(' ');
-    buffer.write(line);
-    if (line.contains('{')) break;
-  }
-  return buffer.toString();
-}
-
 int? _awaitedNotifierResultColumn(SourceScannerContext context, int lineIndex, int methodEnd) {
   final line = context.source.masked[lineIndex];
   final start = _awaitedNotifierResultStart.firstMatch(line);
   if (start == null) return null;
 
-  final window = _lineWindow(context, lineIndex, methodEnd, 8);
+  final window = sourceLineWindow(context, lineIndex, methodEnd, 8);
   if (!_notifierReadInWindow.hasMatch(window)) return null;
   final awaitColumn = line.indexOf('await');
   return awaitColumn >= 0 ? awaitColumn : start.start;
@@ -261,7 +250,7 @@ int _notifierThenResultColumn(SourceScannerContext context, int lineIndex, int m
   final line = context.source.masked[lineIndex];
   if (!line.contains('ref.read') && !line.contains('ref')) return -1;
 
-  final window = _lineWindow(context, lineIndex, methodEnd, 12);
+  final window = sourceLineWindow(context, lineIndex, methodEnd, 12);
   if (!_notifierThenInWindow.hasMatch(window)) return -1;
   final refColumn = line.indexOf('ref.read');
   if (refColumn >= 0) return refColumn;
@@ -274,7 +263,7 @@ bool _isCollectionHelper(
   required bool requirePrivate,
 }) {
   if (requirePrivate && !method.name.startsWith('_')) return false;
-  final window = _lineWindow(context, method.start, method.end, 4).replaceAll('\n', ' ');
+  final window = sourceLineWindow(context, method.start, method.end, 4).replaceAll('\n', ' ');
   final pattern = requirePrivate ? _collectionReturnHelper : _anyCollectionReturnHelper;
   return pattern.hasMatch(window);
 }
@@ -282,7 +271,7 @@ bool _isCollectionHelper(
 bool _isTopLevelDerivedCollection(SourceScannerContext context, int lineIndex) {
   final line = context.source.masked[lineIndex];
   if (!_topLevelCollectionVariable.hasMatch(line)) return false;
-  final window = _lineWindow(context, lineIndex, context.source.length - 1, 6);
+  final window = sourceLineWindow(context, lineIndex, context.source.length - 1, 6);
   return _collectionWork.hasMatch(window);
 }
 
@@ -291,47 +280,6 @@ int _firstNonWhitespaceColumn(String line) {
     if (line[i].trim().isNotEmpty) return i;
   }
   return 0;
-}
-
-String _lineWindow(SourceScannerContext context, int startLine, int endLine, int maxLines) {
-  final end = startLine + maxLines > endLine ? endLine : startLine + maxLines;
-  final buffer = StringBuffer();
-  for (var i = startLine; i <= end && i < context.source.length; i++) {
-    if (i > startLine) buffer.write('\n');
-    buffer.write(context.source.masked[i]);
-  }
-  return buffer.toString();
-}
-
-Iterable<int> _directClassMemberLines(
-  SourceScannerContext context,
-  ScannerClassSpan classSpan,
-) sync* {
-  var depth = 0;
-  var sawClassOpenBrace = false;
-
-  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-    final line = context.source.masked[i];
-    if (i > classSpan.start && sawClassOpenBrace && depth == 1) {
-      yield i;
-    }
-
-    depth += _braceDelta(line);
-    if (line.contains('{')) sawClassOpenBrace = true;
-  }
-}
-
-int _braceDelta(String line) {
-  var delta = 0;
-  for (var i = 0; i < line.length; i++) {
-    final char = line[i];
-    if (char == '{') {
-      delta++;
-    } else if (char == '}') {
-      delta--;
-    }
-  }
-  return delta;
 }
 
 bool _buildContainsAppShell(SourceScannerContext context, ScannerMethodSpan method) {

@@ -11,7 +11,6 @@ class AvoidLocalFunctions extends AnalysisRule {
     'avoid_local_functions',
     'Avoid local function declarations.',
     correctionMessage: 'Move the function to a method or top-level helper.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidLocalFunctions()

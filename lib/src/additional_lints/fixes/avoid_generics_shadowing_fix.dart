@@ -30,48 +30,8 @@ class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
 
     final typeParamList = targetNode.parent;
     if (typeParamList is! TypeParameterList) return;
-
-    // Collect names already in use by sibling type parameters.
-    final usedNames = <String>{for (final tp in typeParamList.typeParameters) tp.name.lexeme};
-
-    // Also collect all NamedType identifiers in the declaring scope to avoid
-    // renaming to a name that shadows an outer type or identifier.
-    final scope = _findDeclaringScope(targetNode);
-    if (scope != null) {
-      final scopeNames = _collectNamedTypes(scope);
-      usedNames.addAll(scopeNames);
-    }
-
-    // Also check top-level declaration names in the compilation unit.
-    final unit = targetNode.thisOrAncestorOfType<CompilationUnit>();
-    if (unit != null) {
-      for (final declaration in unit.declarations) {
-        final declName = switch (declaration) {
-          ClassDeclaration(:final namePart) => namePart.typeName.lexeme,
-          MixinDeclaration(:final name) => name.lexeme,
-          EnumDeclaration(:final namePart) => namePart.typeName.lexeme,
-          GenericTypeAlias(:final name) => name.lexeme,
-          FunctionTypeAlias(:final name) => name.lexeme,
-          FunctionDeclaration(:final name) => name.lexeme,
-          TopLevelVariableDeclaration(:final variables) =>
-            variables.variables.firstOrNull?.name.lexeme,
-          _ => null,
-        };
-        if (declName != null) usedNames.add(declName);
-      }
-    }
-
-    // Pick a replacement name: try T, R, E, S, U, V, W, then T0, T1, ...
-    final candidates = ['T', 'R', 'E', 'S', 'U', 'V', 'W'];
-    final replacement = candidates.firstWhere(
-      (c) => !usedNames.contains(c),
-      orElse: () {
-        for (var i = 0; ; i++) {
-          final name = 'T$i';
-          if (!usedNames.contains(name)) return name;
-        }
-      },
-    );
+    final usedNames = _usedTypeParameterNames(targetNode, typeParamList);
+    final replacement = _replacementName(usedNames);
 
     final oldName = targetNode.name.lexeme;
 
@@ -91,6 +51,46 @@ class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
         }
       }
     });
+  }
+
+  Set<String> _usedTypeParameterNames(TypeParameter target, TypeParameterList parameters) {
+    final names = <String>{
+      for (final parameter in parameters.typeParameters) parameter.name.lexeme,
+    };
+    final scope = _findDeclaringScope(target);
+    if (scope != null) names.addAll(_collectNamedTypes(scope));
+    final unit = target.thisOrAncestorOfType<CompilationUnit>();
+    if (unit != null) names.addAll(_topLevelDeclarationNames(unit));
+    return names;
+  }
+
+  Set<String> _topLevelDeclarationNames(CompilationUnit unit) {
+    final names = <String>{};
+    for (final declaration in unit.declarations) {
+      final name = switch (declaration) {
+        ClassDeclaration(:final namePart) => namePart.typeName.lexeme,
+        MixinDeclaration(:final name) => name.lexeme,
+        EnumDeclaration(:final namePart) => namePart.typeName.lexeme,
+        GenericTypeAlias(:final name) => name.lexeme,
+        FunctionTypeAlias(:final name) => name.lexeme,
+        FunctionDeclaration(:final name) => name.lexeme,
+        TopLevelVariableDeclaration(:final variables) =>
+          variables.variables.firstOrNull?.name.lexeme,
+        _ => null,
+      };
+      if (name != null) names.add(name);
+    }
+    return names;
+  }
+
+  String _replacementName(Set<String> usedNames) {
+    for (final candidate in ['T', 'R', 'E', 'S', 'U', 'V', 'W']) {
+      if (!usedNames.contains(candidate)) return candidate;
+    }
+    for (var index = 0; ; index++) {
+      final candidate = 'T$index';
+      if (!usedNames.contains(candidate)) return candidate;
+    }
   }
 
   /// Collects all [NamedType] identifier names used within [scope],

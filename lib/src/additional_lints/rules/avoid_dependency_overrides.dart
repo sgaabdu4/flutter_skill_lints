@@ -1,39 +1,34 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer/file_system/file_system.dart';
+import 'package:flutter_skill_lints/src/additional_lints/pubspec_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/pubspec_rule_utils.dart';
 
-/// Reports pubspec dependency overrides.
-final class AvoidDependencyOverrides extends AnalysisRule {
+/// Reports dependency overrides in every package in the workspace.
+final class AvoidDependencyOverrides extends PubspecAnalysisRule {
   static const LintCode code = LintCode(
     'avoid_dependency_overrides',
-    'Avoid pub dependency overrides.',
-    correctionMessage: 'Remove dependency_overrides and fix the declared dependency constraints.',
+    'Remove pub dependency overrides.',
+    correctionMessage: 'Remove dependency_overrides from the package or workspace member.',
     severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidDependencyOverrides()
     : super(
         name: 'avoid_dependency_overrides',
-        description: 'Reports pubspec dependency_overrides entries.',
+        description: 'Reports dependency overrides in package and workspace pubspec files.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
+  bool shouldRegister(Folder root, RuleContext context, String? pubspecText) {
+    return hasDependencyOverrideInWorkspace(root);
+  }
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final root = context.package?.root;
-    if (root == null || !_isAnchorUnit(root, context)) return;
-
-    final text = _read(root.getChildAssumingFile('pubspec.yaml'));
-    if (text == null || !_hasDependencyOverrideEntry(text)) return;
-
-    registry.addCompilationUnit(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -47,54 +42,154 @@ final class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-bool _hasDependencyOverrideEntry(String text) {
-  final lines = text.split('\n');
-  var inSection = false;
-  var sectionIndent = 0;
-
-  for (final line in lines) {
-    if (line.trim().isEmpty || line.trimLeft().startsWith('#')) continue;
-    final indent = line.length - line.trimLeft().length;
-    final sectionMatch = RegExp(r'^\s*dependency_overrides\s*:(.*)$').firstMatch(line);
-    if (sectionMatch != null) {
-      sectionIndent = indent;
-      final inlineValue = (sectionMatch.group(1) ?? '').trim();
-      if (inlineValue.isNotEmpty && inlineValue != '{}') return true;
-      inSection = inlineValue.isEmpty;
-      continue;
+bool hasDependencyOverrideInWorkspace(Folder root) {
+  final seen = <String>{};
+  for (final packageRoot in _workspacePackageRoots(root, seen)) {
+    final overrides = <String, String>{};
+    for (final fileName in ['pubspec.yaml', 'pubspec_overrides.yaml']) {
+      final text = readFileText(packageRoot.getFile(fileName));
+      if (text != null) overrides.addAll(_dependencyOverrideEntries(text));
     }
-    if (!inSection) continue;
-    if (indent <= sectionIndent) {
-      inSection = false;
-      continue;
-    }
-    if (indent != sectionIndent + 2) continue;
-    if (RegExp(r'''^\s*['"]?[A-Za-z_][\w-]*['"]?\s*:''').hasMatch(line)) return true;
+    if (overrides.isNotEmpty) return true;
   }
-
   return false;
 }
 
-bool _isAnchorUnit(Folder root, RuleContext context) {
-  final currentPath = context.definingUnit.file.path;
-  final pubspecText = _read(root.getChildAssumingFile('pubspec.yaml')) ?? '';
-  final packageName = RegExp(
-    r'^name:\s*([A-Za-z0-9_]+)\s*$',
-    multiLine: true,
-  ).firstMatch(pubspecText)?.group(1);
+Map<String, String> _dependencyOverrideEntries(String text) {
+  final lines = text.split('\n');
+  final section = _findYamlSection(lines, 'dependency_overrides');
+  if (section == null) return {};
 
-  if (packageName != null) {
-    return currentPath == root.getChildAssumingFile('lib/$packageName.dart').path;
+  if (section.inline.isNotEmpty && section.inline != '{}') {
+    return {'<inline>': section.inline};
   }
+  if (section.inline.isNotEmpty) return {};
 
-  return currentPath == root.getChildAssumingFile('lib/main.dart').path;
+  return _parseYamlEntries(lines, section.index, section.indent);
 }
 
-String? _read(File file) {
-  if (!file.exists) return null;
+Map<String, String> _parseYamlEntries(List<String> lines, int sectionIndex, int sectionIndent) {
+  final entries = <String, String>{};
+  for (var index = sectionIndex + 1; index < lines.length; index++) {
+    final line = lines[index];
+    if (_isBlankOrComment(line)) continue;
+    final indent = _indentOf(line);
+    if (indent <= sectionIndent) break;
+    if (indent != sectionIndent + 2) continue;
+
+    final entry = _yamlEntryPattern.firstMatch(line);
+    if (entry == null) continue;
+    entries[entry.group(1)!] = _stripQuotes(entry.group(2)!);
+  }
+  return entries;
+}
+
+({int indent, int index, String inline})? _findYamlSection(List<String> lines, String name) {
+  final sectionPattern = RegExp('^\\s*$name\\s*:(.*)\$');
+  for (var index = 0; index < lines.length; index++) {
+    final line = lines[index];
+    if (_isBlankOrComment(line)) continue;
+    final match = sectionPattern.firstMatch(line);
+    if (match == null) continue;
+    return (indent: _indentOf(line), index: index, inline: (match.group(1) ?? '').trim());
+  }
+  return null;
+}
+
+bool _isBlankOrComment(String line) => line.trim().isEmpty || line.trimLeft().startsWith('#');
+
+int _indentOf(String line) => line.length - line.trimLeft().length;
+
+String _stripQuotes(String value) => value.replaceAll(RegExp(r'''^['"]|['"]$'''), '');
+
+final _yamlEntryPattern = RegExp(r'''^\s*['"]?([A-Za-z_][\w-]*)['"]?\s*:\s*([^#]+?)\s*$''');
+
+final _workspaceItemPattern = RegExp(r'''^\s*-\s*["']?([^"'#\s]+)["']?\s*$''');
+
+Iterable<String> _inlineWorkspacePaths(String inline) sync* {
+  final body = inline.substring(1, inline.length - 1);
+  for (final item in body.split(',')) {
+    final path = _stripQuotes(item.trim());
+    if (path.isNotEmpty) yield path;
+  }
+}
+
+Iterable<Folder> _workspacePackageRoots(Folder root, Set<String> seen) sync* {
+  if (!seen.add(root.path)) return;
+  yield root;
+
+  final text = readFileText(root.getFile('pubspec.yaml'));
+  if (text == null) return;
+  for (final memberPath in _workspaceMemberPaths(text)) {
+    for (final member in _workspaceMembers(root, memberPath)) {
+      if (!member.exists || !member.getFile('pubspec.yaml').exists) continue;
+      yield* _workspacePackageRoots(member, seen);
+    }
+  }
+}
+
+Iterable<Folder> _workspaceMembers(Folder root, String memberPath) sync* {
+  final parts = memberPath
+      .replaceAll('\\', '/')
+      .split('/')
+      .where((part) => part.isNotEmpty)
+      .toList();
+  if (parts.isEmpty) return;
+  yield* _matchWorkspacePath(root, parts, 0);
+}
+
+Iterable<Folder> _matchWorkspacePath(Folder current, List<String> parts, int index) sync* {
+  if (index == parts.length) {
+    yield current;
+    return;
+  }
+
+  final part = parts[index];
+  if (part == '**') {
+    yield* _matchWorkspacePath(current, parts, index + 1);
+    for (final child in _childFolders(current)) {
+      yield* _matchWorkspacePath(child, parts, index);
+    }
+    return;
+  }
+
+  if (part == '*') {
+    for (final child in _childFolders(current)) {
+      yield* _matchWorkspacePath(child, parts, index + 1);
+    }
+    return;
+  }
+
+  final child = current.getFolder(part);
+  if (child.exists) yield* _matchWorkspacePath(child, parts, index + 1);
+}
+
+Iterable<Folder> _childFolders(Folder folder) sync* {
+  List<Resource> children;
   try {
-    return file.readAsStringSync();
+    children = folder.getChildren();
   } on FileSystemException {
-    return null;
+    return;
+  }
+  for (final child in children) {
+    if (child is Folder) yield child;
+  }
+}
+
+Iterable<String> _workspaceMemberPaths(String text) sync* {
+  final lines = text.split('\n');
+  final section = _findYamlSection(lines, 'workspace');
+  if (section == null) return;
+  if (section.inline.startsWith('[') && section.inline.endsWith(']')) {
+    yield* _inlineWorkspacePaths(section.inline);
+    return;
+  }
+
+  for (var index = section.index + 1; index < lines.length; index++) {
+    final line = lines[index];
+    if (_isBlankOrComment(line)) continue;
+    if (_indentOf(line) <= section.indent) break;
+    final item = _workspaceItemPattern.firstMatch(line);
+    if (item != null) yield item.group(1)!;
   }
 }

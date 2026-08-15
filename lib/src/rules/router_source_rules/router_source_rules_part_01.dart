@@ -69,24 +69,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     ),
     description:
         'Flags BuildContext pop fallback helpers that call canPop/pop without checking mounted plus root/local Navigator stacks first.',
-    scan: (reporter, context) {
-      if (context.isTestFile) return;
-      for (var i = 0; i < context.source.length; i++) {
-        final extensionEnd = _contextExtensionEndLine(context, i);
-        if (extensionEnd == null) continue;
-        for (var j = i + 1; j < extensionEnd && j < context.source.length; j++) {
-          final declaration = _popFallbackHelperDeclaration.firstMatch(context.source.masked[j]);
-          if (declaration == null) continue;
-          final helperEnd = _blockEndLine(context.source.masked, j);
-          if (helperEnd <= j || helperEnd > extensionEnd) continue;
-          final body = context.source.masked.sublist(j, helperEnd + 1).join('\n');
-          if (!_popFallbackBodyLooksLikeHelper(body)) continue;
-          if (_popFallbackHasRequiredSafetyChecks(body)) continue;
-          reporter.report(context, j, declaration.start);
-        }
-        i = extensionEnd;
-      }
-    },
+    scan: _scanPopFallbackHelpers,
   ),
 
   /// Avoid ref.watch in router redirects.
@@ -181,7 +164,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
         r'(?:<[^>]+>)?\s*\(',
       );
       for (var i = 0; i < context.source.length; i++) {
-        final match = _windowMatchStartingOnLine(context, i, pattern, maxLines: 4);
+        final match = sourceWindowMatch(context, i, pattern, maxLines: 4);
         if (match != null) {
           reporter.report(context, i, match.column);
         }
@@ -248,54 +231,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     ),
     description:
         'Flags route-specific BuildContext navigation extensions so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final extensionEnd = _contextExtensionEndLine(context, i);
-        if (extensionEnd == null) continue;
-
-        final safetyEnd = (i + 120).clamp(0, context.source.length);
-        final end = extensionEnd < safetyEnd ? extensionEnd : safetyEnd;
-        for (var j = i + 1; j < end; j++) {
-          final line = context.source.masked[j];
-          final fallbackHelperDeclaration = RegExp(
-            r'^\s*(?:bool|void)\s+pop[A-Z]\w*\s*(?:<[^>]+>)?\s*\(',
-          ).firstMatch(line);
-          if (fallbackHelperDeclaration != null) continue;
-
-          final helperThisCall = RegExp(
-            r'\bpop[A-Z]\w*\s*(?:<[^>]+>)?\s*\(\s*this\b',
-          ).firstMatch(line);
-          if (helperThisCall != null) {
-            reporter.report(context, j, helperThisCall.start);
-            continue;
-          }
-
-          final variableRouteCall = RegExp(
-            r'\b[A-Za-z_]\w*(?:Route|RouteData)\w*\s*\.\s*'
-            r'(?:go|push|replace|pushReplacement|goRelative|pushRelative)\s*'
-            r'(?:<[^>]+>)?\s*\(\s*this\b',
-          ).firstMatch(line);
-          if (variableRouteCall != null) {
-            if (_isGenericContextFallbackRouteCall(context, j)) continue;
-            reporter.report(context, j, variableRouteCall.start);
-            continue;
-          }
-
-          final maxLines = end - j + 1 < 8 ? end - j + 1 : 8;
-          final routeCall = RegExp(
-            r'\b(?:const\s+)?[A-Z]\w*(?:Route|RouteData)\s*'
-            r'(?:<[^>]+>)?\s*\([\s\S]*?\)\s*\.\s*'
-            r'(?:go|push|replace|pushReplacement|goRelative|pushRelative)\s*'
-            r'(?:<[^>]+>)?\s*\(',
-          );
-          final routeMatch = _windowMatchStartingOnLine(context, j, routeCall, maxLines: maxLines);
-          if (routeMatch == null) continue;
-          reporter.report(context, j, routeMatch.column);
-        }
-
-        i = end;
-      }
-    },
+    scan: (reporter, context) => _reportContextNavigationExtensions(reporter, context),
   ),
 
   /// Use typed route helpers as the navigation API.
@@ -379,7 +315,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
         r'(?:\s*(?:<[^>]+>)?|\s*\.\s*\w+)\s*\(',
       );
       for (var i = 0; i < context.source.length; i++) {
-        final match = _windowMatchStartingOnLine(context, i, routeDefinition, maxLines: 4);
+        final match = sourceWindowMatch(context, i, routeDefinition, maxLines: 4);
         if (match != null) {
           reporter.report(context, i, match.column);
         }
@@ -477,3 +413,107 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     },
   ),
 ];
+
+void _reportContextNavigationExtensions(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+) {
+  for (var lineIndex = 0; lineIndex < context.source.length; lineIndex++) {
+    final extensionEnd = _contextExtensionEndLine(context, lineIndex);
+    if (extensionEnd == null) continue;
+    final end = _navigationExtensionEnd(lineIndex, extensionEnd, context.source.length);
+    _reportNavigationExtensionLines(reporter, context, lineIndex + 1, end);
+    lineIndex = end;
+  }
+}
+
+int _navigationExtensionEnd(int start, int extensionEnd, int sourceLength) {
+  final safetyEnd = start + 120;
+  final safeEnd = safetyEnd < sourceLength ? safetyEnd : sourceLength;
+  return extensionEnd < safeEnd ? extensionEnd : safeEnd;
+}
+
+void _reportNavigationExtensionLines(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  int start,
+  int end,
+) {
+  for (var lineIndex = start; lineIndex < end; lineIndex++) {
+    final column = _routeSpecificNavigationColumn(context, lineIndex, end);
+    if (column != null) reporter.report(context, lineIndex, column);
+  }
+}
+
+int? _routeSpecificNavigationColumn(SourceScannerContext context, int lineIndex, int end) {
+  final line = context.source.masked[lineIndex];
+  if (_routeFallbackDeclaration.hasMatch(line)) return null;
+  final helperCall = _routeHelperThisCall.firstMatch(line);
+  if (helperCall != null) return helperCall.start;
+  final variableRouteCall = _variableRouteCall.firstMatch(line);
+  if (variableRouteCall != null) {
+    return _isGenericContextFallbackRouteCall(context, lineIndex) ? null : variableRouteCall.start;
+  }
+  final maxLines = end - lineIndex + 1 < 8 ? end - lineIndex + 1 : 8;
+  final routeMatch = sourceWindowMatch(context, lineIndex, _typedRouteCall, maxLines: maxLines);
+  return routeMatch?.column;
+}
+
+final _routeFallbackDeclaration = RegExp(r'^\s*(?:bool|void)\s+pop[A-Z]\w*\s*(?:<[^>]+>)?\s*\(');
+
+final _routeHelperThisCall = RegExp(r'\bpop[A-Z]\w*\s*(?:<[^>]+>)?\s*\(\s*this\b');
+
+final _variableRouteCall = RegExp(
+  r'\b[A-Za-z_]\w*(?:Route|RouteData)\w*\s*\.\s*'
+  r'(?:go|push|replace|pushReplacement|goRelative|pushRelative)\s*'
+  r'(?:<[^>]+>)?\s*\(\s*this\b',
+);
+
+final _typedRouteCall = RegExp(
+  r'\b(?:const\s+)?[A-Z]\w*(?:Route|RouteData)\s*'
+  r'(?:<[^>]+>)?\s*\([\s\S]*?\)\s*\.\s*'
+  r'(?:go|push|replace|pushReplacement|goRelative|pushRelative)\s*'
+  r'(?:<[^>]+>)?\s*\(',
+);
+
+void _scanPopFallbackHelpers(ScannerRuleReporter reporter, SourceScannerContext context) {
+  if (context.isTestFile) return;
+  for (var lineIndex = 0; lineIndex < context.source.length; lineIndex++) {
+    final extensionEnd = _contextExtensionEndLine(context, lineIndex);
+    if (extensionEnd == null) continue;
+    _reportPopFallbackHelpersInExtension(reporter, context, lineIndex, extensionEnd);
+    lineIndex = extensionEnd;
+  }
+}
+
+void _reportPopFallbackHelpersInExtension(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  int extensionStart,
+  int extensionEnd,
+) {
+  for (
+    var lineIndex = extensionStart + 1;
+    lineIndex < extensionEnd && lineIndex < context.source.length;
+    lineIndex++
+  ) {
+    final declaration = _popFallbackHelperDeclaration.firstMatch(context.source.masked[lineIndex]);
+    if (declaration == null) continue;
+    _reportPopFallbackHelper(reporter, context, lineIndex, extensionEnd, declaration.start);
+  }
+}
+
+void _reportPopFallbackHelper(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  int lineIndex,
+  int extensionEnd,
+  int column,
+) {
+  final helperEnd = _blockEndLine(context.source.masked, lineIndex);
+  if (helperEnd <= lineIndex || helperEnd > extensionEnd) return;
+  final body = context.source.masked.sublist(lineIndex, helperEnd + 1).join('\n');
+  if (!_popFallbackBodyLooksLikeHelper(body)) return;
+  if (_popFallbackHasRequiredSafetyChecks(body)) return;
+  reporter.report(context, lineIndex, column);
+}

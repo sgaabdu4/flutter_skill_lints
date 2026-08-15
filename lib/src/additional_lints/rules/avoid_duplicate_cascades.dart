@@ -1,9 +1,6 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a cascade expression contains duplicate cascade sections.
 ///
@@ -24,7 +21,7 @@ import 'package:analyzer/error/error.dart';
 ///   ..field1 = '2'
 ///   ..field2 = '1';
 /// ```
-class AvoidDuplicateCascades extends AnalysisRule {
+class AvoidDuplicateCascades extends CascadeExpressionCheckRule {
   static const LintCode code = LintCode(
     'avoid_duplicate_cascades',
     'Duplicate cascade section found.',
@@ -37,25 +34,11 @@ class AvoidDuplicateCascades extends AnalysisRule {
         description:
             'Warns when a cascade expression has duplicate cascade '
             'sections.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addCascadeExpression(this, visitor);
-  }
-}
-
-class _Visitor extends SimpleAstVisitor<void> {
-  final AvoidDuplicateCascades rule;
-
-  _Visitor(this.rule);
-
-  @override
-  void visitCascadeExpression(CascadeExpression node) {
+  void checkCascadeExpression(CascadeExpression node) {
     final sections = node.cascadeSections;
     if (sections.length < 2) return;
 
@@ -65,7 +48,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (key == null) continue;
 
       if (!seen.add(key)) {
-        rule.reportAtNode(section);
+        reportAtNode(section);
       }
     }
   }

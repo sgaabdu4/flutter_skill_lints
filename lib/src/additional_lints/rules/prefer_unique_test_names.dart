@@ -1,12 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/test_callback_utils.dart';
 
 /// Warns when test cases in the same group use the same name.
-final class PreferUniqueTestNames extends AnalysisRule {
+final class PreferUniqueTestNames extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'prefer_unique_test_names',
     'Use a unique test name.',
@@ -17,15 +16,11 @@ final class PreferUniqueTestNames extends AnalysisRule {
     : super(
         name: 'prefer_unique_test_names',
         description: 'Warns when sibling test cases use the same literal name.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addCompilationUnit(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends RecursiveAstVisitor<void> {
@@ -54,7 +49,7 @@ final class _Visitor extends RecursiveAstVisitor<void> {
   }
 
   void _visitGroup(MethodInvocation node) {
-    final callback = _callbackArgument(node);
+    final callback = testCallbackArgument(node);
     if (callback == null) {
       super.visitMethodInvocation(node);
       return;
@@ -77,19 +72,9 @@ final class _Visitor extends RecursiveAstVisitor<void> {
     }
   }
 
-  static FunctionExpression? _callbackArgument(MethodInvocation node) {
-    final positionalArgs = node.argumentList.arguments.where(
-      (argument) => argument is! NamedExpression,
-    );
-    if (positionalArgs.length < 2) return null;
-
-    final callback = positionalArgs.elementAt(1);
-    return callback is FunctionExpression ? callback : null;
-  }
-
   static StringLiteral? _literalNameArgument(MethodInvocation node) {
     final positionalArgs = node.argumentList.arguments.where(
-      (argument) => argument is! NamedExpression,
+      (argument) => argument is! NamedArgument,
     );
     if (positionalArgs.isEmpty) return null;
 

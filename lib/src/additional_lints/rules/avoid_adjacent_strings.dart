@@ -4,6 +4,7 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when string literals are placed next to each other.
 class AvoidAdjacentStrings extends AnalysisRule {
@@ -24,6 +25,7 @@ class AvoidAdjacentStrings extends AnalysisRule {
 
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+    if (isGeneratedRuleContext(context)) return;
     registry.addAdjacentStrings(this, _Visitor(this));
   }
 }

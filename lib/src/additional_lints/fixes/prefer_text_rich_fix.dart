@@ -5,7 +5,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-import '../ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
 
 /// Fix that replaces RichText with Text.rich.
 class PreferTextRichFix extends ResolvedCorrectionProducer {
@@ -49,14 +49,14 @@ class PreferTextRichFix extends ResolvedCorrectionProducer {
     final arguments = argumentList.arguments;
 
     // Find the `text` argument (the TextSpan)
-    final textArgument = arguments.whereType<NamedExpression>().firstWhereOrNull(
+    final textArgument = arguments.whereType<NamedArgument>().firstWhereOrNull(
       (e) => e.name.lexeme == 'text',
     );
 
     if (textArgument == null) return;
 
     // Build the replacement: Text.rich(textSpan, otherArgs...)
-    final textSpanSource = textArgument.expression.toSource();
+    final textSpanSource = textArgument.argumentExpression.toSource();
 
     // Collect other arguments (excluding `text`)
     final otherArgs = <String>[];

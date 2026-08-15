@@ -1,15 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import '../ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when `DateTime.toString()` is used for user-facing text.
-class PreferDateFormat extends AnalysisRule {
+class PreferDateFormat extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_date_format',
     'Prefer DateFormat for user-facing dates.',
@@ -18,17 +15,13 @@ class PreferDateFormat extends AnalysisRule {
 
   PreferDateFormat()
     : super(
+        code: code,
         name: 'prefer_date_format',
         description: 'Warns when DateTime.toString() is used for user-facing formatting.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodInvocation(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -71,10 +64,10 @@ bool _isTextArgument(AstNode node) {
 }
 
 bool _isNamedTextArgument(AstNode node) {
-  final namedExpression = node.thisOrAncestorOfType<NamedExpression>();
+  final namedExpression = node.thisOrAncestorOfType<NamedArgument>();
   return namedExpression != null &&
       namedExpression.name.lexeme == 'text' &&
-      _containsNode(namedExpression.expression, node);
+      _containsNode(namedExpression.argumentExpression, node);
 }
 
 String _argumentOwnerName(ArgumentList argumentList) {

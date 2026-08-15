@@ -12,7 +12,6 @@ final class AvoidUnnecessaryParentheses extends AnalysisRule {
     'avoid_unnecessary_parentheses',
     'Avoid unnecessary parentheses.',
     correctionMessage: 'Remove the redundant parentheses.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidUnnecessaryParentheses()
@@ -53,7 +52,7 @@ bool _isSimpleContext(ParenthesizedExpression node) {
     VariableDeclaration(:final initializer) => identical(initializer, node),
     AssignmentExpression(:final rightHandSide) => identical(rightHandSide, node),
     ExpressionStatement(:final expression) => identical(expression, node),
-    NamedExpression(:final expression) => identical(expression, node),
+    NamedArgument(:final argumentExpression) => identical(argumentExpression, node),
     ArgumentList(:final arguments) => arguments.contains(node),
     ListLiteral(:final elements) => elements.contains(node),
     SetOrMapLiteral(:final elements) => elements.contains(node),

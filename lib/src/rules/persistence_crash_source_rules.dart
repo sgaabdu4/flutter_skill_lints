@@ -288,15 +288,7 @@ bool _usesKnownGuardedFireAndForgetHelper(String statement) {
   return RegExp(r'\bunawaited\s*\(\s*_(?:send|runCrashOperation)\s*\(').hasMatch(statement);
 }
 
-int _parenDelta(String line) => _count(line, '(') - _count(line, ')');
-
-int _count(String text, String char) {
-  var count = 0;
-  for (var i = 0; i < text.length; i++) {
-    if (text[i] == char) count++;
-  }
-  return count;
-}
+int _parenDelta(String line) => countCharacter(line, '(') - countCharacter(line, ')');
 
 final class _AnnotationSpan {
   const _AnnotationSpan(this.start, this.column, this.text);

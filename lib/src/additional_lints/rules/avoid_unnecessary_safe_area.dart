@@ -1,16 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when a `SafeArea` has no enabled edges or directly wraps another one.
-class AvoidUnnecessarySafeArea extends AnalysisRule {
+class AvoidUnnecessarySafeArea extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_safe_area',
     'Avoid unnecessary SafeArea widgets.',
@@ -19,22 +15,16 @@ class AvoidUnnecessarySafeArea extends AnalysisRule {
 
   AvoidUnnecessarySafeArea()
     : super(
+        code: code,
         name: 'avoid_unnecessary_safe_area',
         description: 'Warns when SafeArea has no enabled edges or directly wraps another SafeArea.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
-final class _Visitor extends SimpleAstVisitor<void> {
+final class _Visitor extends InstanceAndMethodVisitor {
   _Visitor(this.rule);
 
   final AvoidUnnecessarySafeArea rule;
@@ -42,16 +32,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   static const _safeAreaChecker = TypeChecker.fromName('SafeArea', packageName: 'flutter');
 
   @override
-  void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    _check(node.staticType, node.argumentList, node.constructorName);
-  }
-
-  @override
-  void visitMethodInvocation(MethodInvocation node) {
-    _check(node.staticType, node.argumentList, node.methodName);
-  }
-
-  void _check(DartType? staticType, ArgumentList argumentList, AstNode reportNode) {
+  void checkInstanceOrMethod(DartType? staticType, ArgumentList argumentList, AstNode reportNode) {
     if (staticType == null || !_safeAreaChecker.isExactlyType(staticType)) {
       return;
     }
@@ -65,11 +46,11 @@ final class _Visitor extends SimpleAstVisitor<void> {
     const edgeParameters = {'left', 'top', 'right', 'bottom'};
     final edges = <String, bool>{};
 
-    for (final argument in argumentList.arguments.whereType<NamedExpression>()) {
+    for (final argument in argumentList.arguments.whereType<NamedArgument>()) {
       final name = argument.name.lexeme;
       if (!edgeParameters.contains(name)) continue;
 
-      final expression = argument.expression;
+      final expression = argument.argumentExpression;
       if (expression is! BooleanLiteral) return false;
       edges[name] = expression.value;
     }
@@ -79,9 +60,9 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   static bool _hasSafeAreaChild(ArgumentList argumentList) {
     final child = argumentList.arguments
-        .whereType<NamedExpression>()
+        .whereType<NamedArgument>()
         .firstWhereOrNull((argument) => argument.name.lexeme == 'child')
-        ?.expression;
+        ?.argumentExpression;
     final childType = child?.staticType;
     return childType != null && _safeAreaChecker.isExactlyType(childType);
   }

@@ -1,13 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import '../ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when `any(named:)` disagrees with the named argument it matches.
-final class PreferCorrectAnyMatcher extends AnalysisRule {
+final class PreferCorrectAnyMatcher extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_correct_any_matcher',
     "Match any(named:) to the named argument's name.",
@@ -16,17 +13,13 @@ final class PreferCorrectAnyMatcher extends AnalysisRule {
 
   PreferCorrectAnyMatcher()
     : super(
+        code: code,
         name: 'prefer_correct_any_matcher',
         description: 'Warns when any(named:) has the wrong name in when()/verify() calls.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodInvocation(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -50,16 +43,16 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   static String? _surroundingNamedArgument(AstNode node) {
     final parent = node.parent;
-    if (parent is NamedExpression && parent.expression == node) {
+    if (parent is NamedArgument && parent.argumentExpression == node) {
       return parent.name.lexeme;
     }
     return null;
   }
 
   static String? _matcherNamedValue(MethodInvocation node) {
-    for (final argument in node.argumentList.arguments.whereType<NamedExpression>()) {
+    for (final argument in node.argumentList.arguments.whereType<NamedArgument>()) {
       if (argument.name.lexeme != 'named') continue;
-      final expression = argument.expression;
+      final expression = argument.argumentExpression;
       if (expression is SimpleStringLiteral) return expression.value;
       if (expression is AdjacentStrings) return null;
     }

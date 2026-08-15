@@ -1,18 +1,16 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Suggests using `ConstrainedBox` instead of `Container` with only constraints.
 ///
 /// The dedicated widget makes constraint intent explicit and avoids a generic
 /// `Container` when no decoration, padding, or color is needed.
-class PreferConstrainedBoxOverContainer extends AnalysisRule {
+class PreferConstrainedBoxOverContainer extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'prefer_constrained_box_over_container',
     'Use ConstrainedBox widget instead of the Container widget with only the constraints parameter.',
@@ -23,16 +21,11 @@ class PreferConstrainedBoxOverContainer extends AnalysisRule {
     : super(
         name: 'prefer_constrained_box_over_container',
         description: 'Use ConstrainedBox widget instead of Container when only constraints is set.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {

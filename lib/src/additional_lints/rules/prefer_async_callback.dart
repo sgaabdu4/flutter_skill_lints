@@ -1,9 +1,7 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when `Future<void> Function()` is used instead of `AsyncCallback`.
 ///
@@ -22,7 +20,7 @@ import 'package:analyzer/error/error.dart';
 /// ```dart
 /// void fn(AsyncCallback callback) {}
 /// ```
-class PreferAsyncCallback extends AnalysisRule {
+class PreferAsyncCallback extends GenericFunctionTypeCheckRule {
   static const LintCode code = LintCode(
     'prefer_async_callback',
     "Use 'AsyncCallback' instead of 'Future<void> Function()'.",
@@ -35,37 +33,11 @@ class PreferAsyncCallback extends AnalysisRule {
     : super(
         name: 'prefer_async_callback',
         description: 'Warns when Future<void> Function() is used instead of AsyncCallback.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addGenericFunctionType(this, visitor);
-  }
-}
-
-class _Visitor extends SimpleAstVisitor<void> {
-  final PreferAsyncCallback rule;
-
-  _Visitor(this.rule);
-
-  @override
-  void visitGenericFunctionType(GenericFunctionType node) {
-    // Skip typedef definitions (e.g., typedef AsyncCallback = Future<void> Function())
-    if (node.parent is GenericTypeAlias) return;
-
-    // Must have no type parameters (no generic function)
-    if (node.typeParameters != null) return;
-
-    // Must have no parameters: Function()
-    if (node.parameters.parameters.isNotEmpty) return;
-
-    // Return type must be Future<void>
-    final returnType = node.returnType;
-    if (returnType is! NamedType) return;
+  void checkCallbackReturnType(GenericFunctionType node, NamedType returnType) {
     if (returnType.name.lexeme != 'Future') return;
 
     // Must have exactly one type argument: <void>
@@ -77,6 +49,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (typeArg is! NamedType) return;
     if (typeArg.name.lexeme != 'void') return;
 
-    rule.reportAtNode(node);
+    reportAtNode(node);
   }
 }

@@ -11,7 +11,6 @@ final class AvoidNestedSwitches extends AnalysisRule {
     'avoid_nested_switches',
     'Avoid nested switch statements.',
     correctionMessage: 'Extract the nested switch into a named helper.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidNestedSwitches()

@@ -1,19 +1,16 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/riverpod_consumer_checkers.dart';
 
 /// Warns when `ref.watch()` is used outside a widget `build()` method.
 ///
 /// `ref.watch` subscribes the current build to provider changes. Outside build
 /// it either has no rebuild target or creates a dependency in a callback/life
 /// cycle method where `ref.read` or `ref.listen` is the intended operation.
-class AvoidRefWatchOutsideBuild extends AnalysisRule {
+class AvoidRefWatchOutsideBuild extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_ref_watch_outside_build',
     "Avoid using 'ref.watch' outside build methods.",
@@ -24,6 +21,7 @@ class AvoidRefWatchOutsideBuild extends AnalysisRule {
 
   AvoidRefWatchOutsideBuild()
     : super(
+        code: code,
         name: 'avoid_ref_watch_outside_build',
         description:
             'Warns when ref.watch() is called outside a Riverpod widget '
@@ -31,29 +29,13 @@ class AvoidRefWatchOutsideBuild extends AnalysisRule {
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AvoidRefWatchOutsideBuild rule;
 
   _Visitor(this.rule);
-
-  static const _consumerWidgetChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerWidget', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerWidget', packageName: 'hooks_riverpod'),
-  ]);
-
-  static const _consumerStateChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerState', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerState', packageName: 'hooks_riverpod'),
-  ]);
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
@@ -111,7 +93,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final element = classDecl?.declaredFragment?.element;
     if (element == null) return false;
 
-    return _consumerWidgetChecker.isSuperOf(element) || _consumerStateChecker.isSuperOf(element);
+    return consumerWidgetChecker.isSuperOf(element) || consumerStateChecker.isSuperOf(element);
   }
 
   bool _isRiverpodBuildMethod(MethodDeclaration node) {

@@ -1,18 +1,15 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import '../ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when an Image widget is wrapped in an Opacity widget.
 ///
 /// The Image widget has a dedicated `opacity` parameter that is more
 /// efficient than wrapping the widget in an Opacity widget.
-class AvoidIncorrectImageOpacity extends AnalysisRule {
+class AvoidIncorrectImageOpacity extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_incorrect_image_opacity',
     "Use Image's opacity parameter instead of wrapping it in an Opacity widget.",
@@ -21,19 +18,13 @@ class AvoidIncorrectImageOpacity extends AnalysisRule {
 
   AvoidIncorrectImageOpacity()
     : super(
+        code: code,
         name: 'avoid_incorrect_image_opacity',
         description: "Use Image's opacity parameter instead of wrapping it in Opacity.",
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -62,9 +53,9 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _checkChildArgument(ArgumentList argumentList, AstNode reportNode) {
-    for (final arg in argumentList.arguments.whereType<NamedExpression>()) {
+    for (final arg in argumentList.arguments.whereType<NamedArgument>()) {
       if (arg.name.lexeme == 'child') {
-        final childType = arg.expression.staticType;
+        final childType = arg.argumentExpression.staticType;
         if (childType != null && _imageChecker.isAssignableFromType(childType)) {
           rule.reportAtNode(reportNode);
         }

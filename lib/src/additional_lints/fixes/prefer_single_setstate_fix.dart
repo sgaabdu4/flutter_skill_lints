@@ -3,6 +3,7 @@ import 'package:analysis_server_plugin/edit/dart/dart_fix_kind_priority.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
+import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
@@ -36,50 +37,46 @@ class PreferSingleSetstateFix extends ResolvedCorrectionProducer {
 
     final calls = collector.calls;
     if (calls.length < 2) return;
-
-    // Build merged body from all setState callbacks
-    final bodyParts = <String>[];
-    for (final call in calls) {
-      final args = call.argumentList.arguments;
-      if (args.isEmpty) continue;
-      final callback = args.first;
-      if (callback is! FunctionExpression) continue;
-
-      final body = callback.body;
-      if (body is BlockFunctionBody) {
-        for (final statement in body.block.statements) {
-          bodyParts.add(statement.toSource());
-        }
-      } else if (body is ExpressionFunctionBody) {
-        bodyParts.add('${body.expression.toSource()};');
-      }
-    }
-
-    if (bodyParts.isEmpty) return;
-
-    final mergedBody = bodyParts.join('\n      ');
-    final mergedSetState = 'setState(() {\n      $mergedBody\n    })';
+    final mergedSetState = _mergedSetStateSource(calls);
+    if (mergedSetState == null) return;
 
     await builder.addDartFileEdit(file, (builder) {
-      // Replace the first setState call with the merged version
       builder.addSimpleReplacement(range.node(calls.first), mergedSetState);
-
-      // Remove all subsequent setState calls (as ExpressionStatements)
-      for (var i = 1; i < calls.length; i++) {
-        final statement = calls[i].parent;
-        if (statement is ExpressionStatement) {
-          // Delete the full statement including any preceding whitespace/newline
-          final content = unitResult.content;
-          var start = statement.offset;
-          while (start > 0 && (content[start - 1] == ' ' || content[start - 1] == '\t')) {
-            start--;
-          }
-          if (start > 0 && content[start - 1] == '\n') start--;
-
-          builder.addDeletion(range.startOffsetEndOffset(start, statement.end));
-        }
-      }
+      _removeSubsequentSetStateCalls(builder, calls);
     });
+  }
+
+  static String? _mergedSetStateSource(List<MethodInvocation> calls) {
+    final bodyParts = <String>[];
+    for (final call in calls) {
+      final callback = call.argumentList.arguments.firstOrNull;
+      if (callback is! FunctionExpression) continue;
+      _appendCallbackBody(bodyParts, callback.body);
+    }
+    if (bodyParts.isEmpty) return null;
+    return 'setState(() {\n      ${bodyParts.join('\n      ')}\n    })';
+  }
+
+  static void _appendCallbackBody(List<String> parts, FunctionBody body) {
+    if (body is BlockFunctionBody) {
+      parts.addAll(body.block.statements.map((statement) => statement.toSource()));
+    } else if (body is ExpressionFunctionBody) {
+      parts.add('${body.expression.toSource()};');
+    }
+  }
+
+  void _removeSubsequentSetStateCalls(DartFileEditBuilder builder, List<MethodInvocation> calls) {
+    final content = unitResult.content;
+    for (var i = 1; i < calls.length; i++) {
+      final statement = calls[i].parent;
+      if (statement is! ExpressionStatement) continue;
+      var start = statement.offset;
+      while (start > 0 && (content[start - 1] == ' ' || content[start - 1] == '\t')) {
+        start--;
+      }
+      if (start > 0 && content[start - 1] == '\n') start--;
+      builder.addDeletion(range.startOffsetEndOffset(start, statement.end));
+    }
   }
 
   static MethodDeclaration? _findEnclosingMethod(AstNode node) {

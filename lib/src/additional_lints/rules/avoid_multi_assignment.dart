@@ -1,12 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+
 /// Warns when multiple assignments are chained in one expression.
-class AvoidMultiAssignment extends AnalysisRule {
+class AvoidMultiAssignment extends AssignmentExpressionCheckRule {
   static const LintCode code = LintCode(
     'avoid_multi_assignment',
     'Avoid chained assignments.',
@@ -17,26 +15,13 @@ class AvoidMultiAssignment extends AnalysisRule {
     : super(
         name: 'avoid_multi_assignment',
         description: 'Warns when assignment expressions are chained.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addAssignmentExpression(this, _Visitor(this));
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  const _Visitor(this.rule);
-
-  final AvoidMultiAssignment rule;
-
-  @override
-  void visitAssignmentExpression(AssignmentExpression node) {
+  void checkAssignmentExpression(AssignmentExpression node) {
     if (node.rightHandSide is AssignmentExpression) {
-      rule.reportAtNode(node);
+      reportAtNode(node);
     }
   }
 }

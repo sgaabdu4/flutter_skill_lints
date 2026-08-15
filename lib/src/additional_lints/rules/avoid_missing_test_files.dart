@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer/file_system/file_system.dart';
+import 'package:flutter_skill_lints/src/additional_lints/pubspec_rule_utils.dart';
 
 /// Warns when a non-generated lib file has no obvious sibling test file.
 final class AvoidMissingTestFiles extends AnalysisRule {
@@ -34,13 +35,13 @@ final class AvoidMissingTestFiles extends AnalysisRule {
     if (_isLowSignalLibrary(normalizedPath)) return;
 
     final root = package.root;
-    final testFolder = root.getChildAssumingFolder('test');
+    final testFolder = root.getFolder('test');
     if (!testFolder.exists) return;
 
     final expectedTestPath = _expectedTestPath(root, currentPath);
     if (expectedTestPath == null) return;
 
-    final expectedTestFile = testFolder.getChildAssumingFile(expectedTestPath);
+    final expectedTestFile = testFolder.getFile(expectedTestPath);
     if (expectedTestFile.exists) return;
     if (_hasTestImportCoverage(root, testFolder, currentPath)) return;
 
@@ -89,23 +90,33 @@ bool _isLowSignalLibrary(String path) {
 }
 
 bool _hasTestImportCoverage(Folder root, Folder testFolder, String filePath) {
-  final packageName = _packageName(root);
+  final packageName = packageNameFromPubspec(root);
   if (packageName == null) return false;
 
   final packageUri = _packageUri(root, filePath, packageName);
   if (packageUri == null) return false;
 
   for (final file in _dartFiles(testFolder)) {
-    final text = _read(file);
+    final text = readFileText(file);
     if (text == null) continue;
+    if (_testFileCoversPackage(root, file.path, text, packageName, packageUri)) return true;
+  }
+  return false;
+}
 
-    for (final uri in _importOrExportUris(text)) {
-      final importedUri = _resolveToPackageUri(root, file.path, uri, packageName);
-      if (importedUri == null) continue;
-      if (importedUri == packageUri) return true;
-      if (_packageUriReferences(root, packageName, importedUri, packageUri, <String>{})) {
-        return true;
-      }
+bool _testFileCoversPackage(
+  Folder root,
+  String testPath,
+  String text,
+  String packageName,
+  String packageUri,
+) {
+  for (final uri in _importOrExportUris(text)) {
+    final importedUri = _resolveToPackageUri(root, testPath, uri, packageName);
+    if (importedUri == null) continue;
+    if (importedUri == packageUri ||
+        _packageUriReferences(root, packageName, importedUri, packageUri, <String>{})) {
+      return true;
     }
   }
   return false;
@@ -123,7 +134,7 @@ bool _packageUriReferences(
   final sourceFile = _fileForPackageUri(root, sourcePackageUri, packageName);
   if (sourceFile == null) return false;
 
-  final text = _read(sourceFile);
+  final text = readFileText(sourceFile);
   if (text == null) return false;
 
   for (final uri in _importOrExportUris(text)) {
@@ -193,21 +204,7 @@ File? _fileForPackageUri(Folder root, String packageUri, String packageName) {
 
   final separator = root.path.contains('\\') ? '\\' : '/';
   final relativePath = 'lib/${packageUri.substring(prefix.length)}'.replaceAll('/', separator);
-  return root.getChildAssumingFile(relativePath);
-}
-
-String? _packageName(Folder root) {
-  final text = _read(root.getChildAssumingFile('pubspec.yaml')) ?? '';
-  return RegExp(r'^name:\s*([A-Za-z0-9_]+)\s*$', multiLine: true).firstMatch(text)?.group(1);
-}
-
-String? _read(File file) {
-  if (!file.exists) return null;
-  try {
-    return file.readAsStringSync();
-  } on FileSystemException {
-    return null;
-  }
+  return root.getFile(relativePath);
 }
 
 String _directoryPath(String path) {

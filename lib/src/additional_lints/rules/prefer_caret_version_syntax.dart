@@ -1,13 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import 'package:analyzer/file_system/file_system.dart';
+import 'package:flutter_skill_lints/src/additional_lints/pubspec_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/pubspec_rule_utils.dart';
+import 'package:meta/meta.dart';
 
 /// Warns when a pubspec dependency can use equivalent caret syntax.
-final class PreferCaretVersionSyntax extends AnalysisRule {
+final class PreferCaretVersionSyntax extends PubspecAnalysisRule {
   static const LintCode code = LintCode(
     'prefer_caret_version_syntax',
     'Prefer caret syntax for compatible pub dependency ranges.',
@@ -18,21 +17,14 @@ final class PreferCaretVersionSyntax extends AnalysisRule {
     : super(
         name: 'prefer_caret_version_syntax',
         description: 'Warns when pubspec dependency ranges can use caret syntax.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
+  bool shouldRegisterPubspec(String text) => _hasCaretConvertibleRange(text);
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final root = context.package?.root;
-    if (root == null || !_isAnchorUnit(root, context)) return;
-
-    final text = _read(root.getChildAssumingFile('pubspec.yaml'));
-    if (text == null || !_hasCaretConvertibleRange(text)) return;
-
-    registry.addCompilationUnit(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -58,33 +50,46 @@ bool _hasCaretConvertibleRange(String text) {
 }
 
 Iterable<String> _sectionScalarValues(String text, String section) sync* {
-  final lines = text.split('\n');
-  var inSection = false;
-  var sectionIndent = 0;
+  final state = _SectionScalarState(section);
+  for (final line in text.split('\n')) {
+    final value = state.read(line);
+    if (value != null) yield value;
+  }
+}
 
-  for (final line in lines) {
-    if (line.trim().isEmpty || line.trimLeft().startsWith('#')) continue;
+final class _SectionScalarState {
+  _SectionScalarState(String section)
+    : sectionPattern = RegExp('^\\s*${RegExp.escape(section)}\\s*:(.*)\$');
+
+  final RegExp sectionPattern;
+  final valuePattern = RegExp(r'''^\s*['"]?[A-Za-z_][\w-]*['"]?\s*:\s*(.+?)\s*(?:#.*)?$''');
+  bool inSection = false;
+  int sectionIndent = 0;
+
+  String? read(String line) {
+    if (line.trim().isEmpty || line.trimLeft().startsWith('#')) return null;
     final indent = line.length - line.trimLeft().length;
-    final sectionMatch = RegExp('^\\s*${RegExp.escape(section)}\\s*:(.*)\$').firstMatch(line);
-    if (sectionMatch != null) {
-      sectionIndent = indent;
-      inSection = (sectionMatch.group(1) ?? '').trim().isEmpty;
-      continue;
-    }
-    if (!inSection) continue;
+    final sectionMatch = sectionPattern.firstMatch(line);
+    if (sectionMatch != null) return _enterSection(indent, sectionMatch);
+    if (!inSection) return null;
     if (indent <= sectionIndent) {
       inSection = false;
-      continue;
+      return null;
     }
-    if (indent != sectionIndent + 2) continue;
+    if (indent != sectionIndent + 2) return null;
+    return _scalarValue(line);
+  }
 
-    final match = RegExp(
-      r'''^\s*['"]?[A-Za-z_][\w-]*['"]?\s*:\s*(.+?)\s*(?:#.*)?$''',
-    ).firstMatch(line);
-    final value = match?.group(1)?.trim();
-    if (value == null || value.isEmpty || value == '{}') continue;
-    if (value.startsWith('{')) continue;
-    yield _unquote(value);
+  String? _enterSection(int indent, RegExpMatch match) {
+    sectionIndent = indent;
+    inSection = (match.group(1) ?? '').trim().isEmpty;
+    return null;
+  }
+
+  String? _scalarValue(String line) {
+    final value = valuePattern.firstMatch(line)?.group(1)?.trim();
+    if (value == null || value.isEmpty || value == '{}' || value.startsWith('{')) return null;
+    return unquoteYamlScalar(value);
   }
 }
 
@@ -106,6 +111,7 @@ bool _isCaretEquivalent(String value) {
   return upper == lower.caretUpperBound;
 }
 
+@immutable
 final class _Version {
   const _Version(this.major, this.minor, this.patch);
 
@@ -125,38 +131,4 @@ final class _Version {
 
   @override
   int get hashCode => Object.hash(major, minor, patch);
-}
-
-String _unquote(String value) {
-  if (value.length < 2) return value;
-  final first = value[0];
-  final last = value[value.length - 1];
-  if ((first == '"' && last == '"') || (first == "'" && last == "'")) {
-    return value.substring(1, value.length - 1);
-  }
-  return value;
-}
-
-bool _isAnchorUnit(Folder root, RuleContext context) {
-  final currentPath = context.definingUnit.file.path;
-  final pubspecText = _read(root.getChildAssumingFile('pubspec.yaml')) ?? '';
-  final packageName = RegExp(
-    r'^name:\s*([A-Za-z0-9_]+)\s*$',
-    multiLine: true,
-  ).firstMatch(pubspecText)?.group(1);
-
-  if (packageName != null) {
-    return currentPath == root.getChildAssumingFile('lib/$packageName.dart').path;
-  }
-
-  return currentPath == root.getChildAssumingFile('lib/main.dart').path;
-}
-
-String? _read(File file) {
-  if (!file.exists) return null;
-  try {
-    return file.readAsStringSync();
-  } on FileSystemException {
-    return null;
-  }
 }

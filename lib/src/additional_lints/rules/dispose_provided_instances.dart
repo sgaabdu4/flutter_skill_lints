@@ -7,8 +7,9 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../disposal_utils.dart';
-import '../riverpod_type_checkers.dart';
+import 'package:flutter_skill_lints/src/additional_lints/disposal_utils.dart';
+import 'package:flutter_skill_lints/src/additional_lints/riverpod_type_checkers.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when an instance with a `dispose` method is created inside a Riverpod
 /// provider callback or Notifier `build()` method without a corresponding
@@ -79,12 +80,8 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodDeclaration(MethodDeclaration node) {
     if (node.name.lexeme != 'build') return;
 
-    final enclosingBody = node.parent;
-    if (enclosingBody is! BlockClassBody) return;
-    final classDecl = enclosingBody.parent;
-    if (classDecl is! ClassDeclaration) return;
-
-    final element = classDecl.declaredFragment?.element;
+    final classDecl = enclosingClass(node);
+    final element = classDecl?.declaredFragment?.element;
     if (element == null || !notifierChecker.isSuperOf(element)) return;
 
     _checkFunctionBody(node.body);

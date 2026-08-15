@@ -1,12 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+
 /// Avoids `Future<Future<T>>`.
-class AvoidNestedFutures extends AnalysisRule {
+class AvoidNestedFutures extends NamedTypeCheckRule {
   static const LintCode code = LintCode(
     'avoid_nested_futures',
     'Avoid nested Future types.',
@@ -18,31 +16,18 @@ class AvoidNestedFutures extends AnalysisRule {
     : super(
         name: 'avoid_nested_futures',
         description: 'Avoids Future<Future<T>> type annotations.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addNamedType(this, _Visitor(this));
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  const _Visitor(this.rule);
-
-  final AvoidNestedFutures rule;
-
-  @override
-  void visitNamedType(NamedType node) {
+  void checkNamedType(NamedType node) {
     if (!_isDartAsyncType(node, 'Future')) return;
 
     final typeArguments = node.typeArguments?.arguments;
     if (typeArguments == null) return;
 
     if (typeArguments.any(_containsFutureType)) {
-      rule.reportAtNode(node);
+      reportAtNode(node);
     }
   }
 }

@@ -20,33 +20,7 @@ final List<ScannerRule> dialogSourceRules = [
         'Flags dialog/sheet widgets that ref.watch and ref.read(...notifier).<method>() on the same provider so the Flutter skill modal snapshot pattern is shown during analysis.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (final classSpan in context.classes) {
-        if (!_isDialogHostClass(context, classSpan)) continue;
-        if (!_extendsConsumerSurface(context, classSpan)) continue;
-
-        final mutated = <String>{};
-        for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-          final line = context.source.masked[i];
-          for (final match in _refReadNotifierMethod.allMatches(line)) {
-            final provider = match.group(1);
-            if (provider != null && provider.isNotEmpty) mutated.add(provider);
-          }
-        }
-        if (mutated.isEmpty) continue;
-
-        for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-          final line = context.source.masked[i];
-          for (final match in _refWatchProvider.allMatches(line)) {
-            final provider = match.group(1) ?? '';
-            if (!mutated.contains(provider)) continue;
-            if (_lineIgnoresRule(context, i, 'dialog_widget_subscribes_to_mutable_provider')) {
-              break;
-            }
-            reporter.report(context, i, match.start);
-            break;
-          }
-        }
-      }
+      _reportMutableProviderSubscriptions(reporter, context);
     },
   ),
 
@@ -68,22 +42,7 @@ final List<ScannerRule> dialogSourceRules = [
         'Flags dialog/sheet classes that watch timer, ticker, progress, or running-state provider fields in build().',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (final classSpan in context.classes) {
-        if (!_isDialogHostClass(context, classSpan)) continue;
-        if (!_extendsConsumerSurface(context, classSpan)) continue;
-        for (final method in context.methods.where((m) => m.name == 'build')) {
-          if (!classSpan.contains(method.start)) continue;
-          for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-            final line = context.source.masked[i];
-            final watchStart = line.indexOf('ref.watch');
-            if (watchStart < 0) continue;
-            final watchWindow = _collectLineWindow(context, i, method.end, 8);
-            if (!_highFrequencyWatch.hasMatch(watchWindow)) continue;
-            if (_lineIgnoresRule(context, i, 'modal_high_frequency_watch_not_leaf')) continue;
-            reporter.report(context, i, watchStart);
-          }
-        }
-      }
+      _reportHighFrequencyModalWatches(reporter, context);
     },
   ),
 
@@ -106,35 +65,8 @@ final List<ScannerRule> dialogSourceRules = [
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final classSpan in context.classes) {
-        if (!_isDialogHostClass(context, classSpan)) continue;
-
-        var inBody = false;
-        var depth = 0;
-        var popLine = -1;
-        var popDepth = -1;
-        for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-          final line = context.source.masked[i];
-          if (!inBody && line.contains('{')) inBody = true;
-
-          if (popLine >= 0 && i > popLine) {
-            final offender = _postPopOffender.firstMatch(line);
-            if (offender != null) {
-              reporter.report(context, i, offender.start);
-              popLine = -1;
-              popDepth = -1;
-            }
-          }
-
-          if (_popInvocation.hasMatch(line)) {
-            popLine = i;
-            popDepth = depth;
-          }
-
-          depth += _braceDelta(line);
-          if (popLine >= 0 && depth < popDepth) {
-            popLine = -1;
-            popDepth = -1;
-          }
+        if (_isDialogHostClass(context, classSpan)) {
+          _reportDialogPostPopMutation(reporter, context, classSpan);
         }
       }
     },
@@ -228,25 +160,7 @@ final List<ScannerRule> dialogSourceRules = [
         'Flags build() calls to private methods that assign instance fields/controller properties or call setState.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (final classSpan in context.classes) {
-        final mutatingMethods = _mutatingPrivateMethods(context, classSpan);
-        if (mutatingMethods.isEmpty) continue;
-        for (final method in context.methods.where((m) => m.name == 'build')) {
-          if (!classSpan.contains(method.start)) continue;
-          for (var i = method.start + 1; i <= method.end && i < context.source.length; i++) {
-            final line = context.source.masked[i];
-            for (final mutatingMethod in mutatingMethods) {
-              final match = RegExp(
-                r'\b' + RegExp.escape(mutatingMethod) + r'\s*\(',
-              ).firstMatch(line);
-              if (match == null) continue;
-              if (_isInsideFunctionLiteral(context, method.start, i, match.start)) continue;
-              reporter.report(context, i, match.start);
-              break;
-            }
-          }
-        }
-      }
+      _reportMutatingBuildCalls(reporter, context);
     },
   ),
 
@@ -269,33 +183,7 @@ final List<ScannerRule> dialogSourceRules = [
         'Flags reset/clear/dispose calls that follow an awaited notifier mutation in non-notifier files so the notifier owns its own teardown.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (final classSpan in context.classes) {
-        if (classSpan.isNotifier) continue;
-        if (!_extendsWidgetSurface(context, classSpan)) continue;
-
-        final awaitedProviders = <String, int>{};
-        var depth = 0;
-        for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-          final line = context.source.masked[i];
-
-          final awaited = _awaitedNotifierMethod.firstMatch(line);
-          if (awaited != null) {
-            final provider = awaited.group(1) ?? '';
-            if (provider.isNotEmpty) awaitedProviders[provider] = depth;
-          }
-
-          if (awaitedProviders.isNotEmpty) {
-            for (final match in _notifierTeardown.allMatches(line)) {
-              final provider = match.group(1) ?? '';
-              if (!awaitedProviders.containsKey(provider)) continue;
-              reporter.report(context, i, match.start);
-            }
-          }
-
-          depth += _braceDelta(line);
-          awaitedProviders.removeWhere((_, recordedDepth) => depth < recordedDepth);
-        }
-      }
+      _reportNotifierTeardownCalls(reporter, context);
     },
   ),
 
@@ -329,7 +217,7 @@ final List<ScannerRule> dialogSourceRules = [
               reporter.report(context, i, match.start);
             }
           }
-          depth += _braceDelta(line);
+          depth += braceDelta(line);
           modalDepths.removeWhere((d) => depth < d);
         }
       }
@@ -367,6 +255,175 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 ];
 
+void _reportMutableProviderSubscriptions(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+) {
+  for (final classSpan in context.classes) {
+    if (_isDialogHostClass(context, classSpan) && _extendsConsumerSurface(context, classSpan)) {
+      _reportMutableProviderClass(reporter, context, classSpan);
+    }
+  }
+}
+
+void _reportMutableProviderClass(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+) {
+  final mutated = _mutatedProviders(context, classSpan);
+  if (mutated.isEmpty) return;
+  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
+    _reportWatchedMutation(reporter, context, i, mutated);
+  }
+}
+
+Set<String> _mutatedProviders(SourceScannerContext context, ScannerClassSpan classSpan) {
+  final providers = <String>{};
+  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
+    for (final match in _refReadNotifierMethod.allMatches(context.source.masked[i])) {
+      final provider = match.group(1);
+      if (provider != null && provider.isNotEmpty) providers.add(provider);
+    }
+  }
+  return providers;
+}
+
+void _reportWatchedMutation(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  int lineIndex,
+  Set<String> mutated,
+) {
+  final line = context.source.masked[lineIndex];
+  for (final match in _refWatchProvider.allMatches(line)) {
+    final provider = match.group(1) ?? '';
+    if (!mutated.contains(provider)) continue;
+    if (_lineIgnoresRule(context, lineIndex, 'dialog_widget_subscribes_to_mutable_provider')) {
+      return;
+    }
+    reporter.report(context, lineIndex, match.start);
+    return;
+  }
+}
+
+void _reportHighFrequencyModalWatches(ScannerRuleReporter reporter, SourceScannerContext context) {
+  for (final classSpan in context.classes) {
+    if (!_isDialogHostClass(context, classSpan) || !_extendsConsumerSurface(context, classSpan)) {
+      continue;
+    }
+    for (final method in context.methods.where((method) => method.name == 'build')) {
+      if (classSpan.contains(method.start)) {
+        _reportHighFrequencyBuildMethod(reporter, context, method);
+      }
+    }
+  }
+}
+
+void _reportHighFrequencyBuildMethod(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+) {
+  for (var i = method.start; i <= method.end && i < context.source.length; i++) {
+    final line = context.source.masked[i];
+    final watchStart = line.indexOf('ref.watch');
+    if (watchStart < 0) continue;
+    final watchWindow = sourceLineWindow(context, i, method.end, 8);
+    if (!_highFrequencyWatch.hasMatch(watchWindow) ||
+        _lineIgnoresRule(context, i, 'modal_high_frequency_watch_not_leaf')) {
+      continue;
+    }
+    reporter.report(context, i, watchStart);
+  }
+}
+
+void _reportMutatingBuildCalls(ScannerRuleReporter reporter, SourceScannerContext context) {
+  for (final classSpan in context.classes) {
+    final mutatingMethods = _mutatingPrivateMethods(context, classSpan);
+    if (mutatingMethods.isEmpty) continue;
+    for (final method in context.methods.where((method) => method.name == 'build')) {
+      if (classSpan.contains(method.start)) {
+        _reportMutatingBuildMethod(reporter, context, method, mutatingMethods);
+      }
+    }
+  }
+}
+
+void _reportMutatingBuildMethod(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+  Set<String> mutatingMethods,
+) {
+  for (var i = method.start + 1; i <= method.end && i < context.source.length; i++) {
+    _reportMutatingBuildLine(reporter, context, method, i, mutatingMethods);
+  }
+}
+
+void _reportMutatingBuildLine(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+  int lineIndex,
+  Set<String> mutatingMethods,
+) {
+  final line = context.source.masked[lineIndex];
+  for (final methodName in mutatingMethods) {
+    final match = RegExp(r'\b' + RegExp.escape(methodName) + r'\s*\(').firstMatch(line);
+    if (match == null || _isInsideFunctionLiteral(context, method.start, lineIndex, match.start)) {
+      continue;
+    }
+    reporter.report(context, lineIndex, match.start);
+    return;
+  }
+}
+
+void _reportNotifierTeardownCalls(ScannerRuleReporter reporter, SourceScannerContext context) {
+  for (final classSpan in context.classes) {
+    if (!classSpan.isNotifier && _extendsWidgetSurface(context, classSpan)) {
+      _reportNotifierTeardownClass(reporter, context, classSpan);
+    }
+  }
+}
+
+void _reportNotifierTeardownClass(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+) {
+  final awaitedProviders = <String, int>{};
+  var depth = 0;
+  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
+    final line = context.source.masked[i];
+    _rememberAwaitedNotifier(awaitedProviders, line, depth);
+    _reportTeardownMatches(reporter, context, i, line, awaitedProviders);
+    depth += braceDelta(line);
+    awaitedProviders.removeWhere((_, recordedDepth) => depth < recordedDepth);
+  }
+}
+
+void _rememberAwaitedNotifier(Map<String, int> providers, String line, int depth) {
+  final match = _awaitedNotifierMethod.firstMatch(line);
+  final provider = match?.group(1) ?? '';
+  if (provider.isNotEmpty) providers[provider] = depth;
+}
+
+void _reportTeardownMatches(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  int lineIndex,
+  String line,
+  Map<String, int> awaitedProviders,
+) {
+  if (awaitedProviders.isEmpty) return;
+  for (final match in _notifierTeardown.allMatches(line)) {
+    if (awaitedProviders.containsKey(match.group(1) ?? '')) {
+      reporter.report(context, lineIndex, match.start);
+    }
+  }
+}
+
 final _showModalCall = RegExp(
   r'\b(?:show(?:Dialog|ModalBottomSheet)|show[A-Z]\w*(?:Dialog|Sheet|BottomSheet))'
   r'(?:\s*<[^>]*>)?\s*\(',
@@ -374,37 +431,86 @@ final _showModalCall = RegExp(
 
 final _routeSettingsArg = RegExp(r'\brouteSettings\s*:');
 
-String _collectLineWindow(SourceScannerContext context, int startLine, int endLine, int maxLines) {
-  final end = startLine + maxLines > endLine ? endLine : startLine + maxLines;
-  final buffer = StringBuffer();
-  for (var i = startLine; i <= end && i < context.source.length; i++) {
-    if (i > startLine) buffer.write('\n');
-    buffer.write(context.source.masked[i]);
-  }
-  return buffer.toString();
-}
-
 String? _collectArgList(SourceScannerContext context, int startLine, int startCol) {
-  final buffer = StringBuffer();
-  var depth = 0;
-  var sawOpen = false;
+  final state = _ArgumentCollectionState();
   for (var i = startLine; i < context.source.length && i < startLine + 40; i++) {
     final line = context.source.masked[i];
     final from = i == startLine ? startCol - 1 : 0;
-    for (var j = from < 0 ? 0 : from; j < line.length; j++) {
-      final ch = line[j];
-      if (ch == '(') {
-        depth++;
-        sawOpen = true;
-      } else if (ch == ')') {
-        depth--;
-        if (sawOpen && depth == 0) return buffer.toString();
-      }
-      if (sawOpen) buffer.write(ch);
-    }
-    buffer.write('\n');
+    if (_collectArgumentLine(state, line, from < 0 ? 0 : from)) return state.buffer.toString();
+    state.buffer.write('\n');
   }
   return null;
+}
+
+void _reportDialogPostPopMutation(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+) {
+  final state = _DialogPopState();
+  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
+    final line = context.source.masked[i];
+    _reportPostPopOffender(reporter, context, state, i, line);
+    _rememberPopInvocation(state, i, line);
+    state.depth += braceDelta(line);
+    if (state.hasPop && state.depth < state.popDepth) state.clearPop();
+  }
+}
+
+void _reportPostPopOffender(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  _DialogPopState state,
+  int lineIndex,
+  String line,
+) {
+  if (!state.hasPop || lineIndex <= state.popLine) return;
+  final offender = _postPopOffender.firstMatch(line);
+  if (offender == null) return;
+  reporter.report(context, lineIndex, offender.start);
+  state.clearPop();
+}
+
+void _rememberPopInvocation(_DialogPopState state, int lineIndex, String line) {
+  if (_popInvocation.hasMatch(line)) state.recordPop(lineIndex);
+}
+
+bool _collectArgumentLine(_ArgumentCollectionState state, String line, int start) {
+  for (var column = start; column < line.length; column++) {
+    final char = line[column];
+    if (char == '(') {
+      state.depth++;
+      state.sawOpen = true;
+    } else if (char == ')' && --state.depth == 0 && state.sawOpen) {
+      return true;
+    }
+    if (state.sawOpen) state.buffer.write(char);
+  }
+  return false;
+}
+
+final class _DialogPopState {
+  int depth = 0;
+  int popLine = -1;
+  int popDepth = -1;
+
+  bool get hasPop => popLine >= 0;
+
+  void recordPop(int lineIndex) {
+    popLine = lineIndex;
+    popDepth = depth;
+  }
+
+  void clearPop() {
+    popLine = -1;
+    popDepth = -1;
+  }
+}
+
+final class _ArgumentCollectionState {
+  final buffer = StringBuffer();
+  int depth = 0;
+  bool sawOpen = false;
 }
 
 // ---------------------------------------------------------------------------
@@ -489,12 +595,12 @@ bool _classNameLooksLikeDialog(String name) {
 }
 
 bool _extendsConsumerSurface(SourceScannerContext context, ScannerClassSpan classSpan) {
-  final signature = _classSignature(context, classSpan);
+  final signature = sourceClassSignature(context, classSpan);
   return _consumerSurface.hasMatch(signature);
 }
 
 bool _extendsWidgetSurface(SourceScannerContext context, ScannerClassSpan classSpan) {
-  final signature = _classSignature(context, classSpan);
+  final signature = sourceClassSignature(context, classSpan);
   return _widgetSurface.hasMatch(signature);
 }
 
@@ -505,17 +611,6 @@ final _consumerSurface = RegExp(
 final _widgetSurface = RegExp(
   r'\bextends\s+(?:ConsumerWidget|ConsumerStatefulWidget|HookConsumerWidget|StatelessWidget|StatefulWidget|HookWidget|ConsumerState\b|HookConsumerState\b|State\s*<)',
 );
-
-String _classSignature(SourceScannerContext context, ScannerClassSpan classSpan) {
-  final buffer = StringBuffer();
-  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-    final line = context.source.masked[i];
-    buffer.write(' ');
-    buffer.write(line);
-    if (line.contains('{')) break;
-  }
-  return buffer.toString();
-}
 
 Set<String> _mutatingPrivateMethods(SourceScannerContext context, ScannerClassSpan classSpan) {
   final names = <String>{};
@@ -534,35 +629,29 @@ Set<String> _mutatingPrivateMethods(SourceScannerContext context, ScannerClassSp
 
 bool _lineIgnoresRule(SourceScannerContext context, int lineIndex, String ruleName) {
   final pattern = RegExp(r'//\s*ignore(?:_for_file)?\s*:\s*([^\n]+)');
-  for (final i in [lineIndex, lineIndex - 1]) {
-    if (i < 0 || i >= context.source.length) continue;
-    final match = pattern.firstMatch(context.source.original[i]);
-    if (match == null) continue;
-    final codes = match.group(1)?.split(',').map((c) => c.trim()).toSet() ?? const {};
-    if (codes.contains(ruleName)) return true;
-  }
-  for (var i = 0; i < context.source.length && i < 20; i++) {
-    final match = RegExp(
-      r'//\s*ignore_for_file\s*:\s*([^\n]+)',
-    ).firstMatch(context.source.original[i]);
-    if (match == null) continue;
-    final codes = match.group(1)?.split(',').map((c) => c.trim()).toSet() ?? const {};
-    if (codes.contains(ruleName)) return true;
-  }
-  return false;
+  return _hasIgnoredCode(context, [lineIndex, lineIndex - 1], pattern, ruleName) ||
+      _hasIgnoredCode(context, _leadingLines(context), pattern, ruleName);
 }
 
-int _braceDelta(String line) {
-  var delta = 0;
-  for (var i = 0; i < line.length; i++) {
-    final char = line[i];
-    if (char == '{') {
-      delta++;
-    } else if (char == '}') {
-      delta--;
-    }
+Iterable<int> _leadingLines(SourceScannerContext context) sync* {
+  for (var i = 0; i < context.source.length && i < 20; i++) {
+    yield i;
   }
-  return delta;
+}
+
+bool _hasIgnoredCode(
+  SourceScannerContext context,
+  Iterable<int> lines,
+  RegExp pattern,
+  String ruleName,
+) {
+  for (final lineIndex in lines) {
+    if (lineIndex < 0 || lineIndex >= context.source.length) continue;
+    final match = pattern.firstMatch(context.source.original[lineIndex]);
+    final codes = match?.group(1)?.split(',').map((code) => code.trim()).toSet();
+    if (codes?.contains(ruleName) ?? false) return true;
+  }
+  return false;
 }
 
 bool _isInsideFunctionLiteral(
@@ -575,18 +664,22 @@ bool _isInsideFunctionLiteral(
   for (var i = methodStart + 1; i <= lineIndex && i < context.source.length; i++) {
     final line = context.source.masked[i];
     if (i == lineIndex) {
-      if (closureDepth > 0) return true;
-      final safeColumn = column < 0 ? 0 : (column > line.length ? line.length : column);
-      final prefix = line.substring(0, safeColumn);
-      return _functionLiteralOpen.hasMatch(prefix);
+      return _lineIsInsideFunctionLiteral(line, column, closureDepth);
     }
-    final delta = _braceDelta(line);
-    if (_functionLiteralOpen.hasMatch(line) && delta > 0) {
-      closureDepth += delta;
-    } else if (closureDepth > 0) {
-      closureDepth += delta;
-      if (closureDepth < 0) closureDepth = 0;
-    }
+    closureDepth = _nextFunctionLiteralDepth(line, closureDepth);
   }
   return false;
+}
+
+bool _lineIsInsideFunctionLiteral(String line, int column, int closureDepth) {
+  if (closureDepth > 0) return true;
+  final safeColumn = column.clamp(0, line.length);
+  return _functionLiteralOpen.hasMatch(line.substring(0, safeColumn));
+}
+
+int _nextFunctionLiteralDepth(String line, int depth) {
+  final delta = braceDelta(line);
+  if (_functionLiteralOpen.hasMatch(line) && delta > 0) return depth + delta;
+  if (depth == 0) return depth;
+  return (depth + delta).clamp(0, depth + delta);
 }

@@ -1,12 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when code assigns to a static field.
-class AvoidAssigningToStaticField extends AnalysisRule {
+class AvoidAssigningToStaticField extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_assigning_to_static_field',
     'Avoid assigning to static fields.',
@@ -17,15 +15,11 @@ class AvoidAssigningToStaticField extends AnalysisRule {
     : super(
         name: 'avoid_assigning_to_static_field',
         description: 'Warns when code assigns to static fields.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addCompilationUnit(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends RecursiveAstVisitor<void> {

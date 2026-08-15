@@ -1,13 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when `toString()` uses the default Object implementation.
-class AvoidDefaultToString extends AnalysisRule {
+class AvoidDefaultToString extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_default_tostring',
     "Avoid calling default Object.toString() on '{0}'.",
@@ -16,17 +15,13 @@ class AvoidDefaultToString extends AnalysisRule {
 
   AvoidDefaultToString()
     : super(
+        code: code,
         name: 'avoid_default_tostring',
         description: 'Warns when local classes use the default Object.toString().',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodInvocation(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -45,7 +40,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     final className = type.element.name;
     if (className == null) return;
 
-    final declaration = _localClassDeclaration(node, className);
+    final declaration = localClassDeclaration(node, className);
     if (declaration == null) return;
     if (!_hasOnlyDefaultToString(declaration, node.root)) return;
 
@@ -53,35 +48,14 @@ final class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-ClassDeclaration? _localClassDeclaration(AstNode node, String className) {
-  final unit = node.root;
-  if (unit is! CompilationUnit) return null;
-
-  for (final declaration in unit.declarations) {
-    if (declaration is ClassDeclaration && declaration.namePart.typeName.lexeme == className) {
-      return declaration;
-    }
-  }
-  return null;
-}
-
 bool _hasOnlyDefaultToString(ClassDeclaration declaration, AstNode root) {
-  if (_declaresToString(declaration)) return false;
+  if (declaresToString(declaration)) return false;
 
   final superName = declaration.extendsClause?.superclass.name.lexeme;
   if (superName == null || superName == 'Object') return true;
 
-  final superDeclaration = _localClassDeclaration(root, superName);
+  final superDeclaration = localClassDeclaration(root, superName);
   if (superDeclaration == null) return false;
 
   return _hasOnlyDefaultToString(superDeclaration, root);
-}
-
-bool _declaresToString(ClassDeclaration declaration) {
-  for (final member in declaration.body.members) {
-    if (member is MethodDeclaration && member.name.lexeme == 'toString') {
-      return true;
-    }
-  }
-  return false;
 }

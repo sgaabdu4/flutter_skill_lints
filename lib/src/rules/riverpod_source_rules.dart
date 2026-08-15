@@ -38,20 +38,22 @@ final _refWatchCall = RegExp(r'\bref\s*\.\s*watch\s*\(');
 final _overrideWithValueStart = RegExp(r'\b([a-z]\w*Provider)\s*\.\s*overrideWithValue\s*\(');
 final _stateValueConstructor = RegExp(r'\b(?:const\s+)?([A-Z]\w*State)\s*\(');
 
+void visitBuildMethodLines(
+  SourceScannerContext context,
+  void Function(ScannerMethodSpan method, int lineIndex) callback,
+) {
+  for (final method in context.methods.where((method) => method.name == 'build')) {
+    for (var i = method.start; i <= method.end; i++) {
+      callback(method, i);
+    }
+  }
+}
+
 ({RegExpMatch match, int column})? _manualProviderDeclarationMatch(
   SourceScannerContext context,
   int lineIndex,
 ) {
-  final end = lineIndex + 4 > context.source.masked.length
-      ? context.source.masked.length
-      : lineIndex + 4;
-  final window = context.source.masked.sublist(lineIndex, end).join('\n');
-  final match = _manualProviderDeclaration.firstMatch(window);
-  if (match == null) return null;
-
-  final beforeMatch = window.substring(0, match.start);
-  if (beforeMatch.contains('\n')) return null;
-  return (match: match, column: beforeMatch.length);
+  return sourceWindowMatch(context, lineIndex, _manualProviderDeclaration, maxLines: 4);
 }
 
 ({int column, String providerName})? _notifierStateOverrideWithValueMatch(
@@ -87,19 +89,8 @@ bool _isGeneratedNotifierStateOverride(String providerName, String stateType) {
 }
 
 bool _isConsumerStateClass(SourceScannerContext context, ScannerClassSpan classSpan) {
-  final signature = _classSignature(context, classSpan);
+  final signature = sourceClassSignature(context, classSpan);
   return RegExp(r'\bextends\s+(?:[A-Za-z_]\w*\.)?ConsumerState\s*<').hasMatch(signature);
-}
-
-String _classSignature(SourceScannerContext context, ScannerClassSpan classSpan) {
-  final buffer = StringBuffer();
-  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-    final line = context.source.masked[i];
-    buffer.write(' ');
-    buffer.write(line);
-    if (line.contains('{')) break;
-  }
-  return buffer.toString();
 }
 
 bool _classContainsRefWatch(SourceScannerContext context, ScannerClassSpan classSpan) {
@@ -129,31 +120,6 @@ bool _methodPassesProviderArgName(
 
 RegExp _providerCallWithArgName(String name) {
   return RegExp(r'\b[A-Za-z_]\w*Provider\s*\(\s*' + RegExp.escape(name) + r'\b');
-}
-
-Iterable<int> _directClassMemberLines(
-  SourceScannerContext context,
-  ScannerClassSpan classSpan,
-) sync* {
-  var depth = 0;
-  var sawClassOpenBrace = false;
-
-  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-    final line = context.source.masked[i];
-    if (i > classSpan.start && sawClassOpenBrace && depth == 1) {
-      yield i;
-    }
-
-    for (var j = 0; j < line.length; j++) {
-      final char = line[j];
-      if (char == '{') {
-        depth++;
-        sawClassOpenBrace = true;
-      } else if (char == '}') {
-        depth--;
-      }
-    }
-  }
 }
 
 final class _ProviderAnnotation {
@@ -312,23 +278,31 @@ bool _functionHasProviderParameters(SourceScannerContext context, int declaratio
 
 String _declarationText(SourceScannerContext context, int startLine) {
   final buffer = StringBuffer();
-  var depth = 0;
-  var sawParen = false;
+  final state = _DeclarationScanState();
   for (var i = startLine; i < context.source.length && i < startLine + 8; i++) {
     final line = context.source.masked[i];
     buffer.write(' $line');
-    for (var column = 0; column < line.length; column++) {
-      final char = line[column];
-      if (char == '(') {
-        sawParen = true;
-        depth++;
-      } else if (char == ')' && sawParen) {
-        depth--;
-        if (depth == 0) return buffer.toString();
-      }
-    }
+    if (_scanDeclarationLine(state, line)) return buffer.toString();
   }
   return buffer.toString();
+}
+
+bool _scanDeclarationLine(_DeclarationScanState state, String line) {
+  for (var column = 0; column < line.length; column++) {
+    final char = line[column];
+    if (char == '(') {
+      state.sawParen = true;
+      state.depth++;
+    } else if (char == ')' && state.sawParen && --state.depth == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+final class _DeclarationScanState {
+  int depth = 0;
+  bool sawParen = false;
 }
 
 bool _parameterListHasProviderArgs(String declaration) {
@@ -388,9 +362,9 @@ int _functionProviderEnd(SourceScannerContext context, int declarationLine) {
   var sawOpenBrace = false;
   for (var i = declarationLine; i < context.source.length; i++) {
     final line = context.source.masked[i];
-    depth += _count(line, '{');
+    depth += countCharacter(line, '{');
     if (line.contains('{')) sawOpenBrace = true;
-    depth -= _count(line, '}');
+    depth -= countCharacter(line, '}');
     if (sawOpenBrace && depth <= 0) return i;
   }
   return declarationLine;
@@ -406,14 +380,6 @@ Set<String> _watchedProviderNames(
   return RegExp(
     r'\bref\s*\.\s*watch\s*\(\s*([A-Za-z_]\w*Provider)\b',
   ).allMatches(body).map((match) => match.group(1) ?? '').where((name) => name.isNotEmpty).toSet();
-}
-
-int _count(String text, String char) {
-  var count = 0;
-  for (var i = 0; i < text.length; i++) {
-    if (text[i] == char) count++;
-  }
-  return count;
 }
 
 bool _hasBlockSelectCallback(String invocation) =>
@@ -602,6 +568,20 @@ List<String> _refWatchInvocations(SourceScannerContext context, int lineIndex, i
   ];
 }
 
+void _scanSelectViolations(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  bool Function(String invocation) matches,
+) {
+  visitBuildMethodLines(context, (method, lineIndex) {
+    for (final invocation in _refWatchInvocations(context, lineIndex, method.end)) {
+      if (!matches(invocation)) continue;
+      final selectLine = _firstSelectLine(context, lineIndex, method.end);
+      reporter.report(context, selectLine, context.source.masked[selectLine].indexOf('.select'));
+    }
+  });
+}
+
 String _refWatchInvocation(
   SourceScannerContext context,
   int startLine,
@@ -609,8 +589,7 @@ String _refWatchInvocation(
   int startColumn,
 ) {
   final buffer = StringBuffer();
-  var depth = 0;
-  var sawOpenParen = false;
+  final state = _DeclarationScanState();
 
   for (
     var lineIndex = startLine;
@@ -619,27 +598,31 @@ String _refWatchInvocation(
   ) {
     final line = context.source.masked[lineIndex];
     final scanStart = lineIndex == startLine ? startColumn : 0;
-
-    for (var column = scanStart; column < line.length; column++) {
-      final char = line[column];
-      buffer.write(char);
-
-      if (char == '(') {
-        sawOpenParen = true;
-        depth++;
-        continue;
-      }
-
-      if (char == ')' && sawOpenParen) {
-        depth--;
-        if (depth == 0) {
-          return buffer.toString();
-        }
-      }
-    }
-
+    if (_appendRefWatchLine(buffer, state, line, scanStart)) return buffer.toString();
     buffer.write('\n');
   }
 
   return buffer.toString();
+}
+
+bool _appendRefWatchLine(
+  StringBuffer buffer,
+  _DeclarationScanState state,
+  String line,
+  int scanStart,
+) {
+  for (var column = scanStart; column < line.length; column++) {
+    final char = line[column];
+    buffer.write(char);
+    if (char == '(') {
+      state.sawParen = true;
+      state.depth++;
+      continue;
+    }
+    if (char == ')' && state.sawParen) {
+      state.depth--;
+      if (state.depth == 0) return true;
+    }
+  }
+  return false;
 }

@@ -1,14 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when `toString()` is called on a Stream.
-class AvoidStreamToString extends AnalysisRule {
+class AvoidStreamToString extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_stream_tostring',
     'Avoid calling toString() on a Stream.',
@@ -17,15 +15,14 @@ class AvoidStreamToString extends AnalysisRule {
   );
 
   AvoidStreamToString()
-    : super(name: 'avoid_stream_tostring', description: 'Warns when Stream.toString() is used.');
+    : super(
+        code: code,
+        name: 'avoid_stream_tostring',
+        description: 'Warns when Stream.toString() is used.',
+      );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodInvocation(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {

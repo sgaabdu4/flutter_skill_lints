@@ -56,31 +56,7 @@ final List<ScannerRule> notifierSourceRules = [
       for (final classSpan in context.classes.where((span) => span.isNotifier)) {
         final classMethods = context.methods.where((method) => classSpan.contains(method.start));
         for (final method in classMethods) {
-          if (method.name == 'build') continue;
-
-          var hasEnsure = false;
-          var hasMutationDependency = false;
-          var hasNullRepoReturn = false;
-          for (var i = method.start; i <= method.end; i++) {
-            final line = context.source.masked[i];
-            if (line.contains('_ensure') || RegExp(r'\bensure[A-Z]\w*\s*\(').hasMatch(line)) {
-              hasEnsure = true;
-            }
-            if (line.contains('_repository') ||
-                line.contains('_repo') ||
-                line.contains('Repository') ||
-                line.contains('ref.read(')) {
-              hasMutationDependency = true;
-            }
-            if (RegExp(
-              r'if\s*\(\s*_\w*(?:repo|repository)\w*\s*==\s*null\s*\)\s*return',
-            ).hasMatch(line)) {
-              hasNullRepoReturn = true;
-            }
-          }
-          if (context.isMutationMethod(method.name) &&
-              !hasEnsure &&
-              (hasMutationDependency || hasNullRepoReturn)) {
+          if (method.name != 'build' && _notifierNeedsEnsure(context, method)) {
             reporter.report(context, method.start, 0);
           }
         }
@@ -117,6 +93,33 @@ final List<ScannerRule> notifierSourceRules = [
     },
   ),
 ];
+
+bool _notifierNeedsEnsure(SourceScannerContext context, ScannerMethodSpan method) {
+  var hasEnsure = false;
+  var hasDependency = false;
+  var hasNullRepositoryReturn = false;
+  for (var i = method.start; i <= method.end; i++) {
+    final line = context.source.masked[i];
+    hasEnsure = hasEnsure || _hasEnsureCall(line);
+    hasDependency = hasDependency || _hasMutationDependency(line);
+    hasNullRepositoryReturn = hasNullRepositoryReturn || _hasNullRepositoryReturn(line);
+  }
+  return context.isMutationMethod(method.name) &&
+      !hasEnsure &&
+      (hasDependency || hasNullRepositoryReturn);
+}
+
+bool _hasEnsureCall(String line) =>
+    line.contains('_ensure') || RegExp(r'\bensure[A-Z]\w*\s*\(').hasMatch(line);
+
+bool _hasMutationDependency(String line) =>
+    line.contains('_repository') ||
+    line.contains('_repo') ||
+    line.contains('Repository') ||
+    line.contains('ref.read(');
+
+bool _hasNullRepositoryReturn(String line) =>
+    RegExp(r'if\s*\(\s*_\w*(?:repo|repository)\w*\s*==\s*null\s*\)\s*return').hasMatch(line);
 
 final _notifierLocalDependencyField = RegExp(
   r'^\s+(?:(?:late|final)\s+)*(?:I?[A-Z][A-Za-z0-9_]*(?:Repository|Service|Datasource|DataSource))\??\s+(_[A-Za-z0-9_]*(?:repo|repository|service|datasource|dataSource)[A-Za-z0-9_]*)\s*(?:[=;])',

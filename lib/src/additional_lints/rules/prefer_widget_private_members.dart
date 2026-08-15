@@ -1,15 +1,13 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when widget classes declare public implementation members.
-final class PreferWidgetPrivateMembers extends AnalysisRule {
+final class PreferWidgetPrivateMembers extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'prefer_widget_private_members',
     'Prefer private members in widget classes.',
@@ -21,15 +19,11 @@ final class PreferWidgetPrivateMembers extends AnalysisRule {
         name: 'prefer_widget_private_members',
         description:
             'Warns when widget classes declare public fields, getters, setters, or methods.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addClassDeclaration(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -97,33 +91,36 @@ Set<String> _constructorBackedFieldNames(ClassDeclaration node) {
   for (final member in node.body.members) {
     if (member is! ConstructorDeclaration) continue;
     if (member.factoryKeyword != null) continue;
-
-    for (final parameter in member.parameters.parameters) {
-      final fieldFormal = _fieldFormalParameter(parameter);
-      if (fieldFormal != null) {
-        names.add(fieldFormal.name.lexeme);
-      }
-    }
-
-    final parameterNames = {
-      for (final parameter in member.parameters.parameters)
-        if (parameter.name case final name?) name.lexeme,
-    };
-    for (final initializer in member.initializers) {
-      if (initializer is! ConstructorFieldInitializer) continue;
-      final expression = initializer.expression.unParenthesized;
-      if (expression is! SimpleIdentifier) continue;
-      if (!parameterNames.contains(expression.name)) continue;
-      names.add(initializer.fieldName.name);
-    }
+    _addFieldFormalNames(names, member);
+    _addConstructorInitializerNames(names, member);
   }
   return names;
 }
 
+void _addFieldFormalNames(Set<String> names, ConstructorDeclaration constructor) {
+  for (final parameter in constructor.parameters.parameters) {
+    final fieldFormal = _fieldFormalParameter(parameter);
+    if (fieldFormal != null) names.add(fieldFormal.name.lexeme);
+  }
+}
+
+void _addConstructorInitializerNames(Set<String> names, ConstructorDeclaration constructor) {
+  final parameterNames = {
+    for (final parameter in constructor.parameters.parameters)
+      if (parameter.name case final name?) name.lexeme,
+  };
+  for (final initializer in constructor.initializers) {
+    if (initializer is! ConstructorFieldInitializer) continue;
+    final expression = initializer.expression.unParenthesized;
+    if (expression is SimpleIdentifier && parameterNames.contains(expression.name)) {
+      names.add(initializer.fieldName.name);
+    }
+  }
+}
+
 FieldFormalParameter? _fieldFormalParameter(FormalParameter parameter) {
-  final normal = parameter is DefaultFormalParameter ? parameter.parameter : parameter;
-  return switch (normal) {
-    FieldFormalParameter() => normal,
+  return switch (parameter) {
+    FieldFormalParameter() => parameter,
     _ => null,
   };
 }

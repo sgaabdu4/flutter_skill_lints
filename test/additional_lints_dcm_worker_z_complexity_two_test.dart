@@ -90,6 +90,13 @@ final class AvoidLongFilesTest extends AnalysisRuleTest {
   Future<void> test_fileAtSixHundredLines_noLint() async {
     await assertNoDiagnostics(_fileWithLines(AvoidLongFiles.maxLines));
   }
+
+  Future<void> test_generatedLocalizationOverSixHundredLines_noLint() async {
+    final filePath = '$testPackageLibPath/l10n/app_localizations.dart';
+    newFile(filePath, _fileWithLines(AvoidLongFiles.maxLines + 1));
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
 }
 
 @reflectiveTest

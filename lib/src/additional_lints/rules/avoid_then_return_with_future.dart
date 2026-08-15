@@ -1,14 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when Mockito-style `thenReturn` receives a Future or Stream.
-final class AvoidThenReturnWithFuture extends AnalysisRule {
+final class AvoidThenReturnWithFuture extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_then_return_with_future',
     'Avoid returning Futures or Streams from thenReturn().',
@@ -17,42 +15,23 @@ final class AvoidThenReturnWithFuture extends AnalysisRule {
 
   AvoidThenReturnWithFuture()
     : super(
+        code: code,
         name: 'avoid_then_return_with_future',
         description: 'Warns when thenReturn() receives a Future or Stream expression.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodInvocation(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
   const _Visitor(this.rule);
 
-  static const _futureChecker = TypeChecker.fromUrl('dart:async#Future');
-  static const _streamChecker = TypeChecker.fromUrl('dart:async#Stream');
-
   final AvoidThenReturnWithFuture rule;
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (node.methodName.name != 'thenReturn') return;
-
-    final args = node.argumentList.arguments
-        .where((argument) => argument is! NamedExpression)
-        .toList();
-    if (args.length != 1) return;
-
-    final argument = args.single;
-
-    final type = argument.staticType;
-    if (type == null) return;
-
-    if (_futureChecker.isAssignableFromType(type) || _streamChecker.isAssignableFromType(type)) {
+    if (isAsyncThenReturn(node)) {
       rule.reportAtNode(node.methodName);
     }
   }

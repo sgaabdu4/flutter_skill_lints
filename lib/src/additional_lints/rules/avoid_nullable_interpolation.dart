@@ -12,7 +12,6 @@ class AvoidNullableInterpolation extends AnalysisRule {
     'avoid_nullable_interpolation',
     'Avoid interpolating nullable values directly.',
     correctionMessage: 'Handle the null case before interpolating the value.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidNullableInterpolation()

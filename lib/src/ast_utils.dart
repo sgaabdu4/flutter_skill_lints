@@ -1,6 +1,9 @@
+import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/type.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 bool isGeneratedRuleContext(RuleContext context) {
   final path = context.definingUnit.file.path.replaceAll('\\', '/');
@@ -13,6 +16,183 @@ bool isGeneratedRuleContext(RuleContext context) {
       path.endsWith('.mock.dart') ||
       path.contains('/l10n/app_localizations') ||
       path.contains('/generated/');
+}
+
+mixin SkipGeneratedSources on AnalysisRule {
+  bool shouldRegister(RuleContext context) => !isGeneratedRuleContext(context);
+}
+
+String? productionLibPath(RuleContext context) {
+  if (context.isInTestDirectory || isGeneratedRuleContext(context)) return null;
+  final path = context.definingUnit.file.path.replaceAll('\\', '/');
+  if (!path.contains('/lib/') || path.endsWith('_test.dart')) return null;
+  return path;
+}
+
+bool isCommonConstantOwnerPath(String path) {
+  return path.endsWith('_constants.dart') ||
+      path.endsWith('_keys.dart') ||
+      path.endsWith('_schema.dart') ||
+      path.endsWith('_strings.dart') ||
+      path.endsWith('_theme.dart') ||
+      path.endsWith('_tokens.dart') ||
+      path.contains('/constants/');
+}
+
+bool isTestSourceContext(RuleContext context) {
+  if (context.isInTestDirectory) return true;
+  return context.definingUnit.file.path.replaceAll('\\', '/').endsWith('_test.dart');
+}
+
+bool isExcludedProductionSource(RuleContext context) {
+  if (context.isInTestDirectory || isGeneratedRuleContext(context)) return true;
+
+  final path = context.definingUnit.file.path.replaceAll('\\', '/');
+  return !path.contains('/lib/') || path.endsWith('_test.dart') || path.contains('/l10n/');
+}
+
+bool isClassAssignableTo(ClassDeclaration node, TypeChecker checker) {
+  final element = node.declaredFragment?.element;
+  return element != null && checker.isSuperOf(element);
+}
+
+String? filteredCollectionProperty(PropertyAccess node) {
+  final property = node.propertyName.name;
+  if (property != 'isEmpty' && property != 'isNotEmpty') return null;
+
+  final target = node.target;
+  if (target is! MethodInvocation || target.methodName.name != 'where') return null;
+  if (target.argumentList.arguments.length != 1) return null;
+
+  final sourceType = target.target?.staticType;
+  if (sourceType == null ||
+      !const TypeChecker.fromUrl('dart:core#Iterable').isAssignableFromType(sourceType)) {
+    return null;
+  }
+
+  return property;
+}
+
+bool isEnclosedClassAssignableTo(AstNode node, TypeChecker checker) {
+  final declaration = node.thisOrAncestorOfType<ClassDeclaration>();
+  return declaration != null && isClassAssignableTo(declaration, checker);
+}
+
+BlockClassBody? classBodyOf(ClassDeclaration node) {
+  final body = node.body;
+  return body is BlockClassBody ? body : null;
+}
+
+BlockClassBody? flutterStateBody(ClassDeclaration node) {
+  if (!isClassAssignableTo(node, flutterStateChecker)) return null;
+  return classBodyOf(node);
+}
+
+Expression? namedArgumentExpression(ArgumentList arguments, String name) {
+  for (final argument in arguments.arguments.whereType<NamedArgument>()) {
+    if (argument.name.lexeme == name) return argument.argumentExpression;
+  }
+  return null;
+}
+
+bool isInlineCreatedExpression(Expression expression) {
+  final unwrapped = expression.unParenthesized;
+  return unwrapped is MethodInvocation || unwrapped is InstanceCreationExpression;
+}
+
+bool isIntlMessageInvocation(MethodInvocation node) {
+  final target = node.target;
+  return target is SimpleIdentifier && target.name == 'Intl' && node.methodName.name == 'message';
+}
+
+NamedArgument? namedInvocationArgument(MethodInvocation node, String name) {
+  for (final argument in node.argumentList.arguments.whereType<NamedArgument>()) {
+    if (argument.name.lexeme == name) return argument;
+  }
+  return null;
+}
+
+bool isNonEmptyMapLiteral(SetOrMapLiteral expression) {
+  return expression.isMap && expression.elements.whereType<MapLiteralEntry>().isNotEmpty;
+}
+
+String? simpleLiteralKey(
+  Expression expression, {
+  bool includeIdentifiers = false,
+  bool includeNegative = false,
+}) {
+  final unwrapped = expression.unParenthesized;
+  if (includeNegative && unwrapped is PrefixExpression && unwrapped.operator.lexeme == '-') {
+    final operand = unwrapped.operand.unParenthesized;
+    return switch (operand) {
+      DoubleLiteral(:final value) => 'double:-$value',
+      IntegerLiteral(:final value?) => 'int:-$value',
+      _ => null,
+    };
+  }
+
+  return switch (unwrapped) {
+    BooleanLiteral(:final value) => 'bool:$value',
+    DoubleLiteral(:final value) => 'double:$value',
+    IntegerLiteral(:final value?) => 'int:$value',
+    NullLiteral() => 'null',
+    PrefixedIdentifier() when includeIdentifiers => 'identifier:${unwrapped.toSource()}',
+    PropertyAccess() when includeIdentifiers => 'identifier:${unwrapped.toSource()}',
+    SimpleIdentifier(:final name) when includeIdentifiers => 'identifier:$name',
+    SimpleStringLiteral(:final value) => 'string:$value',
+    _ => null,
+  };
+}
+
+Iterable<ConstructorDeclaration> constructorsWithLogic(BlockClassBody body) sync* {
+  for (final member in body.members) {
+    if (member is! ConstructorDeclaration) continue;
+
+    final hasBody =
+        member.body is BlockFunctionBody &&
+        (member.body as BlockFunctionBody).block.statements.isNotEmpty;
+    final hasInitializers = member.initializers.any((initializer) {
+      return initializer is! SuperConstructorInvocation;
+    });
+
+    if (hasBody || hasInitializers) yield member;
+  }
+}
+
+Set<String> formalParameterNames(FormalParameterList? parameters) {
+  if (parameters == null) return const {};
+
+  return {
+    for (final parameter in parameters.parameters)
+      if (parameter.name case final name?) name.lexeme,
+  };
+}
+
+ClassDeclaration? localClassDeclaration(AstNode node, String className) {
+  final unit = node.root;
+  if (unit is! CompilationUnit) return null;
+
+  for (final declaration in unit.declarations) {
+    if (declaration is ClassDeclaration && declaration.namePart.typeName.lexeme == className) {
+      return declaration;
+    }
+  }
+  return null;
+}
+
+bool declaresToString(ClassDeclaration declaration) {
+  return declaration.body.members.any(
+    (member) => member is MethodDeclaration && member.name.lexeme == 'toString',
+  );
+}
+
+bool isInFreezedClass(AstNode node) {
+  final declaration = node.thisOrAncestorOfType<ClassDeclaration>();
+  return declaration?.metadata.any((annotation) {
+        final name = annotation.name.name;
+        return name == 'freezed' || name == 'Freezed';
+      }) ??
+      false;
 }
 
 bool isNotifierClass(ClassDeclaration node) {
@@ -91,6 +271,128 @@ bool containsThrowExpression(AstNode node) {
 MethodDeclaration? enclosingMethod(AstNode node) => node.thisOrAncestorOfType<MethodDeclaration>();
 
 ClassDeclaration? enclosingClass(AstNode node) => node.thisOrAncestorOfType<ClassDeclaration>();
+
+ClassDeclaration? findStateClass(Iterable<ClassDeclaration> classes, String widgetName) {
+  for (final stateClass in classes) {
+    final superclass = stateClass.extendsClause?.superclass;
+    final typeArguments = superclass?.typeArguments?.arguments;
+    if (typeArguments?.length != 1) continue;
+    final typeArgument = typeArguments!.first;
+    if (typeArgument is NamedType && typeArgument.name.lexeme == widgetName) return stateClass;
+  }
+  return null;
+}
+
+RegularFormalParameter? extensionTypeRepresentationParameter(ExtensionTypeDeclaration node) {
+  final namePart = node.namePart;
+  if (namePart is! PrimaryConstructorDeclaration) return null;
+  final parameter = namePart.formalParameters.parameters.singleOrNull;
+  return parameter is RegularFormalParameter ? parameter : null;
+}
+
+bool isExpressionTargetIdentifier(SimpleIdentifier node) {
+  final parent = node.parent;
+  return (parent is PrefixedIdentifier && parent.prefix == node) ||
+      (parent is PropertyAccess && parent.target == node) ||
+      (parent is MethodInvocation && parent.target == node);
+}
+
+bool isStatusCodeExpression(Expression expression) {
+  final unwrapped = expression.unParenthesized;
+  return switch (unwrapped) {
+    SimpleIdentifier(:final name) => _statusCodePropertyNames.contains(name.toLowerCase()),
+    PrefixedIdentifier(:final identifier) => _statusCodePropertyNames.contains(
+      identifier.name.toLowerCase(),
+    ),
+    PropertyAccess(:final propertyName) => _statusCodePropertyNames.contains(
+      propertyName.name.toLowerCase(),
+    ),
+    _ => false,
+  };
+}
+
+bool isAsyncThenReturn(MethodInvocation node) {
+  if (node.methodName.name != 'thenReturn') return false;
+
+  final arguments = node.argumentList.arguments.where((argument) => argument is! NamedArgument);
+  final argument = arguments.length == 1 ? arguments.single : null;
+  final type = argument?.argumentExpression.staticType;
+  if (type is! InterfaceType || type.element.library.isDartAsync != true) return false;
+
+  final name = type.element.name;
+  return name == 'Future' || name == 'Stream';
+}
+
+bool isNotifierSelector(Expression expression) {
+  return switch (expression.unParenthesized) {
+    PrefixedIdentifier(:final identifier) => identifier.name == 'notifier',
+    PropertyAccess(:final propertyName) => propertyName.name == 'notifier',
+    _ => false,
+  };
+}
+
+String? packageNameFromUri(StringLiteral uri) {
+  final value = uri.stringValue;
+  if (value == null || !value.startsWith('package:')) return null;
+
+  final path = value.substring('package:'.length);
+  final separatorIndex = path.indexOf('/');
+  return separatorIndex == -1 ? path : path.substring(0, separatorIndex);
+}
+
+const _statusCodePropertyNames = {
+  'code',
+  'errorcode',
+  'httpstatuscode',
+  'responsecode',
+  'statuscode',
+};
+
+Object? getterReadElement(SimpleIdentifier node) {
+  return node.inGetterContext() ? node.element : null;
+}
+
+abstract class GetterReadVisitor extends RecursiveAstVisitor<void> {
+  const GetterReadVisitor();
+
+  void checkGetterRead(SimpleIdentifier node, Object key);
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    final key = getterReadElement(node);
+    if (key != null) checkGetterRead(node, key);
+  }
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {}
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {}
+}
+
+void forEachSimpleBlockStatement(
+  Block block, {
+  required void Function(VariableDeclarationList variables) onVariableDeclaration,
+  required void Function(Expression expression) onExpression,
+  required void Function(Expression? expression) onReturn,
+  required void Function() onOther,
+}) {
+  for (final statement in block.statements) {
+    if (statement is VariableDeclarationStatement) {
+      onVariableDeclaration(statement.variables);
+      continue;
+    }
+    if (statement is ExpressionStatement) {
+      onExpression(statement.expression);
+      continue;
+    }
+    if (statement is ReturnStatement) {
+      onReturn(statement.expression);
+      continue;
+    }
+    onOther();
+  }
+}
 
 bool isMutationMethodName(String name) =>
     RegExp(r'^(?:create|update|delete|set|reorder|save|add|remove)(?:[A-Z_]|$)').hasMatch(name);
@@ -279,10 +581,7 @@ final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
       super.visitSimpleIdentifier(node);
       return;
     }
-    final parent = node.parent;
-    if (parent is PrefixedIdentifier && parent.prefix == node) return;
-    if (parent is PropertyAccess && parent.target == node) return;
-    if (parent is MethodInvocation && parent.target == node) return;
+    if (isExpressionTargetIdentifier(node)) return;
     if (classMemberNameIsDeclaration(node)) return;
     this.node = node;
   }

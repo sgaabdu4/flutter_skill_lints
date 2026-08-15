@@ -1,6 +1,6 @@
 # Coverage Audit
 
-Status: 2026-05-11. The package provides one public analyzer plugin for the
+Status: 2026-08-15. The package provides one public analyzer plugin for the
 Flutter skill setup and reports practical Dart-source and installed-plugin
 project-config drift through diagnostics anchored to Dart analysis units. The
 supplemental scanner has been narrowed to bootstrap, agent-hook, and runtime
@@ -110,8 +110,8 @@ preferences, `prefer_switch_expression`, and
 
 - `dart format`: formatted the edited analyzer/scanner files.
 - `dart analyze`: no issues.
-- `dart test`: 283 passing tests, 1 gated integration test skipped by default.
-- `RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart --reporter expanded`: passed. The temp Flutter app loaded `flutter_skill_lints` and stable `riverpod_lint 3.1.4`, emitted `avoid_null_bang`, `avoid_ref_read_inside_build`, and `missing_provider_scope`, and did not emit `server.pluginError`.
+- `dart test`: 1748 passing tests, 1 gated integration test skipped by default.
+- `RUN_FLUTTER_PLUGIN_SMOKE=1 dart test -t integration test/integration_plugin_smoke_test.dart`: passed. The temp Flutter app loaded `flutter_skill_lints` with stable `riverpod_lint 3.1.8`, emitted `avoid_null_bang`, `avoid_ref_read_inside_build`, and `missing_provider_scope`, and did not emit `server.pluginError`.
 - Flutter skill scanner/docs regression suite:
   `dart test/flutter_skill_scan_test.dart` passed from the skill repo.
 - Scanner catalog remains limited to bootstrap/agent-hook checks:

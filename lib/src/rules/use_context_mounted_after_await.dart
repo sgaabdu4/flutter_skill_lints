@@ -80,25 +80,9 @@ final class _ContextAsyncStatementScanner {
     var contextIsBound = hasContextBinding;
 
     for (final statement in block.statements) {
-      if (afterAwait) {
-        final unboundMountedAccess = contextIsBound ? null : _firstContextMountedAccess(statement);
-        if (unboundMountedAccess != null) {
-          rule.reportAtNode(unboundMountedAccess);
-          afterAwait = false;
-          continue;
-        }
-
-        if (contextIsBound && statementIsMountedReturnGuard(statement, 'context')) {
-          afterAwait = false;
-          continue;
-        }
-
-        final access = _firstContextAccess(statement);
-        if (access != null) {
-          rule.reportAtNode(access);
-          afterAwait = false;
-          continue;
-        }
+      if (afterAwait && _handlePostAwaitStatement(statement, contextIsBound)) {
+        afterAwait = false;
+        continue;
       }
 
       final nested = _NestedContextBlockScanner(this, hasContextBinding: contextIsBound);
@@ -112,6 +96,23 @@ final class _ContextAsyncStatementScanner {
         afterAwait = true;
       }
     }
+  }
+
+  bool _handlePostAwaitStatement(Statement statement, bool contextIsBound) {
+    if (!contextIsBound) {
+      final mountedAccess = _firstContextMountedAccess(statement);
+      if (mountedAccess != null) {
+        rule.reportAtNode(mountedAccess);
+        return true;
+      }
+    }
+    if (contextIsBound && statementIsMountedReturnGuard(statement, 'context')) {
+      return true;
+    }
+    final access = _firstContextAccess(statement);
+    if (access == null) return false;
+    rule.reportAtNode(access);
+    return true;
   }
 
   static bool _declaresContextLocal(Statement statement) {

@@ -291,6 +291,75 @@ abstract class _HivePersistenceRuleTest extends _SourceRuleTest {
 }
 
 @reflectiveTest
+final class UnvalidatedPersistedMapCastTest extends _HivePersistenceRuleTest {
+  @override
+  String get ruleName => 'avoid_unvalidated_persisted_map_cast';
+  @override
+  String get needle => 'as Map<String, dynamic>';
+  @override
+  String get path =>
+      '$testPackageLibPath/features/items/data/datasources/item_cache_datasource.dart';
+  @override
+  bool get addIgnorePrefix => false;
+
+  @override
+  String get source => r'''
+Object? readStoredValue(Object? raw) {
+  return raw as Map<String, dynamic>;
+}
+''';
+
+  Future<void> test_allowsCheckedMapNormalization() async {
+    await assertAllows(r'''
+class PersistedMapFormatException implements Exception {}
+
+Map<String, dynamic> normalizeStoredMap(Object? raw) {
+  if (raw is! Map) throw PersistedMapFormatException();
+  final entries = <String, dynamic>{};
+  for (final entry in raw.entries) {
+    if (entry.key is! String) throw PersistedMapFormatException();
+    entries[entry.key as String] = entry.value;
+  }
+  return entries;
+}
+''');
+  }
+
+  Future<void> test_allowsJsonBoundaryCastOutsidePersistencePath() async {
+    final filePath = '$testPackageLibPath/features/items/data/models/item_json.dart';
+    newFile(filePath, r'''
+Map<String, dynamic> decodeJson(Object? raw) => raw as Map<String, dynamic>;
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsRemoteDatasourceJsonCast() async {
+    final filePath = '$testPackageLibPath/features/items/data/remote/item_datasource.dart';
+    newFile(filePath, r'''
+Map<String, dynamic> decodeResponse(Object? raw) => raw as Map<String, dynamic>;
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsLocalDatasourceMapCast() async {
+    final filePath = '$testPackageLibPath/features/items/data/datasources/item_datasource.dart';
+    const source = r'''
+Object? readStoredValue(Object? raw) {
+  return raw as Map<String, dynamic>;
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: false);
+    newFile(filePath, analyzedSource);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, 'as Map<String, dynamic>', ruleName),
+    ]);
+  }
+}
+
+@reflectiveTest
 final class HiveFlutterImportTest extends _HivePersistenceRuleTest {
   @override
   String get ruleName => 'use_hive_ce_flutter_import';

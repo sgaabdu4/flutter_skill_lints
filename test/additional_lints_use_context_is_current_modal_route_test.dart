@@ -1,9 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
-// ignore: implementation_imports
-import 'package:analyzer_testing/src/analysis_rule/pub_package_resolution.dart'
-    show ExpectedDiagnostic;
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_context_is_current_modal_route.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -19,20 +16,20 @@ class UseContextIsCurrentModalRouteTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  ExpectedDiagnostic lintFor(String source, String needle) {
+  T lintFor<T>(String source, String needle) {
     final offset = source.indexOf(needle);
     if (offset < 0) {
       throw StateError('Needle not found: $needle');
     }
-    return lint(offset, needle.length);
+    return lint(offset, needle.length) as T;
   }
 
-  ExpectedDiagnostic lintForLast(String source, String needle) {
+  T lintForLast<T>(String source, String needle) {
     final offset = source.lastIndexOf(needle);
     if (offset < 0) {
       throw StateError('Needle not found: $needle');
     }
-    return lint(offset, needle.length);
+    return lint(offset, needle.length) as T;
   }
 
   Future<void> test_directStaticCheck_lint() async {

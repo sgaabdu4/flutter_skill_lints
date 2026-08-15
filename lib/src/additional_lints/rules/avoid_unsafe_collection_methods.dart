@@ -4,9 +4,8 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../type_checker.dart';
-import 'avoid_unsafe_reduce.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unsafe_reduce.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Reports `first` and `single` reads that can throw on empty iterables.
 class AvoidUnsafeCollectionMethods extends AnalysisRule {
@@ -14,7 +13,6 @@ class AvoidUnsafeCollectionMethods extends AnalysisRule {
     'avoid_unsafe_collection_methods',
     'Reading {0} without proving the iterable is non-empty can throw.',
     correctionMessage: 'Check isNotEmpty first or use a nullable/checked lookup.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidUnsafeCollectionMethods()

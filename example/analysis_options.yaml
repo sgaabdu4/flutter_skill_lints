@@ -1,10 +1,4 @@
-include: package:flutter_lints/flutter.yaml
-
-plugins:
-  # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
-  # Re-check pub.dev before release when Riverpod or analyzer versions move.
-  riverpod_lint: 3.1.4
-  flutter_skill_lints:
+include: package:lints/recommended.yaml
 
 analyzer:
   exclude:
@@ -20,7 +14,6 @@ analyzer:
   errors:
     missing_required_param: error
     missing_return: error
-    invalid_annotation_target: ignore
 
 formatter:
   page_width: 100
@@ -37,7 +30,7 @@ linter:
     - prefer_const_literals_to_create_immutables
     - prefer_final_locals
     - avoid_redundant_argument_values
-    # Effective Dart Design additions not covered by flutter_lints.
+    # Effective Dart Design additions not covered by package:lints.
     - always_declare_return_types
     - type_annotate_public_apis
     - avoid_positional_boolean_parameters

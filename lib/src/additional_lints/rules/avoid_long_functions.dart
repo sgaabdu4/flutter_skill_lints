@@ -14,7 +14,6 @@ final class AvoidLongFunctions extends AnalysisRule {
     'avoid_long_functions',
     'Avoid functions longer than 80 lines.',
     correctionMessage: 'Split the function into smaller named steps.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidLongFunctions()
@@ -28,7 +27,7 @@ final class AvoidLongFunctions extends AnalysisRule {
 
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this, _isTestFile(context));
+    final visitor = _Visitor(this, isTestFile: _isTestFile(context));
     registry.addConstructorDeclaration(this, visitor);
     registry.addFunctionDeclaration(this, visitor);
     registry.addFunctionExpression(this, visitor);
@@ -37,7 +36,7 @@ final class AvoidLongFunctions extends AnalysisRule {
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
-  const _Visitor(this.rule, this.isTestFile);
+  const _Visitor(this.rule, {required this.isTestFile});
 
   final AvoidLongFunctions rule;
   final bool isTestFile;

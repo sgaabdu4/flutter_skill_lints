@@ -1,13 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when an `if` only chooses between opposite boolean literals.
-class AvoidUnnecessaryIf extends AnalysisRule {
+class AvoidUnnecessaryIf extends IfStatementRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_if',
     'Avoid if statements that only choose between boolean literals.',
@@ -19,15 +17,11 @@ class AvoidUnnecessaryIf extends AnalysisRule {
     : super(
         name: 'avoid_unnecessary_if',
         description: 'Warns when an if statement can be replaced with a boolean expression.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addIfStatement(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -81,7 +75,7 @@ _BooleanAssignment? _booleanAssignment(Statement statement) {
   final value = _booleanLiteralValue(expression.rightHandSide);
   if (value == null) return null;
 
-  return _BooleanAssignment(_canonicalSource(expression.leftHandSide), value);
+  return _BooleanAssignment(_canonicalSource(expression.leftHandSide), value: value);
 }
 
 bool? _booleanLiteralValue(Expression expression) {
@@ -110,7 +104,7 @@ String _canonicalSource(AstNode node) {
 }
 
 final class _BooleanAssignment {
-  const _BooleanAssignment(this.variableSource, this.value);
+  const _BooleanAssignment(this.variableSource, {required this.value});
 
   final String variableSource;
   final bool value;

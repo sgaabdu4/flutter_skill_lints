@@ -1,17 +1,15 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../../ast_utils.dart';
-import '../riverpod_type_checkers.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/riverpod_type_checkers.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when Riverpod provider family arguments use mutable objects.
-class PreferImmutableProviderArguments extends AnalysisRule {
+class PreferImmutableProviderArguments extends FunctionAndMethodDeclarationRule
+    with SkipGeneratedSources {
   static const LintCode code = LintCode(
     'prefer_immutable_provider_arguments',
     'Prefer immutable provider arguments.',
@@ -23,18 +21,11 @@ class PreferImmutableProviderArguments extends AnalysisRule {
     : super(
         name: 'prefer_immutable_provider_arguments',
         description: 'Warns when Riverpod provider arguments are mutable.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (isGeneratedRuleContext(context)) return;
-    final visitor = _Visitor(this);
-    registry.addFunctionDeclaration(this, visitor);
-    registry.addMethodDeclaration(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {

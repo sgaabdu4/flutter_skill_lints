@@ -17,21 +17,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     ),
     description:
         'Flags `.saveAll(... .map(Model.fromEntity).toList())` inside a method body that has no earlier `isEmpty` early-return guard.',
-    scan: (reporter, context) {
-      if (context.isTestFile) return;
-      for (final method in context.methods) {
-        for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-          final line = context.source.masked[i];
-          final match = _saveAllCallStart.firstMatch(line);
-          if (match == null) continue;
-          final callWindow = _collectWindow(context, i, method.end, 10);
-          if (!_saveAllFromEntity.hasMatch(callWindow)) continue;
-          if (_hasEarlyEmptyGuard(context, method.start, i)) continue;
-          if (_hasOuterDirtyGuard(context, i)) continue;
-          reporter.report(context, i, match.start);
-        }
-      }
-    },
+    scan: _scanSyncSaveAllGuards,
   ),
 
   /// `saveAll` must not rewrite a full collection after mutating a subset.
@@ -51,22 +37,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     ),
     description:
         'Flags `saveAll(fullCollection.map(Model.fromEntity).toList())` after mutating indexed rows of that same collection.',
-    scan: (reporter, context) {
-      if (context.isTestFile) return;
-      for (final method in context.methods) {
-        for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-          final line = context.source.masked[i];
-          final match = _saveAllCallStart.firstMatch(line);
-          if (match == null) continue;
-          final callWindow = _collectWindow(context, i, method.end, 10);
-          if (!_saveAllFromEntity.hasMatch(callWindow)) continue;
-          final collection = _saveAllMappedCollection(callWindow);
-          if (collection == null) continue;
-          if (!_methodMutatesCollectionSubset(context, method, i, collection)) continue;
-          reporter.report(context, i, match.start);
-        }
-      }
-    },
+    scan: _scanSubsetSaveAllWrites,
   ),
 
   /// Collection getters must not allocate a fresh Map/List/Set on every access.
@@ -85,30 +56,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     ),
     description:
         'Flags Map/List/Set getters that build collection values in the getter body without an obvious cache.',
-    scan: (reporter, context) {
-      if (context.isTestFile) return;
-      for (final classSpan in context.classes) {
-        for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-          final line = context.source.masked[i];
-          final blockMatch = _collectionGetterBlockStart.firstMatch(line);
-          if (blockMatch != null) {
-            final end = _findBlockEnd(context, i, classSpan.end);
-            if (end == null) continue;
-            final body = _collectLines(context, i, end);
-            if (!_collectionGetterAllocates(body)) continue;
-            reporter.report(context, i, blockMatch.start);
-            i = end;
-            continue;
-          }
-
-          final expressionMatch = _collectionGetterExpression.firstMatch(line);
-          if (expressionMatch == null) continue;
-          final expression = expressionMatch.group(2) ?? '';
-          if (!_collectionGetterAllocates(expression)) continue;
-          reporter.report(context, i, expressionMatch.start);
-        }
-      }
-    },
+    scan: _scanCollectionGetterAllocations,
   ),
 
   /// Do not use Expando side tables as derived state caches.
@@ -185,32 +133,8 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
         'Flags firstWhere/indexWhere/manual *ById loops over `.id == ...` in likely-hot widget, notifier, repository, or provider code.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        final match = _byIdFunctionStart.firstMatch(line);
-        if (match == null) continue;
-        final end = _findBlockEnd(context, i, context.source.length - 1);
-        if (end == null) continue;
-        final body = _collectLines(context, i, end);
-        if (!_manualIdLoop.hasMatch(body)) continue;
-        reporter.report(context, i, match.start);
-      }
-
-      for (final classSpan in context.classes) {
-        if (!_isHotLookupClass(context, classSpan)) continue;
-        for (final method in context.methods) {
-          if (!classSpan.contains(method.start)) continue;
-          for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-            final line = context.source.masked[i];
-            final match = _linearIdLookupCall.firstMatch(line);
-            if (match == null) continue;
-            final lookupWindow = _collectWindow(context, i, method.end, 6);
-            if (!_linearIdLookup.hasMatch(lookupWindow)) continue;
-            if (_isIndexLookupInsideForBlock(context, method.start, i)) continue;
-            reporter.report(context, i, match.start);
-          }
-        }
-      }
+      _reportManualIdLookupFunctions(reporter, context);
+      _reportHotClassIdLookups(reporter, context);
     },
   ),
 
@@ -232,22 +156,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final method in context.methods) {
-        for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-          final loop = _forEachLoop.firstMatch(context.source.masked[i]);
-          final loopVar = loop?.group(1);
-          if (loopVar == null) continue;
-          final bodyEnd = _findBlockEnd(context, i, method.end) ?? method.end;
-          final lookup = _nestedIdLookup(loopVar);
-          for (var j = i + 1; j <= bodyEnd && j < context.source.length; j++) {
-            final line = context.source.masked[j];
-            final match = _linearIdLookupCall.firstMatch(line);
-            if (match == null) continue;
-            final lookupWindow = _collectWindow(context, j, bodyEnd, 6);
-            if (!lookup.hasMatch(lookupWindow)) continue;
-            reporter.report(context, j, match.start);
-            break;
-          }
-        }
+        _reportNestedIdLookups(reporter, context, method);
       }
     },
   ),
@@ -271,26 +180,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     ),
     description:
         'Flags Appwrite `createExecution(...)` calls in likely long-running/destructive client methods unless the call explicitly passes `xasync: true`.',
-    scan: (reporter, context) {
-      if (context.isTestFile) return;
-      for (final method in context.methods) {
-        for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-          final line = context.source.masked[i];
-          final match = _appwriteExecutionCall.firstMatch(line);
-          if (match == null) continue;
-          final callWindow = _collectWindow(context, i, method.end, 18);
-          final directAppwriteCall = _appwriteCreateExecution.hasMatch(line);
-          if (!directAppwriteCall && !_functionIdArgument.hasMatch(callWindow)) continue;
-          if (_isExecutionForwardingWrapper(context, method, callWindow)) continue;
-          if (!_methodLooksLongRunningFunction(method.name) &&
-              !_appwriteExecutionLooksLongRunning(callWindow)) {
-            continue;
-          }
-          if (_xasyncTrue.hasMatch(callWindow)) continue;
-          reporter.report(context, i, match.start);
-        }
-      }
-    },
+    scan: _scanBlockingFunctionExecutions,
   ),
 
   /// Destructive failures must reconcile before reporting telemetry.
@@ -343,21 +233,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
         'Flags datasource/repository reset/clear methods that read and restore migration/version/install markers around storage clear.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (final classSpan in context.classes) {
-        if (!_isStorageBoundaryClass(context, classSpan)) continue;
-        for (final method in context.methods) {
-          if (!classSpan.contains(method.start)) continue;
-          if (!_methodLooksLikeResetAll(method.name)) continue;
-          for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-            final line = context.source.masked[i];
-            final match = _storageClearCall.firstMatch(line);
-            if (match == null) continue;
-            if (_clearPreservesSentinel(context, method, i)) {
-              reporter.report(context, i, match.start);
-            }
-          }
-        }
-      }
+      _reportStorageClearSentinels(reporter, context);
     },
   ),
 
@@ -409,21 +285,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     ),
     description:
         'Flags private notifier init/restore/load methods that await and then assign state without an obvious generation/request/stale guard.',
-    scan: (reporter, context) {
-      if (context.isTestFile) return;
-      for (final classSpan in context.classes) {
-        if (!classSpan.isNotifier) continue;
-        for (final method in context.methods) {
-          if (!classSpan.contains(method.start)) continue;
-          if (!_asyncNotifierInitializerMethod.hasMatch(method.name)) continue;
-          final stateWriteLine = _unguardedAsyncStateWriteLine(context, method);
-          if (stateWriteLine == null) continue;
-          final line = context.source.masked[stateWriteLine];
-          final col = _notifierStateWrite.firstMatch(line)?.start ?? 0;
-          reporter.report(context, stateWriteLine, col);
-        }
-      }
-    },
+    scan: _scanAsyncNotifierStaleStateWrites,
   ),
 
   /// Heavy widgets must not initialize in `build` without a user-action gate.
@@ -445,19 +307,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
         'Flags `InAppWebView`, `IOSInAppWebViewWidget`, `WebViewWidget`, `YoutubePlayer`, or `VideoPlayer` constructors inside `build()` of classes that declare no `_user*` / `*Tapped` / `*Requested` boolean gate field.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (final classSpan in context.classes) {
-        for (final method in context.methods) {
-          if (method.name != 'build') continue;
-          if (!classSpan.contains(method.start)) continue;
-          for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-            final line = context.source.masked[i];
-            final match = _heavyWidgetInit.firstMatch(line);
-            if (match == null) continue;
-            if (_isHeavyWidgetGated(context, classSpan, method, i)) continue;
-            reporter.report(context, i, match.start);
-          }
-        }
-      }
+      _reportUngatedHeavyWidgets(reporter, context);
     },
   ),
 
@@ -508,31 +358,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     ),
     description:
         'Flags `@Riverpod(keepAlive: true)` notifiers whose build() derives retained state from `s.<unboundedCollectionName>`.',
-    scan: (reporter, context) {
-      if (context.isTestFile) return;
-      for (final classSpan in context.classes) {
-        if (!_isKeepAliveNotifier(context, classSpan)) continue;
-        for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-          final column = _unboundedCollectionWatchColumn(context, i, classSpan.end);
-          if (column == null) continue;
-          reporter.report(context, i, column);
-          break;
-        }
-      }
-      for (var i = 0; i < context.source.length; i++) {
-        if (!_keepAliveAnnotation.hasMatch(context.source.masked[i])) continue;
-        final fnLine = _findFunctionDeclarationAfter(context, i);
-        if (fnLine == null) continue;
-        final body = _findFunctionBodyEnd(context, fnLine);
-        if (body == null) continue;
-        for (var j = fnLine; j <= body && j < context.source.length; j++) {
-          final column = _unboundedCollectionWatchColumn(context, j, body);
-          if (column == null) continue;
-          reporter.report(context, j, column);
-          break;
-        }
-      }
-    },
+    scan: _scanKeepAliveUnboundedCollections,
   ),
 
   /// Datasource interfaces with many single-field getters need a batch loader.
@@ -564,3 +390,363 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     },
   ),
 ];
+
+void _scanSyncSaveAllGuards(ScannerRuleReporter reporter, SourceScannerContext context) {
+  if (context.isTestFile) return;
+  for (final method in context.methods) {
+    _reportSyncSaveAllGuard(reporter, context, method);
+  }
+}
+
+void _reportSyncSaveAllGuard(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+) {
+  _visitSaveAllCalls(context, method, (lineIndex, match, window) {
+    if (!_saveAllFromEntity.hasMatch(window) ||
+        _hasEarlyEmptyGuard(context, method.start, lineIndex) ||
+        _hasOuterDirtyGuard(context, lineIndex)) {
+      return;
+    }
+    reporter.report(context, lineIndex, match.start);
+  });
+}
+
+void _scanSubsetSaveAllWrites(ScannerRuleReporter reporter, SourceScannerContext context) {
+  if (context.isTestFile) return;
+  for (final method in context.methods) {
+    _reportSubsetSaveAllWrite(reporter, context, method);
+  }
+}
+
+void _reportSubsetSaveAllWrite(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+) {
+  _visitSaveAllCalls(context, method, (lineIndex, match, window) {
+    final collection = _saveAllFromEntity.hasMatch(window)
+        ? _saveAllMappedCollection(window)
+        : null;
+    if (collection == null ||
+        !_methodMutatesCollectionSubset(context, method, lineIndex, collection)) {
+      return;
+    }
+    reporter.report(context, lineIndex, match.start);
+  });
+}
+
+void _scanAsyncNotifierStaleStateWrites(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+) {
+  if (context.isTestFile) return;
+  for (final classSpan in context.classes) {
+    if (!classSpan.isNotifier) continue;
+    _reportAsyncNotifierClassWrites(reporter, context, classSpan);
+  }
+}
+
+void _reportAsyncNotifierClassWrites(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+) {
+  for (final method in context.methods) {
+    if (!classSpan.contains(method.start) ||
+        !_asyncNotifierInitializerMethod.hasMatch(method.name)) {
+      continue;
+    }
+    final stateWriteLine = _unguardedAsyncStateWriteLine(context, method);
+    if (stateWriteLine == null) continue;
+    final line = context.source.masked[stateWriteLine];
+    final column = _notifierStateWrite.firstMatch(line)?.start ?? 0;
+    reporter.report(context, stateWriteLine, column);
+  }
+}
+
+void _scanCollectionGetterAllocations(ScannerRuleReporter reporter, SourceScannerContext context) {
+  if (context.isTestFile) return;
+  for (final classSpan in context.classes) {
+    _reportCollectionGetterAllocationsInClass(reporter, context, classSpan);
+  }
+}
+
+void _reportCollectionGetterAllocationsInClass(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+) {
+  for (
+    var lineIndex = classSpan.start;
+    lineIndex <= classSpan.end && lineIndex < context.source.length;
+    lineIndex++
+  ) {
+    final line = context.source.masked[lineIndex];
+    final blockMatch = _collectionGetterBlockStart.firstMatch(line);
+    if (blockMatch != null) {
+      final end = _findBlockEnd(context, lineIndex, classSpan.end);
+      if (end == null) continue;
+      if (_collectionGetterAllocates(_collectLines(context, lineIndex, end))) {
+        reporter.report(context, lineIndex, blockMatch.start);
+      }
+      lineIndex = end;
+      continue;
+    }
+    _reportCollectionGetterExpression(reporter, context, lineIndex, line);
+  }
+}
+
+void _reportCollectionGetterExpression(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  int lineIndex,
+  String line,
+) {
+  final match = _collectionGetterExpression.firstMatch(line);
+  if (match == null) return;
+  final expression = match.group(2) ?? '';
+  if (_collectionGetterAllocates(expression)) {
+    reporter.report(context, lineIndex, match.start);
+  }
+}
+
+void _scanBlockingFunctionExecutions(ScannerRuleReporter reporter, SourceScannerContext context) {
+  if (context.isTestFile) return;
+  for (final method in context.methods) {
+    _reportBlockingFunctionExecutionsInMethod(reporter, context, method);
+  }
+}
+
+void _reportBlockingFunctionExecutionsInMethod(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+) {
+  _visitMethodLines(context, method, (lineIndex, line) {
+    final match = _appwriteExecutionCall.firstMatch(line);
+    if (match == null) return false;
+    final callWindow = sourceLineWindow(context, lineIndex, method.end, 18);
+    if (!_blockingExecutionMatches(context, method, line, callWindow)) return false;
+    reporter.report(context, lineIndex, match.start);
+    return false;
+  });
+}
+
+bool _blockingExecutionMatches(
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+  String line,
+  String callWindow,
+) {
+  final directCall = _appwriteCreateExecution.hasMatch(line);
+  if (!directCall && !_functionIdArgument.hasMatch(callWindow)) return false;
+  if (_isExecutionForwardingWrapper(context, method, callWindow)) return false;
+  final longRunning =
+      _methodLooksLongRunningFunction(method.name) ||
+      _appwriteExecutionLooksLongRunning(callWindow);
+  return longRunning && !_xasyncTrue.hasMatch(callWindow);
+}
+
+void _scanKeepAliveUnboundedCollections(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+) {
+  if (context.isTestFile) return;
+  for (final classSpan in context.classes) {
+    _reportKeepAliveClassCollection(reporter, context, classSpan);
+  }
+  _reportKeepAliveAnnotatedFunctions(reporter, context);
+}
+
+void _reportKeepAliveClassCollection(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+) {
+  if (!_isKeepAliveNotifier(context, classSpan)) return;
+  for (
+    var lineIndex = classSpan.start;
+    lineIndex <= classSpan.end && lineIndex < context.source.length;
+    lineIndex++
+  ) {
+    final column = _unboundedCollectionWatchColumn(context, lineIndex, classSpan.end);
+    if (column == null) continue;
+    reporter.report(context, lineIndex, column);
+    return;
+  }
+}
+
+void _reportKeepAliveAnnotatedFunctions(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+) {
+  for (var lineIndex = 0; lineIndex < context.source.length; lineIndex++) {
+    if (!_keepAliveAnnotation.hasMatch(context.source.masked[lineIndex])) continue;
+    final functionLine = _findFunctionDeclarationAfter(context, lineIndex);
+    if (functionLine == null) continue;
+    _reportKeepAliveFunctionCollection(reporter, context, functionLine);
+  }
+}
+
+void _reportKeepAliveFunctionCollection(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  int functionLine,
+) {
+  final bodyEnd = _findFunctionBodyEnd(context, functionLine);
+  if (bodyEnd == null) return;
+  for (
+    var lineIndex = functionLine;
+    lineIndex <= bodyEnd && lineIndex < context.source.length;
+    lineIndex++
+  ) {
+    final column = _unboundedCollectionWatchColumn(context, lineIndex, bodyEnd);
+    if (column == null) continue;
+    reporter.report(context, lineIndex, column);
+    return;
+  }
+}
+
+void _reportManualIdLookupFunctions(ScannerRuleReporter reporter, SourceScannerContext context) {
+  for (var lineIndex = 0; lineIndex < context.source.length; lineIndex++) {
+    final match = _byIdFunctionStart.firstMatch(context.source.masked[lineIndex]);
+    if (match == null || !_manualIdLookupFunctionHasLoop(context, lineIndex)) continue;
+    reporter.report(context, lineIndex, match.start);
+  }
+}
+
+bool _manualIdLookupFunctionHasLoop(SourceScannerContext context, int lineIndex) {
+  final end = _findBlockEnd(context, lineIndex, context.source.length - 1);
+  return end != null && _manualIdLoop.hasMatch(_collectLines(context, lineIndex, end));
+}
+
+void _reportHotClassIdLookups(ScannerRuleReporter reporter, SourceScannerContext context) {
+  for (final classSpan in context.classes) {
+    if (!_isHotLookupClass(context, classSpan)) continue;
+    for (final method in context.methods.where((method) => classSpan.contains(method.start))) {
+      _reportHotMethodIdLookups(reporter, context, method);
+    }
+  }
+}
+
+void _reportHotMethodIdLookups(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+) {
+  _visitMethodLines(context, method, (lineIndex, line) {
+    final match = _linearIdLookupCall.firstMatch(line);
+    if (match == null || !_isHotLinearIdLookup(context, method, lineIndex)) return false;
+    reporter.report(context, lineIndex, match.start);
+    return false;
+  });
+}
+
+bool _isHotLinearIdLookup(SourceScannerContext context, ScannerMethodSpan method, int lineIndex) {
+  final lookupWindow = sourceLineWindow(context, lineIndex, method.end, 6);
+  return _linearIdLookup.hasMatch(lookupWindow) &&
+      !_isIndexLookupInsideForBlock(context, method.start, lineIndex);
+}
+
+void _reportNestedIdLookups(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+) {
+  for (
+    var lineIndex = method.start;
+    lineIndex <= method.end && lineIndex < context.source.length;
+    lineIndex++
+  ) {
+    _reportNestedIdLookupAtLine(reporter, context, method, lineIndex);
+  }
+}
+
+void _reportNestedIdLookupAtLine(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+  int lineIndex,
+) {
+  final loop = _forEachLoop.firstMatch(context.source.masked[lineIndex]);
+  final loopVar = loop?.group(1);
+  if (loopVar == null) return;
+  final bodyEnd = _findBlockEnd(context, lineIndex, method.end) ?? method.end;
+  final lookup = _nestedIdLookup(loopVar);
+  for (
+    var bodyLine = lineIndex + 1;
+    bodyLine <= bodyEnd && bodyLine < context.source.length;
+    bodyLine++
+  ) {
+    final match = _linearIdLookupCall.firstMatch(context.source.masked[bodyLine]);
+    if (match == null) continue;
+    if (_nestedLookupMatches(context, bodyLine, bodyEnd, lookup)) {
+      reporter.report(context, bodyLine, match.start);
+      return;
+    }
+  }
+}
+
+bool _nestedLookupMatches(
+  SourceScannerContext context,
+  int lineIndex,
+  int bodyEnd,
+  RegExp lookup,
+) => lookup.hasMatch(sourceLineWindow(context, lineIndex, bodyEnd, 6));
+
+void _reportStorageClearSentinels(ScannerRuleReporter reporter, SourceScannerContext context) {
+  for (final classSpan in context.classes) {
+    if (!_isStorageBoundaryClass(context, classSpan)) continue;
+    for (final method in context.methods.where((method) => classSpan.contains(method.start))) {
+      if (_methodLooksLikeResetAll(method.name)) {
+        _reportStorageClearMethod(reporter, context, method);
+      }
+    }
+  }
+}
+
+void _reportStorageClearMethod(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+) {
+  for (
+    var lineIndex = method.start;
+    lineIndex <= method.end && lineIndex < context.source.length;
+    lineIndex++
+  ) {
+    final match = _storageClearCall.firstMatch(context.source.masked[lineIndex]);
+    if (match != null && _clearPreservesSentinel(context, method, lineIndex)) {
+      reporter.report(context, lineIndex, match.start);
+    }
+  }
+}
+
+void _reportUngatedHeavyWidgets(ScannerRuleReporter reporter, SourceScannerContext context) {
+  for (final classSpan in context.classes) {
+    for (final method in context.methods.where((method) => method.name == 'build')) {
+      if (classSpan.contains(method.start)) {
+        _reportHeavyWidgetsInBuild(reporter, context, classSpan, method);
+      }
+    }
+  }
+}
+
+void _reportHeavyWidgetsInBuild(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+  ScannerMethodSpan method,
+) {
+  for (
+    var lineIndex = method.start;
+    lineIndex <= method.end && lineIndex < context.source.length;
+    lineIndex++
+  ) {
+    final match = _heavyWidgetInit.firstMatch(context.source.masked[lineIndex]);
+    if (match == null || _isHeavyWidgetGated(context, classSpan, method, lineIndex)) continue;
+    reporter.report(context, lineIndex, match.start);
+  }
+}

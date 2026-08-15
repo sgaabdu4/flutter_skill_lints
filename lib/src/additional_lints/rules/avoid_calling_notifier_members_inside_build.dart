@@ -1,18 +1,17 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/riverpod_consumer_checkers.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a notifier member is called directly from a Consumer build.
 ///
 /// A build method must stay side-effect free. Trigger notifier mutations from
 /// callbacks, listeners, or explicit lifecycle code instead.
-class AvoidCallingNotifierMembersInsideBuild extends AnalysisRule {
+class AvoidCallingNotifierMembersInsideBuild extends MethodDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_calling_notifier_members_inside_build',
     'Avoid calling notifier members inside build methods.',
@@ -27,31 +26,17 @@ class AvoidCallingNotifierMembersInsideBuild extends AnalysisRule {
         description:
             'Warns when ref.read/watch(provider.notifier).member() is called '
             'inside a Riverpod Consumer build method.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodDeclaration(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
   const _Visitor(this.rule);
 
   final AvoidCallingNotifierMembersInsideBuild rule;
-
-  static const _consumerWidgetChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerWidget', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerWidget', packageName: 'hooks_riverpod'),
-  ]);
-
-  static const _consumerStateChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerState', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerState', packageName: 'hooks_riverpod'),
-  ]);
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
@@ -60,7 +45,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     final classDecl = enclosingClassDeclaration(node);
     final element = classDecl?.declaredFragment?.element;
     if (element == null) return;
-    if (!_consumerWidgetChecker.isSuperOf(element) && !_consumerStateChecker.isSuperOf(element)) {
+    if (!consumerWidgetChecker.isSuperOf(element) && !consumerStateChecker.isSuperOf(element)) {
       return;
     }
 
@@ -99,14 +84,5 @@ bool _isNotifierRead(MethodInvocation node) {
   if (node.argumentList.arguments.length != 1) return false;
 
   final argument = node.argumentList.arguments.single;
-  return _isNotifierSelector(argument);
-}
-
-bool _isNotifierSelector(Expression expression) {
-  final unwrapped = expression.unParenthesized;
-  return switch (unwrapped) {
-    PrefixedIdentifier(:final identifier) => identifier.name == 'notifier',
-    PropertyAccess(:final propertyName) => propertyName.name == 'notifier',
-    _ => false,
-  };
+  return isNotifierSelector(argument.argumentExpression);
 }

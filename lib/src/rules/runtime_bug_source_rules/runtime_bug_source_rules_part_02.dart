@@ -20,14 +20,8 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final method in context.methods) {
-        if (!_methodHasNotifierAccess(context, method)) continue;
-        for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-          final line = context.source.masked[i];
-          final match = _saveMethodCall.firstMatch(line);
-          if (match == null) continue;
-          if (!_lineHasNumericNamedArg(context, i, method.end)) continue;
-          if (_hasPositiveGuard(context, method.start, i)) continue;
-          reporter.report(context, i, match.start);
+        if (_methodHasNotifierAccess(context, method)) {
+          _reportZeroValueSave(reporter, context, method);
         }
       }
     },
@@ -180,30 +174,8 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final method in context.methods) {
-        if (!_methodHasNotifierAccess(context, method)) continue;
-        final unitVars = <String>{};
-        for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-          for (final m in _unitPrimitiveLocal.allMatches(context.source.masked[i])) {
-            final name = m.group(1);
-            if (name != null) unitVars.add(name);
-          }
-        }
-        if (unitVars.isEmpty) continue;
-        for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-          final line = context.source.masked[i];
-          final save = _saveMethodCall.firstMatch(line);
-          if (save == null) continue;
-          final argEnd = i + 8 > method.end ? method.end : i + 8;
-          var argBlob = '';
-          for (var j = i; j <= argEnd && j < context.source.length; j++) {
-            argBlob += '\n${context.source.masked[j]}';
-          }
-          for (final v in unitVars) {
-            if (RegExp('\\b$v\\b').hasMatch(argBlob)) {
-              reporter.report(context, i, save.start);
-              break;
-            }
-          }
+        if (_methodHasNotifierAccess(context, method)) {
+          _reportUnitPrimitiveNotifierUse(reporter, context, method);
         }
       }
     },
@@ -228,30 +200,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final method in context.methods) {
-        for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-          final loopLine = context.source.masked[i];
-          if (!_loopOpener.hasMatch(loopLine)) continue;
-          // Require the loop's own braced body. Skipping brace-less loops and
-          // collection-for in map/list literals avoids over-scanning unrelated
-          // loads that merely follow the loop in the same method.
-          final hasBracedBody =
-              loopLine.contains('{') ||
-              (i + 1 < context.source.length && context.source.masked[i + 1].contains('{'));
-          if (!hasBracedBody) continue;
-          final bodyEnd = _findBlockEnd(context, i, method.end);
-          if (bodyEnd == null) continue;
-          for (var j = i + 1; j <= bodyEnd && j < context.source.length; j++) {
-            final line = context.source.masked[j];
-            final match = _fullCollectionLoaderCall.firstMatch(line);
-            if (match == null) continue;
-            final awaited =
-                _awaitKeyword.hasMatch(line) ||
-                (j - 1 >= i && _awaitKeyword.hasMatch(context.source.masked[j - 1]));
-            if (!awaited) continue;
-            reporter.report(context, j, match.start);
-            break;
-          }
-        }
+        _reportFullCollectionLoads(reporter, context, method);
       }
     },
   ),
@@ -286,6 +235,109 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
     },
   ),
 ];
+
+void _reportZeroValueSave(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+) {
+  _visitMethodLines(context, method, (lineIndex, line) {
+    final match = _saveMethodCall.firstMatch(line);
+    if (match == null || !_lineHasNumericNamedArg(context, lineIndex, method.end)) return false;
+    if (_hasPositiveGuard(context, method.start, lineIndex)) return false;
+    reporter.report(context, lineIndex, match.start);
+    return false;
+  });
+}
+
+void _reportUnitPrimitiveNotifierUse(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+) {
+  final unitVars = _unitPrimitiveLocalNames(context, method);
+  if (unitVars.isEmpty) return;
+  for (var i = method.start; i <= method.end && i < context.source.length; i++) {
+    final save = _saveMethodCall.firstMatch(context.source.masked[i]);
+    if (save != null && _lineUsesUnitPrimitive(context, method, i, unitVars)) {
+      reporter.report(context, i, save.start);
+    }
+  }
+}
+
+Set<String> _unitPrimitiveLocalNames(SourceScannerContext context, ScannerMethodSpan method) {
+  final names = <String>{};
+  for (var i = method.start; i <= method.end && i < context.source.length; i++) {
+    for (final match in _unitPrimitiveLocal.allMatches(context.source.masked[i])) {
+      final name = match.group(1);
+      if (name != null) names.add(name);
+    }
+  }
+  return names;
+}
+
+bool _lineUsesUnitPrimitive(
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+  int lineIndex,
+  Set<String> names,
+) {
+  final end = (lineIndex + 8).clamp(lineIndex, method.end);
+  final window = [
+    for (var i = lineIndex; i <= end && i < context.source.length; i++) context.source.masked[i],
+  ].join('\n');
+  return names.any((name) => RegExp('\\b$name\\b').hasMatch(window));
+}
+
+void _reportFullCollectionLoads(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+) {
+  for (var i = method.start; i <= method.end && i < context.source.length; i++) {
+    final loopLine = context.source.masked[i];
+    if (!_hasBracedLoopBody(context, i, method.end, loopLine)) continue;
+    final bodyEnd = _findBlockEnd(context, i, method.end);
+    if (bodyEnd != null) _reportCollectionLoadInBody(reporter, context, i, bodyEnd);
+  }
+}
+
+bool _hasBracedLoopBody(SourceScannerContext context, int lineIndex, int methodEnd, String line) {
+  if (!_loopOpener.hasMatch(line)) return false;
+  return line.contains('{') ||
+      (lineIndex + 1 < context.source.length &&
+          lineIndex + 1 <= methodEnd &&
+          context.source.masked[lineIndex + 1].contains('{'));
+}
+
+void _reportCollectionLoadInBody(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  int loopStart,
+  int bodyEnd,
+) {
+  for (
+    var lineIndex = loopStart + 1;
+    lineIndex <= bodyEnd && lineIndex < context.source.length;
+    lineIndex++
+  ) {
+    final line = context.source.masked[lineIndex];
+    final match = _fullCollectionLoaderCall.firstMatch(line);
+    if (match == null || !_isAwaitedCollectionLoad(context, loopStart, lineIndex, line)) continue;
+    reporter.report(context, lineIndex, match.start);
+    return;
+  }
+}
+
+bool _isAwaitedCollectionLoad(
+  SourceScannerContext context,
+  int loopStart,
+  int lineIndex,
+  String line,
+) {
+  return _awaitKeyword.hasMatch(line) ||
+      (lineIndex - 1 >= loopStart && _awaitKeyword.hasMatch(context.source.masked[lineIndex - 1]));
+}
 
 bool _blockHasOnChangedWithWork(String block) {
   final onChangedMatch = _onChangedNamedArg.firstMatch(block);

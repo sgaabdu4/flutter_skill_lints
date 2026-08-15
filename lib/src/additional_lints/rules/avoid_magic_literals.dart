@@ -1,16 +1,14 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
-import '../ast_node_analysis.dart';
 
 /// Warns when executable code uses raw string or numeric literals instead of
 /// named constants, value objects, or semantic helpers.
-class AvoidMagicLiterals extends AnalysisRule {
+class AvoidMagicLiterals extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_magic_literals',
     'Avoid magic string and numeric literals in executable code.',
@@ -27,17 +25,14 @@ class AvoidMagicLiterals extends AnalysisRule {
         description:
             'Warns when executable code uses raw string or numeric literals '
             'instead of named constants, value objects, or semantic helpers.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
+  bool shouldRegister(RuleContext context) => !_isExcludedContext(context);
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (_isExcludedContext(context)) return;
-
-    registry.addCompilationUnit(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends RecursiveAstVisitor<void> {
@@ -103,19 +98,10 @@ class _Visitor extends RecursiveAstVisitor<void> {
 }
 
 bool _isExcludedContext(RuleContext context) {
-  if (context.isInTestDirectory || isGeneratedRuleContext(context)) return true;
-
-  final path = context.definingUnit.file.path.replaceAll('\\', '/');
-  return !path.contains('/lib/') ||
-      path.endsWith('_test.dart') ||
-      path.endsWith('_constants.dart') ||
-      path.endsWith('_keys.dart') ||
-      path.endsWith('_schema.dart') ||
-      path.endsWith('_strings.dart') ||
-      path.endsWith('_theme.dart') ||
-      path.endsWith('_tokens.dart') ||
+  final path = productionLibPath(context);
+  if (path == null) return true;
+  return isCommonConstantOwnerPath(path) ||
       _isDedicatedCodeOwnerPath(path) ||
-      path.contains('/constants/') ||
       path.contains('/extensions/') ||
       path.contains('/core/theme/') ||
       path.contains('/l10n/');
@@ -160,8 +146,8 @@ bool _isInEnumConstant(AstNode node) =>
     node.thisOrAncestorOfType<EnumConstantDeclaration>() != null;
 
 bool _isInDefaultFormalParameter(AstNode node) {
-  final parameter = node.thisOrAncestorOfType<DefaultFormalParameter>();
-  final defaultValue = parameter?.defaultValue;
+  final parameter = node.thisOrAncestorOfType<FormalParameter>();
+  final defaultValue = parameter?.defaultClause?.value;
   return defaultValue != null && _containsNode(defaultValue, node);
 }
 
@@ -224,19 +210,10 @@ bool _isStringKeyContext(AstNode node) {
 }
 
 bool _isStringBoundaryArgument(AstNode node) {
-  final argumentList = _enclosingArgumentList(node);
-  if (argumentList == null) return false;
-
-  final namedExpression = node.thisOrAncestorOfType<NamedExpression>();
-  if (namedExpression != null && _containsNode(namedExpression.expression, node)) {
-    final label = namedExpression.name.lexeme.toLowerCase();
-    if (_stringOwnershipNames.any(label.contains)) return true;
-  }
-
-  final ownerName = _argumentOwnerName(argumentList).toLowerCase();
-  if (ownerName == 'dateformat') return true;
-
-  return _stringOwnershipNames.any(ownerName.contains);
+  return _isBoundaryArgument(
+    node,
+    (name) => name == 'dateformat' || _stringOwnershipNames.any(name.contains),
+  );
 }
 
 Iterable<Expression> _dateFormatPatternExpressions(ArgumentList argumentList) sync* {
@@ -244,8 +221,8 @@ Iterable<Expression> _dateFormatPatternExpressions(ArgumentList argumentList) sy
 
   if (ownerName == 'formatted') {
     for (final argument in argumentList.arguments) {
-      if (argument is NamedExpression && argument.name.lexeme == 'pattern') {
-        yield argument.expression;
+      if (argument is NamedArgument && argument.name.lexeme == 'pattern') {
+        yield argument.argumentExpression;
       }
     }
     return;
@@ -254,27 +231,33 @@ Iterable<Expression> _dateFormatPatternExpressions(ArgumentList argumentList) sy
   if (ownerName != 'dateformat') return;
 
   for (final argument in argumentList.arguments) {
-    if (argument is NamedExpression) {
-      if (argument.name.lexeme == 'pattern') yield argument.expression;
+    if (argument is NamedArgument) {
+      if (argument.name.lexeme == 'pattern') yield argument.argumentExpression;
       continue;
     }
-    yield argument;
+    yield argument.argumentExpression;
     return;
   }
 }
 
 bool _isNumericBoundaryArgument(AstNode node) {
+  return _isBoundaryArgument(
+    node,
+    (name) => _matchesNumericOwnershipName(name) || _numericMethodNames.contains(name),
+  );
+}
+
+bool _isBoundaryArgument(AstNode node, bool Function(String name) matches) {
   final argumentList = _enclosingArgumentList(node);
   if (argumentList == null) return false;
 
-  final namedExpression = node.thisOrAncestorOfType<NamedExpression>();
-  if (namedExpression != null && _containsNode(namedExpression.expression, node)) {
+  final namedExpression = node.thisOrAncestorOfType<NamedArgument>();
+  if (namedExpression != null && _containsNode(namedExpression.argumentExpression, node)) {
     final label = namedExpression.name.lexeme.toLowerCase();
-    if (_matchesNumericOwnershipName(label)) return true;
+    if (matches(label)) return true;
   }
 
-  final ownerName = _argumentOwnerName(argumentList).toLowerCase();
-  return _numericMethodNames.contains(ownerName);
+  return matches(_argumentOwnerName(argumentList).toLowerCase());
 }
 
 bool _isNumericComparison(AstNode node) {
@@ -299,24 +282,10 @@ bool _isStatusCodeComparison(AstNode node) {
   if (parent is! BinaryExpression) return false;
 
   if (_containsNode(parent.leftOperand, reportNode)) {
-    return _isStatusCodeExpression(parent.rightOperand);
+    return isStatusCodeExpression(parent.rightOperand);
   }
   if (_containsNode(parent.rightOperand, reportNode)) {
-    return _isStatusCodeExpression(parent.leftOperand);
-  }
-  return false;
-}
-
-bool _isStatusCodeExpression(Expression expression) {
-  final unwrapped = expression.unParenthesized;
-  if (unwrapped is SimpleIdentifier) {
-    return _statusCodePropertyNames.contains(unwrapped.name.toLowerCase());
-  }
-  if (unwrapped is PrefixedIdentifier) {
-    return _statusCodePropertyNames.contains(unwrapped.identifier.name.toLowerCase());
-  }
-  if (unwrapped is PropertyAccess) {
-    return _statusCodePropertyNames.contains(unwrapped.propertyName.name.toLowerCase());
+    return isStatusCodeExpression(parent.leftOperand);
   }
   return false;
 }
@@ -451,14 +420,6 @@ const _numericMethodNames = {
   'sublist',
   'substring',
   'take',
-};
-
-const _statusCodePropertyNames = {
-  'code',
-  'errorcode',
-  'httpstatuscode',
-  'responsecode',
-  'statuscode',
 };
 
 bool _isDedicatedCodeOwnerClass(AstNode node) {

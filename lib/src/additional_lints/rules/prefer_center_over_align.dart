@@ -1,18 +1,16 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Suggests using `Center` instead of `Align` with center alignment.
 ///
 /// `Center` communicates the common centered-layout case directly and avoids a
 /// more general alignment wrapper.
-class PreferCenterOverAlign extends AnalysisRule {
+class PreferCenterOverAlign extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'prefer_center_over_align',
     'Use the Center widget instead of the Align widget with alignment set to Alignment.center',
@@ -23,16 +21,11 @@ class PreferCenterOverAlign extends AnalysisRule {
     : super(
         name: 'prefer_center_over_align',
         description: 'Use Center widget instead of Align when alignment is center.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -49,7 +42,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final arguments = node.argumentList.arguments;
     var hasAlignmentArgument = false;
 
-    for (final argument in arguments.whereType<NamedExpression>()) {
+    for (final argument in arguments.whereType<NamedArgument>()) {
       if (argument.name.lexeme == 'alignment') {
         hasAlignmentArgument = true;
         if (_isValueAlignmentCenter(argument)) {
@@ -65,8 +58,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  bool _isValueAlignmentCenter(NamedExpression argument) {
-    return switch (argument.expression) {
+  bool _isValueAlignmentCenter(NamedArgument argument) {
+    return switch (argument.argumentExpression) {
       PrefixedIdentifier(identifier: SimpleIdentifier(name: 'center')) => true,
       InstanceCreationExpression(
         staticType: final type,
@@ -78,8 +71,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     };
   }
 
-  bool _isEveryValueZero(Iterable<Expression> arguments) => arguments.every(
-    (argument) => switch (argument) {
+  bool _isEveryValueZero(Iterable<Argument> arguments) => arguments.every(
+    (argument) => switch (argument.argumentExpression) {
       IntegerLiteral(value: 0) || DoubleLiteral(value: 0) => true,
       _ => false,
     },

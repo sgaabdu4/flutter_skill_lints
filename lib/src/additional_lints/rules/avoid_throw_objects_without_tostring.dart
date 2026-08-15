@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when an obvious local throwable class does not declare `toString`.
 class AvoidThrowObjectsWithoutToString extends AnalysisRule {
@@ -41,30 +42,9 @@ final class _Visitor extends SimpleAstVisitor<void> {
     final className = type.element.name;
     if (className == null) return;
 
-    final declaration = _localClassDeclaration(node, className);
-    if (declaration == null || _declaresToString(declaration)) return;
+    final declaration = localClassDeclaration(node, className);
+    if (declaration == null || declaresToString(declaration)) return;
 
     rule.reportAtNode(node.expression, arguments: [declaration.namePart.typeName.lexeme]);
   }
-}
-
-ClassDeclaration? _localClassDeclaration(AstNode node, String className) {
-  final unit = node.root;
-  if (unit is! CompilationUnit) return null;
-
-  for (final declaration in unit.declarations) {
-    if (declaration is ClassDeclaration && declaration.namePart.typeName.lexeme == className) {
-      return declaration;
-    }
-  }
-  return null;
-}
-
-bool _declaresToString(ClassDeclaration declaration) {
-  for (final member in declaration.body.members) {
-    if (member is MethodDeclaration && member.name.lexeme == 'toString') {
-      return true;
-    }
-  }
-  return false;
 }

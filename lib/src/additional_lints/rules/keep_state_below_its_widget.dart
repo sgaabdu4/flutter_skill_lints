@@ -1,14 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when a `State<T>` class is declared before its widget class.
-final class KeepStateBelowItsWidget extends AnalysisRule {
+final class KeepStateBelowItsWidget extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'keep_state_below_its_widget',
     'Keep State classes below their StatefulWidget.',
@@ -19,15 +17,11 @@ final class KeepStateBelowItsWidget extends AnalysisRule {
     : super(
         name: 'keep_state_below_its_widget',
         description: 'Warns when a State class is declared above its StatefulWidget.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addCompilationUnit(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {

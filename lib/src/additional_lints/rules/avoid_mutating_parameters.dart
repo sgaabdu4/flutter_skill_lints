@@ -4,6 +4,7 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a function or method mutates one of its parameters.
 final class AvoidMutatingParameters extends AnalysisRule {
@@ -54,7 +55,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _check(FormalParameterList? parameters, FunctionBody body) {
-    final names = _parameterNames(parameters);
+    final names = formalParameterNames(parameters);
     if (names.isEmpty) return;
     body.accept(_MutationVisitor(rule, names));
   }
@@ -113,14 +114,5 @@ AstNode? _parameterWriteTarget(Expression expression, Set<String> parameters) {
     IndexExpression(target: SimpleIdentifier(:final name)) when parameters.contains(name) =>
       expression,
     _ => null,
-  };
-}
-
-Set<String> _parameterNames(FormalParameterList? parameters) {
-  if (parameters == null) return const {};
-
-  return {
-    for (final parameter in parameters.parameters)
-      if (parameter.name case final name?) name.lexeme,
   };
 }

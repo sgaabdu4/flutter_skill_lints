@@ -4,6 +4,7 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Reports duplicate simple switch case conditions.
 final class AvoidDuplicateSwitchCaseConditions extends AnalysisRule {
@@ -85,30 +86,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
 }
 
 String? _literalKey(Expression expression) {
-  final unwrapped = _unwrapExpression(expression);
-
-  return switch (unwrapped) {
-    BooleanLiteral(:final value) => 'bool:$value',
-    DoubleLiteral(:final value) => 'double:$value',
-    IntegerLiteral(:final value?) => 'int:$value',
-    NullLiteral() => 'null',
-    PrefixExpression(:final operator, :final operand) when operator.lexeme == '-' =>
-      switch (_unwrapExpression(operand)) {
-        DoubleLiteral(:final value) => 'double:-$value',
-        IntegerLiteral(:final value?) => 'int:-$value',
-        _ => null,
-      },
-    SimpleStringLiteral(:final value) => 'string:$value',
-    _ => null,
-  };
-}
-
-Expression _unwrapExpression(Expression expression) {
-  var current = expression;
-  while (current is ParenthesizedExpression) {
-    current = current.expression;
-  }
-  return current;
+  return simpleLiteralKey(expression, includeNegative: true);
 }
 
 DartPattern _unwrapPattern(DartPattern pattern) {

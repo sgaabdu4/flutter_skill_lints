@@ -3,9 +3,6 @@
 import 'dart:math' as math;
 
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
-// ignore: implementation_imports
-import 'package:analyzer_testing/src/analysis_rule/pub_package_resolution.dart'
-    show ExpectedDiagnostic;
 import 'package:flutter_skill_lints/src/rules/flutter_optimization_source_rules.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -48,7 +45,7 @@ abstract class _FlutterOptimizationRuleTest extends AnalysisRuleTest {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  ExpectedDiagnostic lintFor(String source, String needle, {bool lineStart = false}) {
+  T lintFor<T>(String source, String needle, {bool lineStart = false}) {
     var offset = source.indexOf(needle);
     if (offset < 0) {
       throw StateError('Needle not found: $needle');
@@ -59,7 +56,7 @@ abstract class _FlutterOptimizationRuleTest extends AnalysisRuleTest {
 
     final lineEnd = source.indexOf('\n', offset);
     final end = lineEnd < 0 ? source.length : lineEnd;
-    return lint(offset, math.max(1, end - offset), name: ruleName);
+    return lint(offset, math.max(1, end - offset), name: ruleName) as T;
   }
 
   String _withIgnorePrefix(String source) => '''

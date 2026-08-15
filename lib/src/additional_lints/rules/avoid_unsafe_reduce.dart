@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Reports `Iterable.reduce` calls that can throw on empty iterables.
 class AvoidUnsafeReduce extends AnalysisRule {
@@ -13,7 +13,6 @@ class AvoidUnsafeReduce extends AnalysisRule {
     'avoid_unsafe_reduce',
     'Calling reduce() without proving the iterable is non-empty can throw.',
     correctionMessage: 'Check isNotEmpty first or use fold() with an initial value.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidUnsafeReduce()
@@ -63,26 +62,22 @@ bool hasNonEmptyProof(AstNode use, Expression target) {
   if (targetSource == null) return false;
 
   for (AstNode? current = use; current != null; current = current.parent) {
-    final parent = current.parent;
-
-    if (parent is IfStatement && parent.thenStatement == current) {
-      if (_conditionProvesNonEmpty(parent.expression, targetSource)) return true;
-    }
-
-    if (parent is Block) {
-      final currentStatement = current is Statement
-          ? current
-          : current.thisOrAncestorOfType<Statement>();
-      if (currentStatement != null &&
-          _previousStatementsProveNonEmpty(parent.statements, currentStatement, targetSource)) {
-        return true;
-      }
-    }
-
-    if (current is FunctionBody) break;
+    if (_ancestorProvesNonEmpty(current, targetSource)) return true;
+    if (current is FunctionBody) return false;
   }
 
   return false;
+}
+
+bool _ancestorProvesNonEmpty(AstNode current, String targetSource) {
+  final parent = current.parent;
+  if (parent is IfStatement && parent.thenStatement == current) {
+    return _conditionProvesNonEmpty(parent.expression, targetSource);
+  }
+  if (parent is! Block) return false;
+  final statement = current is Statement ? current : current.thisOrAncestorOfType<Statement>();
+  return statement != null &&
+      _previousStatementsProveNonEmpty(parent.statements, statement, targetSource);
 }
 
 bool _previousStatementsProveNonEmpty(

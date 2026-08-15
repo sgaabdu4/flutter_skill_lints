@@ -1,45 +1,29 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'avoid_unused_local_variable.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unused_local_variable.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Reports local variables read before a local assignment is seen.
-final class AvoidUnassignedLocalVariable extends AnalysisRule {
+final class AvoidUnassignedLocalVariable extends BlockCheckRule {
   static const LintCode code = LintCode(
     'avoid_unassigned_local_variable',
     'Local variable is read before it is assigned.',
     correctionMessage: 'Assign the variable before reading it.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidUnassignedLocalVariable()
     : super(
         name: 'avoid_unassigned_local_variable',
         description: 'Reports local variable reads before assignment when safely detectable.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addBlock(this, _Visitor(this));
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  const _Visitor(this.rule);
-
-  final AvoidUnassignedLocalVariable rule;
-
-  @override
-  void visitBlock(Block node) {
-    _BlockChecker(rule).check(node);
+  void checkBlock(Block node) {
+    _BlockChecker(this).check(node);
   }
 }
 
@@ -50,23 +34,16 @@ final class _BlockChecker {
   final Map<Object, bool> _assigned = {};
 
   void check(Block block) {
-    for (final statement in block.statements) {
-      if (statement is VariableDeclarationStatement) {
-        _declare(statement.variables);
-        continue;
-      }
-      if (statement is ExpressionStatement) {
-        _scanExpression(statement.expression);
-        continue;
-      }
-      if (statement is ReturnStatement) {
-        final expression = statement.expression;
+    forEachSimpleBlockStatement(
+      block,
+      onVariableDeclaration: _declare,
+      onExpression: _scanExpression,
+      onReturn: (expression) {
         if (expression != null) _checkReads(expression);
         _forgetUnassignedValues();
-        continue;
-      }
-      _forgetUnassignedValues();
-    }
+      },
+      onOther: _forgetUnassignedValues,
+    );
   }
 
   void _declare(VariableDeclarationList list) {
@@ -108,26 +85,18 @@ final class _BlockChecker {
   }
 }
 
-final class _ReadVisitor extends RecursiveAstVisitor<void> {
+final class _ReadVisitor extends GetterReadVisitor {
   const _ReadVisitor(this.rule, this.assigned);
 
   final AvoidUnassignedLocalVariable rule;
   final Map<Object, bool> assigned;
 
   @override
-  void visitSimpleIdentifier(SimpleIdentifier node) {
-    if (!node.inGetterContext()) return;
-    final key = node.element;
-    if (key != null && assigned[key] == false) {
+  void checkGetterRead(SimpleIdentifier node, Object key) {
+    if (assigned[key] == false) {
       rule.reportAtNode(node);
     }
   }
-
-  @override
-  void visitFunctionExpression(FunctionExpression node) {}
-
-  @override
-  void visitFunctionDeclaration(FunctionDeclaration node) {}
 }
 
 Object? _targetKey(Expression expression) {

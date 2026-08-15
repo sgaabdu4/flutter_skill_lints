@@ -39,24 +39,20 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitAsExpression(AsExpression node) {
-    final sourceType = node.expression.staticType;
-    final targetType = node.type.type;
-    if (sourceType == null || targetType == null) return;
-
-    if (_isStaticallyAssignable(sourceType, targetType)) {
-      rule.reportAtNode(node);
-    }
+    _check(node.expression.staticType, node.type.type, node);
   }
 
   @override
   void visitIsExpression(IsExpression node) {
     if (node.notOperator != null) return;
 
-    final sourceType = node.expression.staticType;
-    final targetType = node.type.type;
-    if (sourceType == null || targetType == null) return;
+    _check(node.expression.staticType, node.type.type, node);
+  }
 
-    if (_isStaticallyAssignable(sourceType, targetType)) {
+  void _check(DartType? sourceType, DartType? targetType, AstNode node) {
+    if (sourceType != null &&
+        targetType != null &&
+        _isStaticallyAssignable(sourceType, targetType)) {
       rule.reportAtNode(node);
     }
   }

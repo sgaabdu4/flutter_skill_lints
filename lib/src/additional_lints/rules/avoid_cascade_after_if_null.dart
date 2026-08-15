@@ -1,10 +1,7 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a cascade expression follows an if-null (`??`) operator
 /// without parentheses, which can produce unexpected results due to
@@ -20,7 +17,7 @@ import 'package:analyzer/error/error.dart';
 /// final cow = (nullableCow ?? Cow())..moo();
 /// final cow = nullableCow ?? (Cow()..moo());
 /// ```
-class AvoidCascadeAfterIfNull extends AnalysisRule {
+class AvoidCascadeAfterIfNull extends CascadeExpressionCheckRule {
   static const LintCode code = LintCode(
     'avoid_cascade_after_if_null',
     'Cascade after if-null operator without parentheses can produce '
@@ -34,28 +31,14 @@ class AvoidCascadeAfterIfNull extends AnalysisRule {
         description:
             'Warns when a cascade follows an if-null operator '
             'without parentheses.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addCascadeExpression(this, visitor);
-  }
-}
-
-class _Visitor extends SimpleAstVisitor<void> {
-  final AvoidCascadeAfterIfNull rule;
-
-  _Visitor(this.rule);
-
-  @override
-  void visitCascadeExpression(CascadeExpression node) {
+  void checkCascadeExpression(CascadeExpression node) {
     final target = node.target;
     if (target is BinaryExpression && target.operator.type == TokenType.QUESTION_QUESTION) {
-      rule.reportAtNode(node);
+      reportAtNode(node);
     }
   }
 }

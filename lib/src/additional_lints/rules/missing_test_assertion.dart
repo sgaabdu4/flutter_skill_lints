@@ -1,12 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/test_callback_utils.dart';
 
 /// Warns when a test callback contains no assertion.
-final class MissingTestAssertion extends AnalysisRule {
+final class MissingTestAssertion extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'missing_test_assertion',
     'Add an assertion to this test.',
@@ -15,17 +14,13 @@ final class MissingTestAssertion extends AnalysisRule {
 
   MissingTestAssertion()
     : super(
+        code: code,
         name: 'missing_test_assertion',
         description: 'Warns when a test callback contains no assertion call.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodInvocation(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -39,7 +34,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     if (!_testFunctions.contains(node.methodName.name)) return;
 
-    final callback = _callbackArgument(node);
+    final callback = testCallbackArgument(node);
     if (callback == null) return;
 
     final finder = _AssertionFinder();
@@ -47,16 +42,6 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (!finder.hasAssertion) {
       rule.reportAtNode(node.methodName);
     }
-  }
-
-  static FunctionExpression? _callbackArgument(MethodInvocation node) {
-    final positionalArgs = node.argumentList.arguments.where(
-      (argument) => argument is! NamedExpression,
-    );
-    if (positionalArgs.length < 2) return null;
-
-    final callback = positionalArgs.elementAt(1);
-    return callback is FunctionExpression ? callback : null;
   }
 }
 
@@ -96,7 +81,7 @@ final class _AssertionFinder extends RecursiveAstVisitor<void> {
 
   static bool _callbackArgumentHasAssertion(MethodInvocation node) {
     for (final argument in node.argumentList.arguments) {
-      if (argument is NamedExpression) continue;
+      if (argument is NamedArgument) continue;
       if (argument case final FunctionExpression callback) {
         final finder = _AssertionFinder();
         callback.body.accept(finder);

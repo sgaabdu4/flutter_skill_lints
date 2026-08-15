@@ -107,7 +107,7 @@ class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
     final name = actual.name?.lexeme;
     String? type;
 
-    if (actual is SimpleFormalParameter && actual.type != null) {
+    if (actual is RegularFormalParameter && actual.type != null) {
       type = actual.type!.toSource();
     } else if (actual is FieldFormalParameter) {
       type = actual.type?.toSource();

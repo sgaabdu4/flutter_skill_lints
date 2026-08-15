@@ -1,12 +1,9 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import '../ast_node_analysis.dart';
-
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/edge_insets_replacement.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when an `EdgeInsets` constructor can be replaced with a simpler one.
 ///
@@ -15,7 +12,7 @@ import '../type_checker.dart';
 /// - `EdgeInsets.only` can be `EdgeInsets.all`, `.symmetric`, or `.zero`
 /// - `EdgeInsets.symmetric` can be `EdgeInsets.all` or `.zero`
 /// - `EdgeInsets.all(0)` can be `EdgeInsets.zero`
-class PreferCorrectEdgeInsetsConstructor extends AnalysisRule {
+class PreferCorrectEdgeInsetsConstructor extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_correct_edge_insets_constructor',
     'Use a simpler EdgeInsets constructor.',
@@ -24,19 +21,13 @@ class PreferCorrectEdgeInsetsConstructor extends AnalysisRule {
 
   PreferCorrectEdgeInsetsConstructor()
     : super(
+        code: code,
         name: 'prefer_correct_edge_insets_constructor',
         description: 'Warns when an EdgeInsets constructor can be replaced with a simpler one.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -72,163 +63,9 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _check(Expression node, String? constructorName, ArgumentList argumentList) {
-    switch (constructorName) {
-      case 'fromLTRB':
-        _checkFromLTRB(node, argumentList);
-      case 'only':
-        _checkOnly(node, argumentList);
-      case 'symmetric':
-        _checkSymmetric(node, argumentList);
-      case 'all':
-        _checkAll(node, argumentList);
+    final replacement = edgeInsetsReplacement(constructorName, argumentList);
+    if (replacement != null) {
+      rule.reportAtNode(node, arguments: [replacement]);
     }
-  }
-
-  void _checkFromLTRB(Expression node, ArgumentList argumentList) {
-    final args = argumentList.arguments;
-    if (args.length != 4) return;
-
-    final l = args[0].toSource();
-    final t = args[1].toSource();
-    final r = args[2].toSource();
-    final b = args[3].toSource();
-
-    // All zero → EdgeInsets.zero
-    if (_isZeroSource(l) && _isZeroSource(t) && _isZeroSource(r) && _isZeroSource(b)) {
-      rule.reportAtNode(node, arguments: ['EdgeInsets.zero']);
-      return;
-    }
-
-    // All equal → EdgeInsets.all(v)
-    if (l == t && t == r && r == b) {
-      rule.reportAtNode(node, arguments: ['EdgeInsets.all($l)']);
-      return;
-    }
-
-    // Symmetric → EdgeInsets.symmetric(...)
-    if (l == r && t == b) {
-      final horizontal = !_isZeroSource(l);
-      final vertical = !_isZeroSource(t);
-      if (horizontal && vertical) {
-        rule.reportAtNode(node, arguments: ['EdgeInsets.symmetric(horizontal: $l, vertical: $t)']);
-      } else if (horizontal) {
-        rule.reportAtNode(node, arguments: ['EdgeInsets.symmetric(horizontal: $l)']);
-      } else if (vertical) {
-        rule.reportAtNode(node, arguments: ['EdgeInsets.symmetric(vertical: $t)']);
-      }
-      return;
-    }
-
-    // Check if .only would be simpler (some sides are zero)
-    final hasLeft = !_isZeroSource(l);
-    final hasTop = !_isZeroSource(t);
-    final hasRight = !_isZeroSource(r);
-    final hasBottom = !_isZeroSource(b);
-    final nonZeroCount = [hasLeft, hasTop, hasRight, hasBottom].where((e) => e).length;
-
-    if (nonZeroCount < 4) {
-      final parts = <String>[];
-      if (hasLeft) parts.add('left: $l');
-      if (hasTop) parts.add('top: $t');
-      if (hasRight) parts.add('right: $r');
-      if (hasBottom) parts.add('bottom: $b');
-      rule.reportAtNode(node, arguments: ['EdgeInsets.only(${parts.join(', ')})']);
-    }
-  }
-
-  void _checkOnly(Expression node, ArgumentList argumentList) {
-    final args = argumentList.arguments;
-
-    String? left;
-    String? top;
-    String? right;
-    String? bottom;
-
-    for (final arg in args.whereType<NamedExpression>()) {
-      switch (arg.name.lexeme) {
-        case 'left':
-          left = arg.expression.toSource();
-        case 'top':
-          top = arg.expression.toSource();
-        case 'right':
-          right = arg.expression.toSource();
-        case 'bottom':
-          bottom = arg.expression.toSource();
-      }
-    }
-
-    final l = left ?? '0';
-    final t = top ?? '0';
-    final r = right ?? '0';
-    final b = bottom ?? '0';
-
-    // All zero → EdgeInsets.zero
-    if (_isZeroSource(l) && _isZeroSource(t) && _isZeroSource(r) && _isZeroSource(b)) {
-      rule.reportAtNode(node, arguments: ['EdgeInsets.zero']);
-      return;
-    }
-
-    // All equal → EdgeInsets.all(v)
-    if (l == t && t == r && r == b) {
-      rule.reportAtNode(node, arguments: ['EdgeInsets.all($l)']);
-      return;
-    }
-
-    // Symmetric → EdgeInsets.symmetric(...)
-    if (l == r && t == b) {
-      final horizontal = !_isZeroSource(l);
-      final vertical = !_isZeroSource(t);
-      if (horizontal && vertical) {
-        rule.reportAtNode(node, arguments: ['EdgeInsets.symmetric(horizontal: $l, vertical: $t)']);
-      } else if (horizontal) {
-        rule.reportAtNode(node, arguments: ['EdgeInsets.symmetric(horizontal: $l)']);
-      } else if (vertical) {
-        rule.reportAtNode(node, arguments: ['EdgeInsets.symmetric(vertical: $t)']);
-      }
-    }
-  }
-
-  void _checkSymmetric(Expression node, ArgumentList argumentList) {
-    final args = argumentList.arguments;
-
-    String? horizontal;
-    String? vertical;
-
-    for (final arg in args.whereType<NamedExpression>()) {
-      switch (arg.name.lexeme) {
-        case 'horizontal':
-          horizontal = arg.expression.toSource();
-        case 'vertical':
-          vertical = arg.expression.toSource();
-      }
-    }
-
-    final h = horizontal ?? '0';
-    final v = vertical ?? '0';
-
-    // Both zero → EdgeInsets.zero
-    if (_isZeroSource(h) && _isZeroSource(v)) {
-      rule.reportAtNode(node, arguments: ['EdgeInsets.zero']);
-      return;
-    }
-
-    // Both equal → EdgeInsets.all(v)
-    if (h == v) {
-      rule.reportAtNode(node, arguments: ['EdgeInsets.all($h)']);
-    }
-  }
-
-  void _checkAll(Expression node, ArgumentList argumentList) {
-    final args = argumentList.arguments;
-    if (args.isEmpty) return;
-
-    final value = args.first.toSource();
-    if (_isZeroSource(value)) {
-      rule.reportAtNode(node, arguments: ['EdgeInsets.zero']);
-    }
-  }
-
-  static bool _isZeroSource(String source) {
-    return source == '0' || source == '0.0';
   }
 }

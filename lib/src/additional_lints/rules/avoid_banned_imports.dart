@@ -4,6 +4,7 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when app source imports packages that are not allowed by this lint pack.
 final class AvoidBannedImports extends AnalysisRule {
@@ -51,20 +52,11 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitImportDirective(ImportDirective node) {
-    final packageName = _packageNameFromUri(node.uri);
+    final packageName = packageNameFromUri(node.uri);
     if (packageName == null || !AvoidBannedImports.bannedPackages.contains(packageName)) {
       return;
     }
 
     rule.reportAtNode(node.uri, arguments: [packageName]);
   }
-}
-
-String? _packageNameFromUri(StringLiteral uri) {
-  final value = uri.stringValue;
-  if (value == null || !value.startsWith('package:')) return null;
-
-  final path = value.substring('package:'.length);
-  final separatorIndex = path.indexOf('/');
-  return separatorIndex == -1 ? path : path.substring(0, separatorIndex);
 }

@@ -1,15 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../../ast_utils.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/riverpod_consumer_checkers.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when `ref` is accessed inside a Riverpod `ConsumerState.dispose()`.
-class AvoidRefInsideStateDispose extends AnalysisRule {
+class AvoidRefInsideStateDispose extends MethodDeclarationRule with SkipGeneratedSources {
   static const LintCode code = LintCode(
     'avoid_ref_inside_state_dispose',
     "Avoid using 'ref' inside ConsumerState.dispose().",
@@ -21,16 +18,11 @@ class AvoidRefInsideStateDispose extends AnalysisRule {
     : super(
         name: 'avoid_ref_inside_state_dispose',
         description: 'Warns when ConsumerState.dispose() accesses Riverpod ref.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (isGeneratedRuleContext(context)) return;
-    registry.addMethodDeclaration(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -38,18 +30,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   final AvoidRefInsideStateDispose rule;
 
-  static const _consumerStateChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerState', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerState', packageName: 'hooks_riverpod'),
-  ]);
-
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
     if (node.name.lexeme != 'dispose') return;
 
     final classDecl = enclosingClass(node);
-    final element = classDecl?.declaredFragment?.element;
-    if (element == null || !_consumerStateChecker.isSuperOf(element)) return;
+    if (classDecl == null || !isClassAssignableTo(classDecl, consumerStateChecker)) return;
 
     final finder = _RefAccessFinder(rule);
     node.body.visitChildren(finder);
@@ -68,10 +54,7 @@ class _RefAccessFinder extends RecursiveAstVisitor<void> {
       return;
     }
 
-    final parent = node.parent;
-    if (parent is PrefixedIdentifier && parent.prefix == node) return;
-    if (parent is PropertyAccess && parent.target == node) return;
-    if (parent is MethodInvocation && parent.target == node) return;
+    if (isExpressionTargetIdentifier(node)) return;
 
     rule.reportAtNode(node);
   }

@@ -1,14 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/error/error.dart';
-import 'package:flutter_skill_lints/src/ast_utils.dart';
+import 'package:flutter_skill_lints/src/additional_lints/function_body_rule.dart';
 
 /// Warns when an explicit nullable return type is not needed.
-class AvoidUnnecessaryNullableReturnType extends AnalysisRule {
+class AvoidUnnecessaryNullableReturnType extends GeneratedFunctionAndMethodBodyCheckRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_nullable_return_type',
     'Avoid unnecessary nullable return types.',
@@ -19,42 +16,19 @@ class AvoidUnnecessaryNullableReturnType extends AnalysisRule {
     : super(
         name: 'avoid_unnecessary_nullable_return_type',
         description: 'Warns when a nullable return type has no nullable return path.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (isGeneratedRuleContext(context)) return;
-
-    final visitor = _Visitor(this);
-    registry.addFunctionDeclaration(this, visitor);
-    registry.addMethodDeclaration(this, visitor);
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  const _Visitor(this.rule);
-
-  final AvoidUnnecessaryNullableReturnType rule;
-
-  @override
-  void visitFunctionDeclaration(FunctionDeclaration node) {
-    _check(node.returnType, node.functionExpression.body);
-  }
-
-  @override
-  void visitMethodDeclaration(MethodDeclaration node) {
-    if (_hasOverrideAnnotation(node.metadata)) return;
-    _check(node.returnType, node.body);
+  void checkNonOverrideFunctionBody(TypeAnnotation? returnType, FunctionBody body) {
+    _check(returnType, body);
   }
 
   void _check(TypeAnnotation? returnType, FunctionBody body) {
     if (returnType is! NamedType || returnType.question == null) return;
     if (!_provesNonNullReturn(body)) return;
 
-    rule.reportAtNode(returnType);
+    reportAtNode(returnType);
   }
 
   bool _provesNonNullReturn(FunctionBody body) {
@@ -104,10 +78,6 @@ final class _Visitor extends SimpleAstVisitor<void> {
         _statementAlwaysExits(statement.thenStatement) && _statementAlwaysExits(elseStatement),
       _ => false,
     };
-  }
-
-  bool _hasOverrideAnnotation(NodeList<Annotation> metadata) {
-    return metadata.any((annotation) => annotation.name.name == 'override');
   }
 }
 

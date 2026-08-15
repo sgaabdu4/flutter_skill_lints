@@ -1,9 +1,7 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a `throw` expression is used inside a catch block.
 ///
@@ -29,7 +27,7 @@ import 'package:analyzer/error/error.dart';
 ///   Error.throwWithStackTrace(RepositoryException(), stack);
 /// }
 /// ```
-class AvoidThrowInCatchBlock extends AnalysisRule {
+class AvoidThrowInCatchBlock extends TryStatementCheckRule {
   static const LintCode code = LintCode(
     'avoid_throw_in_catch_block',
     'Avoid using throw inside a catch block.',
@@ -40,27 +38,13 @@ class AvoidThrowInCatchBlock extends AnalysisRule {
     : super(
         name: 'avoid_throw_in_catch_block',
         description: 'Warns when a throw expression is used inside a catch block.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addTryStatement(this, visitor);
-  }
-}
-
-class _Visitor extends SimpleAstVisitor<void> {
-  final AvoidThrowInCatchBlock rule;
-
-  _Visitor(this.rule);
-
-  @override
-  void visitTryStatement(TryStatement node) {
+  void checkTryStatement(TryStatement node) {
     for (final catchClause in node.catchClauses) {
-      final throwFinder = _ThrowFinder(rule);
+      final throwFinder = _ThrowFinder(this);
       catchClause.body.visitChildren(throwFinder);
     }
   }

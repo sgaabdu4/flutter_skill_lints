@@ -73,10 +73,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 }
 
 bool _isExcludedContext(RuleContext context) {
-  if (context.isInTestDirectory || isGeneratedRuleContext(context)) return true;
-
-  final path = context.definingUnit.file.path.replaceAll('\\', '/');
-  return !path.contains('/lib/') || path.endsWith('_test.dart') || path.contains('/l10n/');
+  return isExcludedProductionSource(context);
 }
 
 bool _isIgnoreComment(Token token) {

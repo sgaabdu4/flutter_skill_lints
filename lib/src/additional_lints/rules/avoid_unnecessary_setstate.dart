@@ -1,11 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when `setState` is called directly inside `initState`,
 /// `didUpdateWidget`, or `build` methods in a `State` subclass.
@@ -17,7 +16,7 @@ import '../type_checker.dart';
 ///
 /// For event handler callbacks (onPressed, onTap, etc.) inside `build`,
 /// `setState` is allowed since those run asynchronously.
-class AvoidUnnecessarySetstate extends AnalysisRule {
+class AvoidUnnecessarySetstate extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_setstate',
     "Unnecessary call to 'setState' inside '{0}'.",
@@ -26,6 +25,7 @@ class AvoidUnnecessarySetstate extends AnalysisRule {
 
   AvoidUnnecessarySetstate()
     : super(
+        code: code,
         name: 'avoid_unnecessary_setstate',
         description:
             'Warns when setState is called in initState, didUpdateWidget, '
@@ -33,13 +33,7 @@ class AvoidUnnecessarySetstate extends AnalysisRule {
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -76,27 +70,21 @@ class _Visitor extends SimpleAstVisitor<void> {
   static ({MethodDeclaration? method, ClassDeclaration? classDecl}) _findLifecycleMethodAndClass(
     AstNode node,
   ) {
-    MethodDeclaration? method;
+    final method = _enclosingLifecycleMethod(node);
+    final classDecl = method == null ? null : enclosingClass(method);
+    return (method: method, classDecl: classDecl);
+  }
+
+  static MethodDeclaration? _enclosingLifecycleMethod(AstNode node) {
     AstNode? current = node.parent;
     while (current != null) {
-      if (method == null) {
-        // Still looking for the lifecycle method
-        if (current is FunctionExpression || current is FunctionDeclaration) {
-          return (method: null, classDecl: null);
-        }
-        if (current is MethodDeclaration) {
-          final name = current.name.lexeme;
-          if (!_lifecycleMethods.contains(name)) {
-            return (method: null, classDecl: null);
-          }
-          method = current;
-        }
-      } else if (current is ClassDeclaration) {
-        return (method: method, classDecl: current);
+      if (current is FunctionExpression || current is FunctionDeclaration) return null;
+      if (current is MethodDeclaration) {
+        return _lifecycleMethods.contains(current.name.lexeme) ? current : null;
       }
       current = current.parent;
     }
-    return (method: null, classDecl: null);
+    return null;
   }
 
   /// Checks whether the setState call is inside a closure that is passed
@@ -120,10 +108,10 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (current is MethodDeclaration) return false;
 
       // Check if we're inside a FunctionExpression that is the value of
-      // a NamedExpression (e.g., onPressed: () { ... })
+      // a NamedArgument (e.g., onPressed: () { ... })
       if (current is FunctionExpression) {
         final parent = current.parent;
-        if (parent is NamedExpression) return true;
+        if (parent is NamedArgument) return true;
       }
 
       current = current.parent;

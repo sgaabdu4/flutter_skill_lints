@@ -1,15 +1,13 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Checks that RenderObjectWidget constructor fields are copied during updates.
-final class ConsistentUpdateRenderObject extends AnalysisRule {
+final class ConsistentUpdateRenderObject extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'consistent_update_render_object',
     'updateRenderObject does not assign `{0}` to the render object.',
@@ -23,15 +21,11 @@ final class ConsistentUpdateRenderObject extends AnalysisRule {
         description:
             'Flags RenderObjectWidget updateRenderObject methods that omit '
             'constructor-backed field assignments.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addClassDeclaration(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -70,38 +64,40 @@ final class _Visitor extends SimpleAstVisitor<void> {
 Map<String, Token> _constructorBackedFields(ClassDeclaration node) {
   final body = node.body;
   if (body is! BlockClassBody) return const {};
-
-  final candidateFields = <String, Token>{};
-  for (final field in body.members.whereType<FieldDeclaration>()) {
-    if (field.isStatic || field.externalKeyword != null) continue;
-
-    for (final variable in field.fields.variables) {
-      if (variable.initializer != null) continue;
-      candidateFields[variable.name.lexeme] = variable.name;
-    }
-  }
+  final candidateFields = _uninitializedInstanceFields(body);
   if (candidateFields.isEmpty) return const {};
-
-  final constructorFields = <String>{};
-  for (final constructor in body.members.whereType<ConstructorDeclaration>()) {
-    if (constructor.factoryKeyword != null) continue;
-    if (constructor.redirectedConstructor != null) continue;
-
-    for (final parameter in constructor.parameters.parameters) {
-      final fieldName = _fieldFormalName(parameter);
-      if (fieldName != null) constructorFields.add(fieldName);
-    }
-  }
-
+  final constructorFields = _constructorFieldNames(body);
   return {
     for (final entry in candidateFields.entries)
       if (constructorFields.contains(entry.key)) entry.key: entry.value,
   };
 }
 
+Map<String, Token> _uninitializedInstanceFields(BlockClassBody body) {
+  final fields = <String, Token>{};
+  for (final field in body.members.whereType<FieldDeclaration>()) {
+    if (field.isStatic || field.externalKeyword != null) continue;
+    for (final variable in field.fields.variables) {
+      if (variable.initializer == null) fields[variable.name.lexeme] = variable.name;
+    }
+  }
+  return fields;
+}
+
+Set<String> _constructorFieldNames(BlockClassBody body) {
+  final names = <String>{};
+  for (final constructor in body.members.whereType<ConstructorDeclaration>()) {
+    if (constructor.factoryKeyword != null || constructor.redirectedConstructor != null) continue;
+    for (final parameter in constructor.parameters.parameters) {
+      final fieldName = _fieldFormalName(parameter);
+      if (fieldName != null) names.add(fieldName);
+    }
+  }
+  return names;
+}
+
 String? _fieldFormalName(FormalParameter parameter) {
-  final normalized = parameter is DefaultFormalParameter ? parameter.parameter : parameter;
-  return switch (normalized) {
+  return switch (parameter) {
     FieldFormalParameter(:final name) => name.lexeme,
     SuperFormalParameter() => null,
     _ => null,

@@ -1,11 +1,9 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../riverpod_type_checkers.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/riverpod_type_checkers.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a `Notifier` or `AsyncNotifier` subclass declares a constructor
 /// with a non-empty body or initializer list.
@@ -13,7 +11,7 @@ import '../riverpod_type_checkers.dart';
 /// Constructors in Notifier classes should not contain initialization logic.
 /// All setup should go into the `build()` method instead, which is the proper
 /// lifecycle method for initialization in Riverpod.
-class AvoidNotifierConstructors extends AnalysisRule {
+class AvoidNotifierConstructors extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_notifier_constructors',
     'Avoid constructors with logic in Notifier classes.',
@@ -26,16 +24,11 @@ class AvoidNotifierConstructors extends AnalysisRule {
         description:
             'Warns when a Notifier or AsyncNotifier subclass has a '
             'constructor with a non-empty body or initializer list.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addClassDeclaration(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -45,24 +38,13 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    final element = node.declaredFragment?.element;
-    if (element == null || !notifierChecker.isSuperOf(element)) return;
+    if (!isClassAssignableTo(node, notifierChecker)) return;
 
     final body = node.body;
     if (body is! BlockClassBody) return;
 
-    for (final member in body.members) {
-      if (member is! ConstructorDeclaration) continue;
-
-      final hasBody =
-          member.body is BlockFunctionBody &&
-          (member.body as BlockFunctionBody).block.statements.isNotEmpty;
-
-      final hasInitializers = member.initializers.any((i) => i is! SuperConstructorInvocation);
-
-      if (hasBody || hasInitializers) {
-        rule.reportAtNode(member);
-      }
+    for (final constructor in constructorsWithLogic(body)) {
+      rule.reportAtNode(constructor);
     }
   }
 }

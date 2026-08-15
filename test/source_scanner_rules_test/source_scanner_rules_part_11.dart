@@ -35,8 +35,7 @@ class ThingNotifier extends Notifier<int> {
 ''';
 
     final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
-    final expected = compatLint(analyzedSource, '_service', ruleName);
-    await assertDiagnostics(analyzedSource, [expected]);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '_service', ruleName)]);
   }
 
   Future<void> test_allowsStatelessProviderHelper() async {

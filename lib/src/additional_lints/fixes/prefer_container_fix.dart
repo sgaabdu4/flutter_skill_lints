@@ -5,8 +5,8 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-import '../ast_node_analysis.dart';
-import '../flutter_widget_helpers.dart';
+import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.dart';
+import 'package:flutter_skill_lints/src/additional_lints/widget_sequence.dart';
 
 /// Fix that merges a sequence of nested widgets into a single Container.
 class PreferContainerFix extends ResolvedCorrectionProducer {
@@ -42,6 +42,25 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
     'IntrinsicHeight': [],
     'IntrinsicWidth': [],
     'LimitedBox': ['maxWidth', 'maxHeight'],
+  };
+
+  static const _containerArgumentMapping = <String, Map<String, String>>{
+    'Padding': {'padding': 'padding'},
+    'Align': {
+      'alignment': 'alignment',
+      'widthFactor': 'widthFactor',
+      'heightFactor': 'heightFactor',
+    },
+    'Center': {'alignment': 'alignment'},
+    'ColoredBox': {'color': 'color'},
+    'DecoratedBox': {'decoration': 'decoration', 'position': 'foregroundDecoration'},
+    'ConstrainedBox': {'constraints': 'constraints'},
+    'SizedBox': {'width': 'width', 'height': 'height'},
+    'Transform': {'transform': 'transform', 'alignment': 'transformAlignment'},
+    'ClipRRect': {'clipBehavior': 'clipBehavior'},
+    'ClipOval': {'clipBehavior': 'clipBehavior'},
+    'ClipPath': {'clipBehavior': 'clipBehavior'},
+    'FractionallySizedBox': {'alignment': 'alignment'},
   };
 
   /// Widget names that are container-compatible.
@@ -81,7 +100,7 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
     }
 
     // Collect the sequence of widgets
-    final sequence = _collectSequence(outerWidget);
+    final sequence = collectWidgetSequence(outerWidget, _getWidgetInfo);
     if (sequence.length < 3) return;
 
     // Build the Container replacement
@@ -93,133 +112,78 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Collects the sequence of container-compatible widgets in the chain.
-  static List<WidgetInfo> _collectSequence(Expression node) {
-    final sequence = <WidgetInfo>[];
-    Expression? current = node;
-
-    while (current != null) {
-      final info = _getWidgetInfo(current);
-      if (info == null) break;
-      sequence.add(info);
-      current = _getChildExpression(info.argumentList);
-    }
-
-    return sequence;
-  }
-
   static WidgetInfo? _getWidgetInfo(Expression expr) {
+    final name = allowedWidgetName(expr, _containerCompatibleWidgets);
     if (expr is InstanceCreationExpression) {
-      final name = expr.constructorName.type.name.lexeme;
-      if (!_containerCompatibleWidgets.contains(name)) return null;
-      return (name: name, argumentList: expr.argumentList, node: expr as Expression);
+      if (name == null) return null;
+      return (name: name, argumentList: expr.argumentList, node: expr);
     }
     if (expr is MethodInvocation) {
-      final name = expr.methodName.name;
-      if (!_containerCompatibleWidgets.contains(name)) return null;
-      return (name: name, argumentList: expr.argumentList, node: expr as Expression);
+      if (name == null) return null;
+      return (name: name, argumentList: expr.argumentList, node: expr);
     }
     return null;
   }
 
-  static Expression? _getChildExpression(ArgumentList argumentList) {
-    final childArg = argumentList.arguments.whereType<NamedExpression>().firstWhereOrNull(
-      (e) => e.name.lexeme == 'child',
-    );
-    return childArg?.expression;
-  }
-
   /// Builds the Container replacement string from the widget sequence.
   static String? _buildContainerReplacement(List<WidgetInfo> sequence) {
-    final params = <String>[];
-    String? keySource;
-    String? childSource;
-
-    for (final widget in sequence) {
-      final mappedParams = _widgetParamMapping[widget.name];
-      if (mappedParams == null) return null;
-
-      for (final arg in widget.argumentList.arguments) {
-        if (arg is! NamedExpression) continue;
-        final argName = arg.name.lexeme;
-
-        if (argName == 'key' && keySource == null) {
-          keySource = arg.expression.toSource();
-          continue;
-        }
-
-        if (argName == 'child') continue;
-
-        // Map the argument to Container's parameter
-        final containerParam = _mapArgToContainerParam(widget.name, argName);
-        if (containerParam != null) {
-          params.add('$containerParam: ${arg.expression.toSource()}');
-        }
-      }
-
-      // Center implicitly adds alignment: Alignment.center
-      if (widget.name == 'Center') {
-        // Only add if no explicit alignment argument was provided
-        final hasAlignment = widget.argumentList.arguments.whereType<NamedExpression>().any(
-          (e) => e.name.lexeme == 'alignment',
-        );
-        if (!hasAlignment) {
-          params.add('alignment: Alignment.center');
-        }
-      }
-    }
-
-    // Get the child of the innermost widget
-    final innermost = sequence.last;
-    final innerChild = _getChildExpression(innermost.argumentList);
-    if (innerChild != null) {
-      childSource = innerChild.toSource();
-    }
+    final parts = _collectContainerParts(sequence);
+    if (parts == null) return null;
 
     final buffer = StringBuffer('Container(');
-    if (keySource != null) {
-      buffer.write('key: $keySource, ');
-    }
-    for (final param in params) {
+    if (parts.keySource != null) buffer.write('key: ${parts.keySource}, ');
+    for (final param in parts.params) {
       buffer.write('$param, ');
     }
-    if (childSource != null) {
-      buffer.write('child: $childSource, ');
-    }
+    if (parts.childSource != null) buffer.write('child: ${parts.childSource}, ');
     buffer.write(')');
-
     return buffer.toString();
+  }
+
+  static ({String? childSource, String? keySource, List<String> params})? _collectContainerParts(
+    List<WidgetInfo> sequence,
+  ) {
+    final params = <String>[];
+    String? keySource;
+
+    for (final widget in sequence) {
+      if (_widgetParamMapping[widget.name] == null) return null;
+      final widgetParts = _collectWidgetParts(widget);
+      keySource ??= widgetParts.keySource;
+      params.addAll(widgetParts.params);
+    }
+
+    final innermost = sequence.last;
+    final innerChild = getWidgetChildExpression(innermost.argumentList);
+    return (keySource: keySource, params: params, childSource: innerChild?.toSource());
+  }
+
+  static ({String? keySource, List<String> params}) _collectWidgetParts(WidgetInfo widget) {
+    String? keySource;
+    final params = <String>[];
+    for (final arg in widget.argumentList.arguments.whereType<NamedArgument>()) {
+      final argName = arg.name.lexeme;
+      if (argName == 'key') {
+        keySource ??= arg.argumentExpression.toSource();
+        continue;
+      }
+      if (argName == 'child') continue;
+      final containerParam = _mapArgToContainerParam(widget.name, argName);
+      if (containerParam != null) {
+        params.add('$containerParam: ${arg.argumentExpression.toSource()}');
+      }
+    }
+    if (widget.name == 'Center' &&
+        !widget.argumentList.arguments.whereType<NamedArgument>().any(
+          (argument) => argument.name.lexeme == 'alignment',
+        )) {
+      params.add('alignment: Alignment.center');
+    }
+    return (keySource: keySource, params: params);
   }
 
   /// Maps a widget's argument name to the corresponding Container parameter.
   static String? _mapArgToContainerParam(String widgetName, String argName) {
-    return switch ((widgetName, argName)) {
-      ('Padding', 'padding') => 'padding',
-      ('Align', 'alignment') => 'alignment',
-      ('Align', 'widthFactor') => 'widthFactor', // Align-specific, not on Container
-      ('Align', 'heightFactor') => 'heightFactor',
-      ('Center', 'widthFactor') => null,
-      ('Center', 'heightFactor') => null,
-      ('Center', 'alignment') => 'alignment',
-      ('ColoredBox', 'color') => 'color',
-      ('DecoratedBox', 'decoration') => 'decoration',
-      ('DecoratedBox', 'position') => 'foregroundDecoration',
-      ('ConstrainedBox', 'constraints') => 'constraints',
-      ('SizedBox', 'width') => 'width',
-      ('SizedBox', 'height') => 'height',
-      ('Transform', 'transform') => 'transform',
-      ('Transform', 'alignment') => 'transformAlignment',
-      ('Transform', 'origin') => null,
-      ('ClipRRect', 'clipBehavior') => 'clipBehavior',
-      ('ClipOval', 'clipBehavior') => 'clipBehavior',
-      ('ClipPath', 'clipBehavior') => 'clipBehavior',
-      ('FractionallySizedBox', 'widthFactor') => null,
-      ('FractionallySizedBox', 'heightFactor') => null,
-      ('FractionallySizedBox', 'alignment') => 'alignment',
-      ('Opacity', 'opacity') => null,
-      ('LimitedBox', 'maxWidth') => null,
-      ('LimitedBox', 'maxHeight') => null,
-      _ => null,
-    };
+    return _containerArgumentMapping[widgetName]?[argName];
   }
 }

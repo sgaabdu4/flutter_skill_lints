@@ -1,13 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when declarations use placeholder names.
-class AvoidBannedNames extends AnalysisRule {
+class AvoidBannedNames extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_banned_names',
     "Avoid banned name '{0}'.",
@@ -17,15 +15,14 @@ class AvoidBannedNames extends AnalysisRule {
   static const bannedNames = {'foo', 'bar', 'baz'};
 
   AvoidBannedNames()
-    : super(name: 'avoid_banned_names', description: 'Warns when declarations use banned names.');
+    : super(
+        name: 'avoid_banned_names',
+        description: 'Warns when declarations use banned names.',
+        code: code,
+      );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addCompilationUnit(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends RecursiveAstVisitor<void> {
@@ -61,7 +58,7 @@ final class _Visitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitExtensionTypeDeclaration(ExtensionTypeDeclaration node) {
-    _check(node.primaryConstructor.typeName);
+    _check(node.namePart.typeName);
     super.visitExtensionTypeDeclaration(node);
   }
 
@@ -90,10 +87,10 @@ final class _Visitor extends RecursiveAstVisitor<void> {
   }
 
   @override
-  void visitSimpleFormalParameter(SimpleFormalParameter node) {
+  void visitRegularFormalParameter(RegularFormalParameter node) {
     final name = node.name;
     if (name != null && !_isOverrideParameter(node)) _check(name);
-    super.visitSimpleFormalParameter(node);
+    super.visitRegularFormalParameter(node);
   }
 
   @override

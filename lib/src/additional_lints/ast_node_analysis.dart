@@ -2,18 +2,22 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 
-import './type_checker.dart';
-
-/// Analyzer exposes labels as AST nodes with a name token.
-extension LabelNameExtension on Label {
-  String get lexeme => label.name;
-}
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Walks up the AST to find the nearest enclosing [ClassDeclaration].
 ClassDeclaration? enclosingClassDeclaration(AstNode node) {
   AstNode? current = node.parent;
   while (current != null) {
     if (current is ClassDeclaration) return current;
+    current = current.parent;
+  }
+  return null;
+}
+
+T? nearestNode<T extends AstNode>(AstNode node) {
+  AstNode? current = node;
+  while (current != null) {
+    if (current is T) return current;
     current = current.parent;
   }
   return null;
@@ -47,9 +51,9 @@ bool isInstanceCreationExpressionOnlyUsingParameter(
   var hasParameter = false;
 
   for (final argument in node.argumentList.arguments) {
-    if (argument is NamedExpression) {
+    if (argument is NamedArgument) {
       final argumentName = argument.name.lexeme;
-      final expression = argument.expression;
+      final expression = argument.argumentExpression;
       final staticType = expression.staticType;
       if (ignoredParameters.contains(argumentName)) {
         continue;

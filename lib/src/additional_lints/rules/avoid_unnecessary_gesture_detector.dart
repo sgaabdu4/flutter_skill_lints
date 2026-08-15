@@ -1,16 +1,13 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import '../ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when a `GestureDetector` widget is created without any event handler
 /// callbacks, making it functionally useless.
-class AvoidUnnecessaryGestureDetector extends AnalysisRule {
+class AvoidUnnecessaryGestureDetector extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_gesture_detector',
     "This 'GestureDetector' has no event handlers.",
@@ -19,19 +16,13 @@ class AvoidUnnecessaryGestureDetector extends AnalysisRule {
 
   AvoidUnnecessaryGestureDetector()
     : super(
+        code: code,
         name: 'avoid_unnecessary_gesture_detector',
         description: 'Warns when a GestureDetector has no event handler callbacks.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -65,7 +56,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   static bool _hasEventHandler(ArgumentList argumentList) {
-    return argumentList.arguments.whereType<NamedExpression>().any(
+    return argumentList.arguments.whereType<NamedArgument>().any(
       (arg) => arg.name.lexeme.startsWith('on'),
     );
   }

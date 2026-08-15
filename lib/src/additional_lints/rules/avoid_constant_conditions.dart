@@ -1,16 +1,13 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import '../constant_expression.dart';
+import 'package:flutter_skill_lints/src/additional_lints/constant_expression.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a binary comparison has constant operands on both sides.
 ///
 /// A condition like `10 == 11` or `SomeClass.value == '1'` always evaluates
 /// to the same result, which usually indicates a typo or a bug.
-class AvoidConstantConditions extends AnalysisRule {
+class AvoidConstantConditions extends BinaryExpressionCheckRule {
   static const LintCode code = LintCode(
     'avoid_constant_conditions',
     'Both sides of this comparison are constants, so the result is always the '
@@ -24,31 +21,18 @@ class AvoidConstantConditions extends AnalysisRule {
         description:
             'Warns when a binary comparison has constant operands on both '
             'sides.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addBinaryExpression(this, visitor);
-  }
-}
-
-class _Visitor extends SimpleAstVisitor<void> {
-  final AvoidConstantConditions rule;
-
-  _Visitor(this.rule);
-
-  @override
-  void visitBinaryExpression(BinaryExpression node) {
+  void checkBinaryExpression(BinaryExpression node) {
     if (!comparisonOperators.contains(node.operator.type)) return;
 
     if (!isConstantExpression(node.leftOperand) || !isConstantExpression(node.rightOperand)) {
       return;
     }
 
-    rule.reportAtNode(node);
+    reportAtNode(node);
   }
 }

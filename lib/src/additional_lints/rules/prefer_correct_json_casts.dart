@@ -1,14 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when JSON map values are cast directly to typed collections.
-class PreferCorrectJsonCasts extends AnalysisRule {
+class PreferCorrectJsonCasts extends AsExpressionCheckRule {
   static const LintCode code = LintCode(
     'prefer_correct_json_casts',
     'Prefer correct JSON collection casts.',
@@ -20,29 +18,18 @@ class PreferCorrectJsonCasts extends AnalysisRule {
     : super(
         name: 'prefer_correct_json_casts',
         description: 'Warns when JSON map lookups are cast directly to typed collections.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
+  bool shouldRegister(RuleContext context) => !isGeneratedRuleContext(context);
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (isGeneratedRuleContext(context)) return;
-    registry.addAsExpression(this, _Visitor(this));
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  const _Visitor(this.rule);
-
-  final PreferCorrectJsonCasts rule;
-
-  @override
-  void visitAsExpression(AsExpression node) {
+  void checkAsExpression(AsExpression node) {
     if (!_isJsonLookup(node.expression)) return;
     if (!_isUnsafeJsonCollectionCast(node.type)) return;
 
-    rule.reportAtNode(node);
+    reportAtNode(node);
   }
 
   bool _isJsonLookup(Expression expression) {

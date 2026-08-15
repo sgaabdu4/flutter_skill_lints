@@ -1,6 +1,6 @@
 import 'package:analyzer/error/error.dart';
 
-import '../class_suffix_validator.dart';
+import 'package:flutter_skill_lints/src/additional_lints/class_suffix_validator.dart';
 
 /// Warns when a Riverpod Notifier class does not use the `Notifier` suffix.
 ///

@@ -77,8 +77,8 @@ final class _NamedDeclaration {
         return _NamedDeclaration(namePart.typeName.lexeme, namePart.typeName);
       case MixinDeclaration(:final name):
         return _NamedDeclaration(name.lexeme, name);
-      case ExtensionTypeDeclaration(:final primaryConstructor):
-        return _NamedDeclaration(primaryConstructor.typeName.lexeme, primaryConstructor.typeName);
+      case ExtensionTypeDeclaration(:final namePart):
+        return _NamedDeclaration(namePart.typeName.lexeme, namePart.typeName);
     }
 
     return null;

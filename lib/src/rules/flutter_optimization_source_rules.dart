@@ -267,23 +267,26 @@ int _firstFilterColumn(String line) {
 }
 
 int _callEndLine(SourceScannerContext context, int startLine, int startColumn) {
-  var depth = 0;
-  var sawOpenParen = false;
+  final state = _CallNesting();
   for (var lineIndex = startLine; lineIndex < context.source.length; lineIndex++) {
     final line = context.source.masked[lineIndex];
     final start = lineIndex == startLine ? startColumn : 0;
-    for (var column = start; column < line.length; column++) {
-      final char = line[column];
-      if (char == '(') {
-        sawOpenParen = true;
-        depth++;
-      } else if (char == ')' && sawOpenParen) {
-        depth--;
-        if (depth == 0) return lineIndex;
-      }
-    }
+    if (_scanCallLine(state, line, start)) return lineIndex;
   }
   return startLine;
+}
+
+bool _scanCallLine(_CallNesting state, String line, int start) {
+  for (var column = start; column < line.length; column++) {
+    final char = line[column];
+    if (char == '(') {
+      state.sawOpenParen = true;
+      state.depth++;
+    } else if (char == ')' && state.sawOpenParen && --state.depth == 0) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool _hasTopLevelNamedArgument(
@@ -293,37 +296,48 @@ bool _hasTopLevelNamedArgument(
   int endLine,
   String name,
 ) {
-  var parenDepth = 0;
-  var braceDepth = 0;
-  var bracketDepth = 0;
+  final state = _CallNesting();
   for (var lineIndex = startLine; lineIndex <= endLine; lineIndex++) {
     final line = context.source.masked[lineIndex];
     final start = lineIndex == startLine ? startColumn : 0;
-    for (var column = start; column < line.length; column++) {
-      if (parenDepth == 1 &&
-          braceDepth == 0 &&
-          bracketDepth == 0 &&
-          _hasNamedArgumentAt(line, column, name)) {
-        return true;
-      }
-
-      final char = line[column];
-      if (char == '(') {
-        parenDepth++;
-      } else if (char == ')') {
-        parenDepth--;
-      } else if (char == '{') {
-        braceDepth++;
-      } else if (char == '}') {
-        braceDepth--;
-      } else if (char == '[') {
-        bracketDepth++;
-      } else if (char == ']') {
-        bracketDepth--;
-      }
-    }
+    if (_scanNamedArgumentLine(state, line, start, name)) return true;
   }
   return false;
+}
+
+bool _scanNamedArgumentLine(_CallNesting state, String line, int start, String name) {
+  for (var column = start; column < line.length; column++) {
+    if (state.isTopLevelArgument && _hasNamedArgumentAt(line, column, name)) return true;
+    state.update(line[column]);
+  }
+  return false;
+}
+
+final class _CallNesting {
+  int depth = 0;
+  int braceDepth = 0;
+  int bracketDepth = 0;
+  bool sawOpenParen = false;
+
+  bool get isTopLevelArgument => depth == 1 && braceDepth == 0 && bracketDepth == 0;
+
+  void update(String char) {
+    switch (char) {
+      case '(':
+        sawOpenParen = true;
+        depth++;
+      case ')':
+        if (sawOpenParen) depth--;
+      case '{':
+        braceDepth++;
+      case '}':
+        braceDepth--;
+      case '[':
+        bracketDepth++;
+      case ']':
+        bracketDepth--;
+    }
+  }
 }
 
 bool _hasNamedArgumentAt(String line, int column, String name) {
@@ -351,21 +365,11 @@ bool _isIdentifierChar(String char) {
 }
 
 bool _isWidgetClass(SourceScannerContext context, ScannerClassSpan classSpan) {
-  final signature = _classSignature(context, classSpan);
+  final signature = sourceClassSignature(context, classSpan);
   return RegExp(
         r'\bextends\s+(?:[A-Za-z_][A-Za-z0-9_]*\.)?(?:StatelessWidget|StatefulWidget|Widget|ConsumerWidget|HookWidget)\b',
       ).hasMatch(signature) ||
       RegExp(
         r'\bextends\s+(?:[A-Za-z_][A-Za-z0-9_]*\.)?[A-Za-z_][A-Za-z0-9_]*Widget\b',
       ).hasMatch(signature);
-}
-
-String _classSignature(SourceScannerContext context, ScannerClassSpan classSpan) {
-  final buffer = StringBuffer();
-  for (var i = classSpan.start; i <= classSpan.end; i++) {
-    buffer.write(' ');
-    buffer.write(context.source.masked[i]);
-    if (context.source.masked[i].contains('{')) break;
-  }
-  return buffer.toString();
 }

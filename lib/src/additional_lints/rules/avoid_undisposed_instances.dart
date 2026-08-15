@@ -1,17 +1,15 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../disposal_utils.dart';
+import 'package:flutter_skill_lints/src/additional_lints/disposal_utils.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a local disposable instance is created and not cleaned up in the
 /// same function body.
-class AvoidUndisposedInstances extends AnalysisRule {
+class AvoidUndisposedInstances extends FunctionAndMethodDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_undisposed_instances',
     "Instance '{0}' is not disposed. Call '{0}.{1}()' before it goes out of scope.",
@@ -22,17 +20,11 @@ class AvoidUndisposedInstances extends AnalysisRule {
     : super(
         name: 'avoid_undisposed_instances',
         description: 'Warns when locally created disposable instances are not cleaned up.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addFunctionDeclaration(this, visitor);
-    registry.addMethodDeclaration(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -134,7 +126,7 @@ class _CleanupCollector extends RecursiveAstVisitor<void> {
     final methodName = node.methodName.name;
     if (methodName == 'addTearDown' || methodName == 'tearDown') {
       for (final argument in node.argumentList.arguments) {
-        _collectCleanupTearOff(argument);
+        _collectCleanupTearOff(argument.argumentExpression);
       }
     }
     if (cleanupMethods.contains(methodName)) {

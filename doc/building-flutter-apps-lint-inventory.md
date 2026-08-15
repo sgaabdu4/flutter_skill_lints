@@ -23,8 +23,8 @@ async_context_mounted_style
 atom_widget_layer_dependency
 atomic_provider_access
 avoid_any_version
-avoid_dependency_overrides
 avoid_dynamic_except_json_maps
+avoid_flutter_host_driver_imports
 avoid_legacy_riverpod_apis
 avoid_null_bang
 avoid_object_map_cast
@@ -41,7 +41,6 @@ build_method_assigns_to_field
 cfg_analysis_options_canonical
 cfg_e2e_entrypoint
 cfg_explicit_to_json
-cfg_freezed_annotation_ignore
 cfg_generated_exclude
 cfg_prohibited_lint_plugins
 cfg_required_lints
@@ -389,6 +388,7 @@ avoid_unnecessary_type_assertions
 avoid_unreachable_for_loop
 avoid_unsafe_collection_methods
 avoid_unsafe_reduce
+avoid_unvalidated_persisted_map_cast
 avoid_unused_assignment
 avoid_unused_local_variable
 avoid_wrapping_in_padding

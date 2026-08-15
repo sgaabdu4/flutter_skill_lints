@@ -25,7 +25,7 @@ class AvoidUnnecessaryEnumArguments extends AnalysisRule {
 
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addNamedExpression(this, _Visitor(this));
+    registry.addNamedArgument(this, _Visitor(this));
   }
 }
 
@@ -35,14 +35,14 @@ final class _Visitor extends SimpleAstVisitor<void> {
   final AvoidUnnecessaryEnumArguments rule;
 
   @override
-  void visitNamedExpression(NamedExpression node) {
+  void visitNamedArgument(NamedArgument node) {
     final parameter = node.correspondingParameter;
     if (parameter == null || !parameter.isOptionalNamed) return;
 
     final defaultValueCode = parameter.defaultValueCode;
     if (defaultValueCode == null) return;
-    if (!_isEnumExpression(node.expression)) return;
-    if (node.expression.toSource() != defaultValueCode) return;
+    if (!_isEnumExpression(node.argumentExpression)) return;
+    if (node.argumentExpression.toSource() != defaultValueCode) return;
 
     rule.reportAtNode(node);
   }

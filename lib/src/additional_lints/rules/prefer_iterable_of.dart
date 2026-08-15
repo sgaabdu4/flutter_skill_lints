@@ -1,10 +1,9 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Suggests using `List.of()` / `Set.of()` instead of `List.from()` /
 /// `Set.from()` when the argument type is already assignable to the target
@@ -12,7 +11,7 @@ import 'package:analyzer/error/error.dart';
 ///
 /// `.of()` enforces type safety at compile time, while `.from()` allows
 /// potentially unsafe downcasting checked only at runtime.
-class PreferIterableOf extends AnalysisRule {
+class PreferIterableOf extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_iterable_of',
     'Use {0}.of() instead of {0}.from().',
@@ -23,6 +22,7 @@ class PreferIterableOf extends AnalysisRule {
 
   PreferIterableOf()
     : super(
+        code: code,
         name: 'prefer_iterable_of',
         description:
             'Prefer List.of() / Set.of() over List.from() / Set.from() when '
@@ -30,14 +30,7 @@ class PreferIterableOf extends AnalysisRule {
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -73,7 +66,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _check(AstNode node, ArgumentList argumentList, DartType? resultType, String typeName) {
-    final positionalArgs = argumentList.arguments.where((a) => a is! NamedExpression).toList();
+    final positionalArgs = argumentList.arguments.where((a) => a is! NamedArgument).toList();
     if (positionalArgs.length != 1) return;
 
     final sourceArg = positionalArgs.first;
@@ -93,11 +86,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
 
     // Get the source argument's static type
-    final sourceType = sourceArg.staticType;
+    final sourceType = sourceArg.argumentExpression.staticType;
     if (sourceType is! InterfaceType) return;
 
     // Extract the source element type from Iterable<T>
-    final sourceElementType = _getIterableElementType(sourceType);
+    final sourceElementType = iterableElementType(sourceType);
     if (sourceElementType == null) return;
 
     // If source element type is assignable to target element type,
@@ -105,22 +98,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (_isAssignable(sourceElementType, targetElementType)) {
       rule.reportAtNode(node, arguments: [typeName]);
     }
-  }
-
-  /// Extracts the element type from an Iterable type.
-  /// For `List<int>`, returns `int`. For `Set<String>`, returns `String`.
-  DartType? _getIterableElementType(InterfaceType type) {
-    if (type.typeArguments.isNotEmpty) {
-      return type.typeArguments.first;
-    }
-
-    for (final supertype in type.element.allSupertypes) {
-      if (supertype.element.name == 'Iterable' && supertype.typeArguments.isNotEmpty) {
-        return supertype.typeArguments.first;
-      }
-    }
-
-    return null;
   }
 
   /// Checks if [source] is assignable to [target].

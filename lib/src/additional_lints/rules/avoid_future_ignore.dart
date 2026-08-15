@@ -1,14 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when a Future is explicitly ignored with `.ignore()`.
-class AvoidFutureIgnore extends AnalysisRule {
+class AvoidFutureIgnore extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_future_ignore',
     'Avoid ignoring a Future with ignore().',
@@ -17,21 +15,18 @@ class AvoidFutureIgnore extends AnalysisRule {
   );
 
   AvoidFutureIgnore()
-    : super(name: 'avoid_future_ignore', description: 'Warns when Future.ignore() is used.');
+    : super(
+        code: code,
+        name: 'avoid_future_ignore',
+        description: 'Warns when Future.ignore() is used.',
+      );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodInvocation(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
   const _Visitor(this.rule);
-
-  static const _futureChecker = TypeChecker.fromUrl('dart:async#Future');
 
   final AvoidFutureIgnore rule;
 
@@ -39,8 +34,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name != 'ignore') return;
     if (node.argumentList.arguments.isNotEmpty) return;
-    final targetType = node.target?.staticType;
-    if (targetType == null || !_futureChecker.isAssignableFromType(targetType)) return;
+    if (!isFutureLikeType(node.target?.staticType)) return;
     rule.reportAtNode(node.methodName);
   }
 }

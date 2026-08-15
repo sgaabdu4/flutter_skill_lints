@@ -1,9 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
-// ignore: implementation_imports
-import 'package:analyzer_testing/src/analysis_rule/pub_package_resolution.dart'
-    show ExpectedDiagnostic;
 import 'package:flutter_skill_lints/src/rules/flutter_skill_project_config.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -26,7 +23,7 @@ environment:
     super.setUp();
   }
 
-  ExpectedDiagnostic projectLint(String name) => lint(0, 1, name: name);
+  T projectLint<T>(String name) => lint(0, 1, name: name) as T;
 
   Future<void> test_reportsProjectConfigGaps() async {
     newFile('$testPackageRootPath/analysis_options.yaml', r'''
@@ -53,7 +50,6 @@ linter:
       projectLint('cfg_strict_analysis'),
       projectLint('cfg_required_lints'),
       projectLint('cfg_generated_exclude'),
-      projectLint('cfg_freezed_annotation_ignore'),
     ]);
   }
 
@@ -183,7 +179,7 @@ include: package:flutter_lints/flutter.yaml
 plugins:
   # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
   # Re-check pub.dev before release when Riverpod or analyzer versions move.
-  riverpod_lint: 3.1.4
+  riverpod_lint: 3.1.8
   flutter_skill_lints:
     "path": ../flutter_skill_lints
 
@@ -200,7 +196,6 @@ analyzer:
   errors:
     missing_required_param: error
     missing_return: error
-    invalid_annotation_target: ignore
 
 linter:
   rules:
@@ -257,7 +252,6 @@ analyzer:
   errors:
     missing_required_param: error
     missing_return: error
-    invalid_annotation_target: ignore
 
 linter:
   rules:
@@ -299,7 +293,7 @@ include: package:flutter_lints/flutter.yaml
 plugins:
   # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
   # Re-check pub.dev before release when Riverpod or analyzer versions move.
-  riverpod_lint: 3.1.4
+  riverpod_lint: 3.1.8
   flutter_skill_lints:
 
 analyzer:
@@ -313,7 +307,6 @@ analyzer:
     strict-inference: true
     strict-raw-types: true
   errors:
-    invalid_annotation_target: ignore
 
 linter:
   rules:
@@ -356,7 +349,6 @@ analyzer:
   errors:
     missing_required_param: error
     missing_return: error
-    invalid_annotation_target: ignore
 
 linter:
   rules:
@@ -395,7 +387,7 @@ linter:
     newFile('$testPackageRootPath/analysis_options.yaml', r'''
 include: package:flutter_lints/flutter.yaml
 
-plugins: {flutter_skill_lints: {path: ../flutter_skill_lints}, riverpod_lint: 3.1.4}
+plugins: {flutter_skill_lints: {path: ../flutter_skill_lints}, riverpod_lint: 3.1.8}
 
 analyzer:
   exclude:
@@ -410,7 +402,6 @@ analyzer:
   errors:
     missing_required_param: error
     missing_return: error
-    invalid_annotation_target: ignore
 
 linter:
   rules:
@@ -452,7 +443,7 @@ include: package:flutter_lints/flutter.yaml
 plugins:
   # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
   # Re-check pub.dev before release when Riverpod or analyzer versions move.
-  riverpod_lint: 3.1.4
+  riverpod_lint: 3.1.8
   flutter_skill_lints:
   "many_lints": ^0.4.0
 
@@ -469,7 +460,6 @@ analyzer:
   errors:
     missing_required_param: error
     missing_return: error
-    invalid_annotation_target: ignore
 
 linter:
   rules:
@@ -530,7 +520,7 @@ include: package:flutter_lints/flutter.yaml
 plugins:
   # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
   # Re-check pub.dev before release when Riverpod or analyzer versions move.
-  riverpod_lint: 3.1.4
+  riverpod_lint: 3.1.8
   flutter_skill_lints:
 
 analyzer:
@@ -546,7 +536,6 @@ analyzer:
   errors:
     missing_required_param: error
     missing_return: error
-    invalid_annotation_target: ignore
 
 linter:
   rules:

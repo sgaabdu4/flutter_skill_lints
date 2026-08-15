@@ -70,19 +70,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 }
 
 bool _isExcludedContext(RuleContext context) {
-  if (context.isInTestDirectory || isGeneratedRuleContext(context)) return true;
-
-  final path = context.definingUnit.file.path.replaceAll('\\', '/');
-  return !path.contains('/lib/') ||
-      path.endsWith('_test.dart') ||
-      path.endsWith('_constants.dart') ||
-      path.endsWith('_keys.dart') ||
-      path.endsWith('_schema.dart') ||
-      path.endsWith('_strings.dart') ||
-      path.endsWith('_theme.dart') ||
-      path.endsWith('_tokens.dart') ||
+  final path = productionLibPath(context);
+  if (path == null) return true;
+  return isCommonConstantOwnerPath(path) ||
       _isDedicatedConstantOwnerPath(path) ||
-      path.contains('/constants/') ||
       path.contains('/l10n/');
 }
 

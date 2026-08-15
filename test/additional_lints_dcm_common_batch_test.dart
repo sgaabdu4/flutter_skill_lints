@@ -39,6 +39,13 @@ const message = 'hello ' 'world';
 const message = 'hello world';
 ''');
   }
+
+  Future<void> test_generatedLocalizationAdjacentStrings_noLint() async {
+    final filePath = '$testPackageLibPath/l10n/app_localizations.dart';
+    newFile(filePath, "const message = 'hello ' 'world';");
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
 }
 
 @reflectiveTest

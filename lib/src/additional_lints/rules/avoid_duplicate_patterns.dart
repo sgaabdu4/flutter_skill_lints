@@ -4,6 +4,7 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Reports duplicate literal or identifier alternatives in logical-or patterns.
 final class AvoidDuplicatePatterns extends AnalysisRule {
@@ -75,37 +76,13 @@ String? _patternKey(DartPattern pattern) {
   final unwrapped = _unwrapPattern(pattern);
   if (unwrapped is! ConstantPattern) return null;
 
-  return _constantExpressionKey(unwrapped.expression);
-}
-
-String? _constantExpressionKey(Expression expression) {
-  final unwrapped = _unwrapExpression(expression);
-
-  return switch (unwrapped) {
-    BooleanLiteral(:final value) => 'bool:$value',
-    DoubleLiteral(:final value) => 'double:$value',
-    IntegerLiteral(:final value?) => 'int:$value',
-    NullLiteral() => 'null',
-    PrefixedIdentifier() => 'identifier:${unwrapped.toSource()}',
-    PropertyAccess() => 'identifier:${unwrapped.toSource()}',
-    SimpleIdentifier(:final name) => 'identifier:$name',
-    SimpleStringLiteral(:final value) => 'string:$value',
-    _ => null,
-  };
+  return simpleLiteralKey(unwrapped.expression, includeIdentifiers: true);
 }
 
 DartPattern _unwrapPattern(DartPattern pattern) {
   var current = pattern;
   while (current is ParenthesizedPattern) {
     current = current.pattern;
-  }
-  return current;
-}
-
-Expression _unwrapExpression(Expression expression) {
-  var current = expression;
-  while (current is ParenthesizedExpression) {
-    current = current.expression;
   }
   return current;
 }

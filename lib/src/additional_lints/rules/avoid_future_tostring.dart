@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when `toString()` is called on a Future.
 class AvoidFutureToString extends AnalysisRule {
@@ -32,23 +32,19 @@ class AvoidFutureToString extends AnalysisRule {
 final class _Visitor extends SimpleAstVisitor<void> {
   const _Visitor(this.rule);
 
-  static const _futureChecker = TypeChecker.fromUrl('dart:async#Future');
-
   final AvoidFutureToString rule;
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name != 'toString') return;
     if (node.argumentList.arguments.isNotEmpty) return;
-    final targetType = node.target?.staticType;
-    if (targetType == null || !_futureChecker.isAssignableFromType(targetType)) return;
+    if (!isFutureLikeType(node.target?.staticType)) return;
     rule.reportAtNode(node.methodName);
   }
 
   @override
   void visitInterpolationExpression(InterpolationExpression node) {
-    final expressionType = node.expression.staticType;
-    if (expressionType == null || !_futureChecker.isAssignableFromType(expressionType)) return;
+    if (!isFutureLikeType(node.expression.staticType)) return;
 
     rule.reportAtNode(node.expression);
   }

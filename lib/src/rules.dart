@@ -2,6 +2,7 @@ import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/architecture_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/architecture_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_dynamic_except_json_maps.dart';
+import 'package:flutter_skill_lints/src/rules/avoid_flutter_host_driver_imports.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_legacy_riverpod_apis.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_null_bang.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_private_widget_classes.dart';
@@ -44,6 +45,7 @@ final List<AbstractAnalysisRule> flutterSkillRules = [
   UseContextMountedAfterAwait(),
   AvoidLegacyRiverpodApis(),
   AvoidDynamicExceptJsonMaps(),
+  AvoidFlutterHostDriverImports(),
   AvoidNullBang(),
   AvoidPrivateWidgetClasses(),
   AvoidWidgetBuildHelpers(),

@@ -1,12 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/test_callback_utils.dart';
 
 /// Warns when a test `group` callback contains no test calls.
-final class AvoidEmptyTestGroups extends AnalysisRule {
+final class AvoidEmptyTestGroups extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_empty_test_groups',
     'Avoid test groups without test cases.',
@@ -15,17 +14,13 @@ final class AvoidEmptyTestGroups extends AnalysisRule {
 
   AvoidEmptyTestGroups()
     : super(
+        code: code,
         name: 'avoid_empty_test_groups',
         description: 'Warns when a test group contains no test calls.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodInvocation(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -37,7 +32,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name != 'group') return;
 
-    final callback = _callbackArgument(node);
+    final callback = testCallbackArgument(node);
     if (callback == null) return;
 
     final finder = _TestCallFinder();
@@ -45,16 +40,6 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (!finder.hasTestCall) {
       rule.reportAtNode(node.methodName);
     }
-  }
-
-  static FunctionExpression? _callbackArgument(MethodInvocation node) {
-    final positionalArgs = node.argumentList.arguments.where(
-      (argument) => argument is! NamedExpression,
-    );
-    if (positionalArgs.length < 2) return null;
-
-    final callback = positionalArgs.elementAt(1);
-    return callback is FunctionExpression ? callback : null;
   }
 }
 

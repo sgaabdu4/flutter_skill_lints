@@ -1,14 +1,13 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when parameters or global collections are mutated through common APIs.
-final class AvoidCollectionMutatingMethods extends AnalysisRule {
+final class AvoidCollectionMutatingMethods extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_collection_mutating_methods',
     'Avoid mutating parameter or global collections.',
@@ -19,15 +18,11 @@ final class AvoidCollectionMutatingMethods extends AnalysisRule {
     : super(
         name: 'avoid_collection_mutating_methods',
         description: 'Warns when mutating collection methods are called on parameters or globals.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addCompilationUnit(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends RecursiveAstVisitor<void> {
@@ -77,28 +72,25 @@ final class _Visitor extends RecursiveAstVisitor<void> {
 
   void _collectGlobals(CompilationUnit unit) {
     for (final declaration in unit.declarations) {
-      switch (declaration) {
-        case TopLevelVariableDeclaration(:final variables):
-          for (final variable in variables.variables) {
-            _topLevelVariables.add(variable.name.lexeme);
-          }
-        case ClassDeclaration(:final namePart, :final body):
-          final fields = <String>{};
-          for (final member in body.members) {
-            if (member is! FieldDeclaration || !member.isStatic) continue;
-            fields.addAll(member.fields.variables.map((variable) => variable.name.lexeme));
-          }
-          if (fields.isNotEmpty) {
-            _staticFieldsByClass[namePart.typeName.lexeme] = fields;
-          }
-        default:
-          break;
+      if (declaration case TopLevelVariableDeclaration(:final variables)) {
+        _topLevelVariables.addAll(variables.variables.map((variable) => variable.name.lexeme));
+      } else if (declaration case ClassDeclaration(:final namePart, :final body)) {
+        _collectStaticFields(namePart.typeName.lexeme, body);
       }
     }
   }
 
+  void _collectStaticFields(String className, ClassBody body) {
+    final fields = <String>{};
+    for (final member in body.members) {
+      if (member is! FieldDeclaration || !member.isStatic) continue;
+      fields.addAll(member.fields.variables.map((variable) => variable.name.lexeme));
+    }
+    if (fields.isNotEmpty) _staticFieldsByClass[className] = fields;
+  }
+
   void _withParameters(FormalParameterList? parameters, void Function() visit) {
-    _parameterStack.add(_parameterNames(parameters));
+    _parameterStack.add(formalParameterNames(parameters));
     visit();
     _parameterStack.removeLast();
   }
@@ -167,13 +159,4 @@ DartType? _receiverType(MethodInvocation node) => _receiver(node)?.staticType;
 
 bool _isCollectionType(DartType? type) {
   return type != null && _collectionChecker.isAssignableFromType(type);
-}
-
-Set<String> _parameterNames(FormalParameterList? parameters) {
-  if (parameters == null) return const {};
-
-  return {
-    for (final parameter in parameters.parameters)
-      if (parameter.name case final name?) name.lexeme,
-  };
 }

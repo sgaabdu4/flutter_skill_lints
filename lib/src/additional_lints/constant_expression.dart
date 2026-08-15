@@ -12,12 +12,20 @@ const comparisonOperators = {
   TokenType.GT_EQ,
 };
 
+Expression unparenthesizedExpression(Expression expression) {
+  while (expression is ParenthesizedExpression) {
+    expression = expression.expression;
+  }
+  return expression;
+}
+
+bool isLogicalOperator(TokenType type) {
+  return type == TokenType.AMPERSAND_AMPERSAND || type == TokenType.BAR_BAR;
+}
+
 /// Returns `true` if [expression] is a compile-time constant.
 bool isConstantExpression(Expression expression) {
-  var expr = expression;
-  while (expr is ParenthesizedExpression) {
-    expr = expr.expression;
-  }
+  final expr = unparenthesizedExpression(expression);
 
   return switch (expr) {
     // Literals: 1, 'hello', true, false, null

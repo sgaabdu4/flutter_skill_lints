@@ -1,19 +1,18 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../async_guard_utils.dart';
-import '../riverpod_type_checkers.dart';
+import 'package:flutter_skill_lints/src/additional_lints/async_guard_utils.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/riverpod_type_checkers.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart' hide containsAwait;
 
 /// Warns when `ref` or `state` is accessed after an `await` point inside a
 /// Riverpod Notifier method without checking `ref.mounted`.
 ///
 /// If the notifier is disposed before the async operation completes, accessing
 /// `ref` or `state` will throw an `UnmountedRefException`.
-class UseRefAndStateSynchronously extends AnalysisRule {
+class UseRefAndStateSynchronously extends MethodDeclarationRule {
   static const LintCode code = LintCode(
     'use_ref_and_state_synchronously',
     "Don't use 'ref' or 'state' after an async gap without checking "
@@ -29,16 +28,11 @@ class UseRefAndStateSynchronously extends AnalysisRule {
         description:
             'Warns when ref or state is accessed after an await point in '
             'a Riverpod Notifier without a mounted guard.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addMethodDeclaration(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -69,35 +63,11 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Checks a list of statements for ref/state usage after an await point.
   void _checkStatements(NodeList<Statement> statements) {
-    var seenAwait = false;
-
-    for (final statement in statements) {
-      // Check if this statement contains an await
-      if (!seenAwait) {
-        seenAwait = containsAwait(statement);
-        continue;
-      }
-
-      // After an await: check for mounted guard that resets context
-      if (isMountedGuardWithReturn(statement)) {
-        // A mounted guard resets the "seen await" state —
-        // code after this guard is safe until the next await
-        seenAwait = false;
-        continue;
-      }
-
-      // Check if this statement contains another await (resets for next pass)
-      if (containsAwait(statement)) {
-        // Report any ref/state usage in this statement before the await
-        final finder = _RefStateFinder(rule);
-        statement.accept(finder);
-        continue;
-      }
-
-      // Report ref/state usage after an await without a mounted guard
-      final finder = _RefStateFinder(rule);
-      statement.accept(finder);
-    }
+    scanStatementsAfterAwait(
+      statements,
+      (statement) => statement.accept(_RefStateFinder(rule)),
+      inspectStatementsContainingAwait: true,
+    );
   }
 }
 
@@ -151,10 +121,7 @@ class _RefStateFinder extends RecursiveAstVisitor<void> {
 
     // Skip when part of a PrefixedIdentifier, PropertyAccess, or
     // MethodInvocation (those visitors handle reporting instead)
-    final parent = node.parent;
-    if (parent is PrefixedIdentifier && parent.prefix == node) return;
-    if (parent is PropertyAccess && parent.target == node) return;
-    if (parent is MethodInvocation && parent.target == node) return;
+    if (isExpressionTargetIdentifier(node)) return;
 
     rule.reportAtNode(node);
   }

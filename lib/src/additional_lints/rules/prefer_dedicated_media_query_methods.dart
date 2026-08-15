@@ -11,7 +11,6 @@ final class PreferDedicatedMediaQueryMethods extends AnalysisRule {
     'prefer_dedicated_media_query_methods',
     'Prefer the dedicated MediaQuery method for `{0}`.',
     correctionMessage: 'Use `MediaQuery.{0}Of(context)` instead.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   PreferDedicatedMediaQueryMethods()

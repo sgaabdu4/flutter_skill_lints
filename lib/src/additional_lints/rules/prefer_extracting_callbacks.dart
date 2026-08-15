@@ -1,35 +1,26 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import '../ast_node_analysis.dart';
-
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when a widget callback argument contains non-trivial inline logic.
-final class PreferExtractingCallbacks extends AnalysisRule {
+final class PreferExtractingCallbacks extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'prefer_extracting_callbacks',
     'Extract non-trivial widget callbacks.',
     correctionMessage: 'Move the callback body to a named method or local variable.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   PreferExtractingCallbacks()
     : super(
         name: 'prefer_extracting_callbacks',
         description: 'Warns when widget callback arguments contain non-trivial inline logic.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addInstanceCreationExpression(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -44,10 +35,10 @@ final class _Visitor extends SimpleAstVisitor<void> {
     final type = node.staticType;
     if (type == null || !_widgetChecker.isAssignableFromType(type)) return;
 
-    for (final argument in node.argumentList.arguments.whereType<NamedExpression>()) {
+    for (final argument in node.argumentList.arguments.whereType<NamedArgument>()) {
       if (!_isCallbackName(argument.name.lexeme)) continue;
 
-      final expression = argument.expression;
+      final expression = argument.argumentExpression;
       if (expression is FunctionExpression && _isNonTrivial(expression.body)) {
         rule.reportAtNode(expression.parameters);
       }

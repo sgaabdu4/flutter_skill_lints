@@ -111,11 +111,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     final actualExpr = args[0];
     final matcherExpr = args[1];
 
-    final actualType = actualExpr.staticType;
+    final actualType = actualExpr.argumentExpression.staticType;
     if (actualType == null || actualType is DynamicType) return;
 
     // Determine matcher name and category
-    final (matcherName, category) = _resolveMatcherCategory(matcherExpr);
+    final (matcherName, category) = _resolveMatcherCategory(matcherExpr.argumentExpression);
     if (matcherName == null || category == null) return;
 
     if (_isMisused(actualType, category)) {

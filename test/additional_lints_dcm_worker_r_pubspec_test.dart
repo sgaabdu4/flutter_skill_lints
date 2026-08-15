@@ -1,9 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
-// ignore: implementation_imports
-import 'package:analyzer_testing/src/analysis_rule/pub_package_resolution.dart'
-    show ExpectedDiagnostic;
 import 'package:flutter_skill_lints/src/rules/flutter_skill_project_config.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -23,7 +20,7 @@ final class PubspecProjectConfigLintTest extends AnalysisRuleTest {
     _writeCanonicalAnalysisOptions();
   }
 
-  ExpectedDiagnostic projectLint(String name) => lint(0, 1, name: name);
+  T projectLint<T>(String name) => lint(0, 1, name: name) as T;
 
   Future<void> test_reportsAnyDependencyVersions() async {
     newFile(
@@ -39,22 +36,6 @@ dev_dependencies:
     );
 
     await assertDiagnostics('void main() {}', [projectLint('avoid_any_version')]);
-  }
-
-  Future<void> test_reportsDependencyOverrides() async {
-    newFile(
-      '$testPackageRootPath/pubspec.yaml',
-      _pubspec(
-        dependencies: '''
-dependencies:
-  path: ^1.9.0
-dependency_overrides:
-  path: ^1.8.0
-''',
-      ),
-    );
-
-    await assertDiagnostics('void main() {}', [projectLint('avoid_dependency_overrides')]);
   }
 
   Future<void> test_reportsNonNonePublishTarget() async {
@@ -92,7 +73,7 @@ $dependencies
 include: package:flutter_lints/flutter.yaml
 
 plugins:
-  riverpod_lint: 3.1.4
+  riverpod_lint: 3.1.8
   flutter_skill_lints:
 
 analyzer:
@@ -108,7 +89,6 @@ analyzer:
   errors:
     missing_required_param: error
     missing_return: error
-    invalid_annotation_target: ignore
 
 linter:
   rules:

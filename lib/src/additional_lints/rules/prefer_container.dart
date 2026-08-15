@@ -1,14 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../ast_node_analysis.dart';
-import '../flutter_widget_helpers.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/widget_sequence.dart';
 
 /// Warns when a sequence of nested widgets could be replaced with a single
 /// `Container` widget.
@@ -17,7 +14,7 @@ import '../type_checker.dart';
 /// `ConstrainedBox`, `Transform`, `ClipPath`, `ColoredBox`, and `SizedBox`
 /// widgets. When 3+ of these widgets are nested, they can be collapsed into
 /// a single `Container`.
-class PreferContainer extends AnalysisRule {
+class PreferContainer extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_container',
     'This sequence of {0} nested widgets can be replaced with a single '
@@ -29,6 +26,7 @@ class PreferContainer extends AnalysisRule {
 
   PreferContainer()
     : super(
+        code: code,
         name: 'prefer_container',
         description:
             'Prefer Container over sequences of nested widgets that '
@@ -36,14 +34,7 @@ class PreferContainer extends AnalysisRule {
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 /// Maps a widget type name to the Container parameter it corresponds to.
@@ -146,7 +137,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (_isChildOfContainerCompatibleWidget(node)) return;
 
     // Walk the child chain to find the sequence length
-    final sequence = _collectSequence(node);
+    final sequence = collectWidgetSequence(node, _getWidgetInfo);
     if (sequence.length < _minSequence) return;
 
     // Check for conflicting parameters (e.g., two Padding widgets would
@@ -160,7 +151,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   /// parent widget.
   static bool _isChildOfContainerCompatibleWidget(Expression node) {
     final parent = node.parent;
-    if (parent is! NamedExpression) return false;
+    if (parent is! NamedArgument) return false;
     if (parent.name.lexeme != 'child') return false;
 
     final grandParent = parent.parent;
@@ -178,52 +169,19 @@ class _Visitor extends SimpleAstVisitor<void> {
     return false;
   }
 
-  /// Collects the sequence of container-compatible widgets by walking the
-  /// child chain.
-  static List<WidgetInfo> _collectSequence(Expression node) {
-    final sequence = <WidgetInfo>[];
-    Expression? current = node;
-
-    while (current != null) {
-      final info = _getWidgetInfo(current);
-      if (info == null) break;
-      sequence.add(info);
-      current = _getChildExpression(info.argumentList);
-    }
-
-    return sequence;
-  }
-
   /// Extracts widget info from an expression if it's a container-compatible
   /// widget.
   static WidgetInfo? _getWidgetInfo(Expression expr) {
-    if (expr is InstanceCreationExpression) {
-      final type = expr.staticType;
-      if (type == null || !_containerCompatibleCheckers.isExactlyType(type)) {
-        return null;
-      }
-      final name = expr.constructorName.type.name.lexeme;
-      if (!_containerCompatibleWidgets.contains(name)) return null;
-      return (name: name, argumentList: expr.argumentList, node: expr as Expression);
-    }
-    if (expr is MethodInvocation) {
-      final type = expr.staticType;
-      if (type == null || !_containerCompatibleCheckers.isExactlyType(type)) {
-        return null;
-      }
-      final name = expr.methodName.name;
-      if (!_containerCompatibleWidgets.contains(name)) return null;
-      return (name: name, argumentList: expr.argumentList, node: expr as Expression);
-    }
-    return null;
-  }
-
-  /// Gets the child expression from a widget's argument list.
-  static Expression? _getChildExpression(ArgumentList argumentList) {
-    final childArg = argumentList.arguments.whereType<NamedExpression>().firstWhereOrNull(
-      (e) => e.name.lexeme == 'child',
-    );
-    return childArg?.expression;
+    final type = expr.staticType;
+    if (type == null || !_containerCompatibleCheckers.isExactlyType(type)) return null;
+    final name = allowedWidgetName(expr, _containerCompatibleWidgets);
+    final argumentList = switch (expr) {
+      InstanceCreationExpression(:final argumentList) => argumentList,
+      MethodInvocation(:final argumentList) => argumentList,
+      _ => null,
+    };
+    if (name == null || argumentList == null) return null;
+    return (name: name, argumentList: argumentList, node: expr);
   }
 
   /// Checks whether the sequence has conflicting parameters. Two widgets that
@@ -231,17 +189,15 @@ class _Visitor extends SimpleAstVisitor<void> {
   static bool _hasConflictingParams(List<WidgetInfo> sequence) {
     final usedParams = <String>{};
     for (final widget in sequence) {
-      final param = _containerParamForWidget(widget.name);
-      if (param == null) continue;
-      // SizedBox maps to both width and height, so use a special key
-      if (widget.name == 'SizedBox') {
-        if (!usedParams.add('sizedBox')) return true;
-      } else if (widget.name == 'FractionallySizedBox') {
-        if (!usedParams.add('fractionallySizedBox')) return true;
-      } else {
-        if (!usedParams.add(param)) return true;
-      }
+      final key = _containerConflictKey(widget.name);
+      if (key != null && !usedParams.add(key)) return true;
     }
     return false;
+  }
+
+  static String? _containerConflictKey(String widgetName) {
+    if (widgetName == 'SizedBox') return 'sizedBox';
+    if (widgetName == 'FractionallySizedBox') return 'fractionallySizedBox';
+    return _containerParamForWidget(widgetName);
   }
 }

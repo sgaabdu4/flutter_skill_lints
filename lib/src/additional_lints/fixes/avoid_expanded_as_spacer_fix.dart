@@ -5,7 +5,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-import '../ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
 
 /// Fix that replaces `Expanded(child: SizedBox())` with `Spacer()`.
 class AvoidExpandedAsSpacerFix extends ResolvedCorrectionProducer {
@@ -27,7 +27,7 @@ class AvoidExpandedAsSpacerFix extends ResolvedCorrectionProducer {
   Future<void> compute(ChangeBuilder builder) async {
     final targetNode = node;
 
-    final NodeList<Expression> arguments;
+    final NodeList<Argument> arguments;
     final String constPrefix;
 
     if (targetNode is InstanceCreationExpression) {
@@ -41,12 +41,12 @@ class AvoidExpandedAsSpacerFix extends ResolvedCorrectionProducer {
     }
 
     // Check for flex argument
-    final flexArg = arguments.whereType<NamedExpression>().firstWhereOrNull(
+    final flexArg = arguments.whereType<NamedArgument>().firstWhereOrNull(
       (e) => e.name.lexeme == 'flex',
     );
 
     // Check for key argument
-    final keyArg = arguments.whereType<NamedExpression>().firstWhereOrNull(
+    final keyArg = arguments.whereType<NamedArgument>().firstWhereOrNull(
       (e) => e.name.lexeme == 'key',
     );
 

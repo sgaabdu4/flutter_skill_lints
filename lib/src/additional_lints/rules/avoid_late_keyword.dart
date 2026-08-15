@@ -24,12 +24,12 @@ class AvoidLateKeyword extends AnalysisRule {
 
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addVariableDeclarationList(this, _Visitor(this, _isTestFile(context)));
+    registry.addVariableDeclarationList(this, _Visitor(this, isTestFile: _isTestFile(context)));
   }
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
-  const _Visitor(this.rule, this.isTestFile);
+  const _Visitor(this.rule, {required this.isTestFile});
 
   final AvoidLateKeyword rule;
   final bool isTestFile;

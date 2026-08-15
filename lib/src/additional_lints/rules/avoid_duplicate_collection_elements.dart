@@ -4,6 +4,7 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/duplicate_literal_key.dart';
 
 /// Warns when constant collection literals repeat an element or map key.
 class AvoidDuplicateCollectionElements extends AnalysisRule {
@@ -62,7 +63,7 @@ void _reportDuplicateExpressions(Iterable<CollectionElement> elements, AnalysisR
   for (final element in elements) {
     if (element is! Expression) continue;
 
-    final key = _constantKey(element);
+    final key = duplicateLiteralKey(element);
     if (key == null) continue;
 
     if (!seen.add(key)) {
@@ -75,32 +76,11 @@ void _reportDuplicateMapKeys(Iterable<MapLiteralEntry> entries, AnalysisRule rul
   final seen = <String>{};
 
   for (final entry in entries) {
-    final key = _constantKey(entry.key);
+    final key = duplicateLiteralKey(entry.key);
     if (key == null) continue;
 
     if (!seen.add(key)) {
       rule.reportAtNode(entry.key);
     }
   }
-}
-
-String? _constantKey(Expression expression) {
-  final unwrapped = _unwrap(expression);
-
-  return switch (unwrapped) {
-    BooleanLiteral(:final value) => 'bool:$value',
-    DoubleLiteral(:final value) => 'double:$value',
-    IntegerLiteral(:final value?) => 'int:$value',
-    NullLiteral() => 'null',
-    SimpleStringLiteral(:final value) => 'string:$value',
-    _ => null,
-  };
-}
-
-Expression _unwrap(Expression expression) {
-  var current = expression;
-  while (current is ParenthesizedExpression) {
-    current = current.expression;
-  }
-  return current;
 }

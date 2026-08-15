@@ -37,34 +37,34 @@ class UseExistingVariableFix extends ResolvedCorrectionProducer {
   /// Walks up to the enclosing block and finds the final/const variable
   /// whose initializer matches the target expression's source.
   static String? _findMatchingVariable(Expression expression) {
+    final block = _enclosingBlock(expression.parent);
+    if (block == null) return null;
     final expressionSource = expression.toSource();
+    for (final statement in block.statements) {
+      if (statement.offset >= expression.offset) break;
+      final name = _matchingVariableName(statement, expressionSource);
+      if (name != null) return name;
+    }
+    return null;
+  }
 
-    // Walk up to find the enclosing Block
-    AstNode? current = expression.parent;
+  static Block? _enclosingBlock(AstNode? node) {
+    var current = node;
     while (current != null && current is! Block) {
       current = current.parent;
     }
-    if (current is! Block) return null;
+    return current as Block?;
+  }
 
-    final targetOffset = expression.offset;
-
-    for (final statement in current.statements) {
-      // Only consider statements before the target expression
-      if (statement.offset >= targetOffset) break;
-
-      if (statement is! VariableDeclarationStatement) continue;
-      final isFinalOrConst = statement.variables.isFinal || statement.variables.isConst;
-      if (!isFinalOrConst) continue;
-
-      for (final variable in statement.variables.variables) {
-        final initializer = variable.initializer;
-        if (initializer == null) continue;
-        if (initializer.toSource() == expressionSource) {
-          return variable.name.lexeme;
-        }
+  static String? _matchingVariableName(AstNode statement, String expressionSource) {
+    if (statement is! VariableDeclarationStatement) return null;
+    final variables = statement.variables;
+    if (!variables.isFinal && !variables.isConst) return null;
+    for (final variable in variables.variables) {
+      if (variable.initializer?.toSource() == expressionSource) {
+        return variable.name.lexeme;
       }
     }
-
     return null;
   }
 }

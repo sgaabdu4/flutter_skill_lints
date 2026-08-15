@@ -166,7 +166,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
           final column = _topLevelFunctionColumn(line);
           if (column >= 0) reporter.report(context, i, column);
         }
-        depth += _braceDelta(line);
+        depth += braceDelta(line);
         if (depth < 0) depth = 0;
       }
     },
@@ -285,14 +285,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
         if (!_isWidgetSurfaceClass(context, classSpan)) continue;
         if (!_classDispatchesNotifierMutation(context, classSpan)) continue;
 
-        for (final lineIndex in _directClassMemberLines(context, classSpan)) {
-          final line = context.source.masked[lineIndex];
-          final match = _widgetLocalMutationFlagField.firstMatch(line);
-          if (match == null) continue;
-          final fieldName = match.group(1);
-          final column = fieldName == null ? match.start : line.indexOf(fieldName, match.start);
-          reporter.report(context, lineIndex, column);
-        }
+        reportDirectClassMemberMatches(reporter, context, classSpan, _widgetLocalMutationFlagField);
       }
     },
   ),
@@ -314,33 +307,8 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
         'Flags widget helper methods/namespaces that return collections and perform filter/map/sort/lookup work.',
     scan: (reporter, context) {
       if (!context.isUiFile || context.isTestFile) return;
-
-      var depth = 0;
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (depth == 0 && _isTopLevelDerivedCollection(context, i)) {
-          reporter.report(context, i, _firstNonWhitespaceColumn(line));
-        }
-        depth += _braceDelta(line);
-        if (depth < 0) depth = 0;
-      }
-
-      for (final classSpan in context.classes) {
-        final isWidgetClass = _isWidgetSurfaceClass(context, classSpan);
-        final isDataClass = _isWidgetDataHelperClass(classSpan);
-        if (!isWidgetClass && !isDataClass) continue;
-
-        for (final method in context.methods.where((method) => classSpan.contains(method.start))) {
-          if (!_isCollectionHelper(context, method, requirePrivate: isWidgetClass)) continue;
-
-          for (var i = method.start + 1; i <= method.end && i < context.source.length; i++) {
-            final match = _collectionWork.firstMatch(context.source.masked[i]);
-            if (match == null) continue;
-            reporter.report(context, i, match.start);
-            break;
-          }
-        }
-      }
+      _reportTopLevelDerivedCollections(reporter, context);
+      _reportWidgetDerivedCollectionHelpers(reporter, context);
     },
   ),
 
@@ -420,58 +388,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     ),
     description:
         'Flags raw current DateTime calls and inline current-date math so timestamp persistence and local calendar bucketing stay behind DateTimeX helpers.',
-    scan: (reporter, context) {
-      if (context.isTestFile) return;
-      final isDateTimeExtensionsFile = context.path.endsWith(
-        '/core/extensions/date_time_extensions.dart',
-      );
-
-      final maskedSource = context.source.masked.join('\n');
-      final codeSource = context.source.code.join('\n');
-      final reportedOffsets = <int>{};
-
-      void reportOffset(int offset) {
-        if (!reportedOffsets.add(offset)) return;
-        final location = _lineColumnForOffset(context.source, offset);
-        reporter.report(context, location.lineIndex, location.column);
-      }
-
-      if (!isDateTimeExtensionsFile) {
-        for (final match in _currentTimeHelperDateMath.allMatches(maskedSource)) {
-          reportOffset(match.start);
-        }
-
-        for (final match in _currentTimeBoundary.allMatches(maskedSource)) {
-          reportOffset(match.start);
-        }
-
-        for (final match in _persistedLocalNowExpression.allMatches(maskedSource)) {
-          final localNowMatch = _localNowExpression.firstMatch(match.group(0)!);
-          if (localNowMatch == null) continue;
-          reportOffset(match.start + localNowMatch.start);
-        }
-      }
-
-      for (final match in _currentDateTimeCall.allMatches(maskedSource)) {
-        if (_isAllowedDateTimeExtensionCurrentBoundary(context, match.start)) {
-          continue;
-        }
-        reportOffset(match.start);
-      }
-
-      for (final match in _interpolatedCurrentDateTimeCall.allMatches(codeSource)) {
-        final callText = match.group(0);
-        if (callText == null) continue;
-        final callIndex = callText.indexOf('DateTime');
-        if (callIndex < 0) continue;
-        final callOffset = match.start + callIndex;
-        if (_isRawStringLiteralText(context, match.start)) continue;
-        if (_isAllowedDateTimeExtensionCurrentBoundary(context, callOffset)) {
-          continue;
-        }
-        reportOffset(callOffset);
-      }
-    },
+    scan: _scanDateTimeNowIntent,
   ),
 
   /// Avoid expensive work in build().
@@ -523,3 +440,145 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     },
   ),
 ];
+
+void _scanDateTimeNowIntent(ScannerRuleReporter reporter, SourceScannerContext context) {
+  if (context.isTestFile) return;
+  final maskedSource = context.source.masked.join('\n');
+  final codeSource = context.source.code.join('\n');
+  final reportedOffsets = <int>{};
+  final isExtensionFile = context.path.endsWith('/core/extensions/date_time_extensions.dart');
+
+  if (!isExtensionFile) {
+    _reportDateTimeMatches(
+      reporter,
+      context,
+      _currentTimeHelperDateMath.allMatches(maskedSource),
+      reportedOffsets,
+    );
+    _reportDateTimeMatches(
+      reporter,
+      context,
+      _currentTimeBoundary.allMatches(maskedSource),
+      reportedOffsets,
+    );
+    _reportPersistedLocalNowMatches(reporter, context, maskedSource, reportedOffsets);
+  }
+
+  _reportCurrentDateTimeMatches(reporter, context, maskedSource, reportedOffsets);
+  _reportInterpolatedCurrentDateTimeMatches(reporter, context, codeSource, reportedOffsets);
+}
+
+void _reportDateTimeMatches(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  Iterable<RegExpMatch> matches,
+  Set<int> reportedOffsets,
+) {
+  for (final match in matches) {
+    _reportDateTimeOffset(reporter, context, match.start, reportedOffsets);
+  }
+}
+
+void _reportPersistedLocalNowMatches(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  String source,
+  Set<int> reportedOffsets,
+) {
+  for (final match in _persistedLocalNowExpression.allMatches(source)) {
+    final localNowMatch = _localNowExpression.firstMatch(match.group(0)!);
+    if (localNowMatch == null) continue;
+    _reportDateTimeOffset(reporter, context, match.start + localNowMatch.start, reportedOffsets);
+  }
+}
+
+void _reportCurrentDateTimeMatches(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  String source,
+  Set<int> reportedOffsets,
+) {
+  for (final match in _currentDateTimeCall.allMatches(source)) {
+    if (_isAllowedDateTimeExtensionCurrentBoundary(context, match.start)) {
+      continue;
+    }
+    _reportDateTimeOffset(reporter, context, match.start, reportedOffsets);
+  }
+}
+
+void _reportInterpolatedCurrentDateTimeMatches(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  String source,
+  Set<int> reportedOffsets,
+) {
+  for (final match in _interpolatedCurrentDateTimeCall.allMatches(source)) {
+    final callText = match.group(0);
+    if (callText == null) continue;
+    final callIndex = callText.indexOf('DateTime');
+    if (callIndex < 0) continue;
+    final callOffset = match.start + callIndex;
+    if (_isRawStringLiteralText(context, match.start)) continue;
+    if (_isAllowedDateTimeExtensionCurrentBoundary(context, callOffset)) {
+      continue;
+    }
+    _reportDateTimeOffset(reporter, context, callOffset, reportedOffsets);
+  }
+}
+
+void _reportDateTimeOffset(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  int offset,
+  Set<int> reportedOffsets,
+) {
+  if (!reportedOffsets.add(offset)) return;
+  final location = _lineColumnForOffset(context.source, offset);
+  reporter.report(context, location.lineIndex, location.column);
+}
+
+void _reportTopLevelDerivedCollections(ScannerRuleReporter reporter, SourceScannerContext context) {
+  var depth = 0;
+  for (var lineIndex = 0; lineIndex < context.source.length; lineIndex++) {
+    final line = context.source.masked[lineIndex];
+    if (depth == 0 && _isTopLevelDerivedCollection(context, lineIndex)) {
+      reporter.report(context, lineIndex, _firstNonWhitespaceColumn(line));
+    }
+    depth = _nonNegativeBraceDepth(depth + braceDelta(line));
+  }
+}
+
+int _nonNegativeBraceDepth(int depth) => depth < 0 ? 0 : depth;
+
+void _reportWidgetDerivedCollectionHelpers(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+) {
+  for (final classSpan in context.classes) {
+    final isWidgetClass = _isWidgetSurfaceClass(context, classSpan);
+    final isDataClass = _isWidgetDataHelperClass(classSpan);
+    if (!isWidgetClass && !isDataClass) continue;
+    for (final method in context.methods.where((method) => classSpan.contains(method.start))) {
+      if (_isCollectionHelper(context, method, requirePrivate: isWidgetClass)) {
+        _reportCollectionWork(reporter, context, method);
+      }
+    }
+  }
+}
+
+void _reportCollectionWork(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+) {
+  for (
+    var lineIndex = method.start + 1;
+    lineIndex <= method.end && lineIndex < context.source.length;
+    lineIndex++
+  ) {
+    final match = _collectionWork.firstMatch(context.source.masked[lineIndex]);
+    if (match == null) continue;
+    reporter.report(context, lineIndex, match.start);
+    return;
+  }
+}

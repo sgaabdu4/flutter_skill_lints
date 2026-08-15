@@ -3,9 +3,6 @@
 import 'dart:math' as math;
 
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
-// ignore: implementation_imports
-import 'package:analyzer_testing/src/analysis_rule/pub_package_resolution.dart'
-    show ExpectedDiagnostic;
 import 'package:flutter_skill_lints/src/rules/persistence_crash_source_rules.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -32,10 +29,9 @@ abstract class _PersistenceCrashRuleTest extends AnalysisRuleTest {
 
   Future<void> assertRuleDiagnostic(String source, String needle, {String? path}) async {
     final analyzedSource = _withIgnorePrefix(source);
-    final expected = _lintFor(analyzedSource, needle, ruleName);
     final filePath = path ?? '$testPackageLibPath/source.dart';
     newFile(filePath, analyzedSource);
-    await assertDiagnosticsInFile(filePath, [expected]);
+    await assertDiagnosticsInFile(filePath, [_lintFor(analyzedSource, needle, ruleName)]);
   }
 
   Future<void> assertRuleNoDiagnostics(String source, {String? path}) async {
@@ -44,7 +40,7 @@ abstract class _PersistenceCrashRuleTest extends AnalysisRuleTest {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  ExpectedDiagnostic _lintFor(String source, String needle, String name) {
+  T _lintFor<T>(String source, String needle, String name) {
     final offset = source.indexOf(needle);
     if (offset < 0) {
       throw StateError('Needle not found: $needle');
@@ -52,7 +48,7 @@ abstract class _PersistenceCrashRuleTest extends AnalysisRuleTest {
 
     final lineEnd = source.indexOf('\n', offset);
     final end = lineEnd < 0 ? source.length : lineEnd;
-    return lint(offset, math.max(1, end - offset), name: name);
+    return lint(offset, math.max(1, end - offset), name: name) as T;
   }
 
   String _withIgnorePrefix(String source) => '''

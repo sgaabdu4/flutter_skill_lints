@@ -5,7 +5,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-import '../text_distance.dart';
+import 'package:flutter_skill_lints/src/additional_lints/text_distance.dart';
 
 /// Fix that appends a suffix to a class name.
 class AddSuffixFix extends ResolvedCorrectionProducer {
@@ -20,7 +20,7 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
     return AddSuffixFix._(
       context: context,
       suffix: 'Notifier',
-      fixKind: FixKind(
+      fixKind: const FixKind(
         'flutter_skill_lints.fix.addNotifierSuffix',
         DartFixKindPriority.standard,
         'Add Notifier suffix',

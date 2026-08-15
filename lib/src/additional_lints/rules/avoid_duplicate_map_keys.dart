@@ -4,6 +4,7 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/duplicate_literal_key.dart';
 
 /// Warns when a const map literal repeats a simple key literal.
 final class AvoidDuplicateMapKeys extends AnalysisRule {
@@ -39,7 +40,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
     final seen = <String>{};
     for (final entry in node.elements.whereType<MapLiteralEntry>()) {
-      final key = _literalKey(entry.key);
+      final key = duplicateLiteralKey(entry.key);
       if (key == null) continue;
 
       if (!seen.add(key)) {
@@ -47,25 +48,4 @@ final class _Visitor extends SimpleAstVisitor<void> {
       }
     }
   }
-}
-
-String? _literalKey(Expression expression) {
-  final unwrapped = _unwrap(expression);
-
-  return switch (unwrapped) {
-    BooleanLiteral(:final value) => 'bool:$value',
-    DoubleLiteral(:final value) => 'double:$value',
-    IntegerLiteral(:final value?) => 'int:$value',
-    NullLiteral() => 'null',
-    SimpleStringLiteral(:final value) => 'string:$value',
-    _ => null,
-  };
-}
-
-Expression _unwrap(Expression expression) {
-  var current = expression;
-  while (current is ParenthesizedExpression) {
-    current = current.expression;
-  }
-  return current;
 }

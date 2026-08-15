@@ -1,16 +1,14 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when commented-out code is found.
 ///
 /// Commented-out code is a sign of technical debt. Use version control
 /// instead of keeping old code in comments.
-class AvoidCommentedOutCode extends AnalysisRule {
+class AvoidCommentedOutCode extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_commented_out_code',
     'This comment looks like commented-out code.',
@@ -23,16 +21,11 @@ class AvoidCommentedOutCode extends AnalysisRule {
     : super(
         name: 'avoid_commented_out_code',
         description: 'Warns when commented-out code is found.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addCompilationUnit(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -77,32 +70,20 @@ class _Visitor extends SimpleAstVisitor<void> {
   List<Token> _collectAllComments(CompilationUnit node) {
     final comments = <Token>[];
     Token? token = node.beginToken;
-
     while (token != null && !token.isEof) {
-      Token? comment = token.precedingComments;
-      while (comment != null) {
-        if (_isSingleLineComment(comment)) {
-          comments.add(comment);
-          if (comments.length >= _maxComments) return comments;
-        }
-        comment = comment.next;
-      }
+      _addSingleLineComments(token.precedingComments, comments);
+      if (comments.length >= _maxComments) return comments;
       token = token.next;
     }
-
-    // Also check the EOF token's preceding comments.
-    if (token != null && token.isEof) {
-      Token? comment = token.precedingComments;
-      while (comment != null) {
-        if (_isSingleLineComment(comment)) {
-          comments.add(comment);
-          if (comments.length >= _maxComments) return comments;
-        }
-        comment = comment.next;
-      }
-    }
-
+    if (token != null) _addSingleLineComments(token.precedingComments, comments);
     return comments;
+  }
+
+  void _addSingleLineComments(Token? comment, List<Token> comments) {
+    while (comment != null && comments.length < _maxComments) {
+      if (_isSingleLineComment(comment)) comments.add(comment);
+      comment = comment.next;
+    }
   }
 
   /// Returns true if the token is a single-line `//` comment (not `///`).

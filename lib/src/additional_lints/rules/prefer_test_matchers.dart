@@ -1,10 +1,8 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when the second argument of `expect()` or `expectLater()` is not a
 /// `Matcher` subclass.
@@ -25,7 +23,7 @@ import 'package:analyzer/error/error.dart';
 /// expect(value, equals('hello'));
 /// expect(flag, isTrue);
 /// ```
-class PreferTestMatchers extends AnalysisRule {
+class PreferTestMatchers extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_test_matchers',
     'Prefer using a Matcher instead of a literal value in expect().',
@@ -36,6 +34,7 @@ class PreferTestMatchers extends AnalysisRule {
 
   PreferTestMatchers()
     : super(
+        code: code,
         name: 'prefer_test_matchers',
         description:
             'Warns when expect() or expectLater() second argument is not a '
@@ -43,13 +42,7 @@ class PreferTestMatchers extends AnalysisRule {
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -69,11 +62,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     final matcherArg = args[1];
 
     // Skip if it's a named expression (e.g., reason: 'xxx')
-    if (matcherArg is NamedExpression) return;
+    if (matcherArg is NamedArgument) return;
 
     final matcherExpr = matcherArg;
 
-    final matcherType = matcherExpr.staticType;
+    final matcherType = matcherExpr.argumentExpression.staticType;
     if (matcherType == null || matcherType is DynamicType) return;
 
     // Check if the matcher type is a Matcher subclass

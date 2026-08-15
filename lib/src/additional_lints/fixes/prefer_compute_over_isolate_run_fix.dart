@@ -1,28 +1,22 @@
-import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analysis_server_plugin/edit/dart/dart_fix_kind_priority.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
+import 'package:flutter_skill_lints/src/additional_lints/correction_producer_utils.dart';
 
 /// Fix that replaces `Isolate.run(callback)` with `compute(callback, null)`.
 ///
 /// Transforms the callback to accept a message parameter since `compute`
 /// requires `ComputeCallback<Q, R>` which takes one argument.
-class PreferComputeOverIsolateRunFix extends ResolvedCorrectionProducer {
+class PreferComputeOverIsolateRunFix extends SingleLocationCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.preferComputeOverIsolateRun',
     DartFixKindPriority.standard,
     "Replace with 'compute()'",
   );
 
-  PreferComputeOverIsolateRunFix({required super.context});
-
-  @override
-  CorrectionApplicability get applicability => CorrectionApplicability.singleLocation;
-
-  @override
-  FixKind get fixKind => _fixKind;
+  PreferComputeOverIsolateRunFix({required super.context}) : super(fixKind: _fixKind);
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
@@ -33,7 +27,7 @@ class PreferComputeOverIsolateRunFix extends ResolvedCorrectionProducer {
     if (args.isEmpty) return;
 
     final callback = args.first;
-    final callbackSource = _transformCallback(callback);
+    final callbackSource = _transformCallback(callback.argumentExpression);
 
     await builder.addDartFileEdit(file, (builder) {
       builder.importLibrary(Uri.parse('package:flutter/foundation.dart'));

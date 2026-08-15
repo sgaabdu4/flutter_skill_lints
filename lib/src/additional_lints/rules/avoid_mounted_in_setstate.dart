@@ -1,18 +1,16 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when `mounted` is checked inside a `setState` callback.
 ///
 /// Checking `mounted` inside `setState` is too late — if the widget has been
 /// disposed, `setState` itself will throw before the callback runs. The
 /// `mounted` check should be placed *before* calling `setState`.
-class AvoidMountedInSetstate extends AnalysisRule {
+class AvoidMountedInSetstate extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_mounted_in_setstate',
     'Checking mounted inside setState is too late and can lead to an exception.',
@@ -21,18 +19,13 @@ class AvoidMountedInSetstate extends AnalysisRule {
 
   AvoidMountedInSetstate()
     : super(
+        code: code,
         name: 'avoid_mounted_in_setstate',
         description: 'Warns when mounted is checked inside a setState callback.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {

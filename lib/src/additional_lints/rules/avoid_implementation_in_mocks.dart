@@ -1,13 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a Mocktail/Mockito mock overrides members.
-final class AvoidImplementationInMocks extends AnalysisRule {
+final class AvoidImplementationInMocks extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_implementation_in_mocks',
     'Avoid implementations in mock classes.',
@@ -18,15 +16,11 @@ final class AvoidImplementationInMocks extends AnalysisRule {
     : super(
         name: 'avoid_implementation_in_mocks',
         description: 'Warns when classes extending Mock override members.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addClassDeclaration(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {

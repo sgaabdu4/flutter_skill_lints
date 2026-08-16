@@ -1,11 +1,9 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
+import 'package:meta/meta.dart';
 
 /// Warns when a listener is added in a State lifecycle method but never
 /// removed in `dispose()`.
@@ -14,7 +12,7 @@ import '../type_checker.dart';
 /// `ChangeNotifier`, `AnimationController`) inside `initState`,
 /// `didUpdateWidget`, or `didChangeDependencies` must have a corresponding
 /// `removeListener()` call in `dispose()` to prevent memory leaks.
-class AlwaysRemoveListener extends AnalysisRule {
+class AlwaysRemoveListener extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'always_remove_listener',
     'Listener added but never removed in dispose().',
@@ -27,16 +25,11 @@ class AlwaysRemoveListener extends AnalysisRule {
         description:
             'Warns when addListener() is called in a State lifecycle '
             'method without a matching removeListener() in dispose().',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addClassDeclaration(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -44,19 +37,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _stateChecker = TypeChecker.fromName('State', packageName: 'flutter');
-
   static const _lifecycleMethods = {'initState', 'didUpdateWidget', 'didChangeDependencies'};
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    final element = node.declaredFragment?.element;
-    if (element == null) return;
-
-    if (!_stateChecker.isSuperOf(element)) return;
-
-    final body = node.body;
-    if (body is! BlockClassBody) return;
+    final body = flutterStateBody(node);
+    if (body == null) return;
 
     final methods = body.members.whereType<MethodDeclaration>();
 
@@ -100,6 +86,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 }
 
 /// Represents an addListener() or removeListener() call with its context.
+@immutable
 class _ListenerCall {
   final MethodInvocation node;
   final String targetSource;

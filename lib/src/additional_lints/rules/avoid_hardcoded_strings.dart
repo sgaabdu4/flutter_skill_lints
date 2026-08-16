@@ -6,7 +6,6 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
-import '../ast_node_analysis.dart';
 
 /// Warns when a user-facing string literal is hardcoded in widget UI code
 /// instead of being sourced from localization or a dedicated strings constant.
@@ -61,26 +60,23 @@ final class _Visitor extends SimpleAstVisitor<void> {
       }
     }
 
-    for (final argument in arguments.whereType<NamedExpression>()) {
+    for (final argument in arguments.whereType<NamedArgument>()) {
       if (!_isUserFacingLabel(argument.name.lexeme)) continue;
-      if (_isUserFacingLiteral(argument.expression)) {
-        rule.reportAtNode(argument.expression);
+      if (_isUserFacingLiteral(argument.argumentExpression)) {
+        rule.reportAtNode(argument.argumentExpression);
       }
     }
   }
 }
 
-Expression? _firstPositional(NodeList<Expression> arguments) {
-  return arguments.isEmpty ? null : arguments.first;
+Expression? _firstPositional(NodeList<Argument> arguments) {
+  return arguments.isEmpty ? null : arguments.first.argumentExpression;
 }
 
 bool _isExcludedContext(RuleContext context) {
-  if (context.isInTestDirectory || isGeneratedRuleContext(context)) return true;
-
-  final path = context.definingUnit.file.path.replaceAll('\\', '/');
-  return !path.contains('/lib/') ||
-      path.endsWith('_test.dart') ||
-      path.endsWith('_strings.dart') ||
+  final path = productionLibPath(context);
+  if (path == null) return true;
+  return path.endsWith('_strings.dart') ||
       path.endsWith('_constants.dart') ||
       path.endsWith('_keys.dart') ||
       path.contains('/constants/') ||

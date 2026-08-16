@@ -1,14 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when a widget creates a `GlobalKey` in its constructor or build path.
-class AlwaysPassGlobalKey extends AnalysisRule {
+class AlwaysPassGlobalKey extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'always_pass_global_key',
     'Pass GlobalKey from the caller instead of creating it here.',
@@ -21,15 +18,11 @@ class AlwaysPassGlobalKey extends AnalysisRule {
         description:
             'Warns when a GlobalKey is created inside a widget constructor '
             'or build() method.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addInstanceCreationExpression(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {

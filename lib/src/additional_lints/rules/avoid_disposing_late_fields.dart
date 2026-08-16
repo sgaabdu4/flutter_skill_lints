@@ -1,14 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../disposal_utils.dart';
+import 'package:flutter_skill_lints/src/additional_lints/disposal_utils.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a `late` field is disposed from `dispose()`.
-class AvoidDisposingLateFields extends AnalysisRule {
+class AvoidDisposingLateFields extends ClassDeclarationCheckRule {
   static const LintCode code = LintCode(
     'avoid_disposing_late_fields',
     'Avoid disposing late field in dispose().',
@@ -20,24 +18,12 @@ class AvoidDisposingLateFields extends AnalysisRule {
     : super(
         name: 'avoid_disposing_late_fields',
         description: 'Warns when dispose() cleans up a field declared with late.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addClassDeclaration(this, _Visitor(this));
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule);
-
-  final AvoidDisposingLateFields rule;
-
-  @override
-  void visitClassDeclaration(ClassDeclaration node) {
+  void checkClassDeclaration(ClassDeclaration node) {
     final body = node.body;
     if (body is! BlockClassBody) return;
 
@@ -56,7 +42,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
       final collector = _DisposedLateFieldCollector(lateFields);
       method.body.visitChildren(collector);
       for (final invocation in collector.invocations) {
-        rule.reportAtNode(invocation);
+        reportAtNode(invocation);
       }
     }
   }

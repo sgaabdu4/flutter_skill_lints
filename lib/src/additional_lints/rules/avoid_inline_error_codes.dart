@@ -1,10 +1,9 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when error or status codes are written inline at call sites.
@@ -12,7 +11,7 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 /// Protocol and backend error codes are shared contracts. Keeping them behind a
 /// dedicated owner makes retry, fallback, logging, and migration code refer to
 /// the same source of truth without forcing a specific helper API.
-class AvoidInlineErrorCodes extends AnalysisRule {
+class AvoidInlineErrorCodes extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_inline_error_codes',
     'Error and status codes should live in a dedicated code owner.',
@@ -27,17 +26,14 @@ class AvoidInlineErrorCodes extends AnalysisRule {
         description:
             'Warns when raw integer error/status codes are used directly in '
             'comparisons instead of a dedicated code owner.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
+  bool shouldRegister(RuleContext context) => !_isExcludedContext(context);
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (_isExcludedContext(context)) return;
-
-    registry.addCompilationUnit(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends RecursiveAstVisitor<void> {
@@ -55,10 +51,7 @@ class _Visitor extends RecursiveAstVisitor<void> {
 }
 
 bool _isExcludedContext(RuleContext context) {
-  if (context.isInTestDirectory || isGeneratedRuleContext(context)) return true;
-
-  final path = context.definingUnit.file.path.replaceAll('\\', '/');
-  return !path.contains('/lib/') || path.endsWith('_test.dart') || path.contains('/l10n/');
+  return isExcludedProductionSource(context);
 }
 
 bool _isStatusCodeComparison(AstNode node) {
@@ -68,10 +61,10 @@ bool _isStatusCodeComparison(AstNode node) {
   if (!_isComparisonOperator(parent.operator.type)) return false;
 
   if (_containsNode(parent.leftOperand, reportNode)) {
-    return _isStatusCodeExpression(parent.rightOperand);
+    return isStatusCodeExpression(parent.rightOperand);
   }
   if (_containsNode(parent.rightOperand, reportNode)) {
-    return _isStatusCodeExpression(parent.leftOperand);
+    return isStatusCodeExpression(parent.leftOperand);
   }
   return false;
 }
@@ -86,20 +79,6 @@ bool _isComparisonOperator(TokenType type) {
     TokenType.LT_EQ => true,
     _ => false,
   };
-}
-
-bool _isStatusCodeExpression(Expression expression) {
-  final unwrapped = expression.unParenthesized;
-  if (unwrapped is SimpleIdentifier) {
-    return _statusCodePropertyNames.contains(unwrapped.name.toLowerCase());
-  }
-  if (unwrapped is PrefixedIdentifier) {
-    return _statusCodePropertyNames.contains(unwrapped.identifier.name.toLowerCase());
-  }
-  if (unwrapped is PropertyAccess) {
-    return _statusCodePropertyNames.contains(unwrapped.propertyName.name.toLowerCase());
-  }
-  return false;
 }
 
 bool _isDedicatedCodeOwnerContext(AstNode node) {
@@ -131,14 +110,6 @@ AstNode _numericReportNode(AstNode node) {
   }
   return node;
 }
-
-const _statusCodePropertyNames = {
-  'code',
-  'errorcode',
-  'httpstatuscode',
-  'responsecode',
-  'statuscode',
-};
 
 const _dedicatedCodeOwnerSuffixes = {'ErrorCodes', 'ResponseCodes', 'StatusCodes'};
 

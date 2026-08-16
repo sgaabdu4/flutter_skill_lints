@@ -11,7 +11,6 @@ class AvoidUnconditionalBreak extends AnalysisRule {
     'avoid_unconditional_break',
     'Avoid unconditional break statements.',
     correctionMessage: 'Remove the break or the unreachable body.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidUnconditionalBreak()

@@ -1,18 +1,15 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when a Flexible or Expanded widget is used outside a Flex widget.
 ///
 /// Flexible and Expanded widgets should only be used as direct children of
 /// Row, Column, or Flex widgets. Using them elsewhere has no effect and
 /// indicates a structural issue in the widget tree.
-class AvoidFlexibleOutsideFlex extends AnalysisRule {
+class AvoidFlexibleOutsideFlex extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'avoid_flexible_outside_flex',
     '{0} should only be used as a direct child of Row, Column, or Flex.',
@@ -25,16 +22,11 @@ class AvoidFlexibleOutsideFlex extends AnalysisRule {
         description:
             'Warns when a Flexible or Expanded widget is used outside '
             'a Flex widget.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -74,43 +66,38 @@ class _Visitor extends SimpleAstVisitor<void> {
   /// Checks if [node] is a direct child in a Flex widget's children list
   /// or child parameter.
   static bool _isDirectChildOfFlex(InstanceCreationExpression node) {
-    // Walk up the AST parent chain looking for the nearest
-    // InstanceCreationExpression that this Flexible/Expanded is an argument of.
+    final argumentList = _directWidgetArgumentList(node);
+    return argumentList != null && _isFlexArgumentList(argumentList);
+  }
+
+  static ArgumentList? _directWidgetArgumentList(InstanceCreationExpression node) {
     AstNode? current = node.parent;
     while (current != null) {
-      // Skip list literals (children: [Flexible(...)])
       if (current is ListLiteral) {
         current = current.parent;
         continue;
       }
-
-      // Skip named expressions (child: Flexible(...) or children: [...])
-      if (current is NamedExpression) {
+      if (current is NamedArgument) {
         current = current.parent;
         continue;
       }
-
-      // We've reached an argument list — check the parent constructor
       if (current is ArgumentList) {
-        final parent = current.parent;
-        if (parent is InstanceCreationExpression) {
-          final parentElement = parent.constructorName.type.element;
-          if (parentElement != null && _flexChecker.isSuperOf(parentElement)) {
-            return true;
-          }
-        }
-        return false;
+        return current;
       }
-
-      // Stop at function/method boundaries — we've left the widget tree
       if (current is FunctionExpression ||
           current is FunctionDeclaration ||
           current is MethodDeclaration) {
-        return false;
+        return null;
       }
-
       current = current.parent;
     }
-    return false;
+    return null;
+  }
+
+  static bool _isFlexArgumentList(ArgumentList argumentList) {
+    final parent = argumentList.parent;
+    if (parent is! InstanceCreationExpression) return false;
+    final element = parent.constructorName.type.element;
+    return element != null && _flexChecker.isSuperOf(element);
   }
 }

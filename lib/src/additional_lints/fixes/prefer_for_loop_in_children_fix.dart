@@ -5,7 +5,10 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-import '../ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+
+typedef _MapSource = ({String iterable, String parameter, String expression});
+typedef _GenerateSource = ({String count, String parameter, String expression});
 
 /// Fix that replaces functional list building with collection-for syntax.
 class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
@@ -63,28 +66,13 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
     final mapCall = toListNode.target;
     if (mapCall is! MethodInvocation) return;
 
-    final iterable = mapCall.target;
-    if (iterable == null) return;
-
-    final args = mapCall.argumentList.arguments;
-    if (args.isEmpty) return;
-    final callback = args.first;
-    if (callback is! FunctionExpression) return;
-
-    final param = callback.parameters?.parameters.firstOrNull;
-    if (param == null) return;
-
-    final bodyExpr = maybeGetSingleReturnExpression(callback.body);
-    if (bodyExpr == null) return;
-
-    final iterableSource = iterable.toSource();
-    final paramName = param.name?.lexeme ?? '_';
-    final exprSource = bodyExpr.toSource();
+    final source = _mapSource(mapCall);
+    if (source == null) return;
 
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(
         range.node(toListNode),
-        '[for (final $paramName in $iterableSource) $exprSource]',
+        '[for (final ${source.parameter} in ${source.iterable}) ${source.expression}]',
       );
     });
   }
@@ -100,55 +88,26 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
 
     if (expr is! MethodInvocation) return;
 
-    final iterable = expr.target;
-    if (iterable == null) return;
-
-    final args = expr.argumentList.arguments;
-    if (args.isEmpty) return;
-    final callback = args.first;
-    if (callback is! FunctionExpression) return;
-
-    final param = callback.parameters?.parameters.firstOrNull;
-    if (param == null) return;
-
-    final bodyExpr = maybeGetSingleReturnExpression(callback.body);
-    if (bodyExpr == null) return;
-
-    final iterableSource = iterable.toSource();
-    final paramName = param.name?.lexeme ?? '_';
-    final exprSource = bodyExpr.toSource();
+    final source = _mapSource(expr);
+    if (source == null) return;
 
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(
         range.node(spread),
-        'for (final $paramName in $iterableSource) $exprSource',
+        'for (final ${source.parameter} in ${source.iterable}) ${source.expression}',
       );
     });
   }
 
   /// Fix: `List.generate(n, (i) => expr)` → `[for (var i = 0; i < n; i++) expr]`
   Future<void> _fixListGenerate(ChangeBuilder builder, MethodInvocation node) async {
-    final args = node.argumentList.arguments;
-    if (args.length < 2) return;
-
-    final countExpr = args.first;
-    final callback = args[1];
-    if (callback is! FunctionExpression) return;
-
-    final param = callback.parameters?.parameters.firstOrNull;
-    if (param == null) return;
-
-    final bodyExpr = maybeGetSingleReturnExpression(callback.body);
-    if (bodyExpr == null) return;
-
-    final countSource = countExpr.toSource();
-    final paramName = param.name?.lexeme ?? 'i';
-    final exprSource = bodyExpr.toSource();
+    final source = _generateSource(node.argumentList);
+    if (source == null) return;
 
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(
         range.node(node),
-        '[for (var $paramName = 0; $paramName < $countSource; $paramName++) $exprSource]',
+        '[for (var ${source.parameter} = 0; ${source.parameter} < ${source.count}; ${source.parameter}++) ${source.expression}]',
       );
     });
   }
@@ -158,29 +117,56 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
     ChangeBuilder builder,
     InstanceCreationExpression node,
   ) async {
-    final args = node.argumentList.arguments;
-    if (args.length < 2) return;
-
-    final countExpr = args.first;
-    final callback = args[1];
-    if (callback is! FunctionExpression) return;
-
-    final param = callback.parameters?.parameters.firstOrNull;
-    if (param == null) return;
-
-    final bodyExpr = maybeGetSingleReturnExpression(callback.body);
-    if (bodyExpr == null) return;
-
-    final countSource = countExpr.toSource();
-    final paramName = param.name?.lexeme ?? 'i';
-    final exprSource = bodyExpr.toSource();
+    final source = _generateSource(node.argumentList);
+    if (source == null) return;
 
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(
         range.node(node),
-        '[for (var $paramName = 0; $paramName < $countSource; $paramName++) $exprSource]',
+        '[for (var ${source.parameter} = 0; ${source.parameter} < ${source.count}; ${source.parameter}++) ${source.expression}]',
       );
     });
+  }
+
+  static _MapSource? _mapSource(MethodInvocation node) {
+    final iterable = node.target;
+    if (iterable == null) return null;
+
+    final callback = node.argumentList.arguments.firstOrNull;
+    final source = _callbackSource(callback, fallbackParameter: '_');
+    if (source == null) return null;
+
+    return (
+      iterable: iterable.toSource(),
+      parameter: source.parameter,
+      expression: source.expression,
+    );
+  }
+
+  static _GenerateSource? _generateSource(ArgumentList argumentList) {
+    final args = argumentList.arguments;
+    if (args.length < 2) return null;
+
+    final source = _callbackSource(args[1], fallbackParameter: 'i');
+    if (source == null) return null;
+
+    return (
+      count: args.first.toSource(),
+      parameter: source.parameter,
+      expression: source.expression,
+    );
+  }
+
+  static ({String parameter, String expression})? _callbackSource(
+    Argument? callback, {
+    required String fallbackParameter,
+  }) {
+    if (callback is! FunctionExpression) return null;
+    final parameter = callback.parameters?.parameters.firstOrNull;
+    if (parameter == null) return null;
+    final body = maybeGetSingleReturnExpression(callback.body);
+    if (body == null) return null;
+    return (parameter: parameter.name?.lexeme ?? fallbackParameter, expression: body.toSource());
   }
 
   /// Fix: `iterable.fold([], (list, e) { ... })` → `[for (final e in iterable) ...]`

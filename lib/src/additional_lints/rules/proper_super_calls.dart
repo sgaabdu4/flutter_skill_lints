@@ -1,11 +1,8 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when `super` lifecycle methods are called in the wrong order
 /// inside a `State` subclass.
@@ -17,7 +14,7 @@ import '../type_checker.dart';
 ///
 /// Calling `super` at the wrong position can lead to bugs where properties
 /// are not yet initialized or have already been disposed.
-class ProperSuperCalls extends AnalysisRule {
+class ProperSuperCalls extends MethodDeclarationRule {
   static const LintCode code = LintCode(
     'proper_super_calls',
     "'{0}' should call 'super.{0}()' {1}.",
@@ -30,16 +27,11 @@ class ProperSuperCalls extends AnalysisRule {
         description:
             'Warns when super lifecycle methods are called in the wrong '
             'order in State subclasses.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addMethodDeclaration(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {

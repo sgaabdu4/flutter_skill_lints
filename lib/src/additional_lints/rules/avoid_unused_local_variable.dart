@@ -12,7 +12,6 @@ final class AvoidUnusedLocalVariable extends AnalysisRule {
     'avoid_unused_local_variable',
     'Local variable is never read.',
     correctionMessage: 'Remove the variable or use its value.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidUnusedLocalVariable()

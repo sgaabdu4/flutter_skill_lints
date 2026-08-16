@@ -183,6 +183,13 @@ Map<String, dynamic> toJson() => {};
 ''');
   }
 
+  Future<void> test_generatedLocalizationDynamic_noLint() async {
+    final filePath = '$testPackageLibPath/l10n/app_localizations.dart';
+    newFile(filePath, 'List<dynamic> delegates = <dynamic>[];');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
   Future<void> test_objectBoundary_noLint() async {
     await assertNoDiagnostics(r'''
 Object? read(Object? value) => value;

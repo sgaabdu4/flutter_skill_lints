@@ -40,39 +40,32 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitBlock(Block node) {
-    // Collect final/const variable declarations with their initializer source
-    // Then scan for duplicate expressions appearing after each declaration
     final variables = <_VariableInfo>[];
-
     for (final statement in node.statements) {
-      // First, check if any existing variable initializers are duplicated
-      // in this statement
-      if (variables.isNotEmpty) {
-        final finder = _DuplicateExpressionFinder(variables);
-        statement.accept(finder);
-        for (final match in finder.matches) {
-          rule.reportAtNode(match.node, arguments: [match.variableName]);
-        }
-      }
+      _reportDuplicateExpressions(statement, variables);
+      _collectVariableDeclarations(statement, variables);
+    }
+  }
 
-      // Then, collect new variable declarations from this statement
-      if (statement is VariableDeclarationStatement) {
-        final isFinalOrConst = statement.variables.isFinal || statement.variables.isConst;
-        if (!isFinalOrConst) continue;
+  void _reportDuplicateExpressions(Statement statement, List<_VariableInfo> variables) {
+    if (variables.isEmpty) return;
+    final finder = _DuplicateExpressionFinder(variables);
+    statement.accept(finder);
+    for (final match in finder.matches) {
+      rule.reportAtNode(match.node, arguments: [match.variableName]);
+    }
+  }
 
-        for (final variable in statement.variables.variables) {
-          final initializer = variable.initializer;
-          if (initializer == null) continue;
-
-          final source = initializer.toSource();
-          // Skip trivial expressions (single identifiers, literals)
-          if (_isTrivialExpression(initializer)) continue;
-
-          variables.add((name: variable.name.lexeme, initializerSource: source));
-        }
-      } else if (_MayHaveSideEffect.check(statement)) {
-        variables.clear();
-      }
+  void _collectVariableDeclarations(Statement statement, List<_VariableInfo> variables) {
+    if (statement is! VariableDeclarationStatement) {
+      if (_MayHaveSideEffect.check(statement)) variables.clear();
+      return;
+    }
+    if (!statement.variables.isFinal && !statement.variables.isConst) return;
+    for (final variable in statement.variables.variables) {
+      final initializer = variable.initializer;
+      if (initializer == null || _isTrivialExpression(initializer)) continue;
+      variables.add((name: variable.name.lexeme, initializerSource: initializer.toSource()));
     }
   }
 

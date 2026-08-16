@@ -32,7 +32,7 @@ dependencies:
 plugins:
   # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
   # Re-check pub.dev before release when Riverpod or analyzer versions move.
-  riverpod_lint: 3.1.4
+  riverpod_lint: 3.1.8
   flutter_skill_lints:
     path: $packageRoot
 

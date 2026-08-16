@@ -4,7 +4,7 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import 'package:analyzer/file_system/file_system.dart';
+import 'package:flutter_skill_lints/src/additional_lints/pubspec_rule_utils.dart';
 
 /// Warns when a package-imported lib file's test is not in the matching folder.
 final class MatchLibFolderStructure extends AnalysisRule {
@@ -28,7 +28,7 @@ final class MatchLibFolderStructure extends AnalysisRule {
     final root = context.package?.root;
     if (root == null) return;
 
-    final packageName = _packageName(root);
+    final packageName = packageNameFromPubspec(root);
     if (packageName == null) return;
 
     final path = context.definingUnit.file.path.replaceAll('\\', '/');
@@ -36,9 +36,7 @@ final class MatchLibFolderStructure extends AnalysisRule {
 
     final testTopLevelFolder = _testTopLevelFolder(path);
     if (testTopLevelFolder != null) {
-      final matchingLibFolder = root
-          .getChildAssumingFolder('lib')
-          .getChildAssumingFolder(testTopLevelFolder);
+      final matchingLibFolder = root.getFolder('lib').getFolder(testTopLevelFolder);
       if (!matchingLibFolder.exists) return;
     }
 
@@ -103,21 +101,4 @@ String? _testTopLevelFolder(String testPath) {
   return relative.substring(0, slashIndex);
 }
 
-bool _isGenerated(String path) {
-  const generatedSuffixes = ['.config.dart', '.freezed.dart', '.g.dart', '.gen.dart', '.gr.dart'];
-  return generatedSuffixes.any(path.endsWith);
-}
-
-String? _packageName(Folder root) {
-  final text = _read(root.getChildAssumingFile('pubspec.yaml')) ?? '';
-  return RegExp(r'^name:\s*([A-Za-z0-9_]+)\s*$', multiLine: true).firstMatch(text)?.group(1);
-}
-
-String? _read(File file) {
-  if (!file.exists) return null;
-  try {
-    return file.readAsStringSync();
-  } on FileSystemException {
-    return null;
-  }
-}
+bool _isGenerated(String path) => generatedDartFileSuffixes.any(path.endsWith);

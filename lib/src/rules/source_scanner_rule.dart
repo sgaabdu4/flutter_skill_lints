@@ -62,6 +62,103 @@ final class ScannerRuleReporter {
   }
 }
 
+String sourceClassSignature(SourceScannerContext context, ScannerClassSpan classSpan) {
+  final buffer = StringBuffer();
+  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
+    final line = context.source.masked[i];
+    buffer.write(' ');
+    buffer.write(line);
+    if (line.contains('{')) break;
+  }
+  return buffer.toString();
+}
+
+String sourceLineWindow(SourceScannerContext context, int startLine, int endLine, int maxLines) {
+  final end = startLine + maxLines > endLine ? endLine : startLine + maxLines;
+  final buffer = StringBuffer();
+  for (var i = startLine; i <= end && i < context.source.length; i++) {
+    if (i > startLine) buffer.write('\n');
+    buffer.write(context.source.masked[i]);
+  }
+  return buffer.toString();
+}
+
+({RegExpMatch match, int column})? sourceWindowMatch(
+  SourceScannerContext context,
+  int lineIndex,
+  RegExp pattern, {
+  int maxLines = 6,
+}) {
+  final end = lineIndex + maxLines > context.source.length
+      ? context.source.length
+      : lineIndex + maxLines;
+  final window = context.source.masked.sublist(lineIndex, end).join('\n');
+  final match = pattern.firstMatch(window);
+  if (match == null) return null;
+  final beforeMatch = window.substring(0, match.start);
+  if (beforeMatch.contains('\n')) return null;
+  return (match: match, column: beforeMatch.length);
+}
+
+int countCharacter(String text, String character) {
+  var count = 0;
+  for (var i = 0; i < text.length; i++) {
+    if (text[i] == character) count++;
+  }
+  return count;
+}
+
+int braceDelta(String line) {
+  var delta = 0;
+  for (var i = 0; i < line.length; i++) {
+    final char = line[i];
+    if (char == '{') {
+      delta++;
+    } else if (char == '}') {
+      delta--;
+    }
+  }
+  return delta;
+}
+
+Iterable<int> directClassMemberLines(
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+) sync* {
+  var depth = 0;
+  var sawClassOpenBrace = false;
+
+  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
+    final line = context.source.masked[i];
+    if (i > classSpan.start && sawClassOpenBrace && depth == 1) yield i;
+    for (var j = 0; j < line.length; j++) {
+      final char = line[j];
+      if (char == '{') {
+        depth++;
+        sawClassOpenBrace = true;
+      } else if (char == '}') {
+        depth--;
+      }
+    }
+  }
+}
+
+void reportDirectClassMemberMatches(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+  RegExp pattern,
+) {
+  for (final lineIndex in directClassMemberLines(context, classSpan)) {
+    final line = context.source.masked[lineIndex];
+    final match = pattern.firstMatch(line);
+    if (match == null) continue;
+    final fieldName = match.group(1);
+    final column = fieldName == null ? match.start : line.indexOf(fieldName, match.start);
+    reporter.report(context, lineIndex, column);
+  }
+}
+
 final class _SourceScannerVisitor extends SimpleAstVisitor<void> {
   _SourceScannerVisitor(this.rule, this.ruleContext);
 
@@ -434,33 +531,38 @@ final class SourceScannerContext {
 
   _ScannerMixinSpan? _enclosingMixin(int lineIndex) {
     for (var start = lineIndex; start >= 0; start--) {
-      final line = source.masked[start];
-      if (!RegExp(r'^\s*mixin(?:\s+class)?\s+\w+\b').hasMatch(line)) continue;
-
-      final signature = StringBuffer(line);
-      var openBraceLine = start;
-      var foundOpenBrace = line.contains('{');
-      while (!foundOpenBrace && openBraceLine + 1 < source.length) {
-        openBraceLine++;
-        signature.write(' ${source.masked[openBraceLine]}');
-        foundOpenBrace = source.masked[openBraceLine].contains('{');
-      }
-      if (!foundOpenBrace || lineIndex < openBraceLine) return null;
-
-      var depth = 0;
-      var end = openBraceLine;
-      for (var i = start; i < source.length; i++) {
-        depth += _braceDelta(source.masked[i]);
-        if (i >= openBraceLine && depth <= 0) {
-          end = i;
-          break;
-        }
-      }
+      final header = _mixinHeader(start);
+      if (header == null || lineIndex < header.openBraceLine) continue;
+      final end = _mixinEnd(start, header.openBraceLine);
       if (lineIndex <= end) {
-        return _ScannerMixinSpan(start: start, end: end, signature: signature.toString());
+        return _ScannerMixinSpan(start: start, end: end, signature: header.signature);
       }
     }
     return null;
+  }
+
+  ({String signature, int openBraceLine})? _mixinHeader(int start) {
+    final firstLine = source.masked[start];
+    if (!RegExp(r'^\s*mixin(?:\s+class)?\s+\w+\b').hasMatch(firstLine)) {
+      return null;
+    }
+    final signature = StringBuffer(firstLine);
+    var openBraceLine = start;
+    while (!source.masked[openBraceLine].contains('{') && openBraceLine + 1 < source.length) {
+      openBraceLine++;
+      signature.write(' ${source.masked[openBraceLine]}');
+    }
+    if (!source.masked[openBraceLine].contains('{')) return null;
+    return (signature: signature.toString(), openBraceLine: openBraceLine);
+  }
+
+  int _mixinEnd(int start, int openBraceLine) {
+    var depth = 0;
+    for (var lineIndex = start; lineIndex < source.length; lineIndex++) {
+      depth += _braceDelta(source.masked[lineIndex]);
+      if (lineIndex >= openBraceLine && depth <= 0) return lineIndex;
+    }
+    return source.length - 1;
   }
 
   bool _isDirectMixinMember(_ScannerMixinSpan mixin, int lineIndex) {
@@ -525,38 +627,45 @@ final class SourceScannerContext {
     );
 
     for (var i = classSpan.start + 1; i < classSpan.end; i++) {
-      final line = source.masked[i];
-      if (line.contains('factory ')) continue;
-      final match = methodRegex.firstMatch(line);
-      if (match == null) continue;
-      final name = match.group(1) ?? '';
-      if (_isControlKeyword(name)) continue;
-
-      if (line.contains('=>')) {
-        methods.add(ScannerMethodSpan(name: name, start: i, end: i));
-        continue;
-      }
-
-      var start = i;
-      var foundOpenBrace = line.contains('{');
-      var braceDepth = _braceDelta(line);
-      while (!foundOpenBrace && start + 1 < classSpan.end) {
-        start++;
-        foundOpenBrace = source.masked[start].contains('{');
-        braceDepth += _braceDelta(source.masked[start]);
-      }
-      if (!foundOpenBrace) continue;
-
-      var end = start;
-      while (braceDepth > 0 && end + 1 <= classSpan.end) {
-        end++;
-        braceDepth += _braceDelta(source.masked[end]);
-      }
-
-      methods.add(ScannerMethodSpan(name: name, start: i, end: end));
-      i = end;
+      final method = _methodAtLine(source, classSpan, i, methodRegex);
+      if (method == null) continue;
+      methods.add(method);
+      i = method.end;
     }
     return methods;
+  }
+
+  static ScannerMethodSpan? _methodAtLine(
+    SourceScannerSource source,
+    ScannerClassSpan classSpan,
+    int lineIndex,
+    RegExp methodRegex,
+  ) {
+    final line = source.masked[lineIndex];
+    if (line.contains('factory ')) return null;
+    final match = methodRegex.firstMatch(line);
+    if (match == null) return null;
+    final name = match.group(1) ?? '';
+    if (_isControlKeyword(name)) return null;
+    final end = _methodEnd(source, classSpan.end, lineIndex, line);
+    return end == null ? null : ScannerMethodSpan(name: name, start: lineIndex, end: end);
+  }
+
+  static int? _methodEnd(SourceScannerSource source, int classEnd, int lineIndex, String line) {
+    if (line.contains('=>')) return lineIndex;
+    var signatureEnd = lineIndex;
+    var braceDepth = _braceDelta(line);
+    while (!source.masked[signatureEnd].contains('{') && signatureEnd + 1 < classEnd) {
+      signatureEnd++;
+      braceDepth += _braceDelta(source.masked[signatureEnd]);
+    }
+    if (!source.masked[signatureEnd].contains('{')) return null;
+    var end = signatureEnd;
+    while (braceDepth > 0 && end + 1 <= classEnd) {
+      end++;
+      braceDepth += _braceDelta(source.masked[end]);
+    }
+    return end;
   }
 
   static bool _isControlKeyword(String name) =>
@@ -574,7 +683,7 @@ final class SourceScannerContext {
 
   static String _relativePath(String path) {
     final normalized = path.replaceAll('\\', '/');
-    for (final marker in ['/lib/', '/test/']) {
+    for (final marker in ['/lib/', '/test/', '/test_driver/', '/integration_test/']) {
       final index = normalized.lastIndexOf(marker);
       if (index >= 0) return normalized.substring(index + 1);
     }

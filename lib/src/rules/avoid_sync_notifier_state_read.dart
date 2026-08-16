@@ -73,12 +73,12 @@ final class _BodyVisitor extends RecursiveAstVisitor<void> {
   }
 
   @override
-  void visitNamedExpression(NamedExpression node) {
-    if (node.name.label.name != 'fireImmediately') {
-      super.visitNamedExpression(node);
+  void visitNamedArgument(NamedArgument node) {
+    if (node.name.lexeme != 'fireImmediately') {
+      super.visitNamedArgument(node);
       return;
     }
-    final expression = node.expression;
+    final expression = node.argumentExpression;
     if (expression is BooleanLiteral && expression.value) {
       rule.reportAtNode(node);
     }

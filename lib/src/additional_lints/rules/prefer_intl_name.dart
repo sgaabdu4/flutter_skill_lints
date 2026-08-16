@@ -1,13 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import '../ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when Intl message names do not match the owning class member.
-final class PreferIntlName extends AnalysisRule {
+final class PreferIntlName extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_intl_name',
     'Prefer class-member Intl names.',
@@ -16,17 +13,13 @@ final class PreferIntlName extends AnalysisRule {
 
   PreferIntlName()
     : super(
+        code: code,
         name: 'prefer_intl_name',
         description: 'Warns when Intl name arguments do not match their class member.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodInvocation(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -58,10 +51,10 @@ bool _isIntlInvocation(MethodInvocation node) {
 const _intlMethods = {'message', 'plural', 'gender', 'select'};
 
 SimpleStringLiteral? _nameArgument(MethodInvocation node) {
-  for (final argument in node.argumentList.arguments.whereType<NamedExpression>()) {
+  for (final argument in node.argumentList.arguments.whereType<NamedArgument>()) {
     if (argument.name.lexeme != 'name') continue;
 
-    final expression = argument.expression;
+    final expression = argument.argumentExpression;
     return expression is SimpleStringLiteral ? expression : null;
   }
 

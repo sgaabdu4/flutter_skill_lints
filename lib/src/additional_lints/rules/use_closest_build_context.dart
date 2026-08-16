@@ -1,18 +1,15 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when an outer BuildContext is used inside a nested builder callback
 /// that has its own BuildContext parameter available.
 ///
 /// Using the closest context keeps inherited lookups and navigation tied to the
 /// subtree created by the builder.
-class UseClosestBuildContext extends AnalysisRule {
+class UseClosestBuildContext extends MethodDeclarationRule {
   static const LintCode code = LintCode(
     'use_closest_build_context',
     'Use the closest available BuildContext instead of the outer one.',
@@ -25,16 +22,11 @@ class UseClosestBuildContext extends AnalysisRule {
         description:
             'Warns when an outer BuildContext is used inside a nested '
             'builder callback that provides its own BuildContext.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addMethodDeclaration(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -72,8 +64,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   static bool _isBuildContextType(FormalParameter param) {
     // First try the explicit type annotation
-    final normal = param is DefaultFormalParameter ? param.parameter : param;
-    final type = normal is SimpleFormalParameter ? normal.type?.type : null;
+    final type = param.type?.type;
     if (type != null) return _buildContextChecker.isExactlyType(type);
 
     // Fall back to the resolved element type (for untyped params like `_`)

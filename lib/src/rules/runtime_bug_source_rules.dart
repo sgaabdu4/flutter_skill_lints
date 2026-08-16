@@ -84,6 +84,33 @@ final _storageReadOrGet = RegExp(r'\.\s*(?:read|get)\s*[<(]');
 
 final _storageWriteOrSave = RegExp(r'\.\s*(?:save|put|set|write)\s*[<(]');
 
+void _visitMethodLines(
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+  bool Function(int lineIndex, String line) visitor,
+) {
+  for (
+    var lineIndex = method.start;
+    lineIndex <= method.end && lineIndex < context.source.length;
+    lineIndex++
+  ) {
+    if (visitor(lineIndex, context.source.masked[lineIndex])) return;
+  }
+}
+
+void _visitSaveAllCalls(
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+  void Function(int lineIndex, RegExpMatch match, String window) visitor,
+) {
+  _visitMethodLines(context, method, (lineIndex, line) {
+    final match = _saveAllCallStart.firstMatch(line);
+    if (match == null) return false;
+    visitor(lineIndex, match, sourceLineWindow(context, lineIndex, method.end, 10));
+    return false;
+  });
+}
+
 final _debounceMechanism = RegExp(
   r'\b(?:Timer\s*\(|Timer\.periodic\s*\(|Future\.delayed\s*\(|Debouncer\b)',
 );
@@ -246,7 +273,7 @@ bool _isExecutionForwardingWrapper(
   ScannerMethodSpan method,
   String callWindow,
 ) {
-  final signature = _collectWindow(context, method.start, method.end, 6);
+  final signature = sourceLineWindow(context, method.start, method.end, 6);
   return RegExp(r'\bbool\??\s+xasync\b').hasMatch(signature) &&
       RegExp(r'\bxasync\s*:\s*xasync\b').hasMatch(callWindow);
 }
@@ -372,22 +399,30 @@ RegExp _nestedIdLookup(String loopVar) => RegExp(
 );
 
 int? _findBlockEnd(SourceScannerContext context, int startLine, int maxLine) {
-  var depth = 0;
-  var sawOpen = false;
+  final state = _BraceScanState();
   for (var i = startLine; i <= maxLine && i < context.source.length; i++) {
-    final line = context.source.masked[i];
-    for (var j = 0; j < line.length; j++) {
-      final char = line[j];
-      if (char == '{') {
-        depth++;
-        sawOpen = true;
-      } else if (char == '}') {
-        depth--;
-        if (sawOpen && depth == 0) return i;
-      }
-    }
+    if (_scanBraceLine(state, context.source.masked[i])) return i;
   }
   return null;
+}
+
+final class _BraceScanState {
+  int depth = 0;
+  bool sawOpen = false;
+}
+
+bool _scanBraceLine(_BraceScanState state, String line) {
+  for (var column = 0; column < line.length; column++) {
+    final char = line[column];
+    if (char == '{') {
+      state.depth++;
+      state.sawOpen = true;
+    } else if (char == '}' && state.sawOpen) {
+      state.depth--;
+      if (state.depth == 0) return true;
+    }
+  }
+  return false;
 }
 
 String _collectLines(SourceScannerContext context, int startLine, int endLine) {
@@ -570,20 +605,9 @@ int? _findFunctionDeclarationAfter(SourceScannerContext context, int annotationL
 }
 
 int? _findFunctionBodyEnd(SourceScannerContext context, int fnLine) {
-  var depth = 0;
-  var sawOpen = false;
+  final state = _BraceScanState();
   for (var i = fnLine; i < context.source.length && i < fnLine + 200; i++) {
-    final line = context.source.masked[i];
-    for (var j = 0; j < line.length; j++) {
-      final ch = line[j];
-      if (ch == '{') {
-        depth++;
-        sawOpen = true;
-      } else if (ch == '}') {
-        depth--;
-        if (sawOpen && depth == 0) return i;
-      }
-    }
+    if (_scanBraceLine(state, context.source.masked[i])) return i;
   }
   return null;
 }
@@ -624,21 +648,11 @@ bool _methodHasNotifierAccess(SourceScannerContext context, ScannerMethodSpan me
   return false;
 }
 
-String _collectWindow(SourceScannerContext context, int startLine, int endLine, int maxLines) {
-  final end = startLine + maxLines > endLine ? endLine : startLine + maxLines;
-  final buffer = StringBuffer();
-  for (var i = startLine; i <= end && i < context.source.length; i++) {
-    if (i > startLine) buffer.write('\n');
-    buffer.write(context.source.masked[i]);
-  }
-  return buffer.toString();
-}
-
 int? _unboundedCollectionWatchColumn(SourceScannerContext context, int startLine, int endLine) {
   final line = context.source.masked[startLine];
   final watchStart = line.indexOf('ref.watch');
   if (watchStart < 0) return null;
-  final window = _collectWindow(context, startLine, endLine, 8);
+  final window = sourceLineWindow(context, startLine, endLine, 8);
   if (!_watchUnboundedCollection.hasMatch(window)) return null;
   if (_isPureCollectionProjection(window)) return null;
   return watchStart;

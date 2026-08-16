@@ -1,13 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when one async function updates the same value on both sides of an
 /// await point.
-final class RequireAtomicAsyncUpdates extends AnalysisRule {
+final class RequireAtomicAsyncUpdates extends FunctionAndMethodDeclarationRule {
   static const LintCode code = LintCode(
     'require_atomic_async_updates',
     'Keep async updates atomic around await points.',
@@ -19,17 +17,11 @@ final class RequireAtomicAsyncUpdates extends AnalysisRule {
     : super(
         name: 'require_atomic_async_updates',
         description: 'Warns when the same variable or field is assigned before and after an await.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addFunctionDeclaration(this, visitor);
-    registry.addMethodDeclaration(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -101,21 +93,20 @@ final class _AssignmentsCollector extends RecursiveAstVisitor<void> {
   @override
   void visitPrefixExpression(PrefixExpression node) {
     final lexeme = node.operator.lexeme;
-    if (lexeme == '++' || lexeme == '--') {
-      final key = _targetKey(node.operand);
-      if (key != null) _assignments.add(_Assignment(key, node.operand));
-    }
+    if (lexeme == '++' || lexeme == '--') _record(node.operand);
     super.visitPrefixExpression(node);
   }
 
   @override
   void visitPostfixExpression(PostfixExpression node) {
     final lexeme = node.operator.lexeme;
-    if (lexeme == '++' || lexeme == '--') {
-      final key = _targetKey(node.operand);
-      if (key != null) _assignments.add(_Assignment(key, node.operand));
-    }
+    if (lexeme == '++' || lexeme == '--') _record(node.operand);
     super.visitPostfixExpression(node);
+  }
+
+  void _record(Expression expression) {
+    final key = _targetKey(expression);
+    if (key != null) _assignments.add(_Assignment(key, expression));
   }
 
   @override
@@ -123,7 +114,7 @@ final class _AssignmentsCollector extends RecursiveAstVisitor<void> {
 }
 
 final class _ContainsAwait extends RecursiveAstVisitor<void> {
-  var found = false;
+  bool found = false;
 
   static bool check(AstNode node) {
     final visitor = _ContainsAwait();

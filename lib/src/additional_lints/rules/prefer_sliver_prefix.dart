@@ -1,21 +1,18 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Flags custom widget classes that return Flutter slivers without a Sliver prefix.
-final class PreferSliverPrefix extends AnalysisRule {
+final class PreferSliverPrefix extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'prefer_sliver_prefix',
     'Prefix custom sliver widget classes with `Sliver`.',
     correctionMessage: 'Rename this widget so its class name starts with `Sliver`.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   PreferSliverPrefix()
@@ -24,31 +21,17 @@ final class PreferSliverPrefix extends AnalysisRule {
         description:
             'Flags StatelessWidget and StatefulWidget classes that build Flutter slivers '
             'but are not prefixed with Sliver.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addCompilationUnit(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
   const _Visitor(this.rule);
 
   final PreferSliverPrefix rule;
-
-  static const _statelessWidgetChecker = TypeChecker.fromName(
-    'StatelessWidget',
-    packageName: 'flutter',
-  );
-  static const _statefulWidgetChecker = TypeChecker.fromName(
-    'StatefulWidget',
-    packageName: 'flutter',
-  );
-  static const _stateChecker = TypeChecker.fromName('State', packageName: 'flutter');
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
@@ -59,11 +42,11 @@ final class _Visitor extends SimpleAstVisitor<void> {
       final element = declaration.declaredFragment?.element;
       if (element == null) continue;
 
-      if (_statelessWidgetChecker.isSuperOf(element)) {
+      if (flutterStatelessWidgetChecker.isSuperOf(element)) {
         _checkStatelessWidget(declaration);
-      } else if (_statefulWidgetChecker.isSuperOf(element)) {
+      } else if (flutterStatefulWidgetChecker.isSuperOf(element)) {
         statefulWidgets.add(declaration);
-      } else if (_stateChecker.isSuperOf(element)) {
+      } else if (flutterStateChecker.isSuperOf(element)) {
         states.add(declaration);
       }
     }

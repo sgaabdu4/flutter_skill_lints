@@ -1,18 +1,16 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when `Border.all()` is used instead of `Border.fromBorderSide()`.
 ///
 /// `Border.all()` calls `Border.fromBorderSide()` under the hood, so using
 /// `Border.fromBorderSide(BorderSide(...))` directly allows the expression
 /// to be const.
-class AvoidBorderAll extends AnalysisRule {
+class AvoidBorderAll extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_border_all',
     'Prefer Border.fromBorderSide over Border.all.',
@@ -21,19 +19,13 @@ class AvoidBorderAll extends AnalysisRule {
 
   AvoidBorderAll()
     : super(
+        code: code,
         name: 'avoid_border_all',
         description: 'Warns when Border.all() is used instead of Border.fromBorderSide().',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {

@@ -4,6 +4,7 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a Riverpod notifier is assigned to a variable or field.
 ///
@@ -68,14 +69,5 @@ bool _isNotifierRead(Expression expression) {
   if (unwrapped.argumentList.arguments.length != 1) return false;
 
   final argument = unwrapped.argumentList.arguments.single;
-  return _isNotifierSelector(argument);
-}
-
-bool _isNotifierSelector(Expression expression) {
-  final unwrapped = expression.unParenthesized;
-  return switch (unwrapped) {
-    PrefixedIdentifier(:final identifier) => identifier.name == 'notifier',
-    PropertyAccess(:final propertyName) => propertyName.name == 'notifier',
-    _ => false,
-  };
+  return isNotifierSelector(argument.argumentExpression);
 }

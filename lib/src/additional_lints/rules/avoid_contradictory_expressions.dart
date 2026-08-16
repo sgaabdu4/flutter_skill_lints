@@ -1,12 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../constant_expression.dart';
+import 'package:flutter_skill_lints/src/additional_lints/constant_expression.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a logical AND (`&&`) expression contains contradictory
 /// comparisons on the same variable, resulting in a condition that always
@@ -14,7 +12,7 @@ import '../constant_expression.dart';
 ///
 /// For example, `x == 3 && x == 4` can never be true because `x` cannot
 /// be both 3 and 4 at the same time.
-class AvoidContradictoryExpressions extends AnalysisRule {
+class AvoidContradictoryExpressions extends BinaryExpressionCheckRule {
   static const LintCode code = LintCode(
     'avoid_contradictory_expressions',
     'This condition contains contradictory comparisons and always evaluates '
@@ -28,15 +26,13 @@ class AvoidContradictoryExpressions extends AnalysisRule {
         description:
             'Warns when a logical AND expression contains contradictory '
             'comparisons that always evaluate to false.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addBinaryExpression(this, visitor);
+  void checkBinaryExpression(BinaryExpression node) {
+    _Visitor(this).visitBinaryExpression(node);
   }
 }
 
@@ -187,59 +183,51 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Check if two expressions refer to the same variable / identifier.
   static bool _sameExpression(Expression a, Expression b) {
-    // Unwrap parentheses.
-    var exprA = a;
-    var exprB = b;
-    while (exprA is ParenthesizedExpression) {
-      exprA = exprA.expression;
-    }
-    while (exprB is ParenthesizedExpression) {
-      exprB = exprB.expression;
-    }
-
-    // Two simple identifiers with the same element.
-    if (exprA is SimpleIdentifier && exprB is SimpleIdentifier) {
-      return exprA.element != null && exprA.element == exprB.element;
-    }
-
-    // Two prefixed identifiers: prefix.id (e.g. SomeClass.field).
-    if (exprA is PrefixedIdentifier && exprB is PrefixedIdentifier) {
-      return exprA.identifier.element != null &&
-          exprA.identifier.element == exprB.identifier.element;
-    }
-
-    // Two property accesses: target.property.
-    if (exprA is PropertyAccess && exprB is PropertyAccess) {
-      return exprA.propertyName.element != null &&
-          exprA.propertyName.element == exprB.propertyName.element &&
-          _sameExpression(exprA.target!, exprB.target!);
-    }
-
-    // Literals with the same value.
-    if (exprA is IntegerLiteral && exprB is IntegerLiteral) {
-      return exprA.value == exprB.value;
-    }
-    if (exprA is DoubleLiteral && exprB is DoubleLiteral) {
-      return exprA.value == exprB.value;
-    }
-    if (exprA is SimpleStringLiteral && exprB is SimpleStringLiteral) {
-      return exprA.value == exprB.value;
-    }
-    if (exprA is BooleanLiteral && exprB is BooleanLiteral) {
-      return exprA.value == exprB.value;
-    }
-    if (exprA is NullLiteral && exprB is NullLiteral) {
-      return true;
-    }
-
-    // Prefix expressions (e.g., -1 == -1).
-    if (exprA is PrefixExpression && exprB is PrefixExpression) {
-      return exprA.operator.type == exprB.operator.type &&
-          _sameExpression(exprA.operand, exprB.operand);
-    }
-
-    return false;
+    final exprA = _unparenthesized(a);
+    final exprB = _unparenthesized(b);
+    return _sameIdentifier(exprA, exprB) ||
+        _samePrefixedIdentifier(exprA, exprB) ||
+        _samePropertyAccess(exprA, exprB) ||
+        _sameLiteral(exprA, exprB) ||
+        _samePrefixExpression(exprA, exprB);
   }
+
+  static Expression _unparenthesized(Expression expression) {
+    while (expression is ParenthesizedExpression) {
+      expression = expression.expression;
+    }
+    return expression;
+  }
+
+  static bool _sameIdentifier(Expression a, Expression b) =>
+      a is SimpleIdentifier && b is SimpleIdentifier && a.element != null && a.element == b.element;
+
+  static bool _samePrefixedIdentifier(Expression a, Expression b) =>
+      a is PrefixedIdentifier &&
+      b is PrefixedIdentifier &&
+      a.identifier.element != null &&
+      a.identifier.element == b.identifier.element;
+
+  static bool _samePropertyAccess(Expression a, Expression b) =>
+      a is PropertyAccess &&
+      b is PropertyAccess &&
+      a.propertyName.element != null &&
+      a.propertyName.element == b.propertyName.element &&
+      _sameExpression(a.target!, b.target!);
+
+  static bool _sameLiteral(Expression a, Expression b) {
+    if (a is IntegerLiteral && b is IntegerLiteral) return a.value == b.value;
+    if (a is DoubleLiteral && b is DoubleLiteral) return a.value == b.value;
+    if (a is SimpleStringLiteral && b is SimpleStringLiteral) return a.value == b.value;
+    if (a is BooleanLiteral && b is BooleanLiteral) return a.value == b.value;
+    return a is NullLiteral && b is NullLiteral;
+  }
+
+  static bool _samePrefixExpression(Expression a, Expression b) =>
+      a is PrefixExpression &&
+      b is PrefixExpression &&
+      a.operator.type == b.operator.type &&
+      _sameExpression(a.operand, b.operand);
 }
 
 typedef _Comparison = ({Expression left, TokenType op, Expression right});

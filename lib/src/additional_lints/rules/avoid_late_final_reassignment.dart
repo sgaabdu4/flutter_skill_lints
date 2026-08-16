@@ -2,8 +2,11 @@ import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+
+import 'package:flutter_skill_lints/src/additional_lints/unassigned_field_analysis.dart';
 
 /// Warns when a `late final` variable or field is assigned more than once in
 /// the same local body.
@@ -40,7 +43,13 @@ final class _Visitor extends RecursiveAstVisitor<void> {
   void visitClassDeclaration(ClassDeclaration node) {
     final body = node.body;
     if (body is! BlockClassBody) return;
+    final fields = _lateFinalFieldCounts(body);
+    _lateFinalFields.add(fields);
+    _checkClassMembers(body);
+    _lateFinalFields.removeLast();
+  }
 
+  Map<String, int> _lateFinalFieldCounts(BlockClassBody body) {
     final fields = <String, int>{};
     for (final member in body.members.whereType<FieldDeclaration>()) {
       if (member.isStatic || !member.fields.isLate || !member.fields.isFinal) continue;
@@ -48,8 +57,10 @@ final class _Visitor extends RecursiveAstVisitor<void> {
         fields[variable.name.lexeme] = variable.initializer == null ? 0 : 1;
       }
     }
+    return fields;
+  }
 
-    _lateFinalFields.add(fields);
+  void _checkClassMembers(BlockClassBody body) {
     for (final member in body.members) {
       if (member is ConstructorDeclaration) {
         _checkConstructor(member);
@@ -57,7 +68,6 @@ final class _Visitor extends RecursiveAstVisitor<void> {
         _checkBody(member.body);
       }
     }
-    _lateFinalFields.removeLast();
   }
 
   @override
@@ -67,22 +77,34 @@ final class _Visitor extends RecursiveAstVisitor<void> {
 
   void _checkConstructor(ConstructorDeclaration node) {
     final initialCounts = Map<String, int>.of(_lateFinalFields.last);
+    _checkFieldFormalParameters(node, initialCounts);
+    _checkFieldInitializers(node, initialCounts);
+    _checkBody(node.body, fieldCounts: initialCounts);
+  }
+
+  void _checkFieldFormalParameters(ConstructorDeclaration node, Map<String, int> counts) {
     for (final parameter in node.parameters.parameters) {
-      final normalized = parameter;
-      if (normalized case FieldFormalParameter(:final name)) {
-        initialCounts[name.lexeme] = (initialCounts[name.lexeme] ?? 0) + 1;
-        if ((initialCounts[name.lexeme] ?? 0) > 1) rule.reportAtToken(name);
+      if (parameter case FieldFormalParameter(:final name)) {
+        _recordConstructorWrite(counts, name.lexeme, name);
       }
     }
+  }
+
+  void _checkFieldInitializers(ConstructorDeclaration node, Map<String, int> counts) {
     for (final initializer in node.initializers) {
       if (initializer case ConstructorFieldInitializer(:final fieldName)) {
         final name = fieldName.name;
-        if (!initialCounts.containsKey(name)) continue;
-        initialCounts[name] = (initialCounts[name] ?? 0) + 1;
-        if ((initialCounts[name] ?? 0) > 1) rule.reportAtToken(fieldName.token);
+        if (counts.containsKey(name)) {
+          _recordConstructorWrite(counts, name, fieldName.token);
+        }
       }
     }
-    _checkBody(node.body, fieldCounts: initialCounts);
+  }
+
+  void _recordConstructorWrite(Map<String, int> counts, String name, Token token) {
+    final count = (counts[name] ?? 0) + 1;
+    counts[name] = count;
+    if (count > 1) rule.reportAtToken(token);
   }
 
   void _checkBody(FunctionBody body, {Map<String, int>? fieldCounts}) {
@@ -161,7 +183,7 @@ final class _BodyChecker extends RecursiveAstVisitor<void> {
     }
     if (localName != null && localNames.contains(localName)) return;
 
-    final fieldName = _fieldNameFromTarget(target);
+    final fieldName = fieldNameFromTarget(target);
     if (fieldName != null && fieldCounts.containsKey(fieldName)) {
       _increment(fieldCounts, fieldName, target);
     }
@@ -178,14 +200,6 @@ final class _BodyChecker extends RecursiveAstVisitor<void> {
 String? _simpleName(Expression expression) {
   return switch (expression.unParenthesized) {
     SimpleIdentifier(:final name) => name,
-    _ => null,
-  };
-}
-
-String? _fieldNameFromTarget(Expression expression) {
-  return switch (expression.unParenthesized) {
-    SimpleIdentifier(:final name) => name,
-    PropertyAccess(target: ThisExpression(), :final propertyName) => propertyName.name,
     _ => null,
   };
 }

@@ -229,4 +229,11 @@ void f() {
 }
 ''');
   }
+
+  Future<void> test_generatedLocalizationThrow_noLint() async {
+    final filePath = '$testPackageLibPath/l10n/app_localizations.dart';
+    newFile(filePath, "Never lookup() => throw 'missing';");
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
 }

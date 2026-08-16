@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
 
 /// Warns when a class or mixin overrides a member without adding
 /// implementation or changing the signature.
@@ -71,7 +71,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final memberName = member.name.lexeme;
 
     // Abstract redeclaration — no body at all (EmptyFunctionBody)
-    if (member.isAbstract) {
+    if (!member.isComplete) {
       rule.reportAtNode(member, arguments: [memberName]);
       return;
     }
@@ -94,41 +94,31 @@ class _Visitor extends SimpleAstVisitor<void> {
   /// Checks if a method only calls `super.methodName(...)` passing through
   /// all parameters in the same order.
   static bool _isOnlySuperCall(MethodDeclaration method, String methodName) {
-    final body = method.body;
-
-    Expression? expression;
-    if (body is ExpressionFunctionBody) {
-      expression = body.expression;
-    } else if (body is BlockFunctionBody) {
-      final statements = body.block.statements;
-      if (statements.length != 1) return false;
-      final statement = statements.first;
-      if (statement is ReturnStatement) {
-        expression = statement.expression;
-      } else if (statement is ExpressionStatement) {
-        expression = statement.expression;
-      } else {
-        return false;
-      }
-    }
-
+    final expression = _singleOverrideExpression(method.body);
     if (expression == null) return false;
 
-    // Regular method call: super.methodName(args)
     if (expression is MethodInvocation) {
       return expression.target is SuperExpression &&
           expression.methodName.name == methodName &&
           _areArgsPassThrough(method.parameters, expression.argumentList);
     }
 
-    // Operator override: super == other, super + other, etc.
-    if (method.isOperator && expression is BinaryExpression) {
-      return expression.leftOperand is SuperExpression &&
-          expression.operator.lexeme == methodName &&
-          _isSingleParamPassThrough(method.parameters, expression.rightOperand);
-    }
+    return method.isOperator &&
+        expression is BinaryExpression &&
+        expression.leftOperand is SuperExpression &&
+        expression.operator.lexeme == methodName &&
+        _isSingleParamPassThrough(method.parameters, expression.rightOperand);
+  }
 
-    return false;
+  static Expression? _singleOverrideExpression(FunctionBody body) {
+    if (body is ExpressionFunctionBody) return body.expression;
+    if (body is! BlockFunctionBody || body.block.statements.length != 1) return null;
+    final statement = body.block.statements.single;
+    return switch (statement) {
+      ReturnStatement(:final expression) => expression,
+      ExpressionStatement(:final expression) => expression,
+      _ => null,
+    };
   }
 
   /// Checks if a binary operator's right operand is just the method's
@@ -152,44 +142,25 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (parameters.length != arguments.length) return false;
 
     for (var i = 0; i < parameters.length; i++) {
-      final param = parameters[i];
-      final arg = arguments[i];
-
-      final paramName = param.name?.lexeme;
-      if (paramName == null) return false;
-
-      if (arg is NamedExpression) {
-        // Named argument: name must match and value must be a simple identifier
-        // with the same name as the parameter.
-        if (arg.name.lexeme != paramName) return false;
-        final expr = arg.expression;
-        if (expr is! SimpleIdentifier || expr.name != paramName) return false;
-      } else if (arg is SimpleIdentifier) {
-        // Positional argument: must be a simple identifier with the same name.
-        if (arg.name != paramName) return false;
-      } else {
-        return false;
-      }
+      if (!_argumentPassesThrough(parameters[i], arguments[i])) return false;
     }
 
     return true;
   }
 
+  static bool _argumentPassesThrough(FormalParameter param, Argument arg) {
+    final paramName = param.name?.lexeme;
+    if (paramName == null) return false;
+    if (arg is NamedArgument) {
+      final expr = arg.argumentExpression;
+      return arg.name.lexeme == paramName && expr is SimpleIdentifier && expr.name == paramName;
+    }
+    return arg is SimpleIdentifier && arg.name == paramName;
+  }
+
   /// Checks if a getter only returns `super.getter`.
   static bool _isUnnecessaryGetter(MethodDeclaration method, String getterName) {
-    final body = method.body;
-
-    Expression? expression;
-    if (body is ExpressionFunctionBody) {
-      expression = body.expression;
-    } else if (body is BlockFunctionBody) {
-      final statements = body.block.statements;
-      if (statements.length != 1) return false;
-      final statement = statements.first;
-      if (statement is! ReturnStatement) return false;
-      expression = statement.expression;
-    }
-
+    final expression = _singleBodyExpression(method);
     if (expression == null) return false;
 
     return _isSuperPropertyAccess(expression, getterName);
@@ -197,19 +168,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Checks if a setter only assigns `super.setter = value`.
   static bool _isUnnecessarySetter(MethodDeclaration method, String setterName) {
-    final body = method.body;
-
-    Expression? expression;
-    if (body is ExpressionFunctionBody) {
-      expression = body.expression;
-    } else if (body is BlockFunctionBody) {
-      final statements = body.block.statements;
-      if (statements.length != 1) return false;
-      final statement = statements.first;
-      if (statement is! ExpressionStatement) return false;
-      expression = statement.expression;
-    }
-
+    final expression = _singleBodyExpression(method);
     if (expression == null) return false;
     if (expression is! AssignmentExpression) return false;
 
@@ -225,6 +184,19 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final rhs = expression.rightHandSide;
     return rhs is SimpleIdentifier && rhs.name == paramName;
+  }
+
+  static Expression? _singleBodyExpression(MethodDeclaration method) {
+    final body = method.body;
+    if (body is ExpressionFunctionBody) return body.expression;
+    if (body is! BlockFunctionBody || body.block.statements.length != 1) return null;
+
+    final statement = body.block.statements.single;
+    return switch ((method.isGetter, statement)) {
+      (true, ReturnStatement(:final expression?)) => expression,
+      (false, ExpressionStatement(:final expression)) => expression,
+      _ => null,
+    };
   }
 
   /// Checks if an expression is `super.name` (either PropertyAccess or

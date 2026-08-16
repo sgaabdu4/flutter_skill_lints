@@ -12,7 +12,6 @@ class AvoidNonEmptyConstructorBodies extends AnalysisRule {
     'avoid_non_empty_constructor_bodies',
     'Avoid non-empty constructor bodies.',
     correctionMessage: 'Move work to field initializers, initializer lists, or a named method.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidNonEmptyConstructorBodies()
@@ -51,15 +50,5 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
 bool _isFreezedFactoryConstructor(ConstructorDeclaration node) {
   if (node.factoryKeyword == null) return false;
-  return _isInFreezedClass(node);
-}
-
-bool _isInFreezedClass(AstNode node) {
-  final declaration = node.thisOrAncestorOfType<ClassDeclaration>();
-  return declaration?.metadata.any(_isFreezedAnnotation) ?? false;
-}
-
-bool _isFreezedAnnotation(Annotation annotation) {
-  final name = annotation.name.name;
-  return name == 'freezed' || name == 'Freezed';
+  return isInFreezedClass(node);
 }

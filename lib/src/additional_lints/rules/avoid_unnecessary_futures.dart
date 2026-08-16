@@ -1,15 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/function_body_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when an async function returns a Future without async work.
-final class AvoidUnnecessaryFutures extends AnalysisRule {
+final class AvoidUnnecessaryFutures extends GeneratedFunctionAndMethodBodyCheckRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_futures',
     'Avoid unnecessary Future return types.',
@@ -21,35 +18,12 @@ final class AvoidUnnecessaryFutures extends AnalysisRule {
     : super(
         name: 'avoid_unnecessary_futures',
         description: 'Warns when async functions return immediate values through Future.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (isGeneratedRuleContext(context)) return;
-
-    final visitor = _Visitor(this);
-    registry.addFunctionDeclaration(this, visitor);
-    registry.addMethodDeclaration(this, visitor);
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  const _Visitor(this.rule);
-
-  final AvoidUnnecessaryFutures rule;
-
-  @override
-  void visitFunctionDeclaration(FunctionDeclaration node) {
-    _check(node.returnType, node.functionExpression.body);
-  }
-
-  @override
-  void visitMethodDeclaration(MethodDeclaration node) {
-    if (_hasOverrideAnnotation(node.metadata)) return;
-    _check(node.returnType, node.body);
+  void checkNonOverrideFunctionBody(TypeAnnotation? returnType, FunctionBody body) {
+    _check(returnType, body);
   }
 
   void _check(TypeAnnotation? returnType, FunctionBody body) {
@@ -58,7 +32,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (containsAwait(body)) return;
     if (!_onlyReturnsSyncValues(body)) return;
 
-    rule.reportAtNode(returnType!);
+    reportAtNode(returnType!);
   }
 
   bool _onlyReturnsSyncValues(FunctionBody body) {
@@ -91,10 +65,6 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
     final valueType = arguments.single;
     return valueType is! NamedType || valueType.name.lexeme != 'void';
-  }
-
-  bool _hasOverrideAnnotation(NodeList<Annotation> metadata) {
-    return metadata.any((annotation) => annotation.name.name == 'override');
   }
 }
 

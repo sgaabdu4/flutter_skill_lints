@@ -29,7 +29,7 @@ final class AvoidShrinkWrap extends AnalysisRule {
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
     if (isGeneratedRuleContext(context)) return;
-    registry.addNamedExpression(this, _Visitor(this));
+    registry.addNamedArgument(this, _Visitor(this));
   }
 }
 
@@ -39,9 +39,9 @@ final class _Visitor extends SimpleAstVisitor<void> {
   final AvoidShrinkWrap rule;
 
   @override
-  void visitNamedExpression(NamedExpression node) {
-    if (node.name.label.name != 'shrinkWrap') return;
-    final expression = node.expression;
+  void visitNamedArgument(NamedArgument node) {
+    if (node.name.lexeme != 'shrinkWrap') return;
+    final expression = node.argumentExpression;
     if (expression is BooleanLiteral && expression.value) {
       rule.reportAtNode(node);
     }

@@ -1,15 +1,13 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when common icon/action buttons are missing a tooltip.
-class PreferActionButtonTooltip extends AnalysisRule {
+class PreferActionButtonTooltip extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'prefer_action_button_tooltip',
     'Define a tooltip for action buttons.',
@@ -20,15 +18,11 @@ class PreferActionButtonTooltip extends AnalysisRule {
     : super(
         name: 'prefer_action_button_tooltip',
         description: 'Warns when action buttons omit an accessible tooltip.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addInstanceCreationExpression(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -51,10 +45,10 @@ final class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    final tooltip = argumentList.arguments.whereType<NamedExpression>().firstWhereOrNull(
+    final tooltip = argumentList.arguments.whereType<NamedArgument>().firstWhereOrNull(
       (argument) => argument.name.lexeme == 'tooltip',
     );
-    if (tooltip == null || tooltip.expression is NullLiteral) {
+    if (tooltip == null || tooltip.argumentExpression is NullLiteral) {
       rule.reportAtNode(reportNode);
     }
   }

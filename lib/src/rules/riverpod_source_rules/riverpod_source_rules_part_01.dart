@@ -115,14 +115,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
         if (!_isConsumerStateClass(context, classSpan)) continue;
         if (!_classContainsRefWatch(context, classSpan)) continue;
 
-        for (final lineIndex in _directClassMemberLines(context, classSpan)) {
-          final line = context.source.masked[lineIndex];
-          final match = _derivedCacheField.firstMatch(line);
-          if (match == null) continue;
-          final fieldName = match.group(1);
-          final column = fieldName == null ? match.start : line.indexOf(fieldName, match.start);
-          reporter.report(context, lineIndex, column);
-        }
+        reportDirectClassMemberMatches(reporter, context, classSpan, _derivedCacheField);
       }
     },
   ),
@@ -144,35 +137,8 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     description:
         'Flags config/args/params wrapper objects passed from widgets into provider families.',
     scan: (reporter, context) {
-      for (final classSpan in context.classes) {
-        if (!_isConsumerStateClass(context, classSpan)) continue;
-
-        for (final lineIndex in _directClassMemberLines(context, classSpan)) {
-          final line = context.source.masked[lineIndex];
-          final match = _providerArgWrapperMember.firstMatch(line);
-          if (match == null) continue;
-          final name = match.group(1);
-          if (name == null || !_classPassesProviderArgName(context, classSpan, name)) continue;
-          reporter.report(context, lineIndex, line.indexOf(name));
-        }
-      }
-
-      for (final method in context.methods.where((method) => method.name == 'build')) {
-        for (var i = method.start; i <= method.end; i++) {
-          final line = context.source.masked[i];
-          final localMatch = _providerArgWrapperLocal.firstMatch(line);
-          if (localMatch != null) {
-            final name = localMatch.group(1);
-            if (name != null && _methodPassesProviderArgName(context, method, name)) {
-              reporter.report(context, i, line.indexOf(name));
-            }
-          }
-
-          final inlineMatch = _inlineProviderArgWrapper.firstMatch(line);
-          if (inlineMatch == null) continue;
-          reporter.report(context, i, inlineMatch.start);
-        }
-      }
+      _reportProviderArgWrapperMembers(reporter, context);
+      _reportProviderArgWrapperBuildLocals(reporter, context);
     },
   ),
 
@@ -195,14 +161,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       for (final classSpan in context.classes) {
         if (!_isConsumerStateClass(context, classSpan)) continue;
 
-        for (final lineIndex in _directClassMemberLines(context, classSpan)) {
-          final line = context.source.masked[lineIndex];
-          final match = _providerSubscriptionField.firstMatch(line);
-          if (match == null) continue;
-          final fieldName = match.group(1);
-          final column = fieldName == null ? match.start : line.indexOf(fieldName, match.start);
-          reporter.report(context, lineIndex, column);
-        }
+        reportDirectClassMemberMatches(reporter, context, classSpan, _providerSubscriptionField);
       }
     },
   ),
@@ -312,21 +271,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     ),
     description:
         'Flags select() callbacks without arrow syntax so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (final method in context.methods.where((method) => method.name == 'build')) {
-        for (var i = method.start; i <= method.end; i++) {
-          for (final invocation in _refWatchInvocations(context, i, method.end)) {
-            if (!_hasBlockSelectCallback(invocation)) continue;
-            final selectLine = _firstSelectLine(context, i, method.end);
-            reporter.report(
-              context,
-              selectLine,
-              context.source.masked[selectLine].indexOf('.select'),
-            );
-          }
-        }
-      }
-    },
+    scan: (reporter, context) => _scanSelectViolations(reporter, context, _hasBlockSelectCallback),
   ),
 
   /// select() must narrow to a field or record, not return the source object.
@@ -344,21 +289,8 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     ),
     description:
         'Flags ref.watch(provider.select((value) => value)) so select remains a real rebuild boundary.',
-    scan: (reporter, context) {
-      for (final method in context.methods.where((method) => method.name == 'build')) {
-        for (var i = method.start; i <= method.end; i++) {
-          for (final invocation in _refWatchInvocations(context, i, method.end)) {
-            if (!_hasIdentitySelectCallback(invocation)) continue;
-            final selectLine = _firstSelectLine(context, i, method.end);
-            reporter.report(
-              context,
-              selectLine,
-              context.source.masked[selectLine].indexOf('.select'),
-            );
-          }
-        }
-      }
-    },
+    scan: (reporter, context) =>
+        _scanSelectViolations(reporter, context, _hasIdentitySelectCallback),
   ),
 
   /// Mutation<T> usage should carry an experimental warning.
@@ -374,30 +306,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     ),
     description:
         'Flags Mutation<T> usage without nearby experimental context so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      if (!context.path.contains('/notifiers/') && !context.path.endsWith('_notifier.dart')) {
-        return;
-      }
-      final mutationUsage = RegExp(r'\bMutation\s*<');
-      final experimental = RegExp(r'\bexperimental\b', caseSensitive: false);
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(r'^\s*class\s+Mutation\s*<').hasMatch(line)) continue;
-        if (RegExp(r'^\s*typedef\s+Mutation\s*<').hasMatch(line)) continue;
-        if (RegExp(r'^\s*Mutation\s*<[^>]+>\s+\w+(?:<[^>]+>)?\s*\(').hasMatch(line)) {
-          continue;
-        }
-        if (RegExp(
-          r'^\s*(?:[A-Za-z_]\w*(?:<[^>]+>)?\??|void)\s+Mutation(?:<[^>]+>)?\s*\(',
-        ).hasMatch(line)) {
-          continue;
-        }
-        final match = mutationUsage.firstMatch(line);
-        if (match != null && match.start > 0 && line[match.start - 1] == '.') continue;
-        if (match == null || context.nearOriginal(i, experimental, 5)) continue;
-        reporter.report(context, i, match.start);
-      }
-    },
+    scan: _scanMutationExperimentalWarning,
   ),
 
   /// Keep derived providers alive when all watched dependencies are keepAlive.
@@ -488,3 +397,83 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     },
   ),
 ];
+
+void _reportProviderArgWrapperMembers(ScannerRuleReporter reporter, SourceScannerContext context) {
+  for (final classSpan in context.classes) {
+    if (!_isConsumerStateClass(context, classSpan)) continue;
+    for (final lineIndex in directClassMemberLines(context, classSpan)) {
+      _reportProviderArgWrapperMember(reporter, context, classSpan, lineIndex);
+    }
+  }
+}
+
+void _reportProviderArgWrapperMember(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+  int lineIndex,
+) {
+  final line = context.source.masked[lineIndex];
+  final match = _providerArgWrapperMember.firstMatch(line);
+  final name = match?.group(1);
+  if (match == null || name == null || !_classPassesProviderArgName(context, classSpan, name)) {
+    return;
+  }
+  reporter.report(context, lineIndex, line.indexOf(name));
+}
+
+void _reportProviderArgWrapperBuildLocals(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+) {
+  for (final method in context.methods.where((method) => method.name == 'build')) {
+    for (var lineIndex = method.start; lineIndex <= method.end; lineIndex++) {
+      _reportProviderArgWrapperLocal(reporter, context, method, lineIndex);
+    }
+  }
+}
+
+void _reportProviderArgWrapperLocal(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+  int lineIndex,
+) {
+  final line = context.source.masked[lineIndex];
+  final localMatch = _providerArgWrapperLocal.firstMatch(line);
+  final name = localMatch?.group(1);
+  if (localMatch != null && name != null && _methodPassesProviderArgName(context, method, name)) {
+    reporter.report(context, lineIndex, line.indexOf(name));
+  }
+  final inlineMatch = _inlineProviderArgWrapper.firstMatch(line);
+  if (inlineMatch != null) reporter.report(context, lineIndex, inlineMatch.start);
+}
+
+void _scanMutationExperimentalWarning(ScannerRuleReporter reporter, SourceScannerContext context) {
+  if (!context.path.contains('/notifiers/') && !context.path.endsWith('_notifier.dart')) {
+    return;
+  }
+  final mutationUsage = RegExp(r'\bMutation\s*<');
+  final experimental = RegExp(r'\bexperimental\b', caseSensitive: false);
+  for (var lineIndex = 0; lineIndex < context.source.length; lineIndex++) {
+    final line = context.source.masked[lineIndex];
+    if (_isMutationDeclaration(line)) continue;
+    final match = mutationUsage.firstMatch(line);
+    if (_isMutationMemberAccess(line, match) || match == null) continue;
+    if (context.nearOriginal(lineIndex, experimental, 5)) continue;
+    reporter.report(context, lineIndex, match.start);
+  }
+}
+
+bool _isMutationDeclaration(String line) {
+  return RegExp(r'^\s*class\s+Mutation\s*<').hasMatch(line) ||
+      RegExp(r'^\s*typedef\s+Mutation\s*<').hasMatch(line) ||
+      RegExp(r'^\s*Mutation\s*<[^>]+>\s+\w+(?:<[^>]+>)?\s*\(').hasMatch(line) ||
+      RegExp(
+        r'^\s*(?:[A-Za-z_]\w*(?:<[^>]+>)?\??|void)\s+Mutation(?:<[^>]+>)?\s*\(',
+      ).hasMatch(line);
+}
+
+bool _isMutationMemberAccess(String line, RegExpMatch? match) {
+  return match != null && match.start > 0 && line[match.start - 1] == '.';
+}

@@ -1,14 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when `initState` depends on inherited widgets.
-class AvoidInheritedWidgetInInitstate extends AnalysisRule {
+class AvoidInheritedWidgetInInitstate extends MethodInvocationCheckRule {
   static const LintCode code = LintCode(
     'avoid_inherited_widget_in_initstate',
     'Avoid inherited widget dependencies in initState.',
@@ -19,23 +17,8 @@ class AvoidInheritedWidgetInInitstate extends AnalysisRule {
     : super(
         name: 'avoid_inherited_widget_in_initstate',
         description: 'Warns when State.initState depends on inherited widgets.',
+        code: code,
       );
-
-  @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodInvocation(this, _Visitor(this));
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule);
-
-  final AvoidInheritedWidgetInInitstate rule;
-
-  static const _stateChecker = TypeChecker.fromName('State', packageName: 'flutter');
 
   static const _inheritedDependencyMethods = {
     'dependOnInheritedElement',
@@ -43,7 +26,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   };
 
   @override
-  void visitMethodInvocation(MethodInvocation node) {
+  void checkMethodInvocation(MethodInvocation node) {
     if (!_inheritedDependencyMethods.contains(node.methodName.name)) return;
     if (!_hasContextTarget(node)) return;
 
@@ -51,9 +34,9 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (method == null || classDecl == null) return;
 
     final element = classDecl.declaredFragment?.element;
-    if (element == null || !_stateChecker.isSuperOf(element)) return;
+    if (element == null || !flutterStateChecker.isSuperOf(element)) return;
 
-    rule.reportAtNode(node);
+    reportAtNode(node);
   }
 
   static bool _hasContextTarget(MethodInvocation node) {
@@ -69,24 +52,20 @@ final class _Visitor extends SimpleAstVisitor<void> {
   static ({MethodDeclaration? method, ClassDeclaration? classDecl}) _findEnclosingInitStateAndClass(
     AstNode node,
   ) {
-    MethodDeclaration? method;
+    final method = _enclosingInitStateMethod(node);
+    final classDecl = method == null ? null : enclosingClass(method);
+    return (method: method, classDecl: classDecl);
+  }
+
+  static MethodDeclaration? _enclosingInitStateMethod(AstNode node) {
     AstNode? current = node.parent;
     while (current != null) {
-      if (method == null) {
-        if (current is FunctionExpression || current is FunctionDeclaration) {
-          return (method: null, classDecl: null);
-        }
-        if (current is MethodDeclaration) {
-          if (current.name.lexeme != 'initState') {
-            return (method: null, classDecl: null);
-          }
-          method = current;
-        }
-      } else if (current is ClassDeclaration) {
-        return (method: method, classDecl: current);
+      if (current is FunctionExpression || current is FunctionDeclaration) return null;
+      if (current is MethodDeclaration) {
+        return current.name.lexeme == 'initState' ? current : null;
       }
       current = current.parent;
     }
-    return (method: null, classDecl: null);
+    return null;
   }
 }

@@ -11,7 +11,6 @@ class AvoidExplicitPatternFieldName extends AnalysisRule {
     'avoid_explicit_pattern_field_name',
     'Use object-pattern field shorthand.',
     correctionMessage: "Replace 'foo: foo' with ':foo'.",
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidExplicitPatternFieldName()

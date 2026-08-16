@@ -1,13 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import 'package:flutter_skill_lints/src/ast_utils.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a pattern explicitly uses the bottom type `Never`.
-class AvoidBottomTypeInPatterns extends AnalysisRule {
+class AvoidBottomTypeInPatterns extends GeneratedCompilationUnitCheckRule {
   static const LintCode code = LintCode(
     'avoid_bottom_type_in_patterns',
     'Avoid bottom types in patterns.',
@@ -18,15 +15,12 @@ class AvoidBottomTypeInPatterns extends AnalysisRule {
     : super(
         name: 'avoid_bottom_type_in_patterns',
         description: 'Warns when patterns explicitly use Never.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (isGeneratedRuleContext(context)) return;
-    registry.addCompilationUnit(this, _Visitor(this));
+  void checkCompilationUnit(CompilationUnit node) {
+    node.accept(_Visitor(this));
   }
 }
 

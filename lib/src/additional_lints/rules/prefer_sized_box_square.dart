@@ -1,17 +1,14 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when a `SizedBox` is created with identical `height` and `width`
 /// values. Use `SizedBox.square(dimension: ...)` instead for cleaner code.
-class PreferSizedBoxSquare extends AnalysisRule {
+class PreferSizedBoxSquare extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_sized_box_square',
     'Use SizedBox.square instead of SizedBox with equal width and height.',
@@ -20,19 +17,13 @@ class PreferSizedBoxSquare extends AnalysisRule {
 
   PreferSizedBoxSquare()
     : super(
+        code: code,
         name: 'prefer_sized_box_square',
         description: 'Prefer SizedBox.square when width and height are identical.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -63,7 +54,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (staticType == null) return;
     if (!_sizedBoxChecker.isExactlyType(staticType)) return;
 
-    final args = argumentList.arguments.whereType<NamedExpression>();
+    final args = argumentList.arguments.whereType<NamedArgument>();
 
     final widthArg = args.firstWhereOrNull((a) => a.name.lexeme == 'width');
     final heightArg = args.firstWhereOrNull((a) => a.name.lexeme == 'height');
@@ -72,8 +63,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (widthArg == null || heightArg == null) return;
 
     // Check if both values are identical by comparing their source text
-    final widthSource = widthArg.expression.toSource();
-    final heightSource = heightArg.expression.toSource();
+    final widthSource = widthArg.argumentExpression.toSource();
+    final heightSource = heightArg.argumentExpression.toSource();
 
     if (widthSource == heightSource) {
       rule.reportAtNode(reportNode);

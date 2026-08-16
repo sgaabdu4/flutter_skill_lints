@@ -1,13 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when Mocktail verification/stubbing receives a non-mock target.
-final class PassMockObject extends AnalysisRule {
+final class PassMockObject extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'pass_mock_object',
     'Pass a mock object to mocktail calls.',
@@ -16,17 +14,13 @@ final class PassMockObject extends AnalysisRule {
 
   PassMockObject()
     : super(
+        code: code,
         name: 'pass_mock_object',
         description: 'Warns when mocktail stubbing or verification targets a regular object.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodInvocation(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -57,7 +51,7 @@ bool _isMocktailEntryPoint(String name) {
 }
 
 FunctionExpression? _singleCallbackArgument(MethodInvocation node) {
-  final arguments = node.argumentList.arguments.where((argument) => argument is! NamedExpression);
+  final arguments = node.argumentList.arguments.where((argument) => argument is! NamedArgument);
   if (arguments.length != 1) return null;
 
   final argument = arguments.single;

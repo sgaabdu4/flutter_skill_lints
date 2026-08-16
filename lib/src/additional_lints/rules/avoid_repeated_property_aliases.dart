@@ -1,18 +1,16 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Reports groups of pass-through locals copied from the same object's fields.
 ///
 /// Use the source object directly, class destructuring, or a named record
 /// typedef/projection instead of scattering `final x = source.x` aliases.
-final class AvoidRepeatedPropertyAliases extends AnalysisRule {
+final class AvoidRepeatedPropertyAliases extends BlockCheckRule {
   static const LintCode code = LintCode(
     'avoid_repeated_property_aliases',
     'Avoid copying multiple fields from the same object into local aliases.',
@@ -27,25 +25,14 @@ final class AvoidRepeatedPropertyAliases extends AnalysisRule {
     : super(
         name: 'avoid_repeated_property_aliases',
         description: 'Reports three or more local aliases copied from one object.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
+  bool shouldRegister(RuleContext context) => !isGeneratedRuleContext(context);
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (isGeneratedRuleContext(context)) return;
-    registry.addBlock(this, _Visitor(this));
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  const _Visitor(this.rule);
-
-  final AvoidRepeatedPropertyAliases rule;
-
-  @override
-  void visitBlock(Block node) {
+  void checkBlock(Block node) {
     final aliasesByReceiver = <String, _ReceiverAliases>{};
 
     for (final statement in node.statements) {
@@ -63,7 +50,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
     for (final aliases in aliasesByReceiver.values) {
       if (aliases.distinctProperties.length < AvoidRepeatedPropertyAliases.minAliases) continue;
-      rule.reportAtToken(aliases.firstAlias);
+      reportAtToken(aliases.firstAlias);
     }
   }
 
@@ -113,7 +100,7 @@ final class _PropertyAlias {
         receiver: prefix,
         property: identifier,
       ),
-      PropertyAccess(target: SimpleIdentifier receiver, :final propertyName) => (
+      PropertyAccess(target: final SimpleIdentifier receiver, :final propertyName) => (
         receiver: receiver,
         property: propertyName,
       ),

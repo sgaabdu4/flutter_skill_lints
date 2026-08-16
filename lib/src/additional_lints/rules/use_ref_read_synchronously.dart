@@ -1,12 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../async_guard_utils.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/async_guard_utils.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/riverpod_consumer_checkers.dart';
 
 /// Warns when `ref.read()` is called after an `await` point inside an async
 /// callback within a ConsumerWidget or ConsumerState build method without
@@ -14,11 +12,11 @@ import '../type_checker.dart';
 ///
 /// After an `await`, the widget may have been unmounted, making `ref.read()`
 /// return stale or unintended state.
-class UseRefReadSynchronously extends AnalysisRule {
+class UseRefReadSynchronously extends MethodDeclarationRule {
   static const LintCode code = LintCode(
     'use_ref_read_synchronously',
     "Avoid calling 'ref.read' after an await point without checking "
-        "if the widget is mounted.",
+        'if the widget is mounted.',
     correctionMessage:
         "Add a 'if (!mounted) return;' or 'if (!context.mounted) return;' "
         "guard before calling 'ref.read' after an await.",
@@ -30,16 +28,11 @@ class UseRefReadSynchronously extends AnalysisRule {
         description:
             'Warns when ref.read() is called after an await point in a '
             'ConsumerWidget or ConsumerState without a mounted guard.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addMethodDeclaration(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -47,33 +40,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _consumerWidgetChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerWidget', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerWidget', packageName: 'hooks_riverpod'),
-  ]);
-
-  static const _consumerStateChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerState', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerState', packageName: 'hooks_riverpod'),
-  ]);
-
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
-    if (node.name.lexeme != 'build') return;
-
-    // Navigate to the enclosing class
-    final enclosingBody = node.parent;
-    if (enclosingBody is! BlockClassBody) return;
-    final classDecl = enclosingBody.parent;
-    if (classDecl is! ClassDeclaration) return;
-
-    final element = classDecl.declaredFragment?.element;
-    if (element == null) return;
-
-    // Check if it's a ConsumerWidget, ConsumerState, or Hook variants
-    if (!_consumerWidgetChecker.isSuperOf(element) && !_consumerStateChecker.isSuperOf(element)) {
-      return;
-    }
+    if (!isConsumerBuildMethod(node)) return;
 
     // Find async callbacks inside the build method and check for ref.read
     // after await points
@@ -105,24 +74,7 @@ class _AsyncCallbackFinder extends RecursiveAstVisitor<void> {
 
   /// Checks a list of statements for ref.read() usage after an await point.
   void _checkStatements(NodeList<Statement> statements) {
-    var seenAwait = false;
-
-    for (final statement in statements) {
-      if (!seenAwait) {
-        seenAwait = containsAwait(statement);
-        continue;
-      }
-
-      // After an await: check for mounted guard that resets context
-      if (isMountedGuardWithReturn(statement)) {
-        seenAwait = false;
-        continue;
-      }
-
-      // Report ref.read() usage after an await without a mounted guard
-      final finder = _RefReadFinder(rule);
-      statement.accept(finder);
-    }
+    scanStatementsAfterAwait(statements, (statement) => statement.accept(_RefReadFinder(rule)));
   }
 }
 

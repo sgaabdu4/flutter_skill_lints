@@ -183,13 +183,18 @@ bool _hasMutableSingletonState(String body) {
 bool _hasPublicDataApi(String body) {
   for (final line in body.split('\n')) {
     final trimmed = line.trim();
-    if (trimmed.startsWith('//') || trimmed.startsWith('@')) continue;
-    if (_classDeclarationLine.hasMatch(trimmed)) continue;
-    if (_singletonInstanceDeclaration.hasMatch(trimmed)) continue;
-    if (_publicDataMethod.hasMatch(trimmed)) return true;
-    if (_publicGetter.hasMatch(trimmed)) return true;
-    if (_privateMemberLine.hasMatch(trimmed)) continue;
-    if (_publicField.hasMatch(trimmed)) return true;
+    if (_isPublicDataApiLine(trimmed)) return true;
   }
   return false;
+}
+
+bool _isPublicDataApiLine(String line) {
+  if (line.startsWith('//') || line.startsWith('@')) return false;
+  if (_classDeclarationLine.hasMatch(line) || _singletonInstanceDeclaration.hasMatch(line)) {
+    return false;
+  }
+  if (_privateMemberLine.hasMatch(line)) return false;
+  return _publicDataMethod.hasMatch(line) ||
+      _publicGetter.hasMatch(line) ||
+      _publicField.hasMatch(line);
 }

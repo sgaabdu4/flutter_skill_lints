@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../constant_expression.dart';
+import 'package:flutter_skill_lints/src/additional_lints/constant_expression.dart';
 
 /// Warns when a switch statement or expression evaluates a constant expression.
 ///

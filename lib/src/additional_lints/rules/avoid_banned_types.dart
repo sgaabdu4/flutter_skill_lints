@@ -1,12 +1,9 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when code uses banned type annotations.
-class AvoidBannedTypes extends AnalysisRule {
+class AvoidBannedTypes extends GeneratedNamedTypeCheckRule {
   static const LintCode code = LintCode(
     'avoid_banned_types',
     "Avoid banned type '{0}'.",
@@ -17,29 +14,16 @@ class AvoidBannedTypes extends AnalysisRule {
     : super(
         name: 'avoid_banned_types',
         description: 'Warns when code uses banned type annotations.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addNamedType(this, _Visitor(this));
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  const _Visitor(this.rule);
-
-  final AvoidBannedTypes rule;
-
-  @override
-  void visitNamedType(NamedType node) {
+  void checkNamedType(NamedType node) {
     final name = node.name.lexeme;
     if (name != 'dynamic') return;
     if (_isJsonMapValueType(node)) return;
 
-    rule.reportAtNode(node, arguments: [name]);
+    reportAtNode(node, arguments: [name]);
   }
 }
 

@@ -1,7 +1,10 @@
-// ignore_for_file: implementation_imports
 import 'dart:io';
 
-import 'package:analysis_server_plugin/src/registry.dart';
+import 'package:analysis_server_plugin/registry.dart';
+import 'package:analyzer/analysis_rule/analysis_rule.dart';
+import 'package:analyzer/error/error.dart';
+import 'package:analyzer_plugin/utilities/assist/assist.dart';
+import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:flutter_skill_lints/flutter_skill_lints.dart' as flutter_skill_lints;
 import 'package:flutter_skill_lints/flutter_skill_lints.dart';
 import 'package:flutter_skill_lints/src/additional_lints/additional_lints.dart';
@@ -15,7 +18,7 @@ void main() {
   });
 
   test('registers every rule once', () {
-    final registry = PluginRegistryImpl('flutter_skill_lints');
+    final registry = _RecordingPluginRegistry('flutter_skill_lints');
     final plugin = FlutterSkillLintsPlugin();
 
     plugin.register(registry);
@@ -33,7 +36,7 @@ void main() {
   });
 
   test('registered diagnostics have hover descriptions and correction messages', () {
-    final registry = PluginRegistryImpl('flutter_skill_lints');
+    final registry = _RecordingPluginRegistry('flutter_skill_lints');
     final plugin = FlutterSkillLintsPlugin();
 
     plugin.register(registry);
@@ -51,8 +54,8 @@ void main() {
   });
 
   test('skill lint references resolve to registered diagnostics', () {
-    final skillRegistry = PluginRegistryImpl('flutter_skill_lints');
-    final additionalRegistry = PluginRegistryImpl('flutter_skill_lints_additional');
+    final skillRegistry = _RecordingPluginRegistry('flutter_skill_lints');
+    final additionalRegistry = _RecordingPluginRegistry('flutter_skill_lints_additional');
 
     FlutterSkillLintsPlugin().register(skillRegistry);
     AdditionalLintsPlugin().register(additionalRegistry);
@@ -113,7 +116,7 @@ void main() {
   });
 
   test('ref-read-in-build diagnostic explains callback reads', () {
-    final registry = PluginRegistryImpl('flutter_skill_lints_additional');
+    final registry = _RecordingPluginRegistry('flutter_skill_lints_additional');
     final plugin = AdditionalLintsPlugin();
 
     plugin.register(registry);
@@ -130,7 +133,7 @@ void main() {
   });
 
   test('avoid-returning-widgets diagnostic explains framework override boundary', () {
-    final registry = PluginRegistryImpl('flutter_skill_lints_additional');
+    final registry = _RecordingPluginRegistry('flutter_skill_lints_additional');
     final plugin = AdditionalLintsPlugin();
 
     plugin.register(registry);
@@ -221,7 +224,7 @@ void main() {
   });
 
   test('registers the additional analyzer surface inspired by many_lints', () {
-    final registry = PluginRegistryImpl('flutter_skill_lints_additional');
+    final registry = _RecordingPluginRegistry('flutter_skill_lints_additional');
     final plugin = AdditionalLintsPlugin();
 
     plugin.register(registry);
@@ -251,7 +254,7 @@ void main() {
   });
 
   test('registers every additional analyzer rule file', () {
-    final registry = PluginRegistryImpl('flutter_skill_lints_additional');
+    final registry = _RecordingPluginRegistry('flutter_skill_lints_additional');
     final plugin = AdditionalLintsPlugin();
 
     plugin.register(registry);
@@ -296,7 +299,7 @@ void main() {
   });
 
   test('appends Flutter skill rules after additional analyzer rules', () {
-    final registry = PluginRegistryImpl('flutter_skill_lints');
+    final registry = _RecordingPluginRegistry('flutter_skill_lints');
     final plugin = FlutterSkillLintsPlugin();
 
     plugin.register(registry);
@@ -313,13 +316,48 @@ void main() {
   });
 }
 
-const _enabledFlutterSkillRuleCount = 183;
+const _enabledFlutterSkillRuleCount = 185;
 const _enabledFlutterSkillDiagnosticCount = 193;
 const _enabledAdditionalRuleCount = 279;
 
+final class _RecordingPluginRegistry extends PluginRegistry {
+  _RecordingPluginRegistry(this.pluginName);
+
+  final String pluginName;
+  final List<AssistKind> assistKinds = [];
+  final Map<FixKind, List<String>> fixKinds = {};
+  final Map<String, AbstractAnalysisRule> warningRules = {};
+  final Map<String, AbstractAnalysisRule> lintRules = {};
+
+  @override
+  void registerLintRule(AbstractAnalysisRule rule) {
+    lintRules[rule.name] = rule;
+  }
+
+  @override
+  void registerWarningRule(AbstractAnalysisRule rule) {
+    warningRules[rule.name] = rule;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    if (invocation.memberName == #registerAssist) {
+      assistKinds.add(const AssistKind('test_assist', 0, 'test assist'));
+      return null;
+    }
+    if (invocation.memberName == #registerFixForRule) {
+      final code = invocation.positionalArguments.first as DiagnosticCode;
+      const kind = FixKind('test_fix', 0, 'test fix');
+      fixKinds.putIfAbsent(kind, () => []).add(code.lowerCaseName);
+      return null;
+    }
+    return super.noSuchMethod(invocation);
+  }
+}
+
 const _appSpecificRuleSymbols = [
   'run'
-      'Repem',
+      'SampleProject',
   'pop'
       'Or'
       'Go',

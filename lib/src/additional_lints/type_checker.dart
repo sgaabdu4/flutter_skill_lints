@@ -136,3 +136,30 @@ class TypeChecker {
     return libraryUri.startsWith('package:$_packageName/');
   }
 }
+
+const flutterStatelessWidgetChecker = TypeChecker.fromName(
+  'StatelessWidget',
+  packageName: 'flutter',
+);
+const flutterStatefulWidgetChecker = TypeChecker.fromName('StatefulWidget', packageName: 'flutter');
+const flutterStateChecker = TypeChecker.fromName('State', packageName: 'flutter');
+
+bool isFutureLikeType(DartType? type) {
+  if (type == null) return false;
+  if (type is InterfaceType &&
+      const TypeChecker.fromUrl('dart:async#Future').isAssignableFromType(type)) {
+    return true;
+  }
+  return type.element?.name == 'FutureOr';
+}
+
+DartType? iterableElementType(InterfaceType type) {
+  if (type.typeArguments.isNotEmpty) return type.typeArguments.first;
+
+  for (final supertype in type.element.allSupertypes) {
+    if (supertype.element.name == 'Iterable' && supertype.typeArguments.isNotEmpty) {
+      return supertype.typeArguments.first;
+    }
+  }
+  return null;
+}

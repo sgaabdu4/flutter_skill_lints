@@ -1,12 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when an `else` wraps code after a branch that always exits.
-class AvoidRedundantElse extends AnalysisRule {
+class AvoidRedundantElse extends IfStatementRule {
   static const LintCode code = LintCode(
     'avoid_redundant_else',
     'Avoid else after a branch that exits.',
@@ -18,15 +16,11 @@ class AvoidRedundantElse extends AnalysisRule {
     : super(
         name: 'avoid_redundant_else',
         description: 'Warns when else follows a return, throw, break, or continue branch.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addIfStatement(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {

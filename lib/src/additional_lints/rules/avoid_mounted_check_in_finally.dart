@@ -1,10 +1,8 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a `finally` block early-returns on a negated `mounted` check.
 ///
@@ -31,7 +29,7 @@ import 'package:analyzer/error/error.dart';
 ///   }
 /// }
 /// ```
-class AvoidMountedCheckInFinally extends AnalysisRule {
+class AvoidMountedCheckInFinally extends TryStatementCheckRule {
   static const LintCode code = LintCode(
     'avoid_mounted_check_in_finally',
     "Don't early-return on '!mounted' inside a 'finally' block.",
@@ -46,28 +44,14 @@ class AvoidMountedCheckInFinally extends AnalysisRule {
         description:
             "Warns when 'if (!ref.mounted) return;' (or context/bare mounted) "
             "appears inside a 'finally' block.",
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addTryStatement(this, visitor);
-  }
-}
-
-class _Visitor extends SimpleAstVisitor<void> {
-  final AvoidMountedCheckInFinally rule;
-
-  _Visitor(this.rule);
-
-  @override
-  void visitTryStatement(TryStatement node) {
+  void checkTryStatement(TryStatement node) {
     final finallyBlock = node.finallyBlock;
     if (finallyBlock == null) return;
-    final finder = _MountedReturnFinder(rule);
+    final finder = _MountedReturnFinder(this);
     finallyBlock.visitChildren(finder);
   }
 }

@@ -59,44 +59,7 @@ final List<ScannerRule> valueObjectSourceRules = [
     ),
     description:
         'Flags public raw redirecting factories on Value Objects so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      if (!context.path.contains('/domain/values/')) return;
-      final full = context.source.masked.join('\n');
-      final lineOffsets = <int>[0];
-      for (var i = 0; i < context.source.masked.length; i++) {
-        lineOffsets.add(lineOffsets[i] + context.source.masked[i].length + 1);
-      }
-      int lineOf(int offset) {
-        for (var i = 0; i < lineOffsets.length - 1; i++) {
-          if (offset < lineOffsets[i + 1]) return i;
-        }
-        return context.source.length - 1;
-      }
-
-      final redirectPattern = RegExp(
-        r'\bconst\s+factory\s+([A-Z]\w*)(?:\s*\.\s*([A-Za-z_]\w*))?\s*\(([^)]*)\)\s*=\s*_\w+\s*;',
-        dotAll: true,
-      );
-      for (final m in redirectPattern.allMatches(full)) {
-        final ctorName = m.group(2);
-        if (ctorName != null && ctorName.startsWith('_')) continue;
-        if (m.group(3)!.trim().isEmpty) continue;
-        final lineIdx = lineOf(m.start);
-        reporter.report(context, lineIdx, m.start - lineOffsets[lineIdx]);
-      }
-
-      final passthroughPattern = RegExp(
-        r'\bfactory\s+([A-Z]\w*)\s*\.\s*([A-Za-z_]\w*)\s*\(\s*\w+\s+(\w+)\s*\)\s*=>\s*\1\s*\.\s*_\w+\s*\(\s*\3\s*\)\s*;',
-        dotAll: true,
-      );
-      for (final m in passthroughPattern.allMatches(full)) {
-        final ctorName = m.group(2)!;
-        if (ctorName.startsWith('_')) continue;
-        if (ctorName == 'fromJson') continue;
-        final lineIdx = lineOf(m.start);
-        reporter.report(context, lineIdx, m.start - lineOffsets[lineIdx]);
-      }
-    },
+    scan: _scanPublicRawRedirectFactories,
   ),
 
   /// Domain entities must not own primitive factories.
@@ -119,26 +82,7 @@ final List<ScannerRule> valueObjectSourceRules = [
     ),
     description:
         'Flags named factories on Freezed domain entities so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      if (!context.isDomainPath) return;
-      if (context.path.contains('/domain/values/')) return;
-      for (final classSpan in context.classes) {
-        if (!context.hasFreezedAnnotation(classSpan)) continue;
-        if (classSpan.name.startsWith('_')) continue;
-        final factoryPattern = RegExp(
-          r'\bfactory\s+' + RegExp.escape(classSpan.name) + r'\s*\.\s*([A-Za-z_]\w*)\s*\(',
-        );
-        for (var i = classSpan.start; i <= classSpan.end; i++) {
-          final line = context.source.masked[i];
-          final match = factoryPattern.firstMatch(line);
-          if (match == null) continue;
-          final factoryName = match.group(1)!;
-          if (factoryName.startsWith('_')) continue;
-          if (factoryName == 'fromJson') continue;
-          reporter.report(context, i, match.start);
-        }
-      }
-    },
+    scan: _scanDomainEntityPrimitiveFactories,
   ),
 
   /// Sealed Value Objects must disable Freezed map/when generation.
@@ -228,3 +172,109 @@ final _domainEmptyStringDefault = RegExp(
   r'''\b(?:final\s+)?String\s+[A-Za-z_]\w*\s*=\s*r?['"]\s*['"]|'''
   r'''\bthis\s*\.\s*[A-Za-z_]\w*\s*=\s*r?['"]\s*['"]''',
 );
+
+void _scanPublicRawRedirectFactories(ScannerRuleReporter reporter, SourceScannerContext context) {
+  if (!context.path.contains('/domain/values/')) return;
+  final source = context.source.masked.join('\n');
+  final lineOffsets = _sourceLineOffsets(context);
+  _reportRawRedirectFactories(reporter, context, source, lineOffsets);
+  _reportPassthroughFactories(reporter, context, source, lineOffsets);
+}
+
+List<int> _sourceLineOffsets(SourceScannerContext context) {
+  final offsets = <int>[0];
+  for (final line in context.source.masked) {
+    offsets.add(offsets.last + line.length + 1);
+  }
+  return offsets;
+}
+
+void _reportRawRedirectFactories(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  String source,
+  List<int> lineOffsets,
+) {
+  final pattern = RegExp(
+    r'\bconst\s+factory\s+([A-Z]\w*)(?:\s*\.\s*([A-Za-z_]\w*))?\s*\(([^)]*)\)\s*=\s*_\w+\s*;',
+    dotAll: true,
+  );
+  for (final match in pattern.allMatches(source)) {
+    final constructorName = match.group(2);
+    if (constructorName != null && constructorName.startsWith('_')) continue;
+    if (match.group(3)!.trim().isEmpty) continue;
+    _reportFactoryMatch(reporter, context, match.start, lineOffsets);
+  }
+}
+
+void _reportPassthroughFactories(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  String source,
+  List<int> lineOffsets,
+) {
+  final pattern = RegExp(
+    r'\bfactory\s+([A-Z]\w*)\s*\.\s*([A-Za-z_]\w*)\s*\(\s*\w+\s+(\w+)\s*\)\s*=>\s*\1\s*\.\s*_\w+\s*\(\s*\3\s*\)\s*;',
+    dotAll: true,
+  );
+  for (final match in pattern.allMatches(source)) {
+    final constructorName = match.group(2)!;
+    if (constructorName.startsWith('_') || constructorName == 'fromJson') continue;
+    _reportFactoryMatch(reporter, context, match.start, lineOffsets);
+  }
+}
+
+void _reportFactoryMatch(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  int offset,
+  List<int> lineOffsets,
+) {
+  final lineIndex = _lineIndexForOffset(offset, lineOffsets, context.source.length);
+  reporter.report(context, lineIndex, offset - lineOffsets[lineIndex]);
+}
+
+int _lineIndexForOffset(int offset, List<int> lineOffsets, int lineCount) {
+  for (var index = 0; index < lineOffsets.length - 1; index++) {
+    if (offset < lineOffsets[index + 1]) return index;
+  }
+  return lineCount - 1;
+}
+
+void _scanDomainEntityPrimitiveFactories(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+) {
+  if (!context.isDomainPath || context.path.contains('/domain/values/')) return;
+  for (final classSpan in context.classes) {
+    _reportPrimitiveFactoriesInClass(reporter, context, classSpan);
+  }
+}
+
+void _reportPrimitiveFactoriesInClass(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+) {
+  if (!context.hasFreezedAnnotation(classSpan) || classSpan.name.startsWith('_')) return;
+  final pattern = RegExp(
+    r'\bfactory\s+' + RegExp.escape(classSpan.name) + r'\s*\.\s*([A-Za-z_]\w*)\s*\(',
+  );
+  for (var lineIndex = classSpan.start; lineIndex <= classSpan.end; lineIndex++) {
+    _reportPrimitiveFactoryLine(reporter, context, classSpan, lineIndex, pattern);
+  }
+}
+
+void _reportPrimitiveFactoryLine(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+  int lineIndex,
+  RegExp pattern,
+) {
+  final match = pattern.firstMatch(context.source.masked[lineIndex]);
+  final factoryName = match?.group(1);
+  if (match == null || factoryName == null) return;
+  if (factoryName.startsWith('_') || factoryName == 'fromJson') return;
+  reporter.report(context, lineIndex, match.start);
+}

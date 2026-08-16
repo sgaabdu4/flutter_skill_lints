@@ -5,8 +5,6 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
-
 /// Warns when `ReorderableListView` / `SliverReorderableList` code mixes old
 /// `onReorder` index semantics with new `onReorderItem` index semantics.
 ///
@@ -35,7 +33,7 @@ class UseOnReorderItemIndexSemantics extends AnalysisRule {
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
     final visitor = _Visitor(this);
-    registry.addNamedExpression(this, visitor);
+    registry.addNamedArgument(this, visitor);
     registry.addFunctionExpression(this, visitor);
     registry.addFunctionDeclaration(this, visitor);
     registry.addMethodDeclaration(this, visitor);
@@ -49,9 +47,9 @@ final class _Visitor extends SimpleAstVisitor<void> {
   final Set<int> _reportedOffsets = <int>{};
 
   @override
-  void visitNamedExpression(NamedExpression node) {
+  void visitNamedArgument(NamedArgument node) {
     if (node.name.lexeme == 'onReorder' && _isFrameworkReorderableArgument(node)) {
-      _report(node.name.label);
+      _reportNamedArgument(node);
       return;
     }
   }
@@ -86,6 +84,11 @@ final class _Visitor extends SimpleAstVisitor<void> {
   void _report(AstNode node) {
     if (!_reportedOffsets.add(node.offset)) return;
     rule.reportAtNode(node);
+  }
+
+  void _reportNamedArgument(NamedArgument node) {
+    if (!_reportedOffsets.add(node.name.offset)) return;
+    rule.reportAtOffset(node.name.offset, node.name.length);
   }
 }
 
@@ -125,7 +128,7 @@ final class _LegacyIndexMathFinder extends RecursiveAstVisitor<void> {
 
 bool _isOnReorderItemCallback(FunctionExpression node) {
   final parent = node.parent;
-  return parent is NamedExpression && parent.name.lexeme == 'onReorderItem';
+  return parent is NamedArgument && parent.name.lexeme == 'onReorderItem';
 }
 
 bool _hasOldAndNewIndexParams(NodeList<FormalParameter>? parameters) {
@@ -136,7 +139,7 @@ bool _hasOldAndNewIndexParams(NodeList<FormalParameter>? parameters) {
 
 bool _isReorderName(String name) => name.toLowerCase().contains('reorder');
 
-bool _isFrameworkReorderableArgument(NamedExpression node) {
+bool _isFrameworkReorderableArgument(NamedArgument node) {
   final parent = node.parent;
   if (parent is! ArgumentList) return false;
   final owner = parent.parent;

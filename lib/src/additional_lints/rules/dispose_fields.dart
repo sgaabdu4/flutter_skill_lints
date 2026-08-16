@@ -1,12 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../disposal_utils.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/disposal_utils.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a widget State field that has a disposal method (`dispose`,
 /// `close`, or `cancel`) is not cleaned up in the `dispose()` method.
@@ -15,7 +13,7 @@ import '../type_checker.dart';
 /// `StreamController`, `StreamSubscription`, `FocusNode`, `Timer`, etc. must
 /// be properly disposed/closed/cancelled in `dispose()` to prevent memory
 /// leaks.
-class DisposeFields extends AnalysisRule {
+class DisposeFields extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'dispose_fields',
     "Field '{0}' is not disposed. Call '{0}.{1}()' in dispose().",
@@ -28,16 +26,11 @@ class DisposeFields extends AnalysisRule {
         description:
             'Warns when a State field with a disposal method is not '
             'cleaned up in dispose().',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addClassDeclaration(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -45,64 +38,55 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _stateChecker = TypeChecker.fromName('State', packageName: 'flutter');
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    final element = node.declaredFragment?.element;
-    if (element == null) return;
+    final body = flutterStateBody(node);
+    if (body == null) return;
+    final cleanedUpTargets = _cleanedUpTargets(body.members);
+    _reportUndisposedFields(rule, body.members, cleanedUpTargets);
+  }
+}
 
-    if (!_stateChecker.isSuperOf(element)) return;
+Map<String, Set<String>> _cleanedUpTargets(List<ClassMember> members) {
+  final disposeMethod = members
+      .whereType<MethodDeclaration>()
+      .where((method) => method.name.lexeme == 'dispose')
+      .firstOrNull;
+  if (disposeMethod == null) return {};
+  final collector = _CleanupCallCollector();
+  disposeMethod.body.visitChildren(collector);
+  final targets = <String, Set<String>>{};
+  for (final call in collector.calls) {
+    targets.putIfAbsent(call.targetSource, () => {}).add(call.methodName);
+  }
+  return targets;
+}
 
-    final body = node.body;
-    if (body is! BlockClassBody) return;
-
-    final members = body.members;
-
-    // Collect all cleanup calls made in dispose()
-    final disposeMethod = members
-        .whereType<MethodDeclaration>()
-        .where((m) => m.name.lexeme == 'dispose')
-        .firstOrNull;
-
-    final cleanedUpTargets = <String, Set<String>>{};
-    if (disposeMethod != null) {
-      final collector = _CleanupCallCollector();
-      disposeMethod.body.visitChildren(collector);
-      for (final call in collector.calls) {
-        cleanedUpTargets.putIfAbsent(call.targetSource, () => {}).add(call.methodName);
-      }
-    }
-
-    // Check each field declaration
-    for (final fieldDecl in members.whereType<FieldDeclaration>()) {
-      if (fieldDecl.isStatic) continue;
-
-      for (final variable in fieldDecl.fields.variables) {
-        final type = variable.declaredFragment?.element.type;
-        if (type == null) continue;
-
-        final expectedCleanup = findCleanupMethod(type);
-        if (expectedCleanup == null) continue;
-
-        final fieldName = variable.name.lexeme;
-
-        // Check if the field is cleaned up in dispose()
-        final calledMethods = cleanedUpTargets[fieldName];
-        if (calledMethods != null && calledMethods.contains(expectedCleanup)) {
-          continue;
-        }
-
-        // Also check with `this.` prefix
-        final thisCalledMethods = cleanedUpTargets['this.$fieldName'];
-        if (thisCalledMethods != null && thisCalledMethods.contains(expectedCleanup)) {
-          continue;
-        }
-
-        rule.reportAtToken(variable.name, arguments: [fieldName, expectedCleanup]);
-      }
+void _reportUndisposedFields(
+  DisposeFields rule,
+  List<ClassMember> members,
+  Map<String, Set<String>> cleanedUpTargets,
+) {
+  for (final fieldDecl in members.whereType<FieldDeclaration>()) {
+    if (fieldDecl.isStatic) continue;
+    for (final variable in fieldDecl.fields.variables) {
+      final expectedCleanup = _expectedCleanup(variable);
+      if (expectedCleanup == null) continue;
+      final fieldName = variable.name.lexeme;
+      if (_isCleanedUp(cleanedUpTargets, fieldName, expectedCleanup)) continue;
+      rule.reportAtToken(variable.name, arguments: [fieldName, expectedCleanup]);
     }
   }
+}
+
+String? _expectedCleanup(VariableDeclaration variable) {
+  final type = variable.declaredFragment?.element.type;
+  return type == null ? null : findCleanupMethod(type);
+}
+
+bool _isCleanedUp(Map<String, Set<String>> cleanedUpTargets, String fieldName, String methodName) {
+  return cleanedUpTargets[fieldName]?.contains(methodName) == true ||
+      cleanedUpTargets['this.$fieldName']?.contains(methodName) == true;
 }
 
 /// Represents a cleanup call like `fieldName.dispose()`.

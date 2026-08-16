@@ -1,12 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when nested `if` statements can be combined.
-class AvoidCollapsibleIf extends AnalysisRule {
+class AvoidCollapsibleIf extends IfStatementRule {
   static const LintCode code = LintCode(
     'avoid_collapsible_if',
     'Avoid nested if statements that can be collapsed.',
@@ -18,15 +16,11 @@ class AvoidCollapsibleIf extends AnalysisRule {
     : super(
         name: 'avoid_collapsible_if',
         description: 'Warns when an if statement only contains another if statement.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addIfStatement(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {

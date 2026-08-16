@@ -53,7 +53,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
 String? _ownPackageName(String? sourcePath) {
   if (sourcePath == null) return null;
 
-  final marker = '/lib/src/';
+  const marker = '/lib/src/';
   final markerIndex = sourcePath.lastIndexOf(marker);
   if (markerIndex == -1) return null;
 

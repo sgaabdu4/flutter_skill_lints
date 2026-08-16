@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Suggests using .any() or .every() instead of .where().isEmpty/.isNotEmpty.
 ///
@@ -39,20 +39,11 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _iterableChecker = TypeChecker.fromUrl('dart:core#Iterable');
-
   @override
   void visitPropertyAccess(PropertyAccess node) {
-    if (node case PropertyAccess(
-      propertyName: SimpleIdentifier(name: final property && ('isEmpty' || 'isNotEmpty')),
-      target: MethodInvocation(
-        target: Expression(staticType: final targetType?),
-        methodName: SimpleIdentifier(name: 'where'),
-        argumentList: ArgumentList(arguments: [_]),
-      ),
-    ) when _iterableChecker.isAssignableFromType(targetType)) {
-      final isNotEmpty = property == 'isNotEmpty';
-      rule.reportAtNode(node, arguments: [isNotEmpty ? 'any' : 'every', property]);
-    }
+    final property = filteredCollectionProperty(node);
+    if (property == null) return;
+    final isNotEmpty = property == 'isNotEmpty';
+    rule.reportAtNode(node, arguments: [isNotEmpty ? 'any' : 'every', property]);
   }
 }

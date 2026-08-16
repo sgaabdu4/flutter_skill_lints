@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Reports collection chains with a cheaper direct predicate form.
 class AvoidSlowCollectionMethods extends AnalysisRule {
@@ -13,7 +13,6 @@ class AvoidSlowCollectionMethods extends AnalysisRule {
     'avoid_slow_collection_methods',
     'Use .{0}() instead of .where().{1}.',
     correctionMessage: 'Use the direct predicate method to avoid a filtered iterable.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidSlowCollectionMethods()
@@ -36,19 +35,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _iterableChecker = TypeChecker.fromUrl('dart:core#Iterable');
-
   @override
   void visitPropertyAccess(PropertyAccess node) {
-    if (node case PropertyAccess(
-      propertyName: SimpleIdentifier(name: final property && ('isEmpty' || 'isNotEmpty')),
-      target: MethodInvocation(
-        target: Expression(staticType: final targetType?),
-        methodName: SimpleIdentifier(name: 'where'),
-        argumentList: ArgumentList(arguments: [_]),
-      ),
-    ) when _iterableChecker.isAssignableFromType(targetType)) {
-      rule.reportAtNode(node, arguments: [property == 'isNotEmpty' ? 'any' : 'every', property]);
-    }
+    final property = filteredCollectionProperty(node);
+    if (property == null) return;
+    rule.reportAtNode(node, arguments: [property == 'isNotEmpty' ? 'any' : 'every', property]);
   }
 }

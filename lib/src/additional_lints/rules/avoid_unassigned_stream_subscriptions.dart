@@ -1,16 +1,14 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a `Stream.listen()` call is not assigned to a variable.
 ///
 /// Without storing the returned `StreamSubscription`, you cannot cancel it
 /// later, which may lead to memory leaks.
-class AvoidUnassignedStreamSubscriptions extends AnalysisRule {
+class AvoidUnassignedStreamSubscriptions extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_unassigned_stream_subscriptions',
     'Stream subscription is not assigned to a variable.',
@@ -19,18 +17,13 @@ class AvoidUnassignedStreamSubscriptions extends AnalysisRule {
 
   AvoidUnassignedStreamSubscriptions()
     : super(
+        code: code,
         name: 'avoid_unassigned_stream_subscriptions',
         description: 'Warns when a stream subscription is not assigned to a variable.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {

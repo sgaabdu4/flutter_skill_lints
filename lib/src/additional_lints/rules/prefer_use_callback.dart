@@ -1,18 +1,15 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when `useMemoized` is used to memoize a function expression.
 ///
 /// `useCallback` is specifically designed for memoizing callbacks and is more
 /// semantically correct than wrapping a function in `useMemoized`.
-class PreferUseCallback extends AnalysisRule {
+class PreferUseCallback extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_use_callback',
     "Use 'useCallback' instead of 'useMemoized' for memoizing functions.",
@@ -21,18 +18,13 @@ class PreferUseCallback extends AnalysisRule {
 
   PreferUseCallback()
     : super(
+        code: code,
         name: 'prefer_use_callback',
         description: 'Warns when useMemoized is used to memoize a function expression.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {

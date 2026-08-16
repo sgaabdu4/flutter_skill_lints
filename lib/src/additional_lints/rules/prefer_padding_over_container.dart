@@ -1,18 +1,16 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Suggests using `Padding` instead of `Container` with only padding or margin.
 ///
 /// Dedicated layout widgets make spacing intent explicit and avoid a generic
 /// `Container` when decoration, constraints, or color are not needed.
-class PreferPaddingOverContainer extends AnalysisRule {
+class PreferPaddingOverContainer extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'prefer_padding_over_container',
     'Use Padding widget instead of the Container widget with only the padding or margin parameter',
@@ -23,16 +21,11 @@ class PreferPaddingOverContainer extends AnalysisRule {
     : super(
         name: 'prefer_padding_over_container',
         description: 'Use Padding widget instead of Container when only padding or margin is set.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {

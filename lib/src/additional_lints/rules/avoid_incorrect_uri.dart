@@ -11,7 +11,6 @@ final class AvoidIncorrectUri extends AnalysisRule {
     'avoid_incorrect_uri',
     'Avoid incorrect directive URIs.',
     correctionMessage: 'Use a valid normalized Dart URI.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidIncorrectUri()
@@ -61,35 +60,42 @@ final class _Visitor extends SimpleAstVisitor<void> {
 }
 
 bool _isIncorrectUri(String value) {
+  if (_hasInvalidUriSurface(value)) return true;
+
+  final parsed = Uri.tryParse(value);
+  if (parsed == null || parsed.hasFragment) return true;
+
+  if (_hasUnsupportedUriScheme(parsed)) return true;
+  if (value.startsWith('package:')) return _isIncorrectPackageUri(value);
+  if (value.startsWith('dart:')) return _isIncorrectDartUri(value);
+  return false;
+}
+
+bool _hasInvalidUriSurface(String value) {
   if (value.trim() != value || value.isEmpty) return true;
   if (value.contains(r'\')) return true;
   if (value.contains('//') && !value.startsWith('dart:') && !value.startsWith('package:')) {
     return true;
   }
-  if (value.startsWith('/') || value.startsWith('./') || value == '..') {
-    return true;
-  }
-  if (value.contains('/./') || _containsNonLeadingParentSegment(value)) return true;
-  if (value.endsWith('/.') || value.endsWith('/..')) return true;
+  if (value.startsWith('/') || value.startsWith('./') || value == '..') return true;
+  return value.contains('/./') ||
+      _containsNonLeadingParentSegment(value) ||
+      value.endsWith('/.') ||
+      value.endsWith('/..');
+}
 
-  final parsed = Uri.tryParse(value);
-  if (parsed == null || parsed.hasFragment) return true;
+bool _hasUnsupportedUriScheme(Uri parsed) {
+  return parsed.scheme.isNotEmpty && parsed.scheme != 'dart' && parsed.scheme != 'package';
+}
 
-  if (parsed.scheme.isNotEmpty && parsed.scheme != 'dart' && parsed.scheme != 'package') {
-    return true;
-  }
+bool _isIncorrectPackageUri(String value) {
+  final path = value.substring('package:'.length);
+  final slashIndex = path.indexOf('/');
+  return slashIndex <= 0 || slashIndex == path.length - 1 || path.contains('//');
+}
 
-  if (value.startsWith('package:')) {
-    final path = value.substring('package:'.length);
-    final slashIndex = path.indexOf('/');
-    return slashIndex <= 0 || slashIndex == path.length - 1 || path.contains('//');
-  }
-
-  if (value.startsWith('dart:')) {
-    return value.length == 'dart:'.length || value.contains('/');
-  }
-
-  return false;
+bool _isIncorrectDartUri(String value) {
+  return value.length == 'dart:'.length || value.contains('/');
 }
 
 bool _containsNonLeadingParentSegment(String value) {

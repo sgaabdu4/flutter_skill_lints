@@ -1,14 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when code uses an explicit runtime `as` cast.
-class AvoidTypeCasts extends AnalysisRule {
+class AvoidTypeCasts extends AsExpressionCheckRule {
   static const LintCode code = LintCode(
     'avoid_type_casts',
     'Avoid type casts.',
@@ -19,31 +17,20 @@ class AvoidTypeCasts extends AnalysisRule {
     : super(
         name: 'avoid_type_casts',
         description: 'Warns when code uses explicit runtime as-casts.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
+  bool shouldRegister(RuleContext context) => !isGeneratedRuleContext(context);
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (isGeneratedRuleContext(context)) return;
-    registry.addAsExpression(this, _Visitor(this));
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  const _Visitor(this.rule);
-
-  final AvoidTypeCasts rule;
-
-  @override
-  void visitAsExpression(AsExpression node) {
+  void checkAsExpression(AsExpression node) {
     final targetType = node.type.type;
     if (targetType == null || targetType is InvalidType) return;
     if (_isAllowedJsonMapCast(node.type)) return;
     if (_isTopType(targetType)) return;
 
-    rule.reportAtNode(node);
+    reportAtNode(node);
   }
 
   bool _isAllowedJsonMapCast(TypeAnnotation type) {

@@ -1,15 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import '../ast_node_analysis.dart';
-
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when controller-accepting text input widgets omit `controller`.
-class AvoidMissingController extends AnalysisRule {
+class AvoidMissingController extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'avoid_missing_controller',
     'Pass a controller to this text input widget.',
@@ -22,15 +18,11 @@ class AvoidMissingController extends AnalysisRule {
         description:
             'Warns when TextField, TextFormField, or EditableText is created '
             'without an explicit controller.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addInstanceCreationExpression(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -54,7 +46,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   }
 
   static bool _hasNamedArgument(ArgumentList argumentList, String name) {
-    for (final argument in argumentList.arguments.whereType<NamedExpression>()) {
+    for (final argument in argumentList.arguments.whereType<NamedArgument>()) {
       if (argument.name.lexeme == name) return true;
     }
     return false;

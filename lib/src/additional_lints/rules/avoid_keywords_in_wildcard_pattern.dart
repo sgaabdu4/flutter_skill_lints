@@ -10,8 +10,7 @@ class AvoidKeywordsInWildcardPattern extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_keywords_in_wildcard_pattern',
     "Avoid 'var' and 'final' in wildcard patterns.",
-    correctionMessage: "Remove the keyword from the wildcard pattern.",
-    severity: DiagnosticSeverity.INFO,
+    correctionMessage: 'Remove the keyword from the wildcard pattern.',
   );
 
   AvoidKeywordsInWildcardPattern()

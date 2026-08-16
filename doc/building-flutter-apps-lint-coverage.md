@@ -1,13 +1,13 @@
 # building-flutter-apps Lint Coverage
 
-Status: 2026-07-15.
+Status: 2026-08-15.
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 183 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 185 registered `building-flutter-apps` warning rules.
 - `lib/src/rules/**`: 193 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 279 additional diagnostics.
-- Total unique diagnostics: 469.
+- Total unique diagnostics: 470.
 
 ## Full Rule Inventory
 
@@ -103,18 +103,18 @@ hover description and correction text.
 
 | Skill reference | Analyzer-backed coverage or recorded boundary |
 | --- | --- |
-| `analysis-options.md` | `cfg_analysis_options_canonical`, `cfg_strict_analysis`, `cfg_required_lints`, `cfg_generated_exclude`, `cfg_freezed_annotation_ignore`, `cfg_prohibited_lint_plugins`, `avoid_flutter_skill_lint_suppression` |
+| `analysis-options.md` | `cfg_analysis_options_canonical`, `cfg_strict_analysis`, `cfg_required_lints`, `cfg_generated_exclude`, `cfg_prohibited_lint_plugins`, `avoid_flutter_skill_lint_suppression` |
 | `analysis_options.yaml` | Canonical include/plugins/analyzer/linter block; duplicate checks leave `flutter_lints` and `riverpod_lint` owned rules to those packages |
 | `architecture.md` | `arch_domain_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_repository_generated_extends`, `arch_concrete_dependency`, `arch_datasource_try_catch`, `arch_widget_path`, `arch_model_missing_to_entity`, `arch_model_extends_entity`, `atomic_provider_access`, `avoid_object_map_cast`, `avoid_inline_error_codes`, `avoid_local_contract_key_constants`, runtime boundary for dual persistence owners |
 | `atomic-design.md` | `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`, `atomic_provider_access`, `arch_widget_path`, `widget_material_boundary`, runtime boundary for cross-feature widget promotion |
 | `common-patterns.md` | `router_string_nav`, `router_gorouter_of`, `router_untyped_navigator_push`, `router_direct_route_call`, `router_raw_route_definition`, `router_modal_local_helpers`, `router_container_navigation_escape`, `router_context_navigation_extension`, `router_navigation_wrapper_api`, `router_pop_then_push`, `pop_fallback_helper_must_check_navigator_stack` (mounted + root/local Navigator fallback), `router_redirect_watch`, `router_redirect_loading_bounce`, `router_splash_waits_for_initial_sync`, `router_complex_extra`, `router_impure_redirect`, `router_shell_tab_push`, `guard_context_pop`, `use_context_is_current_modal_route`, `avoid_route_param_throw_in_build`, `state_broad_invalidation`, `widget_local_mutation_flag`, `storage_clear_preserves_migration_state`, runtime boundary for UX-specific debounce duration |
 | `crashlytics.md` | `crash_direct_firebase_call`, `crash_init_before_run_app`, `crash_possible_pii`, `destructive_failure_logged_before_reconcile`, runtime boundary for CI symbol upload |
-| `dart-mcp-e2e-testing.md` | `cfg_e2e_entrypoint`, `test_inline_value_key`, `test_tap_at`, `test_first_match_finder`, runtime boundary for real device, logs, source-of-truth, cleanup, and multi-actor proof |
+| `dart-mcp-e2e-testing.md` | `cfg_e2e_entrypoint`, `avoid_flutter_host_driver_imports`, `test_inline_value_key`, `test_tap_at`, `test_first_match_finder`, runtime boundary for real device, logs, source-of-truth, cleanup, and multi-actor proof |
 | `dart-patterns-records.md` | `records_map_return`, `typed_id_raw_id`, `avoid_null_bang`, `prefer_wildcard_pattern`, `prefer_class_destructuring`, `use_existing_destructuring` |
 | `extensions-utilities.md` | `ui_snackbar_boundary`, `datetime_now_requires_timezone_intent`, `avoid_magic_literals`, `use_context_is_current_modal_route`, `dart_static_namespace`, `service_static_side_effect`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures` |
 | `flutter-optimizations.md` | `avoid_shrink_wrap`, `perf_listview_children`, `perf_build_work`, `a11y_text_scale_clamp`, `flutter_key_created_in_build`, `flutter_unique_or_global_key`, `flutter_opacity_widget`, `flutter_save_layer_filter`, `flutter_clip_save_layer`, `flutter_intrinsic_layout`, `flutter_animated_builder_child`, `flutter_widget_operator_equals`, `use_dedicated_media_query_methods`, `prefer_compute_over_isolate_run` |
 | `freezed-sealed.md` | `use_sealed_freezed_classes`, `use_freezed_instead_of_immutable`, `freezed_one_class_per_file`, `freezed_missing_private_constructor`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map`, `arch_domain_json_annotation`, `cfg_explicit_to_json` |
-| `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_test_close_missing`, runtime boundary for historical TypeId permanence |
+| `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_test_close_missing`, `avoid_unvalidated_persisted_map_cast`, runtime boundary for historical TypeId permanence |
 | `localization.md` | `strings_hardcoded`, `l10n_context_direct_access` |
 | `mixins.md` | `mixin_mixin_class`, `mixin_name_suffix`, `mixin_mutable_state` |
 | `performance.md` | `riverpod_watch_no_select`, `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `perf_listview_children`, `perf_build_work`, `state_empty_string_sentinel`, `state_bool_string_sentinel`, `state_raw_response`, `state_raw_error_to_string`, `a11y_text_scale_clamp`, `flutter_*` optimization rules |
@@ -185,6 +185,13 @@ Registry/test helper improvements:
 - `test_keys.dart` is treated as a central key registry filename.
 - `test_first_match_finder` is narrower: `.first` only fires around finder
   usage instead of arbitrary collection access.
+
+E2E and persistence boundaries:
+
+- `avoid_flutter_host_driver_imports` rejects direct and transitive Flutter UI,
+  target-only driver, and app-package imports from `test_driver/` host files.
+- `avoid_unvalidated_persisted_map_cast` rejects direct typed-map casts in
+  local persistence paths while allowing remote JSON decoding paths.
 
 Modal snapshot / state teardown (0.7.0) — `dialog_source_rules`:
 
@@ -292,9 +299,8 @@ so this plugin should not add duplicate reports:
 - `prefer_contains` is already enabled by `package:flutter_lints/flutter.yaml`
   through `package:lints/recommended.yaml`.
 - `avoid_public_notifier_properties` and `avoid_ref_inside_state_dispose` are
-  owned by `riverpod_lint` stable `3.1.4`. Verified against
-  `/tmp/riverpod-lint-8e393e4e` at
-  `8e393e4e44cea3ca919db6bb5c68a012e132ab59`.
+  owned by `riverpod_lint` stable `3.1.8`. Verified against the
+  [Riverpod lint changelog](https://pub.dev/packages/riverpod_lint/changelog).
 - Missing `part` files or generated `.g.dart` wiring.
 - Riverpod generated provider dependency metadata and scoped-provider override
   diagnostics already owned by Riverpod tooling.
@@ -307,33 +313,21 @@ so this plugin should not add duplicate reports:
 
 ## Riverpod Package Compatibility
 
-External check source:
-`/tmp/riverpod-lint-8e393e4e/packages` at
-`8e393e4e44cea3ca919db6bb5c68a012e132ab59`.
+The lint package uses the shared analyzer-13 family in its `pubspec.yaml`:
 
-The local package targets `analyzer: ^12.1.0`,
-`analyzer_plugin: ^0.14.8`, and `analysis_server_plugin: ^0.3.14`.
-The checked Riverpod packages that use analyzer APIs accept the same analyzer
-12 line, so no extra dependency is needed here. Per the Flutter skill config,
-`riverpod_lint` stays in the consuming app's top-level `plugins:` block instead
-of this package's `pubspec.yaml`.
+- `analyzer 13.3.0`
+- `analyzer_plugin 0.14.12`
+- `analysis_server_plugin 0.3.18`
+- `analyzer_testing 0.3.2`
+- `riverpod_lint 3.1.8` in the consuming app's top-level `plugins:` block
 
-| Package | Version | SDK | Analyzer/API constraint | Compatible |
-| --- | --- | --- | --- | --- |
-| `flutter_riverpod` | `3.3.2-dev.2` | `^3.7.0` | none | yes |
-| `hooks_riverpod` | `3.3.2-dev.2` | `^3.7.0` | none | yes |
-| `internal_lint` | workspace | `^3.10.0` | `analyzer ^12.0.0`, `analyzer_plugin ^0.14.0` | yes |
-| `lint_visitor_generator` | workspace | `^3.7.0` | `analyzer ^12.0.0` | yes |
-| `riverpod` | `3.3.2-dev.2` | `^3.7.0` | `analyzer ^12.0.0` | yes |
-| `riverpod_analyzer_utils` | `1.0.0-dev.10` | `^3.7.0` | `analyzer ^12.0.0` | yes |
-| `riverpod_analyzer_utils_tests` | workspace | `^3.7.0` | `analyzer ^12.0.0` | yes |
-| `riverpod_annotation` | `4.0.3-dev.2` | `^3.7.0` | none | yes |
-| `riverpod_devtool` | workspace | `^3.10.0` | none | yes |
-| `riverpod_devtool_generator` | workspace | `^3.8.0` | `analyzer ^12.0.0` | yes |
-| `riverpod_generator` | `4.0.4-dev.3` | `^3.7.0` | `analyzer ^12.0.0` | yes |
-| `riverpod_lint` | `3.1.4` | `^3.10.0` | `analyzer ^13.0.0`, `analyzer_plugin ^0.14.0`, `analysis_server_plugin ^0.3.0` | yes |
-| `riverpod_lint_flutter_test` | workspace | `^3.7.0` | `analyzer ^12.0.0`, `analyzer_plugin ^0.14.0` | yes |
-| `riverpod_sqflite` | `0.4.3-dev.2` | `^3.7.0` | none | yes |
+The real analysis-server smoke test resolves both plugins together and checks
+that diagnostics are emitted without `server.pluginError`. `analyzer 14.1.0`
+is a newer standalone candidate, but it is not compatible with the current
+Riverpod plugin family, so it is not the shared package contract. The Flutter
+generator family remains separate because its build process resolves analyzer
+12.x for code generation. Version truth lives in the Flutter skill's
+`references/core-stack.md`.
 
 ## Runtime Proof Boundaries
 

@@ -1,16 +1,14 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a `State` class contains method overrides that only call the
 /// super implementation without any additional logic.
-class AvoidUnnecessaryOverridesInState extends AnalysisRule {
+class AvoidUnnecessaryOverridesInState extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_overrides_in_state',
     'This method override only calls super.{0}() without additional logic.',
@@ -23,16 +21,11 @@ class AvoidUnnecessaryOverridesInState extends AnalysisRule {
         description:
             'Warns when a State class contains method overrides that only '
             'call super without additional logic.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addClassDeclaration(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -40,17 +33,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _stateChecker = TypeChecker.fromName('State', packageName: 'flutter');
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    final element = node.declaredFragment?.element;
-    if (element == null) return;
-
-    if (!_stateChecker.isSuperOf(element)) return;
-
-    final body = node.body;
-    if (body is! BlockClassBody) return;
+    final body = flutterStateBody(node);
+    if (body == null) return;
 
     for (final member in body.members) {
       if (member is! MethodDeclaration) continue;

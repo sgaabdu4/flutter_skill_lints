@@ -1,18 +1,16 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when multi-child widgets have only a single child.
 ///
 /// Dedicated single-child widgets keep the widget tree simpler and avoid a
 /// misleading `children` collection when only one child is present.
-class AvoidSingleChildInMultiChildWidgets extends AnalysisRule {
+class AvoidSingleChildInMultiChildWidgets extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'avoid_single_child_in_multi_child_widgets',
     'Avoid using {0} with a single child.',
@@ -24,16 +22,11 @@ class AvoidSingleChildInMultiChildWidgets extends AnalysisRule {
         name: 'avoid_single_child_in_multi_child_widgets',
         description:
             'Warns when a multi-child widget has one child and a simpler widget can express it.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -57,32 +50,24 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     final constructorName = node.constructorName.type;
     if (constructorName.element case final typeElement?) {
-      // is it something we want to complain about?
       final match = _complain.firstWhereOrNull((e) => e.$2.isExactly(typeElement));
       if (match == null) return;
-
-      // does it have a children argument?
-      Expression? children;
-
-      if (match.$1.isEmpty) {
-        // handle positional (first argument)
-        if (node.argumentList.arguments.isNotEmpty) {
-          children = node.argumentList.arguments.first;
-        }
-      } else {
-        // handle named argument
-        for (final arg in node.argumentList.arguments) {
-          if (arg is NamedExpression && arg.name.lexeme == match.$1) {
-            children = arg.expression;
-            break;
-          }
-        }
-      }
-
+      final children = _childrenArgument(node.argumentList, match.$1);
       if (children == null) return;
-
       _checkInstanceCreation(constructorName, children);
     }
+  }
+
+  static Expression? _childrenArgument(ArgumentList arguments, String name) {
+    if (name.isEmpty) {
+      return arguments.arguments.firstOrNull?.argumentExpression;
+    }
+    for (final argument in arguments.arguments) {
+      if (argument is NamedArgument && argument.name.lexeme == name) {
+        return argument.argumentExpression;
+      }
+    }
+    return null;
   }
 
   void _checkInstanceCreation(NamedType constructorName, Expression children) {
@@ -103,6 +88,7 @@ class _Visitor extends SimpleAstVisitor<void> {
         IfElement(:final thenElement, :final elseElement) =>
           checkExpression(thenElement) && (elseElement == null || checkExpression(elseElement)),
         NullAwareElement(:final value) => checkExpression(value),
+        _ => false,
       };
     }
 

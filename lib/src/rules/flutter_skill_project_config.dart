@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer/file_system/file_system.dart';
+import 'package:flutter_skill_lints/src/additional_lints/pubspec_rule_utils.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Reports package-level Flutter skill configuration drift.
@@ -48,12 +49,6 @@ final class FlutterSkillProjectConfig extends MultiAnalysisRule {
       correctionMessage: 'Exclude *.g.dart, *.freezed.dart, *.gr.dart, and *.arb.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    'cfg_freezed_annotation_ignore': LintCode(
-      'cfg_freezed_annotation_ignore',
-      'Ignore invalid_annotation_target for generated Freezed annotations.',
-      correctionMessage: 'Set analyzer.errors.invalid_annotation_target to ignore.',
-      severity: DiagnosticSeverity.ERROR,
-    ),
     'cfg_prohibited_lint_plugins': LintCode(
       'cfg_prohibited_lint_plugins',
       'Remove old lint plugin dependencies and local plugin sources.',
@@ -82,12 +77,6 @@ final class FlutterSkillProjectConfig extends MultiAnalysisRule {
       'avoid_any_version',
       'Avoid using any as a pubspec dependency version.',
       correctionMessage: 'Pin the dependency to a concrete version constraint.',
-      severity: DiagnosticSeverity.ERROR,
-    ),
-    'avoid_dependency_overrides': LintCode(
-      'avoid_dependency_overrides',
-      'Avoid dependency_overrides in pubspec.yaml.',
-      correctionMessage: 'Remove dependency_overrides before shipping the package.',
       severity: DiagnosticSeverity.ERROR,
     ),
     'prefer_publish_to_none': LintCode(
@@ -121,7 +110,7 @@ final class FlutterSkillProjectConfig extends MultiAnalysisRule {
   Folder? _findPackageRoot(Folder start) {
     var folder = start;
     while (true) {
-      if (folder.getChildAssumingFile('pubspec.yaml').exists) return folder;
+      if (folder.getFile('pubspec.yaml').exists) return folder;
       if (folder.isRoot) return null;
       folder = folder.parent;
     }
@@ -151,24 +140,22 @@ final class _Visitor extends SimpleAstVisitor<void> {
 }
 
 String? _anchorPath(Folder root) {
-  final pubspecText = _read(root.getChildAssumingFile('pubspec.yaml'));
+  final pubspecText = _read(root.getFile('pubspec.yaml'));
   final packageName = RegExp(
     r'^name:\s*([A-Za-z0-9_]+)\s*$',
     multiLine: true,
   ).firstMatch(pubspecText ?? '')?.group(1);
 
   if (packageName != null) {
-    final entrypoint = root.getChildAssumingFile('lib/$packageName.dart');
+    final entrypoint = root.getFile('lib/$packageName.dart');
     if (entrypoint.exists) return entrypoint.path;
   }
 
-  final main = root.getChildAssumingFile('lib/main.dart');
+  final main = root.getFile('lib/main.dart');
   if (main.exists) return main.path;
 
-  final candidates = [
-    ..._dartFiles(root.getChildAssumingFolder('lib')),
-    ..._dartFiles(root.getChildAssumingFolder('test')),
-  ]..sort();
+  final candidates = [..._dartFiles(root.getFolder('lib')), ..._dartFiles(root.getFolder('test'))]
+    ..sort();
   return candidates.isEmpty ? null : candidates.first;
 }
 
@@ -187,7 +174,7 @@ final class _ProjectConfigScanner {
 
   List<String> scan() {
     final issues = <String>{};
-    final pubspecText = _read(root.getChildAssumingFile('pubspec.yaml'));
+    final pubspecText = _read(root.getFile('pubspec.yaml'));
     if (pubspecText != null) {
       _scanPubspec(pubspecText, issues);
       if (_isFlutterPackage(pubspecText)) {
@@ -195,7 +182,7 @@ final class _ProjectConfigScanner {
       }
     }
 
-    final analysisOptions = root.getChildAssumingFile('analysis_options.yaml');
+    final analysisOptions = root.getFile('analysis_options.yaml');
     final analysisOptionsText = _read(analysisOptions);
 
     if (analysisOptionsText == null) {
@@ -205,7 +192,7 @@ final class _ProjectConfigScanner {
     }
 
     if (_hasJsonModels()) {
-      final buildYaml = _read(root.getChildAssumingFile('build.yaml'));
+      final buildYaml = _read(root.getFile('build.yaml'));
       if (buildYaml == null || !RegExp(r'explicit_to_json\s*:\s*true\b').hasMatch(buildYaml)) {
         issues.add('cfg_explicit_to_json');
       }
@@ -225,9 +212,6 @@ final class _ProjectConfigScanner {
     if (_hasAnyDependencyVersion(text)) {
       issues.add('avoid_any_version');
     }
-    if (_hasPubspecSectionEntries(text, 'dependency_overrides')) {
-      issues.add('avoid_dependency_overrides');
-    }
     if (_hasNonNonePublishTarget(text)) {
       issues.add('prefer_publish_to_none');
     }
@@ -238,37 +222,57 @@ final class _ProjectConfigScanner {
       RegExp(r'(^|\n)\s*flutter\s*:', multiLine: true).hasMatch(text);
 
   void _scanFlutterE2eEntrypoint(Set<String> issues) {
-    final mainDev = _read(root.getChildAssumingFile('lib/main_dev.dart'));
+    final mainDev = _read(root.getFile('lib/main_dev.dart'));
     if (mainDev == null || !_hasDeterministicFlutterE2eEntrypoint(mainDev)) {
       issues.add('cfg_e2e_entrypoint');
     }
   }
 
   void _scanAnalysisOptions(String text, Set<String> issues) {
-    if (!RegExp(r'(^|\n)plugins\s*:', multiLine: true).hasMatch(text) ||
-        !RegExp(r'(^|\n)\s*flutter_skill_lints\s*:', multiLine: true).hasMatch(text) ||
-        !RegExp(r'(^|\n)\s*riverpod_lint\s*:', multiLine: true).hasMatch(text) ||
+    _scanCanonicalAnalysisOptions(text, issues);
+    _scanAllowedAnalyzerPlugins(text, issues);
+    _scanStrictAnalysisOptions(text, issues);
+    _scanRequiredLints(text, issues);
+    _scanGeneratedExcludes(text, issues);
+  }
+
+  void _scanCanonicalAnalysisOptions(String text, Set<String> issues) {
+    final hasPlugins = RegExp(r'(^|\n)plugins\s*:', multiLine: true).hasMatch(text);
+    final hasLintPackage = RegExp(
+      r'(^|\n)\s*flutter_skill_lints\s*:',
+      multiLine: true,
+    ).hasMatch(text);
+    final hasRiverpodLint = RegExp(r'(^|\n)\s*riverpod_lint\s*:', multiLine: true).hasMatch(text);
+    if (!hasPlugins ||
+        !hasLintPackage ||
+        !hasRiverpodLint ||
         text.contains('tool/analyzer_plugins') ||
         RegExp(r'(^|\n)\s*many_lints\s*:').hasMatch(text)) {
       issues.add('cfg_analysis_options_canonical');
     }
+  }
 
-    if (_analyzerPluginPackages.skip(2).any((package) => _hasYamlKey(text, package)) ||
-        _hasLocalPluginSource(text)) {
+  void _scanAllowedAnalyzerPlugins(String text, Set<String> issues) {
+    final hasProhibitedPackage = _analyzerPluginPackages
+        .skip(2)
+        .any((package) => _hasYamlKey(text, package));
+    if (hasProhibitedPackage || _hasLocalPluginSource(text)) {
       issues.add('cfg_prohibited_lint_plugins');
     }
+  }
 
+  void _scanStrictAnalysisOptions(String text, Set<String> issues) {
     for (final option in ['strict-casts', 'strict-inference', 'strict-raw-types']) {
-      if (!RegExp('(^|\\n)\\s*$option\\s*:\\s*true\\b').hasMatch(text)) {
-        issues.add('cfg_strict_analysis');
-      }
+      final enabled = RegExp('(^|\\n)\\s*$option\\s*:\\s*true\\b').hasMatch(text);
+      if (!enabled) issues.add('cfg_strict_analysis');
     }
     for (final error in ['missing_required_param', 'missing_return']) {
-      if (!RegExp('(^|\\n)\\s*$error\\s*:\\s*error\\b').hasMatch(text)) {
-        issues.add('cfg_strict_analysis');
-      }
+      final enabled = RegExp('(^|\\n)\\s*$error\\s*:\\s*error\\b').hasMatch(text);
+      if (!enabled) issues.add('cfg_strict_analysis');
     }
+  }
 
+  void _scanRequiredLints(String text, Set<String> issues) {
     const requiredLints = [
       'always_use_package_imports',
       'require_trailing_commas',
@@ -297,21 +301,15 @@ final class _ProjectConfigScanner {
       'unawaited_futures',
     ];
     for (final lint in requiredLints) {
-      final enabledList = RegExp('^\\s*-\\s*$lint\\b', multiLine: true);
-      final disabledMap = RegExp('^\\s*$lint\\s*:\\s*false\\b', multiLine: true);
-      if (!enabledList.hasMatch(text) || disabledMap.hasMatch(text)) {
-        issues.add('cfg_required_lints');
-      }
+      final enabled = RegExp('^\\s*-\\s*$lint\\b', multiLine: true).hasMatch(text);
+      final disabled = RegExp('^\\s*$lint\\s*:\\s*false\\b', multiLine: true).hasMatch(text);
+      if (!enabled || disabled) issues.add('cfg_required_lints');
     }
+  }
 
+  void _scanGeneratedExcludes(String text, Set<String> issues) {
     for (final generated in ['*.g.dart', '*.freezed.dart', '*.gr.dart', '*.arb']) {
-      if (!text.contains(generated)) {
-        issues.add('cfg_generated_exclude');
-      }
-    }
-
-    if (!RegExp(r'(^|\n)\s*invalid_annotation_target\s*:\s*ignore\b').hasMatch(text)) {
-      issues.add('cfg_freezed_annotation_ignore');
+      if (!text.contains(generated)) issues.add('cfg_generated_exclude');
     }
   }
 
@@ -332,22 +330,6 @@ final class _ProjectConfigScanner {
     return false;
   }
 
-  bool _hasPubspecSectionEntries(String text, String section) {
-    final sectionMatch = RegExp(
-      '^\\s*${RegExp.escape(section)}\\s*:(.*)\$',
-      multiLine: true,
-    ).firstMatch(text);
-    if (sectionMatch == null) return false;
-
-    final inline = sectionMatch.group(1) ?? '';
-    if (inline.trim().isNotEmpty && inline.trim() != '{}') return true;
-
-    return _sectionLines(
-      text,
-      section,
-    ).any((line) => RegExp(r'''^\s*['"]?[\w-]+['"]?\s*:''').hasMatch(line));
-  }
-
   bool _hasNonNonePublishTarget(String text) {
     for (final line in text.split('\n')) {
       if (line.trimLeft().startsWith('#')) continue;
@@ -361,80 +343,56 @@ final class _ProjectConfigScanner {
   }
 
   Iterable<String> _sectionLines(String text, String section) sync* {
-    final lines = text.split('\n');
-    var inSection = false;
-    var sectionIndent = 0;
-
-    for (final line in lines) {
-      if (line.trim().isEmpty || line.trimLeft().startsWith('#')) continue;
-      final indent = line.length - line.trimLeft().length;
-      final sectionMatch = RegExp('^\\s*${RegExp.escape(section)}\\s*:(.*)\$').firstMatch(line);
-      if (sectionMatch != null) {
-        sectionIndent = indent;
-        inSection = (sectionMatch.group(1) ?? '').trim().isEmpty;
-        continue;
-      }
-      if (!inSection) continue;
-      if (indent <= sectionIndent) {
-        inSection = false;
-        continue;
-      }
-      yield line;
+    for (final entry in yamlSectionLines(text, section)) {
+      yield entry.line;
     }
   }
 
   bool _hasLocalPluginSource(String text) {
-    var inPlugins = false;
-    var pluginsIndent = 0;
-    String? currentPlugin;
-    var currentPluginIndent = 0;
-
+    final state = _PluginSourceState();
     for (final line in text.split('\n')) {
-      if (line.trim().isEmpty || line.trimLeft().startsWith('#')) continue;
-      final indent = line.length - line.trimLeft().length;
-      final pluginsMatch = RegExp(r'^\s*plugins\s*:(.*)$').firstMatch(line);
-      if (pluginsMatch != null) {
-        final inlinePlugins = pluginsMatch.group(1) ?? '';
-        if (_flowStyleHasProhibitedLocalSource(inlinePlugins)) return true;
-        inPlugins = inlinePlugins.trim().isEmpty;
-        pluginsIndent = indent;
-        currentPlugin = null;
-        continue;
-      }
-      if (inPlugins && indent <= pluginsIndent) {
-        inPlugins = false;
-        currentPlugin = null;
-      }
-      if (inPlugins) {
-        if (currentPlugin != null && indent <= currentPluginIndent) {
-          currentPlugin = null;
-        }
-
-        final pluginMatch = RegExp(r'''^\s*['"]?([A-Za-z_]\w*)['"]?\s*:(.*)$''').firstMatch(line);
-        if (pluginMatch != null && indent > pluginsIndent) {
-          final candidate = pluginMatch.group(1);
-          if (candidate == 'path' || candidate == 'git') {
-            if (!_allowsLocalPluginSource(currentPlugin, line)) {
-              return true;
-            }
-            continue;
-          } else {
-            currentPlugin = candidate;
-            currentPluginIndent = indent;
-          }
-          final rest = pluginMatch.group(2) ?? '';
-          if (_lineHasLocalSource(rest) && !_allowsLocalPluginSource(currentPlugin, rest)) {
-            return true;
-          }
-          continue;
-        }
-
-        if (_lineHasLocalSource(line) && !_allowsLocalPluginSource(currentPlugin, line)) {
-          return true;
-        }
-      }
+      if (_inspectPluginLine(state, line)) return true;
     }
     return false;
+  }
+
+  bool _inspectPluginLine(_PluginSourceState state, String line) {
+    if (line.trim().isEmpty || line.trimLeft().startsWith('#')) return false;
+    final indent = line.length - line.trimLeft().length;
+    final pluginsMatch = RegExp(r'^\s*plugins\s*:(.*)$').firstMatch(line);
+    if (pluginsMatch != null) {
+      return _startPluginSection(state, indent, pluginsMatch.group(1) ?? '');
+    }
+    if (!state.inPlugins) return false;
+    if (indent <= state.pluginsIndent) {
+      state.leaveSection();
+      return false;
+    }
+    if (state.currentPlugin != null && indent <= state.currentPluginIndent) {
+      state.currentPlugin = null;
+    }
+    return _inspectPluginEntry(state, line, indent);
+  }
+
+  bool _startPluginSection(_PluginSourceState state, int indent, String inlinePlugins) {
+    if (_flowStyleHasProhibitedLocalSource(inlinePlugins)) return true;
+    state.beginSection(indent: indent, multiline: inlinePlugins.trim().isEmpty);
+    return false;
+  }
+
+  bool _inspectPluginEntry(_PluginSourceState state, String line, int indent) {
+    final pluginMatch = RegExp(r'''^\s*['"]?([A-Za-z_]\w*)['"]?\s*:(.*)$''').firstMatch(line);
+    if (pluginMatch != null && indent > state.pluginsIndent) {
+      final candidate = pluginMatch.group(1);
+      if (candidate == 'path' || candidate == 'git') {
+        return !_allowsLocalPluginSource(state.currentPlugin, line);
+      }
+      state.currentPlugin = candidate;
+      state.currentPluginIndent = indent;
+      final rest = pluginMatch.group(2) ?? '';
+      return _lineHasLocalSource(rest) && !_allowsLocalPluginSource(state.currentPlugin, rest);
+    }
+    return _lineHasLocalSource(line) && !_allowsLocalPluginSource(state.currentPlugin, line);
   }
 
   bool _lineHasLocalSource(String text) => _hasYamlKey(text, 'git') || _hasYamlKey(text, 'path');
@@ -452,7 +410,7 @@ final class _ProjectConfigScanner {
   }
 
   bool _hasJsonModels() {
-    for (final path in _dartFiles(root.getChildAssumingFolder('lib'))) {
+    for (final path in _dartFiles(root.getFolder('lib'))) {
       final file = root.provider.getFile(path);
       final text = _read(file);
       if (text == null) continue;
@@ -463,6 +421,24 @@ final class _ProjectConfigScanner {
       }
     }
     return false;
+  }
+}
+
+final class _PluginSourceState {
+  bool inPlugins = false;
+  int pluginsIndent = 0;
+  String? currentPlugin;
+  int currentPluginIndent = 0;
+
+  void beginSection({required int indent, required bool multiline}) {
+    inPlugins = multiline;
+    pluginsIndent = indent;
+    currentPlugin = null;
+  }
+
+  void leaveSection() {
+    inPlugins = false;
+    currentPlugin = null;
   }
 }
 

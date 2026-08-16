@@ -4,9 +4,9 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import '../ast_node_analysis.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a parameter list has more than four parameters.
 class AvoidLongParameterList extends AnalysisRule {
@@ -66,7 +66,7 @@ bool _isOverrideAnnotation(Annotation annotation) {
 bool _isFreezedConstructorParameterList(FormalParameterList node) {
   final parent = node.parent;
   if (parent is! ConstructorDeclaration) return false;
-  return _isInFreezedClass(parent);
+  return isInFreezedClass(parent);
 }
 
 bool _isWidgetConstructorParameterList(FormalParameterList node) {
@@ -85,21 +85,11 @@ bool _isZoneSpecificationHandleUncaughtErrorCallback(FormalParameterList node) {
   if (parent is! FunctionExpression) return false;
 
   final namedExpression = parent.parent;
-  if (namedExpression is! NamedExpression) return false;
+  if (namedExpression is! NamedArgument) return false;
   if (namedExpression.name.lexeme != 'handleUncaughtError') return false;
 
   final argumentList = namedExpression.parent;
   final invocation = argumentList?.parent;
   return invocation is InstanceCreationExpression &&
       invocation.constructorName.type.toSource() == 'ZoneSpecification';
-}
-
-bool _isInFreezedClass(AstNode node) {
-  final declaration = node.thisOrAncestorOfType<ClassDeclaration>();
-  return declaration?.metadata.any(_isFreezedAnnotation) ?? false;
-}
-
-bool _isFreezedAnnotation(Annotation annotation) {
-  final name = annotation.name.name;
-  return name == 'freezed' || name == 'Freezed';
 }

@@ -1,17 +1,15 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when RichText is used instead of Text.rich.
 ///
 /// RichText does not handle text scaling well. Prefer Text.rich
 /// for better accessibility support.
-class PreferTextRich extends AnalysisRule {
+class PreferTextRich extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_text_rich',
     'Use Text.rich instead of RichText for better text scaling and accessibility.',
@@ -20,19 +18,13 @@ class PreferTextRich extends AnalysisRule {
 
   PreferTextRich()
     : super(
+        code: code,
         name: 'prefer_text_rich',
         description: 'Warns when RichText is used instead of Text.rich for better accessibility.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {

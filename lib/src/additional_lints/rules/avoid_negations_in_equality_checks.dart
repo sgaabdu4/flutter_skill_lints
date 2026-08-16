@@ -1,13 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when an equality comparison negates one side.
-class AvoidNegationsInEqualityChecks extends AnalysisRule {
+class AvoidNegationsInEqualityChecks extends BinaryExpressionRule {
   static const LintCode code = LintCode(
     'avoid_negations_in_equality_checks',
     'Avoid negating one side of an equality check.',
@@ -18,15 +16,11 @@ class AvoidNegationsInEqualityChecks extends AnalysisRule {
     : super(
         name: 'avoid_negations_in_equality_checks',
         description: 'Warns when == or != compares a negated boolean expression.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addBinaryExpression(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {

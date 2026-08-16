@@ -1,17 +1,14 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Suggests using MediaQuery dedicated methods instead of MediaQuery.of().property.
 ///
 /// Aspect-specific methods rebuild only when the requested property changes,
 /// avoiding broad MediaQuery dependencies.
-class UseDedicatedMediaQueryMethods extends AnalysisRule {
+class UseDedicatedMediaQueryMethods extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'use_dedicated_media_query_methods',
     'Avoid using {0} to access only one property of MediaQueryData. Using aspects of the MediaQuery avoids unnecessary rebuilds.',
@@ -20,18 +17,13 @@ class UseDedicatedMediaQueryMethods extends AnalysisRule {
 
   UseDedicatedMediaQueryMethods()
     : super(
+        code: code,
         name: 'use_dedicated_media_query_methods',
         description: 'Use MediaQuery dedicated methods instead of MediaQuery.of().property.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {

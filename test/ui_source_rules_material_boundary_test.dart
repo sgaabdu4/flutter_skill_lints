@@ -3,9 +3,6 @@
 import 'dart:math' as math;
 
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
-// ignore: implementation_imports
-import 'package:analyzer_testing/src/analysis_rule/pub_package_resolution.dart'
-    show ExpectedDiagnostic;
 import 'package:flutter_skill_lints/src/rules/material_source_rules.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -155,12 +152,12 @@ void main() {
     await assertNoDiagnosticsInFile('$testPackageRootPath/$filePath');
   }
 
-  ExpectedDiagnostic _lintFor(String source, String needle) {
+  T _lintFor<T>(String source, String needle) {
     final offset = source.indexOf(needle);
     if (offset < 0) throw StateError('Needle not found: $needle');
     final lineEnd = source.indexOf('\n', offset);
     final end = lineEnd < 0 ? source.length : lineEnd;
-    return lint(offset, math.max(1, end - offset), name: _ruleName);
+    return lint(offset, math.max(1, end - offset), name: _ruleName) as T;
   }
 
   String _withFlutterImport(String source) => '''
@@ -265,11 +262,11 @@ class ActiveRoutineChip {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  ExpectedDiagnostic _lintFor(String source, String needle, String ruleName) {
+  T _lintFor<T>(String source, String needle, String ruleName) {
     final offset = source.indexOf(needle);
     if (offset < 0) throw StateError('Needle not found: $needle');
     final lineEnd = source.indexOf('\n', offset);
     final end = lineEnd < 0 ? source.length : lineEnd;
-    return lint(offset, math.max(1, end - offset), name: ruleName);
+    return lint(offset, math.max(1, end - offset), name: ruleName) as T;
   }
 }

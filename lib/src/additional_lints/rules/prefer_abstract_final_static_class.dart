@@ -1,13 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a class containing only static members is not marked as
 /// `abstract final`, which would prevent instantiation and inheritance.
-class PreferAbstractFinalStaticClass extends AnalysisRule {
+class PreferAbstractFinalStaticClass extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'prefer_abstract_final_static_class',
     'Classes with only static members should be declared as abstract final.',
@@ -20,16 +18,11 @@ class PreferAbstractFinalStaticClass extends AnalysisRule {
     : super(
         name: 'prefer_abstract_final_static_class',
         description: 'Warns when a class with only static members is not abstract final.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addClassDeclaration(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -39,41 +32,30 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    // Skip if already abstract final
-    if (node.abstractKeyword != null && node.finalKeyword != null) return;
-
-    // Skip classes with other modifiers that make abstract final inappropriate
-    if (node.sealedKeyword != null ||
-        node.baseKeyword != null ||
-        node.interfaceKeyword != null ||
-        node.mixinKeyword != null) {
-      return;
-    }
-
     final body = node.body;
-    if (body is! BlockClassBody) return;
-
-    final members = body.members;
-
-    // Skip empty classes
-    if (members.isEmpty) return;
-
-    // Check that all members are static
-    for (final member in members) {
-      switch (member) {
-        case ConstructorDeclaration():
-          // Any constructor means this isn't a purely static class
-          return;
-        case MethodDeclaration(:final isStatic):
-          if (!isStatic) return;
-        case FieldDeclaration(:final isStatic):
-          if (!isStatic) return;
-        default:
-          // Unknown member type — be conservative
-          return;
-      }
+    if (_isEligibleDeclaration(node) && body is BlockClassBody && _hasOnlyStaticMembers(body)) {
+      rule.reportAtNode(node);
     }
+  }
 
-    rule.reportAtNode(node);
+  static bool _isEligibleDeclaration(ClassDeclaration node) {
+    if (node.abstractKeyword != null && node.finalKeyword != null) return false;
+    return node.sealedKeyword == null &&
+        node.baseKeyword == null &&
+        node.interfaceKeyword == null &&
+        node.mixinKeyword == null;
+  }
+
+  static bool _hasOnlyStaticMembers(BlockClassBody body) {
+    if (body.members.isEmpty) return false;
+    for (final member in body.members) {
+      final isStatic = switch (member) {
+        MethodDeclaration(:final isStatic) => isStatic,
+        FieldDeclaration(:final isStatic) => isStatic,
+        _ => false,
+      };
+      if (!isStatic) return false;
+    }
+    return true;
   }
 }

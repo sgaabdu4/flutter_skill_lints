@@ -1,18 +1,15 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when a widget that supports a `padding` parameter is wrapped in a
 /// `Padding` widget. The padding should be passed directly to the child widget
 /// instead.
-class AvoidWrappingInPadding extends AnalysisRule {
+class AvoidWrappingInPadding extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_wrapping_in_padding',
     "Avoid wrapping a '{0}' in a 'Padding' widget.",
@@ -21,19 +18,13 @@ class AvoidWrappingInPadding extends AnalysisRule {
 
   AvoidWrappingInPadding()
     : super(
+        code: code,
         name: 'avoid_wrapping_in_padding',
         description: 'Avoid wrapping widgets that support padding in a Padding widget.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -58,12 +49,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   void _check(ArgumentList argumentList, AstNode reportNode) {
     // Find the child argument
-    final childArg = argumentList.arguments.whereType<NamedExpression>().firstWhereOrNull(
+    final childArg = argumentList.arguments.whereType<NamedArgument>().firstWhereOrNull(
       (e) => e.name.lexeme == 'child',
     );
     if (childArg == null) return;
 
-    final childExpr = childArg.expression;
+    final childExpr = childArg.argumentExpression;
 
     // Get the child widget's type name and argument list
     final (childTypeName, childArgList) = _getChildInfo(childExpr);
@@ -75,9 +66,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (!_hasPaddingParam(childType)) return;
 
     // Check the child doesn't already have a padding argument set
-    if (childArgList.arguments.whereType<NamedExpression>().any(
-      (e) => e.name.lexeme == 'padding',
-    )) {
+    if (childArgList.arguments.whereType<NamedArgument>().any((e) => e.name.lexeme == 'padding')) {
       return;
     }
 

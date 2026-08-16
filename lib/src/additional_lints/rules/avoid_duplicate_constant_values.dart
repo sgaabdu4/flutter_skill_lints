@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/duplicate_literal_key.dart';
 
 /// Warns when one const declaration group repeats a simple literal value.
 final class AvoidDuplicateConstantValues extends AnalysisRule {
@@ -43,7 +44,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
       final initializer = variable.initializer;
       if (initializer == null) continue;
 
-      final key = _literalKey(initializer);
+      final key = duplicateLiteralKey(initializer);
       if (key == null) continue;
 
       if (!seen.add(key)) {
@@ -51,25 +52,4 @@ final class _Visitor extends SimpleAstVisitor<void> {
       }
     }
   }
-}
-
-String? _literalKey(Expression expression) {
-  final unwrapped = _unwrap(expression);
-
-  return switch (unwrapped) {
-    BooleanLiteral(:final value) => 'bool:$value',
-    DoubleLiteral(:final value) => 'double:$value',
-    IntegerLiteral(:final value?) => 'int:$value',
-    NullLiteral() => 'null',
-    SimpleStringLiteral(:final value) => 'string:$value',
-    _ => null,
-  };
-}
-
-Expression _unwrap(Expression expression) {
-  var current = expression;
-  while (current is ParenthesizedExpression) {
-    current = current.expression;
-  }
-  return current;
 }

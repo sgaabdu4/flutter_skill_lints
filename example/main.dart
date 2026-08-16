@@ -1,6 +1,7 @@
-void main() {
-  final message = buildGreeting('Flutter');
-  assert(message == 'Hello, Flutter');
-}
+import 'package:flutter_skill_lints/flutter_skill_lints.dart';
 
-String buildGreeting(String name) => 'Hello, $name';
+void main() {
+  if (plugin.name.isEmpty) {
+    throw StateError('The plugin must have a name.');
+  }
+}

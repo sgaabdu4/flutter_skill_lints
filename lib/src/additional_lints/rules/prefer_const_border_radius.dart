@@ -1,18 +1,16 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when `BorderRadius.circular()` is used instead of
 /// `BorderRadius.all(Radius.circular())`.
 ///
 /// `BorderRadius.circular` calls `BorderRadius.all(Radius.circular())` under
 /// the hood. Using the explicit form allows the expression to be const.
-class PreferConstBorderRadius extends AnalysisRule {
+class PreferConstBorderRadius extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_const_border_radius',
     'Prefer BorderRadius.all(Radius.circular()) over BorderRadius.circular().',
@@ -22,20 +20,14 @@ class PreferConstBorderRadius extends AnalysisRule {
 
   PreferConstBorderRadius()
     : super(
+        code: code,
         name: 'prefer_const_border_radius',
         description:
             'Warns when BorderRadius.circular() is used instead of BorderRadius.all(Radius.circular()).',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {

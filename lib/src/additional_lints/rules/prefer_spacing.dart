@@ -1,14 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../ast_node_analysis.dart';
-import '../flutter_widget_helpers.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when SizedBox widgets are used for spacing inside Row, Column, or Flex
 /// children instead of using the `spacing` argument (Flutter 3.27+).
@@ -17,7 +14,7 @@ import '../type_checker.dart';
 /// 1. Direct SizedBox in children list with uniform spacing
 /// 2. `.separatedBy()` with SizedBox
 /// 3. `.expand()` with generator yielding SizedBox
-class PreferSpacing extends AnalysisRule {
+class PreferSpacing extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_spacing',
     "Prefer passing the 'spacing' argument instead of using SizedBox.",
@@ -26,6 +23,7 @@ class PreferSpacing extends AnalysisRule {
 
   PreferSpacing()
     : super(
+        code: code,
         name: 'prefer_spacing',
         description:
             "Prefer the 'spacing' argument over SizedBox for spacing in "
@@ -33,14 +31,7 @@ class PreferSpacing extends AnalysisRule {
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addInstanceCreationExpression(this, visitor);
-    registry.addMethodInvocation(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -86,18 +77,18 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (match == null) return;
 
     // Check that the widget doesn't already have a spacing argument
-    final hasSpacingArg = argumentList.arguments.whereType<NamedExpression>().any(
+    final hasSpacingArg = argumentList.arguments.whereType<NamedArgument>().any(
       (arg) => arg.name.lexeme == 'spacing',
     );
     if (hasSpacingArg) return;
 
     // Find the children argument
-    final childrenArg = argumentList.arguments.whereType<NamedExpression>().firstWhereOrNull(
+    final childrenArg = argumentList.arguments.whereType<NamedArgument>().firstWhereOrNull(
       (arg) => arg.name.lexeme == 'children',
     );
     if (childrenArg == null) return;
 
-    final childrenExpr = childrenArg.expression;
+    final childrenExpr = childrenArg.argumentExpression;
 
     // Pattern 1: Direct list literal with SizedBox spacers
     if (childrenExpr is ListLiteral) {
@@ -108,45 +99,30 @@ class _Visitor extends SimpleAstVisitor<void> {
   /// Pattern 1: Direct SizedBox widgets used as spacers in a children list.
   /// Only triggers when all SizedBox spacers have the same value (uniform).
   void _checkDirectSizedBoxInList(ListLiteral list, FlexAxis? parentAxis) {
-    final elements = list.elements;
-    if (elements.length < 3) return;
-
-    // Collect all SizedBox spacers and their values
-    final sizedBoxes = <Expression>[];
-    String? uniformValue;
-    bool isUniform = true;
-
-    for (final element in elements) {
-      if (element is! Expression) continue;
-
-      final spacingInfo = _extractSizedBoxSpacingFromExpr(element);
-      if (spacingInfo == null) continue;
-
-      // Check axis match
-      if (parentAxis != null) {
-        if (parentAxis == FlexAxis.vertical && spacingInfo.$1 != 'height') {
-          continue;
-        }
-        if (parentAxis == FlexAxis.horizontal && spacingInfo.$1 != 'width') {
-          continue;
-        }
-      }
-
-      sizedBoxes.add(element);
-
-      final value = spacingInfo.$2;
-      if (uniformValue == null) {
-        uniformValue = value;
-      } else if (uniformValue != value) {
-        isUniform = false;
-      }
-    }
-
-    if (sizedBoxes.isEmpty || !isUniform) return;
-
+    final sizedBoxes = _uniformSizedBoxes(list, parentAxis);
+    if (sizedBoxes == null) return;
     for (final sizedBox in sizedBoxes) {
       rule.reportAtNode(sizedBox);
     }
+  }
+
+  List<Expression>? _uniformSizedBoxes(ListLiteral list, FlexAxis? parentAxis) {
+    if (list.elements.length < 3) return null;
+    final sizedBoxes = <Expression>[];
+    String? uniformValue;
+    for (final element in list.elements.whereType<Expression>()) {
+      final spacingInfo = _extractSizedBoxSpacingFromExpr(element);
+      if (spacingInfo == null || !_matchesAxis(spacingInfo.$1, parentAxis)) continue;
+      sizedBoxes.add(element);
+      uniformValue ??= spacingInfo.$2;
+      if (uniformValue != spacingInfo.$2) return null;
+    }
+    return sizedBoxes.isEmpty ? null : sizedBoxes;
+  }
+
+  bool _matchesAxis(String axis, FlexAxis? parentAxis) {
+    if (parentAxis == null) return true;
+    return parentAxis == FlexAxis.vertical ? axis == 'height' : axis == 'width';
   }
 
   /// Pattern 2: `.separatedBy(SizedBox(...))` on a list used as children.
@@ -157,7 +133,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (args.isEmpty) return;
 
     final separatorArg = args.first;
-    if (_extractSizedBoxSpacingFromExpr(separatorArg) == null) return;
+    if (_extractSizedBoxSpacingFromExpr(separatorArg.argumentExpression) == null) return;
 
     rule.reportAtNode(node);
   }
@@ -169,7 +145,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final args = node.argumentList.arguments;
     if (args.isEmpty) return;
 
-    final callback = args.first;
+    final callback = args.first.argumentExpression;
     if (callback is! FunctionExpression) return;
 
     final body = callback.body;
@@ -194,9 +170,9 @@ class _Visitor extends SimpleAstVisitor<void> {
       topOfChain = parent;
     }
 
-    // Should be a NamedExpression(children: ...)
+    // Should be a NamedArgument(children: ...)
     final namedExpr = topOfChain.parent;
-    if (namedExpr is! NamedExpression) return false;
+    if (namedExpr is! NamedArgument) return false;
     if (namedExpr.name.lexeme != 'children') return false;
 
     final argList = namedExpr.parent;
@@ -212,7 +188,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     };
     if (parentArgs == null) return false;
 
-    final hasSpacingArg = parentArgs.whereType<NamedExpression>().any(
+    final hasSpacingArg = parentArgs.whereType<NamedArgument>().any(
       (arg) => arg.name.lexeme == 'spacing',
     );
     if (hasSpacingArg) return false;
@@ -245,17 +221,17 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Extracts spacing info from SizedBox arguments.
   /// Returns (paramName, valueSource) or null if not a pure spacer.
-  static (String, String)? _extractSizedBoxSpacing(NodeList<Expression> args) {
+  static (String, String)? _extractSizedBoxSpacing(NodeList<Argument> args) {
     String? spacingParam;
     String? spacingValue;
 
     for (final arg in args) {
-      if (arg is NamedExpression) {
+      if (arg is NamedArgument) {
         final name = arg.name.lexeme;
         if (name == 'key') continue;
         if ((name == 'height' || name == 'width') && spacingParam == null) {
           spacingParam = name;
-          spacingValue = arg.expression.toSource();
+          spacingValue = arg.argumentExpression.toSource();
         } else {
           return null; // has child, both dimensions, or other params
         }

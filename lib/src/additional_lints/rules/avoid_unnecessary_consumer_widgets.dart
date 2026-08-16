@@ -1,18 +1,16 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/riverpod_consumer_checkers.dart';
 
 /// Warns when a ConsumerWidget does not use WidgetRef.
 ///
 /// A widget that never reads providers does not need Riverpod wiring, so it can
 /// be a regular StatelessWidget.
-class AvoidUnnecessaryConsumerWidgets extends AnalysisRule {
+class AvoidUnnecessaryConsumerWidgets extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_consumer_widgets',
     'ConsumerWidget does not use WidgetRef. Consider using StatelessWidget instead.',
@@ -24,16 +22,11 @@ class AvoidUnnecessaryConsumerWidgets extends AnalysisRule {
         name: 'avoid_unnecessary_consumer_widgets',
         description:
             'Warns when ConsumerWidget does not use WidgetRef and can be a StatelessWidget.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addClassDeclaration(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -41,18 +34,13 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _consumerWidgetChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerWidget', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('ConsumerStatefulWidget', packageName: 'flutter_riverpod'),
-  ]);
-
   @override
   void visitClassDeclaration(ClassDeclaration cls) {
     final superclass = cls.extendsClause?.superclass;
     final superclassElement = superclass?.element;
     if (superclass == null || superclassElement == null) return;
 
-    if (!_consumerWidgetChecker.isExactly(superclassElement)) return;
+    if (!consumerWidgetChecker.isExactly(superclassElement)) return;
 
     // Find build method
     final body = cls.body;

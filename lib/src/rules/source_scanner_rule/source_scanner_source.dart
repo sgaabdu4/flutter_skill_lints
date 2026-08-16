@@ -25,125 +25,156 @@ final class SourceScannerSource {
   }
 
   _SourceScan _scanText(String text) {
-    final codeBuffer = StringBuffer();
-    final maskedBuffer = StringBuffer();
-    var inLineComment = false;
-    var inBlockComment = false;
-    var quote = '';
-    var inTripleString = false;
-    var inRawString = false;
-    var escaped = false;
-
-    void writeBoth(String value) {
-      codeBuffer.write(value);
-      maskedBuffer.write(value);
+    final state = _ScanTextState();
+    var index = 0;
+    while (index < text.length) {
+      index = state.consume(text, index);
     }
+    return state.result;
+  }
+}
 
-    void writeSpaces(int count) {
-      codeBuffer.write(' ' * count);
-      maskedBuffer.write(' ' * count);
-    }
+final class _ScanTextState {
+  final StringBuffer codeBuffer = StringBuffer();
+  final StringBuffer maskedBuffer = StringBuffer();
+  bool inLineComment = false;
+  bool inBlockComment = false;
+  String quote = '';
+  bool inTripleString = false;
+  bool inRawString = false;
+  bool escaped = false;
 
-    for (var i = 0; i < text.length; i++) {
-      final char = text[i];
-      final next = i + 1 < text.length ? text[i + 1] : '';
+  _SourceScan get result => _SourceScan(codeBuffer.toString(), maskedBuffer.toString());
 
-      if (char == '\n') {
-        writeBoth(char);
-        inLineComment = false;
-        if (quote.isNotEmpty && !inTripleString) {
-          quote = '';
-          escaped = false;
-        }
-        continue;
-      }
+  int consume(String text, int index) {
+    final char = text[index];
+    final next = index + 1 < text.length ? text[index + 1] : '';
 
-      if (quote.isNotEmpty) {
-        codeBuffer.write(inTripleString ? ' ' : char);
-        maskedBuffer.write(' ');
-        if (inTripleString) {
-          if (_startsTripleQuote(text, i, quote)) {
-            writeSpaces(2);
-            quote = '';
-            inTripleString = false;
-            inRawString = false;
-            i += 2;
-          }
-          continue;
-        }
-        if (escaped) {
-          escaped = false;
-        } else if (!inRawString && char == r'\') {
-          escaped = true;
-        } else if (char == quote) {
-          quote = '';
-          inRawString = false;
-        }
-        continue;
-      }
+    if (char == '\n') return _consumeNewline(index);
+    if (quote.isNotEmpty) return _consumeQuoted(text, index);
+    if (inLineComment) return _consumeLineComment(index);
+    if (inBlockComment) return _consumeBlockComment(char, next, index);
+    if (char == '/' && next == '/') return _startLineComment(index);
+    if (char == '/' && next == '*') return _startBlockComment(index);
+    if (_isStringStart(text, index)) return _startString(text, index);
 
-      if (inLineComment) {
-        writeSpaces(1);
-        continue;
-      }
-
-      if (inBlockComment) {
-        if (char == '*' && next == '/') {
-          writeSpaces(2);
-          inBlockComment = false;
-          i++;
-          continue;
-        }
-        writeSpaces(1);
-        continue;
-      }
-
-      if (char == '/' && next == '/') {
-        writeSpaces(2);
-        inLineComment = true;
-        i++;
-        continue;
-      }
-      if (char == '/' && next == '*') {
-        writeSpaces(2);
-        inBlockComment = true;
-        i++;
-        continue;
-      }
-
-      final rawPrefix =
-          (char == 'r' || char == 'R') && i + 1 < text.length && _isQuote(text[i + 1]);
-      if (rawPrefix || _isQuote(char)) {
-        final quoteIndex = rawPrefix ? i + 1 : i;
-        quote = text[quoteIndex];
-        inRawString = rawPrefix;
-        inTripleString = _startsTripleQuote(text, quoteIndex, quote);
-        final prefixLength = rawPrefix ? 1 : 0;
-        final quoteLength = inTripleString ? 3 : 1;
-        if (inTripleString) {
-          writeSpaces(prefixLength + quoteLength);
-        } else {
-          codeBuffer.write(text.substring(i, quoteIndex + quoteLength));
-          maskedBuffer.write(' ' * (prefixLength + quoteLength));
-        }
-        i = quoteIndex + quoteLength - 1;
-        continue;
-      }
-
-      writeBoth(char);
-    }
-
-    return _SourceScan(codeBuffer.toString(), maskedBuffer.toString());
+    _writeBoth(char);
+    return index + 1;
   }
 
-  bool _isQuote(String char) => char == '\'' || char == '"';
+  int _consumeNewline(int index) {
+    _writeBoth('\n');
+    inLineComment = false;
+    if (quote.isNotEmpty && !inTripleString) {
+      quote = '';
+      escaped = false;
+    }
+    return index + 1;
+  }
 
-  bool _startsTripleQuote(String text, int index, String quote) =>
-      index + 2 < text.length &&
-      text[index] == quote &&
-      text[index + 1] == quote &&
-      text[index + 2] == quote;
+  int _consumeQuoted(String text, int index) {
+    if (inTripleString) return _consumeTripleString(text, index);
+    return _consumeStringCharacter(text[index], index);
+  }
+
+  int _consumeTripleString(String text, int index) {
+    codeBuffer.write(' ');
+    maskedBuffer.write(' ');
+    if (!_startsTripleQuote(text, index, quote)) return index + 1;
+
+    _writeSpaces(2);
+    quote = '';
+    inTripleString = false;
+    inRawString = false;
+    return index + 3;
+  }
+
+  int _consumeStringCharacter(String char, int index) {
+    codeBuffer.write(char);
+    maskedBuffer.write(' ');
+    if (escaped) {
+      escaped = false;
+    } else if (!inRawString && char == r'\') {
+      escaped = true;
+    } else if (char == quote) {
+      quote = '';
+      inRawString = false;
+    }
+    return index + 1;
+  }
+
+  int _consumeLineComment(int index) {
+    _writeSpaces(1);
+    return index + 1;
+  }
+
+  int _consumeBlockComment(String char, String next, int index) {
+    if (char == '*' && next == '/') {
+      _writeSpaces(2);
+      inBlockComment = false;
+      return index + 2;
+    }
+    _writeSpaces(1);
+    return index + 1;
+  }
+
+  int _startLineComment(int index) {
+    _writeSpaces(2);
+    inLineComment = true;
+    return index + 2;
+  }
+
+  int _startBlockComment(int index) {
+    _writeSpaces(2);
+    inBlockComment = true;
+    return index + 2;
+  }
+
+  bool _isStringStart(String text, int index) {
+    final char = text[index];
+    final rawPrefix =
+        (char == 'r' || char == 'R') && index + 1 < text.length && _isQuote(text[index + 1]);
+    return rawPrefix || _isQuote(char);
+  }
+
+  int _startString(String text, int index) {
+    final rawPrefix =
+        (text[index] == 'r' || text[index] == 'R') &&
+        index + 1 < text.length &&
+        _isQuote(text[index + 1]);
+    final quoteIndex = rawPrefix ? index + 1 : index;
+    quote = text[quoteIndex];
+    inRawString = rawPrefix;
+    inTripleString = _startsTripleQuote(text, quoteIndex, quote);
+    final prefixLength = rawPrefix ? 1 : 0;
+    final quoteLength = inTripleString ? 3 : 1;
+    if (inTripleString) {
+      _writeSpaces(prefixLength + quoteLength);
+    } else {
+      codeBuffer.write(text.substring(index, quoteIndex + quoteLength));
+      maskedBuffer.write(' ' * (prefixLength + quoteLength));
+    }
+    return quoteIndex + quoteLength;
+  }
+
+  void _writeBoth(String value) {
+    codeBuffer.write(value);
+    maskedBuffer.write(value);
+  }
+
+  void _writeSpaces(int count) {
+    codeBuffer.write(' ' * count);
+    maskedBuffer.write(' ' * count);
+  }
 }
+
+bool _isQuote(String char) => char == '\'' || char == '"';
+
+bool _startsTripleQuote(String text, int index, String quote) =>
+    index + 2 < text.length &&
+    text[index] == quote &&
+    text[index + 1] == quote &&
+    text[index + 2] == quote;
 
 final class _SourceScan {
   const _SourceScan(this.code, this.masked);
@@ -192,36 +223,35 @@ String _blankDebugCalls(String text, {String? structure}) {
   final structuralText = structure ?? text;
   final buffer = StringBuffer();
   final call = RegExp(r'\b(?:debugPrint|print)\s*\(');
-  var i = 0;
-  while (i < text.length) {
-    final structuralRemainder = structuralText.substring(i);
-    final remainder = text.substring(i);
-    final match = call.firstMatch(structuralRemainder);
+  var index = 0;
+  while (index < text.length) {
+    final match = call.firstMatch(structuralText.substring(index));
     if (match == null) {
-      buffer.write(remainder);
+      buffer.write(text.substring(index));
       break;
     }
-    buffer.write(remainder.substring(0, match.end));
-    var depth = 1;
-    var j = i + match.end;
-    while (j < text.length && depth > 0) {
-      final structuralChar = structuralText[j];
-      final ch = text[j];
-      if (structuralChar == '(') {
-        depth++;
-      } else if (structuralChar == ')') {
-        depth--;
-      }
-      if (depth == 0) {
-        buffer.write(ch);
-      } else if (ch == '\n') {
-        buffer.write('\n');
-      } else {
-        buffer.write(' ');
-      }
-      j++;
-    }
-    i = j;
+    final matchEnd = index + match.end;
+    buffer.write(text.substring(index, matchEnd));
+    index = _blankDebugCallBody(text, structuralText, matchEnd, buffer);
   }
   return buffer.toString();
+}
+
+int _blankDebugCallBody(String text, String structure, int index, StringBuffer buffer) {
+  var depth = 1;
+  while (index < text.length && depth > 0) {
+    final structuralChar = structure[index];
+    final char = text[index];
+    if (structuralChar == '(') depth++;
+    if (structuralChar == ')') depth--;
+    if (depth == 0) {
+      buffer.write(char);
+    } else if (char == '\n') {
+      buffer.write('\n');
+    } else {
+      buffer.write(' ');
+    }
+    index++;
+  }
+  return index;
 }

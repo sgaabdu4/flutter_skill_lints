@@ -1,7 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:analyzer/error/error.dart';
-import 'package:analyzer/src/diagnostic/diagnostic.dart' as diag;
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_parameter_aliases.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_repeated_property_aliases.dart';
@@ -297,9 +296,12 @@ void f() {
 }
 ''';
 
+    final offset = source.indexOf('value);');
+    final unassignedLateLocal = errorCodeByUniqueName('definitely_unassigned_late_local_variable')!;
+
     await assertDiagnostics(source, [
-      error(diag.definitelyUnassignedLateLocalVariable, source.indexOf('value);'), 'value'.length),
-      lint(source.indexOf('value);'), 'value'.length),
+      error(unassignedLateLocal, offset, 'value'.length),
+      lint(offset, 'value'.length),
     ]);
   }
 

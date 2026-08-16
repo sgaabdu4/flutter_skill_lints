@@ -6,6 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when collection methods are called with arguments whose types are
 /// unrelated to the collection's type parameter.
@@ -92,45 +93,39 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (args.isEmpty) return;
 
     final firstArg = args.first;
-    final argType = firstArg.staticType;
+    final argType = firstArg.argumentExpression.staticType;
     if (argType == null) return;
 
-    // Check if the target is a Map type.
     final mapKeyValueTypes = _getMapTypes(targetType);
-    if (mapKeyValueTypes != null) {
-      final (keyType, valueType) = mapKeyValueTypes;
-
-      if (_keyMethods.contains(methodName)) {
-        if (_areUnrelatedTypes(argType, keyType)) {
-          rule.reportAtNode(
-            node,
-            arguments: [argType.getDisplayString(), keyType.getDisplayString()],
-          );
-        }
-        return;
-      }
-
-      if (_valueMethods.contains(methodName)) {
-        if (_areUnrelatedTypes(argType, valueType)) {
-          rule.reportAtNode(
-            node,
-            arguments: [argType.getDisplayString(), valueType.getDisplayString()],
-          );
-        }
-        return;
-      }
+    if (mapKeyValueTypes != null && _reportMapMethod(node, methodName, argType, mapKeyValueTypes)) {
+      return;
     }
-
-    // Check if the target is an Iterable/List/Set type.
-    final elementType = _getIterableElementType(targetType);
+    final elementType = iterableElementType(targetType);
     if (elementType != null && _elementMethods.contains(methodName)) {
-      if (_areUnrelatedTypes(argType, elementType)) {
-        rule.reportAtNode(
-          node,
-          arguments: [argType.getDisplayString(), elementType.getDisplayString()],
-        );
-      }
+      _reportUnrelatedType(node, argType, elementType);
     }
+  }
+
+  bool _reportMapMethod(
+    MethodInvocation node,
+    String methodName,
+    DartType argType,
+    (DartType, DartType) types,
+  ) {
+    final (keyType, valueType) = types;
+    final expectedType = _keyMethods.contains(methodName)
+        ? keyType
+        : _valueMethods.contains(methodName)
+        ? valueType
+        : null;
+    if (expectedType == null) return false;
+    _reportUnrelatedType(node, argType, expectedType);
+    return true;
+  }
+
+  void _reportUnrelatedType(MethodInvocation node, DartType actual, DartType expected) {
+    if (!_areUnrelatedTypes(actual, expected)) return;
+    rule.reportAtNode(node, arguments: [actual.getDisplayString(), expected.getDisplayString()]);
   }
 
   @override
@@ -168,23 +163,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     for (final supertype in type.element.allSupertypes) {
       if (supertype.element.name == 'Map' && supertype.typeArguments.length == 2) {
         return (supertype.typeArguments[0], supertype.typeArguments[1]);
-      }
-    }
-    return null;
-  }
-
-  /// Returns the element type if [type] implements `Iterable<E>`.
-  ///
-  /// For `List<int>`, `Set<int>`, `Iterable<int>` the first type argument
-  /// is the element type. For custom subtypes we walk `allSupertypes`.
-  static DartType? _getIterableElementType(InterfaceType type) {
-    // List<T>, Set<T>, Iterable<T> all have element type as first arg.
-    if (type.typeArguments.isNotEmpty) {
-      return type.typeArguments.first;
-    }
-    for (final supertype in type.element.allSupertypes) {
-      if (supertype.element.name == 'Iterable' && supertype.typeArguments.isNotEmpty) {
-        return supertype.typeArguments.first;
       }
     }
     return null;

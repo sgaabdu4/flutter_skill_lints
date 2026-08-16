@@ -21,11 +21,11 @@ Designed for Riverpod + codegen Flutter apps.
 
 | Surface | Count |
 | --- | ---: |
-| Flutter skill warning rules | 183 |
+| Flutter skill warning rules | 185 |
 | Flutter skill diagnostic codes | 193 |
 | Additional Dart/Flutter warning rules | 238 |
 | Additional Dart/Flutter diagnostic codes | 279 |
-| Total unique diagnostic codes | 469 |
+| Total unique diagnostic codes | 470 |
 | Quick fixes | 63 |
 | Assists | 1 |
 
@@ -38,9 +38,9 @@ Designed for Riverpod + codegen Flutter apps.
    include: package:flutter_lints/flutter.yaml
 
    plugins:
-     # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
+     # Stable Riverpod lint pin verified for Riverpod 3.4-era lint coverage.
      # Re-check pub.dev before release when Riverpod or analyzer versions move.
-     riverpod_lint: 3.1.4
+     riverpod_lint: 3.1.8
      flutter_skill_lints:
 
    analyzer:
@@ -57,7 +57,6 @@ Designed for Riverpod + codegen Flutter apps.
      errors:
        missing_required_param: error
        missing_return: error
-       invalid_annotation_target: ignore
 
    formatter:
      page_width: 100
@@ -212,26 +211,11 @@ class User {
 
 ## Configuration
 
-Suppress a single diagnostic with a line comment:
-
-```dart
-final raw = response.body!; // ignore: avoid_null_bang
-```
-
-Or scope to a file:
-
-```dart
-// ignore_for_file: avoid_null_bang, avoid_shrink_wrap
-```
-
-To disable a rule project-wide, add it to `analysis_options.yaml`:
-
-```yaml
-analyzer:
-  errors:
-    avoid_shrink_wrap: ignore
-    datetime_now_requires_timezone_intent: ignore
-```
+Keep the enabled diagnostics active. Do not hide a finding with `ignore`,
+`ignore_for_file`, an analyzer severity downgrade, a baseline, or a skipped
+test. Fix the source, correct the package family, or update the canonical
+rule when the contract is wrong. Generated files may be excluded only when
+generation and compilation prove those files are valid.
 
 ## Troubleshooting
 
@@ -243,16 +227,23 @@ versions listed under [Compatibility](#compatibility). Analyzer plugin APIs
 are not stable across major versions.
 
 **Conflict with `riverpod_lint`.** Both plugins are designed to coexist; pin
-`riverpod_lint` to stable `3.1.4` to match the version we test against.
+`riverpod_lint` to stable `3.1.8` so the analysis-server plugin entrypoint can
+use the shared analyzer-13 family.
 
 ## Compatibility
 
-Targets the analyzer 12 line. Verified against:
+Targets the analyzer-13 shared plugin family. Verified against:
 
-- `analysis_server_plugin 0.3.14`
-- `analyzer 12.1.0`
-- `analyzer_plugin 0.14.8`
-- `riverpod_lint 3.1.4`
+- `analysis_server_plugin 0.3.18`
+- `analyzer 13.3.0`
+- `analyzer_plugin 0.14.12`
+- `analyzer_testing 0.3.2`
+- `riverpod_lint 3.1.8`
+
+`analyzer 14.1.0` is a newer standalone analyzer release, but its plugin
+family cannot solve with `riverpod_lint 3.1.8`. The real analysis-server smoke
+test is the compatibility gate, so the shared analyzer-13 family is the
+selected package contract.
 
 Recheck before publishing a new release.
 

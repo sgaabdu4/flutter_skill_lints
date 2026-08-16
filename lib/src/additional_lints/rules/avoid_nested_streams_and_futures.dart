@@ -1,12 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+
 /// Avoids async container types nested across `Future` and `Stream`.
-class AvoidNestedStreamsAndFutures extends AnalysisRule {
+class AvoidNestedStreamsAndFutures extends NamedTypeCheckRule {
   static const LintCode code = LintCode(
     'avoid_nested_streams_and_futures',
     'Avoid nested Stream and Future types.',
@@ -18,24 +16,11 @@ class AvoidNestedStreamsAndFutures extends AnalysisRule {
     : super(
         name: 'avoid_nested_streams_and_futures',
         description: 'Avoids Future<Stream<T>>, Stream<Future<T>>, and Stream<Stream<T>>.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addNamedType(this, _Visitor(this));
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  const _Visitor(this.rule);
-
-  final AvoidNestedStreamsAndFutures rule;
-
-  @override
-  void visitNamedType(NamedType node) {
+  void checkNamedType(NamedType node) {
     if (!_isDartAsyncType(node, 'Future') && !_isDartAsyncType(node, 'Stream')) {
       return;
     }
@@ -49,7 +34,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
         continue;
       }
       if (_isDartAsyncType(typeArgument, 'Future') || _isDartAsyncType(typeArgument, 'Stream')) {
-        rule.reportAtNode(node);
+        reportAtNode(node);
         return;
       }
     }

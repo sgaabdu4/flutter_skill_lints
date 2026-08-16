@@ -11,7 +11,6 @@ class AvoidContinue extends AnalysisRule {
     'avoid_continue',
     'Avoid continue statements.',
     correctionMessage: 'Refactor the loop body so continue is no longer needed.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   AvoidContinue()

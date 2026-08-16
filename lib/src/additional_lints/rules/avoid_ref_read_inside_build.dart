@@ -1,11 +1,8 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/riverpod_consumer_checkers.dart';
 
 /// Warns when `ref.read()` is called inside a `build()` method of a
 /// Riverpod consumer widget or consumer state class.
@@ -14,7 +11,7 @@ import '../type_checker.dart';
 /// Using it inside `build()` means the widget won't rebuild when the
 /// provider's value changes. Use `ref.watch()` instead, or move
 /// `ref.read()` into callbacks/user interactions that intentionally read once.
-class AvoidRefReadInsideBuild extends AnalysisRule {
+class AvoidRefReadInsideBuild extends MethodDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_ref_read_inside_build',
     "Avoid using 'ref.read' inside the build method.",
@@ -30,16 +27,11 @@ class AvoidRefReadInsideBuild extends AnalysisRule {
         description:
             'Warns when ref.read() is used inside the build method of a '
             'Riverpod consumer widget or state.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addMethodDeclaration(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -47,33 +39,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _consumerWidgetChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerWidget', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerWidget', packageName: 'hooks_riverpod'),
-  ]);
-
-  static const _consumerStateChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerState', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerState', packageName: 'hooks_riverpod'),
-  ]);
-
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
-    if (node.name.lexeme != 'build') return;
-
-    // Navigate to the enclosing class
-    final enclosingBody = node.parent;
-    if (enclosingBody is! BlockClassBody) return;
-    final classDecl = enclosingBody.parent;
-    if (classDecl is! ClassDeclaration) return;
-
-    final element = classDecl.declaredFragment?.element;
-    if (element == null) return;
-
-    // Check if it's a ConsumerWidget, ConsumerState, or Hook variants
-    if (!_consumerWidgetChecker.isSuperOf(element) && !_consumerStateChecker.isSuperOf(element)) {
-      return;
-    }
+    if (!isConsumerBuildMethod(node)) return;
 
     // Search for ref.read() calls inside the build body (excluding closures)
     final finder = _RefReadFinder(rule);

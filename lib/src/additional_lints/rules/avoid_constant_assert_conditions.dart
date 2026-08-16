@@ -2,11 +2,10 @@ import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../constant_expression.dart';
+import 'package:flutter_skill_lints/src/additional_lints/constant_expression.dart';
 
 /// Warns when an assert condition is a compile-time constant.
 final class AvoidConstantAssertConditions extends AnalysisRule {
@@ -45,29 +44,17 @@ final class _Visitor extends SimpleAstVisitor<void> {
 }
 
 bool _isConstantCondition(Expression expression) {
-  expression = _unwrapParentheses(expression);
+  expression = unparenthesizedExpression(expression);
 
   if (isConstantExpression(expression)) return true;
 
   if (expression is BinaryExpression) {
     final operator = expression.operator.type;
-    if (comparisonOperators.contains(operator) || _isLogicalOperator(operator)) {
+    if (comparisonOperators.contains(operator) || isLogicalOperator(operator)) {
       return _isConstantCondition(expression.leftOperand) &&
           _isConstantCondition(expression.rightOperand);
     }
   }
 
   return false;
-}
-
-Expression _unwrapParentheses(Expression expression) {
-  while (expression is ParenthesizedExpression) {
-    expression = expression.expression;
-  }
-
-  return expression;
-}
-
-bool _isLogicalOperator(TokenType type) {
-  return type == TokenType.AMPERSAND_AMPERSAND || type == TokenType.BAR_BAR;
 }

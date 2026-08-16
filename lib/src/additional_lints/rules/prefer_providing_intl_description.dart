@@ -1,33 +1,26 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import '../ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when `Intl.message` omits a description.
-final class PreferProvidingIntlDescription extends AnalysisRule {
+final class PreferProvidingIntlDescription extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_providing_intl_description',
     'Provide an Intl.message description.',
     correctionMessage: 'Add a desc argument that explains the message context.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   PreferProvidingIntlDescription()
     : super(
+        code: code,
         name: 'prefer_providing_intl_description',
         description: 'Warns when Intl.message calls omit desc.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodInvocation(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -37,24 +30,11 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (!_isIntlMessage(node)) return;
+    if (!isIntlMessageInvocation(node)) return;
 
-    final desc = _namedArgument(node, 'desc');
-    if (desc != null && desc.expression is! NullLiteral) return;
+    final desc = namedInvocationArgument(node, 'desc');
+    if (desc != null && desc.argumentExpression is! NullLiteral) return;
 
     rule.reportAtNode(node.methodName);
   }
-}
-
-bool _isIntlMessage(MethodInvocation node) {
-  final target = node.target;
-  return target is SimpleIdentifier && target.name == 'Intl' && node.methodName.name == 'message';
-}
-
-NamedExpression? _namedArgument(MethodInvocation node, String name) {
-  for (final argument in node.argumentList.arguments.whereType<NamedExpression>()) {
-    if (argument.name.lexeme == name) return argument;
-  }
-
-  return null;
 }

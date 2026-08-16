@@ -4,7 +4,7 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import '../constant_expression.dart';
+import 'package:flutter_skill_lints/src/additional_lints/constant_expression.dart';
 
 /// Warns when a collection is accessed by a constant index inside a loop body.
 ///

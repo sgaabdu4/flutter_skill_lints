@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when custom IconData constants live outside a static provider class.
 final class PreferCorrectStaticIconProvider extends AnalysisRule {
@@ -13,7 +13,6 @@ final class PreferCorrectStaticIconProvider extends AnalysisRule {
     'prefer_correct_static_icon_provider',
     'Expose IconData constants from a static const provider.',
     correctionMessage: 'Move the IconData constant to a static const field on an icon provider.',
-    severity: DiagnosticSeverity.INFO,
   );
 
   PreferCorrectStaticIconProvider()

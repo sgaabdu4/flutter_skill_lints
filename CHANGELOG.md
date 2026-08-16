@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.9.0] - 2026-08-15
+
+- Updated to the shared analyzer 13.3.0 family with analyzer_plugin 0.14.12,
+  analysis_server_plugin 0.3.18, and analyzer_testing 0.3.2 so this plug-in
+  can share one analysis server with current `riverpod_lint 3.1.8`.
+- Kept analyzer 14.1.0 as a rejected standalone candidate because its
+  dependency family cannot solve with the current Riverpod analysis plugin.
+- Migrated rules and tests to the current analyzer AST and plug-in APIs.
+- Added `avoid_flutter_host_driver_imports` for keeping direct and transitive
+  Flutter and app code out of pure integration-test host drivers.
+- Added `avoid_unvalidated_persisted_map_cast` for checking persisted map keys
+  before converting them to typed maps, including local datasource paths.
+- Added workspace dependency-override checks. A nearby audit file does not
+  exempt a dependency override.
+- Removed analyzer exclusions from the active rule and example source trees.
+
 ## [0.8.1] - 2026-07-25
 
 - Removed the deprecated `avoid_null_checks_in_equality_operators` lint from

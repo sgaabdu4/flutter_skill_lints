@@ -1,11 +1,7 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
-import 'package:flutter_skill_lints/src/ast_utils.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Mark intentionally discarded callback Futures with unawaited.
 ///
@@ -14,7 +10,7 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 /// `unawaited(...)`. For reusable utilities, return `Future<void>` and await
 /// `Future.wait(...)` so callers can choose whether to await or explicitly
 /// launch the work in the background.
-final class UseUnawaitedForFireAndForgetFutures extends AnalysisRule {
+final class UseUnawaitedForFireAndForgetFutures extends GeneratedExpressionStatementCheckRule {
   static const LintCode code = LintCode(
     'use_unawaited_for_fire_and_forget_futures',
     'Future returned from a void callback is discarded.',
@@ -31,25 +27,11 @@ final class UseUnawaitedForFireAndForgetFutures extends AnalysisRule {
         description:
             'Warns when a synchronous void callback drops a Future instead of '
             'marking it with unawaited.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (isGeneratedRuleContext(context)) return;
-    registry.addExpressionStatement(this, _Visitor(this));
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule);
-
-  final UseUnawaitedForFireAndForgetFutures rule;
-
-  @override
-  void visitExpressionStatement(ExpressionStatement node) {
+  void checkExpressionStatement(ExpressionStatement node) {
     final expression = node.expression;
     if (expression is AwaitExpression) return;
     if (!_isFutureLike(expression.staticType)) return;
@@ -58,7 +40,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (callback == null || callback.body.isAsynchronous) return;
     if (!_isVoidCallbackContext(callback)) return;
 
-    rule.reportAtNode(expression);
+    reportAtNode(expression);
   }
 
   static bool _isVoidCallbackContext(FunctionExpression node) {

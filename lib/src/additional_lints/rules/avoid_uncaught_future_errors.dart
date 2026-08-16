@@ -1,12 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a fire-and-forget Future has no local error handler.
-final class AvoidUncaughtFutureErrors extends AnalysisRule {
+final class AvoidUncaughtFutureErrors extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_uncaught_future_errors',
     'Handle errors from fire-and-forget Futures.',
@@ -15,17 +13,13 @@ final class AvoidUncaughtFutureErrors extends AnalysisRule {
 
   AvoidUncaughtFutureErrors()
     : super(
+        code: code,
         name: 'avoid_uncaught_future_errors',
         description: 'Warns when an inline async unawaited() body has no visible try/catch.',
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    registry.addMethodInvocation(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {
@@ -40,7 +34,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (arguments.length != 1) return;
 
     final future = arguments.single;
-    final inlineBody = _inlineAsyncBody(future);
+    final inlineBody = _inlineAsyncBody(future.argumentExpression);
     if (inlineBody == null) return;
     if (_containsTryStatement(inlineBody)) return;
 

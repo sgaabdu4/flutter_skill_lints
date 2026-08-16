@@ -44,23 +44,6 @@ bool _isNavigatorLookup(String line, {required bool rootNavigator}) {
   return rootNavigator ? isRoot : !isRoot;
 }
 
-({RegExpMatch match, int column})? _windowMatchStartingOnLine(
-  SourceScannerContext context,
-  int lineIndex,
-  RegExp pattern, {
-  int maxLines = 6,
-}) {
-  final end = lineIndex + maxLines > context.source.length
-      ? context.source.length
-      : lineIndex + maxLines;
-  final window = context.source.masked.sublist(lineIndex, end).join('\n');
-  final match = pattern.firstMatch(window);
-  if (match == null) return null;
-  final beforeMatch = window.substring(0, match.start);
-  if (beforeMatch.contains('\n')) return null;
-  return (match: match, column: beforeMatch.length);
-}
-
 int? _contextExtensionEndLine(SourceScannerContext context, int startLine) {
   final firstLine = context.source.masked[startLine];
   if (!RegExp(r'^\s*extension\b').hasMatch(firstLine)) return null;
@@ -115,24 +98,30 @@ bool _isGenericContextFallbackRouteCall(SourceScannerContext context, int lineIn
 }
 
 int _blockEndLine(List<String> lines, int startLine) {
-  var depth = 0;
-  var sawOpenBrace = false;
-
+  final state = _BlockBraceState();
   for (var i = startLine; i < lines.length; i++) {
-    final line = lines[i];
-    for (var j = 0; j < line.length; j++) {
-      final char = line.codeUnitAt(j);
-      if (char == 123) {
-        depth++;
-        sawOpenBrace = true;
-      } else if (char == 125 && sawOpenBrace) {
-        depth--;
-        if (depth <= 0) return i;
-      }
+    if (_scanBlockBraces(state, lines[i])) return i;
+  }
+  return lines.length;
+}
+
+final class _BlockBraceState {
+  int depth = 0;
+  bool sawOpenBrace = false;
+}
+
+bool _scanBlockBraces(_BlockBraceState state, String line) {
+  for (var column = 0; column < line.length; column++) {
+    final char = line.codeUnitAt(column);
+    if (char == 123) {
+      state.depth++;
+      state.sawOpenBrace = true;
+    } else if (char == 125 && state.sawOpenBrace) {
+      state.depth--;
+      if (state.depth <= 0) return true;
     }
   }
-
-  return lines.length;
+  return false;
 }
 
 int? _splashInitialSyncGateColumn(SourceScannerContext context, int lineIndex) {
@@ -177,7 +166,7 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
   final publicCoordinatorStaticCallPattern = RegExp(
     r'\b[A-Z]\w*NavigationCoordinator\s*\.\s*\w+\s*(?:<[^>]+>)?\s*\(',
   );
-  final publicCoordinatorStaticCall = _windowMatchStartingOnLine(
+  final publicCoordinatorStaticCall = sourceWindowMatch(
     context,
     lineIndex,
     publicCoordinatorStaticCallPattern,
@@ -189,7 +178,7 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
     r'\bcontext\s*\.\s*(?:go|push|replace|pushReplacement|goNamed|pushNamed|replaceNamed)\s*'
     r'(?:<[^>]+>)?\s*\(',
   );
-  final contextNavigationCall = _windowMatchStartingOnLine(
+  final contextNavigationCall = sourceWindowMatch(
     context,
     lineIndex,
     contextNavigation,
@@ -201,7 +190,7 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
     r'\bcontext\s*\.\s*(?:go|push|replace|pushReplacement)[A-Z]\w*\s*'
     r'(?:<[^>]+>)?\s*\(',
   );
-  final contextConvenienceNavigationCall = _windowMatchStartingOnLine(
+  final contextConvenienceNavigationCall = sourceWindowMatch(
     context,
     lineIndex,
     contextConvenienceNavigation,
@@ -216,7 +205,7 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
     r'(?:go|push|replace|pushReplacement|goNamed|pushNamed|replaceNamed)\s*'
     r'(?:<[^>]+>)?\s*\(',
   );
-  final routerVariableNavigationCall = _windowMatchStartingOnLine(
+  final routerVariableNavigationCall = sourceWindowMatch(
     context,
     lineIndex,
     routerVariableNavigation,
@@ -229,7 +218,7 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
     r'(?:go|push|replace|pushReplacement)[A-Z]\w*\s*'
     r'(?:<[^>]+>)?\s*\(',
   );
-  final routerConvenienceNavigationCall = _windowMatchStartingOnLine(
+  final routerConvenienceNavigationCall = sourceWindowMatch(
     context,
     lineIndex,
     routerConvenienceNavigation,
@@ -245,7 +234,7 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
     r'restorablePush|restorablePushNamed)\s*'
     r'(?:<[^>]+>)?\s*\(',
   );
-  final navigatorNavigationCall = _windowMatchStartingOnLine(
+  final navigatorNavigationCall = sourceWindowMatch(
     context,
     lineIndex,
     navigatorNavigation,

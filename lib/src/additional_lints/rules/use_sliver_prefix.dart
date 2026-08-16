@@ -1,20 +1,19 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a widget's build method returns a sliver widget but the class
 /// name does not include 'Sliver'.
 ///
 /// Consistent sliver naming helps developers quickly identify
 /// which widgets are sliver-based and can be used inside CustomScrollView.
-class UseSliverPrefix extends AnalysisRule {
+class UseSliverPrefix extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'use_sliver_prefix',
     "Widget returns a sliver but its name does not include 'Sliver'.",
@@ -25,16 +24,11 @@ class UseSliverPrefix extends AnalysisRule {
     : super(
         name: 'use_sliver_prefix',
         description: 'Warns when a widget returns a sliver but lacks Sliver in its name.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    final visitor = _Visitor(this);
-    registry.addCompilationUnit(this, visitor);
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -42,52 +36,59 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _statelessWidgetChecker = TypeChecker.fromName(
-    'StatelessWidget',
-    packageName: 'flutter',
-  );
-
-  static const _statefulWidgetChecker = TypeChecker.fromName(
-    'StatefulWidget',
-    packageName: 'flutter',
-  );
-
-  static const _stateChecker = TypeChecker.fromName('State', packageName: 'flutter');
-
   @override
   void visitCompilationUnit(CompilationUnit node) {
+    final classes = _classGroups(node);
+    _reportStatelessSliverWidgets(classes.statelessWidgets);
+    _reportStatefulSliverWidgets(classes.statefulWidgets, classes.stateClasses);
+  }
+
+  ({
+    List<ClassDeclaration> stateClasses,
+    List<ClassDeclaration> statefulWidgets,
+    List<ClassDeclaration> statelessWidgets,
+  })
+  _classGroups(CompilationUnit node) {
     final statefulWidgets = <ClassDeclaration>[];
     final stateClasses = <ClassDeclaration>[];
-
-    for (final declaration in node.declarations) {
-      if (declaration is! ClassDeclaration) continue;
-
+    final statelessWidgets = <ClassDeclaration>[];
+    for (final declaration in node.declarations.whereType<ClassDeclaration>()) {
       final element = declaration.declaredFragment?.element;
       if (element == null) continue;
-
       final className = declaration.namePart.typeName.lexeme;
-
-      if (_statelessWidgetChecker.isSuperOf(element)) {
-        // StatelessWidget: check build() directly
-        if (!_hasSliverName(className) && _buildReturnsSliverWidget(declaration)) {
-          rule.reportAtToken(declaration.namePart.typeName);
-        }
-      } else if (_statefulWidgetChecker.isSuperOf(element)) {
+      if (flutterStatelessWidgetChecker.isSuperOf(element)) {
+        statelessWidgets.add(declaration);
+      } else if (flutterStatefulWidgetChecker.isSuperOf(element)) {
         statefulWidgets.add(declaration);
-      } else if (_stateChecker.isSuperOf(element)) {
+      } else if (flutterStateChecker.isSuperOf(element)) {
         stateClasses.add(declaration);
       }
+      if (_hasSliverName(className)) {
+        statelessWidgets.remove(declaration);
+        statefulWidgets.remove(declaration);
+      }
     }
+    return (
+      statelessWidgets: statelessWidgets,
+      statefulWidgets: statefulWidgets,
+      stateClasses: stateClasses,
+    );
+  }
 
-    // For StatefulWidgets, find companion State and check its build()
-    for (final widget in statefulWidgets) {
+  void _reportStatelessSliverWidgets(List<ClassDeclaration> widgets) {
+    for (final widget in widgets) {
+      if (_buildReturnsSliverWidget(widget)) rule.reportAtToken(widget.namePart.typeName);
+    }
+  }
+
+  void _reportStatefulSliverWidgets(
+    List<ClassDeclaration> widgets,
+    List<ClassDeclaration> stateClasses,
+  ) {
+    for (final widget in widgets) {
       final widgetName = widget.namePart.typeName.lexeme;
-      if (_hasSliverName(widgetName)) continue;
-
-      final stateClass = _findStateClass(stateClasses, widgetName);
-      if (stateClass == null) continue;
-
-      if (_buildReturnsSliverWidget(stateClass)) {
+      final stateClass = findStateClass(stateClasses, widgetName);
+      if (stateClass != null && _buildReturnsSliverWidget(stateClass)) {
         rule.reportAtToken(widget.namePart.typeName);
       }
     }
@@ -110,23 +111,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (returnExpr == null) return false;
 
     return _isSliverExpression(returnExpr);
-  }
-
-  /// Finds the State class that corresponds to the given StatefulWidget name.
-  static ClassDeclaration? _findStateClass(List<ClassDeclaration> stateClasses, String widgetName) {
-    for (final stateClass in stateClasses) {
-      final superclass = stateClass.extendsClause?.superclass;
-      if (superclass == null) continue;
-
-      final typeArgs = superclass.typeArguments?.arguments;
-      if (typeArgs != null && typeArgs.length == 1) {
-        final typeArg = typeArgs.first;
-        if (typeArg is NamedType && typeArg.name.lexeme == widgetName) {
-          return stateClass;
-        }
-      }
-    }
-    return null;
   }
 
   /// Checks if the expression's static type is a sliver widget from Flutter.

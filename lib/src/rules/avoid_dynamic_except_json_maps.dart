@@ -1,17 +1,13 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import 'package:flutter_skill_lints/src/ast_utils.dart';
+import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Avoid dynamic except at JSON map boundaries.
 ///
 /// Why: `dynamic` disables static checking in normal app code and hides runtime errors. The only
 /// built-in allowance is `Map<String, dynamic>` because JSON payloads commonly need that shape.
 /// For untyped runtime APIs, keep the lint visible and add a targeted ignore with a local reason.
-final class AvoidDynamicExceptJsonMaps extends AnalysisRule {
+final class AvoidDynamicExceptJsonMaps extends GeneratedNamedTypeCheckRule {
   static const LintCode code = LintCode(
     'avoid_dynamic_except_json_maps',
     'Avoid dynamic except at JSON map boundaries.',
@@ -24,29 +20,15 @@ final class AvoidDynamicExceptJsonMaps extends AnalysisRule {
     : super(
         name: 'avoid_dynamic_except_json_maps',
         description: 'Bans dynamic except in Map<String, dynamic> JSON types.',
+        code: code,
       );
 
   @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (isGeneratedRuleContext(context)) return;
-    registry.addNamedType(this, _Visitor(this));
-  }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule);
-
-  final AvoidDynamicExceptJsonMaps rule;
-
-  @override
-  void visitNamedType(NamedType node) {
+  void checkNamedType(NamedType node) {
     if (node.name.lexeme != 'dynamic') return;
     if (_isAllowedJsonMapDynamic(node)) return;
     if (_isAllowedJsonMapCastDynamic(node)) return;
-    rule.reportAtNode(node);
+    reportAtNode(node);
   }
 
   bool _isAllowedJsonMapDynamic(NamedType node) {

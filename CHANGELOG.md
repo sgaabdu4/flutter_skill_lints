@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.9.1] - 2026-08-16
+
+- Replaced the unreachable Dart example entrypoint with a package usage README.
+
 ## [0.9.0] - 2026-08-15
 
 - Updated to the shared analyzer 13.3.0 family with analyzer_plugin 0.14.12,

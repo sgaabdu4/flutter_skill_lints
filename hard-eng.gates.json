@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "hard_eng": {
+    "schema_version": 1,
+    "channel": "prerelease",
+    "release_repository": "sgaabdu4/hard-eng",
+    "wiring": "shared",
+    "pin": {
+      "tag": "v0.1.0-alpha.g0e5d258d50bad0a162528f11cea00b3c5ddac181",
+      "archive_sha256": "a1fa54d46f8efb2e73ece95579b3f0a9371fcb53a5da8cd4d3063ccd8d8e3bc5",
+      "manifest_sha256": "7e25f950f21c8e30d36a5cb4307dd7bf8a38f497e36554bf611d85d34ccdd0c2"
+    }
+  }
+}

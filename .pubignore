@@ -10,3 +10,11 @@ coverage/
 pubspec.lock
 TODO.md
 release.sh
+.claude/
+.codex/
+.hard-eng/
+AGENTS.md
+AGENTS.override.md
+CLAUDE.md
+hard-eng.gates.json
+PRODUCT.md

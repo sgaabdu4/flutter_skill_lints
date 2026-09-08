@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+unset $(git rev-parse --local-env-vars)
+repo=$(git rev-parse --show-toplevel)
+exec "$repo/scripts/run-gate-phase.sh" push "$@"

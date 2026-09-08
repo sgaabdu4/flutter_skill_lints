@@ -1,7 +1,5 @@
 # building-flutter-apps Lint Coverage
 
-Status: 2026-08-15.
-
 This audit covers both plugin surfaces:
 
 - `lib/src/rules/**`: 185 registered `building-flutter-apps` warning rules.
@@ -299,7 +297,7 @@ so this plugin should not add duplicate reports:
 - `prefer_contains` is already enabled by `package:flutter_lints/flutter.yaml`
   through `package:lints/recommended.yaml`.
 - `avoid_public_notifier_properties` and `avoid_ref_inside_state_dispose` are
-  owned by `riverpod_lint` stable `3.1.8`. Verified against the
+  owned by `riverpod_lint 3.1.9`. Verified against the
   [Riverpod lint changelog](https://pub.dev/packages/riverpod_lint/changelog).
 - Missing `part` files or generated `.g.dart` wiring.
 - Riverpod generated provider dependency metadata and scoped-provider override
@@ -313,20 +311,19 @@ so this plugin should not add duplicate reports:
 
 ## Riverpod Package Compatibility
 
-The lint package uses the shared analyzer-13 family in its `pubspec.yaml`:
+The lint package uses the shared analyzer-14.3 family in its `pubspec.yaml`:
 
-- `analyzer 13.3.0`
-- `analyzer_plugin 0.14.12`
-- `analysis_server_plugin 0.3.18`
-- `analyzer_testing 0.3.2`
-- `riverpod_lint 3.1.8` in the consuming app's top-level `plugins:` block
+- `analyzer 14.3.0`
+- `analyzer_plugin 0.14.16`
+- `analysis_server_plugin 0.3.22`
+- `analyzer_testing 0.4.1`
+- `riverpod_lint 3.1.9` in a Dart 3.13 consuming app's top-level `plugins:` block
 
 The real analysis-server smoke test resolves both plugins together and checks
-that diagnostics are emitted without `server.pluginError`. `analyzer 14.1.0`
-is a newer standalone candidate, but it is not compatible with the current
-Riverpod plugin family, so it is not the shared package contract. The Flutter
-generator family remains separate because its build process resolves analyzer
-12.x for code generation. Version truth lives in the Flutter skill's
+that diagnostics are emitted without `server.pluginError`. The analyzer-14.3
+family is the shared package contract. The Flutter generator family remains
+separate because its build process resolves analyzer 12.x for code generation.
+Version truth lives in the Flutter skill's
 `references/core-stack.md`.
 
 ## Runtime Proof Boundaries

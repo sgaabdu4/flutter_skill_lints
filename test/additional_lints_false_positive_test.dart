@@ -304,7 +304,7 @@ class _PrimaryWidgetContent extends StatelessWidget {
   }
 
   Future<void> test_allowsVisibleForTestingWidgetCompanion() async {
-    const filePath = '/home/test/package/lib/primary_widget.dart';
+    final filePath = '$testPackageRootPath/lib/primary_widget.dart';
     newFile(filePath, r'''
 import 'package:flutter/widgets.dart';
 
@@ -354,7 +354,7 @@ class _PrimaryWidgetContent extends StatelessWidget {
   }
 
   Future<void> test_allowsPrivateWidgetCompanionInTestFile() async {
-    const filePath = '/home/test/package/test/primary_widget_test.dart';
+    final filePath = '$testPackageRootPath/test/primary_widget_test.dart';
     newFile(filePath, r'''
 // ignore_for_file: unused_element_parameter
 import 'package:flutter/widgets.dart';
@@ -372,7 +372,7 @@ class _PrimaryWidgetContent extends StatelessWidget {
   }
 
   Future<void> test_reportsVisibleForTestingWidgetCompanionInTestFile() async {
-    const filePath = '/home/test/package/test/primary_widget_test.dart';
+    final filePath = '$testPackageRootPath/test/primary_widget_test.dart';
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -528,12 +528,12 @@ final class PreferClassDestructuringFalsePositiveTest extends _AdditionalLintRul
   }
 
   Future<void> test_allowsPropertyAssertionsInTests() async {
-    const filePath = '/home/test/package/test/workout_test.dart';
+    final filePath = '$testPackageRootPath/test/workout_test.dart';
     newFile(filePath, r'''
 class Workout {
   String get routineId => 'routine-1';
   int get orderIndex => 2;
-  String get updatedAt => '2024-01-01';
+  String get updatedAt => 'saved';
 }
 
 void expect(Object? actual, Object? matcher) {}

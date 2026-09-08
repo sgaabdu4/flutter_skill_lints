@@ -10,5 +10,29 @@
       "archive_sha256": "231b068e87cff3d124a64051c647c6b9f460ea6156dbc9e927c03d437c83c613",
       "manifest_sha256": "5b18149222c9b3ef41ed2187b213e6c7c459d80bafa0cc929e52db5e5e188796"
     }
+  },
+  "enforcement": {
+    "schema_version": 1,
+    "required_paths": [
+      "hard-eng.gates.json",
+      "scripts/run-gate-phase.sh",
+      "scripts/setup-git-hooks.sh",
+      "scripts/privacy_scan.py",
+      ".githooks/pre-commit",
+      ".githooks/pre-push"
+    ]
+  },
+  "families": {
+    "dart-format": ["dart", "format", "--output=none", "--set-exit-if-changed", "."],
+    "dart-analyze": ["dart", "analyze", "--fatal-infos"],
+    "dart-test": ["dart", "test", "--reporter", "expanded"],
+    "dart-decimate": ["npx", "--yes", "dart-decimate@latest", "json", "."],
+    "secrets": ["gitleaks", "dir", "--redact", "--no-banner", "--exit-code", "1", "."],
+    "privacy": ["python3", "scripts/privacy_scan.py", "--repo", "."]
+  },
+  "phases": {
+    "commit": ["dart-format", "dart-analyze", "privacy"],
+    "push": ["dart-format", "dart-analyze", "dart-test", "dart-decimate", "secrets", "privacy"],
+    "ci": ["dart-format", "dart-analyze", "dart-test", "dart-decimate", "secrets", "privacy"]
   }
 }

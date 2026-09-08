@@ -1,0 +1,31 @@
+{
+  "evidence": [
+    "hard-eng.gates.json contained only the legacy Hard Eng marker and no check families or phases.",
+    "setup_state.py run reported gate_manifest=FAIL and gate_enforcement=FAIL.",
+    "The configured push phase and installed pre-push hook passed after the repair.",
+    "setup_state.py run now reports gate_manifest=PASS and gate_enforcement=PASS.",
+    "The expanded push phase passed format, analysis, test, Dart Decimate, secrets, and privacy.",
+    "The refreshed setup receipt reports worktree_write=PASS, gate_manifest=PASS, and gate_enforcement=PASS.",
+    "The gate wiring contract passes all three tests after the current-tree secret scan correction.",
+    "Gitleaks 8.30.1 directory scanning rejects an untracked synthetic token, accepts the cleaned fixture, and passes on the current tree."
+  ],
+  "failure": "Gate migration was reported as passed without a validating receipt.",
+  "helper": {
+    "name": "he-learn",
+    "selections": 1,
+    "state": "launched"
+  },
+  "learning_id": "gate-migration-admission",
+  "occurrences": 1,
+  "prevention": {
+    "kind": "deterministic",
+    "owner": "scripts/run-gate-phase.sh",
+    "violation_fixture": "test/gate_wiring_test.dart",
+    "valid_fixture": "hard-eng.gates.json",
+    "proof": "scripts/setup-git-hooks.sh"
+  },
+  "root_cause": "Admission relied on marker presence instead of executable manifest validation, universal gate coverage, and hook enforcement.",
+  "schema_version": 1,
+  "status": "resolved",
+  "trigger": "false-passing-check"
+}

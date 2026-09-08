@@ -13,8 +13,12 @@ release.sh
 .claude/
 .codex/
 .hard-eng/
+.hard-eng-runtime/
+.agents/
+.githooks/
 AGENTS.md
 AGENTS.override.md
 CLAUDE.md
 hard-eng.gates.json
+scripts/
 PRODUCT.md

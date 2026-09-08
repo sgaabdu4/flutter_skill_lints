@@ -38,10 +38,8 @@ Designed for Riverpod + codegen Flutter apps.
    include: package:flutter_lints/flutter.yaml
 
    plugins:
-     # Stable Riverpod lint pin verified for Riverpod 3.4-era lint coverage.
-     # Re-check pub.dev before release when Riverpod or analyzer versions move.
-     riverpod_lint: 3.1.8
-     flutter_skill_lints:
+     riverpod_lint: ^3.1.9
+     flutter_skill_lints: ^0.10.0
 
    analyzer:
      exclude:
@@ -226,24 +224,22 @@ generation and compilation prove those files are valid.
 versions listed under [Compatibility](#compatibility). Analyzer plugin APIs
 are not stable across major versions.
 
-**Conflict with `riverpod_lint`.** Both plugins are designed to coexist; pin
-`riverpod_lint` to stable `3.1.8` so the analysis-server plugin entrypoint can
-use the shared analyzer-13 family.
+**Conflict with `riverpod_lint`.** Both plugins are designed to coexist when
+their top-level plugin constraints resolve with the analyzer 14.3 family.
 
 ## Compatibility
 
-Targets the analyzer-13 shared plugin family. Verified against:
+Targets the analyzer-14.3 shared plugin family and requires Dart 3.11 or
+later. Verified against:
 
-- `analysis_server_plugin 0.3.18`
-- `analyzer 13.3.0`
-- `analyzer_plugin 0.14.12`
-- `analyzer_testing 0.3.2`
-- `riverpod_lint 3.1.8`
+- `analysis_server_plugin 0.3.22`
+- `analyzer 14.3.0`
+- `analyzer_plugin 0.14.16`
+- `analyzer_testing 0.4.1`
+- `riverpod_lint 3.1.9` in a Dart 3.13 consumer
 
-`analyzer 14.1.0` is a newer standalone analyzer release, but its plugin
-family cannot solve with `riverpod_lint 3.1.8`. The real analysis-server smoke
-test is the compatibility gate, so the shared analyzer-13 family is the
-selected package contract.
+The real analysis-server smoke test resolves both plugins together, so the
+shared analyzer-14.3 family is the package contract.
 
 Recheck before publishing a new release.
 
@@ -253,6 +249,12 @@ Recheck before publishing a new release.
 dart format .
 dart analyze
 dart test
+```
+
+Set up the repository hooks once:
+
+```bash
+sh scripts/setup-git-hooks.sh
 ```
 
 Integration smoke test (creates a temporary Flutter app, gated):

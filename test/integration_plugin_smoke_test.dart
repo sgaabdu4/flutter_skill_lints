@@ -20,19 +20,17 @@ name: flutter_skill_lints_smoke
 publish_to: none
 
 environment:
-  sdk: ^3.10.0
+  sdk: ^3.13.0
 
 dependencies:
   flutter:
     sdk: flutter
-  flutter_riverpod: ^3.0.0
-  riverpod_annotation: ^3.0.0
+  flutter_riverpod: ^3.4.3
+  riverpod_annotation: ^4.0.7
 ''');
         await _writeFile('${app.path}/analysis_options.yaml', '''
 plugins:
-  # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
-  # Re-check pub.dev before release when Riverpod or analyzer versions move.
-  riverpod_lint: 3.1.8
+  riverpod_lint: ^3.1.9
   flutter_skill_lints:
     path: $packageRoot
 

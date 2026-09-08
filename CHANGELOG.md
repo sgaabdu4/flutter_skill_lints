@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.10.0]
+
+- Updated the analyzer plug-in dependencies to the analyzer 14.3 family and
+  verified them with the current Riverpod lint plug-in.
+
 ## [0.9.1] - 2026-08-16
 
 - Replaced the unreachable Dart example entrypoint with a package usage README.

@@ -1,6 +1,6 @@
 name: flutter_skill_lints
 description: Analyzer plugin companion for the building-flutter-apps skill's Dart and Flutter guardrails.
-version: 0.9.1
+version: 0.10.0
 repository: https://github.com/sgaabdu4/flutter_skill_lints
 issue_tracker: https://github.com/sgaabdu4/flutter_skill_lints/issues
 topics:
@@ -11,16 +11,16 @@ topics:
   - static-analysis
 
 environment:
-  sdk: ^3.10.0
+  sdk: ^3.11.0
 
 dependencies:
-  analyzer: ^13.3.0
-  analyzer_plugin: ^0.14.12
-  analysis_server_plugin: ^0.3.18
+  analyzer: ^14.3.0
+  analyzer_plugin: ^0.14.16
+  analysis_server_plugin: ^0.3.22
   meta: ^1.19.0
 
 dev_dependencies:
-  analyzer_testing: 0.3.2
+  analyzer_testing: 0.4.1
   lints: ^6.1.0
-  test: ^1.31.2
+  test: ^1.32.0
   test_reflective_loader: ^0.4.0

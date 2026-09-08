@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -34,10 +34,36 @@ jobs:
           fi
 
       - name: Check formatting
-        run: dart format --set-exit-if-changed .
+        run: dart format --output=none --set-exit-if-changed .
 
       - name: Analyze code
         run: dart analyze --fatal-infos
+
+      - name: Scan committed history for secrets
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_VERSION: "8.30.1"
+          GITLEAKS_ENABLE_COMMENTS: "false"
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+
+      - name: Scan the current tree for secrets
+        run: gitleaks dir --redact --no-banner --exit-code 1 .
+
+      - name: Checkout Hard Eng privacy scanner
+        uses: actions/checkout@v6
+        with:
+          repository: sgaabdu4/hard-eng
+          ref: v0.1.0-alpha.gf2c7a9d8842cd2b485819560d8d23728165573c6
+          path: .hard-eng-runtime
+
+      - name: Scan the full repository for personal data
+        env:
+          HARD_ENG_RUNTIME: ${{ github.workspace }}/.hard-eng-runtime
+        run: python3 scripts/privacy_scan.py --repo "$GITHUB_WORKSPACE"
+
+      - name: Run Dart Decimate
+        run: npx --yes dart-decimate@latest json .
 
       - name: Checkout Flutter skill docs
         run: git clone --depth 1 --branch main https://github.com/sgaabdu4/building-flutter-apps.git ../building-flutter-apps

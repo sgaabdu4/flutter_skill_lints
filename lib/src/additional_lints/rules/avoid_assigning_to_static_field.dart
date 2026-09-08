@@ -115,6 +115,9 @@ final class _Visitor extends RecursiveAstVisitor<void> {
       PropertyAccess(target: SimpleIdentifier(:final name), :final propertyName)
           when _isStaticFieldOnClass(name, propertyName.name) =>
         propertyName.name,
+      PropertyAccess(target: TypeLiteral(:final type), :final propertyName)
+          when _isStaticFieldOnClass(type.name.lexeme, propertyName.name) =>
+        propertyName.name,
       _ => null,
     };
   }

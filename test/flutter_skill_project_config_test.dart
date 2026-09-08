@@ -177,9 +177,7 @@ linter:
 include: package:flutter_lints/flutter.yaml
 
 plugins:
-  # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
-  # Re-check pub.dev before release when Riverpod or analyzer versions move.
-  riverpod_lint: 3.1.8
+  riverpod_lint: ^3.1.9
   flutter_skill_lints:
     "path": ../flutter_skill_lints
 
@@ -291,10 +289,8 @@ linter:
 include: package:flutter_lints/flutter.yaml
 
 plugins:
-  # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
-  # Re-check pub.dev before release when Riverpod or analyzer versions move.
-  riverpod_lint: 3.1.8
-  flutter_skill_lints:
+  riverpod_lint: ^3.1.9
+  flutter_skill_lints: ^0.10.0
 
 analyzer:
   exclude:
@@ -387,7 +383,7 @@ linter:
     newFile('$testPackageRootPath/analysis_options.yaml', r'''
 include: package:flutter_lints/flutter.yaml
 
-plugins: {flutter_skill_lints: {path: ../flutter_skill_lints}, riverpod_lint: 3.1.8}
+plugins: {flutter_skill_lints: {path: ../flutter_skill_lints}, riverpod_lint: ^3.1.9}
 
 analyzer:
   exclude:
@@ -441,10 +437,8 @@ linter:
 include: package:flutter_lints/flutter.yaml
 
 plugins:
-  # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
-  # Re-check pub.dev before release when Riverpod or analyzer versions move.
-  riverpod_lint: 3.1.8
-  flutter_skill_lints:
+  riverpod_lint: ^3.1.9
+  flutter_skill_lints: ^0.10.0
   "many_lints": ^0.4.0
 
 analyzer:
@@ -518,10 +512,8 @@ class User {
 include: package:flutter_lints/flutter.yaml
 
 plugins:
-  # Stable Riverpod lint pin verified for Riverpod 3.3-era lint coverage.
-  # Re-check pub.dev before release when Riverpod or analyzer versions move.
-  riverpod_lint: 3.1.8
-  flutter_skill_lints:
+  riverpod_lint: ^3.1.9
+  flutter_skill_lints: ^0.10.0
 
 analyzer:
   exclude:

@@ -56,14 +56,14 @@ dev_dependencies:
 dependencies:
   path: ^1.9.0
 dev_dependencies:
-  test: ^1.30.0
+  test: ^1.32.0
 ''',
   }) {
     return '''
 name: test
 publish_to: $publishTo
 environment:
-  sdk: ^3.10.0
+  sdk: ^3.13.0
 $dependencies
 ''';
   }
@@ -73,8 +73,8 @@ $dependencies
 include: package:flutter_lints/flutter.yaml
 
 plugins:
-  riverpod_lint: 3.1.8
-  flutter_skill_lints:
+  riverpod_lint: ^3.1.9
+  flutter_skill_lints: ^0.10.0
 
 analyzer:
   exclude:

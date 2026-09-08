@@ -40,7 +40,7 @@ jobs:
         run: dart pub get
 
       - name: Check formatting
-        run: dart format --set-exit-if-changed .
+        run: dart format --output=none --set-exit-if-changed .
 
   analyze:
     name: Analyze Code
@@ -57,6 +57,48 @@ jobs:
 
       - name: Analyze code
         run: dart analyze --fatal-infos
+
+  universal-gates:
+    name: Scan Secrets and Privacy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Scan committed history for secrets
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_VERSION: "8.30.1"
+          GITLEAKS_ENABLE_COMMENTS: "false"
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+
+      - name: Scan the current tree for secrets
+        run: gitleaks dir --redact --no-banner --exit-code 1 .
+
+      - name: Checkout Hard Eng privacy scanner
+        uses: actions/checkout@v6
+        with:
+          repository: sgaabdu4/hard-eng
+          ref: v0.1.0-alpha.gf2c7a9d8842cd2b485819560d8d23728165573c6
+          path: .hard-eng-runtime
+
+      - name: Scan the full repository for personal data
+        env:
+          HARD_ENG_RUNTIME: ${{ github.workspace }}/.hard-eng-runtime
+        run: python3 scripts/privacy_scan.py --repo "$GITHUB_WORKSPACE"
+
+  dart-decimate:
+    name: Check Dart Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Run Dart Decimate
+        run: npx --yes dart-decimate@latest json .
 
   test:
     name: Run Dart Tests
@@ -99,7 +141,7 @@ jobs:
   publish-dry-run:
     name: Publish Dry Run
     runs-on: ubuntu-latest
-    needs: [version-check, format, analyze, test, flutter-smoke]
+    needs: [version-check, format, analyze, universal-gates, dart-decimate, test, flutter-smoke]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -116,7 +158,7 @@ jobs:
   pana:
     name: Package Analysis
     runs-on: ubuntu-latest
-    needs: [version-check, format, analyze, test, flutter-smoke]
+    needs: [version-check, format, analyze, universal-gates, dart-decimate, test, flutter-smoke]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -137,8 +179,8 @@ jobs:
           TOTAL=$(jq '.scores.maxPoints' pana.json)
           MIN_SCORE=$((TOTAL - 10))
           echo "PANA Score: $SCORE/$TOTAL"
-          # Analyzer is intentionally held on the analyzer 13 line for
-          # riverpod_lint compatibility; keep every other PANA category clean.
+          # Analyzer 14.3 is the supported package contract; keep every other
+          # PANA category clean.
           if [ "$SCORE" -lt "$MIN_SCORE" ]; then
             jq '.suggestions' pana.json
             exit 1
@@ -147,7 +189,7 @@ jobs:
   release-tag:
     name: Auto-Tag Release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [version-check, format, analyze, test, flutter-smoke, publish-dry-run, pana]
+    needs: [version-check, format, analyze, universal-gates, dart-decimate, test, flutter-smoke, publish-dry-run, pana]
     runs-on: ubuntu-latest
     permissions:
       contents: write

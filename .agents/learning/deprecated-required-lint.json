@@ -1,0 +1,21 @@
+{
+  "evidence": [
+    "Hosted analyzer-14.3 consumer reproduces deprecated_lint as its only remaining analysis issue; the package canonical fixture fails with cfg_required_lints when the deprecated lint is removed."
+  ],
+  "failure": "The 0.10.1 canonical configuration and cfg_required_lints contract required avoid_private_typedef_functions after Dart deprecated that lint.",
+  "helper": {
+    "name": "he-learn",
+    "selections": 1,
+    "state": "selected"
+  },
+  "learning_id": "deprecated-required-lint",
+  "next_action": "Publish the corrected 0.10.2 package and obtain the hosted-consumer receipt, then run the selected he-learn review to set deterministic prevention and close this record.",
+  "occurrences": 1,
+  "prevention": {
+    "kind": "none"
+  },
+  "root_cause": "The required-lint list and copied canonical configurations were not reconciled against the Dart lint deprecation before release.",
+  "schema_version": 1,
+  "status": "open",
+  "trigger": "false-passing-check"
+}

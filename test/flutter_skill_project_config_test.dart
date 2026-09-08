@@ -210,7 +210,6 @@ linter:
     - type_annotate_public_apis
     - avoid_positional_boolean_parameters
     - avoid_equals_and_hash_code_on_mutable_classes
-    - avoid_private_typedef_functions
     - avoid_returning_this
     - avoid_setters_without_getters
     - prefer_mixin
@@ -266,7 +265,6 @@ linter:
     - type_annotate_public_apis
     - avoid_positional_boolean_parameters
     - avoid_equals_and_hash_code_on_mutable_classes
-    - avoid_private_typedef_functions
     - avoid_returning_this
     - avoid_setters_without_getters
     - prefer_mixin
@@ -361,7 +359,6 @@ linter:
     - type_annotate_public_apis
     - avoid_positional_boolean_parameters
     - avoid_equals_and_hash_code_on_mutable_classes
-    - avoid_private_typedef_functions
     - avoid_returning_this
     - avoid_setters_without_getters
     - prefer_mixin
@@ -414,7 +411,6 @@ linter:
     - type_annotate_public_apis
     - avoid_positional_boolean_parameters
     - avoid_equals_and_hash_code_on_mutable_classes
-    - avoid_private_typedef_functions
     - avoid_returning_this
     - avoid_setters_without_getters
     - prefer_mixin
@@ -470,7 +466,6 @@ linter:
     - type_annotate_public_apis
     - avoid_positional_boolean_parameters
     - avoid_equals_and_hash_code_on_mutable_classes
-    - avoid_private_typedef_functions
     - avoid_returning_this
     - avoid_setters_without_getters
     - prefer_mixin
@@ -544,7 +539,6 @@ linter:
     - type_annotate_public_apis
     - avoid_positional_boolean_parameters
     - avoid_equals_and_hash_code_on_mutable_classes
-    - avoid_private_typedef_functions
     - avoid_returning_this
     - avoid_setters_without_getters
     - prefer_mixin

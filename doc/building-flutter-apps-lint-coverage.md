@@ -66,11 +66,10 @@ Core skill rules already covered before this pass:
   `test_pump_and_settle`, `test_tap_at`, `test_inline_value_key`,
   `test_first_match_finder`.
 - Effective Dart/config shape: canonical configs require
-  `always_declare_return_types`, `type_annotate_public_apis`,
-  `avoid_positional_boolean_parameters`,
-  `avoid_equals_and_hash_code_on_mutable_classes`,
-  `avoid_private_typedef_functions`, `avoid_returning_this`,
-  `avoid_setters_without_getters`, `prefer_mixin`, and
+   `always_declare_return_types`, `type_annotate_public_apis`,
+   `avoid_positional_boolean_parameters`,
+   `avoid_equals_and_hash_code_on_mutable_classes`, `avoid_returning_this`,
+   `avoid_setters_without_getters`, `prefer_mixin`, and
   `use_to_and_as_if_applicable`. `prefer_type_over_var` was removed because it
   conflicts with Effective Dart's local-variable inference guidance.
 - Effective Dart Design API safety not covered by upstream lints:

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.10.2] - 2026-09-08
+
+- Removed the deprecated `avoid_private_typedef_functions` lint from the
+  canonical Flutter skill configuration and its configuration contract.
+
 ## [0.10.1] - 2026-09-08
 
 - Fixed the release verification order so Dart Decimate scans only the package

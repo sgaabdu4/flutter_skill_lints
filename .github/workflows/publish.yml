@@ -50,6 +50,12 @@ jobs:
       - name: Scan the current tree for secrets
         run: gitleaks dir --redact --no-banner --exit-code 1 .
 
+      - name: Run Dart Decimate
+        run: npx --yes dart-decimate@latest json .
+
+      - name: Publish dry run
+        run: dart pub publish --dry-run
+
       - name: Checkout Hard Eng privacy scanner
         uses: actions/checkout@v6
         with:
@@ -62,9 +68,6 @@ jobs:
           HARD_ENG_RUNTIME: ${{ github.workspace }}/.hard-eng-runtime
         run: python3 scripts/privacy_scan.py --repo "$GITHUB_WORKSPACE"
 
-      - name: Run Dart Decimate
-        run: npx --yes dart-decimate@latest json .
-
       - name: Checkout Flutter skill docs
         run: git clone --depth 1 --branch main https://github.com/sgaabdu4/building-flutter-apps.git ../building-flutter-apps
 
@@ -73,9 +76,6 @@ jobs:
 
       - name: Run real analyzer-server smoke
         run: RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart --reporter expanded
-
-      - name: Publish dry run
-        run: dart pub publish --dry-run
 
   publish:
     name: Publish to pub.dev

@@ -1,0 +1,27 @@
+{
+  "evidence": [
+    "GitHub Actions run 34178533405 failed in Verify package / Run Dart Decimate with two dead-file findings and one unlisted flutter dependency under .hard-eng-runtime.",
+    "The tag-push workflow checked out the privacy runtime before running Dart Decimate."
+  ],
+  "failure": "The tagged publisher failed before publication because Dart Decimate scanned the injected Hard Eng runtime instead of only the package checkout.",
+  "helper": {
+    "name": "he-learn",
+    "selections": 1,
+    "state": "selected"
+  },
+  "learning_id": "publish-runtime-scope",
+  "deferred_owner": "native_git",
+  "next_action": "Verify the delivered v0.10.1 tag-push run's Verify package, trusted pub.dev publish, and GitHub release results before resolving.",
+  "occurrences": 1,
+  "prevention": {
+    "kind": "deterministic",
+    "owner": "test/gate_wiring_test.dart",
+    "violation_fixture": "test/gate_wiring_test.dart",
+    "valid_fixture": ".github/workflows/publish.yml",
+    "proof": "test/gate_wiring_test.dart"
+  },
+  "root_cause": "The release workflow added an external runtime inside the package workspace before a full-tree package scanner, changing the scanner subject after local and main CI proof.",
+  "schema_version": 1,
+  "status": "deferred",
+  "trigger": "false-passing-check"
+}

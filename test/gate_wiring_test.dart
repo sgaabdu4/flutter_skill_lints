@@ -99,6 +99,27 @@ void main() {
       expect(publish, contains('dart format --output=none --set-exit-if-changed .'));
       expect(ci, contains(_decimateCommand));
       expect(publish, contains(_decimateCommand));
+      expect(
+        publish.indexOf(_decimateCommand),
+        lessThan(publish.indexOf('Checkout Hard Eng privacy scanner')),
+      );
+      expect(
+        publish.indexOf('Publish dry run'),
+        lessThan(publish.indexOf('Checkout Hard Eng privacy scanner')),
+      );
+      expect(publish, contains('  push:\n    tags:'));
+      expect(publish, isNot(contains('workflow_dispatch:')));
+      final publishJob = publish.substring(
+        publish.indexOf('  publish:'),
+        publish.indexOf('  github-release:'),
+      );
+      expect(publishJob, contains('needs: verify'));
+      expect(publishJob, contains('uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1'));
+      expect(publishJob, isNot(contains('Checkout Hard Eng privacy scanner')));
+      expect(
+        publish,
+        contains('  github-release:\n    name: Create GitHub release\n    needs: publish'),
+      );
       for (final job in ['publish-dry-run', 'pana', 'release-tag']) {
         expect(ci, matches(RegExp('  $job:\\n[\\s\\S]*?needs: \\[[^\\]]*dart-decimate')));
         expect(ci, matches(RegExp('  $job:\\n[\\s\\S]*?needs: \\[[^\\]]*universal-gates')));

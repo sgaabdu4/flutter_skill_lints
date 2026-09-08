@@ -9,7 +9,7 @@ void main() {
   final shouldRun = Platform.environment['RUN_FLUTTER_PLUGIN_SMOKE'] == '1';
 
   test(
-    'loads with riverpod_lint in a real Flutter analysis server run',
+    'loads canonical configuration with riverpod_lint in a real Flutter analysis server run',
     () async {
       final packageRoot = Directory.current.absolute.path;
       final app = await Directory.systemTemp.createTemp('flutter_skill_lints_smoke_');
@@ -28,16 +28,8 @@ dependencies:
   flutter_riverpod: ^3.4.3
   riverpod_annotation: ^4.0.7
 ''');
-        await _writeFile('${app.path}/analysis_options.yaml', '''
-plugins:
-  riverpod_lint: ^3.1.9
-  flutter_skill_lints:
-    path: $packageRoot
-
-analyzer:
-  exclude:
-    - "**/*.g.dart"
-''');
+        final analysisOptionsPath = '${app.path}/analysis_options.yaml';
+        await _writeFile(analysisOptionsPath, _analysisOptions(packageRoot));
         await Directory('${app.path}/lib').create(recursive: true);
         await Directory(
           '${app.path}/lib/features/history/presentation/notifiers',
@@ -160,7 +152,16 @@ class _ContentViewState extends State<ContentView> {
         expect(output, contains('presentation_widget_navigation_forbidden'));
         expect(output, contains('presentation_widget_controller_state'));
         expect(output, contains('presentation_widget_infrastructure_dependency'));
+        expect(output, isNot(contains('deprecated_lint')));
         expect(output, isNot(contains('server.pluginError')));
+
+        await _writeFile(analysisOptionsPath, _analysisOptionsWithDeprecatedLint(packageRoot));
+        final deprecatedLintAnalyze = await _run('dart', ['analyze'], app);
+        final deprecatedLintOutput =
+            '${deprecatedLintAnalyze.stdout}\n${deprecatedLintAnalyze.stderr}';
+
+        expect(deprecatedLintOutput, contains('avoid_private_typedef_functions'));
+        expect(deprecatedLintOutput, contains('deprecated_lint'));
       } finally {
         await app.delete(recursive: true);
       }
@@ -169,6 +170,28 @@ class _ContentViewState extends State<ContentView> {
     timeout: const Timeout(Duration(minutes: 5)),
   );
 }
+
+String _analysisOptions(String packageRoot) =>
+    '''
+include: package:flutter_skill_lints/analysis_options.yaml
+
+plugins:
+  riverpod_lint: ^3.1.9
+  flutter_skill_lints:
+    path: $packageRoot
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+''';
+
+String _analysisOptionsWithDeprecatedLint(String packageRoot) =>
+    '''
+${_analysisOptions(packageRoot)}
+linter:
+  rules:
+    - avoid_private_typedef_functions
+''';
 
 Future<void> _writeFile(String path, String content) async {
   final file = File(path);

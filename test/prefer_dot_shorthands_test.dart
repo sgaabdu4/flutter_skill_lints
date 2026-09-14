@@ -1,7 +1,13 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
+import 'package:analyzer/dart/analysis/results.dart';
+import 'package:analyzer_plugin/protocol/protocol_common.dart';
+import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_dot_shorthands_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_dot_shorthands.dart';
+import 'package:test/test.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
@@ -141,6 +147,227 @@ Color color = Palette.red;
 ''');
   }
 
+  Future<void> test_namedExtensionStaticHelpers_noLint() async {
+    await assertNoDiagnostics(r'''
+extension DateTimeX on DateTime {
+  static DateTime nowUtc() => throw 0;
+}
+extension ChoiceMapping on Choice {
+  static Choice fromDbInt(int value) => throw 0;
+}
+enum Choice { one }
+
+DateTime now() => DateTimeX.nowUtc();
+Choice choice() => ChoiceMapping.fromDbInt(1);
+''');
+  }
+
+  Future<void> test_inferredGenericArgument_noLint() async {
+    await assertNoDiagnostics(r'''
+enum Choice { one }
+class Key<T> {
+  const Key(T value);
+}
+class Navigator {
+  void pop<T>(T? value) {}
+}
+void consume<T>(T value, {T? named}) {}
+
+void example(Navigator navigator) {
+  consume(Choice.one);
+  consume(0, named: Choice.one);
+  navigator.pop(Choice.one);
+  const Key(Choice.one);
+}
+''');
+  }
+
+  Future<void> test_explicitGenericArgument_lint() async {
+    const source = r'''
+enum Choice { one }
+class Key<T> {
+  const Key(T value);
+}
+class Navigator {
+  void pop<T>(T? value) {}
+}
+void consume<T>(T value) {}
+
+void example(Navigator navigator) {
+  consume<Choice>(Choice.one);
+  navigator.pop<Choice>(Choice.one);
+  const Key<Choice>(Choice.one);
+}
+''';
+    final targets = _targetRanges(source, const ['Choice.one', 'Choice.one', 'Choice.one']);
+    await assertDiagnostics(source, targets.map((target) => lint(target.$1, target.$2)).toList());
+  }
+
+  Future<void> test_asyncReturn_usesFlattenedValueContext() async {
+    const source = r'''
+import 'dart:async';
+
+enum Axis { start, center }
+
+Future<Axis> expression() async => Axis.center;
+FutureOr<Axis> futureOr() async => Axis.start;
+Future<Axis> block() async {
+  return Axis.center;
+}
+Future<Axis> alreadyFuture() async => Future<Axis>.error(0);
+''';
+    final targets = _targetRanges(source, const ['Axis.center', 'Axis.start', 'Axis.center']);
+    await assertDiagnostics(source, targets.map((target) => lint(target.$1, target.$2)).toList());
+  }
+
+  Future<void> test_subtypeStaticNamespace_noLint() async {
+    await assertNoDiagnostics(r'''
+class Base {
+  const Base();
+}
+class Derived extends Base {
+  const Derived();
+  static const value = Derived();
+}
+Base value = Derived.value;
+''');
+  }
+
+  Future<void> test_selectorChainWithContextNamespace_lint() async {
+    const source = r'''
+class Item {
+  static Builder builder() => .new();
+}
+class Builder {
+  Item build() => .new();
+}
+Item item = Item.builder().build();
+''';
+    const target = 'Item.builder()';
+    await assertDiagnostics(source, [lint(source.indexOf(target), target.length)]);
+  }
+
+  Future<void> test_fix_constructorForms_areValid() async {
+    const source = r'''
+class Box<T> {
+  const Box();
+  const Box.named();
+}
+
+Box<int> a = new Box<int>();
+Box<int> b = new Box<int>.named();
+Box<int> c = const Box<int>();
+Box<int> d = const Box<int>.named();
+Box<int> e = Box<int>();
+Box<int> f = Box<int>.named();
+''';
+    const targets = [
+      'new Box<int>()',
+      'new Box<int>.named()',
+      'const Box<int>()',
+      'const Box<int>.named()',
+      'Box<int>()',
+      'Box<int>.named()',
+    ];
+    const expected = r'''
+class Box<T> {
+  const Box();
+  const Box.named();
+}
+
+Box<int> a = .new();
+Box<int> b = .named();
+Box<int> c = const .new();
+Box<int> d = const .named();
+Box<int> e = .new();
+Box<int> f = .named();
+''';
+
+    await _assertFixes(source, targets, expected);
+  }
+
+  Future<void> test_fix_staticGenericMethod_preservesTypeArguments() async {
+    const source = r'''
+class Token {
+  const Token();
+  static Token parse<T>(T value) => const .new();
+}
+Token token = Token.parse<int>(1);
+''';
+    const expected = r'''
+class Token {
+  const Token();
+  static Token parse<T>(T value) => const .new();
+}
+Token token = .parse<int>(1);
+''';
+    await _assertFixes(source, const ['Token.parse<int>(1)'], expected);
+  }
+
+  Future<void> test_fix_typeAliasNamespace_isValid() async {
+    const source = r'''
+class Token {
+  const Token();
+  static const zero = Token();
+}
+typedef Alias = Token;
+Alias token = Alias.zero;
+''';
+    const expected = r'''
+class Token {
+  const Token();
+  static const zero = Token();
+}
+typedef Alias = Token;
+Alias token = .zero;
+''';
+    await _assertFixes(source, const ['Alias.zero'], expected);
+  }
+
+  Future<void> test_fix_extensionTypeMembers_areValid() async {
+    const source = r'''
+extension type UserId(int value) {
+  static UserId get zero => .new(0);
+  static UserId parse(String value) => .new(0);
+}
+UserId zero = UserId.zero;
+UserId parsed = UserId.parse('1');
+UserId created = UserId(1);
+''';
+    const expected = r'''
+extension type UserId(int value) {
+  static UserId get zero => .new(0);
+  static UserId parse(String value) => .new(0);
+}
+UserId zero = .zero;
+UserId parsed = .parse('1');
+UserId created = .new(1);
+''';
+    await _assertFixes(source, const ['UserId.zero', "UserId.parse('1')", 'UserId(1)'], expected);
+  }
+
+  Future<void> test_fix_selectorChain_isValid() async {
+    const source = r'''
+class Item {
+  static Builder builder() => .new();
+}
+class Builder {
+  Item build() => .new();
+}
+Item item = Item.builder().build();
+''';
+    const expected = r'''
+class Item {
+  static Builder builder() => .new();
+}
+class Builder {
+  Item build() => .new();
+}
+Item item = .builder().build();
+''';
+    await _assertFixes(source, const ['Item.builder()'], expected);
+  }
+
   Future<void> test_alreadyShorthand_noLint() async {
     await assertNoDiagnostics(r'''
 enum Axis { center }
@@ -155,4 +382,44 @@ enum Axis { center }
 final callback = () => Axis.center;
 ''');
   }
+
+  Future<void> _assertFixes(String source, List<String> targets, String expected) async {
+    final ranges = _targetRanges(source, targets);
+    await assertDiagnostics(source, ranges.map((target) => lint(target.$1, target.$2)).toList());
+
+    final unit = await getResolvedUnit(testFile);
+    final library = await unit.session.getResolvedLibraryContaining(testFilePath);
+    expect(library, isA<ResolvedLibraryResult>());
+    final edits = <SourceEdit>[];
+    for (final (offset, length) in ranges) {
+      final context = CorrectionProducerContext.createResolved(
+        libraryResult: library as ResolvedLibraryResult,
+        unitResult: unit,
+        selectionOffset: offset,
+        selectionLength: length,
+      );
+      final builder = ChangeBuilder(session: unit.session);
+      final producer = PreferDotShorthandsFix(context: context);
+      expect(producer.canBeAppliedAcrossSingleFile, isTrue);
+      expect(producer.multiFixKind, isNotNull);
+      await producer.compute(builder);
+      edits.addAll(builder.sourceChange.edits.single.edits);
+    }
+
+    edits.sort((left, right) => right.offset.compareTo(left.offset));
+    final fixed = SourceEdit.applySequence(normalizeSource(source), edits);
+    expect(fixed, normalizeSource(expected));
+    newFile(testFilePath, fixed);
+    await assertNoDiagnostics(fixed);
+  }
+}
+
+List<(int, int)> _targetRanges(String source, List<String> targets) {
+  var cursor = 0;
+  return targets.map((target) {
+    final offset = source.indexOf(target, cursor);
+    expect(offset, isNonNegative, reason: 'Missing target after offset $cursor: $target');
+    cursor = offset + target.length;
+    return (offset, target.length);
+  }).toList();
 }

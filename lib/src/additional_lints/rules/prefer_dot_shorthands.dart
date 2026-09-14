@@ -7,6 +7,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/type_system.dart';
+import 'package:analyzer/dart/element/type_visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 /// Prefers Dart's dot shorthand whenever an existing context supplies the type.
@@ -56,67 +57,86 @@ final class _Visitor extends SimpleAstVisitor<void> {
   void visitInstanceCreationExpression(InstanceCreationExpression node) => _check(node);
 
   void _check(Expression expression) {
-    final candidate = _candidate(expression);
-    if (candidate == null) return;
-
-    final expressionType = expression.staticType;
-    if (expressionType == null || !typeSystem.isSubtypeOf(expressionType, candidate.type)) {
-      return;
-    }
+    final namespace = _candidateNamespace(expression);
+    if (namespace == null) return;
 
     final contextExpression = _outermostSelector(expression);
     final expectedType = _expectedType(contextExpression);
     if (expectedType == null) return;
 
-    final nonNullExpected = typeSystem.promoteToNonNull(expectedType);
-    final sameNamespace =
-        typeSystem.isSubtypeOf(candidate.type, nonNullExpected) &&
-        typeSystem.isSubtypeOf(nonNullExpected, candidate.type);
-    if (!sameNamespace) return;
+    final namespaceType = _namespaceType(expectedType);
+    if (namespaceType is! InterfaceType ||
+        !identical(namespaceType.element.baseElement, namespace.baseElement)) {
+      return;
+    }
+
+    final resultType = contextExpression.staticType;
+    if (resultType == null || !typeSystem.isSubtypeOf(resultType, expectedType)) return;
 
     rule.reportAtNode(expression);
   }
 
-  ({AstNode prefix, DartType type})? _candidate(Expression expression) {
+  InstanceElement? _candidateNamespace(Expression expression) {
     if (expression is PrefixedIdentifier) {
       final prefix = expression.prefix;
-      final element = prefix.element;
-      final type = element is InstanceElement ? element.thisType : null;
-      if (type != null) {
-        return (prefix: prefix, type: type);
+      final namespace = _interfaceElement(prefix);
+      final owner = _staticMemberOwner(expression.identifier.element);
+      if (namespace != null && identical(namespace.baseElement, owner?.baseElement)) {
+        return namespace;
       }
     }
     if (expression case PropertyAccess(:final target)) {
-      final element = _interfaceElement(target);
-      final type = element?.thisType;
-      if (target != null && type != null) {
-        return (prefix: target, type: type);
+      final namespace = _interfaceElement(target);
+      final owner = _staticMemberOwner(expression.propertyName.element);
+      if (target != null &&
+          namespace != null &&
+          identical(namespace.baseElement, owner?.baseElement)) {
+        return namespace;
       }
     }
     if (expression case MethodInvocation(:final target)) {
-      final element = _interfaceElement(target);
-      final type = element?.thisType;
-      if (target != null && type != null) {
-        return (prefix: target, type: type);
+      final namespace = _interfaceElement(target);
+      final owner = _staticMemberOwner(expression.methodName.element);
+      if (target != null &&
+          namespace != null &&
+          identical(namespace.baseElement, owner?.baseElement)) {
+        return namespace;
       }
     }
-    if (expression
-        case InstanceCreationExpression(
-          constructorName: ConstructorName(:final type),
-          :final staticType,
-        )
-        when staticType != null) {
-      return (prefix: type, type: staticType);
+    if (expression case InstanceCreationExpression(constructorName: ConstructorName(:final element))
+        when element != null) {
+      return element.enclosingElement;
     }
     return null;
   }
 
-  InstanceElement? _interfaceElement(Expression? expression) => switch (expression) {
-    SimpleIdentifier(element: final InstanceElement element) => element,
-    PrefixedIdentifier(identifier: SimpleIdentifier(element: final InstanceElement element)) =>
-      element,
+  InstanceElement? _interfaceElement(Expression? expression) {
+    final element = switch (expression) {
+      SimpleIdentifier(:final element) => element,
+      PrefixedIdentifier(identifier: SimpleIdentifier(:final element)) => element,
+      _ => null,
+    };
+    if (element is InstanceElement) return element;
+    if (element is TypeAliasElement) {
+      final aliasedElement = _namespaceType(element.aliasedType).element;
+      return aliasedElement is InstanceElement ? aliasedElement : null;
+    }
+    return null;
+  }
+
+  InstanceElement? _staticMemberOwner(Element? element) => switch (element) {
+    ExecutableElement(isStatic: true, enclosingElement: final InstanceElement owner) => owner,
+    VariableElement(isStatic: true, enclosingElement: final InstanceElement owner) => owner,
     _ => null,
   };
+
+  DartType _namespaceType(DartType type) {
+    var result = typeSystem.promoteToNonNull(type);
+    while (result is InterfaceType && result.isDartAsyncFutureOr) {
+      result = typeSystem.promoteToNonNull(result.typeArguments.single);
+    }
+    return result;
+  }
 
   Expression _outermostSelector(Expression expression) {
     var current = expression;
@@ -143,9 +163,11 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   DartType? _directExpectedType(Expression expression, AstNode? parent) {
     if (parent is ParenthesizedExpression) return _expectedType(parent);
-    if (parent is NamedArgument) return parent.correspondingParameter?.type;
+    if (parent is NamedArgument) {
+      return _argumentExpectedType(parent, parent.correspondingParameter);
+    }
     if (parent is ArgumentList) {
-      return expression.correspondingParameter?.type;
+      return _argumentExpectedType(expression, expression.correspondingParameter);
     }
     if (parent is VariableDeclaration && identical(parent.initializer, expression)) {
       final list = parent.parent;
@@ -155,7 +177,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
       return parent.writeType;
     }
     if (parent is ReturnStatement || parent is ExpressionFunctionBody) {
-      return _declaredReturnType(parent!);
+      return _returnContextType(parent!);
     }
     return null;
   }
@@ -189,21 +211,57 @@ final class _Visitor extends SimpleAstVisitor<void> {
     return null;
   }
 
-  DartType? _declaredReturnType(AstNode node) {
-    AstNode? current = node.parent;
+  DartType? _returnContextType(AstNode node) {
+    AstNode? current = node;
+    FunctionBody? body;
     while (current != null) {
+      if (current is FunctionBody) body ??= current;
       switch (current) {
-        case FunctionExpression(parent: final FunctionDeclaration declaration):
-          return declaration.returnType?.type;
-        case FunctionExpression():
+        case FunctionExpression() when current.parent is! FunctionDeclaration:
           return null;
+        case FunctionDeclaration(:final returnType):
+          return _adjustReturnType(returnType?.type, body);
         case MethodDeclaration(:final returnType):
-          return returnType?.type;
+          return _adjustReturnType(returnType?.type, body);
       }
       current = current.parent;
     }
     return null;
   }
+
+  DartType? _adjustReturnType(DartType? returnType, FunctionBody? body) {
+    if (returnType == null || body == null || body.isGenerator) return null;
+    return body.isAsynchronous ? typeSystem.flatten(returnType) : returnType;
+  }
+
+  DartType? _argumentExpectedType(AstNode argument, FormalParameterElement? parameter) {
+    if (parameter == null) return null;
+    final parent = argument.parent;
+    final argumentList = parent is NamedArgument ? parent.parent : parent;
+    if (argumentList is! ArgumentList) return null;
+
+    final inferred = _inferredTypeParameters(argumentList.parent);
+    if (inferred.isNotEmpty) {
+      final dependencies = _TypeParameterCollector.collect(parameter.baseElement.type);
+      if (dependencies.any(inferred.contains)) return null;
+    }
+    return parameter.type;
+  }
+
+  Set<TypeParameterElement> _inferredTypeParameters(AstNode? invocation) => switch (invocation) {
+    MethodInvocation(typeArguments: null, methodName: SimpleIdentifier(:final element))
+        when element is ExecutableElement =>
+      element.baseElement.type.typeParameters.toSet(),
+    FunctionExpressionInvocation(typeArguments: null, function: final function)
+        when function.staticType is FunctionType =>
+      (function.staticType! as FunctionType).typeParameters.toSet(),
+    InstanceCreationExpression(
+      constructorName: ConstructorName(type: NamedType(typeArguments: null), :final element),
+    )
+        when element != null =>
+      element.enclosingElement.typeParameters.toSet(),
+    _ => const {},
+  };
 
   DartType? _listElementType(ListLiteral literal) {
     final explicit = literal.typeArguments?.arguments.firstOrNull?.type;
@@ -239,5 +297,45 @@ final class _Visitor extends SimpleAstVisitor<void> {
       valueType = contextType.typeArguments.length == 2 ? contextType.typeArguments[1] : null;
     }
     return identical(entry.key, expression) ? keyType : valueType;
+  }
+}
+
+final class _TypeParameterCollector extends UnifyingTypeVisitor<void> {
+  final Set<TypeParameterElement> elements = {};
+
+  static Set<TypeParameterElement> collect(DartType type) {
+    final visitor = _TypeParameterCollector();
+    type.accept(visitor);
+    return visitor.elements;
+  }
+
+  @override
+  void visitDartType(DartType type) {}
+
+  @override
+  void visitFunctionType(FunctionType type) {
+    type.returnType.accept(this);
+    for (final parameter in type.formalParameters) {
+      parameter.type.accept(this);
+    }
+  }
+
+  @override
+  void visitInterfaceType(InterfaceType type) {
+    for (final argument in type.typeArguments) {
+      argument.accept(this);
+    }
+  }
+
+  @override
+  void visitRecordType(RecordType type) {
+    for (final field in [...type.positionalFields, ...type.namedFields]) {
+      field.type.accept(this);
+    }
+  }
+
+  @override
+  void visitTypeParameterType(TypeParameterType type) {
+    elements.add(type.element);
   }
 }

@@ -1,6 +1,6 @@
 # Dart 3.13 Tooling Support
 
-Status: Complete
+Status: Ready
 
 ## Outcome + scope
 
@@ -33,6 +33,15 @@ temporary copies for consumer validation.
 
 ## Acceptance + steps
 
+- [x] Correct `prefer_dot_shorthands` so diagnostics and automatic fixes are
+      offered only when Dart 3.13 can resolve the shorthand from an independent
+      context type.
+- [x] Cover named-extension helpers, inferred generic arguments, async return
+      flattening, explicit `new`, generic constructors/methods, and exact
+      fix-output validity.
+- [x] Bulk-apply the registered fix in isolated real consumers, then analyze
+      and test the rewritten code before publishing the corrective release.
+
 - [x] Refresh reviewed upstream Flutter-skill metadata and update concise Dart
       3.13 and Flutter 3.47 guidance in `building-flutter-apps`.
 - [x] Require Dart 3.13 in `flutter_skill_lints`, add a default
@@ -58,11 +67,11 @@ temporary copies for consumer validation.
 ## Baseline + execution
 
 Result: Passed
-Evidence: Before feature edits, `python3 .hooks/hard-eng.py check --plan-stage
-Draft` passed every configured gate with exit 0 on Dart 3.13.3 and Flutter
-3.47.3. This includes the existing 1,749-test suite, analysis, formatting,
-coverage, performance, import-boundary, dependency, security, secret, and
-workflow checks.
+Evidence: After updating Hard Eng to
+`b4c508efee3420de43fe4700e08dda8e1395608e`, `python3
+.hooks/hard-eng.py check --plan-stage Draft` passed every configured gate on
+Dart 3.13.3, Flutter 3.47.3, analyzer 14.4.0, and analysis_server_plugin 0.3.23,
+including 1,757 tests.
 
 One builder owns the shared working trees. Implement in dependency order:
 `flutter_skill_lints`, `building-flutter-apps`, then `dart-decimate`; finish with
@@ -83,17 +92,21 @@ N/A — this task changes analyzer diagnostics, parser behavior, tests, and tech
 ## Verification
 
 Result: Passed
-Evidence: Dart analysis and 1,757 unit tests passed; the real Flutter analysis
+Evidence: Dart analysis passed and all 1,770 package tests passed; the real Flutter analysis
 server smoke loaded `flutter_skill_lints` and `riverpod_lint`; the
 `building-flutter-apps` gate passed 28 drift fixtures, 13 rules, and 44 smoke
 checks; its local compatibility fixture resolved analyzer 14.4 and built the
 generator family; Dart Decimate passed formatting, strict Clippy, every Rust
 test, and an exact Rust 1.90 minimum-version compile after its dependency
 update. Isolated SmartMum and
-Repem copies resolved the new stack with no plugin errors; SmartMum ran 510
-tests with only two Git-metadata-dependent archive checks failing because the
-copy excludes `.git`, while Repem passed all 2,601 tests. Neither real app tree
-was modified. The post-release Hard Eng repair uses a measured 600-second
+Repem copies resolved the new stack with no plugin errors. Bulk correction
+reduced SmartMum from 3,750 shorthand diagnostics to zero without changing its
+one configuration error or two deprecated-lint warnings; 510 tests passed and
+only two Git-metadata-dependent archive checks failed because the copy excludes
+`.git`. Bulk correction reduced Repem from 6,278 shorthand diagnostics to zero
+with no shorthand compile errors; after updating one directly related
+source-text expectation in the isolated copy, all 2,601 tests passed. Neither
+real app tree was modified. The post-release Hard Eng repair uses a measured 600-second
 cold-CI budget, and the maintenance workflow was refactored to satisfy the
 current actionlint/ShellCheck diagnostics without suppressions.
 
@@ -106,5 +119,4 @@ The updated local repository passed all 1,757 tests, coverage, performance,
 secrets, actionlint, and workflow-security checks.
 
 Delivery target: Merge
-Delivery: Ready for ship — local implementation and verification complete;
-delivery not performed.
+Delivery: Corrective release in progress.

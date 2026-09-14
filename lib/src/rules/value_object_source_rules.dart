@@ -88,7 +88,7 @@ final List<ScannerRule> valueObjectSourceRules = [
   /// the native sealed hierarchy. Those APIs bypass the analyzer's exhaustiveness
   /// check on `switch`, are harder to refactor when variants change, and tempt
   /// LLMs trained on Freezed 2.x examples back into the wrong pattern.
-  /// Annotate with `@Freezed(map: FreezedMapOptions.none, when: FreezedWhenOptions.none)`
+  /// Annotate with `@Freezed(map: .none, when: .none)`
   /// so the only supported pattern-matching is Dart 3 native `switch`.
   scannerRule(
     code: const LintCode(
@@ -96,7 +96,7 @@ final List<ScannerRule> valueObjectSourceRules = [
       'Sealed Value Objects must disable Freezed map/when generation.',
       correctionMessage:
           'Replace `@freezed` with '
-          '`@Freezed(map: FreezedMapOptions.none, when: FreezedWhenOptions.none)` '
+          '`@Freezed(map: .none, when: .none)` '
           'on this sealed Value Object. The default `.map()`/`.when()` methods '
           'bypass the sealed exhaustiveness check and are explicitly forbidden '
           'by Critical Rule 7 — use native `switch (instance) { _Case(:final v) => ... }` '
@@ -116,8 +116,8 @@ final List<ScannerRule> valueObjectSourceRules = [
         if (!RegExp(r'\bsealed\s+class\b').hasMatch(declLine)) continue;
         final windowStart = classSpan.start - 10 < 0 ? 0 : classSpan.start - 10;
         final window = context.source.masked.sublist(windowStart, classSpan.start).join('\n');
-        final hasMapNone = RegExp(r'map\s*:\s*FreezedMapOptions\.none').hasMatch(window);
-        final hasWhenNone = RegExp(r'when\s*:\s*FreezedWhenOptions\.none').hasMatch(window);
+        final hasMapNone = RegExp(r'map\s*:\s*(?:FreezedMapOptions)?\.none').hasMatch(window);
+        final hasWhenNone = RegExp(r'when\s*:\s*(?:FreezedWhenOptions)?\.none').hasMatch(window);
         if (hasMapNone && hasWhenNone) continue;
         final col = declLine.indexOf('sealed');
         reporter.report(context, classSpan.start, col < 0 ? 0 : col);

@@ -113,7 +113,7 @@ void _visitSaveAllCalls(
 }
 
 final _debounceMechanism = RegExp(
-  r'\b(?:Timer\s*\(|Timer\.periodic\s*\(|Future\.delayed\s*\(|Debouncer\b)',
+  r'\b(?:Timer\s*\??\s+[A-Za-z_]\w*|Timer\s*\(|Timer\.periodic\s*\(|Future\.delayed\s*\(|Debouncer\b)',
 );
 
 final _durationMillisecondsLiteral = RegExp(r'Duration\s*\(\s*milliseconds\s*:\s*(\d+)');

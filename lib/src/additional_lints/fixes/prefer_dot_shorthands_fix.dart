@@ -13,6 +13,12 @@ final class PreferDotShorthandsFix extends ResolvedCorrectionProducer {
     'Use dot shorthand',
   );
 
+  static const _multiFixKind = FixKind(
+    'flutter_skill_lints.fix.preferDotShorthands.multi',
+    DartFixKindPriority.inFile,
+    'Use dot shorthand everywhere in file',
+  );
+
   PreferDotShorthandsFix({required super.context});
 
   @override
@@ -22,26 +28,34 @@ final class PreferDotShorthandsFix extends ResolvedCorrectionProducer {
   FixKind get fixKind => _fixKind;
 
   @override
+  FixKind get multiFixKind => _multiFixKind;
+
+  @override
   Future<void> compute(ChangeBuilder builder) async {
     final target = node;
-    final (prefix, replacement) = switch (target) {
-      PrefixedIdentifier(:final prefix) => (prefix as AstNode, ''),
-      PropertyAccess(target: final prefix?) => (prefix, ''),
-      MethodInvocation(target: final prefix?) => (prefix, ''),
+    final (prefix, replacement, explicitNew) = switch (target) {
+      PrefixedIdentifier(:final prefix) => (prefix as AstNode, '', null),
+      PropertyAccess(target: final prefix?) => (prefix, '', null),
+      MethodInvocation(target: final prefix?) => (prefix, '', null),
       InstanceCreationExpression(constructorName: ConstructorName(:final type, name: null)) => (
         type as AstNode,
         '.new',
+        target.keyword?.lexeme == 'new' ? target.keyword : null,
       ),
       InstanceCreationExpression(constructorName: ConstructorName(:final type)) => (
         type as AstNode,
         '',
+        target.keyword?.lexeme == 'new' ? target.keyword : null,
       ),
-      _ => (null, ''),
+      _ => (null, '', null),
     };
     if (prefix == null) return;
 
     await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(range.node(prefix), replacement);
+      builder.addSimpleReplacement(
+        explicitNew == null ? range.node(prefix) : range.startEnd(explicitNew, prefix),
+        replacement,
+      );
     });
   }
 }

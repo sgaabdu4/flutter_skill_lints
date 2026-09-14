@@ -2,6 +2,13 @@
 
 Load for configuring or running HE Ship. The initial verifier supports GitHub PRs whose head and base belong to `origin`; fork PRs and other providers are unsupported. Missing `gh`, authentication or configuration is a blocker. The checks use real Git/`gh` responses and trusted project commands. Fixture responses are only test evidence, not hosted delivery proof.
 
+## Publication privacy
+
+- Audience = establish the destination and who can read it before recording tracked content or publishing. General merge/publish authorization does not authorize disclosure of private context.
+- Public shared tooling = use public repository facts or accurately labeled synthetic reproductions. Exclude private consumer/client identifiers, personal data, private task/commit IDs, internal URLs, local paths and private operational logs/screenshots. Keep real private evidence within its authorized audience; do not relabel it as synthetic.
+- Review = inspect the complete payload: diff, plans/decisions/fixtures, filenames, branch/commit text, PR titles/bodies/comments, links, logs and attachments. Sanitize descriptions and evidence before publication. A passing secret scan cannot establish privacy.
+- Disclosure = stop further exposure, sanitize current text within existing authority and report remaining history/copies. Current-text cleanup does not erase Git/edit history, notifications or copies; history rewriting requires separate authorization.
+
 ## Project contract
 
 Add `shipping` to the existing `hard-eng.gates.json` from observed repository requirements:
@@ -19,7 +26,9 @@ Add `shipping` to the existing `hard-eng.gates.json` from observed repository re
 }
 ```
 
-Values above are an example, not universal defaults. Use the actual target, required check names, UI owners and measured budgets. An empty UI path list explicitly describes a nonvisual project. Missing/invalid policy cannot pass a ship check. Existing pre-push rejects direct updates to the configured base and still verifies the actual pushed commit; the elapsed budget is an additional requirement, not permission to omit checks.
+Values above are an example, not universal defaults. Use the actual target, required check names, UI owners and measured budgets. An empty UI path list explicitly describes a nonvisual project. Missing/invalid policy blocks pushes, Complete plans selecting delivery and ship checks. Pre-push rejects direct updates to the configured base and still verifies the actual pushed commit; the elapsed budget is an additional requirement, not permission to omit checks.
+
+Installed-scaffold freshness is checked without mutation at completion and shipping. A newer CI-verified revision or unavailable freshness evidence blocks a completion claim. Use the supported updater, preserve conflicting local edits and reverify affected work; never advance the revision marker manually. Source development without an installed marker is outside this update check.
 
 For deployment, `delivery` contains existing project verifiers: `{"name":"production","command":["python3","scripts/verify_deployment.py"]}`. Reuse a native project command before adding a script. Each receives `HE_SHIP_REVISION` and `HE_SHIP_PR_URL`; it must inspect the actual deployed state and emit JSON `{"status":"passed","revision":"<observed source revision>"}`. Nonzero exit, missing/wrong revision or absent required commands fail. A script that echoes the expected environment variable proves nothing; validate an old-version failure and current-version success at the deployed boundary.
 

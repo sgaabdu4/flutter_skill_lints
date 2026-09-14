@@ -64,6 +64,28 @@ def latest_verified(previous: str) -> str | None:
         page += 1
 
 
+def require_current(root: Path) -> None:
+    """Check installed-scaffold freshness without changing verified work."""
+    marker = root / SOURCE_FILE
+    if not marker.exists():
+        return
+    try:
+        metadata = json.loads(marker.read_text())
+        previous = metadata.get("revision") if isinstance(metadata, dict) else None
+        if not isinstance(previous, str) or not re.fullmatch(r"[0-9a-f]{40}", previous):
+            raise ValueError("installed revision is not a published commit")
+        revision = latest_verified(previous)
+    except (OSError, ValueError, TypeError, subprocess.SubprocessError) as error:
+        raise ValueError(
+            f"Hard Eng freshness could not be verified: {error}"
+        ) from error
+    if revision is not None:
+        raise ValueError(
+            f"Hard Eng freshness check found newer verified revision {revision}. "
+            "Use the supported updater, preserve local edits, then reverify before shipping or claiming completion."
+        )
+
+
 def fetch_sources(temporary: Path, revision: str, previous: str) -> tuple[Path, Path]:
     source, old = temporary / "source", temporary / "previous"
     subprocess.run(
@@ -232,16 +254,25 @@ def verify_candidate(
         command = (
             [sys.executable, "-m", "compileall", "-q", str(candidate / ".hooks")]
             if only_scaffold
-            else [sys.executable, str(candidate / ".hooks/hard-eng.py"), "check"]
+            else [
+                sys.executable,
+                "-I",
+                "-c",
+                (
+                    "import runpy, sys; "
+                    "sys.path.insert(0, '.hooks'); "
+                    "raise SystemExit(runpy.run_path('.hooks/hard-eng.py')['check']("
+                    "base=sys.argv[1], verify_plan=False))"
+                ),
+            ]
         )
         if not only_scaffold:
             from ship_actions import remote_base
             from shipping import load_policy
 
             policy = load_policy(candidate, required=False)
-            command.extend(
-                ["--base", remote_base(candidate, policy["base"] if policy else None)]
-            )
+            # An update candidate is verification input, not a completed task.
+            command.append(remote_base(candidate, policy["base"] if policy else None))
         subprocess.run(
             command, cwd=candidate, stdout=sys.stderr, check=True, timeout=3500
         )

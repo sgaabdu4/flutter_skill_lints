@@ -129,7 +129,7 @@ app.get('/health', async (req, res) => {
     try {
         const db = await health.getDB();
         const cache = await health.getCache();
-        
+
         if (db.status === 'pass' && cache.status === 'pass') {
             res.status(200).json({ status: 'healthy' });
         } else {

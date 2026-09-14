@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 
-export function uniqueSelectFields(fields, label = "Query.select") {
-  if (!Array.isArray(fields) || fields.length === 0
-      || fields.some((field) => typeof field !== "string" || field.length === 0)) {
+export function uniqueSelectFields(fields, label = 'Query.select') {
+  if (!Array.isArray(fields) || fields.length === 0 || fields.some((field) => typeof field !== 'string' || field.length === 0)) {
     throw new Error(`${label} requires non-empty string fields`);
   }
   const seen = new Set();
@@ -12,7 +11,7 @@ export function uniqueSelectFields(fields, label = "Query.select") {
     seen.add(field);
   }
   if (duplicates.size > 0) {
-    throw new Error(`${label} duplicates: ${[...duplicates].sort().join(", ")}`);
+    throw new Error(`${label} duplicates: ${[...duplicates].sort().join(', ')}`);
   }
   return [...fields];
 }

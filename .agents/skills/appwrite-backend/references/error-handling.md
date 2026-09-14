@@ -49,7 +49,7 @@ Future<T> withRetry<T>(Future<T> Function() operation, {int maxRetries = 3}) asy
             return await operation();
         } on AppwriteException catch (e) {
             if (e.code != 429 || attempt == maxRetries - 1) rethrow;
-            
+
             final delay = Duration(seconds: (1 << attempt)); // 1, 2, 4 seconds
             await Future.delayed(delay);
         }
@@ -73,10 +73,10 @@ def with_retry(operation, max_retries=3):
         except AppwriteException as e:
             if e.code != 429 or attempt == max_retries - 1:
                 raise
-            
+
             delay = 2 ** attempt  # 1, 2, 4 seconds
             time.sleep(delay)
-    
+
     raise Exception('Max retries exceeded')
 
 # Usage
@@ -94,7 +94,7 @@ async function withRetry<T>(
             return await operation();
         } catch (e) {
             if (e.code !== 429 || attempt === maxRetries - 1) throw e;
-            
+
             const delay = Math.pow(2, attempt) * 1000; // 1, 2, 4 seconds
             await new Promise(r => setTimeout(r, delay));
         }

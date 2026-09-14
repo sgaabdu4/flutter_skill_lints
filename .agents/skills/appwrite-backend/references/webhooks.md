@@ -70,23 +70,23 @@ import crypto from 'crypto';
 app.post('/webhooks/appwrite', (req, res) => {
     const signature = req.headers['x-appwrite-webhook-signature'];
     const timestamp = req.headers['x-appwrite-webhook-timestamp'];
-    
+
     // Recreate signature
     const payload = `${timestamp}.${JSON.stringify(req.body)}`;
     const expected = crypto
         .createHmac('sha256', process.env.WEBHOOK_SECRET)
         .update(payload)
         .digest('hex');
-    
+
     if (signature !== expected) {
         return res.status(401).send('Invalid signature');
     }
-    
+
     // Process webhook
     const event = req.body;
     console.log('Event:', event.event);
     console.log('Payload:', event.payload);
-    
+
     res.status(200).send('OK');
 });
 ```
@@ -101,20 +101,20 @@ from flask import request
 def handle_webhook():
     signature = request.headers.get('X-Appwrite-Webhook-Signature')
     timestamp = request.headers.get('X-Appwrite-Webhook-Timestamp')
-    
+
     payload = f"{timestamp}.{request.data.decode()}"
     expected = hmac.new(
         WEBHOOK_SECRET.encode(),
         payload.encode(),
         hashlib.sha256
     ).hexdigest()
-    
+
     if not hmac.compare_digest(signature, expected):
         return 'Invalid signature', 401
-    
+
     event = request.json
     print(f"Event: {event['event']}")
-    
+
     return 'OK', 200
 ```
 

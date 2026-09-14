@@ -7,13 +7,6 @@
         "timeoutSec": 3600
       }
     ],
-    "postToolUse": [
-      {
-        "type": "command",
-        "bash": "python3 \"$(git rev-parse --show-toplevel)/.hooks/hard-eng.py\" tool copilot",
-        "timeoutSec": 10
-      }
-    ],
     "postToolUseFailure": [
       {
         "type": "command",

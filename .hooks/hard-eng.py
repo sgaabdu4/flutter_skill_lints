@@ -639,12 +639,6 @@ def pre_push() -> int:
     return verify_push(ROOT)
 
 
-def agent_hook(event: str, agent: str) -> int:
-    from agent_hooks import handle_event
-
-    return handle_event(ROOT, event, agent)
-
-
 def main() -> int:
     import argparse
 
@@ -668,11 +662,14 @@ def main() -> int:
     )
     shipping.add_argument("--worktree", help="Task worktree in the same repository")
     shipping.add_argument("--merge-method", choices=("merge", "squash", "rebase"))
-    for event in ("session", "prompt", "tool", "failure", "stop"):
+    for event in ("session", "failure", "stop"):
         hook = commands.add_parser(event, help=f"Handle a native {event} hook")
         hook.add_argument("agent", choices=("claude", "codex", "copilot"))
     args = parser.parse_args()
     if args.command == "check":
+        from tool_setup import ensure_python_runtime
+
+        ensure_python_runtime()
         return check(base=args.base, plan_stage=args.plan_stage)
     if args.command == "pre-push":
         return pre_push()
@@ -682,7 +679,9 @@ def main() -> int:
         return run(
             ROOT, args.plan, args.pr, args.stage, args.worktree, args.merge_method
         )
-    return agent_hook(args.command, args.agent)
+    from agent_hooks import handle_event
+
+    return handle_event(ROOT, args.command, args.agent)
 
 
 if __name__ == "__main__":

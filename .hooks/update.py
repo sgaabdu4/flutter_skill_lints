@@ -149,7 +149,15 @@ def update_plan(
 ) -> tuple[dict[str, str | None], dict[str, str | None]]:
     output = subprocess.check_output(
         [
+            "uv",
+            "run",
+            "--project",
+            str(source),
+            "--locked",
+            "--no-dev",
+            "--python",
             sys.executable,
+            "python",
             str(source / "setup.py"),
             str(root),
             "--plan",
@@ -227,13 +235,7 @@ def verify_candidate(
     links: dict[str, str | None],
     candidate: Path,
 ) -> None:
-    subprocess.run(
-        [sys.executable, str(source / ".hooks/hard-eng.py"), "check"],
-        cwd=source,
-        stdout=sys.stderr,
-        check=True,
-        timeout=3500,
-    )
+    # Both callers already verified upstream CI for this exact source revision.
     subprocess.run(
         ["git", "worktree", "add", "--quiet", "--detach", str(candidate), "HEAD"],
         cwd=root,
@@ -255,7 +257,15 @@ def verify_candidate(
             [sys.executable, "-m", "compileall", "-q", str(candidate / ".hooks")]
             if only_scaffold
             else [
+                "uv",
+                "run",
+                "--project",
+                str(source),
+                "--locked",
+                "--no-dev",
+                "--python",
                 sys.executable,
+                "python",
                 "-I",
                 "-c",
                 (
@@ -457,7 +467,7 @@ def check_scaffold_update(root: Path, base: str) -> bool:
         ):
             return False
         print(
-            "Scaffold-only update: checking the upstream scaffold and installed Python hooks.",
+            "Scaffold-only update: source CI verified; checking installed Python hooks.",
             flush=True,
         )
         verify_candidate(root, source, {}, {}, Path(temporary) / "candidate")

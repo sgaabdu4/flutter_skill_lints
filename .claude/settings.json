@@ -11,28 +11,6 @@
         ]
       }
     ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$(git rev-parse --show-toplevel)/.hooks/hard-eng.py\" prompt claude",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$(git rev-parse --show-toplevel)/.hooks/hard-eng.py\" tool claude",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "PostToolUseFailure": [
       {
         "hooks": [

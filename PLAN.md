@@ -89,7 +89,11 @@ update. Isolated SmartMum and
 Repem copies resolved the new stack with no plugin errors; SmartMum ran 510
 tests with only two Git-metadata-dependent archive checks failing because the
 copy excludes `.git`, while Repem passed all 2,601 tests. Neither real app tree
-was modified.
+was modified. The post-release Hard Eng repair uses a measured 600-second
+cold-CI budget, and the maintenance workflow was refactored to satisfy the
+current actionlint/ShellCheck diagnostics without suppressions.
 
-Delivery target: Deploy. Publish flutter_skill_lints 0.11.0 after the verified
-main-branch push and record the remote release evidence here.
+Delivery target: Deploy
+Delivery: Complete — flutter_skill_lints 0.11.0 was published from commit
+0f03efb0ec5a58af6f92a8b43e5f88eedb42baea after Dart CI passed; the trusted
+publish workflow and GitHub release both completed successfully.

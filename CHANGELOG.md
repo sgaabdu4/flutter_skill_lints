@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.11.2] - 2026-09-14
+
+- Avoid shorthand constructor fixes when an explicit generic type is narrower
+  than the contextual type, preserving the constructed runtime type.
+
 ## [0.11.1] - 2026-09-14
 
 - Make `prefer_dot_shorthands` use Dart's exact static namespace and independent

@@ -25,37 +25,11 @@ Future<dynamic> main(final context) async {
 
 ### Design for Idempotency
 
-Event trigger deliver same event >1x. Use idempotency key.
-
-```dart
-Future<dynamic> main(final context) async {
-    final eventId = context.req.headers['x-appwrite-event-id'];
-    if (eventId == null || eventId.isEmpty) {
-        return context.res.json({'error': 'Missing event ID'}, statusCode: 400);
-    }
-
-    try {
-        await tablesDB.getRow(
-            databaseId: 'db', tableId: 'processed_events', rowId: eventId);
-        return context.res.json({'status': 'already_processed'});
-    } on AppwriteException catch (e) {
-        if (e.code != 404) rethrow;
-    }
-
-    // ⚠️ Validate event payload before processing
-    final payload = context.req.bodyJson;
-    if (payload is! Map<String, dynamic>) {
-        return context.res.json({'error': 'Invalid payload'}, statusCode: 400);
-    }
-
-    await processEvent(payload);
-    await tablesDB.createRow(
-        databaseId: 'db', tableId: 'processed_events', rowId: eventId,
-        data: {'processedAt': DateTime.now().toIso8601String()});
-
-    return context.res.json({'status': 'processed'});
-}
-```
+- Duplicate or concurrent delivery = same durable operation key; validate its producer and payload. Enforce key uniqueness in the completion table. A pre-read alone cannot prevent duplicate effects.
+- TablesDB-only effects = stage every mutation and the unique completion record in the **same transaction**, carrying its `transactionId` through helpers; commit together. Use [transactions](transactions.md) for SDK calls, conflicts, rollback and failure causality. A separately committed marker before work loses retries; one after work permits duplicate effects.
+- Conflict or uncertain commit = read the exact committed completion record and business postcondition; return already processed only when both agree. Otherwise rebuild from current state in a fresh transaction. Never treat every `409` as successful processing.
+- External effects (email, payment, Storage, Auth) are outside that transaction. Use the existing [cross-service guidance](transactions.md#cross-service-side-effects): durable intent plus the downstream provider's idempotency key and reconciliation. Without downstream deduplication or observable reconciliation, do not claim exactly-once effects.
+- Proof = concurrent duplicate deliveries apply one business effect; failure before commit leaves no effect or completion record; retry after an uncertain commit reconciles the original result. External-effect tests cover a crash after provider success but before local acknowledgement.
 
 ---
 

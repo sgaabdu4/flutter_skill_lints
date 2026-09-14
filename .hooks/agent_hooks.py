@@ -12,6 +12,42 @@ from project_setup import dependency_command
 from update import require_current
 
 
+def configure_instructions(
+    root: Path, source: Path, previous: Path | None, changes: dict[str, str]
+) -> None:
+    start, end = "<!-- hard-eng:start -->", "<!-- hard-eng:end -->"
+    instructions = {
+        "AGENTS.md": (source / "AGENTS.md").read_text().rstrip(),
+    }
+    claude = root / "CLAUDE.md"
+    if not (claude.is_symlink() and claude.resolve() == root / "AGENTS.md"):
+        instructions["CLAUDE.md"] = "@AGENTS.md"
+    if (root / "AGENTS.override.md").exists():
+        instructions["AGENTS.override.md"] = (
+            "Read and follow [shared instructions](AGENTS.md) before repository work."
+        )
+    for name, content in instructions.items():
+        target = root / name
+        existing = target.read_bytes().decode("utf-8") if target.exists() else ""
+        if start in existing or end in existing:
+            old = (
+                ((previous or source) / name).read_text().rstrip()
+                if name == "AGENTS.md"
+                else content
+            )
+            prefix = f"{start}\n{old}\n{end}\n\n"
+            if (
+                existing.count(start) != 1
+                or existing.count(end) != 1
+                or not existing.startswith(prefix)
+            ):
+                raise ValueError(
+                    f"Local Hard Eng instructions differ or have conflicting markers in {name}; preserve them and resolve before replacing them"
+                )
+            existing = existing[len(prefix) :]
+        changes[name] = f"{start}\n{content}\n{end}\n\n{existing}"
+
+
 def project_pre_push(root: Path, hook: Path) -> Path:
     """Validate repository hook ownership and preserve Husky's forwarding shim."""
     if not hook.parent.resolve().is_relative_to(root):
@@ -53,6 +89,39 @@ def hook_events(agent: str) -> dict[str, str]:
     return events
 
 
+def owned_hook_entry(
+    agent: str,
+    event: str,
+    command: str,
+    timeout: int,
+    status_message: str | None = None,
+) -> JsonObject:
+    """Build one exact managed hook entry for setup and legacy migration."""
+    call = f"{command} {event} {agent}"
+    if agent == "copilot":
+        return {"type": "command", "bash": call, "timeoutSec": timeout}
+    handler: JsonObject = {"type": "command", "command": call, "timeout": timeout}
+    if status_message is not None:
+        handler["statusMessage"] = status_message
+    return {"hooks": [handler]}
+
+
+CODEX_HOOK_STATUS = {
+    "session": "Hard Eng: updating project setup",
+    "stop": "Hard Eng: verifying changes",
+}
+
+
+def _remove_owned_entry(hooks: JsonObject, native: str, owned: JsonObject) -> None:
+    entries = hooks.get(native)
+    if not isinstance(entries, list) or owned not in entries:
+        return
+    while owned in entries:
+        entries.remove(owned)
+    if not entries:
+        del hooks[native]
+
+
 def remove_routine_hooks(current: JsonObject, agent: str, command: str) -> None:
     """Remove only the exact routine registrations previously installed by us."""
     hooks = current.get("hooks", {})
@@ -68,11 +137,14 @@ def remove_routine_hooks(current: JsonObject, agent: str, command: str) -> None:
         if agent == "copilot":
             native = "postToolUse"
             owned = {"type": "command", "bash": call, "timeoutSec": 10}
-        entries = hooks.get(native)
-        if isinstance(entries, list) and owned in entries:
-            entries.remove(owned)
-            if not entries:
-                del hooks[native]
+        _remove_owned_entry(hooks, native, owned)
+    if agent == "codex":
+        for event in CODEX_HOOK_STATUS:
+            _remove_owned_entry(
+                hooks,
+                hook_events(agent)[event],
+                owned_hook_entry(agent, event, command, 3600),
+            )
 
 
 def learning_context(event: str) -> str:
@@ -128,7 +200,19 @@ def session_context(root: Path, payload: JsonObject) -> str:
         "Use configured MCPs when relevant to the task. Before relying on one, verify a real call against the intended repository/index, service project or running app/device; registration alone is not readiness. If unavailable, warn and continue with available tools."
     )
     messages.append(learning_context("start/resume"))
-    return " ".join(messages)
+    return "\n".join(messages)
+
+
+def completion_notice(agent: str | None, output: str) -> JsonObject:
+    """Surface only the runner's explicit plan-stage handoff where supported."""
+    if agent not in {"claude", "codex"}:
+        return {}
+    lines = output.splitlines()
+    if lines and lines[-1].startswith(
+        ("Hard Eng: planning checks passed", "Hard Eng: build checks passed")
+    ):
+        return {"systemMessage": lines[-1]}
+    return {}
 
 
 def integrated_services(root: Path) -> list[str]:
@@ -168,7 +252,7 @@ def integrated_services(root: Path) -> list[str]:
     return sorted(found)
 
 
-def completion(root: Path, payload: JsonObject) -> JsonObject:
+def completion(root: Path, payload: JsonObject, agent: str | None = None) -> JsonObject:
     if payload.get("stop_hook_active") is True:
         return {
             "systemMessage": "Report remaining verification blockers honestly. Do not claim a pass; no repeated stop-hook loop."
@@ -218,6 +302,7 @@ def completion(root: Path, payload: JsonObject) -> JsonObject:
             output = log.read().decode("utf-8", errors="replace")
         if result.returncode == 0:
             require_current(root)
+            return completion_notice(agent, output)
     except (OSError, ValueError, TypeError, subprocess.SubprocessError) as error:
         return {
             "decision": "block",
@@ -249,7 +334,7 @@ def handle_event(root: Path, event: str, agent: str) -> int:
         if native is None:
             raise ValueError("Unsupported native hook event")
         if event == "stop":
-            output = completion(root, payload)
+            output = completion(root, payload, agent)
         else:
             message = (
                 session_context(root, payload)
@@ -257,6 +342,8 @@ def handle_event(root: Path, event: str, agent: str) -> int:
                 else learning_context(event)
             )
             output = context_output(agent, native, message)
+            if event == "session" and agent in {"claude", "codex"}:
+                output["systemMessage"] = "Hard Eng startup: " + message.splitlines()[0]
     except (OSError, ValueError, TypeError) as error:
         message = f"Hard Eng hook input/setup failed: {error}. Continue with available tools; do not claim verification passed."
         output = (

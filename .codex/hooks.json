@@ -6,7 +6,8 @@
           {
             "type": "command",
             "command": "python3 \"$(git rev-parse --show-toplevel)/.hooks/hard-eng.py\" session codex",
-            "timeout": 3600
+            "timeout": 3600,
+            "statusMessage": "Hard Eng: updating project setup"
           }
         ]
       }
@@ -17,7 +18,8 @@
           {
             "type": "command",
             "command": "python3 \"$(git rev-parse --show-toplevel)/.hooks/hard-eng.py\" stop codex",
-            "timeout": 3600
+            "timeout": 3600,
+            "statusMessage": "Hard Eng: verifying changes"
           }
         ]
       }

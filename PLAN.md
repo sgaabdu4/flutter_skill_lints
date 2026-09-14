@@ -114,10 +114,10 @@ The canonical generator compatibility fixture also passed against the local
 0.11.2 correction, including its explicitly typed `AdapterSpec` constructor;
 this proves shorthand does not widen a narrower explicit generic type.
 The supported installer then updated Hard Eng through
-`1b4d4fdb7d5a87faf6d164f5c3c423a52f3fd463`, retaining the released
+`7d8666843518b7df0ec1420f1fa2198cb8f4c501`, retaining the released
 `building-flutter-apps` 5.10.2 material and the 0.11.0/0.11.1 to 0.11.2 lint
-migration while adopting Appwrite backend skill 2.1.3 and the repaired
-missing-gate-input contract.
+migration while adopting the verified pnpm 12 tool provisioning, startup
+reporting, Appwrite execution-result guidance, and gate-integrity contracts.
 
 The final action audit found no stale workflow pins outside this repository.
 All checkout uses now resolve to v7.0.1, the generated workflow uses pnpm/setup

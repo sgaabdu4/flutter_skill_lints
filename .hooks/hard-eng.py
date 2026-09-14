@@ -29,6 +29,7 @@ from gate_config import (
     validate_dart_boundaries,
     validate_dart_exclusions,
 )
+from project_setup import package_script_arguments as test_arguments
 from tool_setup import execution_lock, managed_command, provision_tools
 
 DartAnalyzer = TypedDict(
@@ -92,6 +93,9 @@ def validate_dart_includes(
         raise ValueError(f"Recursive Dart analysis include: {path}")
     seen.add(path)
     options = dart_options(path)
+    from gate_config import validate_dart_plugins
+
+    validate_dart_plugins(cast(JsonObject, options))
     analyzer = options.get("analyzer", {})
     if {"strict-casts", "strict-raw-types"} & analyzer.get("language", {}).keys():
         raise ValueError(
@@ -171,7 +175,7 @@ def validate_dart_typing(
             if group == "rules":
                 actual = dart_rule_settings(actual)
             if isinstance(settings, list):
-                validate_dart_exclusions(directory, actual)
+                validate_dart_exclusions(directory, section_options.get(group, []))
                 continue
             if not isinstance(actual, dict) or any(
                 actual.get(key) != value for key, value in settings.items()
@@ -186,12 +190,6 @@ def validate_dart_typing(
                 validate_typing(
                     nested.parent, "dart", package_root=package_root or directory
                 )
-
-
-def test_arguments(command: list[str], directory: Path) -> list[str]:
-    from project_setup import package_script_arguments
-
-    return package_script_arguments(command, directory)
 
 
 def reject_test_filters(
@@ -387,7 +385,7 @@ def prepare_command(group: Group, gate: Gate, timeout: float) -> list[str]:
             ]
         elif language == "javascript":
             validate_typescript(command, directory, group, timeout)
-    return managed_command(command)
+    return managed_command(command, ROOT / group["path"])
 
 
 def validate_typescript(
@@ -526,6 +524,7 @@ def run_gate(
                         cwd=ROOT / group["path"],
                         check=False,
                         timeout=timeout,
+                        env={**os.environ, "PNPM_CONFIG_DLX_CACHE_MAX_AGE": "0"},
                         stdout=output if capture else log,
                         stderr=log,
                     )
@@ -599,10 +598,10 @@ def check(
         return 0
 
     groups = load_groups(ROOT, base)
-    from plans import validate_plans
+    from plans import report_stage, validate_plans
 
     if verify_plan:
-        validate_plans(ROOT, base, plan_stage)
+        plan_stage = validate_plans(ROOT, base, plan_stage)
     provision_tools(ROOT, groups, timeout)
     output_lock = threading.Lock()
 
@@ -627,9 +626,11 @@ def check(
                 failed |= result
                 if result and gate.get("role") == "lockfiles":
                     print("Dependency setup failed; remaining checks were not run.")
+                    report_stage(True, plan_stage)
                     return 1
         for future in pending:
             failed |= future.result()
+    report_stage(failed, plan_stage)
     return int(failed)
 
 

@@ -9,7 +9,8 @@ Make Dart 3.13 the supported baseline across `building-flutter-apps`,
 shorthands wherever Dart has an unambiguous context type, document the new
 language and Flutter baseline without generic release-note noise, and make the
 Rust parser understand Dart 3.13 constructor syntax safely. Preserve unrelated
-working-tree changes. No commit, push, publication, or deployment is included.
+working-tree changes. Keep repository-owned and generated CI action pins on
+their latest verified releases.
 
 ## Repository context
 
@@ -26,8 +27,9 @@ Blockers: None
 Task mode: Autonomous. The user approved all audited work, requires Dart 3.13
 instead of legacy compatibility, wants shorthand syntax wherever it is valid,
 requires real-codebase validation against SmartMum and Repem, and requires a
-before/after report before any push. Their application working trees must not be
-changed; use isolated temporary copies for consumer validation.
+before/after report. They later authorized version bumps, publication, and
+pushes. Their application working trees must not be changed; use isolated
+temporary copies for consumer validation.
 
 ## Acceptance + steps
 
@@ -50,6 +52,8 @@ changed; use isolated temporary copies for consumer validation.
       and isolated SmartMum/Repem analysis without modifying either application.
 - [x] Review the final diffs for unnecessary additions and report before/after,
       proof, edge cases, and remaining delivery work before any push.
+- [x] Update every GitHub Actions checkout pin to v7.0.1 and the generated Hard
+      Eng pnpm setup pin to v2.1.0, then pass the protected-branch checks.
 
 ## Baseline + execution
 
@@ -93,7 +97,13 @@ was modified. The post-release Hard Eng repair uses a measured 600-second
 cold-CI budget, and the maintenance workflow was refactored to satisfy the
 current actionlint/ShellCheck diagnostics without suppressions.
 
-Delivery target: Deploy
-Delivery: Complete — flutter_skill_lints 0.11.0 was published from commit
-0f03efb0ec5a58af6f92a8b43e5f88eedb42baea after Dart CI passed; the trusted
-publish workflow and GitHub release both completed successfully.
+The final action audit found no stale workflow pins outside this repository.
+All checkout uses now resolve to v7.0.1, the generated workflow uses pnpm/setup
+v2.1.0, and Hard Eng source `c67fced96100e91cea67e1ca773ec5bfc2257524`
+passed its PR and post-merge gates after fixing the concurrent uv cache race.
+The updated local repository passed all 1,757 tests, coverage, performance,
+secrets, actionlint, and workflow-security checks.
+
+Delivery target: Merge
+Delivery: Ready for ship — local implementation and verification complete;
+delivery not performed.

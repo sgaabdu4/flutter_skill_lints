@@ -99,8 +99,9 @@ current actionlint/ShellCheck diagnostics without suppressions.
 
 The final action audit found no stale workflow pins outside this repository.
 All checkout uses now resolve to v7.0.1, the generated workflow uses pnpm/setup
-v2.1.0, and Hard Eng source `c67fced96100e91cea67e1ca773ec5bfc2257524`
-passed its PR and post-merge gates after fixing the concurrent uv cache race.
+v2.1.0, and Hard Eng source `3bd3c233110f965a3b980a6994dec58acef0865e`
+passed its PR and post-merge gates after fixing the concurrent uv cache race
+and adding the known-pin updater migration.
 The updated local repository passed all 1,757 tests, coverage, performance,
 secrets, actionlint, and workflow-security checks.
 

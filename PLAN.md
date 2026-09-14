@@ -113,6 +113,9 @@ current actionlint/ShellCheck diagnostics without suppressions.
 The canonical generator compatibility fixture also passed against the local
 0.11.2 correction, including its explicitly typed `AdapterSpec` constructor;
 this proves shorthand does not widen a narrower explicit generic type.
+The supported installer then updated Hard Eng to
+`b6821266ea57515fb3ade891ce0ac8444d611732`, including the verified cold-tool
+provisioning workflow correction.
 
 The final action audit found no stale workflow pins outside this repository.
 All checkout uses now resolve to v7.0.1, the generated workflow uses pnpm/setup

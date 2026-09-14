@@ -1,40 +1,27 @@
-import assert from "node:assert/strict";
-import {
-  chmodSync,
-  existsSync,
-  mkdtempSync,
-  mkdirSync,
-  realpathSync,
-  symlinkSync,
-  writeFileSync,
-} from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import test from "node:test";
+import assert from 'node:assert/strict';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, realpathSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import test from 'node:test';
 
-import {
-  captureInventory,
-  checkManifest,
-  loadManifest,
-  writeExclusiveJson,
-} from "./appwrite-schema-guard.mjs";
+import { captureInventory, checkManifest, loadManifest, writeExclusiveJson } from './appwrite-schema-guard.mjs';
 
-const endpoint = "https://example.invalid/v1";
-const projectId = "project";
-const now = Date.parse("2026-07-16T00:10:00.000Z");
+const endpoint = 'https://example.invalid/v1';
+const projectId = 'project';
+const now = Date.parse('2026-07-16T00:10:00.000Z');
 
-function root(name = "appwrite-schema-guard-") {
+function root(name = 'appwrite-schema-guard-') {
   return mkdtempSync(join(realpathSync(tmpdir()), name));
 }
 
 function column(overrides = {}) {
   return {
-    key: "status",
-    type: "string",
+    key: 'status',
+    type: 'string',
     required: false,
     array: false,
     size: 64,
-    format: "varchar",
+    format: 'varchar',
     default: null,
     encrypt: false,
     ...overrides,
@@ -43,25 +30,25 @@ function column(overrides = {}) {
 
 function index(overrides = {}) {
   return {
-    key: "status_idx",
-    type: "key",
-    attributes: ["status"],
+    key: 'status_idx',
+    type: 'key',
+    attributes: ['status'],
     lengths: [],
-    orders: ["ASC"],
+    orders: ['ASC'],
     ...overrides,
   };
 }
 
 function manifest({
-  databases = ["primary"],
-  tables = [["primary", "users"]],
+  databases = ['primary'],
+  tables = [['primary', 'users']],
   columns = [],
   indexes = [],
   rowSecurity = false,
   permissions = [],
 } = {}) {
   return {
-    capturedAt: "2026-07-16T00:00:00.000Z",
+    capturedAt: '2026-07-16T00:00:00.000Z',
     endpoint,
     projectId,
     tablesDB: databases.map(($id) => ({ $id, enabled: true })),
@@ -83,32 +70,35 @@ function changed(base, update) {
   return value;
 }
 
-test("complete normalized manifest passes live and baseline inventory", () => {
+test('complete normalized manifest passes live and baseline inventory', () => {
   const candidate = manifest({
-    tables: [["primary", "users"], ["primary", "orders"]],
+    tables: [
+      ['primary', 'users'],
+      ['primary', 'orders'],
+    ],
     columns: [column()],
     indexes: [index()],
   });
   const prior = manifest({ columns: [column()], indexes: [index()] });
-  assert.equal(checkManifest(candidate, prior, prior, now).result, "PASS");
+  assert.equal(checkManifest(candidate, prior, prior, now).result, 'PASS');
 });
 
 test("float declarations match Appwrite's raw double model", () => {
-  const candidate = manifest({ columns: [column({ type: "float", size: null, format: null })] });
-  const live = manifest({ columns: [column({ type: "double", size: null, format: null })] });
-  assert.equal(checkManifest(candidate, live, undefined, now).result, "PASS");
+  const candidate = manifest({ columns: [column({ type: 'float', size: null, format: null })] });
+  const live = manifest({ columns: [column({ type: 'double', size: null, format: null })] });
+  assert.equal(checkManifest(candidate, live, undefined, now).result, 'PASS');
 });
 
-test("conflicting permission aliases fail with a stable validation error", () => {
+test('conflicting permission aliases fail with a stable validation error', () => {
   const candidate = manifest();
-  /** @type {any} */ (candidate.tables[0]).permissions = "not-an-array";
+  /** @type {any} */ (candidate.tables[0]).permissions = 'not-an-array';
   assert.throws(() => checkManifest(candidate, manifest(), undefined, now), /permissions must be an array/);
 });
 
-test("index over array column fails before Appwrite mutation", () => {
+test('index over array column fails before Appwrite mutation', () => {
   const candidate = manifest({
-    columns: [column({ key: "labels", array: true }), column()],
-    indexes: [index({ key: "labels_status", attributes: ["labels", "status"] })],
+    columns: [column({ key: 'labels', array: true }), column()],
+    indexes: [index({ key: 'labels_status', attributes: ['labels', 'status'] })],
   });
   assert.throws(
     () => checkManifest(candidate, manifest(), undefined, now),
@@ -116,177 +106,236 @@ test("index over array column fails before Appwrite mutation", () => {
   );
 });
 
-test("optional non-relationship column and index additions are safe", () => {
+test('optional non-relationship column and index additions are safe', () => {
   const prior = manifest({ columns: [column()] });
   const candidate = manifest({
-    columns: [column(), column({ key: "note", size: 256 })],
+    columns: [column(), column({ key: 'note', size: 256 })],
     indexes: [index()],
   });
-  assert.deepEqual(
-    checkManifest(candidate, prior, undefined, now).additiveChanges,
-    ["column:primary/users/note", "index:primary/users/status_idx"],
-  );
+  assert.deepEqual(checkManifest(candidate, prior, undefined, now).additiveChanges, [
+    'column:primary/users/note',
+    'index:primary/users/status_idx',
+  ]);
 });
 
-test("new table access and relationship state fail closed", () => {
+test('new table access and relationship state fail closed', () => {
   const prior = manifest();
   const publicTable = manifest({
-    tables: [["primary", "users"], ["primary", "public"]],
+    tables: [
+      ['primary', 'users'],
+      ['primary', 'public'],
+    ],
   });
   publicTable.tables[1].$permissions = ['read("any")'];
   assert.throws(() => checkManifest(publicTable, prior, undefined, now), /permission\/access new table/);
   const relatedTable = manifest({
-    tables: [["primary", "users"], ["primary", "related"]],
+    tables: [
+      ['primary', 'users'],
+      ['primary', 'related'],
+    ],
   });
-  relatedTable.tables[1].columns = [column({
-    key: "owner",
-    type: "relationship",
-    size: null,
-    format: null,
-    relatedTable: "users",
-    relationType: "manyToOne",
-  })];
+  relatedTable.tables[1].columns = [
+    column({
+      key: 'owner',
+      type: 'relationship',
+      size: null,
+      format: null,
+      relatedTable: 'users',
+      relationType: 'manyToOne',
+    }),
+  ];
   assert.throws(() => checkManifest(relatedTable, prior, undefined, now), /relationship on new table/);
 });
 
 /** @type {Array<[string, (value: any) => void, RegExp]>} */
 const incompatibleCases = [
-  ["column deletion", (value) => { value.tables[0].columns = []; }, /destructive removal.*column/],
-  ["column type", (value) => { value.tables[0].columns[0].type = "integer"; }, /incompatible column change/],
-  ["required constraint", (value) => { value.tables[0].columns[0].required = true; }, /incompatible column change/],
-  ["default constraint", (value) => { value.tables[0].columns[0].default = "open"; }, /incompatible column change/],
-  ["index deletion", (value) => { value.tables[0].indexes = []; }, /destructive removal.*index/],
-  ["index order", (value) => { value.tables[0].indexes[0].orders = ["DESC"]; }, /incompatible index change/],
-  ["row security", (value) => { value.tables[0].rowSecurity = true; }, /permission\/access row-security change/],
-  ["permission broadening", (value) => { value.tables[0].$permissions = ['read("any")']; }, /permission\/access table permission change/],
-  ["permission narrowing", (value) => { value.tables[0].$permissions = []; }, /permission\/access table permission change/],
+  [
+    'column deletion',
+    (value) => {
+      value.tables[0].columns = [];
+    },
+    /destructive removal.*column/,
+  ],
+  [
+    'column type',
+    (value) => {
+      value.tables[0].columns[0].type = 'integer';
+    },
+    /incompatible column change/,
+  ],
+  [
+    'required constraint',
+    (value) => {
+      value.tables[0].columns[0].required = true;
+    },
+    /incompatible column change/,
+  ],
+  [
+    'default constraint',
+    (value) => {
+      value.tables[0].columns[0].default = 'open';
+    },
+    /incompatible column change/,
+  ],
+  [
+    'index deletion',
+    (value) => {
+      value.tables[0].indexes = [];
+    },
+    /destructive removal.*index/,
+  ],
+  [
+    'index order',
+    (value) => {
+      value.tables[0].indexes[0].orders = ['DESC'];
+    },
+    /incompatible index change/,
+  ],
+  [
+    'row security',
+    (value) => {
+      value.tables[0].rowSecurity = true;
+    },
+    /permission\/access row-security change/,
+  ],
+  [
+    'permission broadening',
+    (value) => {
+      value.tables[0].$permissions = ['read("any")'];
+    },
+    /permission\/access table permission change/,
+  ],
+  [
+    'permission narrowing',
+    (value) => {
+      value.tables[0].$permissions = [];
+    },
+    /permission\/access table permission change/,
+  ],
 ];
 for (const [name, mutate, expected] of incompatibleCases) {
   test(`${name} fails closed`, () => {
     const prior = manifest({
       columns: [column()],
       indexes: [index()],
-      permissions: name === "permission narrowing" ? ['read("any")'] : [],
+      permissions: name === 'permission narrowing' ? ['read("any")'] : [],
     });
     assert.throws(() => checkManifest(changed(prior, mutate), prior, undefined, now), expected);
   });
 }
 
-test("relationship metadata change fails closed", () => {
+test('relationship metadata change fails closed', () => {
   const relation = column({
-    key: "owner",
-    type: "relationship",
+    key: 'owner',
+    type: 'relationship',
     size: null,
     format: null,
-    relatedTable: "owners",
-    relationType: "manyToOne",
-    onDelete: "restrict",
-    side: "child",
+    relatedTable: 'owners',
+    relationType: 'manyToOne',
+    onDelete: 'restrict',
+    side: 'child',
   });
   const prior = manifest({ columns: [relation] });
   const candidate = changed(prior, (value) => {
-    value.tables[0].columns[0].onDelete = "cascade";
+    value.tables[0].columns[0].onDelete = 'cascade';
   });
   assert.throws(() => checkManifest(candidate, prior, undefined, now), /relationship change/);
 });
 
-test("unknown material schema field fails closed", () => {
+test('unknown material schema field fails closed', () => {
   const candidate = manifest();
   /** @type {any} */ (candidate.tables[0]).unknownSetting = true;
   assert.throws(() => checkManifest(candidate, manifest(), undefined, now), /unknown material field/);
 });
 
-test("unknown column and index types fail closed", () => {
+test('unknown column and index types fail closed', () => {
   assert.throws(
-    () => checkManifest(manifest({ columns: [column({ type: "mystery" })] }), manifest(), undefined, now),
+    () => checkManifest(manifest({ columns: [column({ type: 'mystery' })] }), manifest(), undefined, now),
     /unknown material column type/,
   );
   assert.throws(
-    () => checkManifest(manifest({ indexes: [index({ type: "mystery" })] }), manifest(), undefined, now),
+    () => checkManifest(manifest({ indexes: [index({ type: 'mystery' })] }), manifest(), undefined, now),
     /unknown material index type/,
   );
 });
 
-test("resource omissions and target mismatches fail closed", () => {
-  assert.throws(
-    () => checkManifest(manifest({ databases: [], tables: [] }), manifest(), undefined, now),
-    /destructive removal.*database/,
-  );
-  assert.throws(
-    () => checkManifest(manifest({ tables: [] }), manifest(), undefined, now),
-    /destructive removal.*table/,
-  );
-  assert.throws(
-    () => checkManifest(manifest(), { ...manifest(), projectId: "wrong" }, undefined, now),
-    /project mismatch/,
-  );
+test('resource omissions and target mismatches fail closed', () => {
+  assert.throws(() => checkManifest(manifest({ databases: [], tables: [] }), manifest(), undefined, now), /destructive removal.*database/);
+  assert.throws(() => checkManifest(manifest({ tables: [] }), manifest(), undefined, now), /destructive removal.*table/);
+  assert.throws(() => checkManifest(manifest(), { ...manifest(), projectId: 'wrong' }, undefined, now), /project mismatch/);
 });
 
-test("duplicate, orphan, and stale inventories fail closed", () => {
+test('duplicate, orphan, and stale inventories fail closed', () => {
   assert.throws(
-    () => checkManifest(manifest({ databases: ["primary", "primary"], tables: [] }), manifest(), undefined, now),
+    () => checkManifest(manifest({ databases: ['primary', 'primary'], tables: [] }), manifest(), undefined, now),
     /duplicate database/,
   );
   assert.throws(
-    () => checkManifest(manifest({ tables: [["missing", "users"]] }), manifest(), undefined, now),
+    () => checkManifest(manifest({ tables: [['missing', 'users']] }), manifest(), undefined, now),
     /references missing database/,
   );
-  assert.throws(
-    () => checkManifest(manifest(), { ...manifest(), capturedAt: "2026-07-15T23:00:00.000Z" }, undefined, now),
-    /stale/,
+  assert.throws(() => checkManifest(manifest(), { ...manifest(), capturedAt: '2026-07-15T23:00:00.000Z' }, undefined, now), /stale/);
+});
+
+test('includes are arrays inside a no-symlink project path', () => {
+  const directory = root();
+  mkdirSync(join(directory, 'appwrite'));
+  writeFileSync(join(directory, 'appwrite', 'databases.json'), '[{"$id":"primary"}]');
+  writeFileSync(join(directory, 'appwrite', 'tables.json'), '[{"$id":"users","databaseId":"primary"}]');
+  writeFileSync(
+    join(directory, 'appwrite.config.json'),
+    JSON.stringify({
+      endpoint,
+      projectId,
+      includes: {
+        tablesDB: 'appwrite/databases.json',
+        tables: 'appwrite/tables.json',
+      },
+    }),
   );
+  assert.equal(loadManifest(join(directory, 'appwrite.config.json')).tables[0].$id, 'users');
 });
 
-test("includes are arrays inside a no-symlink project path", () => {
+test('include symlink escape fails closed', () => {
   const directory = root();
-  mkdirSync(join(directory, "appwrite"));
-  writeFileSync(join(directory, "appwrite", "databases.json"), '[{"$id":"primary"}]');
-  writeFileSync(join(directory, "appwrite", "tables.json"), '[{"$id":"users","databaseId":"primary"}]');
-  writeFileSync(join(directory, "appwrite.config.json"), JSON.stringify({
-    endpoint,
-    projectId,
-    includes: {
-      tablesDB: "appwrite/databases.json",
-      tables: "appwrite/tables.json",
-    },
-  }));
-  assert.equal(loadManifest(join(directory, "appwrite.config.json")).tables[0].$id, "users");
+  const outside = join(root('appwrite-outside-'), 'tables.json');
+  writeFileSync(outside, '[]');
+  symlinkSync(outside, join(directory, 'tables.json'));
+  writeFileSync(
+    join(directory, 'appwrite.config.json'),
+    JSON.stringify({
+      endpoint,
+      projectId,
+      tablesDB: [],
+      includes: { tables: 'tables.json' },
+    }),
+  );
+  assert.throws(() => loadManifest(join(directory, 'appwrite.config.json')), /symlink/);
 });
 
-test("include symlink escape fails closed", () => {
+test('capture output is private, exclusive, and no-follow', () => {
   const directory = root();
-  const outside = join(root("appwrite-outside-"), "tables.json");
-  writeFileSync(outside, "[]");
-  symlinkSync(outside, join(directory, "tables.json"));
-  writeFileSync(join(directory, "appwrite.config.json"), JSON.stringify({
-    endpoint,
-    projectId,
-    tablesDB: [],
-    includes: { tables: "tables.json" },
-  }));
-  assert.throws(() => loadManifest(join(directory, "appwrite.config.json")), /symlink/);
-});
-
-test("capture output is private, exclusive, and no-follow", () => {
-  const directory = root();
-  const output = join(directory, "inventory.json");
-  writeExclusiveJson(output, { result: "PASS" });
-  assert.throws(() => writeExclusiveJson(output, { result: "changed" }), /EEXIST/);
-  const target = join(directory, "target.json");
-  const link = join(directory, "link.json");
-  writeFileSync(target, "unchanged");
+  const output = join(directory, 'inventory.json');
+  writeExclusiveJson(output, { result: 'PASS' });
+  assert.throws(() => writeExclusiveJson(output, { result: 'changed' }), /EEXIST/);
+  const target = join(directory, 'target.json');
+  const link = join(directory, 'link.json');
+  writeFileSync(target, 'unchanged');
   symlinkSync(target, link);
-  assert.throws(() => writeExclusiveJson(link, { result: "changed" }), /EEXIST|symlink/);
+  assert.throws(() => writeExclusiveJson(link, { result: 'changed' }), /EEXIST|symlink/);
 });
 
 function fakeCli(directory, behavior) {
-  const executable = join(directory, "appwrite");
-  writeFileSync(executable, `#!/usr/bin/env node
+  const executable = join(directory, 'appwrite');
+  writeFileSync(
+    executable,
+    `#!/usr/bin/env node
 const args = process.argv.slice(2);
 const joined = args.join(" ");
 const emit = (value) => process.stdout.write("notice\\n" + JSON.stringify(value));
 ${behavior}
-`);
+`,
+  );
   chmodSync(executable, 0o700);
   return executable;
 }
@@ -294,7 +343,7 @@ ${behavior}
 function assertCleanupCausality(action, primaryPattern, causePattern = primaryPattern) {
   const originalKill = process.kill;
   process.kill = () => {
-    throw Object.assign(new Error("simulated process-group cleanup failure"), { code: "EPERM" });
+    throw Object.assign(new Error('simulated process-group cleanup failure'), { code: 'EPERM' });
   };
   try {
     assert.throws(action, (error) => {
@@ -304,7 +353,7 @@ function assertCleanupCausality(action, primaryPattern, causePattern = primaryPa
       assert.equal(error.errors.length, 2);
       assert.match(error.errors[0].message, causePattern);
       assert.match(error.errors[0].stack, causePattern);
-      assert.equal(error.errors[1].code, "EPERM");
+      assert.equal(error.errors[1].code, 'EPERM');
       assert.match(error.errors[1].stack, /simulated process-group cleanup failure/);
       assert.equal(error.cause, error.errors[0]);
       return true;
@@ -328,21 +377,21 @@ else if (joined === "--raw tables-db get-table --database-id primary --table-id 
 else process.exit(2);
 `;
 
-test("capture uses complete raw project, database, table, column, and index data", () => {
+test('capture uses complete raw project, database, table, column, and index data', () => {
   const directory = root();
   const inventory = captureInventory(manifest(), fakeCli(directory, completeFake));
   assert.equal(inventory.schemaVersion, 2);
-  assert.equal(inventory.tables[0].columns[0].key, "status");
-  assert.equal(inventory.tables[0].indexes[0].key, "status_idx");
+  assert.equal(inventory.tables[0].columns[0].key, 'status');
+  assert.equal(inventory.tables[0].indexes[0].key, 'status_idx');
 });
 
-test("CLI deadline fails closed", () => {
+test('CLI deadline fails closed', () => {
   const directory = root();
   const executable = fakeCli(directory, 'setTimeout(() => {}, 1000);');
   assert.throws(() => captureInventory(manifest(), executable, { timeoutMs: 25 }), /timed out/);
 });
 
-test("CLI timeout preserves cleanup failure details", { skip: process.platform === "win32" }, () => {
+test('CLI timeout preserves cleanup failure details', { skip: process.platform === 'win32' }, () => {
   const directory = root();
   const executable = fakeCli(directory, 'setTimeout(() => {}, 1000);');
   assertCleanupCausality(
@@ -352,18 +401,15 @@ test("CLI timeout preserves cleanup failure details", { skip: process.platform =
   );
 });
 
-test("CLI command failure remains primary when cleanup also fails", { skip: process.platform === "win32" }, () => {
+test('CLI command failure remains primary when cleanup also fails', { skip: process.platform === 'win32' }, () => {
   const directory = root();
-  const executable = fakeCli(directory, "process.exit(2);");
-  assertCleanupCausality(
-    () => captureInventory(manifest(), executable),
-    /Appwrite CLI failed: client --debug exit=2/,
-  );
+  const executable = fakeCli(directory, 'process.exit(2);');
+  assertCleanupCausality(() => captureInventory(manifest(), executable), /Appwrite CLI failed: client --debug exit=2/);
 });
 
-test("CLI timeout removes descendant processes", { skip: process.platform === "win32" }, () => {
+test('CLI timeout removes descendant processes', { skip: process.platform === 'win32' }, () => {
   const directory = root();
-  const marker = join(directory, "descendant-survived");
+  const marker = join(directory, 'descendant-survived');
   const child = `setTimeout(() => require("node:fs").writeFileSync(${JSON.stringify(marker)}, "leaked"), 150)`;
   const behavior = `
 const {spawn} = process.getBuiltinModule("node:child_process");
@@ -376,7 +422,7 @@ setTimeout(() => {}, 1000);
   assert.equal(existsSync(marker), false);
 });
 
-test("non-progressing pagination fails closed", () => {
+test('non-progressing pagination fails closed', () => {
   const directory = root();
   const behavior = `
 if (joined === "client --debug") process.stdout.write("endpoint     ${endpoint}\\n");
@@ -389,7 +435,7 @@ else process.exit(2);
   assert.throws(() => captureInventory(manifest(), fakeCli(directory, behavior)), /did not progress/);
 });
 
-test("page and item ceilings fail closed", () => {
+test('page and item ceilings fail closed', () => {
   const directory = root();
   const behavior = `
 if (joined === "client --debug") process.stdout.write("endpoint     ${endpoint}\\n");

@@ -47,7 +47,7 @@ Future<dynamic> main(final context) async {
     if (payload is! Map<String, dynamic>) {
         return context.res.json({'error': 'Invalid payload'}, statusCode: 400);
     }
-    
+
     await processEvent(payload);
     await tablesDB.createRow(
         databaseId: 'db', tableId: 'processed_events', rowId: eventId,

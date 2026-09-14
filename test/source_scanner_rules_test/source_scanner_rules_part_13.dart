@@ -140,13 +140,15 @@ final class FreezedDisableMapWhenRequiredTest extends _ValueObjectRuleTest {
   void setUp() {
     newPackage('freezed_annotation').addFile('lib/freezed_annotation.dart', r'''
 class Freezed {
-  const Freezed({Object? map, Object? when});
+  const Freezed({FreezedMapOptions? map, FreezedWhenOptions? when});
 }
 class FreezedMapOptions {
-  static const Object none = Object();
+  static const FreezedMapOptions none = FreezedMapOptions();
+  const FreezedMapOptions();
 }
 class FreezedWhenOptions {
-  static const Object none = Object();
+  static const FreezedWhenOptions none = FreezedWhenOptions();
+  const FreezedWhenOptions();
 }
 const freezed = Freezed();
 ''');
@@ -172,6 +174,22 @@ sealed class Distance with _$Distance {
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 @Freezed(map: FreezedMapOptions.none, when: FreezedWhenOptions.none)
+sealed class Distance with _$Distance {
+  const Distance._();
+  const factory Distance._meters(double value) = _Meters;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsDotShorthandOptOut() async {
+    final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
+    newFile(filePath, r'''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@Freezed(map: .none, when: .none)
 sealed class Distance with _$Distance {
   const Distance._();
   const factory Distance._meters(double value) = _Meters;

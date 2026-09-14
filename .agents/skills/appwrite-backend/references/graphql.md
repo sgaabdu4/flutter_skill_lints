@@ -117,11 +117,11 @@ query BatchedQueries {
   products: tablesdbListRows(tableId: "products", queries: ["limit(10)"]) {
     rows { id name }
   }
-  
+
   categories: tablesdbListRows(tableId: "categories") {
     rows { id title }
   }
-  
+
   stats: tablesdbListRows(tableId: "stats", queries: ["limit(1)"]) {
     rows { totalSales }
   }

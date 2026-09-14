@@ -93,14 +93,14 @@ Server-side session for Next.js, SvelteKit, Nuxt, etc.
 ```typescript
 export async function POST({ request }) {
     const { email, password } = await request.json();
-    
+
     const client = new Client()
         .setEndpoint('https://cloud.appwrite.io/v1')
         .setProject('PROJECT_ID');
-    
+
     const account = new Account(client);
     const session = await account.createEmailPasswordSession({ email, password });
-    
+
     return new Response(JSON.stringify({ success: true }), {
         headers: {
             'Set-Cookie': `a_session_[PROJECT_ID]=${session.secret}; Path=/; HttpOnly; Secure; SameSite=Strict`,
@@ -118,9 +118,9 @@ export async function GET({ cookies }) {
         .setEndpoint('https://cloud.appwrite.io/v1')
         .setProject('PROJECT_ID')
         .setSession(session);
-    
+
     const account = new Account(client);
-    
+
     try {
         const user = await account.get();
         return { user };

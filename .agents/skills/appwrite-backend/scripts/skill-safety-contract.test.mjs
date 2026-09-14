@@ -1,19 +1,13 @@
-import assert from "node:assert/strict";
-import { readdir, readFile } from "node:fs/promises";
-import test from "node:test";
+import assert from 'node:assert/strict';
+import { readdir, readFile } from 'node:fs/promises';
+import test from 'node:test';
 
-const root = new URL("../", import.meta.url);
-const text = (path) => readFile(new URL(path, root), "utf8");
+const root = new URL('../', import.meta.url);
+const text = (path) => readFile(new URL(path, root), 'utf8');
 
-test("every Appwrite CLI path routes to the CLI safety owner before action", async () => {
-  const [skill, cli] = await Promise.all([
-    text("SKILL.md"),
-    text("references/appwrite-cli.md"),
-  ]);
-  assert.match(
-    skill,
-    /Any Appwrite CLI\/wrapper command[\s\S]*appwrite-cli\.md/u,
-  );
+test('every Appwrite CLI path routes to the CLI safety owner before action', async () => {
+  const [skill, cli] = await Promise.all([text('SKILL.md'), text('references/appwrite-cli.md')]);
+  assert.match(skill, /Any Appwrite CLI\/wrapper command[\s\S]*appwrite-cli\.md/u);
   assert.match(cli, /Load this reference before any Appwrite CLI\/wrapper command/u);
   assert.match(cli, /inspect exact pinned command help/u);
   assert.match(cli, /unknown flags can execute a default deployment path/u);
@@ -25,8 +19,8 @@ test("every Appwrite CLI path routes to the CLI safety owner before action", asy
   assert.match(cli, /script PASS alone ≠ production gate PASS/u);
 });
 
-test("function deploys preserve every live setting or fail before mutation", async () => {
-  const cli = await text("references/appwrite-cli.md");
+test('function deploys preserve every live setting or fail before mutation', async () => {
+  const cli = await text('references/appwrite-cli.md');
   assert.match(cli, /partial `functions update` is forbidden/u);
   assert.match(cli, /raw full function model before any settings mutation/u);
   assert.match(cli, /official Server SDK\s+`Functions\.update`/u);
@@ -41,16 +35,16 @@ test("function deploys preserve every live setting or fail before mutation", asy
   assert.match(cli, /forced\s+push requires complete intended function settings in the manifest/u);
 });
 
-test("each Appwrite CLI caller preserves immutable committed config bytes", async () => {
-  const cli = await text("references/appwrite-cli.md");
+test('each Appwrite CLI caller preserves immutable committed config bytes', async () => {
+  const cli = await text('references/appwrite-cli.md');
   const steps = [
-    "require the full tracked checkout clean",
-    "Before its first CLI invocation",
-    "Fail before invoking the CLI",
-    "Run every CLI invocation for that caller",
-    "On success or failure, restore every protected file byte-for-byte",
-    "Verify the full tracked checkout equals the committed revision",
-    "Remove the caller-owned snapshot",
+    'require the full tracked checkout clean',
+    'Before its first CLI invocation',
+    'Fail before invoking the CLI',
+    'Run every CLI invocation for that caller',
+    'On success or failure, restore every protected file byte-for-byte',
+    'Verify the full tracked checkout equals the committed revision',
+    'Remove the caller-owned snapshot',
   ];
   let previous = -1;
   for (const step of steps) {
@@ -66,8 +60,8 @@ test("each Appwrite CLI caller preserves immutable committed config bytes", asyn
   assert.match(cli, /checking only[\s\S]*`appwrite\.config\.json` is insufficient/u);
 });
 
-test("schema guard binds complete destructive and access state", async () => {
-  const cli = await text("references/appwrite-cli.md");
+test('schema guard binds complete destructive and access state', async () => {
+  const cli = await text('references/appwrite-cli.md');
   assert.match(cli, /raw full-model capture for every database \+ table/u);
   assert.match(cli, /complete columns \+ indexes/u);
   assert.match(cli, /row-security \+ permission \+ column constraint \+ relationship \+ index definitions/u);
@@ -77,11 +71,8 @@ test("schema guard binds complete destructive and access state", async () => {
   assert.match(cli, /capture output is new private `0600`/u);
 });
 
-test("CLI version, exact output, and API-key safety contracts stay explicit", async () => {
-  const [cli, selfHosting] = await Promise.all([
-    text("references/appwrite-cli.md"),
-    text("references/self-hosting.md"),
-  ]);
+test('CLI version, exact output, and API-key safety contracts stay explicit', async () => {
+  const [cli, selfHosting] = await Promise.all([text('references/appwrite-cli.md'), text('references/self-hosting.md')]);
   assert.match(selfHosting, /Appwrite 1\.9\.6[\s\S]*`appwrite-cli` \| `23\.0\.0`/u);
   assert.match(cli, /npm install -g appwrite-cli@25\.0\.0/u);
   assert.match(cli, /Registry latest on 2026-07-31 = CLI\s+`25\.0\.0`/u);
@@ -101,11 +92,8 @@ test("CLI version, exact output, and API-key safety contracts stay explicit", as
   assert.match(cli, /metadata output never proves the actual consumer received the secret/u);
 });
 
-test("release-matched SDK pins require call-shape migration proof", async () => {
-  const [skill, selfHosting] = await Promise.all([
-    text("SKILL.md"),
-    text("references/self-hosting.md"),
-  ]);
+test('release-matched SDK pins require call-shape migration proof', async () => {
+  const [skill, selfHosting] = await Promise.all([text('SKILL.md'), text('references/self-hosting.md')]);
   assert.match(skill, /Compatible with `1\.9\.x`[^\n]*does not mean release-matched/u);
   assert.match(skill, /audit every intervening breaking change/u);
   assert.match(skill, /real SDK calls against the candidate/u);
@@ -114,11 +102,8 @@ test("release-matched SDK pins require call-shape migration proof", async () => 
   assert.match(selfHosting, /exact isolated dependency resolution/u);
 });
 
-test("function execution parsing drift routes to a target-proven response-format repair", async () => {
-  const [skill, functionsAdvanced] = await Promise.all([
-    text("SKILL.md"),
-    text("references/functions-advanced.md"),
-  ]);
+test('function execution parsing drift routes to a target-proven response-format repair', async () => {
+  const [skill, functionsAdvanced] = await Promise.all([text('SKILL.md'), text('references/functions-advanced.md')]);
   assert.match(skill, /Function execution SDK model or response-format parsing failure[\s\S]*functions-advanced/u);
   assert.match(functionsAdvanced, /execution may already have completed[\s\S]*reconcile the source-of-truth state/u);
   assert.match(functionsAdvanced, /exact installed SDK tag[\s\S]*default `X-Appwrite-Response-Format`[\s\S]*required model fields/u);
@@ -129,15 +114,15 @@ test("function execution parsing drift routes to a target-proven response-format
   assert.match(functionsAdvanced, /client configuration regression[\s\S]*real deployed target/u);
 });
 
-test("numeric schema distinguishes 32-bit integer from 64-bit bigint", async () => {
-  const schema = await text("references/schema-management.md");
+test('numeric schema distinguishes 32-bit integer from 64-bit bigint', async () => {
+  const schema = await text('references/schema-management.md');
   assert.match(schema, /`integer` \| signed 32-bit/u);
   assert.match(schema, /`bigint` \| signed 64-bit/u);
   assert.match(schema, /Number\.isSafeInteger/u);
 });
 
-test("retryable creates preallocate and reuse an SDK resource ID", async () => {
-  const skill = await text("SKILL.md");
+test('retryable creates preallocate and reuse an SDK resource ID', async () => {
+  const skill = await text('SKILL.md');
   assert.match(skill, /call `ID\.unique\(\)` before the first attempt/u);
   assert.match(skill, /persist the returned ID in the durable draft\/intent/u);
   assert.match(skill, /reuse that exact ID for every retry\/reconciliation/u);
@@ -145,11 +130,8 @@ test("retryable creates preallocate and reuse an SDK resource ID", async () => {
   assert.match(skill, /never derive resource IDs/u);
 });
 
-test("client recovery is coordinated and partial sync reports once", async () => {
-  const [skill, errors] = await Promise.all([
-    text("SKILL.md"),
-    text("references/error-handling.md"),
-  ]);
+test('client recovery is coordinated and partial sync reports once', async () => {
+  const [skill, errors] = await Promise.all([text('SKILL.md'), text('references/error-handling.md')]);
   assert.match(skill, /one endpoint\/project-scoped coordinator/u);
   assert.match(skill, /never advance a sync checkpoint after partial failure/u);
   assert.match(errors, /Foreground actions \+ background sync \+ authentication cleanup/u);
@@ -160,16 +142,16 @@ test("client recovery is coordinated and partial sync reports once", async () =>
   assert.match(errors, /leaves its checkpoints unchanged/u);
 });
 
-test("password recovery proves the Appwrite allowlist and delivered route", async () => {
-  const auth = await text("references/auth-methods.md");
+test('password recovery proves the Appwrite allowlist and delivered route', async () => {
+  const auth = await text('references/auth-methods.md');
   assert.match(auth, /Callback web hostname → exact target Appwrite project platform allowlist entry/u);
   assert.match(auth, /native scheme registration \+ Flutter route contract/u);
   assert.match(auth, /actual delivered link/u);
   assert.match(auth, /Successful `createRecovery` response = request acceptance only/u);
 });
 
-test("SDK routing lives in the always-loaded router", async () => {
-  const skill = await text("SKILL.md");
+test('SDK routing lives in the always-loaded router', async () => {
+  const skill = await text('SKILL.md');
   assert.match(skill, /`node-appwrite`/u);
   assert.match(skill, /`dart_appwrite`/u);
   assert.match(skill, /https:\/\/<REGION>\.cloud\.appwrite\.io\/v1/u);
@@ -177,23 +159,17 @@ test("SDK routing lives in the always-loaded router", async () => {
   assert.doesNotMatch(skill, /React Native|react-native/iu);
 });
 
-test("production migration contract preserves data and exact ACL proof", async () => {
-  const migration = await text("references/production-migrations.md");
-  assert.match(
-    migration,
-    /bind → preflight → expand → backfill → verify → deploy-compatible → contract → activate → final read-back/u,
-  );
+test('production migration contract preserves data and exact ACL proof', async () => {
+  const migration = await text('references/production-migrations.md');
+  assert.match(migration, /bind → preflight → expand → backfill → verify → deploy-compatible → contract → activate → final read-back/u);
   assert.match(migration, /Missing `\$permissions`[\s\S]*never `\[\]`/u);
   assert.match(migration, /row writes do not invalidate cached lists/u);
   assert.match(migration, /rollback-by-deletion requires separate destructive proof\/approval/u);
   assert.match(migration, /secret status = one-way/iu);
 });
 
-test("transaction and recovery owners cover recurring production failures", async () => {
-  const [transactions, recovery] = await Promise.all([
-    text("references/transactions.md"),
-    text("references/self-hosting-ops.md"),
-  ]);
+test('transaction and recovery owners cover recurring production failures', async () => {
+  const [transactions, recovery] = await Promise.all([text('references/transactions.md'), text('references/self-hosting-ops.md')]);
   assert.match(transactions, /same `transactionId`/u);
   assert.match(transactions, /schema \+ Auth \+ Storage \+ Functions/u);
   assert.match(transactions, /One bulk row call with `transactionId` = one operation/u);
@@ -206,11 +182,8 @@ test("transaction and recovery owners cover recurring production failures", asyn
   assert.match(recovery, /SQL counts alone = incomplete/u);
 });
 
-test("destructive erasure is schema-closed, post-commit-proven, and retry-convergent", async () => {
-  const [skill, erasure] = await Promise.all([
-    text("SKILL.md"),
-    text("references/destructive-erasure.md"),
-  ]);
+test('destructive erasure is schema-closed, post-commit-proven, and retry-convergent', async () => {
+  const [skill, erasure] = await Promise.all([text('SKILL.md'), text('references/destructive-erasure.md')]);
   assert.match(skill, /Permanent account\/subject-data erasure[\s\S]*destructive-erasure\.md/u);
   assert.match(erasure, /one machine-readable registry/u);
   assert.match(erasure, /new\/renamed subject-linked table\/field without one exact disposition = failure/u);
@@ -228,12 +201,8 @@ test("destructive erasure is schema-closed, post-commit-proven, and retry-conver
   assert.match(erasure, /no rollback is attempted after commit/u);
 });
 
-test("bulk owner matches current Appwrite atomicity and budgeting contracts", async () => {
-  const [skill, bulk, limits] = await Promise.all([
-    text("SKILL.md"),
-    text("references/bulk-operations.md"),
-    text("references/limits.md"),
-  ]);
+test('bulk owner matches current Appwrite atomicity and budgeting contracts', async () => {
+  const [skill, bulk, limits] = await Promise.all([text('SKILL.md'), text('references/bulk-operations.md'), text('references/limits.md')]);
   assert.match(skill, /Preserve write intent before optimizing/u);
   assert.match(skill, /update-only work never routes through `upsertRow`\/`upsertRows`/u);
   assert.match(skill, /pre-read, existence check, or full payload/u);
@@ -267,11 +236,8 @@ test("bulk owner matches current Appwrite atomicity and budgeting contracts", as
   assert.doesNotMatch(`${skill}\n${bulk}\n${limits}`, /\b(?:Free|Pro|Scale)\b/u);
 });
 
-test("collection writes must choose batching before implementation", async () => {
-  const [skill, bulk] = await Promise.all([
-    text("SKILL.md"),
-    text("references/bulk-operations.md"),
-  ]);
+test('collection writes must choose batching before implementation', async () => {
+  const [skill, bulk] = await Promise.all([text('SKILL.md'), text('references/bulk-operations.md')]);
   assert.match(skill, /Batch collection writes before coding/u);
   assert.match(skill, /target count can exceed one or is data-dependent/u);
   assert.match(skill, /Compatible server bulk method exists → per-row write loop is forbidden/u);
@@ -283,31 +249,25 @@ test("collection writes must choose batching before implementation", async () =>
   assert.match(bulk, /Full plan exceeds the transaction cap → redesign/u);
 });
 
-test("SKILL remains a bounded router", async () => {
-  const skill = await text("SKILL.md");
-  assert.ok(skill.split("\n").length <= 220);
+test('SKILL remains a bounded router', async () => {
+  const skill = await text('SKILL.md');
+  assert.ok(skill.split('\n').length <= 220);
   assert.match(skill, /production-migrations\.md/u);
 });
 
-test("every reference has exactly one router row and no orphans", async () => {
-  const skill = await text("SKILL.md");
-  const files = (await readdir(new URL("references/", root))).sort();
-  const linked = [...skill.matchAll(/\(references\/([a-z0-9-]+\.md)\)/gu)].map(
-    (m) => m[1],
-  );
-  assert.deepEqual(
-    [...new Set(linked)].sort(),
-    files,
-    "SKILL.md must link every reference and only existing references",
-  );
+test('every reference has exactly one router row and no orphans', async () => {
+  const skill = await text('SKILL.md');
+  const files = (await readdir(new URL('references/', root))).sort();
+  const linked = [...skill.matchAll(/\(references\/([a-z0-9-]+\.md)\)/gu)].map((m) => m[1]);
+  assert.deepEqual([...new Set(linked)].sort(), files, 'SKILL.md must link every reference and only existing references');
 });
 
-test("recurring production failure contracts stay with canonical owners", async () => {
+test('recurring production failure contracts stay with canonical owners', async () => {
   const [migration, transactions, performance, query] = await Promise.all([
-    text("references/production-migrations.md"),
-    text("references/transactions.md"),
-    text("references/performance.md"),
-    text("references/query-optimization.md"),
+    text('references/production-migrations.md'),
+    text('references/transactions.md'),
+    text('references/performance.md'),
+    text('references/query-optimization.md'),
   ]);
   assert.match(migration, /explicit `null`/u);
   assert.match(migration, /execution `completed` = transport proof only/u);
@@ -317,11 +277,8 @@ test("recurring production failure contracts stay with canonical owners", async 
   assert.match(query, /appwrite-query-contract\.mjs/u);
 });
 
-test("MCP wiring binds the server choice to the deployed endpoint", async () => {
-  const [skill, mcp] = await Promise.all([
-    text("SKILL.md"),
-    text("references/mcp-servers.md"),
-  ]);
+test('MCP wiring binds the server choice to the deployed endpoint', async () => {
+  const [skill, mcp] = await Promise.all([text('SKILL.md'), text('references/mcp-servers.md')]);
   assert.match(skill, /Appwrite MCP server setup[\s\S]*mcp-servers\.md/u);
   assert.match(mcp, /Server choice = deployed endpoint, never preference/u);
   assert.match(mcp, /hosted server authenticates against Appwrite Cloud only and can never reach a self-hosted instance/u);
@@ -332,8 +289,8 @@ test("MCP wiring binds the server choice to the deployed endpoint", async () => 
   assert.match(mcp, /`confirm_write=true`/u);
 });
 
-test("Codex wiring prefers the project file over the global one", async () => {
-  const mcp = await text("references/mcp-servers.md");
+test('Codex wiring prefers the project file over the global one', async () => {
+  const mcp = await text('references/mcp-servers.md');
   assert.match(mcp, /overrides a same-named global server/u);
   assert.match(mcp, /trust_level = "trusted"/u);
   assert.match(mcp, /Untrusted repository = project file silently ignored/u);
@@ -341,8 +298,8 @@ test("Codex wiring prefers the project file over the global one", async () => {
   assert.doesNotMatch(mcp, /Codex has no project config|No project-level config exists/u);
 });
 
-test("documentation lookup prefers the key-free Appwrite feed", async () => {
-  const mcp = await text("references/mcp-servers.md");
+test('documentation lookup prefers the key-free Appwrite feed', async () => {
+  const mcp = await text('references/mcp-servers.md');
   assert.match(mcp, /`appwrite_search_docs` activates only when the bundled index and `OPENAI_API_KEY` are both present/u);
   assert.match(mcp, /bound to OpenAI `text-embedding-3-small`, so no other provider substitutes/u);
   assert.match(mcp, /https:\/\/appwrite\.io\/llms-full\.txt/u);

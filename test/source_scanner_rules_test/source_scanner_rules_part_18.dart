@@ -358,6 +358,22 @@ class DraftNotifier {
 ''');
   }
 
+  Future<void> test_allowsWithDotShorthandTimerDebounce() async {
+    await assertAllows(r'''
+import 'dart:async';
+
+class DraftNotifier {
+  Timer? _debounceTimer;
+
+  void _scheduleDraftPersist() {
+    _debounceTimer = .new(Duration.zero, () => unawaited(_enqueueDraftPersist()));
+  }
+
+  Future<void> _enqueueDraftPersist() async {}
+}
+''');
+  }
+
   Future<void> test_reportsQueueAndGenerationWithoutDebounce() async {
     const source = r'''
 class DraftNotifier {

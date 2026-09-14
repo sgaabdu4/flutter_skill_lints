@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.11.1] - 2026-09-14
+
+- Make `prefer_dot_shorthands` use Dart's exact static namespace and independent
+  context, avoiding invalid fixes for extension helpers and inferred generics.
+- Use the flattened value context for async returns and safely rewrite explicit
+  `new`, generic constructors, static methods, aliases, and selector chains.
+- Add the IDE file-wide autofix and keep Freezed opt-outs and timer-debounce
+  checks compatible with valid dot shorthand.
+
 ## [0.11.0] - 2026-09-14
 
 - Require Dart 3.13 and prefer contextual dot shorthands through a first-party

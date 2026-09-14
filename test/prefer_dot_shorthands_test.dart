@@ -182,6 +182,15 @@ void example(Navigator navigator) {
 ''');
   }
 
+  Future<void> test_narrowerExplicitGenericConstructor_noLint() async {
+    await assertNoDiagnostics(r'''
+class Box<T> {
+  const Box();
+}
+Box<num> value = const Box<int>();
+''');
+  }
+
   Future<void> test_explicitGenericArgument_lint() async {
     const source = r'''
 enum Choice { one }

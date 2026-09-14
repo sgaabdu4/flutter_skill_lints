@@ -110,6 +110,10 @@ real app tree was modified. The post-release Hard Eng repair uses a measured 600
 cold-CI budget, and the maintenance workflow was refactored to satisfy the
 current actionlint/ShellCheck diagnostics without suppressions.
 
+The canonical generator compatibility fixture also passed against the local
+0.11.2 correction, including its explicitly typed `AdapterSpec` constructor;
+this proves shorthand does not widen a narrower explicit generic type.
+
 The final action audit found no stale workflow pins outside this repository.
 All checkout uses now resolve to v7.0.1, the generated workflow uses pnpm/setup
 v2.1.0, and Hard Eng source `3bd3c233110f965a3b980a6994dec58acef0865e`

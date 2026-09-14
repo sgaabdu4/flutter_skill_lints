@@ -287,7 +287,7 @@ include: package:flutter_lints/flutter.yaml
 
 plugins:
   riverpod_lint: ^3.1.9
-  flutter_skill_lints: ^0.11.1
+  flutter_skill_lints: ^0.11.2
 
 analyzer:
   exclude:
@@ -433,7 +433,7 @@ include: package:flutter_lints/flutter.yaml
 
 plugins:
   riverpod_lint: ^3.1.9
-  flutter_skill_lints: ^0.11.1
+  flutter_skill_lints: ^0.11.2
   "many_lints": ^0.4.0
 
 analyzer:
@@ -507,7 +507,7 @@ include: package:flutter_lints/flutter.yaml
 
 plugins:
   riverpod_lint: ^3.1.9
-  flutter_skill_lints: ^0.11.1
+  flutter_skill_lints: ^0.11.2
 
 analyzer:
   exclude:

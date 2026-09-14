@@ -72,6 +72,10 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
     final resultType = contextExpression.staticType;
     if (resultType == null || !typeSystem.isSubtypeOf(resultType, expectedType)) return;
+    if (expression is InstanceCreationExpression &&
+        !typeSystem.isSubtypeOf(namespaceType, resultType)) {
+      return;
+    }
 
     rule.reportAtNode(expression);
   }

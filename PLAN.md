@@ -113,18 +113,20 @@ current actionlint/ShellCheck diagnostics without suppressions.
 The canonical generator compatibility fixture also passed against the local
 0.11.2 correction, including its explicitly typed `AdapterSpec` constructor;
 this proves shorthand does not widen a narrower explicit generic type.
-The supported installer then updated Hard Eng to
-`41d706b8834ea9bf5a6fbd1c613f42ee8d70095f`, including the released
+The supported installer then updated Hard Eng through
+`1b4d4fdb7d5a87faf6d164f5c3c423a52f3fd463`, retaining the released
 `building-flutter-apps` 5.10.2 material and the 0.11.0/0.11.1 to 0.11.2 lint
-migration.
+migration while adopting Appwrite backend skill 2.1.3 and the repaired
+missing-gate-input contract.
 
 The final action audit found no stale workflow pins outside this repository.
 All checkout uses now resolve to v7.0.1, the generated workflow uses pnpm/setup
 v2.1.0, and Hard Eng source `3bd3c233110f965a3b980a6994dec58acef0865e`
 passed its PR and post-merge gates after fixing the concurrent uv cache race
 and adding the known-pin updater migration.
-The updated local repository passed all 1,757 tests, coverage, performance,
+The updated local repository passed all 1,771 tests, coverage, performance,
 secrets, actionlint, and workflow-security checks.
 
 Delivery target: Merge
-Delivery: Verified and ready for corrective merge and publication.
+Delivery: Version 0.11.2 is published; the latest Hard Eng scaffold is verified
+and ready for its scaffold-only corrective merge.

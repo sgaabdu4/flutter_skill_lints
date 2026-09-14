@@ -1,6 +1,6 @@
 # Dart 3.13 Tooling Support
 
-Status: Ready
+Status: Complete
 
 ## Outcome + scope
 
@@ -52,7 +52,7 @@ temporary copies for consumer validation.
       and isolated SmartMum/Repem analysis without modifying either application.
 - [x] Review the final diffs for unnecessary additions and report before/after,
       proof, edge cases, and remaining delivery work before any push.
-- [ ] Update every GitHub Actions checkout pin to v7.0.1 and the generated Hard
+- [x] Update every GitHub Actions checkout pin to v7.0.1 and the generated Hard
       Eng pnpm setup pin to v2.1.0, then pass the protected-branch checks.
 
 ## Baseline + execution
@@ -97,6 +97,13 @@ was modified. The post-release Hard Eng repair uses a measured 600-second
 cold-CI budget, and the maintenance workflow was refactored to satisfy the
 current actionlint/ShellCheck diagnostics without suppressions.
 
+The final action audit found no stale workflow pins outside this repository.
+All checkout uses now resolve to v7.0.1, the generated workflow uses pnpm/setup
+v2.1.0, and Hard Eng source `c67fced96100e91cea67e1ca773ec5bfc2257524`
+passed its PR and post-merge gates after fixing the concurrent uv cache race.
+The updated local repository passed all 1,757 tests, coverage, performance,
+secrets, actionlint, and workflow-security checks.
+
 Delivery target: Merge
-Delivery: In progress — flutter_skill_lints 0.11.0 is published; merge the
-latest-action maintenance PR after its protected-branch checks pass.
+Delivery: Ready for ship — local implementation and verification complete;
+delivery not performed.

@@ -91,5 +91,7 @@ tests with only two Git-metadata-dependent archive checks failing because the
 copy excludes `.git`, while Repem passed all 2,601 tests. Neither real app tree
 was modified.
 
-Delivery target: Deploy. Publish flutter_skill_lints 0.11.0 after the verified
-main-branch push and record the remote release evidence here.
+Delivery target: Deploy
+Delivery: Complete — flutter_skill_lints 0.11.0 was published from commit
+0f03efb0ec5a58af6f92a8b43e5f88eedb42baea after Dart CI passed; the trusted
+publish workflow and GitHub release both completed successfully.

@@ -211,5 +211,21 @@
         "."
       ]
     }
-  ]
+  ],
+  "shipping": {
+    "base": "main",
+    "checks": [
+      "Check Version Consistency",
+      "Run Flutter Plugin Smoke",
+      "Run Dart Tests",
+      "Analyze Code",
+      "Check Formatting",
+      "Package Analysis",
+      "Publish Dry Run"
+    ],
+    "ui_paths": [],
+    "ci_seconds": 600,
+    "pre_push_seconds": 180,
+    "delivery": []
+  }
 }

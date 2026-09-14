@@ -10,8 +10,7 @@ class AvoidRefInsideStateDispose extends MethodDeclarationRule with SkipGenerate
   static const LintCode code = LintCode(
     'avoid_ref_inside_state_dispose',
     "Avoid using 'ref' inside ConsumerState.dispose().",
-    correctionMessage:
-        'Move provider cleanup into ref.onDispose(), a subscription close call, or an earlier lifecycle method.',
+    correctionMessage: 'Move provider cleanup into ref.onDispose(), a subscription close call, or an earlier lifecycle method.',
   );
 
   AvoidRefInsideStateDispose()

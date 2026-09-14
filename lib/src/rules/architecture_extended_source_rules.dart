@@ -13,8 +13,7 @@ final List<ScannerRule> architectureExtendedSourceRules = [
       correctionMessage: 'Add a toEntity() method on data models and map in repositories.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags data model files whose model classes do not expose toEntity() so the Flutter skill violation is shown during analysis.',
+    description: 'Flags data model files whose model classes do not expose toEntity() so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.path.contains('/data/models/')) return;
       if (!RegExp(r'\bclass\s+\w+Model\b').hasMatch(context.source.masked.join('\n'))) {
@@ -38,8 +37,7 @@ final List<ScannerRule> architectureExtendedSourceRules = [
       correctionMessage: 'Keep model and entity classes separate; map with toEntity().',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags data models that inherit from likely domain entities so the Flutter skill violation is shown during analysis.',
+    description: 'Flags data models that inherit from likely domain entities so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.path.contains('/data/models/')) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -62,8 +60,7 @@ final List<ScannerRule> architectureExtendedSourceRules = [
       correctionMessage: 'Move JSON keys and serialization annotations to data models.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags JSON annotations in domain files so the Flutter skill violation is shown during analysis.',
+    description: 'Flags JSON annotations in domain files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isDomainPath) return;
       for (var i = 0; i < context.source.length; i++) {

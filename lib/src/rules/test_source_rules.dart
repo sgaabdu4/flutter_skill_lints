@@ -13,8 +13,7 @@ final List<ScannerRule> testSourceRules = [
       correctionMessage: 'Replace ProviderContainer(...) with ProviderContainer.test().',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags direct ProviderContainer construction in tests so the Flutter skill violation is shown during analysis.',
+    description: 'Flags direct ProviderContainer construction in tests so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -36,8 +35,7 @@ final List<ScannerRule> testSourceRules = [
       correctionMessage: 'Wrap test widgets with an explicit test container.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags ProviderScope usage in tests so the Flutter skill violation is shown during analysis.',
+    description: 'Flags ProviderScope usage in tests so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -58,8 +56,7 @@ final List<ScannerRule> testSourceRules = [
       correctionMessage: 'Use ProviderContainer.test().',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags createContainer test helpers so the Flutter skill violation is shown during analysis.',
+    description: 'Flags createContainer test helpers so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -81,8 +78,7 @@ final List<ScannerRule> testSourceRules = [
       correctionMessage: 'Mock I* contracts instead of concrete implementations.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags mocks that implement concrete classes so the Flutter skill violation is shown during analysis.',
+    description: 'Flags mocks that implement concrete classes so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       final concreteMockPattern = RegExp(
         r'class\s+Mock\w+\s+extends\s+Mock\s+implements\s+((?!I)[A-Z]\w+)',
@@ -110,8 +106,7 @@ final List<ScannerRule> testSourceRules = [
       correctionMessage: 'Use explicit pumps or pass a bounded Duration argument.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags pumpAndSettle calls without an explicit duration argument so the Flutter skill violation is shown during analysis.',
+    description: 'Flags pumpAndSettle calls without an explicit duration argument so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -157,8 +152,7 @@ final List<ScannerRule> testSourceRules = [
       correctionMessage: 'Centralize widget keys in a key registry.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags inline ValueKey string literals outside key registries so the Flutter skill violation is shown during analysis.',
+    description: 'Flags inline ValueKey string literals outside key registries so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -181,8 +175,7 @@ final List<ScannerRule> testSourceRules = [
       correctionMessage: 'Use deterministic ValueKey finders.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags first-match widget finder usage in tests so the Flutter skill violation is shown during analysis.',
+    description: 'Flags first-match widget finder usage in tests so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];

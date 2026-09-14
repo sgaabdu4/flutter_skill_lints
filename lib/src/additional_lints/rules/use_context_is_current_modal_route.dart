@@ -11,8 +11,7 @@ class UseContextIsCurrentModalRoute extends AnalysisRule {
   static const LintCode code = LintCode(
     'use_context_is_current_modal_route',
     'Use context.isCurrentModalRoute instead of inline ModalRoute current-route checks.',
-    correctionMessage:
-        'Move route-current logic to the BuildContext extension and call context.isCurrentModalRoute.',
+    correctionMessage: 'Move route-current logic to the BuildContext extension and call context.isCurrentModalRoute.',
     severity: DiagnosticSeverity.ERROR,
   );
 

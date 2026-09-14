@@ -11,12 +11,10 @@ final List<ScannerRule> servicesExtendedSourceRules = [
     code: const LintCode(
       'service_static_side_effect',
       'Static service facade is not tiny and direct.',
-      correctionMessage:
-          'Keep the facade tiny, direct, and fire-and-forget. Public methods must return only void/Future<void>; move returned data/state to a provider/repository boundary.',
+      correctionMessage: 'Keep the facade tiny, direct, and fire-and-forget. Public methods must return only void/Future<void>; move returned data/state to a provider/repository boundary.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags static helper/facade classes that hide clock/random work or grow wider than the plain boring service-facade pattern.',
+    description: 'Flags static helper/facade classes that hide clock/random work or grow wider than the plain boring service-facade pattern.',
     scan: (reporter, context) {
       for (final classSpan in context.classes) {
         final body = context.source.masked.sublist(classSpan.start, classSpan.end + 1).join('\n');
@@ -52,8 +50,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       correctionMessage: 'Hoist Random to a module-level final and reuse it.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags Random construction inside methods so the Flutter skill violation is shown during analysis.',
+    description: 'Flags Random construction inside methods so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (final method in context.methods) {
         for (var i = method.start; i <= method.end; i++) {
@@ -75,8 +72,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
     code: const LintCode(
       'hidden_dependency_fallback',
       'Do not instantiate dependency fallbacks behind ??.',
-      correctionMessage:
-          'Require the dependency in the constructor/provider/function and wire the concrete implementation at the composition root.',
+      correctionMessage: 'Require the dependency in the constructor/provider/function and wire the concrete implementation at the composition root.',
       severity: DiagnosticSeverity.WARNING,
     ),
     description:
@@ -105,12 +101,10 @@ final List<ScannerRule> servicesExtendedSourceRules = [
     code: const LintCode(
       'hidden_dependency_default_param',
       'Do not use optional/defaulted dependency seams.',
-      correctionMessage:
-          'Make dependency/function seams required and pass the production implementation from the provider/composition root.',
+      correctionMessage: 'Make dependency/function seams required and pass the production implementation from the provider/composition root.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags optional or defaulted dependency/function constructor parameters in production code.',
+    description: 'Flags optional or defaulted dependency/function constructor parameters in production code.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
 
@@ -132,12 +126,10 @@ final List<ScannerRule> servicesExtendedSourceRules = [
     code: const LintCode(
       'service_inline_concrete_dependency',
       'Do not inline concrete dependency constructors inside service wiring.',
-      correctionMessage:
-          'Move the dependency constructor to its own provider/composition root and pass the provider value into the service.',
+      correctionMessage: 'Move the dependency constructor to its own provider/composition root and pass the provider value into the service.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags named arguments such as `plugin: ConcretePlugin()` inside production service wiring.',
+    description: 'Flags named arguments such as `plugin: ConcretePlugin()` inside production service wiring.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
 
@@ -161,12 +153,10 @@ final List<ScannerRule> servicesExtendedSourceRules = [
     code: const LintCode(
       'service_provider_watch_dependency',
       'Use ref.read for stable infrastructure dependencies.',
-      correctionMessage:
-          'In service/repository/datasource/client provider factories, use ref.read for stable dependency wiring.',
+      correctionMessage: 'In service/repository/datasource/client provider factories, use ref.read for stable dependency wiring.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags ref.watch inside stable infrastructure provider factories so services are not recreated reactively for wiring-only dependencies.',
+    description: 'Flags ref.watch inside stable infrastructure provider factories so services are not recreated reactively for wiring-only dependencies.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
 
@@ -190,12 +180,10 @@ final List<ScannerRule> servicesExtendedSourceRules = [
     code: const LintCode(
       'implicit_null_fallback',
       'Do not hide null handling behind sentinel fallbacks.',
-      correctionMessage:
-          'Use a required value, explicit nullable branch, pattern match, or typed domain value instead of primitive/string/toString/chained ?? fallbacks.',
+      correctionMessage: 'Use a required value, explicit nullable branch, pattern match, or typed domain value instead of primitive/string/toString/chained ?? fallbacks.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags primitive, empty collection/string, callback, toString, and chained null-coalescing fallbacks in production code.',
+    description: 'Flags primitive, empty collection/string, callback, toString, and chained null-coalescing fallbacks in production code.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
 
@@ -219,8 +207,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       correctionMessage: 'Await the Future directly in tests and assert on the fake service.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags unawaited calls from test files so the Flutter skill violation is shown during analysis.',
+    description: 'Flags unawaited calls from test files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {

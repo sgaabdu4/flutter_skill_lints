@@ -6,8 +6,7 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 import 'package:flutter_skill_lints/src/additional_lints/override_fix_utils.dart';
 
 abstract class SingleLocationCorrectionProducer extends ResolvedCorrectionProducer {
-  SingleLocationCorrectionProducer({required super.context, required FixKind fixKind})
-    : _fixKind = fixKind;
+  SingleLocationCorrectionProducer({required super.context, required this._fixKind});
 
   final FixKind _fixKind;
 

@@ -11,12 +11,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
     code: const LintCode(
       'notifier_zero_value_save_no_guard',
       'Save call passes numeric fields without a positive-value guard.',
-      correctionMessage:
-          'Wrap the `ref.read(...notifier).save*(...)` call in `if (amount > 0 || count > 0)` (or equivalent) so empty submissions cannot persist.',
+      correctionMessage: 'Wrap the `ref.read(...notifier).save*(...)` call in `if (amount > 0 || count > 0)` (or equivalent) so empty submissions cannot persist.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags `ref.read(...notifier).save*(amount: .., count: ..)` (and similar numeric named-args such as `duration`, `distance`, `weight`, `size`, `total`) without a `> 0` / `isNotEmpty` guard in the same method body.',
+    description: 'Flags `ref.read(...notifier).save*(amount: .., count: ..)` (and similar numeric named-args such as `duration`, `distance`, `weight`, `size`, `total`) without a `> 0` / `isNotEmpty` guard in the same method body.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final method in context.methods) {
@@ -37,12 +35,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
     code: const LintCode(
       'text_field_on_changed_no_debounce',
       'TextField onChanged triggers expensive work without debounce.',
-      correctionMessage:
-          'Wrap the notifier call in a `Timer` (cancel-and-restart) or `Debouncer`. For search-as-you-type, 300–500ms is typical.',
+      correctionMessage: 'Wrap the notifier call in a `Timer` (cancel-and-restart) or `Debouncer`. For search-as-you-type, 300–500ms is typical.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags TextField/TextFormField onChanged callbacks that call a notifier method or await async work, when the file has no Timer/Debouncer/Future.delayed indirection.',
+    description: 'Flags TextField/TextFormField onChanged callbacks that call a notifier method or await async work, when the file has no Timer/Debouncer/Future.delayed indirection.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -69,12 +65,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
     code: const LintCode(
       'slider_on_changed_no_debounce',
       'Slider onChanged triggers expensive work without debounce or onChangeEnd.',
-      correctionMessage:
-          'Move the notifier call to `onChangeEnd`, or debounce with a Timer. `onChanged` should only update local UI state.',
+      correctionMessage: 'Move the notifier call to `onChangeEnd`, or debounce with a Timer. `onChanged` should only update local UI state.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags Slider/RangeSlider/CupertinoSlider onChanged callbacks that call notifiers or await async work without debounce.',
+    description: 'Flags Slider/RangeSlider/CupertinoSlider onChanged callbacks that call notifiers or await async work without debounce.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -100,12 +94,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
     code: const LintCode(
       'scroll_listener_no_throttle',
       'ScrollController.addListener fires expensive work without throttle.',
-      correctionMessage:
-          'Throttle the callback with a Timer or guard with a last-fired-at timestamp; scroll callbacks run per pixel.',
+      correctionMessage: 'Throttle the callback with a Timer or guard with a last-fired-at timestamp; scroll callbacks run per pixel.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags `<ScrollController>.addListener(...)` callbacks that call a notifier method or await async work without Timer/throttle in the same file.',
+    description: 'Flags `<ScrollController>.addListener(...)` callbacks that call a notifier method or await async work without Timer/throttle in the same file.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -131,12 +123,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
     code: const LintCode(
       'user_visible_duration_too_long',
       'User-visible debounce, animation, or hard wait exceeds the snappy budget.',
-      correctionMessage:
-          'Reduce foreground debounce/wait durations: search/realtime <=150ms, animations <=120ms, persistence or Future.delayed hard waits <=50ms. Move sync/retry/domain waits to background owners.',
+      correctionMessage: 'Reduce foreground debounce/wait durations: search/realtime <=150ms, animations <=120ms, persistence or Future.delayed hard waits <=50ms. Move sync/retry/domain waits to background owners.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags long Duration literals in UI/notifier/app-flow debounce, Timer, Future.delayed, animation, and transition contexts while ignoring tests, repositories, datasources, services, retry/backoff, rest timers, reminders, and sync/backfill settle timers.',
+    description: 'Flags long Duration literals in UI/notifier/app-flow debounce, Timer, Future.delayed, animation, and transition contexts while ignoring tests, repositories, datasources, services, retry/backoff, rest timers, reminders, and sync/backfill settle timers.',
     scan: (reporter, context) {
       if (!_isUserVisibleLatencyPath(context)) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -165,12 +155,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
     code: const LintCode(
       'notifier_param_requires_value_object',
       'Unit-bearing primitive local passed to notifier save call.',
-      correctionMessage:
-          'Wrap the local in a domain Value Object (e.g. `Distance.fromMeters(distance)`) at the boundary; the notifier should accept the VO, not the primitive.',
+      correctionMessage: 'Wrap the local in a domain Value Object (e.g. `Distance.fromMeters(distance)`) at the boundary; the notifier should accept the VO, not the primitive.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags `double|int <name>(Meters|Seconds|Kilometers|Miles|Cents|Percent)` local declarations followed by a `ref.read(...notifier).save*(...)` call in the same method.',
+    description: 'Flags `double|int <name>(Meters|Seconds|Kilometers|Miles|Cents|Percent)` local declarations followed by a `ref.read(...notifier).save*(...)` call in the same method.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final method in context.methods) {
@@ -191,12 +179,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
     code: const LintCode(
       'full_collection_load_in_loop',
       'Full-collection load runs once per loop iteration.',
-      correctionMessage:
-          'Load the collection once before the loop, or add a batched lookup that resolves all keys in one pass. Awaiting a load-all call per iteration is O(items × rows).',
+      correctionMessage: 'Load the collection once before the loop, or add a batched lookup that resolves all keys in one pass. Awaiting a load-all call per iteration is O(items × rows).',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags an awaited getAll/fetchAll/loadAll-style full-collection load inside a for/while loop body.',
+    description: 'Flags an awaited getAll/fetchAll/loadAll-style full-collection load inside a for/while loop body.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final method in context.methods) {
@@ -217,12 +203,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
     code: const LintCode(
       'unguarded_fire_and_forget_platform_command',
       'Fire-and-forget platform command future has no error handling.',
-      correctionMessage:
-          'Route the native/webview/media command through an error-handling helper (a try/catch wrapper or .catchError) instead of unawaited(...). Unhandled rejections escape to the global error handler and are often misreported as fatal crashes.',
+      correctionMessage: 'Route the native/webview/media command through an error-handling helper (a try/catch wrapper or .catchError) instead of unawaited(...). Unhandled rejections escape to the global error handler and are often misreported as fatal crashes.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags a webview/media controller command (runJavaScript, playVideo, seekTo, ...) passed directly to unawaited(...) without error handling.',
+    description: 'Flags a webview/media controller command (runJavaScript, playVideo, seekTo, ...) passed directly to unawaited(...) without error handling.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {

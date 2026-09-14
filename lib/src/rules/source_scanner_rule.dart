@@ -7,8 +7,10 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 part 'source_scanner_rule/source_scanner_source.dart';
 
-typedef ScannerRuleCallback =
-    void Function(ScannerRuleReporter reporter, SourceScannerContext context);
+typedef ScannerRuleCallback = void Function(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+);
 
 /// ScannerRule enforces a Flutter skill lint contract.
 ///
@@ -18,10 +20,9 @@ final class ScannerRule extends AnalysisRule {
   ScannerRule({
     required super.name,
     required super.description,
-    required LintCode code,
-    required ScannerRuleCallback scan,
-  }) : _code = code,
-       _scan = scan;
+    required this._code,
+    required this._scan,
+  });
 
   @override
   LintCode get diagnosticCode => _code;
@@ -268,9 +269,8 @@ final class SourceScannerContext {
     if (path.endsWith('_strings.dart') || path.contains('/l10n/')) return false;
     if (isTestFile) return false;
     return RegExp(r'''\b(?:Text|Tooltip|Semantics)\s*\(\s*['"][^'"]+['"]''').hasMatch(code) ||
-        RegExp(
-          r'''\b(?:title|label|tooltip|hintText|helperText|errorText)\s*:\s*['"][^'"]+['"]''',
-        ).hasMatch(code);
+        RegExp(r'''\b(?:title|label|tooltip|hintText|helperText|errorText)\s*:\s*['"][^'"]+['"]''')
+            .hasMatch(code);
   }
 
   int? directContextL10nColumn(int lineIndex) {
@@ -357,9 +357,8 @@ final class SourceScannerContext {
     if (RegExp(r'^\s*(?:abstract\s+interface\s+)?class\b').hasMatch(line)) {
       return false;
     }
-    if (RegExp(
-      r'\b(?:final\s+)?(?!I)[A-Z]\w*(?:Repository|Datasource)\s+_\w+\s*;',
-    ).hasMatch(line)) {
+    if (RegExp(r'\b(?:final\s+)?(?!I)[A-Z]\w*(?:Repository|Datasource)\s+_\w+\s*;')
+        .hasMatch(line)) {
       return true;
     }
     if (RegExp(r'[(,]\s*(?!I)[A-Z]\w*(?:Repository|Datasource)\s+\w+').hasMatch(line)) {

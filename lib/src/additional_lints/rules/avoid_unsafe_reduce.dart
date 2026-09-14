@@ -110,11 +110,13 @@ bool _conditionProvesNonEmpty(Expression condition, String targetSource) {
 
   if (_conditionChecksNotEmpty(expression, targetSource)) return true;
 
-  if (expression case BinaryExpression(
-    leftOperand: final left,
-    operator: final operator,
-    rightOperand: final right,
-  ) when operator.lexeme == '&&') {
+  if (expression
+      case BinaryExpression(
+        leftOperand: final left,
+        operator: final operator,
+        rightOperand: final right,
+      )
+      when operator.lexeme == '&&') {
     return _conditionProvesNonEmpty(left, targetSource) ||
         _conditionProvesNonEmpty(right, targetSource);
   }
@@ -127,10 +129,8 @@ bool _conditionChecksEmpty(Expression condition, String targetSource) {
 
   if (_matchesProperty(expression, targetSource, 'isEmpty')) return true;
 
-  if (expression case PrefixExpression(
-    operator: final operator,
-    operand: final operand,
-  ) when operator.lexeme == '!') {
+  if (expression case PrefixExpression(operator: final operator, operand: final operand)
+      when operator.lexeme == '!') {
     return _conditionChecksNotEmpty(operand, targetSource);
   }
 
@@ -142,10 +142,8 @@ bool _conditionChecksNotEmpty(Expression condition, String targetSource) {
 
   if (_matchesProperty(expression, targetSource, 'isNotEmpty')) return true;
 
-  if (expression case PrefixExpression(
-    operator: final operator,
-    operand: final operand,
-  ) when operator.lexeme == '!') {
+  if (expression case PrefixExpression(operator: final operator, operand: final operand)
+      when operator.lexeme == '!') {
     return _conditionChecksEmpty(operand, targetSource);
   }
 

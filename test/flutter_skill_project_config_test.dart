@@ -34,7 +34,6 @@ plugins:
 
 analyzer:
   language:
-    strict-casts: true
   errors:
     missing_return: error
 
@@ -188,9 +187,7 @@ analyzer:
     - "**/*.gr.dart"
     - "**/*.arb"
   language:
-    strict-casts: true
     strict-inference: true
-    strict-raw-types: true
   errors:
     missing_required_param: error
     missing_return: error
@@ -216,6 +213,8 @@ linter:
     - use_to_and_as_if_applicable
     - flutter_skill_project_config
     - avoid_dynamic_calls
+    - no_dynamic_casts
+    - no_raw_types
     - unawaited_futures
     - discarded_futures
     - avoid_void_async
@@ -243,9 +242,7 @@ analyzer:
     - "**/*.gr.dart"
     - "**/*.arb"
   language:
-    strict-casts: true
     strict-inference: true
-    strict-raw-types: true
   errors:
     missing_required_param: error
     missing_return: error
@@ -271,6 +268,8 @@ linter:
     - use_to_and_as_if_applicable
     - flutter_skill_project_config
     - avoid_dynamic_calls
+    - no_dynamic_casts
+    - no_raw_types
     - unawaited_futures
     - discarded_futures
     - avoid_void_async
@@ -288,7 +287,7 @@ include: package:flutter_lints/flutter.yaml
 
 plugins:
   riverpod_lint: ^3.1.9
-  flutter_skill_lints: ^0.10.0
+  flutter_skill_lints: ^0.11.0
 
 analyzer:
   exclude:
@@ -297,15 +296,15 @@ analyzer:
     - "**/*.gr.dart"
     - "**/*.arb"
   language:
-    strict-casts: true
     strict-inference: true
-    strict-raw-types: true
   errors:
 
 linter:
   rules:
     - flutter_skill_project_config
     - avoid_dynamic_calls
+    - no_dynamic_casts
+    - no_raw_types
     - unawaited_futures
     - discarded_futures
     - avoid_void_async
@@ -337,9 +336,7 @@ analyzer:
     - "**/*.gr.dart"
     - "**/*.arb"
   language:
-    strict-casts: true
     strict-inference: true
-    strict-raw-types: true
   errors:
     missing_required_param: error
     missing_return: error
@@ -365,6 +362,8 @@ linter:
     - use_to_and_as_if_applicable
     - flutter_skill_project_config
     - avoid_dynamic_calls
+    - no_dynamic_casts
+    - no_raw_types
     - unawaited_futures
     - discarded_futures
     - avoid_void_async
@@ -389,9 +388,7 @@ analyzer:
     - "**/*.gr.dart"
     - "**/*.arb"
   language:
-    strict-casts: true
     strict-inference: true
-    strict-raw-types: true
   errors:
     missing_required_param: error
     missing_return: error
@@ -417,6 +414,8 @@ linter:
     - use_to_and_as_if_applicable
     - flutter_skill_project_config
     - avoid_dynamic_calls
+    - no_dynamic_casts
+    - no_raw_types
     - unawaited_futures
     - discarded_futures
     - avoid_void_async
@@ -434,7 +433,7 @@ include: package:flutter_lints/flutter.yaml
 
 plugins:
   riverpod_lint: ^3.1.9
-  flutter_skill_lints: ^0.10.0
+  flutter_skill_lints: ^0.11.0
   "many_lints": ^0.4.0
 
 analyzer:
@@ -444,9 +443,7 @@ analyzer:
     - "**/*.gr.dart"
     - "**/*.arb"
   language:
-    strict-casts: true
     strict-inference: true
-    strict-raw-types: true
   errors:
     missing_required_param: error
     missing_return: error
@@ -472,6 +469,8 @@ linter:
     - use_to_and_as_if_applicable
     - flutter_skill_project_config
     - avoid_dynamic_calls
+    - no_dynamic_casts
+    - no_raw_types
     - unawaited_futures
     - discarded_futures
     - avoid_void_async
@@ -508,7 +507,7 @@ include: package:flutter_lints/flutter.yaml
 
 plugins:
   riverpod_lint: ^3.1.9
-  flutter_skill_lints: ^0.10.0
+  flutter_skill_lints: ^0.11.0
 
 analyzer:
   exclude:
@@ -517,9 +516,7 @@ analyzer:
     - "**/*.gr.dart"
     - "**/*.arb"
   language:
-    strict-casts: true
     strict-inference: true
-    strict-raw-types: true
   errors:
     missing_required_param: error
     missing_return: error
@@ -545,6 +542,8 @@ linter:
     - use_to_and_as_if_applicable
     - flutter_skill_project_config
     - avoid_dynamic_calls
+    - no_dynamic_casts
+    - no_raw_types
     - unawaited_futures
     - discarded_futures
     - avoid_void_async

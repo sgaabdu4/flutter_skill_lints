@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.11.0] - 2026-09-14
+
+- Require Dart 3.13 and prefer contextual dot shorthands through a first-party
+  analyzer diagnostic and IDE quick fix.
+- Replace the removed strict-cast and strict-raw analyzer flags with
+  `no_dynamic_casts` and `no_raw_types`.
+- Update to analyzer 14.4, analyzer_plugin 0.14.17,
+  analysis_server_plugin 0.3.23, and analyzer_testing 0.4.2.
+
 ## [0.10.2] - 2026-09-08
 
 - Removed the deprecated `avoid_private_typedef_functions` lint from the

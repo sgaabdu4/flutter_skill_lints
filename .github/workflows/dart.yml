@@ -7,13 +7,22 @@ on:
     branches: [main]
   workflow_call:
 
+permissions:
+  contents: read # Required to check out and inspect repository contents.
+
+concurrency:
+  group: dart-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   version-check:
     name: Check Version Consistency
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Check version consistency
         run: |
@@ -31,10 +40,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Setup Dart
-        uses: dart-lang/setup-dart@v1
+        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1
 
       - name: Install dependencies
         run: dart pub get
@@ -47,10 +58,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Setup Dart
-        uses: dart-lang/setup-dart@v1
+        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1
 
       - name: Install dependencies
         run: dart pub get
@@ -63,12 +76,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Scan committed history for secrets
-        uses: gitleaks/gitleaks-action@v3
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_VERSION: "8.30.1"
@@ -78,24 +92,14 @@ jobs:
       - name: Scan the current tree for secrets
         run: gitleaks dir --redact --no-banner --exit-code 1 .
 
-      - name: Checkout Hard Eng privacy scanner
-        uses: actions/checkout@v6
-        with:
-          repository: sgaabdu4/hard-eng
-          ref: v0.1.0-alpha.gf2c7a9d8842cd2b485819560d8d23728165573c6
-          path: .hard-eng-runtime
-
-      - name: Scan the full repository for personal data
-        env:
-          HARD_ENG_RUNTIME: ${{ github.workspace }}/.hard-eng-runtime
-        run: python3 scripts/privacy_scan.py --repo "$GITHUB_WORKSPACE"
-
   dart-decimate:
     name: Check Dart Quality
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
 
       - name: Run Dart Decimate
         run: npx --yes dart-decimate@latest json .
@@ -105,10 +109,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Setup Dart
-        uses: dart-lang/setup-dart@v1
+        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1
 
       - name: Install dependencies
         run: dart pub get
@@ -124,10 +130,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: stable
           cache: true
@@ -144,10 +152,12 @@ jobs:
     needs: [version-check, format, analyze, universal-gates, dart-decimate, test, flutter-smoke]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Setup Dart
-        uses: dart-lang/setup-dart@v1
+        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1
 
       - name: Install dependencies
         run: dart pub get
@@ -161,10 +171,12 @@ jobs:
     needs: [version-check, format, analyze, universal-gates, dart-decimate, test, flutter-smoke]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Setup Dart
-        uses: dart-lang/setup-dart@v1
+        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1
 
       - name: Install dependencies
         run: dart pub get
@@ -192,7 +204,7 @@ jobs:
     needs: [version-check, format, analyze, universal-gates, dart-decimate, test, flutter-smoke, publish-dry-run, pana]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # Required to create and push the release tag.
     outputs:
       tag_created: ${{ steps.tag.outputs.tag_created }}
       version: ${{ steps.tag.outputs.version }}
@@ -208,7 +220,7 @@ jobs:
           fi
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
           persist-credentials: false

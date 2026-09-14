@@ -12,8 +12,7 @@ final class GuardContextPop extends GeneratedMethodInvocationCheckRule {
   static const LintCode code = LintCode(
     'guard_context_pop',
     'Guard context.pop() with context.canPop().',
-    correctionMessage:
-        'Check context.canPop() before context.pop(), then navigate to a typed fallback when false.',
+    correctionMessage: 'Check context.canPop() before context.pop(), then navigate to a typed fallback when false.',
   );
 
   GuardContextPop()

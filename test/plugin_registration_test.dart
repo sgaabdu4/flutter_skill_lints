@@ -68,12 +68,13 @@ void main() {
         (rule) => rule.diagnosticCodes.map((code) => code.lowerCaseName),
       ),
     };
-    final companionSkill = Directory('../building-flutter-apps/skills/building-flutter-apps');
+    final companionSkill = Directory('.agents/skills/building-flutter-apps');
     final skillFiles = [
       File('${companionSkill.path}/SKILL.md'),
-      ...Directory(
-        '${companionSkill.path}/references',
-      ).listSync(recursive: true).whereType<File>().where((file) => file.path.endsWith('.md')),
+      ...Directory('${companionSkill.path}/references')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.md')),
     ];
     final issues = <String>[];
     final refs = <String>{};
@@ -165,12 +166,14 @@ void main() {
   test('rule source files document every rule with API docs', () {
     final issues = <String>[];
     final ruleFiles = [
-      ...Directory(
-        'lib/src/rules',
-      ).listSync().whereType<File>().where((file) => file.path.endsWith('.dart')),
-      ...Directory(
-        'lib/src/additional_lints/rules',
-      ).listSync().whereType<File>().where((file) => file.path.endsWith('.dart')),
+      ...Directory('lib/src/rules')
+          .listSync()
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.dart')),
+      ...Directory('lib/src/additional_lints/rules')
+          .listSync()
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.dart')),
     ];
 
     for (final file in ruleFiles) {
@@ -235,7 +238,7 @@ void main() {
     );
 
     expect(registry.warningRules.length, _enabledAdditionalRuleCount);
-    expect(registeredFixCount, 63);
+    expect(registeredFixCount, 64);
     expect(registry.assistKinds, hasLength(1));
     expect(registry.warningRules, containsPair('avoid_ref_read_inside_build', isNotNull));
     expect(registry.warningRules, containsPair('use_ref_and_state_synchronously', isNotNull));
@@ -318,7 +321,7 @@ void main() {
 
 const _enabledFlutterSkillRuleCount = 185;
 const _enabledFlutterSkillDiagnosticCount = 193;
-const _enabledAdditionalRuleCount = 279;
+const _enabledAdditionalRuleCount = 280;
 
 final class _RecordingPluginRegistry extends PluginRegistry {
   _RecordingPluginRegistry(this.pluginName);

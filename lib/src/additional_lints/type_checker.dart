@@ -9,9 +9,8 @@ class TypeChecker {
   ///
   /// Use this when checking for types from external packages.
   /// Example: `TypeChecker.fromName('Widget', packageName: 'flutter')`
-  const TypeChecker.fromName(this._name, {required String packageName})
-    : _packageName = packageName,
-      _url = null,
+  const TypeChecker.fromName(this._name, {required this._packageName})
+    : _url = null,
       _checkers = null;
 
   /// Creates a type checker that matches a type by its full URL.

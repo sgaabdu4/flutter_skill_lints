@@ -30,10 +30,8 @@ final class FlutterSkillProjectConfig extends MultiAnalysisRule {
     ),
     'cfg_strict_analysis': LintCode(
       'cfg_strict_analysis',
-      'Enable strict analyzer language options and required analyzer errors.',
-      correctionMessage:
-          'Set strict-casts, strict-inference, strict-raw-types, '
-          'missing_required_param, and missing_return.',
+      'Enable strict inference and required analyzer errors.',
+      correctionMessage: 'Set strict-inference, missing_required_param, and missing_return.',
       severity: DiagnosticSeverity.ERROR,
     ),
     'cfg_required_lints': LintCode(
@@ -262,7 +260,7 @@ final class _ProjectConfigScanner {
   }
 
   void _scanStrictAnalysisOptions(String text, Set<String> issues) {
-    for (final option in ['strict-casts', 'strict-inference', 'strict-raw-types']) {
+    for (final option in ['strict-inference']) {
       final enabled = RegExp('(^|\\n)\\s*$option\\s*:\\s*true\\b').hasMatch(text);
       if (!enabled) issues.add('cfg_strict_analysis');
     }
@@ -292,6 +290,8 @@ final class _ProjectConfigScanner {
       'prefer_mixin',
       'use_to_and_as_if_applicable',
       'avoid_dynamic_calls',
+      'no_dynamic_casts',
+      'no_raw_types',
       'avoid_print',
       'avoid_void_async',
       'cancel_subscriptions',
@@ -332,9 +332,8 @@ final class _ProjectConfigScanner {
   bool _hasNonNonePublishTarget(String text) {
     for (final line in text.split('\n')) {
       if (line.trimLeft().startsWith('#')) continue;
-      final match = RegExp(
-        r'''^\s*publish_to\s*:\s*['"]?([^'"#\s]+)['"]?\s*(?:#.*)?$''',
-      ).firstMatch(line);
+      final match = RegExp(r'''^\s*publish_to\s*:\s*['"]?([^'"#\s]+)['"]?\s*(?:#.*)?$''')
+          .firstMatch(line);
       if (match == null) continue;
       return match.group(1) != 'none';
     }

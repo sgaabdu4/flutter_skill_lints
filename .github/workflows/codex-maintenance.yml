@@ -6,16 +6,21 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  issues: read
-  pull-requests: read
+  contents: read # Required to inspect repository versions and history.
+  issues: read # Required to report open issues.
+  pull-requests: read # Required to inspect Dependabot pull requests.
+
+concurrency:
+  group: codex-maintenance-${{ github.repository }}
+  cancel-in-progress: false
 
 jobs:
-  maintain:
+  maintain: # zizmor: ignore[secrets-outside-env] Repository-scoped SMTP settings are intentional for this non-deployment job.
+    name: Maintain dependencies and issue reports
     permissions:
-      contents: write
-      issues: read
-      pull-requests: write
+      contents: write # Required to bump the package version after dependency merges.
+      issues: read # Required to generate the issue report.
+      pull-requests: write # Required to queue dependency and version pull requests.
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}

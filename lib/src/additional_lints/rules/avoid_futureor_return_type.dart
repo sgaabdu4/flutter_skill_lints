@@ -11,8 +11,7 @@ class AvoidFutureOrReturnType extends GeneratedFunctionAndMethodReturnTypeCheckR
   static const LintCode code = LintCode(
     'avoid_futureor_return_type',
     'Avoid FutureOr as a return type.',
-    correctionMessage:
-        'Return Future<T> for async APIs, T for sync APIs, or Future<void> for async APIs without a value.',
+    correctionMessage: 'Return Future<T> for async APIs, T for sync APIs, or Future<void> for async APIs without a value.',
     severity: DiagnosticSeverity.ERROR,
   );
 

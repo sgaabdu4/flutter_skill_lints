@@ -59,9 +59,8 @@ int? _contextExtensionEndLine(SourceScannerContext context, int startLine) {
   }
   if (!foundOpenBrace) return null;
 
-  final isContextExtension = RegExp(
-    r'\bon\s+(?:[A-Za-z_]\w*\.)?BuildContext\??\b',
-  ).hasMatch(signature.toString());
+  final isContextExtension = RegExp(r'\bon\s+(?:[A-Za-z_]\w*\.)?BuildContext\??\b')
+      .hasMatch(signature.toString());
   if (!isContextExtension) return null;
 
   return _blockEndLine(context.source.masked, startLine);
@@ -69,9 +68,8 @@ int? _contextExtensionEndLine(SourceScannerContext context, int startLine) {
 
 bool _isGenericContextFallbackRouteCall(SourceScannerContext context, int lineIndex) {
   final line = context.source.masked[lineIndex];
-  final fallbackRouteCall = RegExp(
-    r'\bfallbackRoute\s*\.\s*go\s*(?:<[^>]+>)?\s*\(\s*this\b',
-  ).firstMatch(line);
+  final fallbackRouteCall = RegExp(r'\bfallbackRoute\s*\.\s*go\s*(?:<[^>]+>)?\s*\(\s*this\b')
+      .firstMatch(line);
   if (fallbackRouteCall == null) return false;
 
   int? declarationLine;
@@ -134,9 +132,8 @@ int? _splashInitialSyncGateColumn(SourceScannerContext context, int lineIndex) {
 
   final window = _routerWindow(context, lineIndex, before: 8, after: 8).toLowerCase();
   if (!window.contains('splash')) return null;
-  if (!RegExp(
-    r'\bredirect\b|\bgorouter\b|\bcurrent(?:path|location)\b|location\b',
-  ).hasMatch(window)) {
+  if (!RegExp(r'\bredirect\b|\bgorouter\b|\bcurrent(?:path|location)\b|location\b')
+      .hasMatch(window)) {
     return null;
   }
 
@@ -287,9 +284,8 @@ int? _routerExtraColumn(SourceScannerContext context, int lineIndex) {
     return typedRouteExtraColumn;
   }
 
-  final stateExtra = RegExp(
-    r'\b(?:state|GoRouterState\s*\.\s*of\s*\([^)]*\))\s*\.\s*extra\b',
-  ).firstMatch(line);
+  final stateExtra = RegExp(r'\b(?:state|GoRouterState\s*\.\s*of\s*\([^)]*\))\s*\.\s*extra\b')
+      .firstMatch(line);
   if (stateExtra != null) {
     return stateExtra.start;
   }

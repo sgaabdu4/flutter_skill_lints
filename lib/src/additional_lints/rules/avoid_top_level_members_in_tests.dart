@@ -10,8 +10,7 @@ final class AvoidTopLevelMembersInTests extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_top_level_members_in_tests',
     'Avoid public top-level helpers in test files.',
-    correctionMessage:
-        'Make the helper private, move it inside main(), or move shared helpers into a dedicated test support file.',
+    correctionMessage: 'Make the helper private, move it inside main(), or move shared helpers into a dedicated test support file.',
   );
 
   AvoidTopLevelMembersInTests()

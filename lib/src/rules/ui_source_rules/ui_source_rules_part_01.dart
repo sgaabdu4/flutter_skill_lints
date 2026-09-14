@@ -11,8 +11,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       correctionMessage: 'Use design tokens.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags raw visual constants instead of design tokens so the Flutter skill violation is shown during analysis.',
+    description: 'Flags raw visual constants instead of design tokens so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (context.isThemeDefFile || context.isTestFile) return;
 
@@ -105,8 +104,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       correctionMessage: 'Dispatch a notifier action and let the shell own snackbar presentation.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags direct snackbar dispatches from UI widgets so the Flutter skill violation is shown during analysis.',
+    description: 'Flags direct snackbar dispatches from UI widgets so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -126,12 +124,10 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     code: const LintCode(
       'widget_infra_dependency_boundary',
       'Widgets must not receive concrete infrastructure dependencies.',
-      correctionMessage:
-          'Move cache/client/storage/service/repository/datasource wiring behind the owning provider, datasource, repository, or service; widgets render values and dispatch only.',
+      correctionMessage: 'Move cache/client/storage/service/repository/datasource wiring behind the owning provider, datasource, repository, or service; widgets render values and dispatch only.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags infrastructure dependency props in widget/screen files so widgets stay UI + dispatch only.',
+    description: 'Flags infrastructure dependency props in widget/screen files so widgets stay UI + dispatch only.',
     scan: (reporter, context) {
       if (!context.isUiFile || context.isTestFile) return;
 
@@ -150,12 +146,10 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     code: const LintCode(
       'widget_top_level_function_boundary',
       'Widget files must not declare top-level helper functions.',
-      correctionMessage:
-          'Move top-level widget helpers into a named class or notifier/computed provider; widget files must not expose global functions.',
+      correctionMessage: 'Move top-level widget helpers into a named class or notifier/computed provider; widget files must not expose global functions.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags top-level functions in widget/screen files so UI behavior has a class/provider owner.',
+    description: 'Flags top-level functions in widget/screen files so UI behavior has a class/provider owner.',
     scan: (reporter, context) {
       if (!context.isUiFile || context.isTestFile) return;
 
@@ -181,8 +175,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     code: const LintCode(
       'widget_actions_namespace_boundary',
       'Widget files must not host provider-backed action namespaces.',
-      correctionMessage:
-          'Move provider-backed *Actions orchestration out of widgets into a coordinator, notifier, computed provider, or service.',
+      correctionMessage: 'Move provider-backed *Actions orchestration out of widgets into a coordinator, notifier, computed provider, or service.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags widget-file *Actions namespaces that accept WidgetRef and call providers.',
@@ -213,8 +206,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     code: const LintCode(
       'widget_try_catch_boundary',
       'Widget classes must not catch errors.',
-      correctionMessage:
-          'Move try/catch, error translation, snackbar dispatch, and telemetry into the notifier; keep widgets as UI + dispatch only.',
+      correctionMessage: 'Move try/catch, error translation, snackbar dispatch, and telemetry into the notifier; keep widgets as UI + dispatch only.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags try blocks inside widget files so error handling stays in notifiers.',
@@ -238,8 +230,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     code: const LintCode(
       'widget_awaits_notifier_result',
       'Widget branches on an awaited notifier result.',
-      correctionMessage:
-          'Move async orchestration and result branching into the notifier. Widgets may dispatch notifier actions and observe provider state.',
+      correctionMessage: 'Move async orchestration and result branching into the notifier. Widgets may dispatch notifier actions and observe provider state.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description:
@@ -272,8 +263,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     code: const LintCode(
       'widget_local_mutation_flag',
       'Widget owns provider mutation busy state.',
-      correctionMessage:
-          'Move local mutation flags into the owning notifier/provider state; widgets dispatch and watch/listen only.',
+      correctionMessage: 'Move local mutation flags into the owning notifier/provider state; widgets dispatch and watch/listen only.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description:
@@ -299,12 +289,10 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     code: const LintCode(
       'widget_derived_collection_logic',
       'Widget helper derives collections.',
-      correctionMessage:
-          'Move filtering, mapping, sorting, and lookup/index construction to a notifier or computed provider; widgets render the selected value.',
+      correctionMessage: 'Move filtering, mapping, sorting, and lookup/index construction to a notifier or computed provider; widgets render the selected value.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags widget helper methods/namespaces that return collections and perform filter/map/sort/lookup work.',
+    description: 'Flags widget helper methods/namespaces that return collections and perform filter/map/sort/lookup work.',
     scan: (reporter, context) {
       if (!context.isUiFile || context.isTestFile) return;
       _reportTopLevelDerivedCollections(reporter, context);
@@ -323,8 +311,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       correctionMessage: 'Fix responsive layout instead of clamping accessibility text size.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags app-level text scaling clamps so the Flutter skill violation is shown during analysis.',
+    description: 'Flags app-level text scaling clamps so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -344,12 +331,10 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     code: const LintCode(
       'app_shell_bootstrap_side_effects',
       'Keep app shell widgets free of bootstrap side effects.',
-      correctionMessage:
-          'Move ref.listen/startup orchestration into a dedicated bootstrap widget/provider; keep app shell widgets declarative.',
+      correctionMessage: 'Move ref.listen/startup orchestration into a dedicated bootstrap widget/provider; keep app shell widgets declarative.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags root app widgets that host bootstrap listeners so the Flutter skill app-shell boundary is shown during analysis.',
+    description: 'Flags root app widgets that host bootstrap listeners so the Flutter skill app-shell boundary is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isAppRootFile || context.isTestFile) return;
 
@@ -382,12 +367,10 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     code: const LintCode(
       'datetime_now_requires_timezone_intent',
       'Make current DateTime timezone intent explicit.',
-      correctionMessage:
-          'Use DateTimeX.nowUtc()/nowLocal(), and move repeated current-date windows into a DateTimeX helper.',
+      correctionMessage: 'Use DateTimeX.nowUtc()/nowLocal(), and move repeated current-date windows into a DateTimeX helper.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags raw current DateTime calls and inline current-date math so timestamp persistence and local calendar bucketing stay behind DateTimeX helpers.',
+    description: 'Flags raw current DateTime calls and inline current-date math so timestamp persistence and local calendar bucketing stay behind DateTimeX helpers.',
     scan: _scanDateTimeNowIntent,
   ),
 
@@ -402,8 +385,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       correctionMessage: 'Move sorting, filtering, formatting, and regex creation out of build.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags expensive collection or formatting work inside build methods so the Flutter skill violation is shown during analysis.',
+    description: 'Flags expensive collection or formatting work inside build methods so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (final method in context.methods.where((method) => method.name == 'build')) {
         for (var i = method.start; i <= method.end; i++) {
@@ -428,8 +410,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       correctionMessage: 'Use builder/sliver variants instead of ListView(children: ...).',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags ListView(children: ...) usage so the Flutter skill violation is shown during analysis.',
+    description: 'Flags ListView(children: ...) usage so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];

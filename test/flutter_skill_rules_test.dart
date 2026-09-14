@@ -161,9 +161,8 @@ class StreamProvider<T> {
   StreamProvider(Stream<T> Function(Ref ref) create);
 }
 ''');
-    newPackage(
-      'flutter_riverpod',
-    ).addFile('lib/flutter_riverpod.dart', "export 'package:riverpod/riverpod.dart';\n");
+    newPackage('flutter_riverpod')
+        .addFile('lib/flutter_riverpod.dart', "export 'package:riverpod/riverpod.dart';\n");
   }
 
   void _addFreezedPackage() {

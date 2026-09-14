@@ -11,12 +11,10 @@ final List<ScannerRule> stateSourceRules = [
     code: const LintCode(
       'nullable_collection_type',
       'Avoid nullable collection types.',
-      correctionMessage:
-          'Use a non-nullable collection with an empty default. If null has distinct semantics, model that as AsyncValue or a sealed state.',
+      correctionMessage: 'Use a non-nullable collection with an empty default. If null has distinct semantics, model that as AsyncValue or a sealed state.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags nullable collection types so absence is modeled explicitly instead of with List?/Map?/Set?.',
+    description: 'Flags nullable collection types so absence is modeled explicitly instead of with List?/Map?/Set?.',
     scan: (reporter, context) {
       if (context.isTestFile || context.isDataModelPath) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -38,12 +36,10 @@ final List<ScannerRule> stateSourceRules = [
     code: const LintCode(
       'state_empty_string_sentinel',
       'Do not use empty strings as state sentinels.',
-      correctionMessage:
-          'Use String? for true absence, a validated Value Object for required domain text, or rename transient fields as draft/search/input text.',
+      correctionMessage: 'Use String? for true absence, a validated Value Object for required domain text, or rename transient fields as draft/search/input text.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags empty-string defaults in Freezed state unless the field is explicit transient input/search/draft text.',
+    description: 'Flags empty-string defaults in Freezed state unless the field is explicit transient input/search/draft text.',
     scan: (reporter, context) {
       for (final classSpan in context.classes) {
         if (!context.hasFreezedAnnotation(classSpan)) continue;
@@ -72,12 +68,10 @@ final List<ScannerRule> stateSourceRules = [
     code: const LintCode(
       'state_bool_string_sentinel',
       'Do not encode booleans as "1"/"0" strings.',
-      correctionMessage:
-          'Keep the value as bool. If a wire protocol truly requires "1"/"0", convert at the datasource boundary with a named encoder.',
+      correctionMessage: 'Keep the value as bool. If a wire protocol truly requires "1"/"0", convert at the datasource boundary with a named encoder.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags boolean ternaries that produce "1"/"0" string sentinels so state and selectors keep boolean meaning typed.',
+    description: 'Flags boolean ternaries that produce "1"/"0" string sentinels so state and selectors keep boolean meaning typed.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -99,14 +93,12 @@ final List<ScannerRule> stateSourceRules = [
       correctionMessage: 'Extract the fields needed by the UI.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags raw JSON or response values stored in UI state so the Flutter skill violation is shown during analysis.',
+    description: 'Flags raw JSON or response values stored in UI state so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (RegExp(
-          r'\bstate\s*=\s*state\.copyWith\s*\([^)]*(?:rawJson|response|json)',
-        ).hasMatch(line)) {
+        if (RegExp(r'\bstate\s*=\s*state\.copyWith\s*\([^)]*(?:rawJson|response|json)')
+            .hasMatch(line)) {
           reporter.report(context, i, line.indexOf('state'));
         }
       }
@@ -124,8 +116,7 @@ final List<ScannerRule> stateSourceRules = [
       correctionMessage: 'Use AppException or another structured, user-safe error message.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags raw error toString state updates so the Flutter skill violation is shown during analysis.',
+    description: 'Flags raw error toString state updates so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       final rawErrorString = RegExp(r'\berror\s*:\s*[A-Za-z_]\w*\.toString\(\)');
       for (var i = 0; i < context.source.length; i++) {
@@ -148,8 +139,7 @@ final List<ScannerRule> stateSourceRules = [
       correctionMessage: 'Use AsyncError, a failure union, or a structured app exception.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags String? error fields in Freezed state classes so the Flutter skill violation is shown during analysis.',
+    description: 'Flags String? error fields in Freezed state classes so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       final nullableError = RegExp(r'\bString\?\s+error\b');
       for (final classSpan in context.classes) {
@@ -176,8 +166,7 @@ final List<ScannerRule> stateSourceRules = [
       correctionMessage: 'Persist, targeted-sync state, then navigate.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags broad invalidation before navigation-critical route changes so the Flutter skill violation is shown during analysis.',
+    description: 'Flags broad invalidation before navigation-critical route changes so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (final method in context.methods) {
         for (var i = method.start; i <= method.end; i++) {
@@ -203,8 +192,7 @@ final List<ScannerRule> stateSourceRules = [
       correctionMessage: 'Replace mounted checks with context.mounted for BuildContext safety.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags widget mounted checks after async gaps instead of context.mounted so the Flutter skill violation is shown during analysis.',
+    description: 'Flags widget mounted checks after async gaps instead of context.mounted so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (final method in context.methods) {
         for (var i = method.start; i <= method.end; i++) {
@@ -226,12 +214,10 @@ final List<ScannerRule> stateSourceRules = [
     code: const LintCode(
       'bare_state_mounted_forbidden',
       'Use context.mounted instead of bare mounted.',
-      correctionMessage:
-          "Replace bare 'mounted' / 'this.mounted' with 'context.mounted'. In State methods, capture 'final context = this.context;' when needed.",
+      correctionMessage: "Replace bare 'mounted' / 'this.mounted' with 'context.mounted'. In State methods, capture 'final context = this.context;' when needed.",
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags bare State.mounted checks so widget lifecycle guards use context.mounted consistently.',
+    description: 'Flags bare State.mounted checks so widget lifecycle guards use context.mounted consistently.',
     scan: (reporter, context) {
       if (!context.isUiFile || context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {

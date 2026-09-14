@@ -11,8 +11,7 @@ final class AvoidParameterAliases extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_parameter_aliases',
     'Avoid copying values into pass-through local variables.',
-    correctionMessage:
-        'Use the existing value directly or create a derived value instead of a pass-through alias.',
+    correctionMessage: 'Use the existing value directly or create a derived value instead of a pass-through alias.',
   );
 
   AvoidParameterAliases()

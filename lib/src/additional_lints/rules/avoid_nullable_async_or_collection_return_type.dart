@@ -12,8 +12,7 @@ class AvoidNullableAsyncOrCollectionReturnType
   static const LintCode code = LintCode(
     'avoid_nullable_async_or_collection_return_type',
     'Avoid nullable Future, Stream, and collection return types.',
-    correctionMessage:
-        'Return a non-null Future/Stream/collection. Put ? on the value type, return an empty collection, or model absence explicitly.',
+    correctionMessage: 'Return a non-null Future/Stream/collection. Put ? on the value type, return an empty collection, or model absence explicitly.',
     severity: DiagnosticSeverity.ERROR,
   );
 

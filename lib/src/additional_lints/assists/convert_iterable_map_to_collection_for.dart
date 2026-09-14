@@ -63,23 +63,25 @@ class ConvertIterableMapToCollectionFor extends ResolvedCorrectionProducer {
   static const _iterableChecker = TypeChecker.fromUrl('dart:core#Iterable');
 
   Future<void> _handleIterable(MethodInvocation node, ChangeBuilder builder) async {
-    if (node case MethodInvocation(
-      target: Expression(
-        staticType: final targetType?,
-        offset: final targetOffset,
-        end: final targetEnd,
-      ),
-      methodName: SimpleIdentifier(name: 'map'),
-      :final parent,
-      argumentList: ArgumentList(
-        arguments: [
-          FunctionExpression(
-            body: final functionBody,
-            parameters: FormalParameterList(parameters: [final parameter]),
+    if (node
+        case MethodInvocation(
+          target: Expression(
+            staticType: final targetType?,
+            offset: final targetOffset,
+            end: final targetEnd,
           ),
-        ],
-      ),
-    ) when _iterableChecker.isAssignableFromType(targetType)) {
+          methodName: SimpleIdentifier(name: 'map'),
+          :final parent,
+          argumentList: ArgumentList(
+            arguments: [
+              FunctionExpression(
+                body: final functionBody,
+                parameters: FormalParameterList(parameters: [final parameter]),
+              ),
+            ],
+          ),
+        )
+        when _iterableChecker.isAssignableFromType(targetType)) {
       final expression = maybeGetSingleReturnExpression(functionBody);
       if (expression == null) return;
 

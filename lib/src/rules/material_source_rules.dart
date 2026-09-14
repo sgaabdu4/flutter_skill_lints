@@ -12,12 +12,10 @@ final List<ScannerRule> materialSourceRules = [
     code: const LintCode(
       'widget_material_boundary',
       'Random widgets must not create raw Material/Ink surfaces.',
-      correctionMessage:
-          'Move the concrete widget that owns this tap/surface into lib/core/widgets/atoms/, or compose an existing atom such as BentoCard. Do not add a pass-through Material wrapper.',
+      correctionMessage: 'Move the concrete widget that owns this tap/surface into lib/core/widgets/atoms/, or compose an existing atom such as BentoCard. Do not add a pass-through Material wrapper.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags raw Material/Ink construction in non-atom UI widgets so surface/ink policy stays owned by app primitives.',
+    description: 'Flags raw Material/Ink construction in non-atom UI widgets so surface/ink policy stays owned by app primitives.',
     scan: (reporter, context) {
       if (!context.isUiFile || context.isTestFile || _isMaterialOwnerPath(context.path)) {
         return;
@@ -41,8 +39,7 @@ final List<ScannerRule> materialSourceRules = [
     code: const LintCode(
       'atom_widget_layer_dependency',
       'Atoms must not import higher-level widget layers.',
-      correctionMessage:
-          'Move the reusable dependency down into atoms, or keep the widget in the higher layer and compose existing atoms.',
+      correctionMessage: 'Move the reusable dependency down into atoms, or keep the widget in the higher layer and compose existing atoms.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags atom imports from higher widget layers so atomic design remains one-way.',

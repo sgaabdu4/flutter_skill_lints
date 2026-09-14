@@ -23,8 +23,7 @@ class UseOnReorderItemIndexSemantics extends AnalysisRule {
   UseOnReorderItemIndexSemantics()
     : super(
         name: 'use_on_reorder_item_index_semantics',
-        description:
-            'Rejects deprecated onReorder usage and legacy oldIndex/newIndex adjustment with onReorderItem.',
+        description: 'Rejects deprecated onReorder usage and legacy oldIndex/newIndex adjustment with onReorderItem.',
       );
 
   @override

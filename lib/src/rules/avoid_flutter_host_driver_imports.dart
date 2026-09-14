@@ -11,8 +11,7 @@ final class AvoidFlutterHostDriverImports extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_flutter_host_driver_imports',
     'Host driver files must not import Flutter UI or app code.',
-    correctionMessage:
-        'Keep test_driver code on Dart and host-driver APIs. Move Flutter and app imports to the target test.',
+    correctionMessage: 'Keep test_driver code on Dart and host-driver APIs. Move Flutter and app imports to the target test.',
     severity: DiagnosticSeverity.ERROR,
   );
 

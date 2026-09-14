@@ -12,8 +12,7 @@ class AvoidGenericsShadowing extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_generics_shadowing',
     "The type parameter '{0}' shadows the top-level declaration '{0}'.",
-    correctionMessage:
-        'Rename the type parameter, for example to T, R, or E, so it no longer shadows a declaration.',
+    correctionMessage: 'Rename the type parameter, for example to T, R, or E, so it no longer shadows a declaration.',
   );
 
   AvoidGenericsShadowing()

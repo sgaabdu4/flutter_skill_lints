@@ -377,9 +377,11 @@ Set<String> _watchedProviderNames(
   final body = context.source.masked
       .sublist(definition.bodyStart, definition.bodyEnd + 1)
       .join('\n');
-  return RegExp(
-    r'\bref\s*\.\s*watch\s*\(\s*([A-Za-z_]\w*Provider)\b',
-  ).allMatches(body).map((match) => match.group(1) ?? '').where((name) => name.isNotEmpty).toSet();
+  return RegExp(r'\bref\s*\.\s*watch\s*\(\s*([A-Za-z_]\w*Provider)\b')
+      .allMatches(body)
+      .map((match) => match.group(1) ?? '')
+      .where((name) => name.isNotEmpty)
+      .toSet();
 }
 
 bool _hasBlockSelectCallback(String invocation) =>
@@ -505,9 +507,8 @@ bool _isProjectionProviderWatch(String invocation) {
 }
 
 String? _watchedProviderName(String invocation) {
-  final match = RegExp(
-    r'\bref\s*\.\s*watch\s*\(\s*([A-Za-z_]\w*Provider)\b',
-  ).firstMatch(invocation);
+  final match = RegExp(r'\bref\s*\.\s*watch\s*\(\s*([A-Za-z_]\w*Provider)\b')
+      .firstMatch(invocation);
   return match?.group(1);
 }
 

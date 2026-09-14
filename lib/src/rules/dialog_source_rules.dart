@@ -12,12 +12,10 @@ final List<ScannerRule> dialogSourceRules = [
     code: const LintCode(
       'dialog_widget_subscribes_to_mutable_provider',
       'Dialog/sheet widget watches a provider its own action also mutates.',
-      correctionMessage:
-          'Pass an immutable snapshot value object via the constructor. The dialog must not subscribe to state its own action mutates.',
+      correctionMessage: 'Pass an immutable snapshot value object via the constructor. The dialog must not subscribe to state its own action mutates.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags dialog/sheet widgets that ref.watch and ref.read(...notifier).<method>() on the same provider so the Flutter skill modal snapshot pattern is shown during analysis.',
+    description: 'Flags dialog/sheet widgets that ref.watch and ref.read(...notifier).<method>() on the same provider so the Flutter skill modal snapshot pattern is shown during analysis.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       _reportMutableProviderSubscriptions(reporter, context);
@@ -34,12 +32,10 @@ final List<ScannerRule> dialogSourceRules = [
     code: const LintCode(
       'modal_high_frequency_watch_not_leaf',
       'Modal parent watches a high-frequency provider field.',
-      correctionMessage:
-          'Extract the ticking/progress controls to a leaf ConsumerWidget and watch seconds/progress/isRunning there instead of in the sheet/dialog parent.',
+      correctionMessage: 'Extract the ticking/progress controls to a leaf ConsumerWidget and watch seconds/progress/isRunning there instead of in the sheet/dialog parent.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags dialog/sheet classes that watch timer, ticker, progress, or running-state provider fields in build().',
+    description: 'Flags dialog/sheet classes that watch timer, ticker, progress, or running-state provider fields in build().',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       _reportHighFrequencyModalWatches(reporter, context);
@@ -56,12 +52,10 @@ final List<ScannerRule> dialogSourceRules = [
     code: const LintCode(
       'dialog_button_pop_then_state_mutation',
       'Dialog button mutates state or navigates after Navigator.pop.',
-      correctionMessage:
-          'Dialogs must Navigator.pop(result) and exit. Move provider mutations or further navigation to the caller after `await showDialog<T>(...)`.',
+      correctionMessage: 'Dialogs must Navigator.pop(result) and exit. Move provider mutations or further navigation to the caller after `await showDialog<T>(...)`.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags code that runs after Navigator.pop inside a dialog/sheet widget so the modal snapshot pattern is shown during analysis.',
+    description: 'Flags code that runs after Navigator.pop inside a dialog/sheet widget so the modal snapshot pattern is shown during analysis.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final classSpan in context.classes) {
@@ -83,12 +77,10 @@ final List<ScannerRule> dialogSourceRules = [
     code: const LintCode(
       'select_returns_unstable_record_identity',
       'Record select includes a getter that returns a fresh Map/Set/List each call.',
-      correctionMessage:
-          'Records compare by field identity; getters that build a fresh Map/Set/List each call cause a rebuild on every notify. Watch primitive fields or memoize the derived value in a provider.',
+      correctionMessage: 'Records compare by field identity; getters that build a fresh Map/Set/List each call cause a rebuild on every notify. Watch primitive fields or memoize the derived value in a provider.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags ref.watch(...select((s) => (...record literal...))) where any field reads a getter whose name implies a fresh Map/Set/List per call.',
+    description: 'Flags ref.watch(...select((s) => (...record literal...))) where any field reads a getter whose name implies a fresh Map/Set/List per call.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -152,12 +144,10 @@ final List<ScannerRule> dialogSourceRules = [
     code: const LintCode(
       'build_calls_mutating_instance_method',
       'build() calls a helper that mutates instance state.',
-      correctionMessage:
-          'Keep build pure. Move field/controller sync to initState, didUpdateWidget, an event callback, or a provider.',
+      correctionMessage: 'Keep build pure. Move field/controller sync to initState, didUpdateWidget, an event callback, or a provider.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags build() calls to private methods that assign instance fields/controller properties or call setState.',
+    description: 'Flags build() calls to private methods that assign instance fields/controller properties or call setState.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       _reportMutatingBuildCalls(reporter, context);
@@ -175,12 +165,10 @@ final List<ScannerRule> dialogSourceRules = [
     code: const LintCode(
       'widget_calls_notifier_teardown_after_await',
       'Widget calls notifier.reset/clear/dispose after awaiting a notifier mutation.',
-      correctionMessage:
-          'Move the teardown into the notifier method on its success path. Widgets dispatch and observe state; they do not orchestrate notifier lifecycle.',
+      correctionMessage: 'Move the teardown into the notifier method on its success path. Widgets dispatch and observe state; they do not orchestrate notifier lifecycle.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags reset/clear/dispose calls that follow an awaited notifier mutation in non-notifier files so the notifier owns its own teardown.',
+    description: 'Flags reset/clear/dispose calls that follow an awaited notifier mutation in non-notifier files so the notifier owns its own teardown.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       _reportNotifierTeardownCalls(reporter, context);
@@ -197,8 +185,7 @@ final List<ScannerRule> dialogSourceRules = [
     code: const LintCode(
       'popscope_bypass_uses_go_not_pop',
       'Pop navigation after an awaited modal triggers PopScope interception.',
-      correctionMessage:
-          'Use a typed `<Route>().go(context)` (or `context.go(...)`) for intentional navigation after an awaited modal; pop navigation triggers PopScope.onPopInvoked.',
+      correctionMessage: 'Use a typed `<Route>().go(context)` (or `context.go(...)`) for intentional navigation after an awaited modal; pop navigation triggers PopScope.onPopInvoked.',
       severity: DiagnosticSeverity.WARNING,
     ),
     description:
@@ -235,8 +222,7 @@ final List<ScannerRule> dialogSourceRules = [
     code: const LintCode(
       'modal_helper_requires_route_settings',
       'show modal helper missing routeSettings.',
-      correctionMessage:
-          'Pass `routeSettings: const RouteSettings(name: "...")` so the dialog/sheet shows up in observer logs and analytics.',
+      correctionMessage: 'Pass `routeSettings: const RouteSettings(name: "...")` so the dialog/sheet shows up in observer logs and analytics.',
       severity: DiagnosticSeverity.WARNING,
     ),
     description: 'Flags showDialog/showModalBottomSheet calls without a routeSettings argument.',

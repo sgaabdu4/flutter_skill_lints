@@ -22,8 +22,7 @@ class PreferConstBorderRadius extends InstanceAndMethodInvocationRule {
     : super(
         code: code,
         name: 'prefer_const_border_radius',
-        description:
-            'Warns when BorderRadius.circular() is used instead of BorderRadius.all(Radius.circular()).',
+        description: 'Warns when BorderRadius.circular() is used instead of BorderRadius.all(Radius.circular()).',
       );
 
   @override

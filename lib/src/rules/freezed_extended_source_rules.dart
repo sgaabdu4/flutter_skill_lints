@@ -13,8 +13,7 @@ final List<ScannerRule> freezedExtendedSourceRules = [
       correctionMessage: 'Add const ClassName._(); before custom getters or methods.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags Freezed classes with custom getters/methods but no private constructor so the Flutter skill violation is shown during analysis.',
+    description: 'Flags Freezed classes with custom getters/methods but no private constructor so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (final classSpan in context.classes) {
         final annotationStart = classSpan.start - 4 < 0 ? 0 : classSpan.start - 4;

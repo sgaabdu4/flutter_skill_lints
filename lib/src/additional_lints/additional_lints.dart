@@ -50,6 +50,7 @@ import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_const_bord
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_constrained_box_over_container_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_container_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_correct_edge_insets_constructor_fix.dart';
+import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_dot_shorthands_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_enums_by_name_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_expect_later_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_explicit_function_type_fix.dart';
@@ -269,6 +270,7 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_correct_js
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_correct_test_file_name.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_date_format.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_define_hero_tag.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_dot_shorthands.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_enums_by_name.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_expect_later.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_explicit_function_type.dart';
@@ -477,6 +479,7 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferConstrainedBoxOverContainer());
     registry.registerWarningRule(PreferContainer());
     registry.registerWarningRule(PreferCorrectEdgeInsetsConstructor());
+    registry.registerWarningRule(PreferDotShorthands());
     registry.registerWarningRule(PreferForLoopInChildren());
     registry.registerWarningRule(PreferSingleSetstate());
     registry.registerWarningRule(PreferSizedBoxSquare());
@@ -651,6 +654,7 @@ class AdditionalLintsPlugin extends Plugin {
       PreferCorrectEdgeInsetsConstructor.code,
       PreferCorrectEdgeInsetsConstructorFix.new,
     );
+    registry.registerFixForRule(PreferDotShorthands.code, PreferDotShorthandsFix.new);
     registry.registerFixForRule(PreferForLoopInChildren.code, PreferForLoopInChildrenFix.new);
     registry.registerFixForRule(PreferSingleSetstate.code, PreferSingleSetstateFix.new);
     registry.registerFixForRule(PreferSizedBoxSquare.code, PreferSizedBoxSquareFix.new);

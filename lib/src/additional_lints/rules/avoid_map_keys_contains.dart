@@ -43,19 +43,23 @@ class _Visitor extends SimpleAstVisitor<void> {
     final target = node.target;
 
     // map.keys.contains(x) — simple variable target parses as PrefixedIdentifier
-    if (target case PrefixedIdentifier(
-      identifier: SimpleIdentifier(name: 'keys'),
-      prefix: SimpleIdentifier(staticType: final mapType?),
-    ) when _mapChecker.isAssignableFromType(mapType)) {
+    if (target
+        case PrefixedIdentifier(
+          identifier: SimpleIdentifier(name: 'keys'),
+          prefix: SimpleIdentifier(staticType: final mapType?),
+        )
+        when _mapChecker.isAssignableFromType(mapType)) {
       rule.reportAtNode(node);
       return;
     }
 
     // expr.keys.contains(x) — complex target parses as PropertyAccess
-    if (target case PropertyAccess(
-      propertyName: SimpleIdentifier(name: 'keys'),
-      target: Expression(staticType: final mapType?),
-    ) when _mapChecker.isAssignableFromType(mapType)) {
+    if (target
+        case PropertyAccess(
+          propertyName: SimpleIdentifier(name: 'keys'),
+          target: Expression(staticType: final mapType?),
+        )
+        when _mapChecker.isAssignableFromType(mapType)) {
       rule.reportAtNode(node);
     }
   }

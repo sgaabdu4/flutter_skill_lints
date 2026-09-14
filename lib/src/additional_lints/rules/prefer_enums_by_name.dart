@@ -48,10 +48,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Checks if [target] is `SomeEnum.values` where `SomeEnum` is an enum.
   static bool _isEnumValues(Expression? target) {
-    if (target case PrefixedIdentifier(
-      identifier: SimpleIdentifier(name: 'values'),
-      prefix: SimpleIdentifier(element: final element?),
-    ) when element is EnumElement) {
+    if (target
+        case PrefixedIdentifier(
+          identifier: SimpleIdentifier(name: 'values'),
+          prefix: SimpleIdentifier(element: final element?),
+        )
+        when element is EnumElement) {
       return true;
     }
     if (target case PropertyAccess(

@@ -1,0 +1,11 @@
+{
+  "boundaries": [
+    {
+      "from": "lib/src/additional_lints",
+      "disallow": "lib/src/rules"
+    }
+  ],
+  "ignore_patterns": [
+    ".agents/**"
+  ]
+}

@@ -9,8 +9,7 @@ final class RequireAtomicAsyncUpdates extends FunctionAndMethodDeclarationRule {
   static const LintCode code = LintCode(
     'require_atomic_async_updates',
     'Keep async updates atomic around await points.',
-    correctionMessage:
-        'Compute the new value after the await, or split the loading/status update from the data update.',
+    correctionMessage: 'Compute the new value after the await, or split the loading/status update from the data update.',
   );
 
   RequireAtomicAsyncUpdates()

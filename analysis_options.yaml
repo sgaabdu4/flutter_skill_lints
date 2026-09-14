@@ -1,45 +1,43 @@
+# Hard Eng test coverage uses dart run coverage:test_with_coverage.
 include: package:lints/recommended.yaml
-
 analyzer:
   exclude:
-    - .dart_tool/**
-    - build/**
+  - .dart_tool/**
   language:
-    strict-casts: true
     strict-inference: true
-    strict-raw-types: true
   errors:
     missing_required_param: error
     missing_return: error
-
 formatter:
   page_width: 100
-
 linter:
   rules:
-    - always_use_package_imports
-    - avoid_dynamic_calls
-    - avoid_multiple_declarations_per_line
-    - avoid_print
-    - avoid_void_async
-    # Effective Dart Design additions not covered by package:lints/recommended.yaml.
-    - always_declare_return_types
-    - type_annotate_public_apis
-    - avoid_positional_boolean_parameters
-    - avoid_equals_and_hash_code_on_mutable_classes
-    - avoid_returning_this
-    - avoid_setters_without_getters
-    - prefer_mixin
-    - use_to_and_as_if_applicable
-    - cancel_subscriptions
-    - close_sinks
-    - directives_ordering
-    - discarded_futures
-    - prefer_const_constructors
-    - prefer_const_declarations
-    - prefer_const_literals_to_create_immutables
-    - prefer_final_locals
-    - avoid_redundant_argument_values
-    - prefer_single_quotes
-    - require_trailing_commas
-    - unawaited_futures
+  - always_use_package_imports
+  - avoid_dynamic_calls
+  - no_dynamic_casts
+  - no_raw_types
+  - avoid_multiple_declarations_per_line
+  - avoid_print
+  - avoid_void_async
+  - always_declare_return_types
+  - type_annotate_public_apis
+  - avoid_positional_boolean_parameters
+  - avoid_equals_and_hash_code_on_mutable_classes
+  - avoid_returning_this
+  - avoid_setters_without_getters
+  - prefer_mixin
+  - use_to_and_as_if_applicable
+  - cancel_subscriptions
+  - close_sinks
+  - directives_ordering
+  - discarded_futures
+  - prefer_const_constructors
+  - prefer_const_declarations
+  - prefer_const_literals_to_create_immutables
+  - prefer_final_locals
+  - avoid_redundant_argument_values
+  - prefer_single_quotes
+  - require_trailing_commas
+  - unawaited_futures
+  - avoid_annotating_with_dynamic
+  - strict_top_level_inference

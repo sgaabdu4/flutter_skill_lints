@@ -4,8 +4,8 @@ This audit covers both plugin surfaces:
 
 - `lib/src/rules/**`: 185 registered `building-flutter-apps` warning rules.
 - `lib/src/rules/**`: 193 `building-flutter-apps` diagnostic codes.
-- `lib/src/additional_lints/rules/**`: 279 additional diagnostics.
-- Total unique diagnostics: 470.
+- `lib/src/additional_lints/rules/**`: 280 additional diagnostics.
+- Total unique diagnostics: 471.
 
 ## Full Rule Inventory
 
@@ -310,16 +310,16 @@ so this plugin should not add duplicate reports:
 
 ## Riverpod Package Compatibility
 
-The lint package uses the shared analyzer-14.3 family in its `pubspec.yaml`:
+The lint package uses the shared analyzer-14.4 family in its `pubspec.yaml`:
 
-- `analyzer 14.3.0`
-- `analyzer_plugin 0.14.16`
-- `analysis_server_plugin 0.3.22`
-- `analyzer_testing 0.4.1`
+- `analyzer 14.4.0`
+- `analyzer_plugin 0.14.17`
+- `analysis_server_plugin 0.3.23`
+- `analyzer_testing 0.4.2`
 - `riverpod_lint 3.1.9` in a Dart 3.13 consuming app's top-level `plugins:` block
 
 The real analysis-server smoke test resolves both plugins together and checks
-that diagnostics are emitted without `server.pluginError`. The analyzer-14.3
+that diagnostics are emitted without `server.pluginError`. The analyzer-14.4
 family is the shared package contract. The Flutter generator family remains
 separate because its build process resolves analyzer 12.x for code generation.
 Version truth lives in the Flutter skill's

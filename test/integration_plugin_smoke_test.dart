@@ -31,12 +31,10 @@ dependencies:
         final analysisOptionsPath = '${app.path}/analysis_options.yaml';
         await _writeFile(analysisOptionsPath, _analysisOptions(packageRoot));
         await Directory('${app.path}/lib').create(recursive: true);
-        await Directory(
-          '${app.path}/lib/features/history/presentation/notifiers',
-        ).create(recursive: true);
-        await Directory(
-          '${app.path}/lib/features/content/presentation/widgets',
-        ).create(recursive: true);
+        await Directory('${app.path}/lib/features/history/presentation/notifiers')
+            .create(recursive: true);
+        await Directory('${app.path}/lib/features/content/presentation/widgets')
+            .create(recursive: true);
         await Directory('${app.path}/lib/features/content/repositories').create(recursive: true);
         await _writeFile('${app.path}/lib/main.dart', r'''
 import 'package:flutter/widgets.dart';
@@ -152,6 +150,7 @@ class _ContentViewState extends State<ContentView> {
         expect(output, contains('presentation_widget_navigation_forbidden'));
         expect(output, contains('presentation_widget_controller_state'));
         expect(output, contains('presentation_widget_infrastructure_dependency'));
+        expect(output, contains('prefer_dot_shorthands'));
         expect(output, isNot(contains('deprecated_lint')));
         expect(output, isNot(contains('server.pluginError')));
 

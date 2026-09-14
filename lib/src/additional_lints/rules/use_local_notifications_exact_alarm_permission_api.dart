@@ -8,16 +8,14 @@ class UseLocalNotificationsExactAlarmPermissionApi extends InstanceCreationExpre
   static const LintCode code = LintCode(
     'use_local_notifications_exact_alarm_permission_api',
     'Use the flutter_local_notifications exact-alarm permission API.',
-    correctionMessage:
-        'Call AndroidFlutterLocalNotificationsPlugin.requestExactAlarmsPermission(); do not launch android.settings.REQUEST_SCHEDULE_EXACT_ALARM manually.',
+    correctionMessage: 'Call AndroidFlutterLocalNotificationsPlugin.requestExactAlarmsPermission(); do not launch android.settings.REQUEST_SCHEDULE_EXACT_ALARM manually.',
     severity: DiagnosticSeverity.ERROR,
   );
 
   UseLocalNotificationsExactAlarmPermissionApi()
     : super(
         name: 'use_local_notifications_exact_alarm_permission_api',
-        description:
-            'Avoid manual exact-alarm settings intents when flutter_local_notifications owns the permission flow.',
+        description: 'Avoid manual exact-alarm settings intents when flutter_local_notifications owns the permission flow.',
         code: code,
       );
 

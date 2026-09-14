@@ -11,8 +11,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       correctionMessage: 'Defer reads with a post-frame callback.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags ref.read calls made from initState so the Flutter skill violation is shown during analysis.',
+    description: 'Flags ref.read calls made from initState so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -33,14 +32,12 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       correctionMessage: 'Model dependencies with providers.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags service locator classes in Riverpod apps so the Flutter skill violation is shown during analysis.',
+    description: 'Flags service locator classes in Riverpod apps so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (RegExp(
-          r'\bclass\s+(?:ServiceFactory|ServiceLocator|BackendProvider)\b',
-        ).hasMatch(line)) {
+        if (RegExp(r'\bclass\s+(?:ServiceFactory|ServiceLocator|BackendProvider)\b')
+            .hasMatch(line)) {
           reporter.report(context, i, line.indexOf('class'));
         }
       }
@@ -59,8 +56,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       correctionMessage: 'Replace manual Provider(...) declarations with @riverpod codegen.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags manual Riverpod provider declarations so the Flutter skill violation is shown during analysis.',
+    description: 'Flags manual Riverpod provider declarations so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final match = _manualProviderDeclarationMatch(context, i);
@@ -104,12 +100,10 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     code: const LintCode(
       'riverpod_consumer_state_derived_cache',
       'Do not cache provider-derived data in ConsumerState.',
-      correctionMessage:
-          'Move the cache to one @riverpod source of truth or compute it locally without mutable cache fields.',
+      correctionMessage: 'Move the cache to one @riverpod source of truth or compute it locally without mutable cache fields.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags ConsumerState cache/source fields used with ref.watch so provider-derived data has one Riverpod source of truth.',
+    description: 'Flags ConsumerState cache/source fields used with ref.watch so provider-derived data has one Riverpod source of truth.',
     scan: (reporter, context) {
       for (final classSpan in context.classes) {
         if (!_isConsumerStateClass(context, classSpan)) continue;
@@ -130,8 +124,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     code: const LintCode(
       'riverpod_widget_provider_arg_wrapper',
       'Do not use provider arg wrapper objects in widgets.',
-      correctionMessage:
-          'Pass immutable IDs/primitives to generated providers, or derive args inside the provider/notifier.',
+      correctionMessage: 'Pass immutable IDs/primitives to generated providers, or derive args inside the provider/notifier.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description:
@@ -151,12 +144,10 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     code: const LintCode(
       'riverpod_consumer_state_provider_subscription',
       'Do not store ProviderSubscription fields in ConsumerState.',
-      correctionMessage:
-          'Use ref.listen in build for widget side effects, or move synchronization to the provider/notifier source of truth.',
+      correctionMessage: 'Use ref.listen in build for widget side effects, or move synchronization to the provider/notifier source of truth.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags ProviderSubscription fields in ConsumerState so Riverpod remains the lifecycle source of truth.',
+    description: 'Flags ProviderSubscription fields in ConsumerState so Riverpod remains the lifecycle source of truth.',
     scan: (reporter, context) {
       for (final classSpan in context.classes) {
         if (!_isConsumerStateClass(context, classSpan)) continue;
@@ -175,12 +166,10 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     code: const LintCode(
       'riverpod_listen_manual_forbidden',
       'Do not use ref.listenManual.',
-      correctionMessage:
-          'Use ref.listen in build for widget side effects, or move durable subscriptions to a provider/notifier/service lifecycle.',
+      correctionMessage: 'Use ref.listen in build for widget side effects, or move durable subscriptions to a provider/notifier/service lifecycle.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags ref.listenManual calls so Riverpod owns subscription lifecycle from one source of truth.',
+    description: 'Flags ref.listenManual calls so Riverpod owns subscription lifecycle from one source of truth.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -200,12 +189,10 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     code: const LintCode(
       'riverpod_event_counter_signal_forbidden',
       'Do not create standalone Riverpod signal/event providers.',
-      correctionMessage:
-          'Fold the event serial/payload into the owning notifier state, or rename durable status state to a concrete Status/Lifecycle notifier.',
+      correctionMessage: 'Fold the event serial/payload into the owning notifier state, or rename durable status state to a concrete Status/Lifecycle notifier.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags standalone Riverpod signal/event providers so mutation state stays in one notifier source of truth.',
+    description: 'Flags standalone Riverpod signal/event providers so mutation state stays in one notifier source of truth.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final classSpan in context.classes) {
@@ -241,8 +228,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       correctionMessage: 'Use ref.watch(provider.select((value) => value.field)).',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags broad ref.watch calls that do not use select so the Flutter skill violation is shown during analysis.',
+    description: 'Flags broad ref.watch calls that do not use select so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       // Only fire inside widget build() methods. Computed providers and
       // service factories legitimately call ref.watch without .select.
@@ -269,8 +255,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       correctionMessage: 'Change select((value) { ... }) to select((value) => value.field).',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags select() callbacks without arrow syntax so the Flutter skill violation is shown during analysis.',
+    description: 'Flags select() callbacks without arrow syntax so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) => _scanSelectViolations(reporter, context, _hasBlockSelectCallback),
   ),
 
@@ -283,12 +268,10 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     code: const LintCode(
       'riverpod_select_identity_forbidden',
       'Do not use identity select callbacks.',
-      correctionMessage:
-          'Select concrete fields/records, or watch a generated computed projection provider directly.',
+      correctionMessage: 'Select concrete fields/records, or watch a generated computed projection provider directly.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags ref.watch(provider.select((value) => value)) so select remains a real rebuild boundary.',
+    description: 'Flags ref.watch(provider.select((value) => value)) so select remains a real rebuild boundary.',
     scan: (reporter, context) =>
         _scanSelectViolations(reporter, context, _hasIdentitySelectCallback),
   ),
@@ -304,8 +287,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       correctionMessage: 'Add a nearby comment that says Mutation is experimental.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags Mutation<T> usage without nearby experimental context so the Flutter skill violation is shown during analysis.',
+    description: 'Flags Mutation<T> usage without nearby experimental context so the Flutter skill violation is shown during analysis.',
     scan: _scanMutationExperimentalWarning,
   ),
 
@@ -352,8 +334,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     code: const LintCode(
       'riverpod_feature_notifier_keepalive',
       'Feature notifiers should use keepAlive.',
-      correctionMessage:
-          'Change @riverpod to @Riverpod(keepAlive: true), or add an autoDispose rationale comment.',
+      correctionMessage: 'Change @riverpod to @Riverpod(keepAlive: true), or add an autoDispose rationale comment.',
       severity: DiagnosticSeverity.WARNING,
     ),
     description:
@@ -383,8 +364,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       correctionMessage: 'Use auto-dispose families unless the cache is bounded.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags keepAlive Riverpod families with required parameters so the Flutter skill violation is shown during analysis.',
+    description: 'Flags keepAlive Riverpod families with required parameters so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -469,9 +449,8 @@ bool _isMutationDeclaration(String line) {
   return RegExp(r'^\s*class\s+Mutation\s*<').hasMatch(line) ||
       RegExp(r'^\s*typedef\s+Mutation\s*<').hasMatch(line) ||
       RegExp(r'^\s*Mutation\s*<[^>]+>\s+\w+(?:<[^>]+>)?\s*\(').hasMatch(line) ||
-      RegExp(
-        r'^\s*(?:[A-Za-z_]\w*(?:<[^>]+>)?\??|void)\s+Mutation(?:<[^>]+>)?\s*\(',
-      ).hasMatch(line);
+      RegExp(r'^\s*(?:[A-Za-z_]\w*(?:<[^>]+>)?\??|void)\s+Mutation(?:<[^>]+>)?\s*\(')
+          .hasMatch(line);
 }
 
 bool _isMutationMemberAccess(String line, RegExpMatch? match) {

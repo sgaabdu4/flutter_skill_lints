@@ -3,16 +3,20 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
 
 bool isEnumNameAccess(Expression expression, String parameterName) {
-  if (expression case PrefixedIdentifier(
-    prefix: SimpleIdentifier(name: final prefix),
-    identifier: SimpleIdentifier(name: 'name'),
-  ) when prefix == parameterName) {
+  if (expression
+      case PrefixedIdentifier(
+        prefix: SimpleIdentifier(name: final prefix),
+        identifier: SimpleIdentifier(name: 'name'),
+      )
+      when prefix == parameterName) {
     return true;
   }
-  if (expression case PropertyAccess(
-    target: SimpleIdentifier(name: final prefix),
-    propertyName: SimpleIdentifier(name: 'name'),
-  ) when prefix == parameterName) {
+  if (expression
+      case PropertyAccess(
+        target: SimpleIdentifier(name: final prefix),
+        propertyName: SimpleIdentifier(name: 'name'),
+      )
+      when prefix == parameterName) {
     return true;
   }
   return false;

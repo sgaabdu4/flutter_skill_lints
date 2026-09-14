@@ -1,38 +1,215 @@
 {
-  "schema_version": 1,
-  "hard_eng": {
-    "schema_version": 1,
-    "channel": "prerelease",
-    "release_repository": "sgaabdu4/hard-eng",
-    "wiring": "shared",
-    "pin": {
-      "tag": "v0.1.0-alpha.g0761411fe1877805db39c2ea13660ac470a0a3c6",
-      "archive_sha256": "231b068e87cff3d124a64051c647c6b9f460ea6156dbc9e927c03d437c83c613",
-      "manifest_sha256": "5b18149222c9b3ef41ed2187b213e6c7c459d80bafa0cc929e52db5e5e188796"
+  "version": 1,
+  "packages": [
+    {
+      "name": ".",
+      "path": ".",
+      "language": "dart",
+      "sources": [
+        "lib"
+      ],
+      "checks": [
+        {
+          "name": "security",
+          "role": "security",
+          "parallel": true,
+          "command": [
+            "semgrep",
+            "scan",
+            "--config",
+            ".agents/skills/he/security",
+            "--jobs",
+            "2",
+            "--error",
+            "--strict",
+            "--time",
+            "--json",
+            "--output",
+            "coverage/semgrep.json",
+            "."
+          ],
+          "report": {
+            "type": "semgrep",
+            "path": "coverage/semgrep.json"
+          }
+        },
+        {
+          "name": "vulnerabilities",
+          "role": "vulnerabilities",
+          "parallel": true,
+          "command": [
+            "osv-scanner",
+            "scan",
+            "source",
+            "--lockfile=pubspec.lock",
+            "--all-packages",
+            "--format=json",
+            "--output-file=coverage/osv.json"
+          ],
+          "report": {
+            "type": "osv",
+            "path": "coverage/osv.json"
+          }
+        },
+        {
+          "name": "lockfile",
+          "role": "lockfiles",
+          "command": [
+            "dart",
+            "pub",
+            "get",
+            "--enforce-lockfile"
+          ]
+        },
+        {
+          "name": "format",
+          "role": "format",
+          "parallel": true,
+          "command": [
+            "dart",
+            "format",
+            "--output=none",
+            "--set-exit-if-changed",
+            "."
+          ]
+        },
+        {
+          "name": "types-lint",
+          "role": "types",
+          "parallel": true,
+          "command": [
+            "dart",
+            "analyze",
+            "--fatal-infos",
+            "."
+          ]
+        },
+        {
+          "name": "import-boundaries",
+          "role": "boundaries",
+          "command": [
+            "dart-decimate",
+            "check",
+            ".",
+            "--boundary-violations"
+          ]
+        },
+        {
+          "name": "tests",
+          "role": "tests",
+          "command": [
+            "dart",
+            "run",
+            "coverage:test_with_coverage",
+            "--branch-coverage",
+            "--",
+            "--file-reporter=json:coverage/tests.jsonl"
+          ],
+          "report": {
+            "type": "dart-tests",
+            "tests": "coverage/tests.jsonl",
+            "coverage": "coverage/lcov.info",
+            "stdout": false
+          }
+        },
+        {
+          "name": "dead-code-duplicates",
+          "role": "dead-code-duplicates",
+          "command": [
+            "dart-decimate",
+            "check",
+            ".",
+            "--threshold",
+            "0",
+            "--format",
+            "json"
+          ],
+          "report": {
+            "type": "dart-decimate",
+            "path": "coverage/dart-decimate.json",
+            "stdout": true
+          }
+        },
+        {
+          "name": "performance",
+          "role": "performance",
+          "command": [
+            "dart",
+            "test",
+            "test/performance",
+            "--reporter=json"
+          ],
+          "report": {
+            "type": "performance-dart",
+            "path": "coverage/performance.jsonl",
+            "stdout": true
+          }
+        }
+      ]
     }
-  },
-  "enforcement": {
-    "schema_version": 1,
-    "required_paths": [
-      "hard-eng.gates.json",
-      "scripts/run-gate-phase.sh",
-      "scripts/setup-git-hooks.sh",
-      "scripts/privacy_scan.py",
-      ".githooks/pre-commit",
-      ".githooks/pre-push"
-    ]
-  },
-  "families": {
-    "dart-format": ["dart", "format", "--output=none", "--set-exit-if-changed", "."],
-    "dart-analyze": ["dart", "analyze", "--fatal-infos"],
-    "dart-test": ["dart", "test", "--reporter", "expanded"],
-    "dart-decimate": ["npx", "--yes", "dart-decimate@latest", "json", "."],
-    "secrets": ["gitleaks", "dir", "--redact", "--no-banner", "--exit-code", "1", "."],
-    "privacy": ["python3", "scripts/privacy_scan.py", "--repo", "."]
-  },
-  "phases": {
-    "commit": ["dart-format", "dart-analyze", "privacy"],
-    "push": ["dart-format", "dart-analyze", "dart-test", "dart-decimate", "secrets", "privacy"],
-    "ci": ["dart-format", "dart-analyze", "dart-test", "dart-decimate", "secrets", "privacy"]
-  }
+  ],
+  "shared": [
+    {
+      "name": "secrets-files",
+      "role": "secrets-files",
+      "parallel": true,
+      "command": [
+        "gitleaks",
+        "dir",
+        ".",
+        "--redact=100",
+        "--no-banner",
+        "--report-format",
+        "sarif",
+        "--report-path",
+        "coverage/gitleaks-files.sarif"
+      ],
+      "report": {
+        "type": "gitleaks",
+        "path": "coverage/gitleaks-files.sarif"
+      }
+    },
+    {
+      "name": "secrets-history",
+      "role": "secrets-history",
+      "parallel": true,
+      "command": [
+        "gitleaks",
+        "git",
+        ".",
+        "--redact=100",
+        "--no-banner",
+        "--log-opts=--all",
+        "--report-format",
+        "sarif",
+        "--report-path",
+        "coverage/gitleaks-history.sarif"
+      ],
+      "report": {
+        "type": "gitleaks",
+        "path": "coverage/gitleaks-history.sarif"
+      }
+    },
+    {
+      "name": "actionlint",
+      "role": "workflows",
+      "parallel": true,
+      "command": [
+        "actionlint",
+        "-no-color"
+      ]
+    },
+    {
+      "name": "zizmor",
+      "role": "ci-security",
+      "parallel": true,
+      "command": [
+        "zizmor",
+        "--strict-collection",
+        "--persona=auditor",
+        "--format=plain",
+        "."
+      ]
+    }
+  ]
 }

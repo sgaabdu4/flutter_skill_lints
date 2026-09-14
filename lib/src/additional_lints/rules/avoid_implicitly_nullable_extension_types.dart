@@ -10,8 +10,7 @@ class AvoidImplicitlyNullableExtensionTypes extends GeneratedExtensionTypeDeclar
   static const LintCode code = LintCode(
     'avoid_implicitly_nullable_extension_types',
     'Avoid implicitly nullable extension type representations.',
-    correctionMessage:
-        'Add a non-nullable bound such as `extends Object` or use a concrete non-nullable representation type.',
+    correctionMessage: 'Add a non-nullable bound such as `extends Object` or use a concrete non-nullable representation type.',
   );
 
   AvoidImplicitlyNullableExtensionTypes()

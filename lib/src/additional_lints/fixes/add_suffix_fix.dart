@@ -12,8 +12,7 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
   final String suffix;
   final FixKind _fixKind;
 
-  AddSuffixFix._({required super.context, required this.suffix, required FixKind fixKind})
-    : _fixKind = fixKind;
+  AddSuffixFix._({required super.context, required this.suffix, required this._fixKind});
 
   /// Factory for adding "Notifier" suffix.
   static AddSuffixFix notifierFix({required CorrectionProducerContext context}) {

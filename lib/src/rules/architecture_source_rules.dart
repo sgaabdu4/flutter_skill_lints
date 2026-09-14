@@ -21,17 +21,15 @@ final List<ScannerRule> architectureSourceRules = [
           'add an entity getter. See building-flutter-apps SKILL.md Critical Rule 11 + 12.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags Flutter or package imports from domain files so the Flutter skill violation is shown during analysis.',
+    description: 'Flags Flutter or package imports from domain files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
         final code = context.source.code[i];
         if (_isAllowedDomainImport(code)) continue;
         if (context.isDomainPath &&
-            RegExp(
-              r'''^\s*import\s+['"](?:package:flutter|dart:ui|package:[^'"]+)''',
-            ).hasMatch(code)) {
+            RegExp(r'''^\s*import\s+['"](?:package:flutter|dart:ui|package:[^'"]+)''')
+                .hasMatch(code)) {
           reporter.report(context, i, context.source.masked[i].indexOf('import'));
         }
       }
@@ -49,14 +47,12 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Move fromJson/toJson code to data models.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags JSON serialization members in domain files so the Flutter skill violation is shown during analysis.',
+    description: 'Flags JSON serialization members in domain files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         if (context.isDomainPath &&
-            RegExp(
-              r'\b(?:fromJson|toJson|_\$\w+FromJson)\s*\(',
-            ).hasMatch(context.source.masked[i])) {
+            RegExp(r'\b(?:fromJson|toJson|_\$\w+FromJson)\s*\(')
+                .hasMatch(context.source.masked[i])) {
           reporter.report(context, i, 0);
         }
       }
@@ -74,8 +70,7 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Add an abstract interface class for this layer.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags repository or datasource files without I* contracts so the Flutter skill violation is shown during analysis.',
+    description: 'Flags repository or datasource files without I* contracts so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       final text = context.source.masked.join('\n');
@@ -99,8 +94,7 @@ final List<ScannerRule> architectureSourceRules = [
           'Use a concrete repository that implements I*Repository, not extends _\$*Repository.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags repositories extending generated classes so the Flutter skill violation is shown during analysis.',
+    description: 'Flags repositories extending generated classes so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       final generatedRepository = RegExp(r'\bclass\s+\w+Repository\s+extends\s+_\$\w+Repository\b');
       for (var i = 0; i < context.source.length; i++) {
@@ -123,8 +117,7 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Take I*Repository/I*Datasource interfaces instead of concrete classes.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags concrete repository or datasource constructor dependencies so the Flutter skill violation is shown during analysis.',
+    description: 'Flags concrete repository or datasource constructor dependencies so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isRepositoryPath && !context.isDatasourcePath) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -146,8 +139,7 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Let errors propagate and catch once at the notifier boundary.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags try/catch blocks inside datasource files so the Flutter skill violation is shown during analysis.',
+    description: 'Flags try/catch blocks inside datasource files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -169,8 +161,7 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Move feature widgets into the presentation layer.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags feature widgets outside presentation/widgets so the Flutter skill violation is shown during analysis.',
+    description: 'Flags feature widgets outside presentation/widgets so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isFeatureWidgetWrongPath) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -190,8 +181,7 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Move provider access to the presentation boundary.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags provider access from atomic design widgets so the Flutter skill violation is shown during analysis.',
+    description: 'Flags provider access from atomic design widgets so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -214,8 +204,7 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Use extension types or value objects for IDs.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags domain entities with multiple raw String ID fields so the Flutter skill violation is shown during analysis.',
+    description: 'Flags domain entities with multiple raw String ID fields so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isDomainPath) return;
       final idFields = <int>[];
@@ -241,8 +230,7 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Use records or typed objects.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags non-data helpers returning Map<String, dynamic> tuples so the Flutter skill violation is shown during analysis.',
+    description: 'Flags non-data helpers returning Map<String, dynamic> tuples so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];

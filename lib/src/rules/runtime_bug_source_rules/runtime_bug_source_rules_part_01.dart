@@ -11,12 +11,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'sync_save_all_no_dirty_guard',
       'saveAll called inside sync push without a dirty-list guard.',
-      correctionMessage:
-          'Check the changed-row list and return early when empty before `saveAll(...)`. Otherwise every sync cycle rewrites the whole collection.',
+      correctionMessage: 'Check the changed-row list and return early when empty before `saveAll(...)`. Otherwise every sync cycle rewrites the whole collection.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags `.saveAll(... .map(Model.fromEntity).toList())` inside a method body that has no earlier `isEmpty` early-return guard.',
+    description: 'Flags `.saveAll(... .map(Model.fromEntity).toList())` inside a method body that has no earlier `isEmpty` early-return guard.',
     scan: _scanSyncSaveAllGuards,
   ),
 
@@ -31,12 +29,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'save_all_full_collection_after_subset_mutation',
       'saveAll rewrites a full collection after subset mutation.',
-      correctionMessage:
-          'Collect changed rows and call mergeAll/saveMany, or add an ignore comment when a full rewrite is intentional.',
+      correctionMessage: 'Collect changed rows and call mergeAll/saveMany, or add an ignore comment when a full rewrite is intentional.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags `saveAll(fullCollection.map(Model.fromEntity).toList())` after mutating indexed rows of that same collection.',
+    description: 'Flags `saveAll(fullCollection.map(Model.fromEntity).toList())` after mutating indexed rows of that same collection.',
     scan: _scanSubsetSaveAllWrites,
   ),
 
@@ -50,12 +46,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'collection_getter_allocates_each_access',
       'Collection getter allocates a fresh Map/List/Set on every access.',
-      correctionMessage:
-          'Use a generated computed provider/service/repository cache; for non-const classes, an instance `late final` derived field is also valid.',
+      correctionMessage: 'Use a generated computed provider/service/repository cache; for non-const classes, an instance `late final` derived field is also valid.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags Map/List/Set getters that build collection values in the getter body without an obvious cache.',
+    description: 'Flags Map/List/Set getters that build collection values in the getter body without an obvious cache.',
     scan: _scanCollectionGetterAllocations,
   ),
 
@@ -70,12 +64,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'expando_derived_cache_forbidden',
       'Do not use Expando for derived caches in production app code.',
-      correctionMessage:
-          'Use a computed provider or explicit service/repository cache; for non-const classes, an instance `late final` derived field is also valid.',
+      correctionMessage: 'Use a computed provider or explicit service/repository cache; for non-const classes, an instance `late final` derived field is also valid.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags production Expando usage so derived caches do not live in hidden top-level side tables.',
+    description: 'Flags production Expando usage so derived caches do not live in hidden top-level side tables.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -97,12 +89,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'ad_hoc_id_index_lookup',
       'Ad-hoc id lookup belongs in an extension.',
-      correctionMessage:
-          'Use `lookupByKey` / `indexOfByKey`, or expose a computed provider/service-owned index when the full map is reused.',
+      correctionMessage: 'Use `lookupByKey` / `indexOfByKey`, or expose a computed provider/service-owned index when the full map is reused.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags `items.indexBy((item) => item.id)[id]` one-off lookups outside the shared Iterable extension.',
+    description: 'Flags `items.indexBy((item) => item.id)[id]` one-off lookups outside the shared Iterable extension.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       if (context.path.endsWith('iterable_extensions.dart')) return;
@@ -125,12 +115,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'linear_id_lookup_in_hot_path',
       'Linear id lookup in a hot path.',
-      correctionMessage:
-          'Build/reuse a `Map<Id, Item>` index for id lookups instead of firstWhere/indexWhere/manual loops.',
+      correctionMessage: 'Build/reuse a `Map<Id, Item>` index for id lookups instead of firstWhere/indexWhere/manual loops.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags firstWhere/indexWhere/manual *ById loops over `.id == ...` in likely-hot widget, notifier, repository, or provider code.',
+    description: 'Flags firstWhere/indexWhere/manual *ById loops over `.id == ...` in likely-hot widget, notifier, repository, or provider code.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       _reportManualIdLookupFunctions(reporter, context);
@@ -147,12 +135,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'nested_linear_lookup_by_id',
       'Nested loop performs an inner linear id lookup.',
-      correctionMessage:
-          'Build a lookup map before the loop and read by id inside the loop instead of calling indexWhere/firstWhere repeatedly.',
+      correctionMessage: 'Build a lookup map before the loop and read by id inside the loop instead of calling indexWhere/firstWhere repeatedly.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags `for (final item in items) { otherItems.indexWhere((x) => x.id == item.otherId) }` patterns.',
+    description: 'Flags `for (final item in items) { otherItems.indexWhere((x) => x.id == item.otherId) }` patterns.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final method in context.methods) {
@@ -174,12 +160,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'appwrite_blocking_function_execution_in_client',
       'Long-running Appwrite Function execution waits synchronously on the client.',
-      correctionMessage:
-          'Pass `xasync: true`, treat the response as an async-start acknowledgement, then reconcile the source of truth with bounded polling/realtime.',
+      correctionMessage: 'Pass `xasync: true`, treat the response as an async-start acknowledgement, then reconcile the source of truth with bounded polling/realtime.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags Appwrite `createExecution(...)` calls in likely long-running/destructive client methods unless the call explicitly passes `xasync: true`.',
+    description: 'Flags Appwrite `createExecution(...)` calls in likely long-running/destructive client methods unless the call explicitly passes `xasync: true`.',
     scan: _scanBlockingFunctionExecutions,
   ),
 
@@ -195,12 +179,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'destructive_failure_logged_before_reconcile',
       'Destructive mutation reports failure before source-of-truth reconciliation.',
-      correctionMessage:
-          'Call a reconcile/verify/waitFor source-of-truth check first, then log/report the exception only when reconciliation fails.',
+      correctionMessage: 'Call a reconcile/verify/waitFor source-of-truth check first, then log/report the exception only when reconciliation fails.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags Crash/Sentry/Firebase error reporting before a later reconcile/verify call inside delete/remove/deactivate methods.',
+    description: 'Flags Crash/Sentry/Firebase error reporting before a later reconcile/verify call inside delete/remove/deactivate methods.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final method in context.methods) {
@@ -225,12 +207,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'storage_clear_preserves_migration_state',
       'Reset/clear method preserves migration state around local storage clear.',
-      correctionMessage:
-          'Remove migration/version/install marker preservation. Let reset/clear hard-clear app-owned local storage.',
+      correctionMessage: 'Remove migration/version/install marker preservation. Let reset/clear hard-clear app-owned local storage.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags datasource/repository reset/clear methods that read and restore migration/version/install markers around storage clear.',
+    description: 'Flags datasource/repository reset/clear methods that read and restore migration/version/install markers around storage clear.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       _reportStorageClearSentinels(reporter, context);
@@ -247,12 +227,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'notifier_persistence_no_debounce',
       'Persistence helper has no debounce / Timer / delayed indirection.',
-      correctionMessage:
-          'Wrap the persist call in a `Timer` (cancel-and-restart on next call) or a `Debouncer` so rapid mutations coalesce into one write.',
+      correctionMessage: 'Wrap the persist call in a `Timer` (cancel-and-restart on next call) or a `Debouncer` so rapid mutations coalesce into one write.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags `_schedule*Persist` / `_persistDraft` helper methods that lack any Timer/Future.delayed/Debouncer reference inside their class.',
+    description: 'Flags `_schedule*Persist` / `_persistDraft` helper methods that lack any Timer/Future.delayed/Debouncer reference inside their class.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final classSpan in context.classes) {
@@ -279,12 +257,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'notifier_async_init_stale_state_write',
       'Async notifier init/restore/load writes state after await without a stale guard.',
-      correctionMessage:
-          'Capture a generation/request token before the await and return if it is stale before assigning `state`.',
+      correctionMessage: 'Capture a generation/request token before the await and return if it is stale before assigning `state`.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags private notifier init/restore/load methods that await and then assign state without an obvious generation/request/stale guard.',
+    description: 'Flags private notifier init/restore/load methods that await and then assign state without an obvious generation/request/stale guard.',
     scan: _scanAsyncNotifierStaleStateWrites,
   ),
 
@@ -299,12 +275,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'webview_init_in_build_no_gate',
       'Heavy widget (WebView / native player) constructed in build without a user-action gate.',
-      correctionMessage:
-          'Add a `bool _userRequested = false` (or `_userTapped...` / `_userOpened...`) field, set it in an `onTap` callback, and construct the heavy widget only when the flag is true.',
+      correctionMessage: 'Add a `bool _userRequested = false` (or `_userTapped...` / `_userOpened...`) field, set it in an `onTap` callback, and construct the heavy widget only when the flag is true.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags `InAppWebView`, `IOSInAppWebViewWidget`, `WebViewWidget`, `YoutubePlayer`, or `VideoPlayer` constructors inside `build()` of classes that declare no `_user*` / `*Tapped` / `*Requested` boolean gate field.',
+    description: 'Flags `InAppWebView`, `IOSInAppWebViewWidget`, `WebViewWidget`, `YoutubePlayer`, or `VideoPlayer` constructors inside `build()` of classes that declare no `_user*` / `*Tapped` / `*Requested` boolean gate field.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       _reportUngatedHeavyWidgets(reporter, context);
@@ -320,12 +294,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'service_storage_read_no_memo',
       'Service reads from storage without an in-memory memo.',
-      correctionMessage:
-          'Add a `Map<String, T> _cache` field; check it before `_storage.read(...)`. Write through on `markSeen` / equivalent.',
+      correctionMessage: 'Add a `Map<String, T> _cache` field; check it before `_storage.read(...)`. Write through on `markSeen` / equivalent.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags `_storage.read` / `box.get` calls inside *Service classes that declare no `Map<String,*>` cache field.',
+    description: 'Flags `_storage.read` / `box.get` calls inside *Service classes that declare no `Map<String,*>` cache field.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final classSpan in context.classes) {
@@ -352,12 +324,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'keepalive_watches_unbounded_collection',
       'keepAlive notifier watches an unbounded collection getter.',
-      correctionMessage:
-          'Return a bounded projection (e.g. `s.lastNDays` / `s.count`) instead of deriving and retaining a new collection from the full source list.',
+      correctionMessage: 'Return a bounded projection (e.g. `s.lastNDays` / `s.count`) instead of deriving and retaining a new collection from the full source list.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags `@Riverpod(keepAlive: true)` notifiers whose build() derives retained state from `s.<unboundedCollectionName>`.',
+    description: 'Flags `@Riverpod(keepAlive: true)` notifiers whose build() derives retained state from `s.<unboundedCollectionName>`.',
     scan: _scanKeepAliveUnboundedCollections,
   ),
 
@@ -370,12 +340,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'datasource_missing_batch_loader',
       'Datasource interface has many single-field getters but no batch loader.',
-      correctionMessage:
-          'Expose a `Future<SettingsSnapshot> loadAll()` aggregator so callers can fetch everything in one read.',
+      correctionMessage: 'Expose a `Future<SettingsSnapshot> loadAll()` aggregator so callers can fetch everything in one read.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags abstract `*LocalDatasource` / `*RemoteDatasource` interfaces with 5+ single-value async getters and no loadAll/getAll/readAll method.',
+    description: 'Flags abstract `*LocalDatasource` / `*RemoteDatasource` interfaces with 5+ single-value async getters and no loadAll/getAll/readAll method.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final classSpan in context.classes) {
@@ -606,147 +574,5 @@ void _reportKeepAliveFunctionCollection(
     if (column == null) continue;
     reporter.report(context, lineIndex, column);
     return;
-  }
-}
-
-void _reportManualIdLookupFunctions(ScannerRuleReporter reporter, SourceScannerContext context) {
-  for (var lineIndex = 0; lineIndex < context.source.length; lineIndex++) {
-    final match = _byIdFunctionStart.firstMatch(context.source.masked[lineIndex]);
-    if (match == null || !_manualIdLookupFunctionHasLoop(context, lineIndex)) continue;
-    reporter.report(context, lineIndex, match.start);
-  }
-}
-
-bool _manualIdLookupFunctionHasLoop(SourceScannerContext context, int lineIndex) {
-  final end = _findBlockEnd(context, lineIndex, context.source.length - 1);
-  return end != null && _manualIdLoop.hasMatch(_collectLines(context, lineIndex, end));
-}
-
-void _reportHotClassIdLookups(ScannerRuleReporter reporter, SourceScannerContext context) {
-  for (final classSpan in context.classes) {
-    if (!_isHotLookupClass(context, classSpan)) continue;
-    for (final method in context.methods.where((method) => classSpan.contains(method.start))) {
-      _reportHotMethodIdLookups(reporter, context, method);
-    }
-  }
-}
-
-void _reportHotMethodIdLookups(
-  ScannerRuleReporter reporter,
-  SourceScannerContext context,
-  ScannerMethodSpan method,
-) {
-  _visitMethodLines(context, method, (lineIndex, line) {
-    final match = _linearIdLookupCall.firstMatch(line);
-    if (match == null || !_isHotLinearIdLookup(context, method, lineIndex)) return false;
-    reporter.report(context, lineIndex, match.start);
-    return false;
-  });
-}
-
-bool _isHotLinearIdLookup(SourceScannerContext context, ScannerMethodSpan method, int lineIndex) {
-  final lookupWindow = sourceLineWindow(context, lineIndex, method.end, 6);
-  return _linearIdLookup.hasMatch(lookupWindow) &&
-      !_isIndexLookupInsideForBlock(context, method.start, lineIndex);
-}
-
-void _reportNestedIdLookups(
-  ScannerRuleReporter reporter,
-  SourceScannerContext context,
-  ScannerMethodSpan method,
-) {
-  for (
-    var lineIndex = method.start;
-    lineIndex <= method.end && lineIndex < context.source.length;
-    lineIndex++
-  ) {
-    _reportNestedIdLookupAtLine(reporter, context, method, lineIndex);
-  }
-}
-
-void _reportNestedIdLookupAtLine(
-  ScannerRuleReporter reporter,
-  SourceScannerContext context,
-  ScannerMethodSpan method,
-  int lineIndex,
-) {
-  final loop = _forEachLoop.firstMatch(context.source.masked[lineIndex]);
-  final loopVar = loop?.group(1);
-  if (loopVar == null) return;
-  final bodyEnd = _findBlockEnd(context, lineIndex, method.end) ?? method.end;
-  final lookup = _nestedIdLookup(loopVar);
-  for (
-    var bodyLine = lineIndex + 1;
-    bodyLine <= bodyEnd && bodyLine < context.source.length;
-    bodyLine++
-  ) {
-    final match = _linearIdLookupCall.firstMatch(context.source.masked[bodyLine]);
-    if (match == null) continue;
-    if (_nestedLookupMatches(context, bodyLine, bodyEnd, lookup)) {
-      reporter.report(context, bodyLine, match.start);
-      return;
-    }
-  }
-}
-
-bool _nestedLookupMatches(
-  SourceScannerContext context,
-  int lineIndex,
-  int bodyEnd,
-  RegExp lookup,
-) => lookup.hasMatch(sourceLineWindow(context, lineIndex, bodyEnd, 6));
-
-void _reportStorageClearSentinels(ScannerRuleReporter reporter, SourceScannerContext context) {
-  for (final classSpan in context.classes) {
-    if (!_isStorageBoundaryClass(context, classSpan)) continue;
-    for (final method in context.methods.where((method) => classSpan.contains(method.start))) {
-      if (_methodLooksLikeResetAll(method.name)) {
-        _reportStorageClearMethod(reporter, context, method);
-      }
-    }
-  }
-}
-
-void _reportStorageClearMethod(
-  ScannerRuleReporter reporter,
-  SourceScannerContext context,
-  ScannerMethodSpan method,
-) {
-  for (
-    var lineIndex = method.start;
-    lineIndex <= method.end && lineIndex < context.source.length;
-    lineIndex++
-  ) {
-    final match = _storageClearCall.firstMatch(context.source.masked[lineIndex]);
-    if (match != null && _clearPreservesSentinel(context, method, lineIndex)) {
-      reporter.report(context, lineIndex, match.start);
-    }
-  }
-}
-
-void _reportUngatedHeavyWidgets(ScannerRuleReporter reporter, SourceScannerContext context) {
-  for (final classSpan in context.classes) {
-    for (final method in context.methods.where((method) => method.name == 'build')) {
-      if (classSpan.contains(method.start)) {
-        _reportHeavyWidgetsInBuild(reporter, context, classSpan, method);
-      }
-    }
-  }
-}
-
-void _reportHeavyWidgetsInBuild(
-  ScannerRuleReporter reporter,
-  SourceScannerContext context,
-  ScannerClassSpan classSpan,
-  ScannerMethodSpan method,
-) {
-  for (
-    var lineIndex = method.start;
-    lineIndex <= method.end && lineIndex < context.source.length;
-    lineIndex++
-  ) {
-    final match = _heavyWidgetInit.firstMatch(context.source.masked[lineIndex]);
-    if (match == null || _isHeavyWidgetGated(context, classSpan, method, lineIndex)) continue;
-    reporter.report(context, lineIndex, match.start);
   }
 }

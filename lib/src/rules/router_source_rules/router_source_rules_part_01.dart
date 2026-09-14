@@ -11,8 +11,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
       correctionMessage: 'Use typed GoRouter routes.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags string-based GoRouter navigation so the Flutter skill violation is shown during analysis.',
+    description: 'Flags string-based GoRouter navigation so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
 
@@ -39,8 +38,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
       correctionMessage: 'Wait for modal dismissal before pushing the next route.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags synchronous context.pop followed by push navigation so the Flutter skill violation is shown during analysis.',
+    description: 'Flags synchronous context.pop followed by push navigation so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -63,12 +61,10 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     code: const LintCode(
       'pop_fallback_helper_must_check_navigator_stack',
       'BuildContext pop fallback helper does not check Navigator stacks.',
-      correctionMessage:
-          'Check `mounted`, root `Navigator.maybeOf(...).canPop()`, and local `Navigator.maybeOf(...).canPop()` before fallback navigation.',
+      correctionMessage: 'Check `mounted`, root `Navigator.maybeOf(...).canPop()`, and local `Navigator.maybeOf(...).canPop()` before fallback navigation.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags BuildContext pop fallback helpers that call canPop/pop without checking mounted plus root/local Navigator stacks first.',
+    description: 'Flags BuildContext pop fallback helpers that call canPop/pop without checking mounted plus root/local Navigator stacks first.',
     scan: _scanPopFallbackHelpers,
   ),
 
@@ -83,8 +79,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
       correctionMessage: 'Use a read/listenable bridge for redirect state.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags ref.watch calls inside router redirects so the Flutter skill violation is shown during analysis.',
+    description: 'Flags ref.watch calls inside router redirects so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -106,8 +101,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
       correctionMessage: 'Return null while loading to stay on the current route.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags redirects to loading routes while auth/router state is loading so the Flutter skill violation is shown during analysis.',
+    description: 'Flags redirects to loading routes while auth/router state is loading so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         if (context.isRedirectLoadingBounce(i, context.source.code[i])) {
@@ -126,12 +120,10 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     code: const LintCode(
       'router_splash_waits_for_initial_sync',
       'Do not hold splash while initial sync runs.',
-      correctionMessage:
-          'Route to the authenticated shell once auth/setup are resolved; keep initial sync in the background.',
+      correctionMessage: 'Route to the authenticated shell once auth/setup are resolved; keep initial sync in the background.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags splash redirect gates that wait for InitialSyncStatus.syncing so startup stays responsive.',
+    description: 'Flags splash redirect gates that wait for InitialSyncStatus.syncing so startup stays responsive.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final column = _splashInitialSyncGateColumn(context, i);
@@ -155,8 +147,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
       correctionMessage: 'Call the generated typed route helper instead of GoRouter.of(context).',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags GoRouter.of(context) push/go/replace calls so the Flutter skill violation is shown during analysis.',
+    description: 'Flags GoRouter.of(context) push/go/replace calls so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       final pattern = RegExp(
         r'\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*'
@@ -184,8 +175,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
       correctionMessage: 'Define a @TypedGoRoute and call the generated route .go/.push helper.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags Navigator push with MaterialPageRoute/CupertinoPageRoute/PageRouteBuilder so the Flutter skill violation is shown during analysis.',
+    description: 'Flags Navigator push with MaterialPageRoute/CupertinoPageRoute/PageRouteBuilder so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       final navigatorCall = RegExp(
         r'\bNavigator\s*\.\s*(?:of\s*\([^)]*\)\s*\.\s*)?'
@@ -229,8 +219,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
       correctionMessage: 'Call the generated typed route helper at the call site.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags route-specific BuildContext navigation extensions so the Flutter skill violation is shown during analysis.',
+    description: 'Flags route-specific BuildContext navigation extensions so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) => _reportContextNavigationExtensions(reporter, context),
   ),
 
@@ -395,8 +384,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     code: const LintCode(
       'router_complex_extra',
       'Avoid GoRouter extra for route state.',
-      correctionMessage:
-          'Pass stable route IDs/path params, or configure and test an explicit GoRouter extraCodec.',
+      correctionMessage: 'Pass stable route IDs/path params, or configure and test an explicit GoRouter extraCodec.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description:

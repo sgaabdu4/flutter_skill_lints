@@ -13,8 +13,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
       correctionMessage: 'Move stable keys to a field, registry, or source value outside build().',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags local key construction inside build methods so the Flutter skill violation is shown during analysis.',
+    description: 'Flags local key construction inside build methods so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (final method in context.methods.where((method) => method.name == 'build')) {
         for (var i = method.start; i <= method.end; i++) {
@@ -38,8 +37,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
       correctionMessage: 'Prefer ValueKey or ObjectKey for normal state preservation.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags UniqueKey and GlobalKey construction so the Flutter skill violation is shown during analysis.',
+    description: 'Flags UniqueKey and GlobalKey construction so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -71,8 +69,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
           'Use a semi-transparent color for static opacity or FadeTransition for animation.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags Opacity widget construction so the Flutter skill violation is shown during analysis.',
+    description: 'Flags Opacity widget construction so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       _reportConstructors(reporter, context, const ['Opacity']);
     },
@@ -90,8 +87,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
           'Prefer cheaper painting or precomputed assets when a saveLayer is not required.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags ShaderMask, ColorFiltered, and ColorFilter usage so the Flutter skill violation is shown during analysis.',
+    description: 'Flags ShaderMask, ColorFiltered, and ColorFilter usage so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -114,8 +110,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
       correctionMessage: 'Use border radius, Clip.hardEdge, or Clip.antiAlias when possible.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags Clip.antiAliasWithSaveLayer usage so the Flutter skill violation is shown during analysis.',
+    description: 'Flags Clip.antiAliasWithSaveLayer usage so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -156,8 +151,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
       correctionMessage: 'Move static widgets to AnimatedBuilder.child and reuse child in builder.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags AnimatedBuilder calls without a child argument so the Flutter skill violation is shown during analysis.',
+    description: 'Flags AnimatedBuilder calls without a child argument so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -183,8 +177,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
       correctionMessage: 'Use const constructors, stable inputs, and caching instead.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags operator == overrides on Widget classes so the Flutter skill violation is shown during analysis.',
+    description: 'Flags operator == overrides on Widget classes so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (final classSpan in context.classes) {
         if (!_isWidgetClass(context, classSpan)) continue;
@@ -227,9 +220,8 @@ bool _containsConstructor(String line, String name) => _constructorColumn(line, 
 
 bool _isAllowedGlobalKeyUse(SourceScannerContext context, String line) {
   if (context.isTestFile || context.isKeyRegistryFile) return true;
-  if (RegExp(
-    r'\bGlobalKey\s*<[^>]*(?:State|NavigatorState|ScaffoldMessengerState)[^>]*>',
-  ).hasMatch(line)) {
+  if (RegExp(r'\bGlobalKey\s*<[^>]*(?:State|NavigatorState|ScaffoldMessengerState)[^>]*>')
+      .hasMatch(line)) {
     return true;
   }
   return RegExp(
@@ -369,7 +361,6 @@ bool _isWidgetClass(SourceScannerContext context, ScannerClassSpan classSpan) {
   return RegExp(
         r'\bextends\s+(?:[A-Za-z_][A-Za-z0-9_]*\.)?(?:StatelessWidget|StatefulWidget|Widget|ConsumerWidget|HookWidget)\b',
       ).hasMatch(signature) ||
-      RegExp(
-        r'\bextends\s+(?:[A-Za-z_][A-Za-z0-9_]*\.)?[A-Za-z_][A-Za-z0-9_]*Widget\b',
-      ).hasMatch(signature);
+      RegExp(r'\bextends\s+(?:[A-Za-z_][A-Za-z0-9_]*\.)?[A-Za-z_][A-Za-z0-9_]*Widget\b')
+          .hasMatch(signature);
 }

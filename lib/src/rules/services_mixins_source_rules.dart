@@ -12,12 +12,10 @@ final List<ScannerRule> servicesMixinsSourceRules = [
     code: const LintCode(
       'service_singleton',
       'Singleton is not plain and boring.',
-      correctionMessage:
-          'Use a private constructor with one static final instance/trivial getter and void/Future<void> public methods only. Move data/stateful services to a provider/repository boundary.',
+      correctionMessage: 'Use a private constructor with one static final instance/trivial getter and void/Future<void> public methods only. Move data/stateful services to a provider/repository boundary.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags singleton shapes that are mutable, injectable, or missing a private constructor so the Flutter skill singleton guidance is shown during analysis.',
+    description: 'Flags singleton shapes that are mutable, injectable, or missing a private constructor so the Flutter skill singleton guidance is shown during analysis.',
     scan: (reporter, context) {
       for (final classSpan in context.classes) {
         final singletonLine = _singletonInstanceLine(context, classSpan);
@@ -49,8 +47,7 @@ final List<ScannerRule> servicesMixinsSourceRules = [
       correctionMessage: 'Use mixin for reusable behavior.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags mixin class declarations for capability mixins so the Flutter skill violation is shown during analysis.',
+    description: 'Flags mixin class declarations for capability mixins so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -72,8 +69,7 @@ final List<ScannerRule> servicesMixinsSourceRules = [
       correctionMessage: 'Suffix capability mixins with Mixin.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags capability mixins without the Mixin suffix so the Flutter skill violation is shown during analysis.',
+    description: 'Flags capability mixins without the Mixin suffix so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -95,8 +91,7 @@ final List<ScannerRule> servicesMixinsSourceRules = [
       correctionMessage: 'Keep mixins stateless.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags mutable fields inside mixins so the Flutter skill violation is shown during analysis.',
+    description: 'Flags mutable fields inside mixins so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         if (context.isMutableMixinField(i)) {

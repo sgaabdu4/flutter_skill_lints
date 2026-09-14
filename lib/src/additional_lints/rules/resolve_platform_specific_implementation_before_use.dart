@@ -12,16 +12,14 @@ class ResolvePlatformSpecificImplementationBeforeUse extends AnalysisRule {
   static const LintCode code = LintCode(
     'resolve_platform_specific_implementation_before_use',
     'Resolve platform-specific plugin implementations before use.',
-    correctionMessage:
-        'Assign resolvePlatformSpecificImplementation<T>() to a local variable or getter, handle null explicitly, then call platform-specific members.',
+    correctionMessage: 'Assign resolvePlatformSpecificImplementation<T>() to a local variable or getter, handle null explicitly, then call platform-specific members.',
     severity: DiagnosticSeverity.ERROR,
   );
 
   ResolvePlatformSpecificImplementationBeforeUse()
     : super(
         name: 'resolve_platform_specific_implementation_before_use',
-        description:
-            'Avoids chaining member access directly from nullable platform-specific plugin resolution.',
+        description: 'Avoids chaining member access directly from nullable platform-specific plugin resolution.',
       );
 
   @override

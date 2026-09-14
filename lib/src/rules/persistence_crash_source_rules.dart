@@ -13,8 +13,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
       correctionMessage: 'Add reservedTypeIds when @HiveType classes share a file with adapters.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags @GenerateAdapters without reservedTypeIds when @HiveType exists so the Flutter skill violation is shown during analysis.',
+    description: 'Flags @GenerateAdapters without reservedTypeIds when @HiveType exists so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (_annotationSpans(context, 'HiveType').isEmpty) return;
       final adapterSpans = _annotationSpans(context, 'GenerateAdapters');
@@ -37,8 +36,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
       correctionMessage: 'Call Hive.close() from tearDown or cleanup.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags test files that use Hive without Hive.close() so the Flutter skill violation is shown during analysis.',
+    description: 'Flags test files that use Hive without Hive.close() so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isTestFile) return;
       final hiveUseLine = _firstLineMatching(context, RegExp(r'\bHive\s*\.'));
@@ -59,8 +57,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
       correctionMessage: 'Assign a fresh permanent typeId and retire the old id.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags duplicate Hive typeId values in the same file so the Flutter skill violation is shown during analysis.',
+    description: 'Flags duplicate Hive typeId values in the same file so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       _reportDuplicateAnnotationIds(
         reporter: reporter,
@@ -82,8 +79,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
       correctionMessage: 'Append with a new HiveField index; never reuse a retired index.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags duplicate HiveField indices in the same file so the Flutter skill violation is shown during analysis.',
+    description: 'Flags duplicate HiveField indices in the same file so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       _reportDuplicateAnnotationIds(
         reporter: reporter,
@@ -105,8 +101,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
       correctionMessage: 'Route feature code through Crash.init/error/log.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags FirebaseCrashlytics.instance usage outside crash_service.dart so the Flutter skill violation is shown during analysis.',
+    description: 'Flags FirebaseCrashlytics.instance usage outside crash_service.dart so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (_isCrashServiceContext(context)) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -130,8 +125,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
       correctionMessage: 'Call and await Crash.init() before runApp in the app entrypoint.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags main entrypoints that call runApp before Crash.init() so the Flutter skill violation is shown during analysis.',
+    description: 'Flags main entrypoints that call runApp before Crash.init() so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!_isMainEntrypoint(context)) return;
       final runAppLine = _firstRunAppInvocationLine(context);
@@ -154,8 +148,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
       correctionMessage: 'Catch inside the fire-and-forget future or attach catchError.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags feasible unawaited fire-and-forget calls without catch handling so the Flutter skill violation is shown during analysis.',
+    description: 'Flags feasible unawaited fire-and-forget calls without catch handling so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -247,9 +240,8 @@ int? _firstRunAppInvocationLine(SourceScannerContext context) {
   for (var i = 0; i < context.source.length; i++) {
     final line = context.source.masked[i];
     if (!RegExp(r'\brunApp\s*\(').hasMatch(line)) continue;
-    if (RegExp(
-      r'^\s*(?:void|Future(?:<[^>]+>)?|[A-Za-z_][A-Za-z0-9_<>,? ]+)\s+runApp\s*\(',
-    ).hasMatch(line)) {
+    if (RegExp(r'^\s*(?:void|Future(?:<[^>]+>)?|[A-Za-z_][A-Za-z0-9_<>,? ]+)\s+runApp\s*\(')
+        .hasMatch(line)) {
       continue;
     }
     return i;

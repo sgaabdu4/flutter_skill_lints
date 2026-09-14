@@ -23,10 +23,10 @@ Designed for Riverpod + codegen Flutter apps.
 | --- | ---: |
 | Flutter skill warning rules | 185 |
 | Flutter skill diagnostic codes | 193 |
-| Additional Dart/Flutter warning rules | 238 |
-| Additional Dart/Flutter diagnostic codes | 279 |
-| Total unique diagnostic codes | 470 |
-| Quick fixes | 63 |
+| Additional Dart/Flutter warning rules | 239 |
+| Additional Dart/Flutter diagnostic codes | 280 |
+| Total unique diagnostic codes | 471 |
+| Quick fixes | 64 |
 | Assists | 1 |
 
 ## Quick Start
@@ -39,7 +39,7 @@ Designed for Riverpod + codegen Flutter apps.
 
    plugins:
      riverpod_lint: ^3.1.9
-     flutter_skill_lints: ^0.10.0
+     flutter_skill_lints: ^0.11.0
 
    analyzer:
      exclude:
@@ -49,9 +49,7 @@ Designed for Riverpod + codegen Flutter apps.
        - "**/*.gr.dart"
        - "**/*.arb"
      language:
-       strict-casts: true
        strict-inference: true
-       strict-raw-types: true
      errors:
        missing_required_param: error
        missing_return: error
@@ -73,6 +71,8 @@ Designed for Riverpod + codegen Flutter apps.
        # Effective Dart Design additions not covered by flutter_lints.
        - always_declare_return_types
        - type_annotate_public_apis
+       - no_dynamic_casts
+       - no_raw_types
        - avoid_positional_boolean_parameters
        - avoid_equals_and_hash_code_on_mutable_classes
        - avoid_returning_this
@@ -224,21 +224,21 @@ versions listed under [Compatibility](#compatibility). Analyzer plugin APIs
 are not stable across major versions.
 
 **Conflict with `riverpod_lint`.** Both plugins are designed to coexist when
-their top-level plugin constraints resolve with the analyzer 14.3 family.
+their top-level plugin constraints resolve with the analyzer 14.4 family.
 
 ## Compatibility
 
-Targets the analyzer-14.3 shared plugin family and requires Dart 3.11 or
+Targets the analyzer-14.4 shared plugin family and requires Dart 3.13 or
 later. Verified against:
 
-- `analysis_server_plugin 0.3.22`
-- `analyzer 14.3.0`
-- `analyzer_plugin 0.14.16`
-- `analyzer_testing 0.4.1`
+- `analysis_server_plugin 0.3.23`
+- `analyzer 14.4.0`
+- `analyzer_plugin 0.14.17`
+- `analyzer_testing 0.4.2`
 - `riverpod_lint 3.1.9` in a Dart 3.13 consumer
 
 The real analysis-server smoke test resolves both plugins together, so the
-shared analyzer-14.3 family is the package contract.
+shared analyzer-14.4 family is the package contract.
 
 Recheck before publishing a new release.
 
@@ -250,10 +250,10 @@ dart analyze
 dart test
 ```
 
-Set up the repository hooks once:
+Run the full repository gate:
 
 ```bash
-sh scripts/setup-git-hooks.sh
+python3 .hooks/hard-eng.py check
 ```
 
 Integration smoke test (creates a temporary Flutter app, gated):

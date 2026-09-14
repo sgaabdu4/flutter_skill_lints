@@ -60,9 +60,8 @@ Iterable<String> _sectionScalarValues(String text, String section) sync* {
 }
 
 String? _dependencyScalarValue(String line) {
-  final match = RegExp(
-    r'''^\s*['"]?[A-Za-z_][\w-]*['"]?\s*:\s*(.+?)\s*(?:#.*)?$''',
-  ).firstMatch(line);
+  final match = RegExp(r'''^\s*['"]?[A-Za-z_][\w-]*['"]?\s*:\s*(.+?)\s*(?:#.*)?$''')
+      .firstMatch(line);
   final value = match?.group(1)?.trim();
   if (value == null || value.isEmpty || value == '{}' || value.startsWith('{')) {
     return null;

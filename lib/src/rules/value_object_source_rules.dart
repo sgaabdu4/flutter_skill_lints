@@ -19,12 +19,10 @@ final List<ScannerRule> valueObjectSourceRules = [
     code: const LintCode(
       'domain_empty_string_sentinel',
       'Do not use empty strings as domain sentinels.',
-      correctionMessage:
-          'Use a validated Value Object for required text, or String? for optional text after normalizing blank input to null at the boundary.',
+      correctionMessage: 'Use a validated Value Object for required text, or String? for optional text after normalizing blank input to null at the boundary.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags empty-string defaults in domain code so blank text is not used as a missing-value sentinel.',
+    description: 'Flags empty-string defaults in domain code so blank text is not used as a missing-value sentinel.',
     scan: (reporter, context) {
       if (!context.isDomainPath) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -57,8 +55,7 @@ final List<ScannerRule> valueObjectSourceRules = [
           'Critical Rule 12 + references/value-objects.md Forbidden section.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags public raw redirecting factories on Value Objects so the Flutter skill violation is shown during analysis.',
+    description: 'Flags public raw redirecting factories on Value Objects so the Flutter skill violation is shown during analysis.',
     scan: _scanPublicRawRedirectFactories,
   ),
 
@@ -80,8 +77,7 @@ final List<ScannerRule> valueObjectSourceRules = [
           'references/value-objects.md.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags named factories on Freezed domain entities so the Flutter skill violation is shown during analysis.',
+    description: 'Flags named factories on Freezed domain entities so the Flutter skill violation is shown during analysis.',
     scan: _scanDomainEntityPrimitiveFactories,
   ),
 
@@ -110,8 +106,7 @@ final List<ScannerRule> valueObjectSourceRules = [
           'references/value-objects.md.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags sealed Freezed Value Objects whose annotation does not disable .map()/.when() generation.',
+    description: 'Flags sealed Freezed Value Objects whose annotation does not disable .map()/.when() generation.',
     scan: (reporter, context) {
       if (!context.path.contains('/domain/values/')) return;
       for (final classSpan in context.classes) {
@@ -147,8 +142,7 @@ final List<ScannerRule> valueObjectSourceRules = [
           'building-flutter-apps SKILL.md Critical Rule 12 + references/value-objects.md.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags hand-written copyWith declarations in /domain/ files so the Flutter skill violation is shown during analysis.',
+    description: 'Flags hand-written copyWith declarations in /domain/ files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isDomainPath) return;
       final declRegex = RegExp(

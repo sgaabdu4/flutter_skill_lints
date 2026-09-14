@@ -9,8 +9,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 abstract class NodeRegistrationRule extends AnalysisRule {
-  NodeRegistrationRule({required super.name, required super.description, required LintCode code})
-    : _code = code;
+  NodeRegistrationRule({required super.name, required super.description, required this._code});
 
   final LintCode _code;
 

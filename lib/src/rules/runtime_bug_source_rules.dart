@@ -2,6 +2,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'runtime_bug_source_rules/runtime_bug_source_rules_part_01.dart';
 part 'runtime_bug_source_rules/runtime_bug_source_rules_part_02.dart';
+part 'runtime_bug_source_rules/runtime_bug_source_rules_part_03.dart';
 
 final List<ScannerRule> runtimeBugSourceRules = [
   ..._runtimeBugSourceRulesPart1,
@@ -151,8 +152,6 @@ final _byIdFunctionStart = RegExp(
   r'^\s*(?:[A-Za-z_]\w*(?:\s*<[^;]+>)?\??)\s+_?[A-Za-z_]\w*ById\s*\([^)]*\)\s*\{',
 );
 
-final _manualIdLoop = RegExp(r'\bfor\s*\([\s\S]*?\.\s*id\s*==');
-
 final _adHocIdIndexLookup = RegExp(
   r'\.\s*indexBy\s*\(\s*'
   r'(?:\([A-Za-z_]\w*\)|[A-Za-z_]\w*)\s*=>\s*[A-Za-z_]\w*\s*\.\s*id\s*'
@@ -292,9 +291,8 @@ bool _hasLaterReconcileCall(SourceScannerContext context, int startLine, int end
 
 bool _isStorageBoundaryClass(SourceScannerContext context, ScannerClassSpan classSpan) {
   if (context.isDatasourcePath || context.isRepositoryPath) return true;
-  return RegExp(
-    r'(?:Datasource|Repository|Storage|Preferences|Settings|Local)$',
-  ).hasMatch(classSpan.name);
+  return RegExp(r'(?:Datasource|Repository|Storage|Preferences|Settings|Local)$')
+      .hasMatch(classSpan.name);
 }
 
 bool _methodLooksLikeResetAll(String methodName) => RegExp(
@@ -342,9 +340,8 @@ bool _hasOuterDirtyGuard(SourceScannerContext context, int saveAllLine) {
 }
 
 String? _saveAllMappedCollection(String callWindow) {
-  final match = RegExp(
-    r'\b([A-Za-z_]\w*)\s*\.\s*map\s*\([^)]*\.\s*fromEntity\s*\)',
-  ).firstMatch(callWindow);
+  final match = RegExp(r'\b([A-Za-z_]\w*)\s*\.\s*map\s*\([^)]*\.\s*fromEntity\s*\)')
+      .firstMatch(callWindow);
   return match?.group(1);
 }
 

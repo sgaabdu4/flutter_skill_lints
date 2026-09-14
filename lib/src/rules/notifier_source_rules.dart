@@ -12,12 +12,10 @@ final List<ScannerRule> notifierSourceRules = [
     code: const LintCode(
       'notifier_local_dependency_cache',
       'Do not cache repositories or services in notifiers.',
-      correctionMessage:
-          'Resolve stable dependencies from their provider via a stateless helper/mixin instead of a notifier-local field.',
+      correctionMessage: 'Resolve stable dependencies from their provider via a stateless helper/mixin instead of a notifier-local field.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags notifier-local repository/service fields so Riverpod provider caching remains the dependency source of truth.',
+    description: 'Flags notifier-local repository/service fields so Riverpod provider caching remains the dependency source of truth.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
 
@@ -50,8 +48,7 @@ final List<ScannerRule> notifierSourceRules = [
           'Call an _ensure... helper before using repositories or ref.read dependencies.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags Notifier mutation methods that write before dependency initialization so the Flutter skill violation is shown during analysis.',
+    description: 'Flags Notifier mutation methods that write before dependency initialization so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (final classSpan in context.classes.where((span) => span.isNotifier)) {
         final classMethods = context.methods.where((method) => classSpan.contains(method.start));
@@ -74,8 +71,7 @@ final List<ScannerRule> notifierSourceRules = [
       correctionMessage: 'Use ref.read in notifier methods.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags ref.watch calls inside Notifier methods so the Flutter skill violation is shown during analysis.',
+    description: 'Flags ref.watch calls inside Notifier methods so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (final classSpan in context.classes.where((span) => span.isNotifier)) {
         final classMethods = context.methods.where((method) => classSpan.contains(method.start));

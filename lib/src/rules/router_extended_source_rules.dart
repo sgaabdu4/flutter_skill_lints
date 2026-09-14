@@ -14,8 +14,7 @@ final List<ScannerRule> routerExtendedSourceRules = [
           'Move redirect branching into a resolve...Redirect function and matrix-test it.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags inline branching inside GoRouter redirect closures so the Flutter skill violation is shown during analysis.',
+    description: 'Flags inline branching inside GoRouter redirect closures so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -42,8 +41,7 @@ final List<ScannerRule> routerExtendedSourceRules = [
       correctionMessage: 'Use StatefulNavigationShell.goBranch for tab changes.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags typed route push calls in shell navigation widgets so the Flutter skill violation is shown during analysis.',
+    description: 'Flags typed route push calls in shell navigation widgets so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       final shellTabPush = RegExp(
         r'\bconst\s+[A-Z]\w*Route\s*'

@@ -14,8 +14,7 @@ final List<ScannerRule> freezedSourceRules = [
           'Replace private constructors on static-only classes with abstract final class.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description:
-        'Flags static-only classes that use private constructors so the Flutter skill violation is shown during analysis.',
+    description: 'Flags static-only classes that use private constructors so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (final classSpan in context.classes) {
         if (context.isPrivateNamespaceConstructor(classSpan)) {
@@ -36,8 +35,7 @@ final List<ScannerRule> freezedSourceRules = [
       correctionMessage: 'Set explicit_to_json: true in build.yaml.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags per-class JsonSerializable explicitToJson settings so the Flutter skill violation is shown during analysis.',
+    description: 'Flags per-class JsonSerializable explicitToJson settings so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -59,8 +57,7 @@ final List<ScannerRule> freezedSourceRules = [
       correctionMessage: 'Use plain @freezed with fromJson.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags @Freezed(toJson: true) classes that already define fromJson so the Flutter skill violation is shown during analysis.',
+    description: 'Flags @Freezed(toJson: true) classes that already define fromJson so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       final text = context.source.masked.join('\n');
       if (RegExp(r'@Freezed\s*\([^)]*toJson\s*:\s*true').hasMatch(text) &&
@@ -81,8 +78,7 @@ final List<ScannerRule> freezedSourceRules = [
       correctionMessage: 'Use Dart pattern matching and switch expressions.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags legacy Freezed when/maybeWhen/maybeMap invocations so the Flutter skill violation is shown during analysis.',
+    description: 'Flags legacy Freezed when/maybeWhen/maybeMap invocations so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
@@ -102,12 +98,10 @@ final List<ScannerRule> freezedSourceRules = [
     code: const LintCode(
       'freezed_required_value_class',
       'Use Freezed for domain entities and data models.',
-      correctionMessage:
-          'Use @freezed sealed classes only. This project chooses one value-class pattern to remove mental tax; do not use Equatable or manual equality here.',
+      correctionMessage: 'Use @freezed sealed classes only. This project chooses one value-class pattern to remove mental tax; do not use Equatable or manual equality here.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags non-Freezed domain entities and data models so value classes use one consistent immutable pattern with no Equatable/manual-equality choice.',
+    description: 'Flags non-Freezed domain entities and data models so value classes use one consistent immutable pattern with no Equatable/manual-equality choice.',
     scan: (reporter, context) {
       for (final classSpan in context.classes) {
         if (!context.requiresFreezedValueClass(classSpan)) continue;
@@ -130,12 +124,10 @@ final List<ScannerRule> freezedSourceRules = [
     code: const LintCode(
       'use_freezed_instead_of_immutable',
       'Use Freezed instead of @immutable.',
-      correctionMessage:
-          'Remove @immutable and rewrite the value/state class as a @freezed sealed class in its own file.',
+      correctionMessage: 'Remove @immutable and rewrite the value/state class as a @freezed sealed class in its own file.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags manual @immutable annotations so immutable value/state classes use the project-wide Freezed pattern.',
+    description: 'Flags manual @immutable annotations so immutable value/state classes use the project-wide Freezed pattern.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -159,8 +151,7 @@ final List<ScannerRule> freezedSourceRules = [
       correctionMessage: 'Move each @freezed/@Freezed class into its own Dart file.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags files containing multiple Freezed declarations so each generated value class has one source owner.',
+    description: 'Flags files containing multiple Freezed declarations so each generated value class has one source owner.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       final freezedClasses = [

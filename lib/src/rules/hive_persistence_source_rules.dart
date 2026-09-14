@@ -26,12 +26,10 @@ final List<ScannerRule> hivePersistenceSourceRules = [
     code: const LintCode(
       'avoid_unvalidated_persisted_map_cast',
       'Do not cast persisted values directly to Map<String, dynamic>.',
-      correctionMessage:
-          'Check the value is a map, validate every key is a String, and create a typed map before decoding it.',
+      correctionMessage: 'Check the value is a map, validate every key is a String, and create a typed map before decoding it.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags direct Map<String, dynamic> casts at local persistence boundaries so malformed stored values are rejected safely.',
+    description: 'Flags direct Map<String, dynamic> casts at local persistence boundaries so malformed stored values are rejected safely.',
     scan: (reporter, context) {
       if (context.isTestFile || !context.path.startsWith('lib/')) return;
       final path = context.path.toLowerCase();
@@ -78,15 +76,13 @@ final List<ScannerRule> hivePersistenceSourceRules = [
           'Use manual `Hive.init(path)` only for explicit custom paths or test temp boxes.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags direct hive_ce imports in production Flutter lib/ files so apps use the Flutter package surface.',
+    description: 'Flags direct hive_ce imports in production Flutter lib/ files so apps use the Flutter package surface.',
     scan: (reporter, context) {
       if (context.isTestFile || !context.path.startsWith('lib/')) return;
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.code[i];
-        final match = RegExp(
-          r'''^\s*import\s+['"]package:hive_ce/hive_ce\.dart['"]''',
-        ).firstMatch(line);
+        final match = RegExp(r'''^\s*import\s+['"]package:hive_ce/hive_ce\.dart['"]''')
+            .firstMatch(line);
         if (match != null) reporter.report(context, i, match.start);
       }
     },
@@ -110,8 +106,7 @@ final List<ScannerRule> hivePersistenceSourceRules = [
           'references/hive-persistence.md (VO Interop).',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags VO-typed constructor parameters on Hive Model classes so the Flutter skill violation is shown during analysis.',
+    description: 'Flags VO-typed constructor parameters on Hive Model classes so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.path.contains('/data/models/') && !context.path.contains('/data/model/')) {
         return;

@@ -78,9 +78,8 @@ bool _isAllowedDateTimeExtensionCurrentBoundary(SourceScannerContext context, in
 
   final start = lineIndex < 3 ? 0 : lineIndex - 3;
   final window = context.source.masked.sublist(start, lineIndex + 1).join('\n');
-  return RegExp(
-    r'\bstatic\s+DateTime\s+nowUtc\s*\(\s*\)\s*=>\s*DateTime\s*\.\s*timestamp\s*\(',
-  ).hasMatch(window);
+  return RegExp(r'\bstatic\s+DateTime\s+nowUtc\s*\(\s*\)\s*=>\s*DateTime\s*\.\s*timestamp\s*\(')
+      .hasMatch(window);
 }
 
 bool _isRawStringLiteralText(SourceScannerContext context, int offset) {
@@ -173,9 +172,8 @@ final _widgetInfraLocalConstructor = RegExp(
 );
 
 int _topLevelFunctionColumn(String line) {
-  if (RegExp(
-    r'^\s*(?:class|mixin|enum|extension|typedef|sealed\s+class|abstract\s+class)\b',
-  ).hasMatch(line)) {
+  if (RegExp(r'^\s*(?:class|mixin|enum|extension|typedef|sealed\s+class|abstract\s+class)\b')
+      .hasMatch(line)) {
     return -1;
   }
   final match = _topLevelFunction.firstMatch(line);
@@ -225,9 +223,7 @@ bool _classDispatchesNotifierMutation(SourceScannerContext context, ScannerClass
     final getterName = match.group(1);
     if (getterName == null) continue;
     final getterMutation = RegExp(
-      r'\b' +
-          RegExp.escape(getterName) +
-          r'\s*\.\s*(?:save|create|update|delete|set|add|remove|import|export|submit|select|continue|start)[A-Za-z0-9_]*\s*\(',
+      r'\b' + RegExp.escape(getterName) + r'\s*\.\s*(?:save|create|update|delete|set|add|remove|import|export|submit|select|continue|start)[A-Za-z0-9_]*\s*\(',
     );
     if (getterMutation.hasMatch(body)) return true;
   }
@@ -284,9 +280,8 @@ int _firstNonWhitespaceColumn(String line) {
 
 bool _buildContainsAppShell(SourceScannerContext context, ScannerMethodSpan method) {
   for (var i = method.start; i <= method.end; i++) {
-    if (RegExp(
-      r'\b(?:MaterialApp|CupertinoApp|WidgetsApp)(?:\.router)?\s*\(',
-    ).hasMatch(context.source.masked[i])) {
+    if (RegExp(r'\b(?:MaterialApp|CupertinoApp|WidgetsApp)(?:\.router)?\s*\(')
+        .hasMatch(context.source.masked[i])) {
       return true;
     }
   }

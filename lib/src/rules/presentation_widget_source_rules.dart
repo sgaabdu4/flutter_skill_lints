@@ -24,8 +24,7 @@ final List<ScannerRule> presentationWidgetSourceRules = [
     code: const LintCode(
       'presentation_widget_controller_state',
       'Reusable presentation widgets must not retain domain or workflow state.',
-      correctionMessage:
-          'Pass immutable view data and typed callbacks; move domain and workflow state to the screen, route, or notifier.',
+      correctionMessage: 'Pass immutable view data and typed callbacks; move domain and workflow state to the screen, route, or notifier.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Keeps domain and workflow state out of reusable presentation widgets.',
@@ -54,8 +53,7 @@ final List<ScannerRule> presentationWidgetSourceRules = [
     code: const LintCode(
       'presentation_widget_infrastructure_dependency',
       'Reusable presentation widgets must not depend on infrastructure.',
-      correctionMessage:
-          'Emit a typed callback and let the screen or notifier own repositories, services, providers, and SDKs.',
+      correctionMessage: 'Emit a typed callback and let the screen or notifier own repositories, services, providers, and SDKs.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Keeps infrastructure access out of reusable presentation widgets.',

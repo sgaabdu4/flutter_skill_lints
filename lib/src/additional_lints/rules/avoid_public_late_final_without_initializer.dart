@@ -15,8 +15,7 @@ class AvoidPublicLateFinalWithoutInitializer extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_public_late_final_without_initializer',
     'Avoid public late final fields without initializers.',
-    correctionMessage:
-        'Initialize the field in the constructor, make the lazy field private, or add a late final initializer.',
+    correctionMessage: 'Initialize the field in the constructor, make the lazy field private, or add a late final initializer.',
     severity: DiagnosticSeverity.ERROR,
   );
 

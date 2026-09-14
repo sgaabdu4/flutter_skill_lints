@@ -4,7 +4,7 @@ description: Appwrite backend development and operations, including destructive 
 license: MIT
 metadata:
   author: sgaabdu4
-  version: "2.1.2"
+  version: "2.1.3"
   tags: appwrite, backend, baas, dart, python, typescript
 ---
 
@@ -36,7 +36,7 @@ Load the owner before acting. Unlisted detail = read the owner, never infer.
 | Upload, download, preview, transform, bucket config | [storage-files](references/storage-files.md) |
 | Function authoring, handler, runtime, cold start, env vars | [functions](references/functions.md) |
 | Function events, schedules, idempotency, binary payloads, CI/CD | [functions-advanced](references/functions-advanced.md) |
-| Function execution SDK model or response-format parsing failure after remote work starts | [functions-advanced](references/functions-advanced.md) |
+| Function execution SDK model or response-format parsing failure, execution mode, response retrieval or execution timeout | [functions-advanced](references/functions-advanced.md) |
 | Realtime subscription, channel, presence, event filtering | [realtime](references/realtime.md) |
 | Push, email, or SMS delivery | [messaging](references/messaging.md) |
 | Outbound event delivery to an external system | [webhooks](references/webhooks.md) |
@@ -58,7 +58,7 @@ Load the owner before acting. Unlisted detail = read the owner, never infer.
 4. **Allocate Appwrite IDs once with `ID.unique()`** — retryable create: call `ID.unique()` before the first attempt → persist the returned ID in the durable draft/intent → reuse that exact ID for every retry/reconciliation. A fresh `ID.unique()` on retry creates a second resource. Business/natural identity remains in indexed columns; never derive resource IDs from names, timestamps, slugs, hashes, or custom generators.
 5. **Explicit ACL** — server SDK/Console create = empty resource ACL; client SDK create = creator read/update/delete. Pass explicit `Permission`/`Role` whenever ACL correctness matters.
 6. **Bind limits to the deployed target** — page size, bulk rows/request, transaction operations, and `Query.equal()` value cap come from the deployed server source/config, never from memory.
-7. **Async-start long-running Functions** — client `createExecution` for delete/sync/import/export/migrate/generate uses async execution, then reconciles source-of-truth state with bounded polling/realtime/fetch. Report destructive failure only after reconciliation proves the entity still exists. A synchronous `createExecution` already returns the terminal execution → read `responseStatusCode` + `responseBody` off that response; polling `getExecution` from the creating session returns `404` and inverts a success into a failure. Unavoidable status poll → `404` = terminal-unknown, never an error branch. Use [functions-advanced](references/functions-advanced.md).
+7. **Choose execution mode by the required result** — response data → synchronous `createExecution` within its 30-second limit. Async background work → bounded status monitoring + source-of-truth reconciliation; execution polling/realtime cannot return the response body or headers. Long-running results need an authorized durable result read. Report destructive failure only after reconciliation proves the entity still exists. Consume synchronous responses directly; ambiguous status/`404` → reconcile before retrying. Use [functions-advanced](references/functions-advanced.md).
 8. **Guard schema pushes** — `appwrite push tables` reconciles remote TablesDB against the complete local manifest; omission means deletion. Production push requires [appwrite-cli](references/appwrite-cli.md) inventory + manifest guard PASS. `push all`, `--all`, and `--force` never substitute for that gate.
 9. **Stage production migrations** — additive expand → type-aware resumable backfill → compatible deployment → contract/read-back → consumer activation. Partial data/schema never activates downstream code. Use [production-migrations](references/production-migrations.md).
 10. **Preserve write intent before optimizing** — update-only work never routes through `upsertRow`/`upsertRows`; a pre-read, existence check, or full payload does not remove create-on-missing semantics. Same patch across rows → `updateRows`; heterogeneous per-row updates → `createOperations` with `action: update` inside the verified transaction budget, or redesign. Transaction pressure never authorizes upsert. Use [bulk-operations](references/bulk-operations.md).

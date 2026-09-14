@@ -131,24 +131,27 @@ Future<dynamic> main(final context) async {
 | Report generation | 60s |
 | Data migration | 300s |
 
-Break long tasks to async executions:
+These are workload budgets; synchronous executions have a 30-second hard limit. Long-running work uses async execution and stores any required result in an authorized durable resource:
 
 ```dart
 final execution = await functions.createExecution(
     functionId: 'heavy-report', async: true,
     body: jsonEncode({'reportId': 'abc'}));
 
-// Check result later
-final result = await functions.getExecution(
+// Check execution status; the response body is not retained.
+final status = await functions.getExecution(
     functionId: 'heavy-report', executionId: execution.$id);
 ```
 
 ### Execution Result Read
 
-| Mode | Terminal result source |
+| Mode | Status and result source |
 |------|------------------------|
 | Sync (async flag false/omitted; Dart client `xasync`) | the `createExecution` response itself — `status` + `responseStatusCode` + `responseBody` |
-| Async | realtime `functions.<FUNCTION>.executions`, else bounded `getExecution` |
+| Async | Status only through realtime `functions.<FUNCTION>.executions` or bounded `getExecution`; read application results from the authorized durable resource |
+
+- Appwrite does not store response bodies or headers; only synchronous calls return them. Switching a data-returning call to async + polling cannot recover its JSON response, even when execution status is `completed`. [Execution modes](https://appwrite.io/docs/products/functions/execute#execution-modes).
+- Before changing execution mode, prove the caller receives its required result through the selected path. Test doubles must preserve the absent async body; a mocked completed execution containing response JSON is not valid integration proof.
 
 - Sync execution + follow-up `getExecution` from a client (user session) context = `404`; the execution row is not readable by the session that created it. Symptom = a function that succeeded reported as failed by the poller. Cloud `1.9.5` proof.
 - Polling a sync execution is forbidden; the create response is already terminal.

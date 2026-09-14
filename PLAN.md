@@ -1,6 +1,6 @@
 # Dart 3.13 Tooling Support
 
-Status: Ready
+Status: Complete
 
 ## Outcome + scope
 
@@ -119,4 +119,4 @@ The updated local repository passed all 1,757 tests, coverage, performance,
 secrets, actionlint, and workflow-security checks.
 
 Delivery target: Merge
-Delivery: Corrective release in progress.
+Delivery: Verified and ready for corrective merge and publication.

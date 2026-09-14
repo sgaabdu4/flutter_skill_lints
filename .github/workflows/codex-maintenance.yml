@@ -33,9 +33,12 @@ jobs:
           repo="$GITHUB_REPOSITORY"
           report="dependabot-report.md"
           : > "$report"
+          append_report() {
+            printf '%s\n' "$*" >> "$report"
+          }
           default_branch=$(gh repo view "$repo" --json defaultBranchRef --jq .defaultBranchRef.name)
           if [ "$default_branch" != "main" ] && [ "$default_branch" != "master" ]; then
-            echo "Skipped Dependabot merging because the default branch is $default_branch, not main or master." >> "$report"
+            append_report "Skipped Dependabot merging because the default branch is $default_branch, not main or master."
             exit 0
           fi
 
@@ -47,31 +50,27 @@ jobs:
           fi
           queued=0
           blocked=0
-          {
-            echo "### Dependabot pull requests"
-            echo ""
-            echo "Found ${#prs[@]} open Dependabot pull request(s)."
-          } >> "$report"
+          append_report "### Dependabot pull requests"
+          append_report ""
+          append_report "Found ${#prs[@]} open Dependabot pull request(s)."
 
           for pr in "${prs[@]}"; do
             title=$(gh pr view "$pr" --repo "$repo" --json title --jq .title)
             if output=$(gh pr merge "$pr" --repo "$repo" --auto --squash 2>&1); then
               queued=$((queued + 1))
-              echo "- queued #$pr: $title" >> "$report"
+              append_report "- queued #$pr: $title"
             else
               blocked=$((blocked + 1))
-              echo "- could not queue #$pr: $title" >> "$report"
-              echo '```' >> "$report"
-              echo "$output" >> "$report"
-              echo '```' >> "$report"
+              append_report "- could not queue #$pr: $title"
+              append_report '```'
+              append_report "$output"
+              append_report '```'
             fi
           done
 
-          {
-            echo ""
-            echo "Auto-merge requested: $queued"
-            echo "Needs repository settings or another machine credential: $blocked"
-          } >> "$report"
+          append_report ""
+          append_report "Auto-merge requested: $queued"
+          append_report "Needs repository settings or another machine credential: $blocked"
 
       - name: Record open issues not created by the owner
         shell: bash
@@ -174,7 +173,7 @@ jobs:
               | select(.merged_at >= $cutoff)
               | [.number, .merged_at]
               | @tsv')
-          while IFS=$'\t' read -r pr merged_at; do
+          while IFS=$'\t' read -r pr _merged_at; do
             [ -n "$pr" ] || continue
             marker="Dependabot PR #$pr"
             if printf '%s\n' "$recent_messages" | grep -Fq "$marker"; then

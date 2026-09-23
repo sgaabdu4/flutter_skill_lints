@@ -319,8 +319,8 @@ void main() {
   });
 }
 
-const _enabledFlutterSkillRuleCount = 185;
-const _enabledFlutterSkillDiagnosticCount = 193;
+const _enabledFlutterSkillRuleCount = 187;
+const _enabledFlutterSkillDiagnosticCount = 195;
 const _enabledAdditionalRuleCount = 280;
 
 final class _RecordingPluginRegistry extends PluginRegistry {

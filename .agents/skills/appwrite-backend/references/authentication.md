@@ -301,6 +301,20 @@ client-SDK executions. Its payload carries exactly `userId` + `sessionId` +
 - project with the JWT auth method disabled → `account.createJWT()` / `/account/jwts` returns `501`; the injected function JWT is unaffected
 
 ```dart
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:dart_appwrite/dart_appwrite.dart';
+
+// `FunctionContext` and `adaptFunctionContext` are the verified project
+// boundary described in functions.md.
+final class UserJwtClaims {
+  const UserJwtClaims({required this.userId, required this.sessionId});
+
+  final String userId;
+  final String sessionId;
+}
+
 UserJwtClaims? readUserJwtClaims(String jwt) {
   final parts = jwt.split('.');
   if (parts.length != 3) return null;
@@ -321,16 +335,32 @@ UserJwtClaims? readUserJwtClaims(String jwt) {
   return UserJwtClaims(userId: userId, sessionId: sessionId);
 }
 
-final claims = readUserJwtClaims(jwt);
-if (claims == null) return context.res.json({'error': 'Unauthorized'}, statusCode: 401);
+Future<Object?> main(Object rawContext) async {
+  final FunctionContext context = adaptFunctionContext(rawContext);
+  final String? jwt = context.req.headers['x-appwrite-user-jwt'];
+  if (jwt == null || jwt.isEmpty) {
+    return context.res.json({'error': 'Unauthorized'}, status: 401);
+  }
 
-final user = await Account(Client()
-        .setEndpoint(endpoint)
-        .setProject(projectId)
-        .setJWT(jwt))
-    .get();
-if (user.$id != claims.userId) {
-    return context.res.json({'error': 'Unauthorized'}, statusCode: 401);
+  final claims = readUserJwtClaims(jwt);
+  if (claims == null) {
+    return context.res.json({'error': 'Unauthorized'}, status: 401);
+  }
+
+  final endpoint = Platform.environment['APPWRITE_FUNCTION_API_ENDPOINT'];
+  final projectId = Platform.environment['APPWRITE_FUNCTION_PROJECT_ID'];
+  if (endpoint == null || projectId == null) {
+    throw StateError('Missing Appwrite Function configuration');
+  }
+
+  final user = await Account(
+    Client().setEndpoint(endpoint).setProject(projectId).setJWT(jwt),
+  ).get();
+  if (user.$id != claims.userId) {
+    return context.res.json({'error': 'Unauthorized'}, status: 401);
+  }
+
+  return context.res.json({'ok': true});
 }
 ```
 

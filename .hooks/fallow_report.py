@@ -2,39 +2,192 @@
 
 import json
 import math
+import os
+import shlex
 from pathlib import Path
 
-from gate_config import JsonObject, Report
+from gate_config import Gate, Group, JsonObject, Report
+
+
+def owns_package_fallow(
+    group: Group,
+    gate: Gate,
+    scripts: dict[str, str],
+    package_groups: list[Group] | None = None,
+) -> bool:
+    """Keep the audit owner while allowing serial coverage to be reused."""
+    command = gate["command"]
+    if gate.get("report", {}).get("type") != "fallow":
+        return False
+    if command[:3] == ["pnpm", "run", "check:fallow"]:
+        return True
+    if command[:2] != ["pnpm", "run"] or gate.get("parallel"):
+        return False
+    try:
+        standalone = shlex.split(scripts.get("check:fallow", ""))
+    except ValueError:
+        return False
+    prerequisites = _serial_test_prerequisites(group, gate)
+    if not prerequisites:
+        return False
+    expected = _chain_commands(prerequisites + [command])
+    if standalone == expected:
+        return True
+    if package_groups is None:
+        return False
+    dependencies = _dependency_coverage_commands(group, package_groups)
+    return dependencies is not None and standalone == _chain_commands(
+        prerequisites + dependencies + [command]
+    )
+
+
+def _serial_test_prerequisites(
+    group: Group, gate: Gate | None
+) -> list[list[str]] | None:
+    prerequisites = []
+    for previous in group["checks"]:
+        if gate is not None and previous is gate:
+            return prerequisites
+        if previous.get("role") == "tests":
+            if previous.get("parallel"):
+                return None
+            prerequisites.append(previous["command"])
+    return prerequisites if gate is None else None
+
+
+def _dependency_coverage_commands(
+    group: Group, package_groups: list[Group]
+) -> list[list[str]] | None:
+    by_path = {
+        candidate["path"]: (index, candidate)
+        for index, candidate in enumerate(package_groups)
+    }
+    current_index = next(
+        (index for index, candidate in enumerate(package_groups) if candidate is group),
+        None,
+    )
+    if current_index is None:
+        return None
+    commands: list[list[str]] = []
+    for dependency in group.get("depends_on", []):
+        owner = by_path.get(dependency)
+        if owner is None:
+            return None
+        owner_index, owner_group = owner
+        if owner_index >= current_index or group["path"] not in owner_group.get(
+            "depends_on", []
+        ):
+            return None
+        owner_commands = _serial_test_prerequisites(owner_group, None)
+        if not owner_commands or any(
+            command[:2] != ["pnpm", "run"] for command in owner_commands
+        ):
+            return None
+        commands.extend(
+            [
+                [
+                    "pnpm",
+                    "--dir",
+                    os.path.relpath(dependency, start=group["path"]),
+                    "run",
+                    *command[2:],
+                ]
+                for command in owner_commands
+            ]
+        )
+    return commands
+
+
+def _chain_commands(commands: list[list[str]]) -> list[str]:
+    return [
+        argument
+        for index, command in enumerate(commands)
+        for argument in (["&&"] if index else []) + command
+    ]
+
+
+SCANNERS = {"fallow", "dart-decimate", "react-doctor"}
+TOLERANCE_FLAGS = {
+    "--baseline",
+    "--save-baseline",
+    "--dead-code-baseline",
+    "--health-baseline",
+    "--dupes-baseline",
+    "--regression-baseline",
+    "--fail-on-regression",
+    "--tolerance",
+}
+
+
+def native_scanner_command(arguments: list[str]) -> list[str] | None:
+    """Return a scanner executable with its arguments behind package-manager prefixes."""
+    if arguments[:2] in (["pnpm", "dlx"], ["pnpm", "exec"]):
+        arguments = arguments[2:]
+        while arguments and arguments[0].startswith(("--package=", "--allow-build=")):
+            arguments = arguments[1:]
+    if not arguments:
+        return None
+    executable = Path(arguments[0]).name.split("@", 1)[0]
+    return [executable, *arguments[1:]] if executable in SCANNERS else None
 
 
 def native_fallow_command(arguments: list[str]) -> list[str] | None:
-    if arguments[:2] in (["pnpm", "dlx"], ["pnpm", "exec"]):
-        arguments = arguments[2:]
-    if not arguments or Path(arguments[0]).name.split("@", 1)[0] != "fallow":
+    invocation = native_scanner_command(arguments)
+    return invocation if invocation and invocation[0] == "fallow" else None
+
+
+def option(invocation: list[str], flag: str) -> str | None:
+    for index, argument in enumerate(invocation):
+        key, separator, value = argument.partition("=")
+        if key == flag:
+            return value if separator else next(iter(invocation[index + 1 :]), "")
+    return None
+
+
+def fallow_failure(invocation: list[str], report: Report) -> str | None:
+    crap = option(invocation, "--max-crap")
+    if crap is not None and (not math.isfinite(float(crap)) or float(crap) <= 0):
+        return "Fallow CRAP enforcement cannot be disabled; repair its coverage input"
+    if "audit" not in invocation:
+        if "--fail-on-issues" not in invocation:
+            return "Fallow scans must fail on every finding; add --fail-on-issues"
         return None
-    return ["fallow", *arguments[1:]]
+    if report.get("type") != "fallow":
+        return "Fallow audit gates require a native fallow report; exit status alone cannot prove enabled metrics"
+    if option(invocation, "--gate") != "all":
+        return (
+            "Fallow audit must fail on every finding, not only new ones; add --gate all"
+        )
+    return None
 
 
-def validate_fallow_command(arguments: list[str], report: Report) -> None:
-    invocation = native_fallow_command(arguments)
+def scanner_failure(invocation: list[str], report: Report) -> str | None:
+    if invocation[0] == "dart-decimate":
+        if "check" in invocation and "--strict" not in invocation:
+            return "dart-decimate check must fail on every finding; add --strict"
+    elif invocation[0] == "react-doctor":
+        if option(invocation, "--blocking") != "warning":
+            return "React Doctor must fail on warnings; use --blocking warning"
+        if "--no-respect-inline-disables" not in invocation:
+            return "React Doctor must not honour inline suppressions; add --no-respect-inline-disables"
+    else:
+        return fallow_failure(invocation, report)
+    return None
+
+
+def validate_scanner_command(arguments: list[str], report: Report) -> None:
+    """Every finding fails; none may be baselined, tolerated or suppressed."""
+    invocation = native_scanner_command(arguments)
     if invocation is None:
         return
-    for index, argument in enumerate(invocation):
-        flag, separator, value = argument.partition("=")
-        if flag == "--max-crap":
-            value = (
-                value
-                if separator
-                else next(iter(invocation[index + 1 : index + 2]), "")
+    for argument in invocation:
+        if argument.partition("=")[0] in TOLERANCE_FLAGS:
+            raise ValueError(
+                f"{invocation[0]} cannot tolerate existing findings with {argument}; repair every reported finding and commit the repair before continuing"
             )
-            if not math.isfinite(float(value)) or float(value) <= 0:
-                raise ValueError(
-                    "Fallow CRAP enforcement cannot be disabled; repair its coverage input"
-                )
-    if "audit" in invocation and report.get("type") != "fallow":
-        raise ValueError(
-            "Fallow audit gates require a native fallow report; exit status alone cannot prove enabled metrics"
-        )
+    failure = scanner_failure(invocation, report)
+    if failure is not None:
+        raise ValueError(failure)
 
 
 def fallow_report_path(arguments: list[str]) -> str | None:

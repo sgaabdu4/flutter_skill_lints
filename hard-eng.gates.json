@@ -75,7 +75,7 @@
         },
         {
           "name": "types-lint",
-          "role": "types",
+          "role": "project-types",
           "parallel": true,
           "command": [
             "dart",
@@ -91,7 +91,8 @@
             "dart-decimate",
             "check",
             ".",
-            "--boundary-violations"
+            "--boundary-violations",
+            "--strict"
           ]
         },
         {
@@ -122,7 +123,8 @@
             "--threshold",
             "0",
             "--format",
-            "json"
+            "json",
+            "--strict"
           ],
           "report": {
             "type": "dart-decimate",
@@ -144,6 +146,18 @@
             "path": "coverage/performance.jsonl",
             "stdout": true
           }
+        },
+        {
+          "name": "strict-types-lint",
+          "role": "types",
+          "parallel": true,
+          "command": [
+            "dart",
+            "analyze",
+            "--fatal-infos",
+            "lib",
+            "test"
+          ]
         }
       ]
     }

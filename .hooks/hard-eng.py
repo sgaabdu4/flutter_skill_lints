@@ -30,7 +30,7 @@ from gate_config import (
     validate_dart_exclusions,
 )
 from project_setup import package_script_arguments as test_arguments
-from tool_setup import execution_lock, managed_command, provision_tools
+from tool_setup import managed_command, provision_tools
 
 DartAnalyzer = TypedDict(
     "DartAnalyzer",
@@ -336,8 +336,7 @@ def production_files(
 
 
 def prepare_command(group: Group, gate: Gate, timeout: float) -> list[str]:
-    command = gate["command"]
-    validate_dart_boundaries(command, ROOT / group["path"], timeout)
+    command = managed_command(gate["command"], ROOT / group["path"])
     if command[0] == "biome" and "." in command:
         from project_setup import javascript_files
 
@@ -385,7 +384,8 @@ def prepare_command(group: Group, gate: Gate, timeout: float) -> list[str]:
             ]
         elif language == "javascript":
             validate_typescript(command, directory, group, timeout)
-    return managed_command(command, ROOT / group["path"])
+    validate_dart_boundaries(command, ROOT / group["path"], timeout)
+    return command
 
 
 def validate_typescript(
@@ -479,7 +479,7 @@ def run_gate(
         directory = ROOT / group["path"]
         expected_sources: set[Path] = set()
         command = prepare_command(group, gate, timeout)
-        from reports import SCANNER_LOGS, SCANNERS
+        from reports import SCANNERS, emit_dart_test_failure, validate_scanner_log
 
         report = gate.get("report", {})
         kind = report.get("type", "")
@@ -504,37 +504,35 @@ def run_gate(
             report_path, coverage_path, directory, expected_sources = prepare_reports(
                 group, report, kind, tests, scanner, command
             )
-        capture = (tests and kind == "dart-tests" and report.get("stdout", True)) or (
-            scanner and report.get("stdout") is True
-        )
+        capture = tests and kind == "dart-tests" and report.get("stdout", True)
+        capture = capture or scanner and report.get("stdout") is True
+        result = None
         with tempfile.TemporaryFile(
             mode="w+", encoding="utf-8", errors="replace"
         ) as log:
             try:
                 with (
-                    execution_lock(command),
-                    (
-                        report_path.open("w")
-                        if capture and report_path is not None
-                        else nullcontext()
-                    ) as output,
-                ):
-                    result = subprocess.run(
+                    report_path.open("w")
+                    if capture and report_path is not None
+                    else nullcontext()
+                ) as output:
+                    from gitleaks_scan import run_gate_command
+
+                    result = run_gate_command(
+                        gate.get("role"),
                         command,
-                        cwd=ROOT / group["path"],
-                        check=False,
-                        timeout=timeout,
-                        env={**os.environ, "PNPM_CONFIG_DLX_CACHE_MAX_AGE": "0"},
-                        stdout=output if capture else log,
-                        stderr=log,
+                        directory,
+                        timeout,
+                        output if capture else log,
+                        log,
                     )
             finally:
                 with output_lock:
                     print(f"OUTPUT {group['path']}/{gate['name']}", flush=True)
                     log.seek(0)
                     shutil.copyfileobj(log, sys.stdout)
-            if scanner in SCANNER_LOGS:
-                SCANNER_LOGS[scanner](log)
+                    emit_dart_test_failure(result, tests, kind, report_path)
+            validate_scanner_log(scanner, log)
         if result.returncode == 0 and scanner and report_path is not None:
             if (
                 scanner == "osv"
@@ -547,7 +545,7 @@ def run_gate(
                 validate_osv(report_path, empty_pnpm=directory)
             else:
                 SCANNERS[scanner](report_path)
-        from reports import completed_tests, line_coverage
+        from reports import completed_tests, line_coverage, parallel_hint
 
         if (
             result.returncode == 0
@@ -566,7 +564,8 @@ def run_gate(
             if covered * 100 < total * 70:
                 raise ValueError("Line coverage is below the required 70%")
         print(
-            f"{'PASS' if result.returncode == 0 else 'FAIL'} {gate['name']} (exit {result.returncode})",
+            f"{'PASS' if result.returncode == 0 else 'FAIL'} {gate['name']} (exit {result.returncode})"
+            + parallel_hint(result.returncode, tests, command),
             flush=True,
         )
         failed |= result.returncode != 0
@@ -634,6 +633,20 @@ def check(
     return int(failed)
 
 
+def impact(base: str) -> int:
+    """Tell CI whether the check will run only the secret scan, before tools."""
+    from contextlib import redirect_stdout
+
+    from gate_config import changed_packages, parse_config
+
+    config = parse_config((ROOT / "hard-eng.gates.json").read_text())
+    by_path = {group["path"]: group for group in config["packages"]}
+    with redirect_stdout(sys.stderr):
+        docs_only = bool(by_path) and changed_packages(ROOT, by_path, base) == set()
+    print(f"docs_only={str(docs_only).lower()}")
+    return 0
+
+
 def pre_push() -> int:
     from ship_actions import pre_push as verify_push
 
@@ -652,6 +665,10 @@ def main() -> int:
         "--base", help="Git comparison base; unknown impact runs all checks"
     )
     checks.add_argument("--plan-stage", choices=("Draft", "Ready", "Complete"))
+    impacts = commands.add_parser(
+        "impact", help="Print docs_only=true when only the secret scan applies"
+    )
+    impacts.add_argument("--base", required=True)
     commands.add_parser("pre-push", help="Verify the actual commits being pushed")
     shipping = commands.add_parser(
         "ship", help="Verify PR delivery or perform guarded shipping actions"
@@ -672,6 +689,8 @@ def main() -> int:
 
         ensure_python_runtime()
         return check(base=args.base, plan_stage=args.plan_stage)
+    if args.command == "impact":
+        return impact(args.base)
     if args.command == "pre-push":
         return pre_push()
     if args.command == "ship":

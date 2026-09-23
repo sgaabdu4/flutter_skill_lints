@@ -3,7 +3,7 @@
 ## Architecture
 
 **Group functions by domain.** Each function own one domain — not one operation, not everything.
-Use official SDK packages only. For self-hosted Appwrite `1.9.x`, pin Dart Functions/server code to `dart_appwrite: 25.1.0`; for Appwrite Cloud, use the latest stable SDK supported by the runtime.
+Use official SDK packages only. For self-hosted Appwrite `1.9.x`, use the release-matched Dart Functions/server pin in [self-hosting.md](self-hosting.md); for Appwrite Cloud, use the latest stable SDK supported by the runtime.
 
 ```
 ✅ api-users          — all user endpoints (CRUD, profile, settings)
@@ -19,18 +19,13 @@ Use official SDK packages only. For self-hosted Appwrite `1.9.x`, pin Dart Funct
 
 ### Route Handling Inside Domain Functions
 
+Extract request values at the runtime entrypoint; pass typed inputs to domain handlers.
+
 ```dart
-Future<dynamic> main(final context) async {
-    final path = context.req.path;
-    final method = context.req.method;
-
-    if (method == 'GET' && path == '/users') return listUsers(context);
-    if (method == 'POST' && path == '/users') return createUser(context);
-    if (method == 'GET' && path.startsWith('/users/')) return getUser(context);
-    if (method == 'PUT' && path.startsWith('/users/')) return updateUser(context);
-    if (method == 'DELETE' && path.startsWith('/users/')) return deleteUser(context);
-
-    return context.res.json({'error': 'Not found'}, statusCode: 404);
+Future<Object?> routeRead(String method, String path) async {
+    if (method == 'GET' && path == '/users') return listUsers();
+    if (method == 'GET' && path.startsWith('/users/')) return getUser(path);
+    return {'error': 'Not found'};
 }
 ```
 
@@ -84,33 +79,9 @@ Init SDK + services **outside handler** (warm-start). Refresh dynamic API key ea
 
 ### Dart
 
-```dart
-Client? _client;
-TablesDB? _tablesDB;
+Open Runtimes constructs `RuntimeContext` in its generated server; the user function package cannot import that private type. Use `Future<Object?> main(Object rawContext)`. Reuse an existing verified bridge when one exists. Otherwise, one local ABI boundary may perform only the dynamic operations necessary to read the private request, write logs, and serialize the private response. Document each operation-specific lint exception; file-wide ignores, nominal interface casts, and application-data casts through `dynamic` are invalid.
 
-void _ensureInit(dynamic context) {
-  final apiKey = (context.req.headers['x-appwrite-key'] ?? '') as String;
-
-  if (_client != null) {
-    _client!.setKey(apiKey);
-    return;
-  }
-
-  _client = Client()
-      .setEndpoint(Platform.environment['APPWRITE_FUNCTION_API_ENDPOINT']!)
-      .setProject(Platform.environment['APPWRITE_FUNCTION_PROJECT_ID']!)
-      .setKey(apiKey);
-  _tablesDB = TablesDB(_client!);
-}
-
-Future<dynamic> main(final context) async {
-    _ensureInit(context);
-    final rows = await _tablesDB!.listRows(
-        databaseId: 'db', tableId: 'items',
-        queries: [Query.limit(10)], total: false);
-    return context.res.json({'items': rows.rows});
-}
-```
+Convert request values immediately to typed application data, return typed application results to that boundary, and keep SDK, authorization, validation, and error handling free of runtime dynamic dispatch. Verify the boundary against the actual [runtime context](https://github.com/open-runtimes/open-runtimes/blob/main/runtimes/dart/versions/latest/src/function_types.dart) and [server invocation](https://github.com/open-runtimes/open-runtimes/blob/main/runtimes/dart/versions/latest/src/server.dart) with real runtime HTTP requests: success, authorization rejection, missing/malformed input, upstream failure, response status/body/headers, and error/log secrecy. Matching mocks alone are insufficient.
 
 ### Python
 
@@ -199,21 +170,25 @@ Validate every body/query/header value before using it.
 > **Security:** All user input from `context.req.bodyJson` untrusted. Always validate types, sanitize strings, enforce length limits before processing.
 
 ```dart
-Future<dynamic> main(final context) async {
+Future<Object?> main(Object rawContext) async {
+    final FunctionContext context = adaptFunctionContext(rawContext);
     if (context.req.method != 'POST') {
-        return context.res.json({'error': 'Method not allowed'}, statusCode: 405);
+        return context.res.json({'error': 'Method not allowed'}, status: 405);
     }
 
     // ⚠️ UNTRUSTED INPUT — validate before use
-    final body = context.req.bodyJson;
+    final Object? body = context.req.bodyJson;
+    if (body is! Map<String, Object?>) {
+        return context.res.json({'error': 'Invalid body'}, status: 400);
+    }
     final email = _sanitizeString(body['email']);
     if (email == null || !_isValidEmail(email)) {
-        return context.res.json({'error': 'Invalid email'}, statusCode: 400);
+        return context.res.json({'error': 'Invalid email'}, status: 400);
     }
 
-    final password = _sanitizeString(body['password']);
-    if (password == null || password.length < 8 || password.length > 128) {
-        return context.res.json({'error': 'Invalid password'}, statusCode: 400);
+    final password = body['password'];
+    if (password is! String || password.length < 8 || password.length > 128) {
+        return context.res.json({'error': 'Invalid password'}, status: 400);
     }
 
     try {
@@ -221,14 +196,15 @@ Future<dynamic> main(final context) async {
             userId: ID.unique(), email: email, password: password);
         return context.res.json({'userId': user.$id});
     } on AppwriteException catch (e) {
-        return context.res.json({'error': e.message}, statusCode: e.code ?? 500);
+        return context.res.json({'error': e.message}, status: e.code ?? 500);
     }
 }
 
 // Sanitization helpers
-String? _sanitizeString(dynamic value) {
+String? _sanitizeString(Object? value) {
     if (value is! String) return null;
-    return value.trim().substring(0, value.length.clamp(0, 1000));
+    final trimmed = value.trim();
+    return trimmed.length <= 1000 ? trimmed : null;
 }
 
 bool _isValidEmail(String email) {
@@ -262,16 +238,17 @@ Appwrite auto-generates short-lived API key per execution from function's **scop
 ### Enforce Authorization Server-Side
 
 ```dart
-Future<dynamic> main(final context) async {
+Future<Object?> main(Object rawContext) async {
+    final FunctionContext context = adaptFunctionContext(rawContext);
     final userId = context.req.headers['x-appwrite-user-id'];
     if (userId == null || userId.isEmpty) {
-        return context.res.json({'error': 'Unauthorized'}, statusCode: 401);
+        return context.res.json({'error': 'Unauthorized'}, status: 401);
     }
 
     final row = await tablesDB.getRow(
         databaseId: 'db', tableId: 'orders', rowId: orderId);
     if (row.data['userId'] != userId) {
-        return context.res.json({'error': 'Forbidden'}, statusCode: 403);
+        return context.res.json({'error': 'Forbidden'}, status: 403);
     }
 }
 ```
@@ -290,7 +267,7 @@ Use variables for configuration + secrets; never track values in source/manifest
 - deployment workflow = validate candidate → upsert metadata → deploy → smoke
 - multi-resource bootstrap → [dependency-aware bounded waves](performance.md#dependency-aware-bootstrap)
 
-CLI workflow → [appwrite-cli.md](appwrite-cli.md#function-variables).
+CLI workflow → [appwrite-cli.md](appwrite-cli.md#function--site-variables).
 Production sequencing → [production-migrations.md](production-migrations.md#function--variable-cutover).
 
 ```dart

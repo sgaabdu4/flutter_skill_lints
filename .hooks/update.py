@@ -139,16 +139,19 @@ def fetch_sources(temporary: Path, revision: str, previous: str) -> tuple[Path, 
         timeout=60,
     )
     for tree in (source, old):
-        subprocess.run(
-            ["git", "submodule", "update", "--init", "--recursive"],
-            cwd=tree,
-            check=True,
-            timeout=120,
-        )
+        if (tree / ".gitmodules").is_file():
+            subprocess.run(
+                ["git", "submodule", "update", "--init", "--recursive"],
+                cwd=tree,
+                check=True,
+                timeout=120,
+            )
     return source, old
 
 
 def scaffold_files(source: Path) -> set[str]:
+    from gate_config import repository_files
+
     skills = list((source / ".agents/skills").iterdir())
     if any(skill.is_symlink() and not skill.is_dir() for skill in skills):
         raise ValueError(
@@ -158,9 +161,11 @@ def scaffold_files(source: Path) -> set[str]:
         str(path.relative_to(source)) for path in (source / ".hooks").glob("*.py")
     } | {
         str(path.relative_to(source))
-        for skill in skills
-        for path in skill.rglob("*")
-        if path.is_file()
+        for skill in [
+            source / ".agents/skills",
+            *(skill for skill in skills if skill.is_symlink()),
+        ]
+        for path in repository_files(skill)
     }
 
 
@@ -310,11 +315,21 @@ def verify_candidate(
         check=True,
     )
     try:
+        if (candidate / ".gitmodules").is_file():
+            subprocess.run(
+                ["git", "submodule", "update", "--init", "--recursive"],
+                cwd=candidate,
+                check=True,
+            )
         write_changes(candidate, changes)
         write_links(candidate, links)
         names = sorted({*changes, *links})
         if names:
-            subprocess.run(["git", "add", "--", *names], cwd=candidate, check=True)
+            subprocess.run(
+                ["git", "add", "--force", "--", *names],
+                cwd=candidate,
+                check=True,
+            )
         subprocess.run(
             ["git", "diff", "--cached", "--check"], cwd=candidate, check=True
         )
@@ -328,7 +343,23 @@ def verify_candidate(
             ".husky/pre-push",
         }
         command = (
-            [sys.executable, "-m", "compileall", "-q", str(candidate / ".hooks")]
+            [
+                sys.executable,
+                "-I",
+                "-c",
+                """import compileall, sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+from gate_config import parse_config
+from gitleaks_scan import validate_current_files_gate
+config = parse_config(Path('hard-eng.gates.json').read_text())
+gates = config['shared'] + [gate for group in config['packages'] for gate in group['checks']]
+for gate in gates:
+    validate_current_files_gate(gate.get('role'), gate['command'])
+raise SystemExit(not compileall.compile_dir('.hooks', quiet=1))
+""",
+                str(source / ".hooks"),
+            ]
             if only_scaffold
             else [
                 "uv",
@@ -396,8 +427,12 @@ def commit_update(
     try:
         write_changes(root, changes)
         write_links(root, links)
-        subprocess.run(["git", "add", "--", *names], cwd=root, check=True)
         subprocess.run(
+            ["git", "add", "--force", "--", *names],
+            cwd=root,
+            check=True,
+        )
+        result = subprocess.run(
             [
                 "git",
                 "commit",
@@ -408,10 +443,19 @@ def commit_update(
                 *names,
             ],
             cwd=root,
-            stdout=sys.stderr,
-            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=False,
             timeout=3500,
         )
+        sys.stderr.write(result.stdout)
+        if result.returncode != 0:
+            # SessionStart stderr never reaches the agent, so the error carries the reason.
+            tail = " | ".join(result.stdout.strip().splitlines()[-5:])
+            raise subprocess.SubprocessError(
+                f"git commit exited {result.returncode}: {tail}".removesuffix(": ")
+            )
     except (OSError, subprocess.SubprocessError):
         for name, content in before.items():
             target = root / name
@@ -460,7 +504,15 @@ def update(root: Path) -> str:
             return "Hard Eng already matches the verified source."
         names = sorted({*changes, *links})
         if subprocess.check_output(
-            ["git", "status", "--porcelain", "--untracked-files=all", "--", *names],
+            [
+                "git",
+                "status",
+                "--porcelain",
+                "--untracked-files=all",
+                "--ignored",
+                "--",
+                *names,
+            ],
             cwd=root,
             text=True,
         ):
@@ -480,7 +532,15 @@ def update(root: Path) -> str:
                 "Files changed during verification; the update was not applied"
             )
         if subprocess.check_output(
-            ["git", "status", "--porcelain", "--untracked-files=all", "--", *names],
+            [
+                "git",
+                "status",
+                "--porcelain",
+                "--untracked-files=all",
+                "--ignored",
+                "--",
+                *names,
+            ],
             cwd=root,
             text=True,
         ):

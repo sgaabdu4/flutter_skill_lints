@@ -586,3 +586,132 @@ class _EmptyUser implements User {
     await assertDiagnosticsInFile(filePath, [compatLint(source, 'factory User.empty', ruleName)]);
   }
 }
+
+abstract class _DomainEntityParameterRuleTest extends _ValueObjectRuleTest {
+  @override
+  bool get addIgnorePrefix => false;
+
+  @override
+  void setUp() {
+    newPackage('freezed_annotation').addFile('lib/freezed_annotation.dart', r'''
+class Freezed {
+  const Freezed();
+}
+
+class Default {
+  const Default(Object value);
+}
+
+const freezed = Freezed();
+''');
+    super.setUp();
+  }
+
+  String entity(String parameters) =>
+      '''
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_class, redirect_to_invalid_function_type, redirect_to_non_class
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class UploadedReport {
+  const factory UploadedReport({
+$parameters
+  }) = _UploadedReport;
+}
+''';
+}
+
+@reflectiveTest
+final class DomainRawRequiredStringTest extends _DomainEntityParameterRuleTest {
+  @override
+  String get ruleName => 'domain_raw_required_string';
+  @override
+  String get needle => 'String fileName,';
+  @override
+  String get path => '$testPackageLibPath/core/domain/entities/uploaded_report.dart';
+  @override
+  String get source => entity('    required String fileName,\n    required DateTime uploadedAt,');
+
+  Future<void> test_reportsEveryRawStringAroundAnnotatedParameters() async {
+    final source = entity(
+      '    required String id,\n    @Default(0) int pages,\n    required String reviewerName,',
+    );
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(source, 'String id,', ruleName),
+      compatLint(source, 'String reviewerName,', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsValueObjectsOptionalTextAndNamedUnionFactories() async {
+    await assertAllows(
+      '''
+${entity('    required ReportId id,\n    String? note,\n    required List<String> tags,')}
+@freezed
+sealed class AppError {
+  const factory AppError.network(String message) = NetworkError;
+}
+''',
+      path: path,
+      addIgnorePrefix: false,
+    );
+  }
+
+  Future<void> test_allowsDataModelsAndValueObjects() async {
+    final source = entity('    required String fileName,');
+    await assertAllows(
+      source,
+      path: '$testPackageLibPath/core/data/models/uploaded_report_model.dart',
+      addIgnorePrefix: false,
+    );
+    await assertAllows(
+      source,
+      path: '$testPackageLibPath/core/domain/values/uploaded_report.dart',
+      addIgnorePrefix: false,
+    );
+  }
+}
+
+@reflectiveTest
+final class DomainUnitPrimitiveTest extends _DomainEntityParameterRuleTest {
+  @override
+  String get ruleName => 'domain_unit_primitive';
+  @override
+  String get needle => 'int sizeBytes,';
+  @override
+  String get path => '$testPackageLibPath/core/domain/entities/uploaded_report.dart';
+  @override
+  String get source => entity('    required int sizeBytes,\n    required DateTime uploadedAt,');
+
+  Future<void> test_reportsDefaultedAndNullableUnitNumbers() async {
+    final source = entity(
+      '    @Default(0) int workoutsPercent,\n    double? weightKg,\n    num price,',
+    );
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(source, 'int workoutsPercent,', ruleName),
+      compatLint(source, 'double? weightKg,', ruleName),
+      compatLint(source, 'num price,', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsShippedHiveEntityLockedSlots() async {
+    await assertAllows(
+      entity('    required String id,\n    /// HiveField(1)\n    required double distanceMeters,'),
+      path: path,
+      addIgnorePrefix: false,
+    );
+  }
+
+  Future<void> test_allowsCountsAndTypedUnits() async {
+    await assertAllows(
+      entity(
+        '    required int quantity,\n    required int items,\n    required Duration duration,',
+      ),
+      path: path,
+      addIgnorePrefix: false,
+    );
+  }
+}

@@ -7,18 +7,19 @@
 ### Always Return Valid Responses
 
 ```dart
-Future<dynamic> main(final context) async {
+Future<Object?> main(Object rawContext) async {
+    final FunctionContext context = adaptFunctionContext(rawContext);
     try {
         // ⚠️ Validate bodyJson before passing to processOrder
-        final body = context.req.bodyJson;
-        if (body is! Map<String, dynamic>) {
-            return context.res.json({'error': 'Invalid payload'}, statusCode: 400);
+        final Object? body = context.req.bodyJson;
+        if (body is! Map<String, Object?>) {
+            return context.res.json({'error': 'Invalid payload'}, status: 400);
         }
         final result = await processOrder(body);
         return context.res.json({'success': true, 'data': result});
     } catch (e) {
         context.error('Function failed: $e');
-        return context.res.json({'error': 'Internal error'}, statusCode: 500);
+        return context.res.json({'error': 'Internal error'}, status: 500);
     }
 }
 ```
@@ -42,7 +43,8 @@ Map<String, dynamic> _cache = {};
 DateTime? _cacheTime;
 const _cacheTTL = Duration(minutes: 5);
 
-Future<dynamic> main(final context) async {
+Future<Object?> main(Object rawContext) async {
+    final FunctionContext context = adaptFunctionContext(rawContext);
     if (_cacheTime != null &&
         DateTime.now().difference(_cacheTime!) < _cacheTTL) {
         return context.res.json(_cache);
@@ -83,7 +85,8 @@ Console → Functions → Settings → Logging
 | `users.*.sessions.*.create` | Log new sign-ins |
 
 ```dart
-Future<dynamic> main(final context) async {
+Future<Object?> main(Object rawContext) async {
+    final FunctionContext context = adaptFunctionContext(rawContext);
     final event = context.req.headers['x-appwrite-event'];
     final payload = context.req.bodyJson;
 

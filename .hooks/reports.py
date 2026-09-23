@@ -10,23 +10,50 @@ from typing import TextIO, cast
 
 from coverage_sources import erased_typescript
 from dart_coverage import erased_dart
+from dart_test_report import dart_events, failure_summary
 from fallow_report import validate_fallow
 from gate_config import JsonObject
 
 
+def dart_test_failure(
+    result: subprocess.CompletedProcess[bytes] | None,
+    tests: bool,
+    kind: str,
+    path: Path | None,
+) -> str | None:
+    if result and result.returncode and tests and kind == "dart-tests" and path:
+        return failure_summary(path)
+    return None
+
+
+def emit_dart_test_failure(
+    result: subprocess.CompletedProcess[bytes] | None,
+    tests: bool,
+    kind: str,
+    path: Path | None,
+) -> None:
+    if summary := dart_test_failure(result, tests, kind, path):
+        print(summary)
+
+
+def parallel_hint(code: int, tests: bool, command: list[str]) -> str:
+    if code == 0 or not tests or "-n auto" not in " ".join(command):
+        return ""
+    return (
+        "\nThese tests ran in parallel (-n auto). If they pass serially, isolate "
+        "the state they share, or set -n 0 in this gate's command."
+    )
+
+
+def validate_scanner_log(scanner: str | None, log: TextIO) -> None:
+    if scanner in SCANNER_LOGS:
+        SCANNER_LOGS[scanner](log)
+
+
 def completed_tests(path: Path, kind: str) -> int:
     if kind == "dart-tests":
-        events = [
-            json.loads(line) for line in path.read_text().splitlines() if line.strip()
-        ]
-        events = [
-            item
-            for event in events
-            for item in (event if isinstance(event, list) else [event])
-        ]
         if (
-            not events
-            or not all(isinstance(event, dict) for event in events)
+            not (events := dart_events(path))
             or events[-1].get("type") != "done"
             or events[-1].get("success") is not True
         ):
@@ -505,11 +532,12 @@ def validate_dart_decimate(path: Path) -> None:
         envelope = {
             "schema_version": "dart-decimate.report.v1",
             "kind": "combined",
-            "tool": "dart-decimate",
             "command": "check",
             "verdict": "pass",
         }
-        if any(report[key] != value for key, value in envelope.items()):
+        if any(report[key] != value for key, value in envelope.items()) or not (
+            re.fullmatch(r"dart-decimate( \d+\.\d+\.\d+\S*)?", report["tool"])
+        ):
             raise ValueError("Expected a passing combined Dart Decimate check")
         if report["findings"] != [] or report["clone_groups"] != []:
             raise ValueError("Dart Decimate reports findings or duplicate code")

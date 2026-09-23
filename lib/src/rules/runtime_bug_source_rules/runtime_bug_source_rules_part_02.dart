@@ -27,29 +27,27 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
 
   /// TextField `onChanged` that fires expensive work must debounce.
   ///
-  /// Why: `onChanged` fires on every keystroke. A handler that hits a notifier
-  /// mutation, network call, or any `await` runs once per char. Without a
+  /// Why: `onChanged` fires on every keystroke. A handler that starts an async notifier
+  /// operation, network call, or any `await` runs once per char. Without a
   /// Timer-based debounce, typing "hello" sends 5 requests. Debounce in the
   /// notifier (cancel-and-restart Timer) or wrap with a `Debouncer`.
   scannerRule(
     code: const LintCode(
       'text_field_on_changed_no_debounce',
       'TextField onChanged triggers expensive work without debounce.',
-      correctionMessage: 'Wrap the notifier call in a `Timer` (cancel-and-restart) or `Debouncer`. For search-as-you-type, 300–500ms is typical.',
+      correctionMessage: 'Debounce asynchronous work in the notifier or event handler using the project latency budget.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description: 'Flags TextField/TextFormField onChanged callbacks that call a notifier method or await async work, when the file has no Timer/Debouncer/Future.delayed indirection.',
+    description: 'Flags awaited work, HTTP calls and asynchronous or unresolved notifier calls in TextField/TextFormField callbacks without debounce. Resolved synchronous void updates are not assumed to start async work.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
         final m = _textInputConstructor.firstMatch(line);
         if (m == null) continue;
-        final block = _collectCallbackBody(context, i, 18);
-        if (block == null) continue;
-        if (!_blockHasOnChangedWithWork(block)) continue;
-        if (_fileHasDebounce(context)) continue;
         final col = line.indexOf(m.group(1) ?? 'TextField', m.start);
+        if (!_onChangedHasWork(context, i, col)) continue;
+        if (_fileHasDebounce(context)) continue;
         reporter.report(context, i, col);
       }
     },
@@ -57,8 +55,8 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
 
   /// `Slider` `onChanged` must defer expensive work to `onChangeEnd` or debounce.
   ///
-  /// Why: Slider `onChanged` fires continuously during drag (~60Hz). A
-  /// notifier mutation or async work inside fires dozens of times for a
+  /// Why: Slider `onChanged` fires continuously during drag (~60Hz). An
+  /// async notifier operation or awaited work inside fires dozens of times for a
   /// single user gesture. Use `onChangeEnd` for terminal effects, or
   /// debounce.
   scannerRule(
@@ -68,18 +66,16 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
       correctionMessage: 'Move the notifier call to `onChangeEnd`, or debounce with a Timer. `onChanged` should only update local UI state.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description: 'Flags Slider/RangeSlider/CupertinoSlider onChanged callbacks that call notifiers or await async work without debounce.',
+    description: 'Flags Slider/RangeSlider/CupertinoSlider callbacks with asynchronous or unresolved notifier calls, HTTP calls or awaited work without debounce.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (!_sliderConstructor.hasMatch(line)) continue;
-        final block = _collectConstructorArgs(context, i, 18);
-        if (block == null) continue;
-        if (!_blockHasOnChangedWithWork(block)) continue;
-        if (_fileHasDebounce(context)) continue;
         final m = _sliderConstructor.firstMatch(line);
-        final col = m == null ? 0 : line.indexOf(m.group(1) ?? 'Slider', m.start);
+        if (m == null) continue;
+        final col = line.indexOf(m.group(1) ?? 'Slider', m.start);
+        if (!_onChangedHasWork(context, i, col)) continue;
+        if (_fileHasDebounce(context)) continue;
         reporter.report(context, i, col);
       }
     },
@@ -323,13 +319,53 @@ bool _isAwaitedCollectionLoad(
       (lineIndex - 1 >= loopStart && _awaitKeyword.hasMatch(context.source.masked[lineIndex - 1]));
 }
 
-bool _blockHasOnChangedWithWork(String block) {
-  final onChangedMatch = _onChangedNamedArg.firstMatch(block);
-  if (onChangedMatch == null) return false;
-  final after = block.substring(onChangedMatch.end);
-  final terminator = after.indexOf('onChangeEnd');
-  final segment = terminator >= 0 ? after.substring(0, terminator) : after;
-  return _expensiveOnChangedWork.hasMatch(segment);
+bool _onChangedHasWork(SourceScannerContext context, int lineIndex, int column) {
+  final callback = _onChangedCallback(context, context.source.lineOffsets[lineIndex] + column);
+  if (callback == null) return false;
+  final startLine = context.unit.lineInfo.getLocation(callback.offset).lineNumber - 1;
+  final endLine = context.unit.lineInfo.getLocation(callback.end).lineNumber - 1;
+  final start = callback.offset - context.source.lineOffsets[startLine];
+  final segment = context.source.masked
+      .sublist(startLine, endLine + 1)
+      .join('\n')
+      .substring(start, start + callback.length);
+  for (final work in _expensiveOnChangedWork.allMatches(segment)) {
+    if (!work.group(0)!.contains('notifier') ||
+        !_isSynchronousVoidCall(context, callback.offset + work.end - 1)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+Expression? _onChangedCallback(SourceScannerContext context, int offset) {
+  AstNode? node = context.unit.nodeCovering(offset: offset);
+  while (node != null && node is! InstanceCreationExpression && node is! MethodInvocation) {
+    node = node.parent;
+  }
+  final arguments = switch (node) {
+    InstanceCreationExpression(:final argumentList) => argumentList.arguments,
+    MethodInvocation(:final argumentList) => argumentList.arguments,
+    _ => const <Argument>[],
+  };
+  for (final argument in arguments.whereType<NamedArgument>()) {
+    if (argument.name.lexeme == 'onChanged') return argument.argumentExpression;
+  }
+  return null;
+}
+
+bool _isSynchronousVoidCall(SourceScannerContext context, int offset) {
+  AstNode? node = context.unit.nodeCovering(offset: offset);
+  while (node != null && node is! MethodInvocation) {
+    node = node.parent;
+  }
+  if (node is! MethodInvocation) return false;
+  final method = node.methodName.element;
+  return method is ExecutableElement &&
+      !method.isAbstract &&
+      !method.isExternal &&
+      method.fragments.every((fragment) => fragment.isSynchronous) &&
+      node.staticType is VoidType;
 }
 
 bool _fileHasDebounce(SourceScannerContext context) {
@@ -349,8 +385,4 @@ String? _collectCallbackBody(SourceScannerContext context, int startLine, int ma
     buffer.write('\n');
   }
   return buffer.toString();
-}
-
-String? _collectConstructorArgs(SourceScannerContext context, int startLine, int maxLines) {
-  return _collectCallbackBody(context, startLine, maxLines);
 }

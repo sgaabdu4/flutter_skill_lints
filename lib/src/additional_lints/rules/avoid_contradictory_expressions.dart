@@ -30,7 +30,6 @@ class AvoidContradictoryExpressions extends BinaryExpressionCheckRule {
       );
 
   @override
-  @override
   void checkBinaryExpression(BinaryExpression node) {
     _Visitor(this).visitBinaryExpression(node);
   }
@@ -206,7 +205,8 @@ class _Visitor extends SimpleAstVisitor<void> {
       a is PrefixedIdentifier &&
       b is PrefixedIdentifier &&
       a.identifier.element != null &&
-      a.identifier.element == b.identifier.element;
+      a.identifier.element == b.identifier.element &&
+      _sameIdentifier(a.prefix, b.prefix);
 
   static bool _samePropertyAccess(Expression a, Expression b) =>
       a is PropertyAccess &&

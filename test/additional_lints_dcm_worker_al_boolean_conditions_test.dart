@@ -4,6 +4,7 @@ import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_bitwise_operators_with_booleans.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_conditions_with_boolean_literals.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_constant_assert_conditions.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_contradictory_expressions.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
@@ -11,6 +12,7 @@ void main() {
     defineReflectiveTests(AvoidBitwiseOperatorsWithBooleansTest);
     defineReflectiveTests(AvoidConditionsWithBooleanLiteralsTest);
     defineReflectiveTests(AvoidConstantAssertConditionsTest);
+    defineReflectiveTests(AvoidContradictoryExpressionsTest);
   });
 }
 
@@ -183,6 +185,41 @@ void f(bool ready) {
 void f(int value) {
   assert(value > 0);
 }
+''');
+  }
+}
+
+@reflectiveTest
+final class AvoidContradictoryExpressionsTest extends AnalysisRuleTest {
+  @override
+  void setUp() {
+    rule = AvoidContradictoryExpressions();
+    super.setUp();
+  }
+
+  Future<void> test_distinctReceiversCanOverlap_noLint() async {
+    await assertNoDiagnostics(r'''
+class Point { final int value; Point(this.value); }
+bool overlaps(Point start, Point end, Point otherStart, Point otherEnd) =>
+    start.value < otherEnd.value && end.value > otherStart.value;
+''');
+  }
+
+  Future<void> test_sameReceiverContradiction_lint() async {
+    const source = r'''
+class Point { final int value; Point(this.value); }
+bool impossible(Point point, int bound) => point.value < bound && point.value > bound;
+''';
+    const expression = 'point.value < bound && point.value > bound';
+    await assertDiagnostics(source, [lint(source.indexOf(expression), expression.length)]);
+  }
+
+  Future<void> test_distinctNestedReceivers_noLint() async {
+    await assertNoDiagnostics(r'''
+class Point { final int value; Point(this.value); }
+Point first() => Point(1);
+Point second() => Point(2);
+bool possible() => first().value < 2 && second().value > 1;
 ''');
   }
 }

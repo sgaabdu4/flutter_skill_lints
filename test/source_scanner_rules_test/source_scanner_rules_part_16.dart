@@ -407,6 +407,56 @@ class SearchSheet {
 }
 ''';
 
+  Future<void> test_allowsResolvedSynchronousFormUpdate() async {
+    await assertAllows(_inputNotifierSource('TextField', 'void', ''));
+  }
+
+  Future<void> test_reportsResolvedAsyncRequest() async {
+    final source = _inputNotifierSource('TextField', 'Future<void>', 'async');
+    await assertDiagnostics(source, [compatLint(source, 'TextField(onChanged:', ruleName)]);
+  }
+
+  Future<void> test_submissionWorkIsNotOnChangedWork() async {
+    await assertAllows(r'''
+class TextField {
+  TextField({required void Function(String) onChanged, required void Function(String) onSubmitted});
+}
+Object build() => TextField(
+  onChanged: (value) => print(value),
+  onSubmitted: (value) async { await Future<void>.value(); },
+);
+''');
+  }
+
+  Future<void> test_onlyAsyncNeighborReports() async {
+    const source = r'''
+class TextField { TextField({required void Function(String) onChanged}); }
+class Notifier {
+  void update(String value) {}
+  Future<void> fetch(String value) async {}
+}
+class Provider { Notifier get notifier => Notifier(); }
+class Ref { Notifier read(Notifier notifier) => notifier; }
+final formProvider = Provider();
+List<Object> build(Ref ref) => [
+  TextField(onChanged: (value) => ref.read(formProvider.notifier).update(value)),
+  TextField(onChanged: (value) => ref.read(formProvider.notifier).fetch(value)),
+];
+''';
+    await assertDiagnostics(source, [
+      compatLint(
+        source,
+        'TextField(onChanged: (value) => ref.read(formProvider.notifier).fetch',
+        ruleName,
+      ),
+    ]);
+  }
+
+  Future<void> test_reportsResolvedAsyncVoidRequest() async {
+    final source = _inputNotifierSource('TextField', 'void', 'async');
+    await assertDiagnostics(source, [compatLint(source, 'TextField(onChanged:', ruleName)]);
+  }
+
   Future<void> test_allowsWithTimerInFile() async {
     await assertAllows(r'''
 class TextField {
@@ -465,6 +515,15 @@ class RangeSheet {
   }
 }
 ''';
+
+  Future<void> test_allowsResolvedSynchronousSliderUpdate() async {
+    await assertAllows(_inputNotifierSource('Slider', 'void', ''));
+  }
+
+  Future<void> test_reportsResolvedAsyncSliderRequest() async {
+    final source = _inputNotifierSource('Slider', 'Future<void>', 'async');
+    await assertDiagnostics(source, [compatLint(source, 'Slider(onChanged:', ruleName)]);
+  }
 
   Future<void> test_allowsSliderWithOnlySetState() async {
     await assertAllows(r'''
@@ -585,3 +644,13 @@ class ConfirmHost extends ConsumerWidget {
 }
 ''';
 }
+
+String _inputNotifierSource(String inputType, String returnType, String bodyModifier) =>
+    '''
+class $inputType { $inputType({required void Function(String) onChanged}); }
+class Notifier { $returnType update(String value) $bodyModifier {} }
+class Provider { Notifier get notifier => Notifier(); }
+class Ref { Notifier read(Notifier notifier) => notifier; }
+final formProvider = Provider();
+Object build(Ref ref) => $inputType(onChanged: (value) => ref.read(formProvider.notifier).update(value));
+''';

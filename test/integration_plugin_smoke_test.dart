@@ -293,6 +293,40 @@ Widget invalidLayout() => Padding(
 );
 ''');
 
+        await _writeFile('${app.path}/lib/expression_boundaries.dart', r'''
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Point { int value = 1; }
+void replace(Point point) {
+  final previous = point.value;
+  point.value = 2;
+  print(previous);
+}
+void duplicate(Point point) {
+  final previous = point.value;
+  final repeated = point.value;
+  print(previous);
+  print(repeated);
+}
+bool overlap(Point a, Point b, Point c, Point d) => a.value < d.value && b.value > c.value;
+bool impossible(Point a, int bound) => a.value < bound && a.value > bound;
+final formProvider = NotifierProvider<FormNotifier, String>(FormNotifier.new);
+class FormNotifier extends Notifier<String> {
+  @override
+  String build() => '';
+  void update(String value) { state = value; }
+  Future<void> fetch(String value) async {}
+}
+class FormView extends ConsumerWidget {
+  const FormView({super.key});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Column(children: [
+    TextField(onChanged: (value) => ref.read(formProvider.notifier).update(value)),
+    TextField(onChanged: (value) => ref.read(formProvider.notifier).fetch(value)),
+  ]);
+}
+''');
+
         final pubGet = await _run('flutter', ['pub', 'get'], app);
         expect(
           pubGet.exitCode,
@@ -359,6 +393,17 @@ Widget invalidLayout() => Padding(
           'avoid_unassigned_local_variable',
         ]) {
           expect(initialization.where((line) => line.contains(code)), hasLength(1), reason: code);
+        }
+
+        final expressions = output
+            .split('\n')
+            .where((line) => line.contains('expression_boundaries.dart'));
+        for (final code in [
+          'use_existing_variable',
+          'avoid_contradictory_expressions',
+          'text_field_on_changed_no_debounce',
+        ]) {
+          expect(expressions.where((line) => line.contains(code)), hasLength(1), reason: code);
         }
 
         expect(output, isNot(contains('deprecated_lint')));

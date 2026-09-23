@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.12.5] - 2026-09-23
+
+- Keep assignment and increment targets out of duplicate-read suggestions while
+  retaining diagnostics for repeated right-hand-side and null-asserted reads.
+- Compare receivers as well as member declarations when detecting contradictory
+  conditions, so comparisons across different objects are accepted.
+- Limit text-field and slider debounce checks to their actual onChanged callback,
+  including indented widgets. Accept resolved synchronous void notifier updates;
+  retain warnings for async, async-void and unresolved calls. Other callbacks
+  such as onSubmitted no longer contribute work to onChanged.
+
 ## [0.12.4] - 2026-09-23
 
 - Recognize implicit null initialization for mutable nullable locals while

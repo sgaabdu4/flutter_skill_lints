@@ -131,6 +131,26 @@ class _ContentViewState extends State<ContentView> {
 ''',
         );
 
+        await _writeFile('${app.path}/lib/watch_boundaries.dart', r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final flagProvider = Provider<bool?>((ref) => null);
+final structuredProvider = Provider<List<String>>((ref) => []);
+
+class WatchBoundaries extends ConsumerWidget {
+  const WatchBoundaries({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final flag = ref.watch(flagProvider);
+    final entries = ref.watch(structuredProvider);
+    final identity = ref.watch(flagProvider.select((value) => value));
+    return Text('$flag $entries $identity', textDirection: TextDirection.ltr);
+  }
+}
+''');
+
         final pubGet = await _run('flutter', ['pub', 'get'], app);
         expect(
           pubGet.exitCode,
@@ -151,6 +171,13 @@ class _ContentViewState extends State<ContentView> {
         expect(output, contains('presentation_widget_controller_state'));
         expect(output, contains('presentation_widget_infrastructure_dependency'));
         expect(output, contains('prefer_dot_shorthands'));
+        final broadWatches = output
+            .split('\n')
+            .where((line) => line.contains('riverpod_watch_no_select'));
+        expect(broadWatches, hasLength(1));
+        expect(broadWatches.single, contains('watch_boundaries.dart:13:'));
+        expect(output, contains('riverpod_select_identity_forbidden'));
+
         expect(output, isNot(contains('deprecated_lint')));
         expect(output, isNot(contains('server.pluginError')));
 

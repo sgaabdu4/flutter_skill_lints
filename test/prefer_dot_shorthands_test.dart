@@ -2,6 +2,8 @@
 
 import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analyzer/dart/analysis/results.dart';
+import 'package:analyzer/diagnostic/diagnostic.dart';
+import 'package:analyzer/error/error.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
@@ -392,6 +394,37 @@ final callback = () => Axis.center;
 ''');
   }
 
+  Future<void> test_bulkFix_leavesForeignDiagnosticUnchanged() async {
+    const source = r'''
+class Item {
+  const Item(this.id);
+  final int id;
+}
+int identifier(Item item) => item.id;
+''';
+    await assertNoDiagnostics(source);
+    final unit = await getResolvedUnit(testFile);
+    final library = await unit.session.getResolvedLibraryContaining(testFilePath);
+    expect(library, isA<ResolvedLibraryResult>());
+    final offset = source.indexOf('item.id');
+    final context = CorrectionProducerContext.createResolved(
+      libraryResult: library as ResolvedLibraryResult,
+      unitResult: unit,
+      applyingBulkFixes: true,
+      diagnostic: Diagnostic.tmp(
+        source: unit.libraryFragment.source,
+        offset: offset,
+        length: 'item.id'.length,
+        diagnosticCode: const LintCode('other_rule', 'Synthetic unrelated diagnostic.'),
+      ),
+      selectionOffset: offset,
+      selectionLength: 'item.id'.length,
+    );
+    final builder = ChangeBuilder(session: unit.session);
+    await PreferDotShorthandsFix(context: context).compute(builder);
+    expect(builder.sourceChange.edits, isEmpty);
+  }
+
   Future<void> _assertFixes(String source, List<String> targets, String expected) async {
     final ranges = _targetRanges(source, targets);
     await assertDiagnostics(source, ranges.map((target) => lint(target.$1, target.$2)).toList());
@@ -404,6 +437,12 @@ final callback = () => Axis.center;
       final context = CorrectionProducerContext.createResolved(
         libraryResult: library as ResolvedLibraryResult,
         unitResult: unit,
+        diagnostic: Diagnostic.tmp(
+          source: unit.libraryFragment.source,
+          offset: offset,
+          length: length,
+          diagnosticCode: PreferDotShorthands.code,
+        ),
         selectionOffset: offset,
         selectionLength: length,
       );

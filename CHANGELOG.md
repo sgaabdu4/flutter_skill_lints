@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.1] - 2026-09-23
+
+- Allow direct Riverpod watches of resolved scalar values, including nullable
+  scalars and enums, while retaining structured-state and identity-select checks.
+- Allow generated notifier build methods to watch provider dependencies directly.
+- Keep file-wide dot-shorthand fixes from rewriting unrelated diagnostics.
+- Correct documentation lint-reference parsing around parenthetical examples.
+
 ## [0.12.0] - 2026-09-23
 
 - Add `domain_raw_required_string`: Freezed domain entity constructors must not

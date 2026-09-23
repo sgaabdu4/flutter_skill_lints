@@ -4,36 +4,35 @@ import 'package:analyzer/error/error.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/disposal_utils.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/unassigned_field_analysis.dart';
 
-/// Warns when a `late` field is disposed from `dispose()`.
+/// Warns when a late field is disposed without guaranteed initialization.
 class AvoidDisposingLateFields extends ClassDeclarationCheckRule {
   static const LintCode code = LintCode(
     'avoid_disposing_late_fields',
-    'Avoid disposing late field in dispose().',
-    correctionMessage:
-        'Initialize disposable fields eagerly or make disposal conditional before calling cleanup.',
+    'Late field may be uninitialized when dispose() calls its cleanup.',
+    correctionMessage: 'Initialize the field in State.initState or eagerly before calling cleanup.',
   );
 
   AvoidDisposingLateFields()
     : super(
         name: 'avoid_disposing_late_fields',
-        description: 'Warns when dispose() cleans up a field declared with late.',
+        description:
+            'Warns when dispose() cleans up a late field without guaranteed initialization.',
         code: code,
       );
 
-  @override
   @override
   void checkClassDeclaration(ClassDeclaration node) {
     final body = node.body;
     if (body is! BlockClassBody) return;
 
-    final lateFields = <String>{};
-    for (final field in body.members.whereType<FieldDeclaration>()) {
-      if (field.isStatic || !field.fields.isLate) continue;
-      for (final variable in field.fields.variables) {
-        lateFields.add(variable.name.lexeme);
-      }
-    }
+    final lateFields = <String>{
+      for (final field in body.members.whereType<FieldDeclaration>())
+        if (!field.isStatic && field.fields.isLate)
+          for (final variable in field.fields.variables)
+            if (variable.initializer == null) variable.name.lexeme,
+    }..removeAll(initializedFlutterStateFields(node));
     if (lateFields.isEmpty) return;
 
     for (final method in body.members.whereType<MethodDeclaration>()) {

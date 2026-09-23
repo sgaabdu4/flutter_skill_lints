@@ -227,6 +227,72 @@ class MutationViewState extends State<MutationView> {
 }
 ''');
 
+        await _writeFile('${app.path}/lib/initialization_boundaries.dart', r'''
+import 'dart:async';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class Demo extends StatefulWidget {
+  const Demo({super.key});
+  @override
+  State<Demo> createState() => SafeState();
+}
+class SafeState extends State<Demo> {
+  late final TextEditingController controller;
+  @override
+  void initState() {
+    super.initState();
+    controller = TextEditingController();
+  }
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+  @override
+  Widget build(BuildContext context) => Expanded(child: TextFieldPlaceholder());
+}
+class TextFieldPlaceholder extends StatelessWidget {
+  const TextFieldPlaceholder({super.key});
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+class UnsafeState extends State<Demo> {
+  late TextEditingController controller;
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+void ownResource(Ref ref) {
+  final controller = TextEditingController();
+  ref.onDispose(controller.dispose);
+}
+Future<void> timed(Future<void> work) {
+  final timer = Timer(const Duration(seconds: 1), () {});
+  return work.whenComplete(timer.cancel);
+}
+void lostResource() {
+  final controller = TextEditingController();
+  print(controller);
+}
+int? defaultNull() {
+  int? count;
+  return count;
+}
+void unassignedLateLocal() {
+  late int? count;
+  print(count);
+}
+Widget invalidLayout() => Padding(
+  padding: EdgeInsets.zero,
+  child: Expanded(child: const SizedBox()),
+);
+''');
+
         final pubGet = await _run('flutter', ['pub', 'get'], app);
         expect(
           pubGet.exitCode,
@@ -281,6 +347,19 @@ class MutationViewState extends State<MutationView> {
             );
         expect(mutations, hasLength(1));
         expect(mutations.single, contains('mutation_boundaries.dart:14:'));
+
+        final initialization = output
+            .split('\n')
+            .where((line) => line.contains('initialization_boundaries.dart'));
+        for (final code in [
+          'avoid_unassigned_late_fields',
+          'avoid_disposing_late_fields',
+          'avoid_undisposed_instances',
+          'avoid_flexible_outside_flex',
+          'avoid_unassigned_local_variable',
+        ]) {
+          expect(initialization.where((line) => line.contains(code)), hasLength(1), reason: code);
+        }
 
         expect(output, isNot(contains('deprecated_lint')));
         expect(output, isNot(contains('server.pluginError')));

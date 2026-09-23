@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.12.4] - 2026-09-23
+
+- Recognize implicit null initialization for mutable nullable locals while
+  retaining diagnostics for unassigned late and final locals.
+- Recognize unconditional synchronous initialization of a State's own fields in
+  initState for late-field and disposal checks; conditional, deferred, async,
+  shadowed and other-instance assignments still report.
+- Recognize Future.whenComplete and Riverpod Ref.onDispose cleanup tear-offs.
+- Allow extracted and composed Flexible/Expanded widgets; retain diagnostics
+  for known incompatible render-object parents.
+
 ## [0.12.3] - 2026-09-23
 
 - Inspect Freezed class members structurally so factory-local object patterns and

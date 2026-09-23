@@ -315,6 +315,45 @@ void f() {
 ''');
   }
 
+  Future<void> test_nullableDefaultIsInitialized_noLint() async {
+    await assertNoDiagnostics(r'''
+void f() {
+  int? count;
+  dynamic value;
+  print(count);
+  print(value);
+}
+''');
+  }
+
+  Future<void> test_lateNullableStillNeedsAssignment_lint() async {
+    const source = r'''
+void f() {
+  late int? value;
+  print(value);
+}
+''';
+    final offset = source.indexOf('value);');
+    await assertDiagnostics(source, [
+      error(errorCodeByUniqueName('definitely_unassigned_late_local_variable')!, offset, 5),
+      lint(offset, 5),
+    ]);
+  }
+
+  Future<void> test_finalNullableStillNeedsAssignment_lint() async {
+    const source = r'''
+void f() {
+  final int? value;
+  print(value);
+}
+''';
+    final offset = source.indexOf('value);');
+    await assertDiagnostics(source, [
+      error(errorCodeByUniqueName('read_potentially_unassigned_final')!, offset, 5),
+      lint(offset, 5),
+    ]);
+  }
+
   Future<void> test_initializerMakesVariableAssigned_noLint() async {
     await assertNoDiagnostics(r'''
 void f() {

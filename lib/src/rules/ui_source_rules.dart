@@ -1,3 +1,5 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'ui_source_rules/ui_source_rules_part_01.dart';
@@ -290,3 +292,19 @@ bool _buildContainsAppShell(SourceScannerContext context, ScannerMethodSpan meth
 
 int _refListenColumn(String line) =>
     RegExp(r'\bref\s*\.\s*listen\s*(?:<[^>]+>)?\s*\(').firstMatch(line)?.start ?? -1;
+
+final class _WidgetCatchVisitor extends RecursiveAstVisitor<void> {
+  _WidgetCatchVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitTryStatement(TryStatement node) {
+    if (node.catchClauses.isNotEmpty) {
+      final location = context.unit.lineInfo.getLocation(node.tryKeyword.offset);
+      reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+    }
+    super.visitTryStatement(node);
+  }
+}

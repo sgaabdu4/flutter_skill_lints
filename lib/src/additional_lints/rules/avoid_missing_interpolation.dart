@@ -3,6 +3,7 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
 /// Warns when a string literal is exactly the name of an in-scope local value.
@@ -36,10 +37,22 @@ final class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitSimpleStringLiteral(SimpleStringLiteral node) {
     final name = node.value;
-    if (!_isIdentifier(name)) return;
+    if (!_isIdentifier(name) || _isStructuralName(node)) return;
     if (!_isVisibleLocalName(node, name)) return;
     rule.reportAtNode(node, arguments: [name]);
   }
+}
+
+// Keys and diagnostic parameter names deliberately describe structure, not values.
+bool _isStructuralName(SimpleStringLiteral node) {
+  final parent = node.parent;
+  if (parent is MapLiteralEntry && identical(parent.key, node)) return true;
+  if (parent is IndexExpression && identical(parent.index, node)) return true;
+  final parameter = node.correspondingParameter;
+  if (parameter?.name != 'name') return false;
+  final owner = parameter?.enclosingElement;
+  if (owner is! ExecutableElement || owner.library.identifier != 'dart:core') return false;
+  return const {'ArgumentError', 'RangeError', 'IndexError'}.contains(owner.enclosingElement?.name);
 }
 
 bool _isIdentifier(String value) {

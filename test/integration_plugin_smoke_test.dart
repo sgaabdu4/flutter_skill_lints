@@ -122,6 +122,22 @@ class ContentView extends StatefulWidget {
 class _ContentViewState extends State<ContentView> {
   final List<Object> _pageStack = [];
 
+  Future<void> save(Future<void> Function() action, VoidCallback cleanup) async {
+    try {
+      await action();
+    } finally {
+      cleanup();
+    }
+  }
+
+  Future<void> catchAction(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (_) {
+      rethrow;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Navigator.of(context).pop();
@@ -151,6 +167,46 @@ class WatchBoundaries extends ConsumerWidget {
 }
 ''');
 
+        await _writeFile('${app.path}/lib/resolved_contexts.dart', r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'main.dart' show counterProvider;
+Widget makeConsumer() => Consumer(builder: (context, ref, child) {
+  final count = ref.watch(counterProvider);
+  return GestureDetector(
+    onTap: () { ref.watch(counterProvider); },
+    child: Text('$count', textDirection: TextDirection.ltr),
+  );
+});
+
+Map<String, Object> encode(int count, int index, List<int> values) {
+  final result = <String, Object>{'count': count};
+  result['count'] = count;
+  if (count < 0) throw ArgumentError.value(count, 'count', 'Must be positive');
+  if (count == 0) throw ArgumentError('Must be positive', 'count');
+  if (index < 0) throw RangeError.index(index, values, 'index');
+  if (count > 10) throw RangeError.range(count, 1, 10, 'count');
+  RangeError.checkValidIndex(index, values, 'index');
+  RangeError.checkNotNegative(count, 'count');
+  return result;
+}
+
+mixin LifecycleMixin<T extends StatefulWidget> on State<T> {
+  @override
+  void dispose() { super.dispose(); }
+}
+class LifecycleView extends StatefulWidget {
+  const LifecycleView({super.key});
+  @override
+  State<LifecycleView> createState() => LifecycleViewState();
+}
+class LifecycleViewState extends State<LifecycleView> with LifecycleMixin<LifecycleView> {
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+''');
+
         final pubGet = await _run('flutter', ['pub', 'get'], app);
         expect(
           pubGet.exitCode,
@@ -169,6 +225,12 @@ class WatchBoundaries extends ConsumerWidget {
         expect(output, contains('riverpod_feature_notifier_keepalive'));
         expect(output, contains('presentation_widget_navigation_forbidden'));
         expect(output, contains('presentation_widget_controller_state'));
+        final catches = output
+            .split('\n')
+            .where((line) => line.contains('widget_try_catch_boundary'));
+        expect(catches, hasLength(1));
+        expect(catches.single, contains('content_view.dart:24:'));
+
         expect(output, contains('presentation_widget_infrastructure_dependency'));
         expect(output, contains('prefer_dot_shorthands'));
         final broadWatches = output
@@ -177,6 +239,18 @@ class WatchBoundaries extends ConsumerWidget {
         expect(broadWatches, hasLength(1));
         expect(broadWatches.single, contains('watch_boundaries.dart:13:'));
         expect(output, contains('riverpod_select_identity_forbidden'));
+        final contexts = output
+            .split('\n')
+            .where((line) => line.contains('resolved_contexts.dart'));
+        expect(contexts.where((line) => line.contains('avoid_missing_interpolation')), isEmpty);
+        expect(
+          contexts.where((line) => line.contains('avoid_unnecessary_stateful_widgets')),
+          isEmpty,
+        );
+        final callbacks = contexts.where((line) => line.contains('avoid_ref_watch_outside_build'));
+        expect(callbacks, hasLength(1));
+        expect(callbacks.single, contains('resolved_contexts.dart:8:'));
+        expect(contexts.where((line) => line.trimLeft().startsWith('error -')), isEmpty);
 
         expect(output, isNot(contains('deprecated_lint')));
         expect(output, isNot(contains('server.pluginError')));

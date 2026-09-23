@@ -209,15 +209,11 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       correctionMessage: 'Move try/catch, error translation, snackbar dispatch, and telemetry into the notifier; keep widgets as UI + dispatch only.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags try blocks inside widget files so error handling stays in notifiers.',
+    description: 'Flags catch clauses inside widget files so error handling stays in notifiers.',
     scan: (reporter, context) {
       if (!context.isUiFile || context.isTestFile) return;
 
-      for (var i = 0; i < context.source.length; i++) {
-        final match = RegExp(r'\btry\s*\{').firstMatch(context.source.masked[i]);
-        if (match == null) continue;
-        reporter.report(context, i, match.start);
-      }
+      context.unit.accept(_WidgetCatchVisitor(reporter, context));
     },
   ),
 

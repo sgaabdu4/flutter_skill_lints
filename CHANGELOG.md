@@ -1,6 +1,14 @@
 # Changelog
 
-## [0.12.6] - 2026-09-23
+## [0.12.7] - 2026-09-24
+
+- Use the analyzer type system to prove Container properties are non-null. Literal
+  null, dynamic values and nullable generic bounds no longer trigger invalid-parent
+  warnings; non-null generic bounds remain covered.
+- Include the corrections documented below. The 0.12.6 publication was cancelled
+  before upload after finding the nullability edge case; its tag is not rewritten.
+
+## [0.12.6] - Unreleased
 
 - Fix a 0.12.5 debounce regression: synchronous void notifier methods that launch
   or forward work warn again. Exempt only simple state assignments with trivial

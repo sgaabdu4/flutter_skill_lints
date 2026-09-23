@@ -4,6 +4,8 @@ Status: Complete
 
 ## Outcome + scope
 
+Follow-up: publication of 0.12.6 was cancelled before upload after detecting that a nullability suffix is not proof of a non-null type. Use the analyzer type system for Container properties and preserve the cancelled tag; publish the correction as 0.12.7.
+
 Repair three reproduced analyzer false positives: deferred reads are not immediate initState work, unrelated required parameters do not make a provider a family, and separate non-constant constructor calls are not reusable values. Also correct two regressions found by comparing published releases: void notifier methods can launch expensive work, and Container properties can introduce a render-object parent for Expanded.
 
 ## Repository context
@@ -22,12 +24,13 @@ Authority: Autonomous. User approved repair and release of lint defects blocking
 - [x] Non-constant constructor calls remain distinct; genuine repeated reads and constant expressions still report.
 - [x] Direct state assignments remain allowed; synchronous methods forwarding asynchronous work still warn, including imported notifier declarations.
 - [x] Padded and constrained Containers around Expanded report; transparent Containers and extracted widgets remain allowed.
+- [x] Literal null, dynamic and nullable generic Container properties remain unknown/transparent; non-null generic properties still establish an invalid parent.
 - [x] Synthetic regression tests, real Flutter analysis and native gates pass.
 
 ## Baseline + execution
 
 Result: Passed
-Evidence: Main 7155bde passed native Complete and delivered gates, 1,851 tests and 71.93% coverage. PR #32 and main CI 35907903419/35907903346 passed. Publisher 35908429321 succeeded; 553 published archive files match main and hosted 0.12.5 negative controls pass. Reuse this exact baseline.
+Evidence: Main 7155bde passed native Complete and delivered gates, 1,851 tests and 71.93% coverage. PR #32 and main CI 35907903419/35907903346 passed. Publisher 35908429321 succeeded; 553 published archive files match main and hosted 0.12.5 negative controls pass. Original baseline retained. Follow-up baseline 1695f85 passed main CI 35913463411 and 35913463528 and native delivered verification; the new nullability regression test reproduces the defect before its correction.
 Execution: Prove failures, repair the owning rules, review the public payload, then verify and release.
 
 ## Risks + recovery
@@ -41,7 +44,7 @@ N/A — analyzer diagnostics only.
 ## Verification
 
 Result: Passed
-Evidence: Focused scanner, allocation and layout suites pass (701 tests before the added shorthand allocation case); the strengthened real Flutter plugin smoke passes, and strict analysis reports no issues. Two published regressions reproduced on hosted 0.12.5 with 0.12.0 comparison controls. The original three defects failed their focused red tests before repair. Reviewed all library changes since 0.12.0 plus this candidate; no rule disabling or weaker configuration. Native Complete passed all checks: 1,866 tests, 72.09% line coverage, strict analysis, duplication and import checks, security, vulnerability and secret scans. A separate real Flutter widget run confirmed padded/width Containers cause the expected parent-data error and a transparent Container works (three passing cases).
-E2E: Passed — real Flutter/Riverpod analyzer verifies imported notifier bodies, request forwarding, direct and deferred lifecycle reads, Container layout, distinct allocations, and actual family signatures.
+Evidence: Nullability follow-up: the new literal-null test fails against 1695f85 for the expected diagnostic; all 36 Flutter safety tests pass with the type-system correction, including dynamic and generic bounds. Strict analysis and the strengthened real Flutter/Riverpod smoke pass. Four actual Flutter widget cases independently confirm both invalid parents fail and null/transparent Containers work. Prior integrated proof: 1,866 tests, 72.09% coverage and native Complete/pre-push checks passed; Final 0.12.7 native Complete passed with 1,868 tests and 72.09% line coverage; all other required checks passed.
+E2E: Passed — real Flutter analyzer distinguishes literal null, dynamic, nullable generic and non-null generic Container properties, while retaining all previous audit controls. Four Flutter runtime layout cases pass.
 Delivery target: Merge
-Delivery: Pending — PR/main CI, automatic pub.dev publication, archive comparison and hosted consumer proof.
+Delivery: Pending — 0.12.6 publisher 35913972222 was cancelled and upload skipped. PR 33 merged at 1695f85 with both main CI runs passed. The 0.12.7 follow-up requires PR/main CI, automatic publication, archive comparison and hosted proof.

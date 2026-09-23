@@ -409,6 +409,14 @@ class SingleNotifier {
 }
 ''');
 
+        await _writeFile('${app.path}/lib/null_container_boundaries.dart', r'''
+import 'package:flutter/widgets.dart';
+Widget explicitNull() => Container(padding: null, child: Expanded(child: const SizedBox()));
+Widget unknown(dynamic padding) => Container(padding: padding, child: Expanded(child: const SizedBox()));
+Widget nullableBound<T extends EdgeInsetsGeometry?>(T padding) => Container(padding: padding, child: Expanded(child: const SizedBox()));
+Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(padding: padding, child: Expanded(child: const SizedBox()));
+''');
+
         final pubGet = await _run('flutter', ['pub', 'get'], app);
         expect(
           pubGet.exitCode,
@@ -526,6 +534,16 @@ class SingleNotifier {
           ),
           isEmpty,
         );
+
+        final nullableContainers = output
+            .split('\n')
+            .where((line) => line.contains('null_container_boundaries.dart'));
+        final invalidContainers = nullableContainers.where(
+          (line) => line.contains('avoid_flexible_outside_flex'),
+        );
+        expect(invalidContainers, hasLength(1));
+        expect(invalidContainers.single, contains('null_container_boundaries.dart:5:'));
+        expect(nullableContainers.where((line) => line.trimLeft().startsWith('error -')), isEmpty);
 
         expect(output, isNot(contains('deprecated_lint')));
         expect(output, isNot(contains('server.pluginError')));

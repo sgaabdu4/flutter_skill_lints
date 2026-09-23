@@ -449,6 +449,29 @@ Widget build() => Padding(child: Container(child: Expanded(child: const SizedBox
     await assertDiagnostics(source, [lint(source.indexOf('Expanded('), 'Expanded'.length)]);
   }
 
+  Future<void> test_nullAndUnknownContainerProperties_noLint() async {
+    for (final (index, declaration) in [
+      'Widget build() => Container(padding: null,',
+      'Widget build(dynamic padding) => Container(padding: padding,',
+      'Widget build<T>(T padding) => Container(padding: padding,',
+    ].indexed) {
+      final path = '$testPackageLibPath/nullability_$index.dart';
+      newFile(path, '''
+import 'package:flutter/widgets.dart';
+$declaration child: Expanded(child: const SizedBox()));
+''');
+      await assertNoDiagnosticsInFile(path);
+    }
+  }
+
+  Future<void> test_nonNullableGenericContainerProperty_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+Widget build<T extends Object>(T padding) => Container(padding: padding, child: Expanded(child: const SizedBox()));
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('Expanded('), 'Expanded'.length)]);
+  }
+
   Future<void> test_transparentContainer_noLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';

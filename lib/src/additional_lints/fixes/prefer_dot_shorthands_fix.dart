@@ -4,6 +4,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_dot_shorthands.dart';
 
 /// Removes a repeated static type name from a contextually typed expression.
 final class PreferDotShorthandsFix extends ResolvedCorrectionProducer {
@@ -32,6 +33,10 @@ final class PreferDotShorthandsFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
+    // File-wide correction dispatch can include diagnostics from other rules.
+    if (diagnostic?.diagnosticCode.lowerCaseName != PreferDotShorthands.code.lowerCaseName) {
+      return;
+    }
     final target = node;
     final (prefix, replacement, explicitNew) = switch (target) {
       PrefixedIdentifier(:final prefix) => (prefix as AstNode, '', null),

@@ -1,3 +1,6 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'riverpod_source_rules/riverpod_source_rules_part_01.dart';
@@ -471,15 +474,45 @@ bool _registersDisposeCleanup(
   return RegExp(r'\bref\s*\.\s*onDispose\s*\(').hasMatch(body);
 }
 
-bool _hasBroadRefWatch(SourceScannerContext context, int lineIndex, int methodEnd) {
-  for (final invocation in _refWatchInvocations(context, lineIndex, methodEnd)) {
+final class _ScalarWatchVisitor extends RecursiveAstVisitor<void> {
+  final offsets = <int>{};
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.methodName.name == 'watch' && node.target?.toSource() == 'ref') {
+      final type = node.staticType;
+      if (type != null &&
+          (type.isDartCoreBool ||
+              type.isDartCoreString ||
+              type.isDartCoreInt ||
+              type.isDartCoreDouble ||
+              type.isDartCoreNum ||
+              type.element is EnumElement)) {
+        offsets.add(node.offset);
+      }
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+int? _broadRefWatchColumn(
+  SourceScannerContext context,
+  int lineIndex,
+  int methodEnd,
+  Set<int> scalarOffsets,
+) {
+  final line = context.source.masked[lineIndex];
+  for (final match in RegExp(r'\bref\s*\.\s*watch\s*\(').allMatches(line)) {
+    final offset = context.source.lineOffsets[lineIndex] + match.start;
+    if (scalarOffsets.contains(offset)) continue;
+    final invocation = _refWatchInvocation(context, lineIndex, methodEnd, match.start);
     if (!RegExp(r'\.\s*select\s*\(').hasMatch(invocation) &&
         !RegExp(r'\.\s*notifier\b').hasMatch(invocation) &&
         !_isProjectionProviderWatch(invocation)) {
-      return true;
+      return match.start;
     }
   }
-  return false;
+  return null;
 }
 
 final _eventSignalProviderName = RegExp(

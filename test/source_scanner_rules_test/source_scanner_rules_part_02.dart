@@ -222,6 +222,77 @@ class TodoList {
 }
 ''';
 
+  Future<void> test_allowsGeneratedNotifierBuildDependencies() async {
+    await assertAllows(r'''
+const riverpod = Object();
+final provider = Object();
+class Ref {
+  Object watch(Object provider) => provider;
+}
+@riverpod
+class DerivedNotifier {
+  final ref = Ref();
+  Object build() => ref.watch(provider);
+}
+''');
+  }
+
+  Future<void> test_allowsResolvedScalarResults() async {
+    await assertAllows(r"""
+class Source<T> {}
+class WidgetRef {
+  T watch<T>(Source<T> source) => throw StateError('synthetic');
+}
+enum Selection { first, second }
+final flagProvider = Source<bool>();
+final optionalFlagProvider = Source<bool?>();
+final textProvider = Source<String?>();
+final integerProvider = Source<int>();
+final decimalProvider = Source<double>();
+final numericProvider = Source<num>();
+final selectionProvider = Source<Selection>();
+class ScalarView {
+  Object build() {
+    final ref = WidgetRef();
+    return (
+      ref.watch(flagProvider),
+      ref.watch(optionalFlagProvider),
+      ref.watch(textProvider),
+      ref.watch(integerProvider),
+      ref.watch(decimalProvider),
+      ref.watch(numericProvider),
+      ref.watch(selectionProvider),
+    );
+  }
+}
+""");
+  }
+
+  Future<void> test_reportsStructuredWatchBesideScalarOnSameLine() async {
+    final analyzedSource = _analyzedSource(r"""
+class Source<T> {}
+class WidgetRef {
+  T watch<T>(Source<T> source) => throw StateError('synthetic');
+}
+class StateValue {
+  const StateValue(this.title, this.subtitle);
+  final String title;
+  final String subtitle;
+}
+final flagProvider = Source<bool>();
+final structuredProvider = Source<StateValue>();
+class MixedView {
+  Object build() {
+    final ref = WidgetRef();
+    return (ref.watch(flagProvider), ref.watch(structuredProvider));
+  }
+}
+""", addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(structuredProvider)', ruleName),
+    ]);
+  }
+
   Future<void> test_allowsMultilineFamilyProviderSelect() async {
     await assertNoDiagnostics(r'''
 final itemByIdProvider = ItemFamily();

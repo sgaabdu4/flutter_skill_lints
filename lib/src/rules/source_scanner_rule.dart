@@ -175,6 +175,7 @@ final class _SourceScannerVisitor extends SimpleAstVisitor<void> {
 final class SourceScannerContext {
   SourceScannerContext._({
     required this.path,
+    required this.unit,
     required this.source,
     required this.classes,
     required this.methods,
@@ -200,6 +201,7 @@ final class SourceScannerContext {
 
     return SourceScannerContext._(
       path: _relativePath(unit.file.path),
+      unit: unit.unit,
       source: source,
       classes: classes,
       methods: methods,
@@ -211,6 +213,7 @@ final class SourceScannerContext {
   );
 
   final String path;
+  final CompilationUnit unit;
   final SourceScannerSource source;
   final List<ScannerClassSpan> classes;
   final List<ScannerMethodSpan> methods;

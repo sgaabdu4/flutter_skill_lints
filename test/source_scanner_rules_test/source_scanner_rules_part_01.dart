@@ -9,6 +9,66 @@ abstract class _RiverpodRuleTest extends _SourceRuleTest {
 
 @reflectiveTest
 final class RiverpodReadInitStateTest extends _RiverpodRuleTest {
+  Future<void> test_allowsDeferredAndAdjacentReads() async {
+    await assertAllows(r'''
+import 'dart:async';
+final provider = Object();
+class Ref { Object read(Object value) => value; }
+class View {
+  final ref = Ref();
+  void initState() {
+    Future<void>.microtask(() { ref.read(provider); });
+  }
+  void later() { ref.read(provider); }
+}
+''');
+  }
+
+  Future<void> test_reportsImmediatelyInvokedRead() async {
+    final analyzedSource = _analyzedSource(r'''
+final provider = Object();
+class Ref { Object read(Object value) => value; }
+class View {
+  final ref = Ref();
+  void initState() {
+    (() { ref.read(provider); })();
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, needle, ruleName)]);
+  }
+
+  Future<void> test_reportsSynchronousCallback() async {
+    final analyzedSource = _analyzedSource(r'''
+final provider = Object();
+class Ref { Object read(Object value) => value; }
+class View {
+  final ref = Ref();
+  void initState() {
+    [1].forEach((_) { ref.read(provider); });
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, needle, ruleName)]);
+  }
+
+  Future<void> test_reportsReadAfterDeferredCallbackOnSameLine() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'dart:async';
+final provider = Object();
+class Ref { Object read(Object value) => value; }
+class View {
+  final ref = Ref();
+  void initState() {
+    Future<void>.microtask(() { ref.read(provider); }); ref.read(provider);
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      lint(analyzedSource.lastIndexOf(needle), needle.length + 1),
+    ]);
+  }
+
   @override
   String get ruleName => 'riverpod_read_init_state';
   @override

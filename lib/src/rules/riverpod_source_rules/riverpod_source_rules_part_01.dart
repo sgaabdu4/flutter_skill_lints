@@ -14,9 +14,9 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     description: 'Flags ref.read calls made from initState so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (context.isInitStateRead(i)) {
-          reporter.report(context, i, line.indexOf('ref.read'));
+        final column = context.initStateReadColumn(i);
+        if (column != null) {
+          reporter.report(context, i, column);
         }
       }
     },
@@ -377,7 +377,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
         final line = context.source.masked[i];
         if (_isKeepAliveRiverpodAnnotation(context, i) &&
             !_hasKeepAliveTickerModeWorkaround(context, i) &&
-            (context.near(i, 'required ', 5) || _hasFamilySignatureAfterKeepAlive(context, i))) {
+            _hasFamilySignatureAfterKeepAlive(context, i)) {
           reporter.report(context, i, line.indexOf('@Riverpod'));
         }
       }

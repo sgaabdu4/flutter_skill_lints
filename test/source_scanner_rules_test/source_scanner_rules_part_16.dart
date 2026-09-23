@@ -411,6 +411,23 @@ class SearchSheet {
     await assertAllows(_inputNotifierSource('TextField', 'void', ''));
   }
 
+  Future<void> test_allowsDirectStateAssignment() async {
+    await assertAllows(_inputNotifierSource('TextField', 'void', '', body: 'state = value;'));
+  }
+
+  Future<void> test_reportsSynchronousForwardingMethods() async {
+    for (final (index, body) in [
+      'unawaited(fetch(value));',
+      'fetch(value);',
+      'forward(value);',
+    ].indexed) {
+      final source = _inputNotifierSource('TextField', 'void', '', body: body);
+      final path = '$testPackageLibPath/forward_$index.dart';
+      newFile(path, source);
+      await assertDiagnosticsInFile(path, [compatLint(source, 'TextField(onChanged:', ruleName)]);
+    }
+  }
+
   Future<void> test_reportsResolvedAsyncRequest() async {
     final source = _inputNotifierSource('TextField', 'Future<void>', 'async');
     await assertDiagnostics(source, [compatLint(source, 'TextField(onChanged:', ruleName)]);
@@ -645,10 +662,21 @@ class ConfirmHost extends ConsumerWidget {
 ''';
 }
 
-String _inputNotifierSource(String inputType, String returnType, String bodyModifier) =>
+String _inputNotifierSource(
+  String inputType,
+  String returnType,
+  String bodyModifier, {
+  String body = '',
+}) =>
     '''
+import 'dart:async';
 class $inputType { $inputType({required void Function(String) onChanged}); }
-class Notifier { $returnType update(String value) $bodyModifier {} }
+class Notifier {
+  String state = '';
+  $returnType update(String value) $bodyModifier {$body}
+  Future<void> fetch(String value) async {}
+  void forward(String value) { unawaited(fetch(value)); }
+}
 class Provider { Notifier get notifier => Notifier(); }
 class Ref { Notifier read(Notifier notifier) => notifier; }
 final formProvider = Provider();

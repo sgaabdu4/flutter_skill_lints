@@ -4,6 +4,21 @@ part of '../source_scanner_rules_test.dart';
 
 @reflectiveTest
 final class RiverpodKeepaliveFamilyTest extends _RiverpodRuleTest {
+  Future<void> test_allowsNearbyRequiredFieldsAndMethods() async {
+    await assertAllows(r'''
+class Riverpod { const Riverpod({bool keepAlive = false}); }
+class Ref {}
+class Request { Request({required String title}); }
+@Riverpod(keepAlive: true)
+Object repository(Ref ref) => Object();
+@Riverpod(keepAlive: true)
+class Visibility {
+  bool build() => false;
+  void update({required bool visible}) {}
+}
+''');
+  }
+
   @override
   String get ruleName => 'riverpod_keepalive_family';
   @override

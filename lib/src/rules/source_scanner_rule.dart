@@ -3,6 +3,7 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 part 'source_scanner_rule/source_scanner_source.dart';
@@ -229,8 +230,7 @@ final class SourceScannerContext {
     return near(lineIndex, 'isLoading', 8) || near(lineIndex, 'loading', 8);
   }
 
-  bool isInitStateRead(int lineIndex) =>
-      source.masked[lineIndex].contains('ref.read(') && near(lineIndex, 'initState', 8);
+  int? initStateReadColumn(int lineIndex) => _immediateInitStateReadColumn(this, lineIndex);
 
   bool hasStringNavigation(String code, String masked) {
     return stringNavigationColumn(code, masked) != null;

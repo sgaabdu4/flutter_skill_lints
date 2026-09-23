@@ -327,6 +327,88 @@ class FormView extends ConsumerWidget {
 }
 ''');
 
+        await _writeFile('${app.path}/lib/audit_notifier.dart', r'''
+import 'dart:async';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+final auditProvider = NotifierProvider<AuditNotifier, String>(AuditNotifier.new);
+class AuditNotifier extends Notifier<String> {
+  @override
+  String build() => '';
+  void update(String value) { state = value; }
+  Future<void> fetch(String value) async {}
+  void forward(String value) { unawaited(fetch(value)); }
+}
+''');
+        await _writeFile('${app.path}/lib/audit_boundaries.dart', r'''
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'audit_notifier.dart';
+import 'expression_boundaries.dart' show formProvider;
+class AuditView extends ConsumerWidget {
+  const AuditView({super.key});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Column(children: [
+    TextField(onChanged: (value) => ref.read(auditProvider.notifier).update(value)),
+    TextField(onChanged: (value) => ref.read(auditProvider.notifier).forward(value)),
+    TextField(onChanged: (value) => ref.read(auditProvider.notifier).fetch(value)),
+    TextField(onChanged: (value) => ref.read(formProvider.notifier).update(value)),
+    Container(padding: EdgeInsets.zero, child: Expanded(child: const SizedBox())),
+    Container(width: 20, child: Expanded(child: const SizedBox())),
+    Container(child: Expanded(child: const SizedBox())),
+  ]);
+}
+void separateAllocations() {
+  final first = Completer<int>();
+  final second = Completer<int>();
+  first.complete(1);
+  second.complete(2);
+}
+class Box { const Box(); }
+void duplicateConstant() {
+  final first = const Box();
+  final second = const Box();
+  print(first);
+  print(second);
+}
+class StartupView extends ConsumerStatefulWidget {
+  const StartupView({super.key});
+  @override
+  ConsumerState<StartupView> createState() => StartupState();
+}
+class StartupState extends ConsumerState<StartupView> {
+  @override
+  void initState() {
+    super.initState();
+    ref.read(auditProvider);
+    (() { ref.read(auditProvider); })();
+    [1].forEach((_) { ref.read(auditProvider); });
+    WidgetsBinding.instance.addPostFrameCallback((_) { ref.read(auditProvider); });
+    WidgetsBinding.instance.addPostFrameCallback(_afterFrame);
+  }
+  void _afterFrame(Duration elapsed) { ref.read(auditProvider); }
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+''');
+
+        await _writeFile('${app.path}/lib/family_boundaries.dart', r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+class Payload {
+  const Payload({required this.value});
+  final String value;
+}
+@Riverpod(keepAlive: true)
+String singleValue(Ref ref) => '';
+@Riverpod(keepAlive: true)
+String familyValue(Ref ref, String id) => id;
+@Riverpod(keepAlive: true)
+class SingleNotifier {
+  String build() => '';
+  void update({required bool enabled}) {}
+}
+''');
+
         final pubGet = await _run('flutter', ['pub', 'get'], app);
         expect(
           pubGet.exitCode,
@@ -405,6 +487,45 @@ class FormView extends ConsumerWidget {
         ]) {
           expect(expressions.where((line) => line.contains(code)), hasLength(1), reason: code);
         }
+
+        final audit = output.split('\n').where((line) => line.contains('audit_boundaries.dart'));
+        for (final entry in {
+          'text_field_on_changed_no_debounce': [11, 12],
+          'avoid_flexible_outside_flex': [14, 15],
+          'use_existing_variable': [28],
+          'riverpod_read_init_state': [41, 42, 43],
+        }.entries) {
+          final findings = audit.where((line) => line.contains(entry.key));
+          expect(findings, hasLength(entry.value.length), reason: '${entry.key}\n$output');
+          for (final lineNumber in entry.value) {
+            expect(
+              findings.any((line) => line.contains('audit_boundaries.dart:$lineNumber:')),
+              isTrue,
+            );
+          }
+        }
+        expect(
+          audit.where(
+            (line) =>
+                line.trimLeft().startsWith('error -') && !line.contains('riverpod_read_init_state'),
+          ),
+          isEmpty,
+        );
+
+        final families = output
+            .split('\n')
+            .where((line) => line.contains('family_boundaries.dart'));
+        final keptFamilies = families.where((line) => line.contains('riverpod_keepalive_family'));
+        expect(keptFamilies, hasLength(1));
+        expect(keptFamilies.single, contains('family_boundaries.dart:8:'));
+        expect(
+          families.where(
+            (line) =>
+                line.trimLeft().startsWith('error -') &&
+                !line.contains('riverpod_keepalive_family'),
+          ),
+          isEmpty,
+        );
 
         expect(output, isNot(contains('deprecated_lint')));
         expect(output, isNot(contains('server.pluginError')));

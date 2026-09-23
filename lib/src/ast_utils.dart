@@ -609,3 +609,18 @@ final class _EnsureCallFinder extends RecursiveAstVisitor<void> {
     super.visitMethodInvocation(node);
   }
 }
+
+/// Whether a closure executes immediately instead of being stored or scheduled.
+bool isImmediatelyInvoked(FunctionExpression function) {
+  AstNode expression = function;
+  var wrapper = expression.parent;
+  while (wrapper is ParenthesizedExpression) {
+    expression = wrapper;
+    wrapper = expression.parent;
+  }
+  final parent = expression.parent;
+  return parent is FunctionExpressionInvocation && identical(parent.function, expression) ||
+      parent is MethodInvocation &&
+          parent.methodName.name == 'call' &&
+          identical(parent.target, expression);
+}

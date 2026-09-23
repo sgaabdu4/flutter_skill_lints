@@ -340,6 +340,7 @@ void _scanDomainEntityParameters(
 ) {
   if (!context.isDomainPath || context.path.contains('/domain/values/')) return;
   final source = context.source.masked.join('\n');
+  final original = context.source.original.join('\n');
   final lineOffsets = _sourceLineOffsets(context);
   for (final classSpan in context.classes) {
     if (!context.hasFreezedAnnotation(classSpan) || classSpan.name.startsWith('_')) continue;
@@ -351,6 +352,9 @@ void _scanDomainEntityParameters(
     final classEnd = lineOffsets[classSpan.end + 1];
     final match = constructor.firstMatch(source.substring(classStart, classEnd));
     if (match == null) continue;
+    // Shipped Hive entities keep their locked primitive slots (value-objects.md Option A).
+    final constructorText = original.substring(classStart + match.start, classStart + match.end);
+    if (constructorText.contains('HiveField(')) continue;
     final parametersStart = classStart + match.start + match.group(0)!.indexOf('(') + 1;
     for (final parameter in _entityParameter.allMatches(match.group(1)!)) {
       final entity = (

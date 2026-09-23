@@ -19,7 +19,7 @@ Authority: User asked to fix the gap in the canonical skill + lints and push a n
 ## Acceptance + steps
 
 - [x] `domain_raw_required_string` reports each non-nullable, non-defaulted `String` parameter of an unnamed Freezed constructor in `/domain/` outside `/domain/values/`; allows VO types, `String?`, `List<String>`, named union factories, data models and value objects → `DomainRawRequiredStringTest` passes.
-- [x] `domain_unit_primitive` reports unit/currency-named `int`/`double`/`num` parameters, including `@Default` and nullable ones; allows counts and `Duration` → `DomainUnitPrimitiveTest` passes.
+- [x] `domain_unit_primitive` reports unit/currency-named `int`/`double`/`num` parameters, including `@Default` and nullable ones; allows counts, `Duration` and shipped Hive entities whose constructor carries `HiveField(N)` markers → `DomainUnitPrimitiveTest` passes.
 - [x] Real analyzer server reports both diagnostics on the consumer app's domain entities with the plugin wired by path → `dart analyze` output lists `domain_raw_required_string` and `domain_unit_primitive`.
 - [x] Version 0.12.0 is consistent in `pubspec.yaml`, `CHANGELOG.md` and README; rule counts and inventory match registration → `plugin_registration_test.dart` passes.
 - [x] Full gate passes → `python3 .hooks/hard-eng.py check --plan-stage Complete` exits 0.
@@ -41,7 +41,7 @@ N/A — analyzer plugin with no visual surface.
 ## Verification
 
 Result: Passed
-Evidence: `dart test test/source_scanner_rules_test.dart --name 'DomainRawRequiredString|DomainUnitPrimitive|DomainEntityPrimitive|DomainEmptyString'` → 19 passed. Consumer app copy with the plugin by path: `dart analyze` → 39 `domain_raw_required_string` + 9 `domain_unit_primitive` on `/domain/entities/` files, no other diagnostics (previously "No issues found"). `check --plan-stage Ready` on the change → 14/14 gates PASS. `dart pub publish --dry-run` → only the uncommitted-files warning. Limit: unit-free numbers (`glassesTarget`, `steps`) stay a review judgement.
+Evidence: `dart test test/source_scanner_rules_test.dart --name 'DomainRawRequiredString|DomainUnitPrimitive|DomainEntityPrimitive|DomainEmptyString'` → 20 passed (includes the Hive exemption, which fails when the exemption is removed). Consumer app copy with the plugin by path: `dart analyze` → 39 `domain_raw_required_string` + 9 `domain_unit_primitive` on `/domain/entities/` files, no other diagnostics (previously "No issues found"). `check --plan-stage Ready` on the change → 14/14 gates PASS. `dart pub publish --dry-run` → only the uncommitted-files warning. Limit: unit-free numbers (`glassesTarget`, `steps`) stay a review judgement.
 E2E: N/A — no user journey; real analyzer-server proof is the consumer `dart analyze` acceptance item.
 
 Delivery target: Merge; Delivery: Pending — PR checks, merge to main, tag `v0.12.0`, pub.dev publish workflow success.

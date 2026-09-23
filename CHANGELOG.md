@@ -8,6 +8,8 @@
 - Add `domain_unit_primitive`: Freezed domain entity constructors must not carry
   unit- or currency-named numbers such as `sizeBytes`, `weightKg` or `price`;
   use a Value Object or `Duration`.
+- Constructors with `HiveField(N)` markers keep their locked primitive slots,
+  matching the skill's shipped-Hive-entity exception.
 - Both are errors, so existing apps with raw domain fields fail analysis after
   upgrading until those fields use Value Objects.
 

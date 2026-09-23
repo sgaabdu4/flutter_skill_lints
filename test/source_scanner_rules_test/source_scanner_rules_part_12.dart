@@ -697,6 +697,14 @@ final class DomainUnitPrimitiveTest extends _DomainEntityParameterRuleTest {
     ]);
   }
 
+  Future<void> test_allowsShippedHiveEntityLockedSlots() async {
+    await assertAllows(
+      entity('    required String id,\n    /// HiveField(1)\n    required double distanceMeters,'),
+      path: path,
+      addIgnorePrefix: false,
+    );
+  }
+
   Future<void> test_allowsCountsAndTypedUnits() async {
     await assertAllows(
       entity(

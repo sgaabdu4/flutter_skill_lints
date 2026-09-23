@@ -463,6 +463,54 @@ final class UseExistingVariableFalsePositiveTest extends _AdditionalLintRuleTest
     super.setUp();
   }
 
+  Future<void> test_writeTargetsAreNotRepeatedReads() async {
+    for (final assignment in ['box.value = 2', 'box.value += 2', 'box.value++', '++box.value']) {
+      await assertNoDiagnostics('''
+class Box { int value = 1; }
+void run(Box box) {
+  final previous = box.value;
+  $assignment;
+  print(previous);
+}
+''');
+    }
+  }
+
+  Future<void> test_indexAssignmentIsNotRepeatedRead() async {
+    await assertNoDiagnostics(r'''
+void run(Map<String, int> cache) {
+  final previous = cache['key'];
+  cache['key'] = 2;
+  print(previous);
+}
+''');
+  }
+
+  Future<void> test_nullAssertedReadStillReports() async {
+    const source = r'''
+class Box { int? value; }
+void run(Box box) {
+  final previous = box.value;
+  final repeated = box.value!;
+  print(previous);
+  print(repeated);
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('box.value!'), 9)]);
+  }
+
+  Future<void> test_assignmentRightHandReadStillReports() async {
+    const source = r'''
+class Box { int value = 1; }
+void run(Box box) {
+  final previous = box.value;
+  box.value = box.value + 1;
+  print(previous);
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('box.value +'), 9)]);
+  }
+
   Future<void> test_reportsDuplicateExpressionWithoutInterveningSideEffect() async {
     const source = r'''
 class Container {

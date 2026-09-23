@@ -1,3 +1,6 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'runtime_bug_source_rules/runtime_bug_source_rules_part_01.dart';
@@ -670,12 +673,12 @@ bool _lineHasNumericNamedArg(SourceScannerContext context, int saveLine, int met
 }
 
 final _textInputConstructor = RegExp(
-  r'(?:^|\breturn\s+|=>\s*|=\s*|,\s*|\(\s*|\[\s*|child:\s*|children:\s*\[\s*)'
+  r'(?:^\s*|\breturn\s+|=>\s*|=\s*|,\s*|\(\s*|\[\s*|child:\s*|children:\s*\[\s*)'
   r'(TextField|TextFormField|CupertinoTextField|CupertinoTextFormFieldRow|SearchBar|SearchAnchor)\s*\(',
 );
 
 final _sliderConstructor = RegExp(
-  r'(?:^|\breturn\s+|=>\s*|=\s*|,\s*|\(\s*|\[\s*|child:\s*|children:\s*\[\s*)'
+  r'(?:^\s*|\breturn\s+|=>\s*|=\s*|,\s*|\(\s*|\[\s*|child:\s*|children:\s*\[\s*)'
   r'(Slider|RangeSlider|CupertinoSlider)\s*\(',
 );
 
@@ -688,8 +691,6 @@ final _expensiveOnChangedWork = RegExp(
   r'\.\s*notifier\s*\)\s*\.\s*\w+\s*\(|'
   r'\b(?:http|dio|Dio)\s*\.\s*(?:get|post|put|patch|delete)\s*\(',
 );
-
-final _onChangedNamedArg = RegExp(r'\bonChanged\s*:\s*\(');
 
 final _numericNamedArg = RegExp(
   r'\b(?:duration|distance|amount|count|weight|seconds|meters|kilometers|miles|minutes|hours|cents|percent|kilograms|pounds|grams|bytes|pixels|total|max|min|limit|offset|threshold|delay|timeout|ratio|score|level|size|index|page)\w*\s*:',

@@ -224,6 +224,13 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
   /// Checks if [expression] matches any known variable initializer.
   /// Returns true if a match is found (to stop recursion into children).
   bool _checkExpression(Expression expression) {
+    final isWriteTarget = switch (expression.parent) {
+      AssignmentExpression(:final leftHandSide) => identical(leftHandSide, expression),
+      PostfixExpression(:final operator) ||
+      PrefixExpression(:final operator) => operator.lexeme == '++' || operator.lexeme == '--',
+      _ => false,
+    };
+    if (isWriteTarget) return false;
     if (_Visitor._isTrivialExpression(expression)) return false;
     final source = expression.toSource();
     for (final variable in variables) {

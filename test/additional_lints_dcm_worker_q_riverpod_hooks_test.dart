@@ -45,6 +45,10 @@ class WidgetRef {
   T read<T>(ProviderListenable<T> provider) => throw UnimplementedError();
 }
 
+class Consumer extends Widget {
+  const Consumer({required Widget Function(BuildContext, WidgetRef, Widget?) builder});
+}
+
 abstract class ConsumerWidget extends Widget {
   const ConsumerWidget();
   Widget build(BuildContext context, WidgetRef ref);
@@ -136,6 +140,74 @@ class Host extends ConsumerWidget {
   }
 }
 ''');
+  }
+
+  Future<void> test_consumerBuilder_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+final provider = ProviderListenable<int>();
+Widget make() => Consumer(builder: (context, ref, child) {
+  ref.watch(provider);
+  return const Widget();
+});
+''');
+  }
+
+  Future<void> test_hookConsumerBuilder_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+final provider = ProviderListenable<int>();
+Widget make() => HookConsumer(builder: (context, ref) {
+  ref.watch(provider);
+  return const Widget();
+});
+''');
+  }
+
+  Future<void> test_consumerNestedCallback_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+final provider = ProviderListenable<int>();
+Widget make() => Consumer(builder: (context, ref, child) {
+  final callback = () => ref.watch(provider);
+  callback();
+  return const Widget();
+});
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('ref.watch'), 19)]);
+  }
+
+  Future<void> test_outerRefInsideConsumerBuilder_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+final provider = ProviderListenable<int>();
+Widget make(WidgetRef ref) => Consumer(builder: (context, innerRef, child) {
+  ref.watch(provider);
+  return const Widget();
+});
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('ref.watch'), 19)]);
+  }
+
+  Future<void> test_unrelatedConsumerBuilder_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' hide Consumer;
+class Consumer {
+  Consumer({required Widget Function(WidgetRef) builder});
+}
+final provider = ProviderListenable<int>();
+void make() => Consumer(builder: (ref) {
+  ref.watch(provider);
+  return const Widget();
+});
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('ref.watch'), 19)]);
   }
 
   Future<void> test_callbackInsideBuild_lint() async {

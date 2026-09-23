@@ -26,6 +26,38 @@ class TodoScreen extends ConsumerWidget {
 }
 ''';
 
+  Future<void> test_allowsCleanupWithoutCatching() async {
+    await assertAllows(r'''
+class TodoScreen extends Widget {
+  Future<void> save() async {
+    try {
+      await saveAction();
+    } finally {
+      resetIndicator();
+    }
+  }
+}
+''', path: path);
+  }
+
+  Future<void> test_reportsNestedCatchInsideCleanup() async {
+    final analyzedSource = _analyzedSource(r'''
+class TodoScreen extends Widget {
+  Future<void> save() async {
+    try {
+      await saveAction();
+    } finally {
+      try /* handler */ { resetIndicator(); } on Object { recover(); }
+    }
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, 'try /* handler */', ruleName),
+    ]);
+  }
+
   Future<void> test_allowsTryCatchInNotifier() async {
     await assertAllows(r'''
 class TodosNotifier {

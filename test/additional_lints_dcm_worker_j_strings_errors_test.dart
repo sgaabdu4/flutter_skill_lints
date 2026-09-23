@@ -79,6 +79,50 @@ void f(String label) {
     await assertDiagnostics(source, [lint(source.indexOf("'label'"), "'label'".length)]);
   }
 
+  Future<void> test_structuralMapKeys_noLint() async {
+    await assertNoDiagnostics(r'''
+Map<String, Object> encode(int revision, String token) {
+  final result = <String, Object>{'revision': revision, 'token': token};
+  result['revision'] = revision + 1;
+  print(result['token']);
+  return result;
+}
+''');
+  }
+
+  Future<void> test_mapValue_lint() async {
+    const source = r'''
+Map<String, String> encode(String token) => {'value': 'token'};
+''';
+    await assertDiagnostics(source, [lint(source.indexOf("'token'"), 7)]);
+  }
+
+  Future<void> test_coreErrorParameterNames_noLint() async {
+    await assertNoDiagnostics(r'''
+void check(int count) {
+  if (count == 0) throw ArgumentError('Must be positive', 'count');
+}
+''');
+  }
+
+  Future<void> test_unrelatedErrorClass_lint() async {
+    const source = r'''
+class ArgumentError {
+  ArgumentError(Object value, String name);
+}
+void check(String count) => throw ArgumentError(count, 'count');
+''';
+    await assertDiagnostics(source, [lint(source.indexOf("'count'"), 7)]);
+  }
+
+  Future<void> test_unrelatedNameParameter_lint() async {
+    const source = r'''
+void display(String value, String name) {}
+void check(String count) => display(count, 'count');
+''';
+    await assertDiagnostics(source, [lint(source.indexOf("'count'"), 7)]);
+  }
+
   Future<void> test_noLocalName_noLint() async {
     await assertNoDiagnostics(r'''
 void f() {

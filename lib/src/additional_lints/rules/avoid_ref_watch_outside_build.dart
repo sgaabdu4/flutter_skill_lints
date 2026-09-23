@@ -4,6 +4,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/riverpod_consumer_checkers.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when `ref.watch()` is used outside a widget `build()` method.
 ///
@@ -63,6 +64,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
 
     if (function is FunctionExpression) {
+      if (_isConsumerBuilder(function, node)) return true;
       final declaration = function.parent;
       if (declaration is FunctionDeclaration) {
         return _hasRiverpodAnnotation(declaration.metadata);
@@ -70,6 +72,23 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
 
     return false;
+  }
+
+  bool _isConsumerBuilder(FunctionExpression function, MethodInvocation invocation) {
+    final argument = function.parent;
+    if (argument is! NamedArgument || argument.name.lexeme != 'builder') return false;
+    final creation = argument.parent?.parent;
+    if (creation is! InstanceCreationExpression) return false;
+    final type = creation.staticType;
+    const checker = TypeChecker.any([
+      TypeChecker.fromName('Consumer', packageName: 'flutter_riverpod'),
+      TypeChecker.fromName('HookConsumer', packageName: 'hooks_riverpod'),
+    ]);
+    if (type == null || !checker.isExactlyType(type)) return false;
+    final parameters = function.parameters?.parameters;
+    if (parameters == null || parameters.length < 2) return false;
+    final ref = invocation.target as SimpleIdentifier;
+    return ref.element == parameters[1].declaredFragment?.element;
   }
 
   AstNode? _enclosingFunctionBoundary(AstNode node) {

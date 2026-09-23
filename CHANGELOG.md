@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.2] - 2026-09-23
+
+- Allow cleanup-only try/finally in widgets while retaining catch-boundary checks.
+- Recognize map/index keys and core error parameter names as intentional literals.
+- Preserve stateful widgets whose inherited members own mutable state or lifecycle.
+- Allow Riverpod Consumer and HookConsumer builder subscriptions while retaining
+  warnings for nested callbacks and unrelated builder APIs.
+
 ## [0.12.1] - 2026-09-23
 
 - Allow direct Riverpod watches of resolved scalar values, including nullable

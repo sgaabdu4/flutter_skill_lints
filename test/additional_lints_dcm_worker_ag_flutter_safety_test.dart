@@ -3,12 +3,14 @@
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_recursive_widget_calls.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_undisposed_instances.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary_stateful_widgets.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_setstate_synchronously.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
   defineReflectiveSuite(() {
     defineReflectiveTests(AvoidUndisposedInstancesTest);
+    defineReflectiveTests(AvoidUnnecessaryStatefulWidgetsTest);
     defineReflectiveTests(UseSetstateSynchronouslyTest);
     defineReflectiveTests(AvoidRecursiveWidgetCallsTest);
   });
@@ -47,6 +49,8 @@ abstract class State<T extends StatefulWidget> {
   bool get mounted => true;
 
   void setState(void Function() fn) => fn();
+  void initState() {}
+  void dispose() {}
 }
 
 class SizedBox extends Widget {
@@ -275,4 +279,76 @@ int countDown(int value) {
 }
 ''');
   }
+}
+
+@reflectiveTest
+final class AvoidUnnecessaryStatefulWidgetsTest extends _FlutterSafetyRuleTest {
+  @override
+  void setUp() {
+    rule = AvoidUnnecessaryStatefulWidgets();
+    super.setUp();
+  }
+
+  Future<void> test_mixinLifecycle_noLint() async {
+    await assertNoDiagnostics(
+      _source('''
+mixin Lifecycle<T extends StatefulWidget> on State<T> {
+  @override
+  void dispose() { super.dispose(); }
+}
+''', 'with Lifecycle<Demo>'),
+    );
+  }
+
+  Future<void> test_mixinMutableState_noLint() async {
+    await assertNoDiagnostics(_source('mixin Counter { int count = 0; }', 'with Counter'));
+  }
+
+  Future<void> test_superclassLifecycle_noLint() async {
+    final source = _source('''
+abstract class Base<T extends StatefulWidget> extends State<T> {
+  @override
+  void initState() { super.initState(); }
+}
+''', '').replaceFirst('extends State<Demo>', 'extends Base<Demo>');
+    await assertNoDiagnostics(source);
+  }
+
+  Future<void> test_lifecycleInterface_lint() async {
+    final source = _source(
+      'abstract interface class Lifecycle { void dispose(); }',
+      'implements Lifecycle',
+    );
+    await assertDiagnostics(source, [lint(source.indexOf('Demo extends'), 4)]);
+  }
+
+  Future<void> test_emptyMixin_lint() async {
+    final source = _source('mixin Empty {}', 'with Empty');
+    await assertDiagnostics(source, [lint(source.indexOf('Demo extends'), 4)]);
+  }
+
+  Future<void> test_finalMixinField_lint() async {
+    final source = _source('mixin Label { final label = "label"; }', 'with Label');
+    await assertDiagnostics(source, [lint(source.indexOf('Demo extends'), 4)]);
+  }
+
+  Future<void> test_ownLifecycle_noLint() async {
+    await assertNoDiagnostics(_source('', '', '@override void dispose() {}'));
+  }
+
+  Future<void> test_plainState_lint() async {
+    final source = _source('', '');
+    await assertDiagnostics(source, [lint(source.indexOf('Demo extends'), 4)]);
+  }
+
+  String _source(String mixin, String clause, [String body = '']) =>
+      '''
+import 'package:flutter/widgets.dart';
+$mixin
+class Demo extends StatefulWidget {}
+class DemoState extends State<Demo> $clause {
+  $body
+  Widget build(BuildContext context) => const Widget();
+}
+''';
 }

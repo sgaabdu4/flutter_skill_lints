@@ -1,6 +1,48 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+
+/// Own fields assigned on the unconditional synchronous path through initState.
+Set<String> initializedFlutterStateFields(ClassDeclaration declaration) {
+  final element = declaration.declaredFragment?.element;
+  final body = declaration.body;
+  if (element == null || !flutterStateChecker.isSuperOf(element) || body is! BlockClassBody) {
+    return const {};
+  }
+  return {
+    for (final method in body.members.whereType<MethodDeclaration>())
+      ..._initializedStateFields(method, element),
+  };
+}
+
+Set<String> _initializedStateFields(MethodDeclaration method, InterfaceElement owner) {
+  if (method.name.lexeme != 'initState' || method.isStatic) return const {};
+  final implementation = method.body;
+  if (implementation is! BlockFunctionBody || implementation.isAsynchronous) return const {};
+  final assigned = <String>{};
+  for (final statement in implementation.block.statements) {
+    if (statement is VariableDeclarationStatement || statement is AssertStatement) continue;
+    if (statement is! ExpressionStatement) break;
+    final field = _assignedOwnField(statement.expression, owner);
+    if (field != null) assigned.add(field);
+  }
+  return assigned;
+}
+
+String? _assignedOwnField(Expression expression, InterfaceElement owner) {
+  if (expression is! AssignmentExpression || expression.operator.lexeme != '=') return null;
+  final receiver = expression.leftHandSide;
+  if (receiver is! SimpleIdentifier &&
+      !(receiver is PropertyAccess && receiver.target is ThisExpression)) {
+    return null;
+  }
+  final target = expression.writeElement;
+  return target is SetterElement && target.variable.enclosingElement == owner
+      ? target.variable.name
+      : null;
+}
 
 Map<String, Token> findUnassignedFields(
   BlockClassBody body, {

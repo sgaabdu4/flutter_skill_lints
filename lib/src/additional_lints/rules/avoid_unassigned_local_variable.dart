@@ -1,5 +1,7 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
@@ -53,7 +55,14 @@ final class _BlockChecker {
 
       final key = localVariableKey(variable);
       if (key != null) {
-        _assigned[key] = initializer != null;
+        final type = variable.declaredFragment?.element.type;
+        final hasImplicitNull =
+            !list.isLate &&
+            !list.isFinal &&
+            (type is DynamicType ||
+                type?.isDartCoreNull == true ||
+                type?.nullabilitySuffix == NullabilitySuffix.question);
+        _assigned[key] = initializer != null || hasImplicitNull;
       }
     }
   }

@@ -1,6 +1,7 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_flexible_outside_flex.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_recursive_widget_calls.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_undisposed_instances.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary_stateful_widgets.dart';
@@ -9,6 +10,7 @@ import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
   defineReflectiveSuite(() {
+    defineReflectiveTests(AvoidFlexibleOutsideFlexTest);
     defineReflectiveTests(AvoidUndisposedInstancesTest);
     defineReflectiveTests(AvoidUnnecessaryStatefulWidgetsTest);
     defineReflectiveTests(UseSetstateSynchronouslyTest);
@@ -53,6 +55,22 @@ abstract class State<T extends StatefulWidget> {
   void dispose() {}
 }
 
+abstract class RenderObjectWidget extends Widget {}
+class Flex extends RenderObjectWidget {
+  Flex({required List<Widget> children});
+}
+class Row extends Flex {
+  Row({required super.children});
+}
+class Padding extends RenderObjectWidget {
+  Padding({required Widget child});
+}
+class Flexible extends Widget {
+  Flexible({required Widget child});
+}
+class Expanded extends Flexible {
+  Expanded({required super.child});
+}
 class SizedBox extends Widget {
   const SizedBox();
 }
@@ -65,6 +83,8 @@ final class AvoidUndisposedInstancesTest extends _FlutterSafetyRuleTest {
   @override
   void setUp() {
     rule = AvoidUndisposedInstances();
+    newPackage('riverpod')
+        .addFile('lib/riverpod.dart', 'class Ref { void onDispose(void Function() callback) {} }');
     super.setUp();
   }
 
@@ -111,6 +131,50 @@ void buildResource() {
   addTearDown(resource.dispose);
 }
 ''');
+  }
+
+  Future<void> test_futureCompletionOwnsCleanup_noLint() async {
+    await assertNoDiagnostics(r'''
+class Resource { void dispose() {} }
+Future<void> useResource(Future<void> work) {
+  final resource = Resource();
+  return work.whenComplete(resource.dispose);
+}
+''');
+  }
+
+  Future<void> test_riverpodOnDisposeOwnsCleanup_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+class Resource { void dispose() {} }
+void useResource(Ref ref) {
+  final resource = Resource();
+  ref.onDispose(resource.dispose);
+}
+''');
+  }
+
+  Future<void> test_unregisteredTearOffDoesNotOwnCleanup_lint() async {
+    const source = r'''
+class Resource { void dispose() {} }
+void useResource() {
+  final resource = Resource();
+  print(resource.dispose);
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('resource ='), 8)]);
+  }
+
+  Future<void> test_unrelatedOnDisposeDoesNotOwnCleanup_lint() async {
+    const source = r'''
+class Resource { void dispose() {} }
+class Ref { void onDispose(void Function() callback) {} }
+void useResource(Ref ref) {
+  final resource = Resource();
+  ref.onDispose(resource.dispose);
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('resource ='), 8)]);
   }
 
   Future<void> test_returnedDisposable_noLint() async {
@@ -351,4 +415,52 @@ class DemoState extends State<Demo> $clause {
   Widget build(BuildContext context) => const Widget();
 }
 ''';
+}
+
+@reflectiveTest
+final class AvoidFlexibleOutsideFlexTest extends _FlutterSafetyRuleTest {
+  @override
+  void setUp() {
+    rule = AvoidFlexibleOutsideFlex();
+    super.setUp();
+  }
+
+  Future<void> test_extractedExpandedWidget_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+class Section extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Expanded(child: const SizedBox());
+}
+Widget build() => Row(children: [Section()]);
+''');
+  }
+
+  Future<void> test_composedFlexParent_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+class Panel extends StatelessWidget {
+  const Panel(this.children);
+  final List<Widget> children;
+  @override
+  Widget build(BuildContext context) => Row(children: children);
+}
+Widget build() => Panel([Expanded(child: const SizedBox())]);
+''');
+  }
+
+  Future<void> test_directFlexParent_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+Widget build() => Row(children: [Expanded(child: const SizedBox())]);
+''');
+  }
+
+  Future<void> test_incompatibleRenderObjectParent_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+Widget build() => Row(children: [Padding(child: Expanded(child: const SizedBox()))]);
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('Expanded'), 8)]);
+  }
 }

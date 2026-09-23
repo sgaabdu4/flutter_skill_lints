@@ -6,13 +6,13 @@ import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when a Flexible or Expanded widget is used outside a Flex widget.
 ///
-/// Flexible and Expanded widgets should only be used as direct children of
-/// Row, Column, or Flex widgets. Using them elsewhere has no effect and
-/// indicates a structural issue in the widget tree.
+/// Stateless and stateful widgets may compose the path to the Flex parent.
+/// Report only a proven incompatible render-object parent; a constructor's
+/// source nesting alone cannot establish an extracted widget's runtime parent.
 class AvoidFlexibleOutsideFlex extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'avoid_flexible_outside_flex',
-    '{0} should only be used as a direct child of Row, Column, or Flex.',
+    '{0} has a non-Flex render-object parent.',
     correctionMessage: 'Move {0} inside a Row, Column, or Flex, or remove the wrapper.',
   );
 
@@ -45,6 +45,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     TypeChecker.fromName('Flex', packageName: 'flutter'),
   ]);
 
+  static const _renderObjectChecker = TypeChecker.fromName(
+    'RenderObjectWidget',
+    packageName: 'flutter',
+  );
+
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     final constructorType = node.constructorName.type;
@@ -54,20 +59,17 @@ class _Visitor extends SimpleAstVisitor<void> {
     // Only interested in Flexible / Expanded
     if (!_flexibleChecker.isSuperOf(element)) return;
 
-    // Walk up the AST to find the nearest parent InstanceCreationExpression
-    // that represents a widget constructor. If it's a Flex widget, this is
-    // valid. If not (or if there is no parent widget), report the lint.
-    if (_isDirectChildOfFlex(node)) return;
+    final parent = _directWidgetArgumentList(node)?.parent;
+    if (parent is! InstanceCreationExpression) return;
+    final parentElement = parent.constructorName.type.element;
+    if (parentElement == null ||
+        _flexChecker.isSuperOf(parentElement) ||
+        !_renderObjectChecker.isSuperOf(parentElement)) {
+      return;
+    }
 
     final widgetName = constructorType.name.lexeme;
     rule.reportAtNode(node.constructorName, arguments: [widgetName]);
-  }
-
-  /// Checks if [node] is a direct child in a Flex widget's children list
-  /// or child parameter.
-  static bool _isDirectChildOfFlex(InstanceCreationExpression node) {
-    final argumentList = _directWidgetArgumentList(node);
-    return argumentList != null && _isFlexArgumentList(argumentList);
   }
 
   static ArgumentList? _directWidgetArgumentList(InstanceCreationExpression node) {
@@ -92,12 +94,5 @@ class _Visitor extends SimpleAstVisitor<void> {
       current = current.parent;
     }
     return null;
-  }
-
-  static bool _isFlexArgumentList(ArgumentList argumentList) {
-    final parent = argumentList.parent;
-    if (parent is! InstanceCreationExpression) return false;
-    final element = parent.constructorName.type.element;
-    return element != null && _flexChecker.isSuperOf(element);
   }
 }

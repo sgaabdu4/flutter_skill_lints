@@ -46,6 +46,11 @@ class StatefulWidget extends Widget {
   const StatefulWidget({super.key});
 }
 
+class State<T extends StatefulWidget> {
+  void initState() {}
+  void dispose() {}
+}
+
 class TextEditingController {
   void dispose() {}
 }
@@ -84,6 +89,47 @@ final class AvoidDisposingLateFieldsTest extends _FlutterControllerRuleTest {
     super.setUp();
   }
 
+  Future<void> test_flutterInitStateAndDispose_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+class Host extends State<StatefulWidget> {
+  bool enabled = true;
+  late final TextEditingController controller;
+  @override
+  void initState() {
+    super.initState();
+    controller = TextEditingController();
+  }
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+}
+''');
+  }
+
+  Future<void> test_conditionalLifecycleDisposalStillReports_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+class Host extends State<StatefulWidget> {
+  bool enabled = true;
+  late final TextEditingController controller;
+  @override
+  void initState() {
+    super.initState();
+    if (enabled) controller = TextEditingController();
+  }
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('controller.dispose()'), 20)]);
+  }
+
   Future<void> test_lateFieldDisposed_lint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
@@ -118,6 +164,28 @@ class Host {
     await assertDiagnostics(source, [
       lint(source.indexOf('this.controller.dispose()'), 'this.controller.dispose()'.length),
     ]);
+  }
+
+  Future<void> test_lateInitializerCanBeDisposed_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+class Host {
+  late final controller = TextEditingController();
+  void dispose() { controller.dispose(); }
+}
+''');
+  }
+
+  Future<void> test_conditionalConstructorDoesNotProveDisposalSafe_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+class Host {
+  late final TextEditingController controller;
+  Host(bool enabled) { if (enabled) controller = TextEditingController(); }
+  void dispose() { controller.dispose(); }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('controller.dispose()'), 20)]);
   }
 
   Future<void> test_eagerFieldDisposed_noLint() async {

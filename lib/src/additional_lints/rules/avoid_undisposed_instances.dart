@@ -1,6 +1,7 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
@@ -124,7 +125,7 @@ class _CleanupCollector extends RecursiveAstVisitor<void> {
   @override
   void visitMethodInvocation(MethodInvocation node) {
     final methodName = node.methodName.name;
-    if (methodName == 'addTearDown' || methodName == 'tearDown') {
+    if (methodName == 'addTearDown' || methodName == 'tearDown' || _registersCleanup(node)) {
       for (final argument in node.argumentList.arguments) {
         _collectCleanupTearOff(argument.argumentExpression);
       }
@@ -137,6 +138,14 @@ class _CleanupCollector extends RecursiveAstVisitor<void> {
     }
 
     super.visitMethodInvocation(node);
+  }
+
+  bool _registersCleanup(MethodInvocation node) {
+    final element = node.methodName.element;
+    if (element is! MethodElement) return false;
+    final library = element.library.identifier;
+    return node.methodName.name == 'whenComplete' && library == 'dart:async' ||
+        node.methodName.name == 'onDispose' && library.startsWith('package:riverpod/');
   }
 
   void _collectCleanupTearOff(Expression expression) {

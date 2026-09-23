@@ -207,6 +207,26 @@ class LifecycleViewState extends State<LifecycleView> with LifecycleMixin<Lifecy
 }
 ''');
 
+        await _writeFile('${app.path}/lib/mutation_boundaries.dart', r'''
+import 'package:flutter/widgets.dart';
+class MutationView extends StatefulWidget {
+  const MutationView({super.key});
+  @override
+  State<MutationView> createState() => MutationViewState();
+}
+class MutationViewState extends State<MutationView> {
+  int _count = 0;
+  void _change() {
+    _count = _count + 1;
+  }
+  @override
+  Widget build(BuildContext context) {
+    _change();
+    return GestureDetector(onTap: () => _change(), child: Text('$_count'));
+  }
+}
+''');
+
         final pubGet = await _run('flutter', ['pub', 'get'], app);
         expect(
           pubGet.exitCode,
@@ -251,6 +271,16 @@ class LifecycleViewState extends State<LifecycleView> with LifecycleMixin<Lifecy
         expect(callbacks, hasLength(1));
         expect(callbacks.single, contains('resolved_contexts.dart:8:'));
         expect(contexts.where((line) => line.trimLeft().startsWith('error -')), isEmpty);
+
+        final mutations = output
+            .split('\n')
+            .where(
+              (line) =>
+                  line.contains('mutation_boundaries.dart') &&
+                  line.contains('build_calls_mutating_instance_method'),
+            );
+        expect(mutations, hasLength(1));
+        expect(mutations.single, contains('mutation_boundaries.dart:14:'));
 
         expect(output, isNot(contains('deprecated_lint')));
         expect(output, isNot(contains('server.pluginError')));

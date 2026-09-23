@@ -1,3 +1,4 @@
+import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -125,7 +126,7 @@ final List<ScannerRule> dialogSourceRules = [
           final line = context.source.masked[i];
           final match = _buildFieldAssignment.firstMatch(line);
           if (match == null) continue;
-          if (_isInsideFunctionLiteral(context, method.start, i, match.start)) {
+          if (_isInsideFunctionLiteral(context, i, match.start)) {
             continue;
           }
           reporter.report(context, i, line.length - line.trimLeft().length);
@@ -343,25 +344,24 @@ void _reportMutatingBuildMethod(
   Set<String> mutatingMethods,
 ) {
   for (var i = method.start + 1; i <= method.end && i < context.source.length; i++) {
-    _reportMutatingBuildLine(reporter, context, method, i, mutatingMethods);
+    _reportMutatingBuildLine(reporter, context, i, mutatingMethods);
   }
 }
 
 void _reportMutatingBuildLine(
   ScannerRuleReporter reporter,
   SourceScannerContext context,
-  ScannerMethodSpan method,
   int lineIndex,
   Set<String> mutatingMethods,
 ) {
   final line = context.source.masked[lineIndex];
   for (final methodName in mutatingMethods) {
-    final match = RegExp(r'\b' + RegExp.escape(methodName) + r'\s*\(').firstMatch(line);
-    if (match == null || _isInsideFunctionLiteral(context, method.start, lineIndex, match.start)) {
-      continue;
+    final matches = RegExp(r'\b' + RegExp.escape(methodName) + r'\s*\(').allMatches(line);
+    for (final match in matches) {
+      if (_isInsideFunctionLiteral(context, lineIndex, match.start)) continue;
+      reporter.report(context, lineIndex, match.start);
+      return;
     }
-    reporter.report(context, lineIndex, match.start);
-    return;
   }
 }
 
@@ -543,10 +543,6 @@ final _instanceStateMutation = RegExp(
   r'^\s*(?:this\s*\.\s*)?_[A-Za-z]\w*(?:\s*(?:\?\?=|=(?![=>]))|\s*\.\s*[A-Za-z_]\w*\s*=(?![=>]))|\bsetState\s*\(',
 );
 
-final _functionLiteralOpen = RegExp(
-  r'(?:^\s*|[:=,(]\s*)(?:\([^)]*\)|[A-Za-z_]\w*)\s*(?:async\s*)?\{',
-);
-
 final _awaitedNotifierMethod = RegExp(
   r'\bawait\s+ref\s*\.\s*read\s*\(\s*([A-Za-z_]\w*)\b[^)]*\.\s*notifier\s*\)\s*\.\s*[A-Za-z_]\w*\s*\(',
 );
@@ -640,32 +636,26 @@ bool _hasIgnoredCode(
   return false;
 }
 
-bool _isInsideFunctionLiteral(
-  SourceScannerContext context,
-  int methodStart,
-  int lineIndex,
-  int column,
-) {
-  var closureDepth = 0;
-  for (var i = methodStart + 1; i <= lineIndex && i < context.source.length; i++) {
-    final line = context.source.masked[i];
-    if (i == lineIndex) {
-      return _lineIsInsideFunctionLiteral(line, column, closureDepth);
-    }
-    closureDepth = _nextFunctionLiteralDepth(line, closureDepth);
+bool _isInsideFunctionLiteral(SourceScannerContext context, int lineIndex, int column) {
+  final offset = context.source.lineOffsets[lineIndex] + column;
+  AstNode? node = context.unit.nodeCovering(offset: offset);
+  while (node != null && node is! MethodDeclaration) {
+    if (node is FunctionExpression && !_isImmediatelyInvoked(node)) return true;
+    node = node.parent;
   }
   return false;
 }
 
-bool _lineIsInsideFunctionLiteral(String line, int column, int closureDepth) {
-  if (closureDepth > 0) return true;
-  final safeColumn = column.clamp(0, line.length);
-  return _functionLiteralOpen.hasMatch(line.substring(0, safeColumn));
-}
-
-int _nextFunctionLiteralDepth(String line, int depth) {
-  final delta = braceDelta(line);
-  if (_functionLiteralOpen.hasMatch(line) && delta > 0) return depth + delta;
-  if (depth == 0) return depth;
-  return (depth + delta).clamp(0, depth + delta);
+bool _isImmediatelyInvoked(FunctionExpression function) {
+  AstNode expression = function;
+  var wrapper = expression.parent;
+  while (wrapper is ParenthesizedExpression) {
+    expression = wrapper;
+    wrapper = expression.parent;
+  }
+  final parent = expression.parent;
+  return parent is FunctionExpressionInvocation && identical(parent.function, expression) ||
+      parent is MethodInvocation &&
+          parent.methodName.name == 'call' &&
+          identical(parent.target, expression);
 }

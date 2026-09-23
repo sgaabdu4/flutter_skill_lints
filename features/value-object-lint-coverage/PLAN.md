@@ -44,4 +44,5 @@ Result: Passed
 Evidence: `dart test test/source_scanner_rules_test.dart --name 'DomainRawRequiredString|DomainUnitPrimitive|DomainEntityPrimitive|DomainEmptyString'` → 20 passed (includes the Hive exemption, which fails when the exemption is removed). Consumer app copy with the plugin by path: `dart analyze` → 39 `domain_raw_required_string` + 9 `domain_unit_primitive` on `/domain/entities/` files, no other diagnostics (previously "No issues found"). `check --plan-stage Ready` on the change → 14/14 gates PASS. `dart pub publish --dry-run` → only the uncommitted-files warning. Limit: unit-free numbers (`glassesTarget`, `steps`) stay a review judgement.
 E2E: N/A — no user journey; real analyzer-server proof is the consumer `dart analyze` acceptance item.
 
-Delivery target: Merge; Delivery: Pending — PR checks, merge to main, tag `v0.12.0`, pub.dev publish workflow success.
+Delivery target: Merge
+Delivery: Pending — PR checks, merge to main, tag `v0.12.0`, pub.dev publish workflow success.

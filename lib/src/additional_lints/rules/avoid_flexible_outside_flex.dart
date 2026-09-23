@@ -1,8 +1,10 @@
+import 'package:analyzer/analysis_rule/analysis_rule.dart';
+import 'package:analyzer/analysis_rule/rule_context.dart';
+import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
-import 'package:analyzer/dart/element/nullability_suffix.dart';
+import 'package:analyzer/dart/element/type_system.dart';
 import 'package:analyzer/error/error.dart';
-import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when a Flexible or Expanded widget is used outside a Flex widget.
@@ -10,7 +12,7 @@ import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 /// Stateless and stateful widgets may compose the path to the Flex parent.
 /// Report only a proven incompatible render-object parent; a constructor's
 /// source nesting alone cannot establish an extracted widget's runtime parent.
-class AvoidFlexibleOutsideFlex extends InstanceCreationExpressionRule {
+class AvoidFlexibleOutsideFlex extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_flexible_outside_flex',
     '{0} has a non-Flex render-object parent.',
@@ -23,17 +25,23 @@ class AvoidFlexibleOutsideFlex extends InstanceCreationExpressionRule {
         description:
             'Warns when a Flexible or Expanded widget is used outside '
             'a Flex widget.',
-        code: code,
       );
 
   @override
-  AstVisitor<void> createVisitor() => _Visitor(this);
+  LintCode get diagnosticCode => code;
+
+  @override
+  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+    registry.addInstanceCreationExpression(this, _Visitor(this, context.typeSystem));
+  }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AvoidFlexibleOutsideFlex rule;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.typeSystem);
+
+  final TypeSystem typeSystem;
 
   static const _flexibleChecker = TypeChecker.any([
     TypeChecker.fromName('Flexible', packageName: 'flutter'),
@@ -67,7 +75,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(node.constructorName, arguments: [widgetName]);
   }
 
-  static bool _hasIncompatibleParent(InstanceCreationExpression node) {
+  bool _hasIncompatibleParent(InstanceCreationExpression node) {
     AstNode? parent = _directWidgetArgumentList(node)?.parent;
     while (parent is InstanceCreationExpression) {
       final element = parent.constructorName.type.element;
@@ -82,7 +90,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     return false;
   }
 
-  static bool _containerAddsRenderParent(InstanceCreationExpression parent) {
+  bool _containerAddsRenderParent(InstanceCreationExpression parent) {
     final type = parent.staticType;
     if (type == null || !_containerChecker.isExactlyType(type)) return false;
     const renderProperties = {
@@ -97,11 +105,12 @@ class _Visitor extends SimpleAstVisitor<void> {
       'margin',
       'transform',
     };
-    return parent.argumentList.arguments.whereType<NamedArgument>().any(
-      (argument) =>
-          renderProperties.contains(argument.name.lexeme) &&
-          argument.argumentExpression.staticType?.nullabilitySuffix == NullabilitySuffix.none,
-    );
+    return parent.argumentList.arguments.whereType<NamedArgument>().any((argument) {
+      final valueType = argument.argumentExpression.staticType;
+      return renderProperties.contains(argument.name.lexeme) &&
+          valueType != null &&
+          typeSystem.isNonNullable(valueType);
+    });
   }
 
   static ArgumentList? _directWidgetArgumentList(InstanceCreationExpression node) {

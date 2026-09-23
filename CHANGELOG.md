@@ -6,7 +6,7 @@
   take non-nullable `String` parameters; use a validated Value Object, or
   `String?` for optional text.
 - Add `domain_unit_primitive`: Freezed domain entity constructors must not carry
-  unit- or currency-named numbers such as `sizeBytes`, `weightKg` or `price`;
+  unit- or currency-named numbers such as `lengthCm`, `weightKg` or `price`;
   use a Value Object or `Duration`.
 - Constructors with `HiveField(N)` markers keep their locked primitive slots,
   matching the skill's shipped-Hive-entity exception.

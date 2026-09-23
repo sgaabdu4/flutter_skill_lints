@@ -107,7 +107,7 @@ final List<ScannerRule> valueObjectSourceRules = [
 
   /// Domain entities must not carry units or money as raw numbers.
   ///
-  /// Why: `int sizeBytes`, `double weightKg` or `int amountCents` put the unit
+  /// Why: `int lengthCm`, `double weightKg` or `int amountCents` put the unit
   /// in the name instead of the type, so callers can mix units or pass
   /// negative values. Unit and currency values become Value Objects.
   scannerRule(

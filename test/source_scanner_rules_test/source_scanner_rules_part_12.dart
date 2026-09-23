@@ -613,10 +613,10 @@ const freezed = Freezed();
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 @freezed
-sealed class UploadedReport {
-  const factory UploadedReport({
+sealed class Product {
+  const factory Product({
 $parameters
-  }) = _UploadedReport;
+  }) = _Product;
 }
 ''';
 }
@@ -626,28 +626,28 @@ final class DomainRawRequiredStringTest extends _DomainEntityParameterRuleTest {
   @override
   String get ruleName => 'domain_raw_required_string';
   @override
-  String get needle => 'String fileName,';
+  String get needle => 'String title,';
   @override
-  String get path => '$testPackageLibPath/core/domain/entities/uploaded_report.dart';
+  String get path => '$testPackageLibPath/core/domain/entities/product.dart';
   @override
-  String get source => entity('    required String fileName,\n    required DateTime uploadedAt,');
+  String get source => entity('    required String title,\n    required DateTime createdAt,');
 
   Future<void> test_reportsEveryRawStringAroundAnnotatedParameters() async {
     final source = entity(
-      '    required String id,\n    @Default(0) int pages,\n    required String reviewerName,',
+      '    required String id,\n    @Default(0) int stock,\n    required String description,',
     );
     newFile(path, source);
 
     await assertDiagnosticsInFile(path, [
       compatLint(source, 'String id,', ruleName),
-      compatLint(source, 'String reviewerName,', ruleName),
+      compatLint(source, 'String description,', ruleName),
     ]);
   }
 
   Future<void> test_allowsValueObjectsOptionalTextAndNamedUnionFactories() async {
     await assertAllows(
       '''
-${entity('    required ReportId id,\n    String? note,\n    required List<String> tags,')}
+${entity('    required ProductId id,\n    String? note,\n    required List<String> tags,')}
 @freezed
 sealed class AppError {
   const factory AppError.network(String message) = NetworkError;
@@ -659,15 +659,15 @@ sealed class AppError {
   }
 
   Future<void> test_allowsDataModelsAndValueObjects() async {
-    final source = entity('    required String fileName,');
+    final source = entity('    required String title,');
     await assertAllows(
       source,
-      path: '$testPackageLibPath/core/data/models/uploaded_report_model.dart',
+      path: '$testPackageLibPath/core/data/models/product_model.dart',
       addIgnorePrefix: false,
     );
     await assertAllows(
       source,
-      path: '$testPackageLibPath/core/domain/values/uploaded_report.dart',
+      path: '$testPackageLibPath/core/domain/values/product.dart',
       addIgnorePrefix: false,
     );
   }
@@ -678,20 +678,20 @@ final class DomainUnitPrimitiveTest extends _DomainEntityParameterRuleTest {
   @override
   String get ruleName => 'domain_unit_primitive';
   @override
-  String get needle => 'int sizeBytes,';
+  String get needle => 'int lengthCm,';
   @override
-  String get path => '$testPackageLibPath/core/domain/entities/uploaded_report.dart';
+  String get path => '$testPackageLibPath/core/domain/entities/product.dart';
   @override
-  String get source => entity('    required int sizeBytes,\n    required DateTime uploadedAt,');
+  String get source => entity('    required int lengthCm,\n    required DateTime createdAt,');
 
   Future<void> test_reportsDefaultedAndNullableUnitNumbers() async {
     final source = entity(
-      '    @Default(0) int workoutsPercent,\n    double? weightKg,\n    num price,',
+      '    @Default(0) int discountPercent,\n    double? weightKg,\n    num price,',
     );
     newFile(path, source);
 
     await assertDiagnosticsInFile(path, [
-      compatLint(source, 'int workoutsPercent,', ruleName),
+      compatLint(source, 'int discountPercent,', ruleName),
       compatLint(source, 'double? weightKg,', ruleName),
       compatLint(source, 'num price,', ruleName),
     ]);

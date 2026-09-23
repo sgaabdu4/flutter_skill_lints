@@ -87,8 +87,7 @@ void main() {
         if (lintMarker == null) continue;
 
         final lintList = lines[i].substring(lintMarker.end);
-        for (final match in RegExp(r'`([a-z][a-z0-9_]+)`').allMatches(lintList)) {
-          final code = match.group(1)!;
+        for (final code in _documentedLintCodes(lintList)) {
           refs.add(code);
           if (!registeredCodes.contains(code)) {
             issues.add('$normalizedPath:${i + 1} references missing lint `$code`');
@@ -100,6 +99,21 @@ void main() {
     expect(refs, isNotEmpty);
     expect(refs, contains('presentation_widget_controller_state'));
     expect(issues, isEmpty, reason: issues.join('\n'));
+  });
+
+  test('documentation references exclude prose examples without hiding lint names', () {
+    expect(
+      _documentedLintCodes(
+        '`first_rule` (required `String`), `second_rule` '
+        '(numbers such as `price`, nested (including `weight`)), `unknown_rule`',
+      ),
+      ['first_rule', 'second_rule', 'unknown_rule'],
+    );
+    expect(_documentedLintCodes('`unknown`'), ['unknown']);
+    expect(_documentedLintCodes('`first_rule` (example `call(value)`) and `last_rule`'), [
+      'first_rule',
+      'last_rule',
+    ]);
   });
 
   test('fire-and-forget diagnostic explains reusable utility contracts', () {
@@ -322,6 +336,21 @@ void main() {
 const _enabledFlutterSkillRuleCount = 187;
 const _enabledFlutterSkillDiagnosticCount = 195;
 const _enabledAdditionalRuleCount = 280;
+
+Iterable<String> _documentedLintCodes(String text) sync* {
+  var depth = 0;
+  final tokens = RegExp(r'`[^`]*`|[()]');
+  for (final match in tokens.allMatches(text)) {
+    final token = match.group(0)!;
+    if (token == '(') {
+      depth++;
+    } else if (token == ')') {
+      if (depth > 0) depth--;
+    } else if (depth == 0 && RegExp(r'^`[a-z][a-z0-9_]+`$').hasMatch(token)) {
+      yield token.substring(1, token.length - 1);
+    }
+  }
+}
 
 final class _RecordingPluginRegistry extends PluginRegistry {
   _RecordingPluginRegistry(this.pluginName);

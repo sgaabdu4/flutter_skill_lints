@@ -174,6 +174,56 @@ sealed class Order with _\$Order {
 ''';
   @override
   String get needle => 'sealed class Order';
+
+  Future<void> test_factoryObjectPatternDoesNotRequirePrivateConstructor() async {
+    await assertAllows(r'''
+class OrderValue {
+  const OrderValue(this.cents);
+  final int cents;
+}
+@freezed
+sealed class Order with _$Order {
+  const factory Order({required int cents}) = _Order;
+  factory Order.copy(OrderValue value) {
+    final OrderValue(:cents) = value;
+    return Order(cents: cents);
+  }
+}
+''');
+  }
+
+  Future<void> test_staticHelpersDoNotRequirePrivateConstructor() async {
+    await assertAllows(r'''
+@freezed
+sealed class Order with _$Order {
+  const factory Order({required int cents}) = _Order;
+  static int get scale => 100;
+  static int normalize(int cents) => cents;
+}
+''');
+  }
+
+  Future<void> test_customBlockGetterRequiresPrivateConstructor() async {
+    final source = _analyzedSource(r'''
+@freezed
+sealed class Order with _$Order {
+  const factory Order({required int cents}) = _Order;
+  int get dollars { return 100; }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(source, [compatLint(source, 'sealed class Order', ruleName)]);
+  }
+
+  Future<void> test_privateConstructorSupportsCustomMethod() async {
+    await assertAllows(r'''
+@freezed
+sealed class Order with _$Order {
+  const Order._();
+  const factory Order({required int cents}) = _Order;
+  int dollars() => 100;
+}
+''');
+  }
 }
 
 abstract class _RouterExtendedRuleTest extends _ExtendedSourceRuleTest {

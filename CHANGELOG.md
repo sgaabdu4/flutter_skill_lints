@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.12.3] - 2026-09-23
+
+- Inspect Freezed class members structurally so factory-local object patterns and
+  static helpers do not require private constructors; implemented instance
+  getters and methods still do.
+- Distinguish deferred arrow/block callbacks from immediate build mutations,
+  including immediately invoked functions and a direct call after a callback
+  on the same line.
+
 ## [0.12.2] - 2026-09-23
 
 - Allow cleanup-only try/finally in widgets while retaining catch-boundary checks.

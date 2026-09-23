@@ -351,6 +351,86 @@ class EditSheet extends ConsumerWidget {
 }
 ''';
 
+  Future<void> test_allowsArrowEventCallback() async {
+    await assertAllows(r'''
+class EditSheet extends Widget {
+  Object? _cached;
+  void _change(Object value) {
+    _cached = value;
+  }
+  Object build(Object context) {
+    return Button(onPressed: () => _change(context));
+  }
+}
+''');
+  }
+
+  Future<void> test_reportsImmediateArrowInvocation() async {
+    final source = _analyzedSource(r'''
+class EditSheet extends Widget {
+  Object? _cached;
+  void _change(Object value) {
+    _cached = value;
+  }
+  Object build(Object context) {
+    (() => _change(context))();
+    return Object();
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(source, [compatLint(source, '_change(context)', ruleName)]);
+  }
+
+  Future<void> test_reportsImmediateBlockInvocation() async {
+    final source = _analyzedSource(r'''
+class EditSheet extends Widget {
+  Object? _cached;
+  void _change(Object value) {
+    _cached = value;
+  }
+  Object build(Object context) {
+    (() {
+      _change(context);
+    })();
+    return Object();
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(source, [compatLint(source, '_change(context)', ruleName)]);
+  }
+
+  Future<void> test_reportsImmediateCallAfterCallbackOnSameLine() async {
+    final source = _analyzedSource(r'''
+class EditSheet extends Widget {
+  Object? _cached;
+  void _change(Object value) {
+    _cached = value;
+  }
+  Object build(Object context) {
+    Button(onPressed: () => _change(context)); _change(Object());
+    return Object();
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(source, [compatLint(source, '_change(Object())', ruleName)]);
+  }
+
+  Future<void> test_reportsImmediateCallInvocation() async {
+    final source = _analyzedSource(r'''
+class EditSheet extends Widget {
+  Object? _cached;
+  void _change(Object value) {
+    _cached = value;
+  }
+  Object build(Object context) {
+    (() => _change(context)).call();
+    return Object();
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(source, [compatLint(source, '_change(context)', ruleName)]);
+  }
+
   Future<void> test_allowsPureHelperFromBuild() async {
     await assertAllows(r'''
 class ConsumerWidget extends Widget {}

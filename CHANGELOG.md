@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.12.0] - 2026-09-23
+
+- Add `domain_raw_required_string`: Freezed domain entity constructors must not
+  take non-nullable `String` parameters; use a validated Value Object, or
+  `String?` for optional text.
+- Add `domain_unit_primitive`: Freezed domain entity constructors must not carry
+  unit- or currency-named numbers such as `sizeBytes`, `weightKg` or `price`;
+  use a Value Object or `Duration`.
+- Both are errors, so existing apps with raw domain fields fail analysis after
+  upgrading until those fields use Value Objects.
+
 ## [0.11.2] - 2026-09-14
 
 - Avoid shorthand constructor fixes when an explicit generic type is narrower

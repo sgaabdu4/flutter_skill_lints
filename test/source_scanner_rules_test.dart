@@ -142,6 +142,8 @@ void main() {
     defineReflectiveTests(DomainEmptyStringSentinelTest);
     defineReflectiveTests(VoPublicRawConstructorTest);
     defineReflectiveTests(DomainEntityPrimitiveFactoryTest);
+    defineReflectiveTests(DomainRawRequiredStringTest);
+    defineReflectiveTests(DomainUnitPrimitiveTest);
     defineReflectiveTests(DomainCustomCopyWithTest);
     defineReflectiveTests(FreezedDisableMapWhenRequiredTest);
     defineReflectiveTests(UnvalidatedPersistedMapCastTest);

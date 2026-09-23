@@ -81,6 +81,53 @@ final List<ScannerRule> valueObjectSourceRules = [
     scan: _scanDomainEntityPrimitiveFactories,
   ),
 
+  /// Domain entities must not take raw required strings.
+  ///
+  /// Why: A required `String` accepts blank or malformed text, so an entity
+  /// built from it proves nothing about its IDs, names or emails. Required
+  /// domain text is a validated Value Object; optional text is `String?`.
+  scannerRule(
+    code: const LintCode(
+      'domain_raw_required_string',
+      'Domain entities must not take raw required String fields.',
+      correctionMessage:
+          'Wrap required text (IDs, names, emails, slugs) in a validated Value Object from '
+          '/domain/values/, or use String? for optional text normalized at the boundary. '
+          'Keep String in data models and convert in mappers. See building-flutter-apps '
+          'SKILL.md Critical Rule 5 + references/value-objects.md.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags non-nullable String parameters on Freezed domain entity constructors so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) => _scanDomainEntityParameters(
+      reporter,
+      context,
+      (parameter) => parameter.type == 'String' && !parameter.nullable && !parameter.hasDefault,
+    ),
+  ),
+
+  /// Domain entities must not carry units or money as raw numbers.
+  ///
+  /// Why: `int sizeBytes`, `double weightKg` or `int amountCents` put the unit
+  /// in the name instead of the type, so callers can mix units or pass
+  /// negative values. Unit and currency values become Value Objects.
+  scannerRule(
+    code: const LintCode(
+      'domain_unit_primitive',
+      'Domain entities must not carry unit or currency values as raw numbers.',
+      correctionMessage:
+          'Use a Value Object (Distance, Money, Weight, Percentage) or Duration for this '
+          'unit-named number. Keep the primitive in the data model and convert in the mapper. '
+          'See building-flutter-apps SKILL.md Critical Rule 12 + references/value-objects.md.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags unit- or currency-named numeric parameters on Freezed domain entity constructors so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) => _scanDomainEntityParameters(
+      reporter,
+      context,
+      (parameter) => parameter.type != 'String' && _unitName.hasMatch(parameter.name),
+    ),
+  ),
+
   /// Sealed Value Objects must disable Freezed map/when generation.
   ///
   /// Why: `@freezed` (or `@Freezed()` without opt-outs) on a `sealed` class
@@ -271,4 +318,52 @@ void _reportPrimitiveFactoryLine(
   if (match == null || factoryName == null) return;
   if (factoryName.startsWith('_') || factoryName == 'fromJson') return;
   reporter.report(context, lineIndex, match.start);
+}
+
+const _unitWords =
+    'Meters|Metres|Kilometers|Kilometres|Km|Miles|Cm|Mm|Kg|Kilograms|Grams|Lbs|Pounds|'
+    'Percent|Percentage|Cents|Pence|Price|Cost|Bytes|Seconds|Secs|Ms|Millis|Milliseconds|'
+    'Minutes|Mins|Hours|Bpm|Kcal|Calories|Celsius|Fahrenheit';
+
+final _unitName = RegExp('^(?:${_unitWords.toLowerCase()})\$|[a-z0-9](?:$_unitWords)\$');
+
+final _entityParameter = RegExp(
+  r'(?:^|[,{(\[])\s*((?:@\w+(?:\s*\([^)]*\))?\s+)*)(?:required\s+)?(String|int|double|num)(\?)?\s+([A-Za-z_]\w*)\b',
+);
+
+typedef _EntityParameter = ({String type, String name, bool nullable, bool hasDefault});
+
+void _scanDomainEntityParameters(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  bool Function(_EntityParameter parameter) matches,
+) {
+  if (!context.isDomainPath || context.path.contains('/domain/values/')) return;
+  final source = context.source.masked.join('\n');
+  final lineOffsets = _sourceLineOffsets(context);
+  for (final classSpan in context.classes) {
+    if (!context.hasFreezedAnnotation(classSpan) || classSpan.name.startsWith('_')) continue;
+    final constructor = RegExp(
+      r'\bconst\s+factory\s+' + RegExp.escape(classSpan.name) + r'\s*\(([^;]*?)\)\s*=\s*\w+\s*;',
+      dotAll: true,
+    );
+    final classStart = lineOffsets[classSpan.start];
+    final classEnd = lineOffsets[classSpan.end + 1];
+    final match = constructor.firstMatch(source.substring(classStart, classEnd));
+    if (match == null) continue;
+    final parametersStart = classStart + match.start + match.group(0)!.indexOf('(') + 1;
+    for (final parameter in _entityParameter.allMatches(match.group(1)!)) {
+      final entity = (
+        type: parameter.group(2)!,
+        name: parameter.group(4)!,
+        nullable: parameter.group(3) != null,
+        hasDefault: parameter.group(1)!.contains('@Default'),
+      );
+      if (!matches(entity)) continue;
+      final text = parameter.group(0)!;
+      final typeIndex = text.lastIndexOf(entity.type, text.length - entity.name.length - 1);
+      final typeOffset = parametersStart + parameter.start + typeIndex;
+      _reportFactoryMatch(reporter, context, typeOffset, lineOffsets);
+    }
+  }
 }

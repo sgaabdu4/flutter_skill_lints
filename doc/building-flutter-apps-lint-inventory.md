@@ -59,6 +59,8 @@ dialog_widget_subscribes_to_mutable_provider
 domain_custom_copy_with
 domain_empty_string_sentinel
 domain_entity_primitive_factory
+domain_raw_required_string
+domain_unit_primitive
 expando_derived_cache_forbidden
 fire_and_forget_missing_catch
 fire_forget_in_tests

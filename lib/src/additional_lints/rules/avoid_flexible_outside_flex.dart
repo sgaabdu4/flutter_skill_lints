@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
@@ -49,6 +50,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     'RenderObjectWidget',
     packageName: 'flutter',
   );
+  static const _containerChecker = TypeChecker.fromName('Container', packageName: 'flutter');
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
@@ -59,17 +61,47 @@ class _Visitor extends SimpleAstVisitor<void> {
     // Only interested in Flexible / Expanded
     if (!_flexibleChecker.isSuperOf(element)) return;
 
-    final parent = _directWidgetArgumentList(node)?.parent;
-    if (parent is! InstanceCreationExpression) return;
-    final parentElement = parent.constructorName.type.element;
-    if (parentElement == null ||
-        _flexChecker.isSuperOf(parentElement) ||
-        !_renderObjectChecker.isSuperOf(parentElement)) {
-      return;
-    }
+    if (!_hasIncompatibleParent(node)) return;
 
     final widgetName = constructorType.name.lexeme;
     rule.reportAtNode(node.constructorName, arguments: [widgetName]);
+  }
+
+  static bool _hasIncompatibleParent(InstanceCreationExpression node) {
+    AstNode? parent = _directWidgetArgumentList(node)?.parent;
+    while (parent is InstanceCreationExpression) {
+      final element = parent.constructorName.type.element;
+      if (element == null || _flexChecker.isSuperOf(element)) return false;
+      if (_renderObjectChecker.isSuperOf(element) || _containerAddsRenderParent(parent)) {
+        return true;
+      }
+      final type = parent.staticType;
+      if (type == null || !_containerChecker.isExactlyType(type)) return false;
+      parent = _directWidgetArgumentList(parent)?.parent;
+    }
+    return false;
+  }
+
+  static bool _containerAddsRenderParent(InstanceCreationExpression parent) {
+    final type = parent.staticType;
+    if (type == null || !_containerChecker.isExactlyType(type)) return false;
+    const renderProperties = {
+      'alignment',
+      'padding',
+      'color',
+      'decoration',
+      'foregroundDecoration',
+      'width',
+      'height',
+      'constraints',
+      'margin',
+      'transform',
+    };
+    return parent.argumentList.arguments.whereType<NamedArgument>().any(
+      (argument) =>
+          renderProperties.contains(argument.name.lexeme) &&
+          argument.argumentExpression.staticType?.nullabilitySuffix == NullabilitySuffix.none,
+    );
   }
 
   static ArgumentList? _directWidgetArgumentList(InstanceCreationExpression node) {

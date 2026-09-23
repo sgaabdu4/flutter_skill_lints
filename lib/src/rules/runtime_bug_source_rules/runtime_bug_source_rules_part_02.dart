@@ -331,7 +331,7 @@ bool _onChangedHasWork(SourceScannerContext context, int lineIndex, int column) 
       .substring(start, start + callback.length);
   for (final work in _expensiveOnChangedWork.allMatches(segment)) {
     if (!work.group(0)!.contains('notifier') ||
-        !_isSynchronousVoidCall(context, callback.offset + work.end - 1)) {
+        !_isSimpleSynchronousStateUpdate(context, callback.offset + work.end - 1)) {
       return true;
     }
   }
@@ -354,19 +354,79 @@ Expression? _onChangedCallback(SourceScannerContext context, int offset) {
   return null;
 }
 
-bool _isSynchronousVoidCall(SourceScannerContext context, int offset) {
+bool _isSimpleSynchronousStateUpdate(SourceScannerContext context, int offset) {
   AstNode? node = context.unit.nodeCovering(offset: offset);
   while (node != null && node is! MethodInvocation) {
     node = node.parent;
   }
   if (node is! MethodInvocation) return false;
+  if (!node.argumentList.arguments.every((argument) {
+    final value = argument.argumentExpression;
+    return value is SimpleIdentifier && value.element is FormalParameterElement ||
+        _isPrimitiveLiteral(value);
+  })) {
+    return false;
+  }
   final method = node.methodName.element;
-  return method is ExecutableElement &&
-      !method.isAbstract &&
-      !method.isExternal &&
-      method.fragments.every((fragment) => fragment.isSynchronous) &&
-      node.staticType is VoidType;
+  if (method is! ExecutableElement ||
+      method.isAbstract ||
+      method.isExternal ||
+      !method.fragments.every((fragment) => fragment.isSynchronous) ||
+      node.staticType is! VoidType) {
+    return false;
+  }
+  final body = _declaredMethodBody(context, method);
+  final declaration = body?.parent;
+  if (declaration is! MethodDeclaration) return false;
+  final parameters = {
+    for (final parameter in declaration.parameters?.parameters ?? <FormalParameter>[])
+      parameter.name?.lexeme,
+  };
+  return switch (body) {
+    ExpressionFunctionBody(:final expression) => _isDirectStateAssignment(expression, parameters),
+    BlockFunctionBody(:final block) => block.statements.every(
+      (statement) =>
+          statement is ExpressionStatement &&
+          _isDirectStateAssignment(statement.expression, parameters),
+    ),
+    _ => false,
+  };
 }
+
+FunctionBody? _declaredMethodBody(SourceScannerContext context, ExecutableElement method) {
+  final fragment = method.firstFragment;
+  final offset = fragment.nameOffset;
+  if (offset == null) return null;
+  final source = fragment.libraryFragment.source;
+  final unit = source == context.unit.declaredFragment?.source
+      ? context.unit
+      : parseString(content: source.contents.data, throwIfDiagnostics: false).unit;
+  AstNode? declaration = unit.nodeCovering(offset: offset);
+  while (declaration != null && declaration is! MethodDeclaration) {
+    declaration = declaration.parent;
+  }
+  return declaration is MethodDeclaration ? declaration.body : null;
+}
+
+bool _isDirectStateAssignment(Expression expression, Set<String?> parameters) {
+  if (expression is! AssignmentExpression || expression.operator.lexeme != '=') return false;
+  final target = expression.leftHandSide;
+  final writesState =
+      target is SimpleIdentifier && target.name == 'state' ||
+      target is PropertyAccess &&
+          target.target is ThisExpression &&
+          target.propertyName.name == 'state';
+  if (!writesState) return false;
+  final value = expression.rightHandSide;
+  return value is SimpleIdentifier && parameters.contains(value.name) || _isPrimitiveLiteral(value);
+}
+
+bool _isPrimitiveLiteral(Expression value) =>
+    value is BooleanLiteral ||
+    value is IntegerLiteral ||
+    value is DoubleLiteral ||
+    value is NullLiteral ||
+    value is SimpleStringLiteral;
 
 bool _fileHasDebounce(SourceScannerContext context) {
   for (var i = 0; i < context.source.length; i++) {

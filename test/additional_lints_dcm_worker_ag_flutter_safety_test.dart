@@ -65,6 +65,12 @@ class Row extends Flex {
 class Padding extends RenderObjectWidget {
   Padding({required Widget child});
 }
+class Container extends StatelessWidget {
+  const Container({required this.child, Object? padding, double? width});
+  final Widget child;
+  @override
+  Widget build(BuildContext context) => child;
+}
 class Flexible extends Widget {
   Flexible({required Widget child});
 }
@@ -419,6 +425,44 @@ class DemoState extends State<Demo> $clause {
 
 @reflectiveTest
 final class AvoidFlexibleOutsideFlexTest extends _FlutterSafetyRuleTest {
+  Future<void> test_containerWithPadding_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+Widget build() => Container(padding: Object(), child: Expanded(child: const SizedBox()));
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('Expanded'), 8)]);
+  }
+
+  Future<void> test_containerWithWidth_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+Widget build() => Container(width: 20, child: Expanded(child: const SizedBox()));
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('Expanded'), 8)]);
+  }
+
+  Future<void> test_transparentContainerBelowPadding_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+Widget build() => Padding(child: Container(child: Expanded(child: const SizedBox())));
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('Expanded('), 'Expanded'.length)]);
+  }
+
+  Future<void> test_transparentContainer_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+Widget build() => Row(children: [Container(child: Expanded(child: const SizedBox()))]);
+''');
+  }
+
+  Future<void> test_nullableContainerPaddingIsNotProvenInvalid_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+Widget build(Object? padding) => Container(padding: padding, child: Expanded(child: const SizedBox()));
+''');
+  }
+
   @override
   void setUp() {
     rule = AvoidFlexibleOutsideFlex();

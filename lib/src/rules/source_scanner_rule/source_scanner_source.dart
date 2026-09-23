@@ -255,3 +255,47 @@ int _blankDebugCallBody(String text, String structure, int index, StringBuffer b
   }
   return index;
 }
+
+int? _immediateInitStateReadColumn(SourceScannerContext context, int lineIndex) {
+  final line = context.source.masked[lineIndex];
+  for (final match in RegExp(r'\bref\.read\(').allMatches(line)) {
+    final offset = context.source.lineOffsets[lineIndex] + match.start;
+    AstNode? node = context.unit.nodeCovering(offset: offset);
+    while (node != null) {
+      if (node is MethodDeclaration) {
+        if (node.name.lexeme == 'initState') return match.start;
+        break;
+      }
+      if (node is FunctionExpression &&
+          !isImmediatelyInvoked(node) &&
+          _isDeferredReadCallback(node)) {
+        break;
+      }
+      node = node.parent;
+    }
+  }
+  return null;
+}
+
+bool _isDeferredReadCallback(FunctionExpression function) {
+  final argument = function.parent;
+  final call = switch (argument) {
+    ArgumentList() => argument.parent,
+    NamedArgument() => argument.parent?.parent,
+    _ => null,
+  };
+  final element = switch (call) {
+    MethodInvocation(:final methodName) => methodName.element,
+    InstanceCreationExpression(:final constructorName) => constructorName.element,
+    _ => null,
+  };
+  if (element is! ExecutableElement) return false;
+  final library = element.library.identifier;
+  if (library.startsWith('package:flutter/') && element.name == 'addPostFrameCallback') return true;
+  if (library != 'dart:async') return false;
+  if (element.name == 'scheduleMicrotask') return true;
+  if (element is! ConstructorElement) return false;
+  final owner = element.enclosingElement.name;
+  return owner == 'Timer' ||
+      owner == 'Future' && const {'new', '', 'delayed', 'microtask'}.contains(element.name);
+}

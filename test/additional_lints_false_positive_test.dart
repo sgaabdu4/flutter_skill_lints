@@ -11,6 +11,8 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/use_existing_vari
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_sliver_prefix.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
+part 'additional_lints_false_positive_test/use_existing_variable_cases.dart';
+
 void main() {
   defineReflectiveSuite(() {
     defineReflectiveTests(PreferExplicitFunctionTypeFalsePositiveTest);
@@ -450,118 +452,6 @@ class Sheet {
   static void show(BuildContext context) => context.show(
     builder: (_) => Child(hostContext: context),
   );
-}
-''');
-  }
-}
-
-@reflectiveTest
-final class UseExistingVariableFalsePositiveTest extends _AdditionalLintRuleTest {
-  @override
-  void setUp() {
-    rule = UseExistingVariable();
-    super.setUp();
-  }
-
-  Future<void> test_writeTargetsAreNotRepeatedReads() async {
-    for (final assignment in ['box.value = 2', 'box.value += 2', 'box.value++', '++box.value']) {
-      await assertNoDiagnostics('''
-class Box { int value = 1; }
-void run(Box box) {
-  final previous = box.value;
-  $assignment;
-  print(previous);
-}
-''');
-    }
-  }
-
-  Future<void> test_indexAssignmentIsNotRepeatedRead() async {
-    await assertNoDiagnostics(r'''
-void run(Map<String, int> cache) {
-  final previous = cache['key'];
-  cache['key'] = 2;
-  print(previous);
-}
-''');
-  }
-
-  Future<void> test_nullAssertedReadStillReports() async {
-    const source = r'''
-class Box { int? value; }
-void run(Box box) {
-  final previous = box.value;
-  final repeated = box.value!;
-  print(previous);
-  print(repeated);
-}
-''';
-    await assertDiagnostics(source, [lint(source.indexOf('box.value!'), 9)]);
-  }
-
-  Future<void> test_assignmentRightHandReadStillReports() async {
-    const source = r'''
-class Box { int value = 1; }
-void run(Box box) {
-  final previous = box.value;
-  box.value = box.value + 1;
-  print(previous);
-}
-''';
-    await assertDiagnostics(source, [lint(source.indexOf('box.value +'), 9)]);
-  }
-
-  Future<void> test_reportsDuplicateExpressionWithoutInterveningSideEffect() async {
-    const source = r'''
-class Container {
-  Object read(Object provider) => Object();
-}
-
-final provider = Object();
-
-void run(Container container) {
-  final initial = container.read(provider);
-  final duplicate = container.read(provider);
-  print(initial);
-  print(duplicate);
-}
-''';
-
-    await assertDiagnostics(source, [
-      lint(source.indexOf('container.read(provider)', source.indexOf('duplicate')), 24),
-    ]);
-  }
-
-  Future<void> test_allowsDuplicateExpressionAfterMutation() async {
-    await assertNoDiagnostics(r'''
-class Container {
-  Object read(Object provider) => Object();
-}
-
-class Notifier {
-  void updateSet(Object value) {}
-}
-
-final provider = Object();
-
-void run(Container container, Notifier notifier) {
-  final initial = container.read(provider);
-  notifier.updateSet(initial);
-  final afterUpdate = container.read(provider);
-  print(afterUpdate);
-}
-''');
-  }
-
-  Future<void> test_allowsFreshCollectionRecorders() async {
-    await assertNoDiagnostics(r'''
-void run() {
-  final deletedIds = <String>[];
-  final createdRows = <Map<String, Object?>>[];
-  final permissions = <List<String>>[];
-  deletedIds.add('one');
-  createdRows.add({'id': 'row-1'});
-  permissions.add(['read']);
 }
 ''');
   }

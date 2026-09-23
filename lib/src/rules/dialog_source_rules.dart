@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> dialogSourceRules = [
@@ -640,22 +641,8 @@ bool _isInsideFunctionLiteral(SourceScannerContext context, int lineIndex, int c
   final offset = context.source.lineOffsets[lineIndex] + column;
   AstNode? node = context.unit.nodeCovering(offset: offset);
   while (node != null && node is! MethodDeclaration) {
-    if (node is FunctionExpression && !_isImmediatelyInvoked(node)) return true;
+    if (node is FunctionExpression && !isImmediatelyInvoked(node)) return true;
     node = node.parent;
   }
   return false;
-}
-
-bool _isImmediatelyInvoked(FunctionExpression function) {
-  AstNode expression = function;
-  var wrapper = expression.parent;
-  while (wrapper is ParenthesizedExpression) {
-    expression = wrapper;
-    wrapper = expression.parent;
-  }
-  final parent = expression.parent;
-  return parent is FunctionExpressionInvocation && identical(parent.function, expression) ||
-      parent is MethodInvocation &&
-          parent.methodName.name == 'call' &&
-          identical(parent.target, expression);
 }

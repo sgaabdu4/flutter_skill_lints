@@ -92,6 +92,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     // Collection literals create fresh mutable objects. Reusing another variable
     // with the same initializer would alias state instead of removing duplication.
     if (expression is ListLiteral || expression is SetOrMapLiteral) return true;
+    if (expression is InstanceCreationExpression && !expression.isConst) return true;
+    if (expression is DotShorthandConstructorInvocation && !expression.isConst) return true;
     return false;
   }
 }

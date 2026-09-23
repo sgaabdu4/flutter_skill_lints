@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.12.6] - 2026-09-23
+
+- Fix a 0.12.5 debounce regression: synchronous void notifier methods that launch
+  or forward work warn again. Exempt only simple state assignments with trivial
+  arguments, including imported methods; unknown bodies remain conservative.
+- Fix a 0.12.4 layout regression: Expanded and Flexible under padded, constrained,
+  or otherwise render-wrapping Containers warn again. Transparent Containers can
+  lead to an outer parent; extracted/custom widget composition remains accepted.
+- Check the actual initState execution context. Deferred SDK callbacks and adjacent
+  methods no longer trigger nearby-read warnings; direct reads, immediately invoked
+  closures and synchronous callbacks still report.
+- Determine keepAlive families from their signatures rather than nearby required
+  fields or method parameters.
+- Preserve independent non-constant constructor allocations in duplicate-expression
+  checks while retaining diagnostics for constant expressions and repeated reads.
+- Add regression controls and real Flutter/Riverpod integration coverage for both
+  accepted and rejected cases. Compare published versions to reproduce the two
+  regressions rather than treating historical green CI as proof of correctness.
+
 ## [0.12.5] - 2026-09-23
 
 - Keep assignment and increment targets out of duplicate-read suggestions while

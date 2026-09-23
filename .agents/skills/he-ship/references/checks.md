@@ -26,7 +26,7 @@ Add `shipping` to the existing `hard-eng.gates.json` from observed repository re
 }
 ```
 
-Values above are an example, not universal defaults. Use the actual target, required check names, UI owners and measured budgets. An empty UI path list explicitly describes a nonvisual project. Missing/invalid policy blocks pushes, Complete plans selecting delivery and ship checks. Pre-push rejects direct updates to the configured base and still verifies the actual pushed commit; the elapsed budget is an additional requirement, not permission to omit checks.
+Values above are an example, not universal defaults. Use the actual target, required check names, UI owners and measured budgets. `ci_seconds` measures each named check, not upstream work hidden behind an aggregate; follow [CI ownership](../../he/references/gates.md) when consolidating existing jobs. A required check must conclude `success` on every PR; `skipped` proves nothing and is rejected. Put a path condition on the job's steps, never on the job, and add one step that reports nothing to verify, so a docs-only PR still concludes the check. An empty UI path list explicitly describes a nonvisual project. Missing/invalid policy blocks pushes, Complete plans selecting delivery and ship checks. Pre-push rejects direct updates to the configured base and still verifies the actual pushed commit; the elapsed budget is an additional requirement, not permission to omit checks.
 
 Installed-scaffold freshness is checked without mutation at completion and shipping. A newer CI-verified revision or unavailable freshness evidence blocks a completion claim. Use the supported updater, preserve conflicting local edits and reverify affected work; never advance the revision marker manually. Source development without an installed marker is outside this update check.
 
@@ -49,6 +49,35 @@ For changes matching `ui_paths`, compare the actual baseline and final appearanc
 Before: ![Before](https://github.com/user-attachments/assets/actual-before-id)
 After: ![After](https://github.com/user-attachments/assets/actual-after-id)
 ```
+
+When the installed `gh pr create` or `gh pr edit` supports `--attach`, upload
+images or videos directly; a browser upload is not a prerequisite. For video,
+keep its local Markdown reference as the only content in its paragraph in the
+body file:
+
+```markdown
+Before:
+
+![](evidence/before.mp4)
+
+After:
+
+![](evidence/after.mp4)
+```
+
+Create or update the PR with that body and both local files:
+
+```sh
+gh pr create --title "Title" --body-file pr-body.md \
+  --attach evidence/before.mp4 --attach evidence/after.mp4
+gh pr edit https://github.com/owner/repo/pull/123 --body-file pr-body.md \
+  --attach evidence/before.mp4 --attach evidence/after.mp4
+```
+
+GitHub CLI rewrites each video reference to a standalone GitHub asset URL, so
+the published body has the same labels followed by raw URLs. The verifier
+accepts those URLs only under `Before:` or `After:`; image Markdown and mixed
+image/video pairs remain supported.
 
 When appearance is unchanged, omit the duplicate attachments and record one comparison note instead:
 

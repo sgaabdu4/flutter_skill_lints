@@ -6,3 +6,7 @@ args = ["dlx", "context-mode@latest"]
 [mcp_servers."codebase-memory-mcp"]
 command = "pnpm"
 args = ["dlx", "codebase-memory-mcp@latest"]
+
+[mcp_servers."dart"]
+command = "dart"
+args = ["mcp-server"]

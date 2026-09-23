@@ -18,7 +18,6 @@ from ship_evidence import attachment_urls
 
 Delivery = TypedDict("Delivery", {"name": str, "command": list[str]})
 
-
 ShippingPolicy = TypedDict(
     "ShippingPolicy",
     {
@@ -49,6 +48,10 @@ class Shipment:
 
 class ShippingError(ValueError):
     pass
+
+
+class PendingCheck(ShippingError):
+    """A required check has not concluded yet; it has not failed."""
 
 
 _CONFIG_KEYS = {
@@ -107,7 +110,8 @@ def _run(
     except (OSError, subprocess.TimeoutExpired) as error:
         raise ShippingError(f"{executable} query unavailable") from error
     if result.returncode != 0:
-        raise ShippingError(f"{executable} query failed")
+        reason = result.stderr.strip().rpartition("\n")[2]
+        raise ShippingError(f"{executable} query failed: {reason}".removesuffix(": "))
     return result.stdout
 
 
@@ -428,7 +432,7 @@ def _checks(root: Path, repository: str, revision: str, policy: ShippingPolicy) 
             by_name[name].append(item)
     for name, candidates in by_name.items():
         if not candidates:
-            raise ShippingError(f"required check missing: {name}")
+            raise PendingCheck(f"required check missing: {name}")
         run = max(candidates, key=_run_sort_key)
         if run.get("truncated") is True or (
             isinstance(run.get("output"), dict)
@@ -436,7 +440,13 @@ def _checks(root: Path, repository: str, revision: str, policy: ShippingPolicy) 
         ):
             raise ShippingError(f"required check truncated: {name}")
         _check_revision(run, revision)
-        if run.get("status") != "completed" or run.get("conclusion") != "success":
+        if run.get("status") != "completed":
+            raise PendingCheck(f"required check has not completed: {name}")
+        if run.get("conclusion") == "skipped":
+            raise ShippingError(
+                f"required check was skipped; gate its steps, not the job: {name}"
+            )
+        if run.get("conclusion") != "success":
             raise ShippingError(f"required check is not successful: {name}")
         started = _timestamp(run.get("started_at"), f"check {name}")
         completed = _timestamp(run.get("completed_at"), f"check {name}")
@@ -540,8 +550,12 @@ def _clean(root: Path) -> None:
 def _plan_target(root: Path, plan: Path) -> tuple[Path, str]:
     resolved_root = root.resolve()
     resolved_plan = plan.resolve()
-    if not resolved_plan.is_relative_to(resolved_root) or not resolved_plan.is_file():
-        raise ShippingError("shipping plan must be an existing repository file")
+    if not resolved_plan.is_relative_to(resolved_root):
+        raise ShippingError("shipping plan must be inside the repository")
+    if not resolved_plan.is_file():
+        raise ShippingError(
+            "shipping plan not found in this checkout; check out the PR's head branch"
+        )
     try:
         from plans import plan_sections, validate_plan
 
@@ -647,6 +661,8 @@ def verify(root: Path, plan: Path, pr_url: str, stage: str) -> Shipment:
     if repository != f"{owner}/{name}".lower():
         raise ShippingError("PR URL repository does not match origin")
     resolved_plan, target = _plan_target(resolved_root, plan)
+    if target == "Deploy" and not policy["delivery"]:
+        raise ShippingError("Deploy target requires configured delivery checks")
     pull = _pull(resolved_root, owner, name, number)
     if pull.base_ref != policy["base"]:
         raise ShippingError("PR base branch does not match shipping policy")
@@ -665,8 +681,6 @@ def verify(root: Path, plan: Path, pr_url: str, stage: str) -> Shipment:
         _ui_evidence(resolved_root, pull, paths, policy)
     _checks(resolved_root, repository, revision, policy)
     if stage == "delivered" and target == "Deploy":
-        if not policy["delivery"]:
-            raise ShippingError("Deploy target requires configured delivery checks")
         _delivery(resolved_root, policy, revision, url)
     current = _pull(resolved_root, owner, name, number)
     if current != pull:

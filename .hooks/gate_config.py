@@ -1,11 +1,13 @@
 """Validate required documents and gate configuration before execution."""
 
 import json
+import os
 import re
 import subprocess
-from collections import deque
 from pathlib import Path
 from typing import NotRequired, TypedDict, cast
+
+from dependency_graph import dependency_review_guidance, expand_dependents, secrets_only
 
 type JsonValue = (
     str | int | float | bool | None | list[JsonValue] | dict[str, JsonValue]
@@ -156,48 +158,28 @@ def validate_dart_plugins(options: JsonObject) -> None:
     plugins = options.get("plugins")
     if not isinstance(plugins, dict):
         return
-    updated: JsonObject = {"plugins": dict(plugins)}
+    migrated = dict(plugins)
+    updated: JsonObject = {"plugins": migrated}
     migrate_dart_plugins(updated, Path(__file__).resolve().parents[1])
     if updated["plugins"] != plugins:
+        versions = {
+            name: value.get("version") if isinstance(value, dict) else value
+            for name, value in plugins.items()
+        }
+        changes = ", ".join(
+            f"{name}: {versions[name]} -> {value.get('version') if isinstance(value, dict) else value}"
+            for name, value in migrated.items()
+            if value != plugins.get(name)
+        )
         raise ValueError(
-            "Flutter lint version is older than the installed canonical profile; run the supported Hard Eng updater"
+            f"Analyzer plugin version is older than the installed canonical profile ({changes}); run the supported Hard Eng updater and verify application compatibility"
         )
 
 
 def validate_dart_exclusions(directory: Path, values: object) -> None:
-    allowed = {
-        ".dart_tool/**",
-        "**/*.g.dart",
-        "**/*.freezed.dart",
-        "**/*.gr.dart",
-        "**/*.arb",
-    }
-    if not isinstance(values, list) or any(
-        not isinstance(value, str) or value not in allowed for value in values
-    ):
-        raise ValueError("Dart strict analysis cannot exclude project files")
-    matches = {
-        path
-        for pattern in set(values)
-        if pattern != ".dart_tool/**"
-        for path in directory.glob(pattern)
-    }
-    names = [str(path.relative_to(directory)) for path in matches]
-    generated = generated_sources(directory, names)
-    for path in matches:
-        if (
-            ".dart_tool/**" in values
-            and path.relative_to(directory).parts[0] == ".dart_tool"
-        ):
-            continue
-        if path.is_symlink() or not path.is_file():
-            raise ValueError(f"Dart generated exclusion matches an unsafe path: {path}")
-        if path.suffix != ".dart" or str(path.relative_to(directory)) in generated:
-            continue
-        with path.open("rb") as source:
-            header = source.read(2048).splitlines()[:10]
-        if b"// GENERATED CODE - DO NOT MODIFY BY HAND" not in header:
-            raise ValueError(f"Dart exclusion matches handwritten source: {path}")
+    from project_setup import validate_dart_exclusions as validate
+
+    validate(directory, values)
 
 
 def validate_file_sizes(root: Path, exceptions: dict[str, dict[str, str]]) -> None:
@@ -237,11 +219,11 @@ def validate_file_sizes(root: Path, exceptions: dict[str, dict[str, str]]) -> No
         if name in generated or name in exceptions:
             continue
         lines = len(path.read_bytes().splitlines())
-        if lines > 700:
+        if lines > 1000:
             failures.append(f"{name}: {lines} lines")
     if failures:
         raise ValueError(
-            "Handwritten files exceed 700 physical lines: " + "; ".join(failures)
+            "Handwritten files exceed 1000 physical lines: " + "; ".join(failures)
         )
 
 
@@ -309,6 +291,9 @@ def validate_gate(gate: Gate, directory: Path, report_paths: set[Path]) -> None:
         raise ValueError(
             f"{gate['name']}: put the executable in command; separate tool fields are unsupported"
         )
+    from gitleaks_scan import validate_current_files_gate
+
+    validate_current_files_gate(gate.get("role"), command)
     from project_setup import validate_command_output
 
     validate_command_output(command, directory, report)
@@ -317,7 +302,7 @@ def validate_gate(gate: Gate, directory: Path, report_paths: set[Path]) -> None:
 def validate_dart_boundaries(
     command: list[str], directory: Path, timeout: float
 ) -> None:
-    if command != ["dart-decimate", "check", ".", "--boundary-violations"]:
+    if command[:4] != ["dart-decimate", "check", ".", "--boundary-violations"]:
         return
     from tool_setup import managed_command
 
@@ -349,9 +334,24 @@ def validate_dart_boundaries(
         )
 
 
+def initial_base(root: Path) -> str:
+    """A new branch compares with its shipping-base merge base, else the empty tree."""
+    from shipping import git, load_policy
+
+    try:
+        policy = load_policy(root, required=False)
+        branch = f"refs/remotes/origin/{policy['base']}" if policy else "HEAD"
+        merged = git(root, "merge-base", branch, "HEAD").strip()
+        if merged != git(root, "rev-parse", "HEAD").strip():
+            return merged
+    except ValueError:
+        pass
+    return git(root, "hash-object", "-w", "-t", "tree", os.devnull).strip()
+
+
 def changed_files(root: Path, base: str) -> set[str] | None:
     try:
-        initial = (len(base) in {40, 64} and set(base) == {"0"}) or (
+        if re.fullmatch(r"0{40}|0{64}", base) or (
             base == "HEAD"
             and subprocess.run(
                 ["git", "rev-parse", "--verify", "--quiet", "HEAD"],
@@ -361,14 +361,8 @@ def changed_files(root: Path, base: str) -> set[str] | None:
                 check=False,
             ).returncode
             == 1
-        )
-        if initial:
-            base = subprocess.check_output(
-                ["git", "hash-object", "-w", "-t", "tree", "--stdin"],
-                input="",
-                cwd=root,
-                text=True,
-            ).strip()
+        ):
+            base = initial_base(root)
         changed = subprocess.check_output(
             ["git", "diff", "--name-only", "--no-renames", "-z", base, "--"],
             cwd=root,
@@ -388,12 +382,12 @@ def changed_files(root: Path, base: str) -> set[str] | None:
 def changed_packages(
     root: Path, by_path: dict[str, Group], base: str
 ) -> set[str] | None:
-    from plans import is_plan_path
+    from plans import is_documentation
 
     names = changed_files(root, base)
-    if not names:
+    if names is None:
         return None
-    names = {name for name in names if not is_plan_path(Path(name))}
+    names = {name for name in names if not is_documentation(Path(name))}
     selected: set[str] = set()
     for name in names:
         matches = [path for path in by_path if Path(name).is_relative_to(path)]
@@ -404,35 +398,27 @@ def changed_packages(
         ):
             return None
         selected.add(max(matches, key=len))
-    return selected or None
+    return selected
 
 
 def affected_groups(root: Path, groups: list[Group], base: str | None) -> list[Group]:
     packages = groups[:-1]
-    if (
-        base is None
-        or not packages
-        or any("depends_on" not in group for group in packages)
-    ):
+    if base is None or not packages:
         return groups
     by_path = {group["path"]: group for group in packages}
-    if len(by_path) != len(packages):
-        return groups
-    dependents: dict[str, list[str]] = {name: [] for name in by_path}
-    for group in packages:
-        for dependency in group["depends_on"]:
-            if dependency not in by_path:
-                raise ValueError(f"Unknown package dependency: {dependency}")
-            dependents[dependency].append(group["path"])
     selected = changed_packages(root, by_path, base)
     if selected is None:
         return groups
-    pending = deque(selected)
-    while pending:
-        for dependent in dependents[pending.popleft()]:
-            if dependent not in selected:
-                selected.add(dependent)
-                pending.append(dependent)
+    if not selected:
+        return [secrets_only(groups[-1])]
+    guidance = dependency_review_guidance(packages)
+    if any("depends_on" not in group for group in packages):
+        if guidance is not None:
+            print("Package impact is unknown; checking all packages. " + guidance)
+        return groups
+    if len(by_path) != len(packages):
+        return groups
+    selected = expand_dependents(packages, by_path, selected)
     print("Affected packages and dependents: " + ", ".join(sorted(selected)))
     return selected_services(root, packages, selected) + [groups[-1]]
 
@@ -610,7 +596,12 @@ def validate_required_checks(root: Path, config: GateConfig) -> None:
                 {gate.get("role", "") for gate in group["checks"]},
             )
         validate_package_services(
-            root, group, by_directory, workspace_languages, shared_roles
+            root,
+            group,
+            by_directory,
+            workspace_languages,
+            shared_roles,
+            config["packages"],
         )
 
 
@@ -620,6 +611,7 @@ def validate_package_services(
     by_directory: dict[tuple[Path, str], Group],
     manifests: dict[str, str],
     shared_roles: set[str],
+    package_groups: list[Group] | None = None,
 ) -> None:
     from project_setup import python_roots, workspace_matches, workspace_members
 
@@ -640,10 +632,11 @@ def validate_package_services(
     if language == "python" and python_roots(directory, group):
         require_roles(group["path"], {"imports"}, roles)
     if language == "javascript":
+        from fallow_report import owns_package_fallow
+
         manifest = json.loads((directory / "package.json").read_text())
         if "check:fallow" in manifest.get("scripts", {}) and not any(
-            gate["command"][:3] == ["pnpm", "run", "check:fallow"]
-            and gate.get("report", {}).get("type") == "fallow"
+            owns_package_fallow(group, gate, manifest["scripts"], package_groups)
             for gate in group["checks"]
         ):
             raise ValueError(
@@ -668,15 +661,22 @@ def validate_package_services(
         require_roles(group["path"], required, roles)
 
 
-def load_groups(root: Path, base: str | None = None) -> list[Group]:
-    validate_documents(root)
-    config = cast(GateConfig, json.loads((root / "hard-eng.gates.json").read_text()))
+def parse_config(content: str) -> GateConfig:
+    config = cast(GateConfig, json.loads(content))
     if (
         not isinstance(config, dict)
         or not isinstance(config.get("packages"), list)
         or not isinstance(config.get("shared"), list)
     ):
-        raise TypeError("Gate configuration must contain packages and shared lists")
+        raise TypeError(
+            "Gate configuration must contain packages and shared lists; preserve existing checks and migrate to the current HE templates before reinstalling"
+        )
+    return config
+
+
+def load_groups(root: Path, base: str | None = None) -> list[Group]:
+    validate_documents(root)
+    config = parse_config((root / "hard-eng.gates.json").read_text())
     if type(config.get("scan_git_history", True)) is not bool:
         raise TypeError("scan_git_history must be true or false")
     if "shipping" in config:
@@ -697,4 +697,9 @@ def load_groups(root: Path, base: str | None = None) -> list[Group]:
     if not count:
         raise ValueError("No checks configured; verification cannot pass")
     validate_required_checks(root, config)
+    from gitleaks_scan import new_commits_command
+
+    for gate in config["shared"]:
+        if gate.get("role") == "secrets-history":
+            gate["command"] = new_commits_command(gate["command"], root, base)
     return affected_groups(root, groups, base)

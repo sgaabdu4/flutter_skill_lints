@@ -4,7 +4,7 @@ description: Appwrite backend development and operations, including destructive 
 license: MIT
 metadata:
   author: sgaabdu4
-  version: "2.1.3"
+  version: "2.1.4"
   tags: appwrite, backend, baas, dart, python, typescript
 ---
 
@@ -80,93 +80,6 @@ Load the owner before acting. Unlisted detail = read the owner, never infer.
 - Client SDKs use account sessions and user-scoped APIs. Server SDKs use API keys. SSR uses two clients: a reusable admin client for session creation, and a per-request session client via `setSession(...)` — never shared.
 - Cloud project endpoint = `https://<REGION>.cloud.appwrite.io/v1`. The CLI account login endpoint stays `https://cloud.appwrite.io/v1`; do not rewrite it to a region.
 - Initialize clients outside warm Function handlers where the runtime allows.
-
-```typescript
-import { Client, TablesDB } from 'node-appwrite';
-const client = new Client()
-    .setEndpoint('https://<REGION>.cloud.appwrite.io/v1')
-    .setProject('<PROJECT_ID>')
-    .setKey('<API_KEY>');
-const tablesDB = new TablesDB(client);
-```
-
-```python
-from appwrite.client import Client
-from appwrite.services.tables_db import TablesDB
-client = (Client()
-    .set_endpoint('https://<REGION>.cloud.appwrite.io/v1')
-    .set_project('<PROJECT_ID>')
-    .set_key('<API_KEY>'))
-tables_db = TablesDB(client)
-```
-
-```dart
-import 'package:dart_appwrite/dart_appwrite.dart';
-final client = Client()
-    .setEndpoint('https://<REGION>.cloud.appwrite.io/v1')
-    .setProject('<PROJECT_ID>')
-    .setKey('<API_KEY>');
-final tablesDB = TablesDB(client);
-```
-
-## Terminology (1.8.0+)
-
-Collections = Tables · Documents = Rows · Attributes = Columns · Databases = TablesDB
-
-## Core Shapes
-
-Row ops: `createRow` · `getRow` · `listRows` · `updateRow` · `upsertRow` · `deleteRow`
-Bulk (server SDK only, atomic per request, rejects relationship columns): `createRows` · `updateRows` · `upsertRows` · `deleteRows`
-
-```dart
-await tablesDB.createRow(databaseId: 'db', tableId: 'users', rowId: ID.unique(),
-    data: {'name': 'Alice'});
-
-final rows = await tablesDB.listRows(databaseId: 'db', tableId: 'users',
-    queries: [Query.equal('status', 'active'), Query.select(['name', 'email'])]);
-```
-
-**Query** (all prefixed `Query.`; per-SDK naming + semantics in [query-optimization](references/query-optimization.md)):
-`equal` · `notEqual` · `lessThan` · `lessThanEqual` · `greaterThan` · `greaterThanEqual` · `between` · `notBetween` · `startsWith` · `endsWith` · `contains` · `search` (+ `not` variants) · `isNull` · `isNotNull` · `and` · `or` · `select` · `limit` · `offset` · `cursorAfter` · `cursorBefore` · `orderAsc` · `orderDesc` · `orderRandom` · `createdAfter` · `createdBefore` · `updatedAfter` · `updatedBefore` · `distanceEqual` · `distanceLessThan` · `distanceGreaterThan` · `intersects` · `overlaps` · `touches` · `crosses`
-
-**Operator** (atomic field mutation; semantics in [atomic-operators](references/atomic-operators.md)):
-`increment` · `decrement` · `multiply` · `divide` · `arrayAppend` · `arrayPrepend` · `arrayRemove` · `arrayUnique` · `arrayIntersect` · `arrayDiff` · `toggle` · `stringConcat` · `stringReplace` · `dateAddDays` · `dateSetNow`
-
-**Column types** (`string` deprecated; full table + storage/index tradeoffs in [schema-management](references/schema-management.md)):
-`varchar` · `text` · `mediumtext` · `longtext` · `integer` · `bigint` · `float` · `boolean` · `datetime` · `email` · `url` · `ip` · `enum` · `relationship` · `point` · `line` · `polygon`
-
-**Realtime channels** (type-safe `Channel` helpers preferred over raw strings):
-`account` · `tablesdb.<DB>.tables.<TABLE>.rows[.<ROW>]` · `buckets.<BUCKET>.files[.<FILE>]` · `teams[.<TEAM>]` · `memberships[.<MEMBERSHIP>]` · `functions.<FUNCTION>.executions` · `presences[.<PRESENCE>]`
-
-## Anti-Patterns
-
-| Wrong | Right | Why |
-|---|---|---|
-| Raw Appwrite HTTP (`fetch`, `requests`, `dio`, `package:http`, `curl`) | Official SDK package | Version drift, auth mistakes, lost typed APIs |
-| `databases.listDocuments()` | `tablesDB.listRows()` | Deprecated API |
-| `ColumnString` | `ColumnVarchar` or `ColumnText` | `string` deprecated |
-| Derived/custom resource ID, or fresh `ID.unique()` per retry | Preallocate one `ID.unique()`, persist, reuse | Leakage/collision, or duplicate resource |
-| N+1 relationship fetches | `Query.select(['col', 'relation.col'])` | Kills extra round-trips |
-| Read-modify-write | `Operator.increment()` | Race condition |
-| Large offsets | `Query.cursorAfter(id)` | O(n) vs O(1) |
-| Fetching totals by default | `total: false` | Kills COUNT scan |
-| `total` as an in-transaction completeness/uniqueness guard | `total: false` + `Query.limit(n + 1)` + assert `rows.length` — [transactions](references/transactions.md) | Staged rows drop out of `total` but stay in `rows` |
-| Missing indexes | Index every queried/ordered column | Full table scan |
-| Full re-fetch every sync | `Query.updatedAfter()` + per-table timestamps | Wastes bandwidth |
-| Loop with per-row create/update/delete | Matching bulk call | N requests + N transaction ops vs 1 |
-| Treating bulk as partial-success | One bulk request is atomic; reconcile exact postcondition | Appwrite bulk is all-or-nothing per request |
-| Empty bulk update/delete queries | Reject unless an explicit all-rows operation is authorized | Empty queries target every row |
-| SDK init inside handler | Init outside for warm reuse | Repeated setup per call |
-| Polling | Realtime or event triggers | Wasted executions |
-| Client-side event filtering | Realtime queries | Server does the work |
-| Raw channel strings | `Channel` helpers | Typos, no autocomplete |
-| Hand-written types | `appwrite generate` | Schema drift, no autocomplete |
-| Durable rows + cleanup cron for online/typing state | Presences API | Ephemeral state does not belong in a table |
-| Hardcoded secrets | Env vars / secret manager | Security risk |
-| One function per operation | One function per domain | Cold starts, deploy sprawl |
-| Independent retry loop per datasource/sync table | One shared request coordinator + cooldown | Concurrent retries recreate the outage and 429 burst |
-| Retry a timed-out write immediately | Read exact postcondition, then reuse the persisted ID or rebuild | The first write may already have succeeded |
-| Report cause + partial-sync wrapper separately | One operation incident with failed-table context | Duplicate groups hide the root cause |
 
 ## Resources
 

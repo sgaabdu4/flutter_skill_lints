@@ -31,8 +31,8 @@ appwrite --version
 appwrite completion install
 ```
 
-Repository-pinned wrapper/version wins. Registry latest on 2026-07-31 = CLI
-`25.0.0`; its official README declares server `1.9.x` compatibility. Appwrite
+Repository-pinned wrapper/version wins. Registry latest observed on 2026-07-31 =
+CLI `25.0.0`; its official README declares server `1.9.x` compatibility. Appwrite
 `1.9.6` release-match = CLI `23.0.0`; [self-hosting.md](self-hosting.md) owns that
 matrix. Releases `23.0.0` and `25.0.0` both remove or change commands/output.
 Never float automation via `appwrite update` or unpinned install. Adopt a newer
@@ -238,15 +238,23 @@ Therefore:
 Run before every production `push tables`:
 
 ```shell
-node skills/appwrite-backend/scripts/appwrite-schema-guard.mjs capture \
+# Set this to the absolute directory containing the loaded SKILL.md.
+APPWRITE_SKILL_DIR="/absolute/path/to/appwrite-backend"
+
+node "$APPWRITE_SKILL_DIR/scripts/appwrite-schema-guard.mjs" capture \
   --config appwrite.config.json \
   --output /tmp/appwrite-live-inventory.json
 
-node skills/appwrite-backend/scripts/appwrite-schema-guard.mjs check \
+node "$APPWRITE_SKILL_DIR/scripts/appwrite-schema-guard.mjs" check \
   --config appwrite.config.json \
   --inventory /tmp/appwrite-live-inventory.json \
   --baseline <BASELINE_APPWRITE_CONFIG>
 ```
+
+Run these commands from the target project root. The loaded skill's path is the
+authority: its directory can be canonical `skills/appwrite-backend`, Hard Eng
+`.agents/skills/appwrite-backend`, or another installed layout. Do not infer a
+different path from the consumer repository.
 
 `capture` = read-only database/table inventory; names/data/secrets excluded.
 

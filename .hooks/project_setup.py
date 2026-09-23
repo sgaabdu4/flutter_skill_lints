@@ -1,7 +1,7 @@
 """Adapt native template commands to the target project's existing stack."""
 
+import configparser
 import json
-import math
 import os
 import re
 import shlex
@@ -10,18 +10,20 @@ import tomllib
 from fnmatch import fnmatchcase
 from pathlib import Path
 
-from fallow_report import fallow_report_path, validate_fallow_command
+from fallow_report import fallow_report_path, validate_scanner_command
 from gate_config import (
     GateConfig,
     Group,
     JsonObject,
     Report,
+    generated_sources,
     nonproduction_source,
     repository_files,
     typescript_packages,
 )
 
 PACKAGE_MANAGERS = {"npm", "npx", "pnpm", "yarn", "yarnpkg", "bun", "bunx"}
+FLUTTER_PLATFORM_ROOTS = {"android", "ios", "web", "windows", "macos", "linux"}
 
 
 def migrate_dart_plugins(options: JsonObject, source: Path) -> None:
@@ -31,26 +33,88 @@ def migrate_dart_plugins(options: JsonObject, source: Path) -> None:
     plugins = options.get("plugins")
     if not isinstance(plugins, dict):
         return
-    version = plugins.get("flutter_skill_lints")
-    installed = (
-        re.fullmatch(r"\^?(\d+)\.(\d+)\.(\d+)", version or "")
-        if isinstance(version, str)
-        else None
+    template = (
+        source / ".agents/skills/building-flutter-apps/references/analysis_options.yaml"
     )
-    if installed:
-        template = (
-            source
-            / ".agents/skills/building-flutter-apps/references/analysis_options.yaml"
+    canonical = yaml.safe_load(template.read_text())
+    for name in ("flutter_skill_lints", "riverpod_lint"):
+        entry = plugins.get(name)
+        if isinstance(entry, dict) and {"path", "git", "hosted"} & entry.keys():
+            continue
+        version = entry.get("version") if isinstance(entry, dict) else entry
+        installed = (
+            re.fullmatch(r"\^?(\d+)\.(\d+)\.(\d+)", version)
+            if isinstance(version, str)
+            else None
         )
-        canonical = yaml.safe_load(template.read_text())
-        current = canonical["plugins"]["flutter_skill_lints"]
+        if installed is None:
+            continue
+        current = canonical["plugins"][name]
         latest = re.fullmatch(r"\^?(\d+)\.(\d+)\.(\d+)", current)
         if latest is None:
             raise ValueError(
                 "Canonical Flutter lint version must be an exact or caret version"
             )
         if tuple(map(int, installed.groups())) < tuple(map(int, latest.groups())):
-            plugins["flutter_skill_lints"] = current
+            plugins[name] = (
+                {**entry, "version": current} if isinstance(entry, dict) else current
+            )
+
+
+def validate_dart_exclusions(directory: Path, values: object) -> None:
+    allowed = {
+        ".dart_tool/**",
+        "**/*.g.dart",
+        "**/*.freezed.dart",
+        "**/*.gr.dart",
+        "**/*.arb",
+    }
+    flutter = (directory / "pubspec.yaml").is_file() and dependency_command(
+        directory, "dart"
+    )[0] == "flutter"
+    native = {"build/**"} if flutter else set()
+    native.update(
+        f"{root}/**"
+        for root in FLUTTER_PLATFORM_ROOTS
+        if flutter and (directory / root).is_dir()
+    )
+    if not isinstance(values, list) or any(
+        not isinstance(value, str) or value not in allowed | native for value in values
+    ):
+        raise ValueError("Dart strict analysis cannot exclude project files")
+    roots = {pattern.split("/", 1)[0] for pattern in set(values) & native}
+    matches = {
+        path
+        for pattern in set(values) - native - {".dart_tool/**"}
+        for path in directory.glob(pattern)
+        if path.relative_to(directory).parts[0] not in roots
+    }
+    if roots:
+        names = subprocess.check_output(
+            ["git", "ls-files", "-zco", "--exclude-standard", "--", *sorted(roots)],
+            cwd=directory,
+            text=True,
+        ).split("\0")
+        matches.update(
+            directory / name
+            for name in names
+            if name
+            and (Path(name).suffix == ".dart" or (directory / name).is_symlink())
+        )
+    names = [str(path.relative_to(directory)) for path in matches]
+    generated = generated_sources(directory, names)
+    for path in matches:
+        relative = path.relative_to(directory)
+        if ".dart_tool/**" in values and relative.parts[0] == ".dart_tool":
+            continue
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(f"Dart generated exclusion matches an unsafe path: {path}")
+        if path.suffix != ".dart" or str(relative) in generated:
+            continue
+        with path.open("rb") as source:
+            header = source.read(2048).splitlines()[:10]
+        if b"// GENERATED CODE - DO NOT MODIFY BY HAND" not in header:
+            raise ValueError(f"Dart exclusion matches handwritten source: {path}")
 
 
 def validate_command_output(
@@ -68,7 +132,7 @@ def validate_command_output(
         raise ValueError(
             "Verification cannot suppress all Node warnings; repair the warning owner or use a justified narrow native exception"
         )
-    validate_fallow_command(arguments, report)
+    validate_scanner_command(arguments, report)
 
 
 def is_shell_script(path: Path) -> bool:
@@ -287,7 +351,7 @@ def adapt_boundaries(package: Group, typescript: set[str]) -> None:
                 "name": "lint:boundaries",
                 "role": "boundaries",
                 "command": (
-                    ["dart-decimate", "check", ".", "--boundary-violations"]
+                    ["dart-decimate", "check", ".", "--boundary-violations", "--strict"]
                     if package.get("language") == "dart"
                     else ["pnpm", "run", "lint:boundaries"]
                 ),
@@ -456,6 +520,55 @@ def python_gate_command(command: list[str], manager: str) -> list[str]:
     return [*prefix, *command]
 
 
+def strict_scanner_flags(package: Group) -> None:
+    """Give an older scanner gate the flags the check now requires of it."""
+    from fallow_report import native_scanner_command, option
+
+    for gate in package["checks"]:
+        invocation = native_scanner_command(gate["command"])
+        if invocation is None or "&&" in gate["command"]:
+            continue
+        required: list[str] = []
+        if invocation[0] == "react-doctor":
+            required = ["--no-respect-inline-disables"]
+        elif invocation[0] == "dart-decimate":
+            required = ["--strict"] if "check" in invocation else required
+        elif "audit" in invocation:
+            required = required if option(invocation, "--gate") else ["--gate", "all"]
+        else:
+            required = ["--fail-on-issues"]
+        if required and required[0] not in invocation:
+            gate["command"] = [*gate["command"], *required]
+
+
+def parallel_pytest(package: Group) -> None:
+    """Run a generated pytest gate on every core; `-n 0` keeps a suite serial."""
+    for gate in package["checks"]:
+        command = gate["command"]
+        runners = [
+            index
+            for index, argument in enumerate(command)
+            if argument == "pytest"
+            and command[index - 1] not in {"--with", "--upgrade-package"}
+        ]
+        if gate.get("role") != "tests" or not runners or "--with" not in command:
+            continue
+        options = command[runners[0] + 1 :]
+        if "no:xdist" in options or any(
+            option.startswith(("-n", "--numprocesses", "--dist")) for option in options
+        ):
+            continue
+        xdist = ["--with", "pytest-xdist", "--upgrade-package", "pytest-xdist"]
+        gate["command"] = [
+            *command[: runners[0]],
+            *([] if "pytest-xdist" in command else xdist),
+            "pytest",
+            "-n",
+            "auto",
+            *options,
+        ]
+
+
 def python_interpreter(directory: Path, timeout: float) -> str:
     from tool_setup import managed_command
 
@@ -516,6 +629,7 @@ def adapt_javascript(directory: Path, package: Group, manager: str) -> None:
                     "full",
                     "--blocking",
                     "warning",
+                    "--no-respect-inline-disables",
                     "--json",
                     "--json-out",
                     "coverage/react-doctor.json",
@@ -558,9 +672,69 @@ def python_roots(directory: Path, package: Group) -> list[str]:
     return sorted(roots)
 
 
+def import_linter_owner(
+    directory: Path,
+) -> tuple[Path, configparser.ConfigParser] | None:
+    for name in ("setup.cfg", ".importlinter"):
+        owner = directory / name
+        if not owner.is_file():
+            continue
+        parser = configparser.ConfigParser()
+        parser.read(owner)
+        if parser.has_section("importlinter"):
+            return owner, parser
+    return None
+
+
+def has_recursive_import_contract(
+    parser: configparser.ConfigParser, roots: list[str]
+) -> bool:
+    root_option = (
+        "root_packages"
+        if parser.has_option("importlinter", "root_packages")
+        else "root_package"
+    )
+    configured_roots = {
+        value.strip()
+        for value in parser.get("importlinter", root_option, fallback="").splitlines()
+        if value.strip()
+    }
+    if not set(roots).issubset(configured_roots):
+        return False
+    contracts = [
+        parser[section]
+        for section in parser.sections()
+        if section.startswith("importlinter:")
+    ]
+    ancestors = set()
+    for contract in contracts:
+        if (
+            contract.get("name", "").strip()
+            and contract.get("type", "").strip() == "acyclic_siblings"
+            and contract.get("depth", "").strip() == "0"
+        ):
+            ancestors.update(
+                value.strip()
+                for value in contract.get("ancestors", "").splitlines()
+                if value.strip()
+            )
+    return all({root, root + ".**"} <= ancestors for root in roots)
+
+
 def import_configuration(directory: Path, package: Group, content: str) -> str:
     roots = python_roots(directory, package)
-    if not roots or "importlinter" in tomllib.loads(content).get("tool", {}):
+    if not roots:
+        return content
+    configured = import_linter_owner(directory)
+    if configured is not None:
+        owner, parser = configured
+        if has_recursive_import_contract(parser, roots):
+            return content
+        raise ValueError(
+            f"Import Linter prioritizes {owner.name}; preserve its existing contracts "
+            "and add a depth-zero acyclic_siblings contract covering each root and its descendants there"
+        )
+    if "importlinter" in tomllib.loads(content).get("tool", {}):
         return content
     ancestors = [value for root in roots for value in (root, root + ".**")]
     return content + (
@@ -570,103 +744,3 @@ def import_configuration(directory: Path, package: Group, content: str) -> str:
         + json.dumps(ancestors)
         + "\ndepth = 0\n"
     )
-
-
-def workflow_budget(root: Path, content: str) -> str:
-    from shipping import load_policy
-
-    policy = load_policy(root, required=False)
-    if policy is None:
-        return content
-    return re.sub(
-        r"(?m)^    timeout-minutes: \d+$",
-        f"    timeout-minutes: {math.ceil(policy['ci_seconds'] / 60)}",
-        content,
-    )
-
-
-def migrate_workflow_pins(content: str) -> str:
-    for action, old, new, before, after in (
-        (
-            "actions/checkout",
-            "fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
-            "3d3c42e5aac5ba805825da76410c181273ba90b1",
-            "v5",
-            "v7.0.1",
-        ),
-        (
-            "pnpm/setup",
-            "c9883cc79df532ad1a7b81bf9ab944ceb090d65c",
-            "703c52620218391530e48b9e8870d5c0082e1b9b",
-            "v2.0.0",
-            "v2.1.0",
-        ),
-    ):
-        content = re.sub(
-            rf"(?m)^([ \t]*(?:-[ \t]+)?uses:[ \t]+){re.escape(action)}@{old}([ \t]*(?:#.*)?)$",
-            lambda match, action=action, new=new, before=before, after=after: (
-                match[1]
-                + action
-                + "@"
-                + new
-                + match[2].replace(f"# {before}", f"# {after}", 1)
-            ),
-            content,
-        )
-    return content
-
-
-def migrate_workflow_tools(content: str) -> str:
-    launcher = "pnpm dlx --allow-build=@jdxcode/mise --package=@jdxcode/mise@latest mise --no-config"
-    return re.sub(
-        r"(?m)^        run: >-\n"
-        r"          pnpm dlx --allow-build=@jdxcode/mise\n"
-        r"          --package=@jdxcode/mise@latest mise --no-config exec\n"
-        r"          (?P<tools>[^\n]+)\n"
-        r"          -- (?P<check>uv run --no-project --with pyyaml python "
-        r'\.hooks/hard-eng\.py check --base "\$BASE_SHA")\n',
-        lambda match: (
-            "        run: |\n"
-            f"          {launcher} install {match['tools']} &&\n"
-            f"          MISE_FETCH_REMOTE_VERSIONS_CACHE=1h {launcher} exec {match['tools']} -- {match['check']}\n"
-        ),
-        content,
-    )
-
-
-def configure_ci(
-    root: Path, source: Path, config: GateConfig, changes: dict[str, str]
-) -> None:
-    name = ".github/workflows/hard-eng.yml"
-    if (root / name).exists():
-        original = (root / name).read_text()
-        migrated = migrate_workflow_tools(migrate_workflow_pins(original))
-        if migrated != original:
-            changes[name] = migrated
-        return
-    tools = ["uv@latest", "python@3.12", "node@latest"]
-    for package in config["packages"]:
-        directory = root / package["path"]
-        language = package.get("language")
-        if language not in {"python", "javascript", "dart"}:
-            continue
-        manager, _, _ = dependency_command(directory, language)
-        if manager in {"dart", "flutter", "pnpm", "yarn", "bun", "poetry"}:
-            version = "latest"
-            if language == "javascript":
-                declared = json.loads((directory / "package.json").read_text()).get(
-                    "packageManager", ""
-                )
-                if declared.startswith(manager + "@"):
-                    version = declared.split("@", 1)[1].split("+", 1)[0]
-            specification = manager + "@" + version
-            if specification not in tools:
-                tools.append(specification)
-    if "flutter@latest" in tools and "dart@latest" in tools:
-        tools.remove("dart@latest")
-    changes[name] = (
-        (source / name)
-        .read_text()
-        .replace("uv@latest python@3.12 node@latest dart@latest", " ".join(tools))
-    )
-    changes[name] = workflow_budget(root, changes[name])

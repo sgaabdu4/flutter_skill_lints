@@ -6,6 +6,12 @@
         "dlx",
         "codebase-memory-mcp@latest"
       ]
+    },
+    "dart": {
+      "command": "dart",
+      "args": [
+        "mcp-server"
+      ]
     }
   }
 }

@@ -8,7 +8,15 @@ import tempfile
 import time
 from pathlib import Path
 
-from shipping import Shipment, gh, git, load_policy, verify
+from shipping import (
+    PendingCheck,
+    Shipment,
+    ShippingError,
+    gh,
+    git,
+    load_policy,
+    verify,
+)
 from update import require_current
 
 
@@ -203,7 +211,8 @@ def cleanup(coordinator: Path, shipment: Shipment) -> None:
     if tracking in references.splitlines():
         git(coordinator, "update-ref", "-d", tracking, shipment.head_sha)
     cleanup_guard(coordinator, shipment)
-    git(coordinator, "worktree", "remove", str(shipment.root))
+    # Git refuses any worktree with a submodule gitlink; the guard proved it clean.
+    git(coordinator, "worktree", "remove", "--force", str(shipment.root))
     print(f"Removed task worktree {shipment.root}", flush=True)
     git(
         coordinator,
@@ -248,7 +257,19 @@ def run(
             "--match-head-commit",
             shipment.head_sha,
         )
-        shipment = verify(target, plan_path, pr_url, "delivered")
+        try:
+            shipment = verify(target, plan_path, pr_url, "delivered")
+        except PendingCheck as error:
+            raise ShippingError(
+                f"Merged; base-branch CI has not finished ({error}). Run ship "
+                "--stage delivered once it completes; do not retry the merge."
+            ) from error
+        except ShippingError as error:
+            raise ShippingError(
+                "Merge command succeeded; post-merge delivery verification is pending "
+                f"or failed: {error}. Inspect the PR before retrying and do not claim "
+                "that the merge was undone."
+            ) from error
     if stage == "cleanup":
         cleanup(coordinator, shipment)
     revision = shipment.merged_sha or shipment.head_sha

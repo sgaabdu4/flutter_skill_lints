@@ -28,6 +28,7 @@ class UseExistingDestructuring extends AnalysisRule {
     correctionMessage:
         "Add ':{1}' to the existing destructuring pattern and use '{1}' "
         'directly.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   UseExistingDestructuring()

@@ -318,6 +318,21 @@ void main() {
     }
   });
 
+  test('model skill MUST and NEVER diagnostics report at error severity', () {
+    final registry = _RecordingPluginRegistry('flutter_skill_lints');
+    FlutterSkillLintsPlugin().register(registry);
+
+    for (final name in _modelSkillErrorDiagnostics) {
+      final rule = registry.warningRules[name];
+      expect(rule, isNotNull, reason: name);
+      expect(
+        rule!.diagnosticCodes.map((code) => code.severity),
+        everyElement(DiagnosticSeverity.ERROR),
+        reason: name,
+      );
+    }
+  });
+
   test('appends Flutter skill rules after additional analyzer rules', () {
     final registry = _RecordingPluginRegistry('flutter_skill_lints');
     final plugin = FlutterSkillLintsPlugin();
@@ -339,6 +354,14 @@ void main() {
 const _enabledFlutterSkillRuleCount = 187;
 const _enabledFlutterSkillDiagnosticCount = 195;
 const _enabledAdditionalRuleCount = 280;
+
+const _modelSkillErrorDiagnostics = [
+  'use_sealed_freezed_classes',
+  'prefer_dot_shorthands',
+  'prefer_wildcard_pattern',
+  'use_existing_destructuring',
+  'datetime_now_requires_timezone_intent',
+];
 
 Iterable<String> _documentedLintCodes(String text) sync* {
   var depth = 0;

@@ -364,7 +364,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       'datetime_now_requires_timezone_intent',
       'Make current DateTime timezone intent explicit.',
       correctionMessage: 'Use DateTimeX.nowUtc()/nowLocal(), and move repeated current-date windows into a DateTimeX helper.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags raw current DateTime calls and inline current-date math so timestamp persistence and local calendar bucketing stay behind DateTimeX helpers.',
     scan: _scanDateTimeNowIntent,

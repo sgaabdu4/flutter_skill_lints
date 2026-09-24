@@ -31,6 +31,7 @@ class PreferWildcardPattern extends AnalysisRule {
     'prefer_wildcard_pattern',
     "Use the wildcard pattern '_' instead of 'Object()'.",
     correctionMessage: "Replace 'Object()' with '_'.",
+    severity: DiagnosticSeverity.ERROR,
   );
 
   PreferWildcardPattern()

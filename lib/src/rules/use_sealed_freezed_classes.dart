@@ -15,6 +15,7 @@ final class UseSealedFreezedClasses extends AnalysisRule {
     'use_sealed_freezed_classes',
     'Use sealed class for Freezed declarations.',
     correctionMessage: 'Replace abstract class with sealed class for Freezed types.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   UseSealedFreezedClasses()

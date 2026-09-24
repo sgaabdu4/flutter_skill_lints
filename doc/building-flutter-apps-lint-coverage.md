@@ -74,7 +74,10 @@ Core skill rules already covered before this pass:
   `presentation_widget_infrastructure_dependency`.
 - UI/performance/date: `avoid_widget_build_helpers`, `avoid_shrink_wrap`,
   `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`,
-  `l10n_context_direct_access`, `ui_snackbar_boundary`,
+  `l10n_context_direct_access`, `l10n_string_concatenation`,
+  `l10n_notifier_localized_copy`, `widget_preview_import_leak`,
+  `widget_preview_platform_dependency`, `widget_preview_screen`,
+  `ui_snackbar_boundary`,
   `widget_material_boundary` (raw `Material` / `Ink` / `InkWell` outside owners),
   `a11y_text_scale_clamp`, `datetime_now_requires_timezone_intent`,
   `avoid_private_widget_classes`, `perf_build_work`, `perf_listview_children`,
@@ -132,7 +135,7 @@ hover description and correction text.
 | `flutter-optimizations.md` | `avoid_shrink_wrap`, `perf_listview_children`, `perf_build_work`, `a11y_text_scale_clamp`, `flutter_key_created_in_build`, `flutter_unique_or_global_key`, `flutter_opacity_widget`, `flutter_save_layer_filter`, `flutter_clip_save_layer`, `flutter_intrinsic_layout`, `flutter_animated_builder_child`, `flutter_widget_operator_equals`, `use_dedicated_media_query_methods`, `prefer_compute_over_isolate_run` |
 | `freezed-sealed.md` | `use_sealed_freezed_classes`, `use_freezed_instead_of_immutable`, `freezed_one_class_per_file`, `freezed_missing_private_constructor`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map`, `arch_domain_json_annotation`, `cfg_explicit_to_json` |
 | `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_test_close_missing`, `avoid_unvalidated_persisted_map_cast`, runtime boundary for historical TypeId permanence |
-| `localization.md` | `strings_hardcoded`, `l10n_context_direct_access` |
+| `localization.md` | `strings_hardcoded`, `avoid_hardcoded_strings`, `l10n_context_direct_access`, `l10n_string_concatenation`, `l10n_notifier_localized_copy` |
 | `mixins.md` | `mixin_mixin_class`, `mixin_name_suffix`, `mixin_mutable_state` |
 | `performance.md` | `riverpod_watch_no_select`, `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `perf_listview_children`, `perf_build_work`, `state_empty_string_sentinel`, `state_bool_string_sentinel`, `state_raw_response`, `state_raw_error_to_string`, `a11y_text_scale_clamp`, `flutter_*` optimization rules |
 | `presentation-widgets.md` | `presentation_widget_navigation_forbidden`, `presentation_widget_controller_state`, `presentation_widget_infrastructure_dependency` |
@@ -140,6 +143,7 @@ hover description and correction text.
 	| `services-and-singletons.md` | `service_singleton`, `service_static_side_effect`, `service_random_per_call`, `hidden_dependency_fallback`, `hidden_dependency_default_param`, `service_inline_concrete_dependency`, `service_provider_watch_dependency`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures`, `fire_forget_in_tests`, `appwrite_blocking_function_execution_in_client` |
 | `state-management.md` | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `async_context_mounted_style`, `avoid_mounted_check_in_finally`, `avoid_sync_notifier_state_read`, `avoid_silent_repository_null_return`, `notifier_ensure_deps`, `notifier_watch_method`, `riverpod_event_counter_signal_forbidden`, `widget_awaits_notifier_result`, `widget_local_mutation_flag`, `state_empty_string_sentinel`, `state_bool_string_sentinel`, `state_broad_invalidation`, `state_freezed_nullable_error`, runtime boundary for source-of-truth freshness |
 | `testing.md` | `cfg_e2e_entrypoint`, `test_provider_container`, `test_uncontrolled_scope`, `test_create_container`, `test_mock_concrete`, `test_pump_and_settle`, `test_tap_at`, `test_inline_value_key`, `test_first_match_finder`, runtime boundary for event-contract and cross-runtime drift proof |
+| `widget-previews.md` | `widget_preview_import_leak`, `widget_preview_platform_dependency` (dart:io, platform channels, Hive, Firebase, Dio, http; arbitrary native plugins are a runtime boundary), `widget_preview_screen` |
 
 ## Added In This Pass
 

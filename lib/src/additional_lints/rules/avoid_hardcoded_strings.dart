@@ -66,7 +66,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     }
 
     for (final argument in arguments.whereType<NamedArgument>()) {
-      if (!_isUserFacingLabel(argument.name.lexeme)) continue;
+      if (!isUserFacingLabel(argument.name.lexeme)) continue;
       if (_isUserFacingLiteral(argument.argumentExpression)) {
         rule.reportAtNode(argument.argumentExpression);
       }
@@ -84,11 +84,9 @@ bool _isExcludedContext(RuleContext context) {
   return path.contains('/l10n/') || path.contains('/generated/');
 }
 
-bool _isUserFacingLabel(String name) => _userFacingLabels.contains(name.toLowerCase());
-
 bool _isUserFacingLiteral(Expression expression) {
-  final text = _literalText(expression) ?? _constantStringText(expression);
-  return text != null && _hasLetter(text);
+  final text = stringLiteralText(expression) ?? _constantStringText(expression);
+  return text != null && hasLetter(text);
 }
 
 /// The value of a resolved `const` String variable or static field.
@@ -103,54 +101,3 @@ String? _constantStringText(Expression expression) {
   if (variable is! VariableElement || !variable.isConst) return null;
   return variable.computeConstantValue()?.toStringValue();
 }
-
-String? _literalText(Expression expression) {
-  if (expression is SimpleStringLiteral) return expression.value;
-
-  if (expression is AdjacentStrings) {
-    final buffer = StringBuffer();
-    for (final string in expression.strings) {
-      final part = _literalText(string);
-      if (part != null) buffer.write(part);
-    }
-    return buffer.toString();
-  }
-
-  if (expression is StringInterpolation) {
-    final buffer = StringBuffer();
-    for (final element in expression.elements) {
-      if (element is InterpolationString) buffer.write(element.value);
-    }
-    return buffer.toString();
-  }
-
-  return null;
-}
-
-bool _hasLetter(String value) => _letter.hasMatch(value);
-
-final RegExp _letter = RegExp('[A-Za-z]');
-
-const _userFacingLabels = {
-  'text',
-  'data',
-  'label',
-  'labeltext',
-  'hint',
-  'hinttext',
-  'helpertext',
-  'errortext',
-  'title',
-  'subtitle',
-  'tooltip',
-  'semanticslabel',
-  'semanticlabel',
-  'message',
-  'placeholder',
-  'prefixtext',
-  'suffixtext',
-  'toptext',
-  'bottomtext',
-  'description',
-  'heading',
-};

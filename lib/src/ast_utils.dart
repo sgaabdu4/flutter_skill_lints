@@ -100,14 +100,20 @@ const flutterWidgetPreviewChecker = TypeChecker.any([
 ]);
 
 /// Whether [node] carries a resolved Flutter widget preview annotation.
-bool hasWidgetPreviewAnnotation(AnnotatedNode node) => node.metadata.any((annotation) {
-  final type = switch (annotation.element) {
-    ConstructorElement(:final returnType) => returnType,
-    PropertyAccessorElement(:final returnType) => returnType,
-    _ => null,
-  };
-  return type != null && flutterWidgetPreviewChecker.isAssignableFromType(type);
-});
+bool hasWidgetPreviewAnnotation(AnnotatedNode node) => widgetPreviewAnnotation(node) != null;
+
+/// The resolved Flutter widget preview annotation on [node], if any.
+Annotation? widgetPreviewAnnotation(AnnotatedNode node) {
+  for (final annotation in node.metadata) {
+    final type = switch (annotation.element) {
+      ConstructorElement(:final returnType) => returnType,
+      PropertyAccessorElement(:final returnType) => returnType,
+      _ => null,
+    };
+    if (type != null && flutterWidgetPreviewChecker.isAssignableFromType(type)) return annotation;
+  }
+  return null;
+}
 
 /// The resolved `@Preview` function, method, or constructor enclosing [node].
 AnnotatedNode? enclosingWidgetPreview(AstNode node) {
@@ -715,3 +721,59 @@ bool isImmediatelyInvoked(FunctionExpression function) {
           parent.methodName.name == 'call' &&
           identical(parent.target, expression);
 }
+
+/// The literal text of a string literal, ignoring interpolated expressions.
+String? stringLiteralText(Expression expression) {
+  if (expression is SimpleStringLiteral) return expression.value;
+
+  if (expression is AdjacentStrings) {
+    final buffer = StringBuffer();
+    for (final string in expression.strings) {
+      final part = stringLiteralText(string);
+      if (part != null) buffer.write(part);
+    }
+    return buffer.toString();
+  }
+
+  if (expression is StringInterpolation) {
+    final buffer = StringBuffer();
+    for (final element in expression.elements) {
+      if (element is InterpolationString) buffer.write(element.value);
+    }
+    return buffer.toString();
+  }
+
+  return null;
+}
+
+/// Whether [value] contains a Latin letter.
+bool hasLetter(String value) => _letter.hasMatch(value);
+
+final RegExp _letter = RegExp('[A-Za-z]');
+
+/// Whether a named argument [name] carries user-facing copy.
+bool isUserFacingLabel(String name) => _userFacingLabels.contains(name.toLowerCase());
+
+const _userFacingLabels = {
+  'text',
+  'data',
+  'label',
+  'labeltext',
+  'hint',
+  'hinttext',
+  'helpertext',
+  'errortext',
+  'title',
+  'subtitle',
+  'tooltip',
+  'semanticslabel',
+  'semanticlabel',
+  'message',
+  'placeholder',
+  'prefixtext',
+  'suffixtext',
+  'toptext',
+  'bottomtext',
+  'description',
+  'heading',
+};

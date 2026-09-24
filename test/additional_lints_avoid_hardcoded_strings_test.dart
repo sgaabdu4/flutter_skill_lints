@@ -58,6 +58,10 @@ class BuildContext {}
 
 typedef ValueChanged<T> = void Function(T value);
 
+typedef DebugPrintCallback = void Function(String? message);
+
+DebugPrintCallback debugPrint = (_) {};
+
 abstract class StatelessWidget extends Widget {
   const StatelessWidget();
   Widget build(BuildContext context);
@@ -402,6 +406,29 @@ class SavePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Widget();
+}
+''');
+  }
+
+  Future<void> test_globalFunctionVariableProseInWidget_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class Hooks {
+  static void Function(String message) onLog = (_) {};
+}
+
+class ProductCard extends StatelessWidget {
+  const ProductCard({required this.productId});
+  final String productId;
+
+  @override
+  Widget build(BuildContext context) {
+    debugPrint('Rebuilt $productId card');
+    debugPrint.call('Rebuilt card again');
+    Hooks.onLog('Product card built');
+    return const Widget();
+  }
 }
 ''');
   }

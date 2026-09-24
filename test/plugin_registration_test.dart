@@ -23,10 +23,7 @@ void main() {
 
     plugin.register(registry);
 
-    expect(
-      registry.warningRules.length,
-      _enabledAdditionalRuleCount + flutterSkillRules.length - 1,
-    );
+    expect(registry.warningRules.length, _enabledAdditionalRuleCount + flutterSkillRules.length);
     expect(flutterSkillRules, hasLength(_enabledFlutterSkillRuleCount));
     expect(
       flutterSkillRules
@@ -34,7 +31,7 @@ void main() {
           .toSet(),
       hasLength(_enabledFlutterSkillDiagnosticCount),
     );
-    expect(registry.lintRules.keys, ['avoid_null_bang']);
+    expect(registry.lintRules, isEmpty);
     expect(registry.warningRules.keys, hasLength(registry.warningRules.keys.toSet().length));
   });
 
@@ -334,10 +331,7 @@ void main() {
     );
     expect(
       registeredNames.skip(_enabledAdditionalRuleCount).toList(),
-      flutterSkillRules
-          .where((rule) => rule.name != 'avoid_null_bang')
-          .map((rule) => rule.name)
-          .toList(),
+      flutterSkillRules.map((rule) => rule.name).toList(),
     );
   });
 }

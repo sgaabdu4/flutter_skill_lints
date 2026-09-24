@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.12.15] - 2026-09-25
+
+- Enforce `avoid_null_bang` by default again, as an error. The 0.12.8 opt-in
+  change removed the skill's documented `avoid_null_bang` check; an unsafe `!`
+  now reports both `avoid_null_bang` and `avoid_non_null_assertion`.
+
 ## [0.12.14] - 2026-09-25
 
 - Resolve provider return types before classifying stable infrastructure; computed

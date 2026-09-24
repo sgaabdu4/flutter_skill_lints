@@ -17,7 +17,7 @@ final List<ScannerRule> freezedSourceRules = [
       'Prefer abstract final for static-only namespaces.',
       correctionMessage:
           'Replace private constructors on static-only classes with abstract final class.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags static-only classes that use private constructors so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {

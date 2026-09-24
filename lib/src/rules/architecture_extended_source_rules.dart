@@ -11,7 +11,7 @@ final List<ScannerRule> architectureExtendedSourceRules = [
       'arch_model_missing_to_entity',
       'Data models should expose a toEntity() mapper.',
       correctionMessage: 'Add a toEntity() method on data models and map in repositories.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags data model files whose model classes do not expose toEntity() so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {

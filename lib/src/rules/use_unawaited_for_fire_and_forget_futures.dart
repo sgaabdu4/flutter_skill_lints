@@ -19,6 +19,7 @@ final class UseUnawaitedForFireAndForgetFutures extends GeneratedExpressionState
         "and import 'dart:async'. For reusable utilities, return Future<void> "
         'and await Future.wait(...) so each caller can choose await or '
         'unawaited.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   UseUnawaitedForFireAndForgetFutures()

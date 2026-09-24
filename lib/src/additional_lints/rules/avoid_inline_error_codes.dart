@@ -18,6 +18,7 @@ class AvoidInlineErrorCodes extends CompilationUnitRule {
     correctionMessage:
         'Move raw error/status codes into a dedicated *ErrorCodes, *StatusCodes, '
         'or *ResponseCodes owner and compare against the named constant.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidInlineErrorCodes()

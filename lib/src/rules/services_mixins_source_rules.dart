@@ -13,7 +13,7 @@ final List<ScannerRule> servicesMixinsSourceRules = [
       'service_singleton',
       'Singleton is not plain and boring.',
       correctionMessage: 'Use a private constructor with one static final instance/trivial getter and void/Future<void> public methods only. Move data/stateful services to a provider/repository boundary.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags singleton shapes that are mutable, injectable, or missing a private constructor so the Flutter skill singleton guidance is shown during analysis.',
     scan: (reporter, context) {

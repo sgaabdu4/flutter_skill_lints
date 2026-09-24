@@ -15,7 +15,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       'service_static_side_effect',
       'Static service facade is not tiny and direct.',
       correctionMessage: 'Keep the facade tiny, direct, and fire-and-forget. Public methods must return only void/Future<void>; move returned data/state to a provider/repository boundary.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags static helper/facade classes that hide clock/random work or grow wider than the plain boring service-facade pattern.',
     scan: (reporter, context) {
@@ -51,7 +51,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       'service_random_per_call',
       'Do not allocate Random per call.',
       correctionMessage: 'Hoist Random to a module-level final and reuse it.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags Random construction inside methods so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
@@ -76,7 +76,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       'hidden_dependency_fallback',
       'Do not instantiate dependency fallbacks behind ??.',
       correctionMessage: 'Require the dependency in the constructor/provider/function and wire the concrete implementation at the composition root.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description:
         'Flags dependency fallback constructors such as `client ?? Client()` in production code.',
@@ -208,7 +208,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       'fire_forget_in_tests',
       'Avoid fire-and-forget calls in tests.',
       correctionMessage: 'Await the Future directly in tests and assert on the fake service.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags unawaited calls from test files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {

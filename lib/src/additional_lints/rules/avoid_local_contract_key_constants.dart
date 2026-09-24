@@ -20,6 +20,7 @@ class AvoidLocalContractKeyConstants extends AnalysisRule {
     correctionMessage:
         'Move the key/action into a dedicated keys, schema, constants, limits, '
         'codec, request, or datasource contract class.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidLocalContractKeyConstants()

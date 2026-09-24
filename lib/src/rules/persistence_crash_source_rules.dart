@@ -150,7 +150,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
       'fire_and_forget_missing_catch',
       'Fire-and-forget futures need local error handling.',
       correctionMessage: 'Catch inside the fire-and-forget future or attach catchError.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags feasible unawaited fire-and-forget calls without catch handling so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {

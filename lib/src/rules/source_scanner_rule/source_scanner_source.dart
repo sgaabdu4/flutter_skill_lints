@@ -225,14 +225,6 @@ final class ScannerMethodSpan {
   final int end;
 }
 
-final class _ScannerMixinSpan {
-  const _ScannerMixinSpan({required this.start, required this.end, required this.signature});
-
-  final int start;
-  final int end;
-  final String signature;
-}
-
 /// Replaces every char inside a `debugPrint(...)` or `print(...)` call body
 /// with a space. Diagnostic offsets stay aligned because chars are not deleted.
 String _blankDebugCalls(String text, {String? structure}) {

@@ -62,6 +62,12 @@ final class ScannerRuleReporter {
     final length = lineLength == 0 ? 1 : (lineLength - safeColumn).clamp(1, lineLength);
     _rule.reportAtOffset(offset, length);
   }
+
+  /// Reports from [offset] to the end of its source line.
+  void reportOffset(SourceScannerContext context, int offset) {
+    final lineIndex = context.source.lineOffsets.lastIndexWhere((start) => start <= offset);
+    report(context, lineIndex, offset - context.source.lineOffsets[lineIndex]);
+  }
 }
 
 String sourceClassSignature(SourceScannerContext context, ScannerClassSpan classSpan) {
@@ -315,30 +321,6 @@ final class SourceScannerContext {
     return null;
   }
 
-  bool isMutableMixinField(int lineIndex) {
-    final line = source.masked[lineIndex];
-    final fieldMatch = RegExp(
-      r'^\s*(?!final\b)(?!const\b)(?:late\s+)?(?:var|int|double|num|bool|String|Object|List|Map|Set|[A-Z]\w*(?:<[^;=]+>)?\??)\s+([A-Za-z_]\w*)\b[^;=]*=',
-    ).firstMatch(line);
-    if (fieldMatch == null) {
-      return false;
-    }
-    if (!near(lineIndex, 'mixin ', 16)) {
-      return false;
-    }
-    final mixin = _enclosingMixin(lineIndex);
-    if (mixin == null || !_isDirectMixinMember(mixin, lineIndex)) {
-      return false;
-    }
-
-    final fieldName = fieldMatch.group(1) ?? '';
-    if (fieldName.startsWith('_') && _isStateLifecycleMixin(mixin.signature)) {
-      return false;
-    }
-
-    return true;
-  }
-
   bool isMapDynamicReturn(String line) {
     if (isDataPath) return false;
     if (RegExp(r'\b(?:toJson|fromJson|toMap)\s*\(').hasMatch(line) ||
@@ -546,53 +528,6 @@ final class SourceScannerContext {
     final line = source.masked[classSpan.start];
     return RegExp(r'\babstract\s+interface\s+class\b').hasMatch(line);
   }
-
-  _ScannerMixinSpan? _enclosingMixin(int lineIndex) {
-    for (var start = lineIndex; start >= 0; start--) {
-      final header = _mixinHeader(start);
-      if (header == null || lineIndex < header.openBraceLine) continue;
-      final end = _mixinEnd(start, header.openBraceLine);
-      if (lineIndex <= end) {
-        return _ScannerMixinSpan(start: start, end: end, signature: header.signature);
-      }
-    }
-    return null;
-  }
-
-  ({String signature, int openBraceLine})? _mixinHeader(int start) {
-    final firstLine = source.masked[start];
-    if (!RegExp(r'^\s*mixin(?:\s+class)?\s+\w+\b').hasMatch(firstLine)) {
-      return null;
-    }
-    final signature = StringBuffer(firstLine);
-    var openBraceLine = start;
-    while (!source.masked[openBraceLine].contains('{') && openBraceLine + 1 < source.length) {
-      openBraceLine++;
-      signature.write(' ${source.masked[openBraceLine]}');
-    }
-    if (!source.masked[openBraceLine].contains('{')) return null;
-    return (signature: signature.toString(), openBraceLine: openBraceLine);
-  }
-
-  int _mixinEnd(int start, int openBraceLine) {
-    var depth = 0;
-    for (var lineIndex = start; lineIndex < source.length; lineIndex++) {
-      depth += _braceDelta(source.masked[lineIndex]);
-      if (lineIndex >= openBraceLine && depth <= 0) return lineIndex;
-    }
-    return source.length - 1;
-  }
-
-  bool _isDirectMixinMember(_ScannerMixinSpan mixin, int lineIndex) {
-    var depth = 0;
-    for (var i = mixin.start; i < lineIndex; i++) {
-      depth += _braceDelta(source.masked[i]);
-    }
-    return depth == 1;
-  }
-
-  bool _isStateLifecycleMixin(String signature) =>
-      RegExp(r'\bon\s+(?:\w+\.)?(?:State|ConsumerState|HookConsumerState)\b').hasMatch(signature);
 
   static List<ScannerClassSpan> _classes(SourceScannerSource source) {
     final classes = <ScannerClassSpan>[];

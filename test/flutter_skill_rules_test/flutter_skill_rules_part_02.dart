@@ -207,6 +207,48 @@ void example() {
     await assertDiagnostics(source, [lintFor(source, 'showDialogBottomSheet<void>()')]);
   }
 
+  Future<void> test_reportsFutureDroppedFromNullableNamedVoidCallback() async {
+    const source = r'''
+Future<void> trackTap() async {}
+
+class TextButton {
+  const TextButton({this.onPressed});
+
+  final void Function()? onPressed;
+}
+
+TextButton example() {
+  return TextButton(
+    onPressed: () {
+      trackTap();
+    },
+  );
+}
+''';
+
+    await assertDiagnostics(source, [lintForLast(source, 'trackTap()')]);
+  }
+
+  Future<void> test_allowsFutureFromNamedFutureCallback() async {
+    await assertNoDiagnostics(r'''
+Future<void> trackTap() async {}
+
+class AsyncButton {
+  const AsyncButton({this.onPressed});
+
+  final Future<void> Function()? onPressed;
+}
+
+AsyncButton example() {
+  return AsyncButton(
+    onPressed: () {
+      return trackTap();
+    },
+  );
+}
+''');
+  }
+
   Future<void> test_allowsUnawaitedFutureFromVoidCallback() async {
     await assertNoDiagnostics(r'''
 import 'dart:async';

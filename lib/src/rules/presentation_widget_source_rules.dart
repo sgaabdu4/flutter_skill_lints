@@ -235,7 +235,7 @@ final class _AwaitOffsetVisitor extends RecursiveAstVisitor<void> {
 int? _infrastructureColumn(String line) {
   final patterns = [
     RegExp(
-      r'''^\s*import\s+['"][^'"]*(?:/data/|/datasources?/|/repositories/|/services?/|/infrastructure/|package:(?:appwrite|cloud_firestore|dio|firebase_|hive|http|shared_preferences|sqflite))[^'"]*['"]''',
+      r'''^\s*import\s+['"](?:dart:io['"]|[^'"]*(?:/data/|/datasources?/|/repositories/|/services?/|/infrastructure/|package:(?:appwrite|cloud_firestore|dio|firebase_|flutter_secure_storage|hive|http|path_provider|shared_preferences|sqflite))[^'"]*['"])''',
     ),
     RegExp(r'\bref\s*\.\s*(?:read|watch|listen|listenManual|invalidate|refresh)\s*\('),
     RegExp(r'\b[A-Za-z_]\w*Provider\s*\.\s*notifier\b'),

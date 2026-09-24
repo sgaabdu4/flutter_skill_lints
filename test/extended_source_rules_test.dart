@@ -13,6 +13,7 @@ import 'package:test_reflective_loader/test_reflective_loader.dart';
 void main() {
   defineReflectiveSuite(() {
     defineReflectiveTests(ArchModelMissingToEntityTest);
+    defineReflectiveTests(ArchRepositoryInlineEntityMappingTest);
     defineReflectiveTests(ArchModelExtendsEntityTest);
     defineReflectiveTests(ArchDomainJsonAnnotationTest);
     defineReflectiveTests(FreezedMissingPrivateConstructorTest);
@@ -121,6 +122,131 @@ final class ArchModelMissingToEntityTest extends _ArchitectureExtendedRuleTest {
   String get needle => '// ignore_for_file';
   @override
   bool get lineStart => true;
+
+  static const _modelSource = r'''
+final class WorkoutSetModel {
+  const WorkoutSetModel({required this.id});
+  final String id;
+}
+''';
+
+  Future<void> test_allowsMapperExtensionInDataMappers() async {
+    final modelPath = '$testPackageLibPath/features/workouts/data/models/workout_set_model.dart';
+    newFile(modelPath, _modelSource);
+    newFile('$testPackageLibPath/features/workouts/domain/entities/workout_set.dart', r'''
+final class WorkoutSet {
+  const WorkoutSet({required this.id});
+  final String id;
+}
+''');
+    newFile('$testPackageLibPath/features/workouts/data/mappers/workout_set_mapper.dart', r'''
+import '../../domain/entities/workout_set.dart';
+import '../models/workout_set_model.dart';
+
+extension WorkoutSetMapper on WorkoutSetModel {
+  WorkoutSet toEntity() => WorkoutSet(id: id);
+}
+''');
+
+    await assertNoDiagnosticsInFile(modelPath);
+  }
+
+  Future<void> test_reportsMapperExtensionOnAnotherModel() async {
+    final modelPath = '$testPackageLibPath/features/workouts/data/models/workout_set_model.dart';
+    newFile(modelPath, _modelSource);
+    newFile('$testPackageLibPath/features/workouts/data/mappers/workout_set_mapper.dart', r'''
+final class OtherModel {}
+
+extension WorkoutSetMapper on OtherModel {
+  Object toEntity() => Object();
+}
+''');
+
+    await assertDiagnosticsInFile(modelPath, [
+      compatLint(_modelSource, 'final class', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsToDomainMapper() async {
+    await assertAllows(r'''
+final class OrderModel {
+  const OrderModel({required this.id});
+  final String id;
+  Object toDomain() => Object();
+}
+''', path: '$testPackageLibPath/features/orders/data/models/order_model.dart');
+  }
+}
+
+@reflectiveTest
+final class ArchRepositoryInlineEntityMappingTest extends _ArchitectureExtendedRuleTest {
+  @override
+  String get ruleName => 'arch_repository_inline_entity_mapping';
+  @override
+  String get path => '$testPackageLibPath/features/products/repositories/product_repository.dart';
+  @override
+  bool get addIgnorePrefix => false;
+  @override
+  String get needle => 'Product(id: ProductId(model.id)';
+  @override
+  String get source => r'''
+import '../data/models/product_model.dart';
+import '../domain/entities/product.dart';
+import '../domain/values/product_id.dart';
+
+final class ProductRepository {
+  Product map(ProductModel model) => Product(id: ProductId(model.id), name: model.name);
+}
+''';
+
+  @override
+  void setUp() {
+    super.setUp();
+    newFile('$testPackageLibPath/features/products/domain/values/product_id.dart', r'''
+final class ProductId {
+  const ProductId(this.value);
+  final String value;
+}
+''');
+    newFile('$testPackageLibPath/features/products/domain/entities/product.dart', r'''
+import '../values/product_id.dart';
+
+final class Product {
+  const Product({required this.id, required this.name});
+  final ProductId id;
+  final String name;
+}
+''');
+    newFile('$testPackageLibPath/features/products/data/models/product_model.dart', r'''
+import '../../domain/entities/product.dart';
+import '../../domain/values/product_id.dart';
+
+final class ProductModel {
+  const ProductModel({required this.id, required this.name});
+  final String id;
+  final String name;
+
+  Product toEntity() => Product(id: ProductId(id), name: name);
+}
+''');
+  }
+
+  Future<void> test_allowsToEntityAndEntitiesBuiltFromDomainInputs() async {
+    await assertAllows(
+      r'''
+import '../data/models/product_model.dart';
+import '../domain/entities/product.dart';
+import '../domain/values/product_id.dart';
+
+final class ProductRepository {
+  Product map(ProductModel model) => model.toEntity();
+  Product draft(ProductId id) => Product(id: id, name: 'Draft');
+}
+''',
+      path: path,
+      addIgnorePrefix: false,
+    );
+  }
 }
 
 @reflectiveTest
@@ -410,6 +536,8 @@ final class ServiceRandomPerCallTest extends _ServicesExtendedRuleTest {
   String get ruleName => 'service_random_per_call';
   @override
   String get source => '''
+import 'dart:math' as math;
+
 class RetryDelay {
   int next() {
     final rng = math.Random();
@@ -419,6 +547,40 @@ class RetryDelay {
 ''';
   @override
   String get needle => 'Random';
+
+  Future<void> test_reportsTopLevelFunctionAndClosure() async {
+    const source = '''
+import 'dart:math';
+
+Duration jitter() {
+  final perCall = Random();
+  return Duration(milliseconds: perCall.nextInt(100));
+}
+
+final pick = () => Random(7).nextBool();
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'Random();', ruleName),
+      compatLint(analyzedSource, 'Random(7)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsHoistedModuleAndStaticRandom() async {
+    await assertAllows('''
+import 'dart:math' as math;
+
+final _rng = math.Random();
+
+class RetryDelay {
+  static final _shared = math.Random();
+
+  int next() => _rng.nextInt(10) + _shared.nextInt(10);
+}
+
+Duration jitter() => Duration(milliseconds: _rng.nextInt(100));
+''');
+  }
 }
 
 @reflectiveTest

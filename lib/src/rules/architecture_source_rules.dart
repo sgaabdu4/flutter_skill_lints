@@ -1,8 +1,10 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/riverpod_consumer_checkers.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> architectureSourceRules = [
@@ -27,15 +29,39 @@ final List<ScannerRule> architectureSourceRules = [
     ),
     description: 'Flags Flutter or package imports from domain files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      if (context.isTestFile) return;
-      for (var i = 0; i < context.source.length; i++) {
-        final code = context.source.code[i];
-        if (_isAllowedDomainImport(code)) continue;
-        if (context.isDomainPath &&
-            RegExp(r'''^\s*import\s+['"](?:package:flutter|dart:ui|package:[^'"]+)''')
-                .hasMatch(code)) {
-          reporter.report(context, i, context.source.masked[i].indexOf('import'));
-        }
+      if (context.isTestFile || !context.isDomainPath) return;
+      for (final directive in context.unit.directives.whereType<ImportDirective>()) {
+        final uri = _resolvedImportUri(context, directive);
+        if (uri == null || _isAllowedDomainImport(uri)) continue;
+        reporter.reportOffset(context, directive.offset);
+      }
+    },
+  ),
+
+  /// Storage SDKs live in local datasources only.
+  ///
+  /// Why: architecture.md forbids `dart:io`, Hive CE, SharedPreferences, secure storage, and
+  /// path_provider imports in `presentation/`, `*_notifier.dart`, `*_service.dart`, and
+  /// `*_repository.dart` files. Storage lives in `Local<X>Datasource`, exposed via
+  /// `<X>Repository`. Reusable presentation widgets report the same imports through
+  /// `presentation_widget_infrastructure_dependency`.
+  scannerRule(
+    code: const LintCode(
+      'arch_storage_sdk_import',
+      'Storage SDK imports belong in local datasources.',
+      correctionMessage:
+          'Move the storage SDK or dart:io call into a Local<X>Datasource and expose it '
+          'through the <X>Repository interface.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags storage SDK and dart:io imports in presentation, notifier, service, and repository files.',
+    scan: (reporter, context) {
+      if (context.isTestFile || context.isPresentationWidgetFile) return;
+      if (!_isStorageSdkForbiddenFile(context.path)) return;
+      for (final directive in context.unit.directives.whereType<ImportDirective>()) {
+        final uri = _resolvedImportUri(context, directive);
+        if (uri == null || !_isStorageSdkImport(uri)) continue;
+        reporter.reportOffset(context, directive.offset);
       }
     },
   ),
@@ -108,23 +134,35 @@ final List<ScannerRule> architectureSourceRules = [
     },
   ),
 
-  /// Layer constructors should depend on interfaces.
+  /// Layer constructors and providers should use interfaces.
   ///
-  /// Why: Flags concrete repository or datasource constructor dependencies. Take
-  /// I*Repository/I*Datasource interfaces instead of concrete classes.
+  /// Why: Flags concrete repository or datasource constructor dependencies, and repository or
+  /// datasource providers whose declared return type is a concrete class implementing an
+  /// abstract interface class. Take and return I*Repository/I*Datasource interfaces instead.
   scannerRule(
     code: const LintCode(
       'arch_concrete_dependency',
-      'Layer constructors should depend on interfaces.',
-      correctionMessage: 'Take I*Repository/I*Datasource interfaces instead of concrete classes.',
+      'Layer constructors and providers should use interfaces.',
+      correctionMessage:
+          'Take I*Repository/I*Datasource interfaces in constructors and return the interface '
+          'type from providers instead of concrete classes.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags concrete repository or datasource constructor dependencies so the Flutter skill violation is shown during analysis.',
+    description: 'Flags concrete repository or datasource constructor dependencies and provider return types so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isRepositoryPath && !context.isDatasourcePath) return;
       for (var i = 0; i < context.source.length; i++) {
         if (context.hasConcreteLayerDependencyLine(context.source.masked[i])) {
           reporter.report(context, i, 0);
+        }
+      }
+      for (final function in context.unit.declarations.whereType<FunctionDeclaration>()) {
+        if (!hasAnnotationNamed(function, const {'riverpod', 'Riverpod'})) continue;
+        final returnType = function.returnType;
+        final element = function.declaredFragment?.element;
+        if (returnType == null || element == null) continue;
+        if (_isConcreteImplementationOfInterface(_unwrapFuture(element.returnType))) {
+          reporter.reportOffset(context, returnType.offset);
         }
       }
     },
@@ -325,13 +363,65 @@ bool _isLayerContract(Element? element, String role) {
       element.isInterface;
 }
 
-bool _isAllowedDomainImport(String line) {
-  final packageImport = RegExp(r'''^\s*import\s+['"]package:([^'"]+)['"]''').firstMatch(line);
-  if (packageImport == null) return false;
+/// Domain allows pure Dart SDK libraries, freezed_annotation, and /domain/ libraries only.
+bool _isAllowedDomainImport(Uri uri) {
+  if (uri.isScheme('dart')) return uri.path != 'io' && uri.path != 'ui';
+  if (uri.toString() == 'package:freezed_annotation/freezed_annotation.dart') return true;
+  return uri.path.contains('/domain/');
+}
 
-  final importedPath = packageImport.group(1) ?? '';
-  return importedPath == 'freezed_annotation/freezed_annotation.dart' ||
-      importedPath.contains('/domain/');
+DartType _unwrapFuture(DartType type) {
+  if (type is InterfaceType &&
+      type.element.library.isDartAsync &&
+      (type.element.name == 'Future' || type.element.name == 'FutureOr') &&
+      type.typeArguments.length == 1) {
+    return type.typeArguments.single;
+  }
+  return type;
+}
+
+/// A concrete class that implements an `abstract interface class` contract.
+bool _isConcreteImplementationOfInterface(DartType type) {
+  if (type is! InterfaceType) return false;
+  final element = type.element;
+  if (element is! ClassElement || element.isAbstract) return false;
+  return element.allSupertypes.any((supertype) {
+    final contract = supertype.element;
+    return contract is ClassElement && contract.isAbstract && contract.isInterface;
+  });
+}
+
+const _storageSdkPackages = {
+  'hive_ce',
+  'hive_ce_flutter',
+  'shared_preferences',
+  'flutter_secure_storage',
+  'path_provider',
+};
+
+bool _isStorageSdkImport(Uri uri) {
+  if (uri.isScheme('dart')) return uri.path == 'io';
+  return uri.isScheme('package') &&
+      uri.pathSegments.isNotEmpty &&
+      _storageSdkPackages.contains(uri.pathSegments.first);
+}
+
+bool _isStorageSdkForbiddenFile(String path) {
+  final normalized = path.replaceAll('\\', '/');
+  return normalized.contains('/presentation/') ||
+      normalized.endsWith('_notifier.dart') ||
+      normalized.endsWith('_service.dart') ||
+      normalized.endsWith('_repository.dart');
+}
+
+/// The imported library URI, with relative imports resolved against this library.
+Uri? _resolvedImportUri(SourceScannerContext context, ImportDirective directive) {
+  final importedLibrary = directive.libraryImport?.importedLibrary;
+  if (importedLibrary != null) return importedLibrary.uri;
+  final uri = directive.uri.stringValue;
+  if (uri == null) return null;
+  final libraryUri = context.unit.declaredFragment?.source.uri;
+  return libraryUri == null ? Uri.tryParse(uri) : libraryUri.resolve(uri);
 }
 
 const _flutterWidgetChecker = TypeChecker.fromName('Widget', packageName: 'flutter');

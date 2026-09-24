@@ -531,6 +531,84 @@ void mirror(Client client) {
 ''');
   }
 
+  Future<void> test_calleeThatCatchesInternally_noDiagnostic() async {
+    await assertRuleNoDiagnostics(r'''
+import 'dart:async';
+
+class RemoteMirror {
+  Future<void> sync() async {
+    try {
+      await Future<void>.value();
+    } on Exception {
+      // handled
+    }
+  }
+}
+
+void mirror(RemoteMirror remoteMirror) {
+  unawaited(remoteMirror.sync());
+}
+''');
+  }
+
+  Future<void> test_reportsCalleeWithoutCatch() async {
+    await assertRuleDiagnostic(r'''
+import 'dart:async';
+
+Future<void> trackUncaught(String name) async {
+  await Future<void>.value();
+}
+
+void track() {
+  unawaited(trackUncaught('x'));
+}
+''', 'unawaited(trackUncaught');
+  }
+
+  Future<void> test_resolvesCalleesInImportedLibraries() async {
+    newFile('$testPackageLibPath/analytics.dart', r'''
+Future<void> trackEvent(String name) async {
+  try {
+    await Future<void>.value();
+  } on Exception {
+    // handled
+  }
+}
+
+Future<void> trackUncaught(String name) async {
+  await Future<void>.value();
+}
+''');
+    await assertRuleDiagnostic(r'''
+import 'dart:async';
+
+import 'analytics.dart';
+
+void track() {
+  unawaited(trackEvent('sign_in'));
+  unawaited(trackUncaught('x'));
+}
+''', 'unawaited(trackUncaught');
+  }
+
+  Future<void> test_emptyCalleeBody_noDiagnostic() async {
+    await assertRuleNoDiagnostics(r'''
+import 'dart:async';
+
+final class PushTokenRefresh {
+  PushTokenRefresh._();
+
+  static final PushTokenRefresh instance = PushTokenRefresh._();
+
+  Future<void> refresh() async {}
+}
+
+void onResume() {
+  unawaited(PushTokenRefresh.instance.refresh());
+}
+''');
+  }
+
   Future<void> test_guardedHelper_noDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
 import 'dart:async';

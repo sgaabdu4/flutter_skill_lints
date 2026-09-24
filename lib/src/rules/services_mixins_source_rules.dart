@@ -1,3 +1,7 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -13,25 +17,27 @@ final List<ScannerRule> servicesMixinsSourceRules = [
       'service_singleton',
       'Singleton is not plain and boring.',
       correctionMessage: 'Use a private constructor with one static final instance/trivial getter and void/Future<void> public methods only. Move data/stateful services to a provider/repository boundary.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags singleton shapes that are mutable, injectable, or missing a private constructor so the Flutter skill singleton guidance is shown during analysis.',
     scan: (reporter, context) {
-      for (final classSpan in context.classes) {
-        final singletonLine = _singletonInstanceLine(context, classSpan);
-        if (singletonLine == null) continue;
+      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+        final singleton = _SingletonShape.of(declaration);
+        if (singleton == null) continue;
 
-        final body = context.source.masked.sublist(classSpan.start, classSpan.end + 1).join('\n');
-        if (_hasPrivateConstructor(body, classSpan.name) &&
-            !_hasMutableInstanceBacking(body) &&
+        final lines = context.source.lineOffsets;
+        final firstLine = lines.lastIndexWhere((start) => start <= declaration.offset);
+        final lastLine = lines.lastIndexWhere((start) => start <= declaration.end);
+        final body = context.source.masked.sublist(firstLine, lastLine + 1).join('\n');
+        if (!singleton.hasPublicConstructor &&
+            !singleton.hasMutableBacking &&
+            !singleton.hasPublicDataApi &&
             !_hasOverbuiltSingletonSeam(body) &&
-            !_hasMutableSingletonState(body) &&
-            !_hasPublicDataApi(body)) {
+            !_hasMutableSingletonState(body)) {
           continue;
         }
 
-        final line = context.source.masked[singletonLine];
-        reporter.report(context, singletonLine, line.indexOf('static'));
+        reporter.reportOffset(context, singleton.exposureOffset);
       }
     },
   ),
@@ -93,23 +99,41 @@ final List<ScannerRule> servicesMixinsSourceRules = [
     ),
     description: 'Flags mutable fields inside mixins so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        if (context.isMutableMixinField(i)) {
-          reporter.report(context, i, 0);
+      for (final declaration in context.unit.declarations) {
+        final (members, onStateLifecycle) = switch (declaration) {
+          MixinDeclaration(:final body) => (body.members, _isOnStateLifecycle(declaration)),
+          ClassDeclaration(:final body, mixinKeyword: _?) => (body.members, false),
+          _ => (const <ClassMember>[], false),
+        };
+        for (final field in members.whereType<FieldDeclaration>()) {
+          if (!_isMutableField(field)) continue;
+          if (onStateLifecycle &&
+              field.fields.variables.every((v) => v.name.lexeme.startsWith('_'))) {
+            continue;
+          }
+          final offset = field.firstTokenAfterCommentAndMetadata.offset;
+          reporter.report(
+            context,
+            context.source.lineOffsets.lastIndexWhere((start) => start <= offset),
+            0,
+          );
         }
       }
     },
   ),
 ];
 
-final _singletonInstanceDeclaration = RegExp(
-  r'\bstatic\s+(?:final\s+)?(?:[A-Za-z_]\w*(?:<[^>]+>)?\s+)?(?:get\s+)?instance\b',
-);
+bool _isMutableField(FieldDeclaration field) =>
+    field.abstractKeyword == null &&
+    field.externalKeyword == null &&
+    !field.fields.isFinal &&
+    !field.fields.isConst;
 
-final _mutableInstanceBacking = RegExp(
-  r'\bstatic\s+(?!final\b)(?![A-Za-z_]\w*(?:<[^>]+>)?\s+get\s+instance\b)'
-  r'[^;\n=]*\b_?instance\b',
-);
+bool _isOnStateLifecycle(MixinDeclaration declaration) =>
+    declaration.onClause?.superclassConstraints.any(
+      (type) => const {'State', 'ConsumerState', 'HookConsumerState'}.contains(type.name.lexeme),
+    ) ??
+    false;
 
 final _overbuiltSingletonSeam = RegExp(
   r'\b(?:debug(?:Reset|Configure|Use|Set|Override)\w*|resetForTest(?:ing)?|'
@@ -128,39 +152,6 @@ final _mutableFinalResourceField = RegExp(
   r'[A-Za-z_]\w*Subscription\b|HttpClient\b)',
 );
 
-final _publicDataMethod = RegExp(
-  r'^(?:static\s+)?(?!(?:void|Future\s*<\s*void\s*>)\s+)'
-  r'(?:Future(?:\s*<[^>]+>)?|[A-Za-z_]\w*(?:<[^>]+>)?)\s+'
-  r'(?!get\b|set\b|instance\b|_)\w+\s*\(',
-);
-
-final _publicGetter = RegExp(
-  r'^(?:static\s+)?[A-Za-z_]\w*(?:<[^>]+>)?\s+get\s+(?!instance\b|_)\w+\b',
-);
-
-final _publicField = RegExp(
-  r'^(?:static\s+)?(?:final|var|late\s+final|late|const)\s+'
-  r'(?:[A-Za-z_]\w*(?:<[^>]+>)?\s+)?(?!instance\b|_)\w+\b',
-);
-
-final _classDeclarationLine = RegExp(r'^(?:abstract\s+)?(?:base\s+)?(?:final\s+)?class\s+');
-final _privateMemberLine = RegExp(r'\b_[A-Za-z_]\w*\b');
-
-int? _singletonInstanceLine(SourceScannerContext context, ScannerClassSpan classSpan) {
-  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-    if (_singletonInstanceDeclaration.hasMatch(context.source.masked[i])) return i;
-  }
-  return null;
-}
-
-bool _hasPrivateConstructor(String body, String className) {
-  return RegExp(r'\b' + RegExp.escape(className) + r'\._[A-Za-z0-9_]*\s*\(').hasMatch(body);
-}
-
-bool _hasMutableInstanceBacking(String body) {
-  return _mutableInstanceBacking.hasMatch(body);
-}
-
 bool _hasOverbuiltSingletonSeam(String body) {
   return _overbuiltSingletonSeam.hasMatch(body);
 }
@@ -175,21 +166,118 @@ bool _hasMutableSingletonState(String body) {
   return false;
 }
 
-bool _hasPublicDataApi(String body) {
-  for (final line in body.split('\n')) {
-    final trimmed = line.trim();
-    if (_isPublicDataApiLine(trimmed)) return true;
+/// A class that keeps exactly one non-const static instance of itself and exposes it
+/// through a public static field or getter typed as the class, or a public factory
+/// constructor that returns the stored instance.
+final class _SingletonShape {
+  const _SingletonShape._({
+    required this.exposureOffset,
+    required this.hasPublicConstructor,
+    required this.hasMutableBacking,
+    required this.hasPublicDataApi,
+  });
+
+  final int exposureOffset;
+  final bool hasPublicConstructor;
+  final bool hasMutableBacking;
+  final bool hasPublicDataApi;
+
+  static _SingletonShape? of(ClassDeclaration declaration) {
+    final classElement = declaration.declaredFragment?.element;
+    if (classElement == null) return null;
+    final stored = _storedSelfInstance(declaration, classElement);
+    if (stored == null) return null;
+
+    final members = declaration.body.members;
+    final exposure = members.where((member) => _exposes(member, stored, classElement)).firstOrNull;
+    if (exposure == null) return null;
+
+    return _SingletonShape._(
+      exposureOffset: exposure.firstTokenAfterCommentAndMetadata.offset,
+      hasPublicConstructor: classElement.constructors.any((constructor) => constructor.isPublic),
+      hasMutableBacking: !stored.isFinal,
+      hasPublicDataApi: members.any((member) => _isPublicDataMember(member, stored, classElement)),
+    );
   }
-  return false;
 }
 
-bool _isPublicDataApiLine(String line) {
-  if (line.startsWith('//') || line.startsWith('@')) return false;
-  if (_classDeclarationLine.hasMatch(line) || _singletonInstanceDeclaration.hasMatch(line)) {
-    return false;
+bool _isSelf(DartType? type, ClassElement classElement) =>
+    type is InterfaceType && type.element == classElement;
+
+bool _isPrivate(String name) => name.startsWith('_');
+
+/// The single non-const static field typed as the class itself, or null.
+FieldElement? _storedSelfInstance(ClassDeclaration declaration, ClassElement classElement) {
+  final stored = [
+    for (final field in declaration.body.members.whereType<FieldDeclaration>())
+      if (field.isStatic && !field.fields.isConst)
+        for (final variable in field.fields.variables)
+          if (variable.declaredFragment?.element case final FieldElement element
+              when _isSelf(element.type, classElement))
+            element,
+  ];
+  return stored.length == 1 ? stored.single : null;
+}
+
+/// Whether [member] hands out the stored instance: the public field itself, a public static
+/// getter typed as the class, or a public factory constructor that returns it.
+bool _exposes(ClassMember member, FieldElement stored, ClassElement classElement) {
+  return switch (member) {
+    FieldDeclaration(:final fields) => fields.variables.any(
+      (variable) =>
+          !_isPrivate(variable.name.lexeme) && variable.declaredFragment?.element == stored,
+    ),
+    MethodDeclaration(:final name, isStatic: true, isGetter: true) =>
+      !_isPrivate(name.lexeme) &&
+          _isSelf(member.declaredFragment?.element.returnType, classElement),
+    ConstructorDeclaration(factoryKeyword: _?, :final name) =>
+      !_isPrivate(name?.lexeme ?? '') && _reads(member.body, stored),
+    _ => false,
+  };
+}
+
+/// Public state or data: any other public field, getter or setter, or a public method whose
+/// resolved return type is not `void` or `Future<void>`.
+bool _isPublicDataMember(ClassMember member, FieldElement stored, ClassElement classElement) {
+  return switch (member) {
+    FieldDeclaration(:final fields) => fields.variables.any(
+      (variable) =>
+          !_isPrivate(variable.name.lexeme) && variable.declaredFragment?.element != stored,
+    ),
+    MethodDeclaration(:final name) when !_isPrivate(name.lexeme) =>
+      !_exposes(member, stored, classElement) &&
+          (member.isGetter ||
+              member.isSetter ||
+              !_returnsNothing(member.declaredFragment?.element.returnType)),
+    _ => false,
+  };
+}
+
+bool _returnsNothing(DartType? type) {
+  if (type is VoidType) return true;
+  return type is InterfaceType &&
+      type.isDartAsyncFuture &&
+      type.typeArguments.length == 1 &&
+      type.typeArguments.single is VoidType;
+}
+
+bool _reads(FunctionBody body, FieldElement field) {
+  final visitor = _FieldReadVisitor(field);
+  body.accept(visitor);
+  return visitor.found;
+}
+
+final class _FieldReadVisitor extends RecursiveAstVisitor<void> {
+  _FieldReadVisitor(this.field);
+
+  final FieldElement field;
+  bool found = false;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    final element = node.element;
+    if (element == field || (element is PropertyAccessorElement && element.variable == field)) {
+      found = true;
+    }
   }
-  if (_privateMemberLine.hasMatch(line)) return false;
-  return _publicDataMethod.hasMatch(line) ||
-      _publicGetter.hasMatch(line) ||
-      _publicField.hasMatch(line);
 }

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
@@ -229,18 +230,15 @@ final List<ScannerRule> persistenceCrashSourceRules = [
       'fire_and_forget_missing_catch',
       'Fire-and-forget futures need local error handling.',
       correctionMessage: 'Catch inside the fire-and-forget future or attach catchError.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags feasible unawaited fire-and-forget calls without catch handling so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        final column = line.indexOf('unawaited(');
-        if (column < 0) continue;
-        final statement = _statementFrom(context, i);
-        if (!_isFeasibleFireAndForgetRisk(statement)) continue;
-        if (_hasCatchGuard(statement) || _usesKnownGuardedFireAndForgetHelper(statement)) continue;
-        reporter.report(context, i, column);
+      final visitor = _UnawaitedVisitor();
+      context.unit.accept(visitor);
+      for (final invocation in visitor.invocations) {
+        if (_isFireAndForgetGuarded(context, invocation)) continue;
+        reporter.reportOffset(context, invocation.offset);
       }
     },
   ),
@@ -584,8 +582,124 @@ bool _hasCatchGuard(String statement) {
   return RegExp(r'\b(?:catch|on\s+[A-Za-z_][A-Za-z0-9_]*)\b').hasMatch(statement);
 }
 
-bool _usesKnownGuardedFireAndForgetHelper(String statement) {
-  return RegExp(r'\bunawaited\s*\(\s*_(?:send|runCrashOperation)\s*\(').hasMatch(statement);
+final class _UnawaitedVisitor extends RecursiveAstVisitor<void> {
+  final invocations = <MethodInvocation>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final element = node.methodName.element;
+    if (node.target == null &&
+        node.methodName.name == 'unawaited' &&
+        (element == null || element.library?.isDartAsync == true)) {
+      invocations.add(node);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+/// Whether the future passed to `unawaited` handles its own errors: a `catchError`/`onError`
+/// chain, an inline closure that catches, or a resolved callee whose body catches (or is
+/// empty). Callees without an available body (SDK, abstract, external) keep the keyword
+/// heuristic.
+bool _isFireAndForgetGuarded(SourceScannerContext context, MethodInvocation invocation) {
+  final arguments = invocation.argumentList.arguments;
+  if (arguments.isEmpty) return true;
+  final future = arguments.first.argumentExpression.unParenthesized;
+  if (future is MethodInvocation &&
+      const {'catchError', 'onError'}.contains(future.methodName.name)) {
+    return true;
+  }
+
+  final body = switch (future) {
+    FunctionExpressionInvocation(:final function)
+        when function.unParenthesized is FunctionExpression =>
+      (function.unParenthesized as FunctionExpression).body,
+    MethodInvocation(:final methodName) => _declaredBody(context, methodName.element),
+    FunctionExpressionInvocation(:final element) => _declaredBody(context, element),
+    _ => null,
+  };
+  if (body != null) return _catchesInternally(body);
+
+  final lineIndex = context.source.lineOffsets.lastIndexWhere(
+    (start) => start <= invocation.offset,
+  );
+  final statement = _statementFrom(context, lineIndex);
+  return !_isFeasibleFireAndForgetRisk(statement) || _hasCatchGuard(statement);
+}
+
+FunctionBody? _declaredBody(SourceScannerContext context, Element? element) {
+  if (element is! ExecutableElement) return null;
+  final declared = element.baseElement;
+  if (declared.isAbstract || declared.isExternal) return null;
+  final library = declared.library;
+  if (library.isInSdk) return null;
+
+  AstNode? node;
+  if (library == context.unit.declaredFragment?.element) {
+    final finder = _DeclarationFinder(declared);
+    context.unit.accept(finder);
+    node = finder.node;
+  }
+  if (node == null) {
+    final parsed = library.session.getParsedLibraryByElement(library);
+    if (parsed is! ParsedLibraryResult) return null;
+    try {
+      node = parsed.getFragmentDeclaration(declared.firstFragment)?.node;
+    } on ArgumentError {
+      return null;
+    }
+  }
+
+  final body = switch (node) {
+    MethodDeclaration(:final body) => body,
+    FunctionDeclaration(:final functionExpression) => functionExpression.body,
+    _ => null,
+  };
+  return body is EmptyFunctionBody ? null : body;
+}
+
+bool _catchesInternally(FunctionBody body) {
+  if (body is BlockFunctionBody && body.block.statements.isEmpty) return true;
+  final visitor = _CatchVisitor();
+  body.accept(visitor);
+  return visitor.catches;
+}
+
+final class _DeclarationFinder extends RecursiveAstVisitor<void> {
+  _DeclarationFinder(this.element);
+
+  final ExecutableElement element;
+  AstNode? node;
+
+  @override
+  void visitMethodDeclaration(MethodDeclaration node) {
+    if (node.declaredFragment?.element == element) this.node = node;
+  }
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    if (node.declaredFragment?.element == element) {
+      this.node = node;
+      return;
+    }
+    super.visitFunctionDeclaration(node);
+  }
+}
+
+final class _CatchVisitor extends RecursiveAstVisitor<void> {
+  bool catches = false;
+
+  @override
+  void visitTryStatement(TryStatement node) {
+    if (node.catchClauses.isNotEmpty) catches = true;
+    super.visitTryStatement(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (const {'catchError', 'onError'}.contains(node.methodName.name)) catches = true;
+    super.visitMethodInvocation(node);
+  }
 }
 
 int _parenDelta(String line) => countCharacter(line, '(') - countCharacter(line, ')');

@@ -16,7 +16,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       'service_static_side_effect',
       'Static service facade is not tiny and direct.',
       correctionMessage: 'Keep the facade tiny, direct, and fire-and-forget. Public methods must return only void/Future<void>; move returned data/state to a provider/repository boundary.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags static helper/facade classes that hide clock/random work or grow wider than the plain boring service-facade pattern.',
     scan: (reporter, context) {
@@ -45,24 +45,21 @@ final List<ScannerRule> servicesExtendedSourceRules = [
 
   /// Do not allocate Random per call.
   ///
-  /// Why: Flags Random construction inside methods. Hoist Random to a module-level final and
-  /// reuse it.
+  /// Why: Flags dart:math Random construction inside any function, method or closure body.
+  /// Hoist Random to a module-level final and reuse it.
   scannerRule(
     code: const LintCode(
       'service_random_per_call',
       'Do not allocate Random per call.',
       correctionMessage: 'Hoist Random to a module-level final and reuse it.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags Random construction inside methods so the Flutter skill violation is shown during analysis.',
+    description: 'Flags dart:math Random construction inside function, method and closure bodies so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      for (final method in context.methods) {
-        for (var i = method.start; i <= method.end; i++) {
-          final line = context.source.masked[i];
-          if (RegExp(r'\b(?:math\.)?Random\s*\(').hasMatch(line)) {
-            reporter.report(context, i, line.indexOf('Random'));
-          }
-        }
+      final visitor = _PerCallRandomVisitor();
+      context.unit.accept(visitor);
+      for (final offset in visitor.offsets) {
+        reporter.reportOffset(context, offset);
       }
     },
   ),
@@ -77,7 +74,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       'hidden_dependency_fallback',
       'Do not instantiate dependency fallbacks behind ??.',
       correctionMessage: 'Require the dependency in the constructor/provider/function and wire the concrete implementation at the composition root.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description:
         'Flags dependency fallback constructors such as `client ?? Client()` in production code.',
@@ -245,7 +242,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       'fire_forget_in_tests',
       'Avoid fire-and-forget calls in tests.',
       correctionMessage: 'Await the Future directly in tests and assert on the fake service.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags unawaited calls from test files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
@@ -473,4 +470,20 @@ bool _isAsyncWrapper(InterfaceType type) {
   final library = type.element.library.uri.toString();
   return (library == 'dart:async' && (name == 'Future' || name == 'Stream')) ||
       (library.startsWith('package:riverpod/') && name == 'AsyncValue');
+}
+
+final class _PerCallRandomVisitor extends RecursiveAstVisitor<void> {
+  final offsets = <int>[];
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final type = node.staticType;
+    if (type is InterfaceType &&
+        type.element.name == 'Random' &&
+        type.element.library.uri.toString() == 'dart:math' &&
+        node.thisOrAncestorOfType<FunctionBody>() != null) {
+      offsets.add(node.constructorName.type.name.offset);
+    }
+    super.visitInstanceCreationExpression(node);
+  }
 }

@@ -44,6 +44,41 @@ class Response {
     ]);
   }
 
+  Future<void> test_allowsExceptionCodeRetryClassificationOnly() async {
+    const source = r'''
+bool shouldRetry(Object e) {
+  if (e is AppwriteException) return e.code == 429 || e.code == 503;
+  return false;
+}
+
+bool notFound(Response response) => response.statusCode == 404;
+bool rateLimited(Payload payload) => payload.code == 429;
+
+class AppwriteException implements Exception {
+  AppwriteException(this.code);
+
+  final int? code;
+}
+
+class Response {
+  Response(this.statusCode);
+
+  final int statusCode;
+}
+
+class Payload {
+  Payload(this.code);
+
+  final int code;
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('404'), 3),
+      lint(source.lastIndexOf('429'), 3),
+    ]);
+  }
+
   Future<void> test_allowsNamedCodeOwnerComparisons() async {
     await assertNoDiagnostics(r'''
 bool notFound(AppwriteException e) => e.code == AppwriteErrorCodes.notFound;

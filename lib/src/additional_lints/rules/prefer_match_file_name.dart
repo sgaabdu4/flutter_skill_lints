@@ -64,22 +64,28 @@ final class _Visitor extends SimpleAstVisitor<void> {
     }
     final expected = _expectedFileNameForType(declaration.name);
     final actual = _fileNameWithoutExtension(path);
-    if (actual != expected) {
+    if (actual != expected && actual != _interfaceFileName(declaration)) {
       rule.reportAtToken(declaration.token);
     }
   }
 }
 
 final class _NamedDeclaration {
-  const _NamedDeclaration(this.name, this.token);
+  const _NamedDeclaration(this.name, this.token, {this.isAbstractInterface = false});
 
   final String name;
   final Token token;
+  final bool isAbstractInterface;
 
   static _NamedDeclaration? from(CompilationUnitMember declaration) {
     switch (declaration) {
-      case ClassDeclaration(:final namePart):
-        return _NamedDeclaration(namePart.typeName.lexeme, namePart.typeName);
+      case ClassDeclaration(:final namePart, :final declaredFragment):
+        final element = declaredFragment?.element;
+        return _NamedDeclaration(
+          namePart.typeName.lexeme,
+          namePart.typeName,
+          isAbstractInterface: element != null && element.isAbstract && element.isInterface,
+        );
       case EnumDeclaration(:final namePart):
         return _NamedDeclaration(namePart.typeName.lexeme, namePart.typeName);
       case MixinDeclaration(:final name):
@@ -94,6 +100,16 @@ final class _NamedDeclaration {
 
 String _expectedFileNameForType(String typeName) =>
     _toSnakeCase(_normalizeMixedCaseWords(typeName));
+
+/// The skill names contract files like `i_order_repository.dart` for
+/// `abstract interface class IOrderRepository` (hive-persistence.md), so an `I` interface
+/// prefix maps to `i_`.
+String? _interfaceFileName(_NamedDeclaration declaration) {
+  final name = declaration.name;
+  if (!declaration.isAbstractInterface || name.length < 2) return null;
+  if (name[0] != 'I' || !_isUppercase(name[1])) return null;
+  return 'i_${_expectedFileNameForType(name.substring(1))}';
+}
 
 String _fileNameWithoutExtension(String path) {
   final fileName = path.substring(path.lastIndexOf('/') + 1);

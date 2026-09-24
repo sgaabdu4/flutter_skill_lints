@@ -487,7 +487,8 @@ bool _isDatasource(InterfaceElement element) =>
 
 /// A dependency type that is an HTTP client, or a concrete project class that
 /// reaches one.
-bool _isConcreteHttpDependency(DartType type, String? root) {
+bool _isConcreteHttpDependency(DartType? type, String? root) {
+  if (type == null) return false;
   if (_httpClientChecker.isAssignableFromType(type)) return true;
   final element = _interfaceOf(type);
   return element is ClassElement && !element.isAbstract && _reachesHttpClient(element, root);
@@ -496,28 +497,31 @@ bool _isConcreteHttpDependency(DartType type, String? root) {
 List<int> _concreteHttpDependencyOffsets(ClassDeclaration declaration, String? root) {
   final body = declaration.body;
   if (body is! BlockClassBody) return const [];
-  final offsets = <int>[];
-  for (final member in body.members) {
-    switch (member) {
-      case FieldDeclaration(isStatic: false, :final fields):
-        for (final variable in fields.variables) {
-          final type = variable.declaredFragment?.element.type;
-          if (type != null && _isConcreteHttpDependency(type, root)) {
-            offsets.add(fields.type?.offset ?? variable.offset);
-          }
-        }
-      case ConstructorDeclaration(:final parameters):
-        for (final parameter in parameters.parameters) {
-          if (parameter is FieldFormalParameter) continue;
-          final type = parameter.declaredFragment?.element.type;
-          if (type != null && _isConcreteHttpDependency(type, root)) offsets.add(parameter.offset);
-        }
-      default:
-        break;
-    }
-  }
-  return offsets;
+  return [
+    for (final member in body.members)
+      ...switch (member) {
+        FieldDeclaration(isStatic: false) => _concreteHttpFieldOffsets(member, root),
+        ConstructorDeclaration() => _concreteHttpParameterOffsets(member, root),
+        _ => const <int>[],
+      },
+  ];
 }
+
+Iterable<int> _concreteHttpFieldOffsets(FieldDeclaration field, String? root) => field
+    .fields
+    .variables
+    .where((variable) => _isConcreteHttpDependency(variable.declaredFragment?.element.type, root))
+    .map((variable) => field.fields.type?.offset ?? variable.offset);
+
+/// Field formal parameters are skipped because their field is already checked.
+Iterable<int> _concreteHttpParameterOffsets(ConstructorDeclaration constructor, String? root) =>
+    constructor.parameters.parameters
+        .where(
+          (parameter) =>
+              parameter is! FieldFormalParameter &&
+              _isConcreteHttpDependency(parameter.declaredFragment?.element.type, root),
+        )
+        .map((parameter) => parameter.offset);
 
 const _rawHttpFailureChecker = TypeChecker.any([
   TypeChecker.fromName('DioException', packageName: 'dio'),

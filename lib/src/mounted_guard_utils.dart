@@ -18,20 +18,45 @@ bool isPureMountedGuardSuffix(Expression expression) {
       value is NullLiteral) {
     return true;
   }
+  if (_isEnumConstant(value)) return true;
   if (value is BinaryExpression) {
     if (value.operator.lexeme != '==' && value.operator.lexeme != '!=') return false;
     final type = value.leftOperand.staticType;
+    // Enums cannot override `==`, so comparing them has no side effects.
     if (type == null ||
         !(type.isDartCoreBool ||
             type.isDartCoreInt ||
             type.isDartCoreString ||
-            type.isDartCoreNum)) {
+            type.isDartCoreNum ||
+            type.element is EnumElement)) {
       return false;
     }
     return isPureMountedGuardSuffix(value.leftOperand) &&
         isPureMountedGuardSuffix(value.rightOperand);
   }
   return false;
+}
+
+bool _isEnumConstant(Expression expression) {
+  final element = switch (expression) {
+    PrefixedIdentifier(:final element) => element,
+    PropertyAccess(:final propertyName) => propertyName.element,
+    _ => null,
+  };
+  return element is PropertyAccessorElement &&
+      element.variable is FieldElement &&
+      (element.variable as FieldElement).isEnumConstant;
+}
+
+/// A `context.mounted` check on a captured BuildContext. The State.context getter
+/// itself throws once the State is unmounted, so it cannot guard an async gap.
+bool isCapturedContextAccess(Expression expression) {
+  final context = switch (expression) {
+    PrefixedIdentifier(:final prefix) => prefix,
+    PropertyAccess(:final target) => target,
+    _ => null,
+  };
+  return context is SimpleIdentifier && context.element is! PropertyAccessorElement;
 }
 
 /// A notifier's inherited Riverpod ref, rather than a same-named local value.

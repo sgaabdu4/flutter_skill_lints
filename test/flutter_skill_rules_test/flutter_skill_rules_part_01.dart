@@ -218,6 +218,127 @@ class Demo extends StatelessWidget {
 ''';
     await assertDiagnostics(source, [lint(source.indexOf('context);'), 7)]);
   }
+
+  Future<void> test_reportsContextAfterAwaitInNestedBlocks() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+void showDone(BuildContext context) {}
+
+Future<void> afterIf(BuildContext context, bool ok) async {
+  await Future<void>.value();
+  if (ok) {
+    showDone(context /* if */);
+  }
+}
+
+Future<void> insideTry(BuildContext context) async {
+  try {
+    await Future<void>.value();
+    showDone(context /* try */);
+  } catch (_) {
+    showDone(context /* catch */);
+  }
+}
+
+Future<void> nextIteration(BuildContext context, List<int> ids) async {
+  for (final _ in ids) {
+    showDone(context /* loop */);
+    await Future<void>.value();
+  }
+}
+
+Future<void> awaitInBranch(BuildContext context, bool ok) async {
+  if (ok) {
+    await Future<void>.value();
+  }
+  showDone(context /* branch */);
+}
+
+class Demo extends StatefulWidget {
+  const Demo();
+}
+
+class DemoState extends State<Demo> {
+  Future<void> load(bool ok) async {
+    await Future<void>.value();
+    if (ok) {
+      if (!context.mounted) return;
+    }
+  }
+
+  Future<void> swapToStateMounted() async {
+    await Future<void>.value();
+    if (!mounted) return;
+    showDone(context /* state */);
+  }
+}
+''';
+    await assertDiagnostics(source, [
+      for (final marker in ['if', 'try', 'catch', 'loop', 'branch'])
+        lint(source.indexOf('context /* $marker */'), 7),
+      lintFor(source, 'context.mounted'),
+      lint(source.indexOf('context /* state */'), 7),
+    ]);
+  }
+
+  Future<void> test_allowsGuardsInNestedBlocksAndSkillExamples() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+void showDone(BuildContext context) {}
+void showSheet({required BuildContext context}) {}
+Future<bool?> confirm() async => true;
+
+enum CreateChoice { exercise, workout }
+
+Future<CreateChoice?> pick() async => null;
+
+Future<void> openCreateSheet(BuildContext context) async {
+  final choice = await pick();
+  if (!context.mounted || choice != CreateChoice.exercise) return;
+  showDone(context);
+}
+
+Future<void> confirmDelete(BuildContext context) async {
+  final confirmed = await confirm();
+  if (confirmed != true || !context.mounted) return;
+  showDone(context);
+}
+
+Future<void> positiveGuard(BuildContext context) async {
+  final ok = await confirm();
+  if (ok == true && context.mounted) {
+    showDone(context);
+  }
+}
+
+Future<void> guardedTry(BuildContext context) async {
+  try {
+    await Future<void>.value();
+    if (!context.mounted) return;
+    showDone(context);
+  } catch (_) {
+    if (!context.mounted) return;
+    showDone(context);
+  }
+}
+
+Future<void> guardedLoop(BuildContext context, List<int> ids) async {
+  for (final _ in ids) {
+    await Future<void>.value();
+    if (!context.mounted) return;
+    showDone(context);
+  }
+}
+
+Future<void> namedArgumentLabel(BuildContext context, BuildContext sheetContext) async {
+  await Future<void>.value();
+  if (!sheetContext.mounted) return;
+  showSheet(context: sheetContext);
+}
+''');
+  }
 }
 
 @reflectiveTest

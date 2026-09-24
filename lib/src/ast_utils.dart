@@ -261,7 +261,11 @@ bool _returnsWhenUnmounted(
   if (condition is PrefixExpression && condition.operator.lexeme == '!') {
     final mounted = condition.operand.unParenthesized;
     return isTargetProperty(mounted, targetName, 'mounted') &&
-        (targetName != 'ref' || isRiverpodRefAccess(mounted));
+        switch (targetName) {
+          'ref' => isRiverpodRefAccess(mounted),
+          'context' => isCapturedContextAccess(mounted),
+          _ => true,
+        };
   }
   if (condition is BinaryExpression && condition.operator.lexeme == '||') {
     return _returnsWhenUnmounted(condition.rightOperand, targetName, additionalCondition) ||
@@ -792,7 +796,9 @@ final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
       if (node.prefix.name == 'ref' && node.identifier.name == 'mounted') {
         return;
       }
-      if (node.prefix.name == 'context' && node.identifier.name == 'mounted') {
+      if (node.prefix.name == 'context' &&
+          node.identifier.name == 'mounted' &&
+          isCapturedContextAccess(node)) {
         return;
       }
       if (_accepts(node)) {
@@ -807,11 +813,28 @@ final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
   void visitPropertyAccess(PropertyAccess node) {
     if (this.node != null) return;
     final target = node.target;
+    // `this.context.mounted` reads the State getter as a whole.
+    if (target is PropertyAccess &&
+        target.target is ThisExpression &&
+        targetNames.contains(target.propertyName.name) &&
+        node.propertyName.name == 'mounted' &&
+        _accepts(node)) {
+      this.node = node;
+      return;
+    }
+    if (target is ThisExpression &&
+        targetNames.contains(node.propertyName.name) &&
+        _accepts(node)) {
+      this.node = node;
+      return;
+    }
     if (target is SimpleIdentifier && targetNames.contains(target.name)) {
       if (target.name == 'ref' && node.propertyName.name == 'mounted') {
         return;
       }
-      if (target.name == 'context' && node.propertyName.name == 'mounted') {
+      if (target.name == 'context' &&
+          node.propertyName.name == 'mounted' &&
+          isCapturedContextAccess(node)) {
         return;
       }
       if (_accepts(node)) {
@@ -831,6 +854,8 @@ final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
     }
     if (isExpressionTargetIdentifier(node)) return;
     if (classMemberNameIsDeclaration(node)) return;
+    // A named argument label such as `context:` is not a read.
+    if (node.parent is Label) return;
     if (_accepts(node)) this.node = node;
   }
 

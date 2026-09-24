@@ -103,6 +103,7 @@ abstract class StatefulWidget extends Widget {
 
 abstract class State<T extends StatefulWidget> {
   BuildContext get context => BuildContext();
+  bool get mounted => true;
 }
 ''');
   }

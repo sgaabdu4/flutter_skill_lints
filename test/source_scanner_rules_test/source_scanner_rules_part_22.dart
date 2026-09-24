@@ -424,6 +424,22 @@ final class DomainRawRequiredStringTest extends _DomainEntityParameterRuleTest {
     ]);
   }
 
+  Future<void> test_reportsNonConstRedirectingFactory() async {
+    final source = entity('    required String label,').replaceFirst('const factory', 'factory');
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [compatLint(source, 'String label,', ruleName)]);
+  }
+
+  Future<void> test_reportsUnmarkedStringBesideHiveFieldSlots() async {
+    final source = entity(
+      '    /// HiveField(0)\n    required String id,\n    required String nickname,',
+    );
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [compatLint(source, 'String nickname,', ruleName)]);
+  }
+
   Future<void> test_allowsValueObjectsOptionalTextAndNamedUnionFactories() async {
     await assertAllows(
       '''
@@ -483,6 +499,15 @@ final class DomainUnitPrimitiveTest extends _DomainEntityParameterRuleTest {
       path: path,
       addIgnorePrefix: false,
     );
+  }
+
+  Future<void> test_reportsNonConstFactoryAndUnmarkedHiveNeighbour() async {
+    final source = entity(
+      '    /// HiveField(1)\n    required double distanceMeters,\n    required double weightKg,',
+    ).replaceFirst('const factory', 'factory');
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [compatLint(source, 'double weightKg,', ruleName)]);
   }
 
   Future<void> test_allowsCountsAndTypedUnits() async {

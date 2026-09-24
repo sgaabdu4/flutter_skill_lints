@@ -1,5 +1,9 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 /// Rules enforcing Value Object boundary integrity in /domain/ paths.
@@ -99,11 +103,8 @@ final List<ScannerRule> valueObjectSourceRules = [
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags non-nullable String parameters on Freezed domain entity constructors so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) => _scanDomainEntityParameters(
-      reporter,
-      context,
-      (parameter) => parameter.type == 'String' && !parameter.nullable && !parameter.hasDefault,
-    ),
+    scan: (reporter, context) =>
+        _scanDomainEntityParameters(reporter, context, _isRawRequiredString),
   ),
 
   /// Domain entities must not carry units or money as raw numbers.
@@ -122,11 +123,7 @@ final List<ScannerRule> valueObjectSourceRules = [
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags unit- or currency-named numeric parameters on Freezed domain entity constructors so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) => _scanDomainEntityParameters(
-      reporter,
-      context,
-      (parameter) => parameter.type != 'String' && _unitName.hasMatch(parameter.name),
-    ),
+    scan: (reporter, context) => _scanDomainEntityParameters(reporter, context, _isUnitNamedNumber),
   ),
 
   /// Sealed Value Objects must disable Freezed map/when generation.
@@ -379,11 +376,7 @@ const _unitWords =
 
 final _unitName = RegExp('^(?:${_unitWords.toLowerCase()})\$|[a-z0-9](?:$_unitWords)\$');
 
-final _entityParameter = RegExp(
-  r'(?:^|[,{(\[])\s*((?:@\w+(?:\s*\([^)]*\))?\s+)*)(?:required\s+)?(String|int|double|num)(\?)?\s+([A-Za-z_]\w*)\b',
-);
-
-typedef _EntityParameter = ({String type, String name, bool nullable, bool hasDefault});
+typedef _EntityParameter = ({DartType type, String name, bool hasDefault});
 
 void _scanDomainEntityParameters(
   ScannerRuleReporter reporter,
@@ -391,35 +384,67 @@ void _scanDomainEntityParameters(
   bool Function(_EntityParameter parameter) matches,
 ) {
   if (!context.isDomainPath || context.path.contains('/domain/values/')) return;
-  final source = context.source.masked.join('\n');
-  final original = context.source.original.join('\n');
-  final lineOffsets = _sourceLineOffsets(context);
-  for (final classSpan in context.classes) {
-    if (!context.hasFreezedAnnotation(classSpan) || classSpan.name.startsWith('_')) continue;
-    final constructor = RegExp(
-      r'\bconst\s+factory\s+' + RegExp.escape(classSpan.name) + r'\s*\(([^;]*?)\)\s*=\s*\w+\s*;',
-      dotAll: true,
-    );
-    final classStart = lineOffsets[classSpan.start];
-    final classEnd = lineOffsets[classSpan.end + 1];
-    final match = constructor.firstMatch(source.substring(classStart, classEnd));
-    if (match == null) continue;
-    // Shipped Hive entities keep their locked primitive slots (value-objects.md Option A).
-    final constructorText = original.substring(classStart + match.start, classStart + match.end);
-    if (constructorText.contains('HiveField(')) continue;
-    final parametersStart = classStart + match.start + match.group(0)!.indexOf('(') + 1;
-    for (final parameter in _entityParameter.allMatches(match.group(1)!)) {
-      final entity = (
-        type: parameter.group(2)!,
-        name: parameter.group(4)!,
-        nullable: parameter.group(3) != null,
-        hasDefault: parameter.group(1)!.contains('@Default'),
+  for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+    if (declaration.namePart.typeName.lexeme.startsWith('_') ||
+        !_isFreezedDeclaration(declaration)) {
+      continue;
+    }
+    final constructor = _canonicalRedirect(declaration);
+    if (constructor == null) continue;
+    for (final parameter in constructor.parameters.parameters) {
+      // Shipped Hive entities keep their locked primitive slots (value-objects.md Option A).
+      if (_hasHiveFieldMarker(parameter)) continue;
+      final type = parameter.declaredFragment?.element.type;
+      final typeNode = parameter.type;
+      final name = parameter.name?.lexeme;
+      if (type == null || typeNode == null || name == null) continue;
+      final hasDefault =
+          parameter.defaultClause != null || parameter.metadata.any(_isFreezedDefault);
+      if (!matches((type: type, name: name, hasDefault: hasDefault))) continue;
+      final line = _lineIndexForOffset(
+        typeNode.offset,
+        context.source.lineOffsets,
+        context.source.length,
       );
-      if (!matches(entity)) continue;
-      final text = parameter.group(0)!;
-      final typeIndex = text.lastIndexOf(entity.type, text.length - entity.name.length - 1);
-      final typeOffset = parametersStart + parameter.start + typeIndex;
-      _reportFactoryMatch(reporter, context, typeOffset, lineOffsets);
+      reporter.report(context, line, typeNode.offset - context.source.lineOffsets[line]);
     }
   }
 }
+
+bool _isFreezedDeclaration(ClassDeclaration declaration) => declaration.metadata.any((annotation) {
+  final element = annotation.elementAnnotation;
+  return element != null && isFreezedAnnotation(element);
+});
+
+/// The unnamed Freezed redirect (`[const] factory Entity({...}) = _Entity;`).
+ConstructorDeclaration? _canonicalRedirect(ClassDeclaration declaration) => declaration.body.members
+    .whereType<ConstructorDeclaration>()
+    .where(
+      (constructor) =>
+          constructor.factoryKeyword != null &&
+          constructor.name == null &&
+          constructor.redirectedConstructor != null,
+    )
+    .firstOrNull;
+
+bool _hasHiveFieldMarker(FormalParameter parameter) =>
+    parameter.documentationComment?.tokens.any((token) => token.lexeme.contains('HiveField(')) ??
+    false;
+
+bool _isFreezedDefault(Annotation annotation) {
+  final element = annotation.element;
+  return element is ConstructorElement &&
+      element.enclosingElement.name == 'Default' &&
+      element.library.uri.toString() == 'package:freezed_annotation/freezed_annotation.dart';
+}
+
+bool _isRawRequiredString(_EntityParameter parameter) =>
+    parameter.type.isDartCoreString &&
+    parameter.type.nullabilitySuffix == NullabilitySuffix.none &&
+    !parameter.hasDefault;
+
+bool _isUnitNamedNumber(_EntityParameter parameter) =>
+    (parameter.type.isDartCoreInt ||
+        parameter.type.isDartCoreDouble ||
+        parameter.type.isDartCoreNum) &&
+    _unitName.hasMatch(parameter.name);

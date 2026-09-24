@@ -157,6 +157,85 @@ final class StyleRawTokenTest extends _UiRuleTest {
     expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
   }
 
+  @override
+  bool get addFlutterPackageDep => true;
+
+  @override
+  void _addFlutterPackage() {}
+
+  Future<void> test_reportsResolvedRawColors() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+final material = Colors.red;
+final cupertino = CupertinoColors.systemBlue;
+const hex = Color(0xFF123456);
+const argb = Color.fromARGB(255, 1, 2, 3);
+const rgbo = Color.fromRGBO(1, 2, 3, 0.5);
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/widgets/atoms/palette_atom.dart';
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      for (final needle in [
+        'final material',
+        'final cupertino',
+        'const hex',
+        'const argb',
+        'const rgbo',
+      ])
+        compatLint(analyzedSource, needle, ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_reportsResolvedRawSizes() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/material.dart';
+
+extension on TextStyle {
+  TextStyle copyWith({double? fontSize}) => this;
+}
+
+Widget icon() => const Icon(null, size: 24);
+TextStyle? body(TextStyle? base) => base?.copyWith(fontSize: 18);
+const side = BorderSide(width: 3);
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/widgets/atoms/size_atom.dart';
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      for (final needle in ['Widget icon()', 'TextStyle? body', 'const side'])
+        compatLint(analyzedSource, needle, ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsTokenSizesAndUnrelatedPalettes() async {
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+
+abstract final class AppTokens {
+  static const double iconMd = 24;
+  static const double fontBody = 14;
+  static const double hairline = 1;
+}
+
+abstract final class Palette {
+  static const red = 1;
+}
+
+extension on TextStyle {
+  TextStyle copyWith({double? fontSize}) => this;
+}
+
+Widget icon() => const Icon(null, size: AppTokens.iconMd);
+TextStyle body(TextStyle base) => base.copyWith(fontSize: AppTokens.fontBody);
+const side = BorderSide(width: AppTokens.hairline);
+const none = BorderSide(width: 0);
+final unrelated = Palette.red;
+''', path: '$testPackageLibPath/core/widgets/atoms/token_atom.dart');
+  }
+
   Future<void> test_allowsRawTokensInThemeDefinitions() async {
     await assertAllows('''
 class Color {

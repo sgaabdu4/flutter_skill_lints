@@ -1,4 +1,8 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/notifier_dependency_capture.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -61,6 +65,39 @@ final List<ScannerRule> notifierSourceRules = [
     },
   ),
 
+  /// Do not store a Ref field in notifiers.
+  ///
+  /// Why: Generated notifiers already expose `ref` from their base class. A
+  /// stored `Ref` field duplicates it and can outlive the provider element that
+  /// owns it. Use the inherited `ref` directly.
+  scannerRule(
+    code: const LintCode(
+      'notifier_stored_ref_field',
+      'Do not store a Ref field in notifiers.',
+      correctionMessage: 'Use the generated ref inherited from the notifier base class.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags Ref-typed fields declared in Riverpod notifier classes.',
+    scan: (reporter, context) {
+      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+        final element = declaration.declaredFragment?.element;
+        final body = declaration.body;
+        if (element == null || body is! BlockClassBody) continue;
+        if (!_riverpodNotifier.isSuperOf(element) && !hasRiverpodCodegenAnnotation(declaration)) {
+          continue;
+        }
+        for (final field in body.members.whereType<FieldDeclaration>()) {
+          for (final variable in field.fields.variables) {
+            final type = variable.declaredFragment?.element.type;
+            if (type is! InterfaceType || !_riverpodRef.isAssignableFromType(type)) continue;
+            final location = context.unit.lineInfo.getLocation(variable.name.offset);
+            reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+          }
+        }
+      }
+    },
+  ),
+
   /// Avoid ref.watch inside notifier methods.
   ///
   /// Why: Flags ref.watch calls inside Notifier methods. Use ref.read in notifier methods.
@@ -96,3 +133,9 @@ final _notifierLocalDependencyField = RegExp(
 
 bool _isInsideMethod(List<ScannerMethodSpan> methods, int lineIndex) =>
     methods.any((method) => lineIndex >= method.start && lineIndex <= method.end);
+
+const _riverpodRef = TypeChecker.fromName('Ref', packageName: 'riverpod');
+const _riverpodNotifier = TypeChecker.any([
+  TypeChecker.fromName('AnyNotifier', packageName: 'riverpod'),
+  TypeChecker.fromName('Notifier', packageName: 'riverpod'),
+]);

@@ -2,6 +2,7 @@ import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/mounted_guard_utils.dart';
@@ -212,6 +213,20 @@ bool isNotifierClass(ClassDeclaration node) {
       superName == 'AsyncNotifier' ||
       superName.endsWith('Notifier') ||
       superName.startsWith(r'_$');
+}
+
+/// Whether [node] carries the resolved `@riverpod` / `@Riverpod(...)` codegen annotation.
+bool hasRiverpodCodegenAnnotation(AnnotatedNode node) {
+  return node.metadata.any((annotation) {
+    final element = annotation.element;
+    final isRiverpod = switch (element) {
+      ConstructorElement(:final enclosingElement) => enclosingElement.name == 'Riverpod',
+      PropertyAccessorElement(:final name) => name == 'riverpod',
+      _ => false,
+    };
+    final library = element?.library?.uri.toString() ?? '';
+    return isRiverpod && library.startsWith('package:riverpod_annotation/');
+  });
 }
 
 bool hasAnnotationNamed(AnnotatedNode node, Set<String> names) {

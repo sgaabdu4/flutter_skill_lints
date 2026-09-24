@@ -2,7 +2,6 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
-import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/class_suffix_validator.dart';
@@ -59,21 +58,8 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (name.lexeme.endsWith(rule.requiredSuffix)) return;
     final element = node.declaredFragment?.element;
     if (element == null) return;
-    if (UseNotifierSuffix._notifier.isSuperOf(element) || _hasRiverpodAnnotation(node)) {
+    if (UseNotifierSuffix._notifier.isSuperOf(element) || hasRiverpodCodegenAnnotation(node)) {
       rule.reportAtToken(name, arguments: [name.lexeme]);
     }
-  }
-
-  bool _hasRiverpodAnnotation(ClassDeclaration node) {
-    return node.metadata.any((annotation) {
-      final element = annotation.element;
-      final isRiverpod = switch (element) {
-        ConstructorElement(:final enclosingElement) => enclosingElement.name == 'Riverpod',
-        PropertyAccessorElement(:final name) => name == 'riverpod',
-        _ => false,
-      };
-      final library = element?.library?.uri.toString() ?? '';
-      return isRiverpod && library.startsWith('package:riverpod_annotation/');
-    });
   }
 }

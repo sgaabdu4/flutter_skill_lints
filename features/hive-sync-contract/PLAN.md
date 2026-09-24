@@ -49,7 +49,7 @@ N/A — analyzer lint package; no app surface.
 ## Verification
 
 Result: Passed
-Evidence: `dart format lib test`, `dart analyze` (no issues) and `dart test` (2,164 passed). New tests were red against the previous rule code where they cover a false positive or gap.
-E2E: Passed — probe app copied from the audit probe and pointed at this worktree; `dart analyze` reports the cross-file typeId collision, the unreserved cross-file @HiveType, the domain AdapterSpec, Hive in a notifier and @HiveType on Freezed, and no longer reports the doc's separate @HiveType field indexes, plain @HiveType models, the early-return zero guard or the Value Object save.
+Evidence: `dart format lib test`, `dart analyze` (no issues) and `dart test` (2,164 passed). New tests were red against the previous rule code where they cover a false positive or gap. `python3 .hooks/hard-eng.py check --base origin/main --plan-stage Draft` passes all 13 gates; `dead-code-duplicates` (dart-decimate 0.0.48) had failed on cognitive complexity above 15 in `_localHiveFacts`, `_joinDirectives`, `_reportDuplicateHiveTypeIds` and `_hasZeroValueGuard`, and passes after the helper split. `sync_save_all_no_dirty_guard` and `save_all_full_collection_after_subset_mutation` are declared ERROR and report as `error` in the probe.
+E2E: Passed — probe app copied from the audit probe and pointed at this worktree; after the helper split its diagnostics are unchanged; `dart analyze` reports the cross-file typeId collision, the unreserved cross-file @HiveType, the domain AdapterSpec, Hive in a notifier and @HiveType on Freezed, and no longer reports the doc's separate @HiveType field indexes, plain @HiveType models, the early-return zero guard or the Value Object save.
 Delivery target: Merge
 Delivery: Pending — branch handed back to the coordinating agent; not pushed.

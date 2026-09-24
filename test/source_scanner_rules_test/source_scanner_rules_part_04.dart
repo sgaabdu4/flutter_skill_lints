@@ -314,7 +314,61 @@ const freezed = Freezed();
     newPackage('equatable').addFile('lib/equatable.dart', r'''
 class Equatable {}
 ''');
+    newPackage('hive_ce').addFile('lib/hive_ce.dart', r'''
+class HiveType {
+  const HiveType({required this.typeId});
+  final int typeId;
+}
+
+class HiveField {
+  const HiveField(this.index);
+  final int index;
+}
+''');
     super.setUp();
+  }
+
+  Future<void> test_allowsNonFreezedHiveTypeDataModel() async {
+    final filePath = '$testPackageLibPath/features/cache/data/models/cache_entry.dart';
+    newFile(filePath, r'''
+import 'package:hive_ce/hive_ce.dart';
+
+@HiveType(typeId: 0)
+class CacheEntry {
+  CacheEntry({required this.key, required this.value});
+
+  @HiveField(0)
+  final String key;
+
+  @HiveField(1)
+  final String value;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsDataModelWithUnresolvedHiveTypeLookalike() async {
+    final filePath = '$testPackageLibPath/features/cache/data/models/cache_entry.dart';
+    const source = r'''
+class HiveType {
+  const HiveType({required this.typeId});
+  final int typeId;
+}
+
+@HiveType(typeId: 0)
+class CacheEntry {
+  CacheEntry({required this.key});
+
+  final String key;
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'class HiveType', ruleName, lineStart: true),
+      compatLint(source, 'class CacheEntry', ruleName, lineStart: true),
+    ]);
   }
 
   Future<void> test_reportsEquatableDataModel() async {

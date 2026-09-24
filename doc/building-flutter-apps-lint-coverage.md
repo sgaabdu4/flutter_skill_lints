@@ -2,10 +2,10 @@
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 187 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 195 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 190 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 198 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 280 additional diagnostics.
-- Total unique diagnostics: 471.
+- Total unique diagnostics: 474.
 
 ## Full Rule Inventory
 
@@ -131,7 +131,7 @@ hover description and correction text.
 | `extensions-utilities.md` | `ui_snackbar_boundary`, `datetime_now_requires_timezone_intent`, `avoid_magic_literals`, `use_context_is_current_modal_route`, `dart_static_namespace`, `service_static_side_effect`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures` |
 | `flutter-optimizations.md` | `avoid_shrink_wrap`, `perf_listview_children`, `perf_build_work`, `a11y_text_scale_clamp`, `flutter_key_created_in_build`, `flutter_unique_or_global_key`, `flutter_opacity_widget`, `flutter_save_layer_filter`, `flutter_clip_save_layer`, `flutter_intrinsic_layout`, `flutter_animated_builder_child`, `flutter_widget_operator_equals`, `use_dedicated_media_query_methods`, `prefer_compute_over_isolate_run` |
 | `freezed-sealed.md` | `use_sealed_freezed_classes`, `use_freezed_instead_of_immutable`, `freezed_one_class_per_file`, `freezed_missing_private_constructor`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map`, `arch_domain_json_annotation`, `cfg_explicit_to_json` |
-| `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_test_close_missing`, `avoid_unvalidated_persisted_map_cast`, runtime boundary for historical TypeId permanence |
+| `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_type_on_freezed_class`, `hive_adapter_spec_domain_type`, `notifier_hive_access`, `hive_test_close_missing`, `avoid_unvalidated_persisted_map_cast`, runtime boundary for historical TypeId permanence |
 | `localization.md` | `strings_hardcoded`, `l10n_context_direct_access` |
 | `mixins.md` | `mixin_mixin_class`, `mixin_name_suffix`, `mixin_mutable_state` |
 | `performance.md` | `riverpod_watch_no_select`, `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `perf_listview_children`, `perf_build_work`, `state_empty_string_sentinel`, `state_bool_string_sentinel`, `state_raw_response`, `state_raw_error_to_string`, `a11y_text_scale_clamp`, `flutter_*` optimization rules |
@@ -183,6 +183,9 @@ Hive/Crash/services:
 - `hive_reserved_type_ids_missing`
 - `hive_duplicate_type_id`
 - `hive_duplicate_field_id`
+- `hive_type_on_freezed_class`
+- `hive_adapter_spec_domain_type`
+- `notifier_hive_access`
 - `hive_test_close_missing`
 - `crash_direct_firebase_call`
 - `crash_init_before_run_app`

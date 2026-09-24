@@ -4,30 +4,27 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> persistenceCrashSourceRules = [
-  /// Hive generated adapters should reserve @HiveType ids.
+  /// Hive generated adapters must reserve every @HiveType id.
   ///
-  /// Why: Flags @GenerateAdapters without reservedTypeIds when @HiveType exists. Add
-  /// reservedTypeIds when @HiveType classes share a file with adapters.
+  /// Why: @GenerateAdapters assigns ids to its specs. A @HiveType class in the same
+  /// registration scope keeps its hand-written id, so every such id must appear in
+  /// reservedTypeIds or a generated adapter can claim it. The check resolves the
+  /// annotations and follows the analyzer's import graph, so it also sees @HiveType
+  /// classes that live in another file of the registration scope.
   scannerRule(
     code: const LintCode(
       'hive_reserved_type_ids_missing',
-      'Hive generated adapters should reserve @HiveType ids.',
-      correctionMessage: 'Add reservedTypeIds when @HiveType classes share a file with adapters.',
+      'Hive generated adapters must reserve every @HiveType typeId.',
+      correctionMessage:
+          'Add each @HiveType typeId from the same registration scope to reservedTypeIds.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags @GenerateAdapters without reservedTypeIds when @HiveType exists so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      if (_annotationSpans(context, 'HiveType').isEmpty) return;
-      final adapterSpans = _annotationSpans(context, 'GenerateAdapters');
-      for (final span in adapterSpans) {
-        if (!RegExp(r'\breservedTypeIds\s*:').hasMatch(span.text)) {
-          reporter.report(context, span.start, 0);
-        }
-      }
-    },
+    description: 'Flags @GenerateAdapters whose reservedTypeIds omit a @HiveType typeId from the same resolved import graph.',
+    scan: _reportUnreservedHiveTypeIds,
   ),
 
   /// Hive tests should close boxes.
@@ -51,47 +48,127 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     },
   ),
 
-  /// Hive typeId values must be unique in a file.
+  /// Hive typeId values must be unique across a registration scope.
   ///
-  /// Why: Flags duplicate Hive typeId values in the same file. Assign a fresh permanent
-  /// typeId and retire the old id.
+  /// Why: Hive registers one adapter per typeId. Two @HiveType classes that share an
+  /// id break registration or read each other's bytes. The check resolves @HiveType
+  /// ids in this library and in every library the analyzer's import graph reaches, and
+  /// reports where the two ids first meet. Assign a fresh permanent typeId and retire
+  /// the old id.
   scannerRule(
     code: const LintCode(
       'hive_duplicate_type_id',
-      'Hive typeId values must be unique in a file.',
+      'Hive typeId values must be unique across registered types.',
       correctionMessage: 'Assign a fresh permanent typeId and retire the old id.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags duplicate Hive typeId values in the same file so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      _reportDuplicateAnnotationIds(
-        reporter: reporter,
-        context: context,
-        annotationName: 'HiveType',
-        idPattern: RegExp(r'\btypeId\s*:\s*(\d+)\b'),
-      );
-    },
+    description: 'Flags @HiveType typeIds that collide within the same resolved import graph, including across files.',
+    scan: _reportDuplicateHiveTypeIds,
   ),
 
-  /// HiveField indices must be unique in a file.
+  /// HiveField indices must be unique within one class.
   ///
-  /// Why: Flags duplicate HiveField indices in the same file. Append with a new HiveField
-  /// index; never reuse a retired index.
+  /// Why: HiveField indexes are per @HiveType class. Two fields of the same class with
+  /// the same index overwrite each other on disk; separate classes may each use 0, 1.
+  /// Append with a new HiveField index; never reuse a retired index.
   scannerRule(
     code: const LintCode(
       'hive_duplicate_field_id',
-      'HiveField indices must be unique in a file.',
+      'HiveField indices must be unique within a class.',
       correctionMessage: 'Append with a new HiveField index; never reuse a retired index.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags duplicate HiveField indices in the same file so the Flutter skill violation is shown during analysis.',
+    description: 'Flags a resolved HiveField index used twice in the same class or enum.',
+    scan: _reportDuplicateHiveFieldIds,
+  ),
+
+  /// Freezed classes use @GenerateAdapters, not @HiveType.
+  ///
+  /// Why: hive-persistence.md: "@HiveType for non-Freezed. @GenerateAdapters for
+  /// Freezed." Freezed owns the constructor, so its Hive slots come from the
+  /// AdapterSpec schema instead of hand-written annotations.
+  scannerRule(
+    code: const LintCode(
+      'hive_type_on_freezed_class',
+      'Freezed classes must use @GenerateAdapters, not @HiveType.',
+      correctionMessage:
+          'Remove @HiveType/@HiveField and add AdapterSpec<Model>() to the @GenerateAdapters list.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags a class annotated with both a resolved Freezed annotation and a hive_ce @HiveType.',
     scan: (reporter, context) {
-      _reportDuplicateAnnotationIds(
-        reporter: reporter,
-        context: context,
-        annotationName: 'HiveField',
-        idPattern: RegExp(r'@HiveField\s*\(\s*(\d+)\b'),
-      );
+      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+        final metadata = declaration.metadata;
+        final isFreezed = metadata.any(
+          (annotation) =>
+              isPackageAnnotation(annotation.elementAnnotation, 'freezed_annotation', 'Freezed'),
+        );
+        if (!isFreezed) continue;
+        for (final annotation in metadata) {
+          if (_isHiveAnnotation(annotation.elementAnnotation, 'HiveType')) {
+            _reportAtOffset(reporter, context, annotation.offset);
+          }
+        }
+      }
+    },
+  ),
+
+  /// AdapterSpec names a persistence Model, never a domain type.
+  ///
+  /// Why: hive-persistence.md: "AdapterSpec<T>() always names a persistence-layer Model
+  /// from /data/models/, never a /domain/entities/ class. Domain entities stay
+  /// Hive-free." The resolved type argument's declaring library decides the layer.
+  scannerRule(
+    code: const LintCode(
+      'hive_adapter_spec_domain_type',
+      'AdapterSpec must name a /data/models/ Model, not a domain type.',
+      correctionMessage: 'Point AdapterSpec at the persistence Model and map it to the domain entity in the mapper.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags AdapterSpec<T>() in @GenerateAdapters when the resolved T is declared under /domain/.',
+    scan: (reporter, context) {
+      for (final annotation in _unitAnnotations(context.unit)) {
+        if (!_isHiveAnnotation(annotation.elementAnnotation, 'GenerateAdapters')) continue;
+        final specs = annotation.arguments?.arguments.firstOrNull;
+        if (specs is! ListLiteral) continue;
+        for (final spec in specs.elements.whereType<InstanceCreationExpression>()) {
+          final type = spec.staticType;
+          if (type is! InterfaceType || type.typeArguments.isEmpty) continue;
+          final model = type.typeArguments.first.element;
+          final path = model?.library?.firstFragment.source.fullName.replaceAll('\\', '/');
+          if (path != null && path.contains('/domain/')) {
+            _reportAtOffset(reporter, context, spec.offset);
+          }
+        }
+      }
+    },
+  ),
+
+  /// Notifiers never touch Hive.
+  ///
+  /// Why: hive-persistence.md: "Notifier consumes IOrderRepository only — never
+  /// touches Hive." Storage calls stay in local datasources behind the repository, so
+  /// tests override the repository without Hive setup.
+  scannerRule(
+    code: const LintCode(
+      'notifier_hive_access',
+      'Notifiers must not touch Hive.',
+      correctionMessage:
+          'Move box access into a local datasource and call it through the repository interface.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags references to hive_ce APIs inside classes whose resolved supertypes include a Riverpod Notifier.',
+    scan: (reporter, context) {
+      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+        final element = declaration.declaredFragment?.element;
+        if (element == null || !element.allSupertypes.any(_isRiverpodNotifierType)) continue;
+        final visitor = _HiveReferenceVisitor();
+        declaration.body.accept(visitor);
+        for (final offset in visitor.offsets) {
+          _reportAtOffset(reporter, context, offset);
+        }
+      }
     },
   ),
 
@@ -442,52 +519,6 @@ final class _CrashShadowVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
-void _reportDuplicateAnnotationIds({
-  required ScannerRuleReporter reporter,
-  required SourceScannerContext context,
-  required String annotationName,
-  required RegExp idPattern,
-}) {
-  final seen = <String, int>{};
-  for (final span in _annotationSpans(context, annotationName)) {
-    final match = idPattern.firstMatch(span.text);
-    final id = match?.group(1);
-    if (id == null) continue;
-    if (seen.containsKey(id)) {
-      reporter.report(context, span.start, span.column);
-      continue;
-    }
-    seen[id] = span.start;
-  }
-}
-
-List<_AnnotationSpan> _annotationSpans(SourceScannerContext context, String name) {
-  final spans = <_AnnotationSpan>[];
-  final startsAnnotation = RegExp('@$name\\b');
-  for (var i = 0; i < context.source.length; i++) {
-    final line = context.source.masked[i];
-    final match = startsAnnotation.firstMatch(line);
-    if (match == null) continue;
-
-    final buffer = StringBuffer(line);
-    var end = i;
-    var depth = _parenDelta(line);
-    final hasArguments = line.contains('(');
-    while (hasArguments && depth > 0 && end + 1 < context.source.length) {
-      end++;
-      final nextLine = context.source.masked[end];
-      buffer
-        ..write('\n')
-        ..write(nextLine);
-      depth += _parenDelta(nextLine);
-    }
-
-    spans.add(_AnnotationSpan(i, match.start, buffer.toString()));
-    i = end;
-  }
-  return spans;
-}
-
 int? _firstLineMatching(SourceScannerContext context, RegExp pattern) {
   for (var i = 0; i < context.source.length; i++) {
     if (pattern.hasMatch(context.source.masked[i])) return i;
@@ -557,10 +588,322 @@ bool _usesKnownGuardedFireAndForgetHelper(String statement) {
 
 int _parenDelta(String line) => countCharacter(line, '(') - countCharacter(line, ')');
 
-final class _AnnotationSpan {
-  const _AnnotationSpan(this.start, this.column, this.text);
-
-  final int start;
-  final int column;
-  final String text;
+void _reportAtOffset(ScannerRuleReporter reporter, SourceScannerContext context, int offset) {
+  final location = context.unit.lineInfo.getLocation(offset);
+  reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
 }
+
+bool _isHiveAnnotation(ElementAnnotation? annotation, String className) =>
+    isPackageAnnotation(annotation, 'hive_ce', className);
+
+bool _isRiverpodNotifierType(InterfaceType type) {
+  final uri = type.element.library.uri;
+  final isRiverpod =
+      uri.scheme == 'package' &&
+      uri.pathSegments.isNotEmpty &&
+      const {'riverpod', 'flutter_riverpod', 'hooks_riverpod'}.contains(uri.pathSegments.first);
+  return isRiverpod && (type.element.name ?? '').contains('Notifier');
+}
+
+final class _HiveReferenceVisitor extends RecursiveAstVisitor<void> {
+  final offsets = <int>[];
+
+  @override
+  void visitNamedType(NamedType node) {
+    if (_isHiveLibrary(node.element?.library)) offsets.add(node.offset);
+    super.visitNamedType(node);
+  }
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    final parent = node.parent;
+    final isMember =
+        (parent is MethodInvocation && parent.methodName == node && parent.target != null) ||
+        (parent is PropertyAccess && parent.propertyName == node) ||
+        (parent is PrefixedIdentifier && parent.identifier == node);
+    if (!isMember && _isHiveLibrary(node.element?.library)) offsets.add(node.offset);
+    super.visitSimpleIdentifier(node);
+  }
+}
+
+bool _isHiveLibrary(LibraryElement? library) {
+  final uri = library?.uri;
+  return uri != null &&
+      uri.scheme == 'package' &&
+      uri.pathSegments.isNotEmpty &&
+      const {'hive_ce', 'hive_ce_flutter'}.contains(uri.pathSegments.first);
+}
+
+Iterable<Annotation> _unitAnnotations(CompilationUnit unit) sync* {
+  for (final declaration in unit.declarations) {
+    yield* declaration.metadata;
+  }
+}
+
+void _reportDuplicateHiveFieldIds(ScannerRuleReporter reporter, SourceScannerContext context) {
+  for (final declaration in context.unit.declarations) {
+    final memberMetadata = switch (declaration) {
+      ClassDeclaration(body: BlockClassBody(:final members)) => [
+        for (final member in members) member.metadata,
+      ],
+      EnumDeclaration(:final body) => [
+        for (final constant in body.constants) constant.metadata,
+        for (final member in body.members) member.metadata,
+      ],
+      _ => const <NodeList<Annotation>>[],
+    };
+    final seen = <int>{};
+    for (final annotation in memberMetadata.expand((metadata) => metadata)) {
+      if (!_isHiveAnnotation(annotation.elementAnnotation, 'HiveField')) continue;
+      final index = annotation.elementAnnotation
+          ?.computeConstantValue()
+          ?.getField('index')
+          ?.toIntValue();
+      if (index != null && !seen.add(index)) _reportAtOffset(reporter, context, annotation.offset);
+    }
+  }
+}
+
+/// A resolved `@HiveType(typeId: n)` declaration.
+final class _HiveTypeFact {
+  const _HiveTypeFact(this.element, this.typeId);
+
+  final Element element;
+  final int typeId;
+}
+
+/// A resolved `@GenerateAdapters(..., reservedTypeIds: {...})` declaration.
+final class _HiveAdapterFact {
+  const _HiveAdapterFact(this.element, this.reservedTypeIds);
+
+  final Element element;
+  final Set<int> reservedTypeIds;
+}
+
+final class _HiveFacts {
+  final types = <_HiveTypeFact>[];
+  final adapters = <_HiveAdapterFact>[];
+
+  void addAll(_HiveFacts other) {
+    types.addAll(other.types);
+    adapters.addAll(other.adapters);
+  }
+
+  bool containsAll(Iterable<Element> elements) {
+    final declared = {
+      for (final fact in types) fact.element,
+      for (final fact in adapters) fact.element,
+    };
+    return elements.every(declared.contains);
+  }
+}
+
+/// The Hive facts reachable through one import or export directive of the unit.
+final class _HiveImportScope {
+  const _HiveImportScope(this.directive, this.facts);
+
+  final NamespaceDirective directive;
+  final _HiveFacts facts;
+}
+
+final _localHiveFactsCache = Expando<_HiveFacts>('flutter_skill_lints_local_hive_facts');
+final _reachableHiveFactsCache = Expando<_HiveFacts>('flutter_skill_lints_reachable_hive_facts');
+
+_HiveFacts _localHiveFacts(LibraryElement library) {
+  final cached = _localHiveFactsCache[library];
+  if (cached != null) return cached;
+  final facts = _HiveFacts();
+  for (final element in library.children) {
+    for (final annotation in element.metadata.annotations) {
+      if (_isHiveAnnotation(annotation, 'HiveType')) {
+        final typeId = annotation.computeConstantValue()?.getField('typeId')?.toIntValue();
+        if (typeId != null) facts.types.add(_HiveTypeFact(element, typeId));
+      } else if (_isHiveAnnotation(annotation, 'GenerateAdapters')) {
+        final reserved = annotation
+            .computeConstantValue()
+            ?.getField('reservedTypeIds')
+            ?.toSetValue();
+        if (reserved == null) continue;
+        final ids = reserved.map((value) => value.toIntValue()).whereType<int>().toSet();
+        facts.adapters.add(_HiveAdapterFact(element, ids));
+      }
+    }
+  }
+  _localHiveFactsCache[library] = facts;
+  return facts;
+}
+
+/// Facts declared in [root] and every same-package library its imports reach.
+_HiveFacts _reachableHiveFacts(LibraryElement root, String packageRoot) {
+  final cached = _reachableHiveFactsCache[root];
+  if (cached != null) return cached;
+  final facts = _HiveFacts();
+  final pending = [root];
+  final seen = <LibraryElement>{};
+  while (pending.isNotEmpty) {
+    final library = pending.removeLast();
+    if (!seen.add(library) || !_isPackageLibrary(library, packageRoot)) continue;
+    facts.addAll(_localHiveFacts(library));
+    pending.addAll(_libraryDependencies(library));
+  }
+  _reachableHiveFactsCache[root] = facts;
+  return facts;
+}
+
+List<LibraryElement> _libraryDependencies(LibraryElement library) => [
+  for (final fragment in library.fragments) ...fragment.importedLibraries,
+  ...library.exportedLibraries,
+];
+
+bool _isPackageLibrary(LibraryElement library, String packageRoot) =>
+    library.firstFragment.source.fullName.replaceAll('\\', '/').startsWith(packageRoot);
+
+String _packageRoot(SourceScannerContext context) {
+  final path = context.unit.declaredFragment?.source.fullName.replaceAll('\\', '/') ?? '';
+  return path.endsWith(context.path) ? path.substring(0, path.length - context.path.length) : path;
+}
+
+/// Import scopes of the defining unit. A generated library (for example the Hive
+/// registrar) is not analyzed, so its own imports stand in for it.
+List<_HiveImportScope> _hiveImportScopes(CompilationUnit unit, String packageRoot) {
+  final scopes = <_HiveImportScope>[];
+  for (final directive in unit.directives.whereType<NamespaceDirective>()) {
+    final imported = switch (directive) {
+      ImportDirective() => directive.libraryImport?.importedLibrary,
+      ExportDirective() => directive.libraryExport?.exportedLibrary,
+    };
+    if (imported == null) continue;
+    final pending = [imported];
+    final seen = <LibraryElement>{};
+    while (pending.isNotEmpty) {
+      final library = pending.removeLast();
+      if (!seen.add(library) || !_isPackageLibrary(library, packageRoot)) continue;
+      if (isGeneratedSourcePath(library.firstFragment.source.fullName)) {
+        pending.addAll(_libraryDependencies(library));
+        continue;
+      }
+      scopes.add(_HiveImportScope(directive, _reachableHiveFacts(library, packageRoot)));
+    }
+  }
+  return scopes;
+}
+
+/// Directives where two non-local facts first meet: no single import scope already
+/// contains both, so no deeper analyzed library reports the pair.
+Set<NamespaceDirective> _joinDirectives(
+  List<_HiveImportScope> scopes,
+  Set<Element> localElements,
+  bool Function(Object first, Object second) conflicts,
+) {
+  final directives = <NamespaceDirective>{};
+  final facts = <(Object, Element, int)>[];
+  for (var index = 0; index < scopes.length; index++) {
+    final scope = scopes[index];
+    for (final fact in [...scope.facts.types, ...scope.facts.adapters]) {
+      final element = fact is _HiveTypeFact ? fact.element : (fact as _HiveAdapterFact).element;
+      if (!localElements.contains(element)) facts.add((fact, element, index));
+    }
+  }
+  for (var i = 0; i < facts.length; i++) {
+    for (var j = i + 1; j < facts.length; j++) {
+      final (first, firstElement, firstScope) = facts[i];
+      final (second, secondElement, secondScope) = facts[j];
+      if (firstElement == secondElement || !conflicts(first, second)) continue;
+      if (scopes.any((scope) => scope.facts.containsAll([firstElement, secondElement]))) continue;
+      directives.add(scopes[firstScope > secondScope ? firstScope : secondScope].directive);
+    }
+  }
+  return directives;
+}
+
+bool _isDefiningUnit(SourceScannerContext context, LibraryElement library) =>
+    context.unit.declaredFragment == library.firstFragment;
+
+void _reportDuplicateHiveTypeIds(ScannerRuleReporter reporter, SourceScannerContext context) {
+  final library = context.unit.declaredFragment?.element;
+  if (library == null) return;
+  final packageRoot = _packageRoot(context);
+  final reachable = _reachableHiveFacts(library, packageRoot);
+  final unitFragment = context.unit.declaredFragment;
+  final seenInUnit = <int, Element>{};
+  for (final declaration in context.unit.declarations) {
+    final element = declaration.declaredFragment?.element;
+    if (element == null) continue;
+    for (final annotation in declaration.metadata) {
+      if (!_isHiveAnnotation(annotation.elementAnnotation, 'HiveType')) continue;
+      final typeId = annotation.elementAnnotation
+          ?.computeConstantValue()
+          ?.getField('typeId')
+          ?.toIntValue();
+      if (typeId == null) continue;
+      final earlier = seenInUnit.putIfAbsent(typeId, () => element);
+      final collidesElsewhere = reachable.types.any(
+        (fact) =>
+            fact.typeId == typeId &&
+            fact.element != element &&
+            fact.element.firstFragment.libraryFragment != unitFragment,
+      );
+      if (earlier != element || collidesElsewhere) {
+        _reportAtOffset(reporter, context, annotation.offset);
+      }
+    }
+  }
+  if (!_isDefiningUnit(context, library)) return;
+  final local = _localHiveFacts(library).types.map((fact) => fact.element).toSet();
+  final joins = _joinDirectives(
+    _hiveImportScopes(context.unit, packageRoot),
+    local,
+    (first, second) =>
+        first is _HiveTypeFact && second is _HiveTypeFact && first.typeId == second.typeId,
+  );
+  for (final directive in joins) {
+    _reportAtOffset(reporter, context, directive.offset);
+  }
+}
+
+void _reportUnreservedHiveTypeIds(ScannerRuleReporter reporter, SourceScannerContext context) {
+  final library = context.unit.declaredFragment?.element;
+  if (library == null) return;
+  final packageRoot = _packageRoot(context);
+  final reachable = _reachableHiveFacts(library, packageRoot);
+  for (final annotation in _unitAnnotations(context.unit)) {
+    final elementAnnotation = annotation.elementAnnotation;
+    if (!_isHiveAnnotation(elementAnnotation, 'GenerateAdapters')) continue;
+    final reserved = elementAnnotation
+        ?.computeConstantValue()
+        ?.getField('reservedTypeIds')
+        ?.toSetValue();
+    if (reserved == null) continue;
+    final ids = reserved.map((value) => value.toIntValue()).whereType<int>().toSet();
+    if (reachable.types.any((fact) => !ids.contains(fact.typeId))) {
+      _reportAtOffset(reporter, context, annotation.offset);
+    }
+  }
+  if (!_isDefiningUnit(context, library)) return;
+  final localFacts = _localHiveFacts(library);
+  final scopes = _hiveImportScopes(context.unit, packageRoot);
+  final directives = {
+    ..._joinDirectives(scopes, {
+      for (final fact in localFacts.types) fact.element,
+      for (final fact in localFacts.adapters) fact.element,
+    }, _isUnreservedPair),
+    // A local @HiveType meets an imported @GenerateAdapters here.
+    for (final scope in scopes)
+      if (localFacts.types.any(
+        (type) => scope.facts.adapters.any((adapter) => _isUnreservedPair(adapter, type)),
+      ))
+        scope.directive,
+  };
+  for (final directive in directives) {
+    _reportAtOffset(reporter, context, directive.offset);
+  }
+}
+
+bool _isUnreservedPair(Object first, Object second) => switch ((first, second)) {
+  (final _HiveAdapterFact adapter, final _HiveTypeFact type) ||
+  (
+    final _HiveTypeFact type,
+    final _HiveAdapterFact adapter,
+  ) => !adapter.reservedTypeIds.contains(type.typeId),
+  _ => false,
+};

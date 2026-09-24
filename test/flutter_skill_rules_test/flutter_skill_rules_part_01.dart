@@ -519,4 +519,76 @@ class Screen extends StatelessWidget {
 }
 ''');
   }
+
+  Future<void> test_reportsDirectThrowAndUnguardedFirstWhereInBuild() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class ProductMissingScreen extends StatelessWidget {
+  const ProductMissingScreen({required this.productId, required this.names});
+
+  final String productId;
+  final List<String> names;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!names.contains(productId)) {
+      throw ArgumentError('missing $productId');
+    }
+    final name = names.firstWhere((n) => n == productId);
+    return Text(name);
+  }
+}
+''';
+    await assertDiagnostics(source, [
+      lintFor(source, r"throw ArgumentError('missing $productId')"),
+      lintFor(source, 'firstWhere'),
+    ]);
+  }
+
+  Future<void> test_allowsThrowInsideBuildClosure() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class Screen extends StatelessWidget {
+  const Screen();
+
+  @override
+  Widget build(BuildContext context) {
+    final onUnsupported = () => throw UnsupportedError('tap');
+    return Text('$onUnsupported');
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsThrowInNonWidgetBuild() async {
+    await assertNoDiagnostics(r'''
+class ReportBuilder {
+  String build(List<String> lines) {
+    if (lines.isEmpty) throw ArgumentError('empty');
+    return lines.firstWhere((line) => line.isNotEmpty);
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsSameNamedFirstWhereOnNonIterable() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class Lookup {
+  String firstWhere(bool Function(String) test) => '';
+}
+
+class Screen extends StatelessWidget {
+  const Screen(this.lookup);
+
+  final Lookup lookup;
+
+  @override
+  Widget build(BuildContext context) => Text(lookup.firstWhere((value) => value.isEmpty));
+}
+''');
+  }
 }

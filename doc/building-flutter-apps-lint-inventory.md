@@ -18,6 +18,7 @@ arch_interface_contract
 arch_model_extends_entity
 arch_model_missing_to_entity
 arch_repository_generated_extends
+arch_repository_inline_entity_mapping
 arch_storage_sdk_import
 arch_widget_path
 async_context_mounted_style

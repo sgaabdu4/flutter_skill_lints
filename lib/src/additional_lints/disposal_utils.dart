@@ -48,6 +48,12 @@ String? findCleanupMethod(DartType type) {
   }
 
   for (final cleanup in cleanupMethods) {
+    // dart:ui Path.close() closes a contour; it does not release the Path.
+    if (cleanup == 'close' &&
+        type.element.name == 'Path' &&
+        type.element.library.identifier == 'dart:ui') {
+      continue;
+    }
     if (hasMethod(cleanup)) return cleanup;
   }
   return null;

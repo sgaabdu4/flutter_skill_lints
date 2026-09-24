@@ -12,6 +12,7 @@ void main() {
   defineReflectiveSuite(() {
     defineReflectiveTests(AvoidFlexibleOutsideFlexTest);
     defineReflectiveTests(AvoidUndisposedInstancesTest);
+    defineReflectiveTests(AvoidUndisposedDartUiPathTest);
     defineReflectiveTests(AvoidUnnecessaryStatefulWidgetsTest);
     defineReflectiveTests(UseSetstateSynchronouslyTest);
     defineReflectiveTests(AvoidRecursiveWidgetCallsTest);
@@ -122,6 +123,39 @@ void buildResource() {
   resource.dispose();
 }
 ''');
+  }
+
+  Future<void> test_createdCloseableWithoutCleanup_lint() async {
+    const source = r'''
+class Resource { void close() {} }
+void buildResource() {
+  final resource = Resource();
+  print(resource);
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('resource ='), 'resource'.length)]);
+  }
+
+  Future<void> test_userDefinedPathCloseStillRequiresCleanup_lint() async {
+    const source = r'''
+class Path { void close() {} }
+void createPath() {
+  final path = Path();
+  print(path);
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('path ='), 'path'.length)]);
+  }
+
+  Future<void> test_createdCancelableWithoutCleanup_lint() async {
+    const source = r'''
+class Task { void cancel() {} }
+void startTask() {
+  final task = Task();
+  print(task);
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('task ='), 'task'.length)]);
   }
 
   Future<void> test_createdDisposableRegisteredWithAddTearDown_noLint() async {
@@ -529,5 +563,44 @@ import 'package:flutter/widgets.dart';
 Widget build() => Row(children: [Padding(child: Expanded(child: const SizedBox()))]);
 ''';
     await assertDiagnostics(source, [lint(source.indexOf('Expanded'), 8)]);
+  }
+}
+
+@reflectiveTest
+final class AvoidUndisposedDartUiPathTest extends AnalysisRuleTest {
+  @override
+  bool get addFlutterPackageDep => true;
+
+  @override
+  void setUp() {
+    rule = AvoidUndisposedInstances();
+    super.setUp();
+    newFile('$packagesRootPath/ui/lib/ui.dart', r'''
+library dart.ui;
+
+class Path {
+  Path();
+  void moveTo(double x, double y) {}
+  void lineTo(double x, double y) {}
+  void close() {}
+}
+class Paint {}
+class Canvas {
+  void drawPath(Path path, Paint paint) {}
+}
+''');
+  }
+
+  Future<void> test_geometricPathCloseIsNotDisposal_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'dart:ui';
+
+void paintLine(Canvas canvas, Paint paint) {
+  final path = Path();
+  path.moveTo(0, 0);
+  path.lineTo(1, 1);
+  canvas.drawPath(path, paint);
+}
+''');
   }
 }

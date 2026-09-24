@@ -3,6 +3,7 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
 /// Warns when enum values are accessed by numeric index.
@@ -43,8 +44,28 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
 bool _isValuesAccess(Expression? target) {
   return switch (target) {
-    PrefixedIdentifier(identifier: SimpleIdentifier(name: 'values')) => true,
-    PropertyAccess(propertyName: SimpleIdentifier(name: 'values')) => true,
+    PrefixedIdentifier(
+      identifier: SimpleIdentifier(name: 'values'),
+      prefix: SimpleIdentifier(element: final declaration),
+    ) =>
+      _isEnumDeclaration(declaration),
+    PropertyAccess(propertyName: SimpleIdentifier(name: 'values'), target: final enumType) =>
+      _isEnumTypeReference(enumType),
     _ => false,
   };
+}
+
+bool _isEnumTypeReference(Expression? expression) {
+  return switch (expression) {
+    SimpleIdentifier(element: final declaration) => _isEnumDeclaration(declaration),
+    PrefixedIdentifier(identifier: SimpleIdentifier(element: final declaration)) =>
+      _isEnumDeclaration(declaration),
+    ParenthesizedExpression(expression: final inner) => _isEnumTypeReference(inner),
+    _ => false,
+  };
+}
+
+bool _isEnumDeclaration(Element? declaration) {
+  if (declaration is EnumElement) return true;
+  return declaration is TypeAliasElement && declaration.aliasedType.element is EnumElement;
 }

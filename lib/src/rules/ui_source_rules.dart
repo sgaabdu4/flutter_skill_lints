@@ -1,6 +1,8 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'ui_source_rules/ui_source_rules_part_01.dart';
 
@@ -27,10 +29,6 @@ final _currentTimeBoundary = RegExp(
 );
 
 bool _hasRawStyleToken(String line) {
-  if (RegExp(r'\bColor\s*\(\s*0x[0-9A-Fa-f]+').hasMatch(line)) {
-    return true;
-  }
-
   final visualConstructor = RegExp(
     r'\b(?:EdgeInsets|BorderRadius|Radius|SizedBox)(?:\.\w+)?\s*\([^)]*',
   );
@@ -40,6 +38,86 @@ bool _hasRawStyleToken(String line) {
     }
   }
   return false;
+}
+
+const _dartUiColorChecker = TypeChecker.fromUrl('dart:ui#Color');
+const _rawColorPaletteChecker = TypeChecker.any([
+  TypeChecker.fromName('Colors', packageName: 'flutter'),
+  TypeChecker.fromName('CupertinoColors', packageName: 'flutter'),
+]);
+const _iconChecker = TypeChecker.fromName('Icon', packageName: 'flutter');
+const _borderSideChecker = TypeChecker.fromName('BorderSide', packageName: 'flutter');
+const _textStyleChecker = TypeChecker.fromName('TextStyle', packageName: 'flutter');
+
+/// Lines holding resolved raw colors, icon sizes, font sizes, or border widths.
+Set<int> _resolvedRawStyleTokenLines(SourceScannerContext context) {
+  final visitor = _RawStyleTokenVisitor();
+  context.unit.accept(visitor);
+  return {
+    for (final offset in visitor.offsets) context.unit.lineInfo.getLocation(offset).lineNumber - 1,
+  };
+}
+
+final class _RawStyleTokenVisitor extends RecursiveAstVisitor<void> {
+  final offsets = <int>[];
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final owner = node.constructorName.element?.enclosingElement;
+    if (owner != null) {
+      final rawArgument = switch (owner) {
+        _ when _dartUiColorChecker.isExactly(owner) => node,
+        _ when _iconChecker.isExactly(owner) => _rawNumericArgument(node.argumentList, 'size'),
+        _ when _borderSideChecker.isExactly(owner) => _rawNumericArgument(
+          node.argumentList,
+          'width',
+        ),
+        _ when owner.library.identifier.startsWith('package:flutter/') => _rawNumericArgument(
+          node.argumentList,
+          'iconSize',
+        ),
+        _ => null,
+      };
+      if (rawArgument != null) offsets.add(rawArgument.offset);
+    }
+    super.visitInstanceCreationExpression(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final targetType = node.realTarget?.staticType;
+    if (node.methodName.name == 'copyWith' &&
+        targetType != null &&
+        _textStyleChecker.isExactlyType(targetType)) {
+      if (_rawNumericArgument(node.argumentList, 'fontSize') case final argument?) {
+        offsets.add(argument.offset);
+      }
+    }
+    super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    final owner = node.element?.enclosingElement;
+    if (owner != null && _rawColorPaletteChecker.isExactly(owner)) {
+      offsets.add(node.offset);
+    }
+    super.visitSimpleIdentifier(node);
+  }
+}
+
+/// A non-zero numeric literal passed as [name], optionally negated.
+Expression? _rawNumericArgument(ArgumentList arguments, String name) {
+  final argument = namedArgumentExpression(arguments, name);
+  final literal = argument is PrefixExpression && argument.operator.lexeme == '-'
+      ? argument.operand
+      : argument;
+  final value = switch (literal) {
+    IntegerLiteral(:final value) => value?.toDouble(),
+    DoubleLiteral(:final value) => value,
+    _ => null,
+  };
+  return value == null || value == 0 ? null : argument;
 }
 
 bool _hasMeaningfulNumericLiteral(String line) {

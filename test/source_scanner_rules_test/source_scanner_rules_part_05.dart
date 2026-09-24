@@ -49,6 +49,104 @@ void build(ref, context) {
     newFile(path, analyzedSource);
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'ref.read', ruleName)]);
   }
+
+  Future<void> test_reportsSharedOrganismProviderWatch() async {
+    final analyzedSource = _analyzedSource(r'''
+void build(ref, provider) {
+  ref.watch(provider);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/widgets/organisms/order_summary.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'ref.watch', ruleName)]);
+  }
+
+  Future<void> test_allowsProviderAccessInScreens() async {
+    await assertAllows(r'''
+void build(ref, provider) {
+  ref.watch(provider);
+}
+''', path: '$testPackageLibPath/features/orders/presentation/screens/orders_screen.dart');
+  }
+}
+
+@reflectiveTest
+final class AtomicPageConsumerWidgetTest extends _ArchitectureRuleTest {
+  @override
+  String get ruleName => 'atomic_page_consumer_widget';
+  @override
+  String get needle => 'OrdersScreen extends StatelessWidget';
+  @override
+  String get path => '$testPackageLibPath/features/orders/presentation/screens/orders_screen.dart';
+  @override
+  String get source => r'''
+import 'package:flutter/widgets.dart';
+
+class OrdersScreen extends StatelessWidget {}
+''';
+
+  @override
+  void setUp() {
+    newPackage('flutter_riverpod').addFile('lib/flutter_riverpod.dart', r'''
+import 'package:flutter/widgets.dart';
+
+abstract class ConsumerStatefulWidget extends StatefulWidget {}
+abstract class ConsumerWidget extends ConsumerStatefulWidget {}
+abstract class ConsumerState<T extends ConsumerStatefulWidget> extends State<T> {}
+''');
+    super.setUp();
+  }
+
+  @override
+  void _addFlutterPackage() {
+    newPackage('flutter').addFile('lib/widgets.dart', r'''
+abstract class Widget {}
+abstract class StatelessWidget extends Widget {}
+abstract class StatefulWidget extends Widget {}
+abstract class State<T extends StatefulWidget> {}
+''');
+  }
+
+  void test_reportsAsError() {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
+  Future<void> test_reportsStatefulScreen() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/widgets.dart';
+
+class OrdersScreen extends StatefulWidget {}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, 'OrdersScreen extends StatefulWidget', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsConsumerScreens() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class OrdersScreen extends ConsumerWidget {}
+
+class OrderEditorScreen extends ConsumerStatefulWidget {}
+
+class _OrderEditorScreenState extends ConsumerState<OrderEditorScreen> {}
+
+class _OrdersBody extends StatelessWidget {}
+''', path: path);
+  }
+
+  Future<void> test_allowsStatelessWidgetsOutsideScreens() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+
+class OrderTile extends StatelessWidget {}
+''', path: '$testPackageLibPath/features/orders/presentation/widgets/order_tile.dart');
+  }
 }
 
 @reflectiveTest
@@ -152,6 +250,89 @@ final class StyleRawTokenTest extends _UiRuleTest {
   bool get lineStart => true;
   @override
   String get source => 'final inset = EdgeInsets.all(8);';
+
+  void test_reportsAsError() {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
+  @override
+  bool get addFlutterPackageDep => true;
+
+  @override
+  void _addFlutterPackage() {}
+
+  Future<void> test_reportsResolvedRawColors() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+final material = Colors.red;
+final cupertino = CupertinoColors.systemBlue;
+const hex = Color(0xFF123456);
+const argb = Color.fromARGB(255, 1, 2, 3);
+const rgbo = Color.fromRGBO(1, 2, 3, 0.5);
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/widgets/atoms/palette_atom.dart';
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      for (final needle in [
+        'final material',
+        'final cupertino',
+        'const hex',
+        'const argb',
+        'const rgbo',
+      ])
+        compatLint(analyzedSource, needle, ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_reportsResolvedRawSizes() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/material.dart';
+
+extension on TextStyle {
+  TextStyle copyWith({double? fontSize}) => this;
+}
+
+Widget icon() => const Icon(null, size: 24);
+TextStyle? body(TextStyle? base) => base?.copyWith(fontSize: 18);
+const side = BorderSide(width: 3);
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/widgets/atoms/size_atom.dart';
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      for (final needle in ['Widget icon()', 'TextStyle? body', 'const side'])
+        compatLint(analyzedSource, needle, ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsTokenSizesAndUnrelatedPalettes() async {
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+
+abstract final class AppTokens {
+  static const double iconMd = 24;
+  static const double fontBody = 14;
+  static const double hairline = 1;
+}
+
+abstract final class Palette {
+  static const red = 1;
+}
+
+extension on TextStyle {
+  TextStyle copyWith({double? fontSize}) => this;
+}
+
+Widget icon() => const Icon(null, size: AppTokens.iconMd);
+TextStyle body(TextStyle base) => base.copyWith(fontSize: AppTokens.fontBody);
+const side = BorderSide(width: AppTokens.hairline);
+const none = BorderSide(width: 0);
+final unrelated = Palette.red;
+''', path: '$testPackageLibPath/core/widgets/atoms/token_atom.dart');
+  }
 
   Future<void> test_allowsRawTokensInThemeDefinitions() async {
     await assertAllows('''
@@ -260,6 +441,10 @@ final class StyleRawTextStyleTest extends _UiRuleTest {
   String get needle => 'TextStyle()';
   @override
   String get source => 'final style = TextStyle();';
+
+  void test_reportsAsError() {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
 
   Future<void> test_allowsTextStyleInThemeDefinitions() async {
     await assertAllows('''

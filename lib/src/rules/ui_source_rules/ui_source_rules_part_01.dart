@@ -9,15 +9,15 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       'style_raw_token',
       'Avoid raw spacing, radius, size, and color tokens.',
       correctionMessage: 'Use design tokens.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags raw visual constants instead of design tokens so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (context.isThemeDefFile || context.isTestFile) return;
 
+      final rawLines = _resolvedRawStyleTokenLines(context);
       for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (_hasRawStyleToken(line)) {
+        if (rawLines.contains(i) || _hasRawStyleToken(context.source.masked[i])) {
           reporter.report(context, i, 0);
         }
       }
@@ -32,7 +32,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       'style_raw_text_style',
       'Avoid raw TextStyle construction.',
       correctionMessage: 'Use the app theme text styles.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description:
         'Flags raw TextStyle construction so the Flutter skill violation is shown during analysis.',

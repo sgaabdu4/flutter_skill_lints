@@ -126,9 +126,9 @@ class ContentView extends StatefulWidget {
 }
 
 class _ContentViewState extends State<ContentView> {
-  final List<Object> _pageStack = [];
-
+  bool _saving = false;
   Future<void> save(Future<void> Function() action, VoidCallback cleanup) async {
+    _saving = true;
     try {
       await action();
     } finally {

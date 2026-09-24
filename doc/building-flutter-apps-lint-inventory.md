@@ -21,6 +21,7 @@ arch_repository_generated_extends
 arch_widget_path
 async_context_mounted_style
 atom_widget_layer_dependency
+atomic_page_consumer_widget
 atomic_provider_access
 avoid_any_version
 avoid_clip_rrect_container

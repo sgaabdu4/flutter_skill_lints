@@ -1,4 +1,10 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> presentationWidgetSourceRules = [
@@ -13,7 +19,20 @@ final List<ScannerRule> presentationWidgetSourceRules = [
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Keeps navigation orchestration out of reusable presentation widgets.',
-    scan: (reporter, context) => _scanPresentationWidgetLines(reporter, context, _navigationColumn),
+    scan: (reporter, context) {
+      _scanPresentationWidgetLines(reporter, context, _navigationImportColumn);
+      if (!context.isPresentationWidgetFile || context.isTestFile) return;
+
+      final visitor = _NavigationVisitor();
+      context.unit.accept(visitor);
+      final reportedLines = <int>{};
+      for (final offset in visitor.offsets) {
+        final location = context.unit.lineInfo.getLocation(offset);
+        if (reportedLines.add(location.lineNumber)) {
+          reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+        }
+      }
+    },
   ),
 
   /// Keep reusable presentation widget State free of domain and workflow state.
@@ -31,14 +50,21 @@ final List<ScannerRule> presentationWidgetSourceRules = [
     scan: (reporter, context) {
       if (!context.isPresentationWidgetFile || context.isTestFile) return;
 
-      for (final classSpan in context.classes) {
-        if (!_isWidgetStateClass(context, classSpan)) continue;
+      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+        final body = flutterStateBody(declaration);
+        if (body == null) continue;
 
-        for (var i = classSpan.start + 1; i < classSpan.end; i++) {
-          if (!_isDirectClassMember(context, classSpan, i)) continue;
-          final line = context.source.masked[i];
-          if (_controllerStateColumn(line) case final column?) {
-            reporter.report(context, i, column);
+        final workflowFlags = _asyncWorkflowFlags(body);
+        for (final field in body.members.whereType<FieldDeclaration>()) {
+          if (field.isStatic) continue;
+          final holdsForbiddenState = field.fields.variables.any((variable) {
+            final element = variable.declaredFragment?.element;
+            return element is FieldElement &&
+                (_holdsDomainOrProviderState(element.type) || workflowFlags.contains(element));
+          });
+          if (holdsForbiddenState) {
+            final location = context.unit.lineInfo.getLocation(field.fields.offset);
+            reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
           }
         }
       }
@@ -78,78 +104,133 @@ void _scanPresentationWidgetLines(
   }
 }
 
-int? _navigationColumn(String line) {
-  final patterns = [
-    RegExp(r'''^\s*import\s+['"][^'"]*(?:go_router|/routing/|/routes/|_route\.dart)[^'"]*['"]'''),
-    RegExp(
-      r'\bNavigator\s*\.\s*(?:of\s*\([^)]*\)\s*\.)?(?:push|pop|replace|restorablePush)\w*\s*\(',
-    ),
-    RegExp(r'\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*(?:go|push|replace|pop)\w*\s*\('),
-    RegExp(
-      r'\b(?:context|[A-Za-z_]\w*Context|this)\s*\.\s*(?:go|goNamed|push|pushNamed|pushReplacement|replace|replaceNamed|pop)\s*\(',
-    ),
-    RegExp(r'\b[A-Z]\w*Route\s*\([^;]*\)\s*\.\s*(?:go|push|replace)\s*\('),
-  ];
-  for (final pattern in patterns) {
-    final match = pattern.firstMatch(line);
-    if (match != null) return match.start;
+int? _navigationImportColumn(String line) =>
+    RegExp(r'''^\s*import\s+['"][^'"]*(?:go_router|/routing/|/routes/|_route\.dart)[^'"]*['"]''')
+        .firstMatch(line)
+        ?.start;
+
+const _navigatorChecker = TypeChecker.any([
+  TypeChecker.fromName('Navigator', packageName: 'flutter'),
+  TypeChecker.fromName('NavigatorState', packageName: 'flutter'),
+]);
+const _goRouterRouteDataChecker = TypeChecker.fromName('RouteData', packageName: 'go_router');
+
+/// Collects resolved Navigator, GoRouter, and typed-route navigation calls.
+final class _NavigationVisitor extends RecursiveAstVisitor<void> {
+  final offsets = <int>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (_isNavigation(node)) offsets.add(node.offset);
+    super.visitMethodInvocation(node);
   }
-  return null;
-}
 
-bool _isWidgetStateClass(SourceScannerContext context, ScannerClassSpan classSpan) {
-  final end = (classSpan.start + 3).clamp(classSpan.start, classSpan.end);
-  final signature = context.source.masked.sublist(classSpan.start, end + 1).join(' ');
-  return RegExp(r'\bextends\s+(?:ConsumerState|HookConsumerState|State)\s*<').hasMatch(signature);
-}
+  bool _isNavigation(MethodInvocation node) {
+    final method = node.methodName.element;
+    final owner = method?.enclosingElement;
+    if (owner != null && _navigatorChecker.isExactly(owner)) {
+      return switch (node.methodName.name) {
+        'of' || 'maybeOf' || 'canPop' => false,
+        'pop' || 'maybePop' => !_isLocalModalDismissal(node),
+        _ => true,
+      };
+    }
+    if (method?.library?.identifier.startsWith('package:go_router/') ?? false) return true;
 
-bool _isDirectClassMember(SourceScannerContext context, ScannerClassSpan classSpan, int lineIndex) {
-  var depth = 0;
-  for (var i = classSpan.start; i < lineIndex; i++) {
-    depth += _braceDelta(context.source.masked[i]);
+    final targetType = node.realTarget?.staticType;
+    return targetType != null && _goRouterRouteDataChecker.isAssignableFromType(targetType);
   }
-  return depth == 1;
 }
 
-int _braceDelta(String line) => '{'.allMatches(line).length - '}'.allMatches(line).length;
+/// Whether a Navigator pop is the final work of its callback: an arrow body,
+/// the last statement of the function, or followed only by a bare `return;`.
+bool _isLocalModalDismissal(MethodInvocation pop) {
+  AstNode node = pop;
+  if (node.parent is ExpressionFunctionBody) return true;
+  if (node.parent is! ExpressionStatement) return false;
+  node = node.parent!;
 
-int? _controllerStateColumn(String line) {
-  final match = RegExp(
-    r'^\s*(?:(?:late|final)\s+)*(?<type>[A-Za-z_]\w*(?:\s*<[^;=]+>)?\??)\s+(?<name>_[A-Za-z_]\w*)\b',
-  ).firstMatch(line);
-  if (match == null) return null;
-
-  final type = match.namedGroup('type') ?? '';
-  final name = match.namedGroup('name') ?? '';
-  if (_isUiLifecycleType(type)) return null;
-
-  final normalizedName = name.replaceAll('_', '').toLowerCase();
-  final isWorkflowStatus = RegExp(
-    r'^(?:is|has)(?:loading|saving|submitting|deleting|mutating|processing|pending|syncing|refreshing|uploading)$',
-  ).hasMatch(normalizedName);
-  final isNavigationCollection =
-      normalizedName.endsWith('stack') &&
-      (normalizedName.contains('page') ||
-          normalizedName.contains('navigation') ||
-          normalizedName.contains('route'));
-  final isDerivedCache =
-      normalizedName.endsWith('cache') ||
-      normalizedName.endsWith('snapshot') ||
-      normalizedName.endsWith('byid');
-  final isSelectedDomainRecord = normalizedName.startsWith('selected') && !_isPrimitiveType(type);
-
-  if (!isWorkflowStatus && !isNavigationCollection && !isDerivedCache && !isSelectedDomainRecord) {
-    return null;
+  while (true) {
+    final parent = node.parent;
+    switch (parent) {
+      case BlockFunctionBody():
+        return true;
+      case IfStatement():
+        node = parent;
+      case Block(:final statements):
+        final index = statements.indexOf(node as Statement);
+        final rest = statements.skip(index + 1).toList();
+        if (rest.isEmpty) {
+          node = parent;
+        } else {
+          return rest.length == 1 &&
+              rest.single is ReturnStatement &&
+              (rest.single as ReturnStatement).expression == null;
+        }
+      default:
+        return false;
+    }
   }
-  return line.indexOf(match.group(0)!.trimLeft());
 }
 
-bool _isUiLifecycleType(String type) => RegExp(
-  r'^(?:TextEditingController|ScrollController|PageController|FocusNode|AnimationController|TabController|Timer|Debouncer)\??$',
-).hasMatch(type);
+const _asyncValueChecker = TypeChecker.fromName('AsyncValue', packageName: 'riverpod');
 
-bool _isPrimitiveType(String type) =>
-    RegExp(r'^(?:bool|int|double|num|String|Duration|DateTime)\??$').hasMatch(type);
+/// Whether [type] is, or is a collection of, a domain-layer type or a
+/// provider-derived AsyncValue snapshot.
+bool _holdsDomainOrProviderState(DartType type) {
+  if (type is! InterfaceType) return false;
+  final library = type.element.library.identifier;
+  if (library.startsWith('package:') && library.contains('/domain/')) return true;
+  if (_asyncValueChecker.isExactlyType(type)) return true;
+  return type.typeArguments.any(_holdsDomainOrProviderState);
+}
+
+/// Bool fields assigned before an `await` in the same async function: flags
+/// that track an in-flight async workflow.
+Set<FieldElement> _asyncWorkflowFlags(BlockClassBody body) {
+  final visitor = _WorkflowFlagVisitor();
+  body.accept(visitor);
+  return visitor.flags;
+}
+
+final class _WorkflowFlagVisitor extends RecursiveAstVisitor<void> {
+  final flags = <FieldElement>{};
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    final written = node.writeElement;
+    final field = switch (written) {
+      FieldElement() => written,
+      PropertyAccessorElement(:final FieldElement variable) => variable,
+      _ => null,
+    };
+    if (field != null && !field.isStatic && field.type.isDartCoreBool && _precedesAwait(node)) {
+      flags.add(field);
+    }
+    super.visitAssignmentExpression(node);
+  }
+}
+
+bool _precedesAwait(AstNode node) {
+  final asyncBody = node.thisOrAncestorMatching<FunctionBody>(
+    (ancestor) => ancestor is FunctionBody && ancestor.isAsynchronous,
+  );
+  if (asyncBody == null) return false;
+
+  final awaits = _AwaitOffsetVisitor();
+  asyncBody.accept(awaits);
+  return awaits.offsets.any((offset) => offset > node.end);
+}
+
+final class _AwaitOffsetVisitor extends RecursiveAstVisitor<void> {
+  final offsets = <int>[];
+
+  @override
+  void visitAwaitExpression(AwaitExpression node) {
+    offsets.add(node.offset);
+    super.visitAwaitExpression(node);
+  }
+}
 
 int? _infrastructureColumn(String line) {
   final patterns = [

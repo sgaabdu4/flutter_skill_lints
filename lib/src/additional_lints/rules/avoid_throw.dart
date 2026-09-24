@@ -13,7 +13,10 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 ///
 /// Resolved `dart:core` `Error.throwWithStackTrace` calls follow the same
 /// contract, except when they propagate the error and stack trace caught by
-/// the same enclosing catch clause. Typed [Exception] subtypes, including `FormatException`, may be thrown by
+/// the same enclosing catch clause. The documented scoped Riverpod provider
+/// stub (`@Riverpod(dependencies: [...])` with an expression body of
+/// `throw UnimplementedError()`) is allowed because it must be overridden.
+/// Typed [Exception] subtypes, including `FormatException`, may be thrown by
 /// parsers and infrastructure code. Throws in resolved Flutter `Widget` or
 /// `State` members, Flutter widget callbacks, and Riverpod notifier methods
 /// remain warnings. Direct same-unit function and method references passed to
@@ -24,6 +27,7 @@ class AvoidThrow extends AnalysisRule {
     'avoid_throw',
     'Avoid throw expressions.',
     correctionMessage: 'Return a typed failure or use the project error boundary.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidThrow()
@@ -53,7 +57,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitThrowExpression(ThrowExpression node) {
-    if (_isValueObjectArgumentGuard(node, path)) return;
+    if (_isValueObjectArgumentGuard(node, path) || _isScopedProviderOverrideStub(node)) return;
     if (_isRecoverableException(node.expression.staticType) && !_isPresentationContext(node)) {
       return;
     }
@@ -192,6 +196,10 @@ const _exceptionChecker = TypeChecker.fromUrl('dart:core#Exception');
 const _errorChecker = TypeChecker.fromUrl('dart:core#Error');
 const _flutterWidgetChecker = TypeChecker.fromName('Widget', packageName: 'flutter');
 const _flutterStateChecker = TypeChecker.fromName('State', packageName: 'flutter');
+const _riverpodAnnotationChecker = TypeChecker.fromName(
+  'Riverpod',
+  packageName: 'riverpod_annotation',
+);
 const _riverpodNotifierChecker = TypeChecker.any([
   TypeChecker.fromName('Notifier', packageName: 'riverpod'),
   TypeChecker.fromName('AsyncNotifier', packageName: 'riverpod'),
@@ -228,6 +236,34 @@ bool _isCaughtPairPropagation(AstNode node, Expression error, Expression stackTr
     clause = clause.parent?.thisOrAncestorOfType<CatchClause>();
   }
   return false;
+}
+
+/// The documented scoped-provider stub that must be overridden before use:
+/// `@Riverpod(dependencies: [...]) T name(Ref ref) => throw UnimplementedError();`
+bool _isScopedProviderOverrideStub(ThrowExpression node) {
+  final body = node.parent;
+  final function = body?.parent?.parent;
+  if (body is! ExpressionFunctionBody ||
+      function is! FunctionDeclaration ||
+      function.parent is! CompilationUnit) {
+    return false;
+  }
+  final error = node.expression;
+  return error is InstanceCreationExpression &&
+      _isCoreClassType(error.staticType, 'UnimplementedError') &&
+      function.metadata.any(_isScopedRiverpodAnnotation);
+}
+
+bool _isScopedRiverpodAnnotation(Annotation annotation) {
+  final constructor = annotation.element;
+  if (constructor is! ConstructorElement ||
+      !_riverpodAnnotationChecker.isExactly(constructor.enclosingElement)) {
+    return false;
+  }
+  final arguments = annotation.arguments?.arguments ?? const <Argument>[];
+  return arguments.any(
+    (argument) => argument is NamedArgument && argument.name.lexeme == 'dependencies',
+  );
 }
 
 bool _isValueObjectArgumentGuard(ThrowExpression node, String path) {

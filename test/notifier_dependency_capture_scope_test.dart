@@ -160,7 +160,7 @@ const freezed = Freezed();
     await _expectNotifierDiagnostic(source);
   }
 
-  Future<void> test_reportsCatchLocalCaptureThatCannotProtectTryMainPath() async {
+  Future<void> test_allowsSkillSaveShapeWithCatchCapture() async {
     final source = _source(r'''
   Future<void> saveItem() async {
     try {
@@ -174,10 +174,10 @@ const freezed = Freezed();
   }
 ''');
 
-    await _expectNotifierDiagnostic(source);
+    await assertNoDiagnostics(source);
   }
 
-  Future<void> test_reportsNestedClosureCaptureThatCannotProtectMainPath() async {
+  Future<void> test_leavesUnguardedAwaitAfterClosureToMountedRule() async {
     final source = _source(r'''
   Future<void> saveItem() async {
     final callback = () async {
@@ -191,10 +191,10 @@ const freezed = Freezed();
   }
 ''');
 
-    await _expectNotifierDiagnostic(source);
+    await assertNoDiagnostics(source);
   }
 
-  Future<void> test_reportsLateRepositoryReadAfterSafeTryCapture() async {
+  Future<void> test_allowsDirectReadAfterSafeTryCapture() async {
     final source = _source(r'''
   Future<void> saveItem() async {
     try {
@@ -208,10 +208,10 @@ const freezed = Freezed();
   }
 ''');
 
-    await _expectNotifierDiagnostic(source);
+    await assertNoDiagnostics(source);
   }
 
-  Future<void> test_reportsCatchResourceOperationBesideSafeTryCapture() async {
+  Future<void> test_allowsDirectReadInCatchBesideSafeTryCapture() async {
     final source = _source(r'''
   Future<void> saveItem() async {
     try {
@@ -225,10 +225,10 @@ const freezed = Freezed();
   }
 ''');
 
-    await _expectNotifierDiagnostic(source);
+    await assertNoDiagnostics(source);
   }
 
-  Future<void> test_reportsFinallyResourceOperationBesideSafeTryCapture() async {
+  Future<void> test_allowsDirectReadInFinallyBesideSafeTryCapture() async {
     final source = _source(r'''
   Future<void> saveItem() async {
     try {
@@ -241,7 +241,7 @@ const freezed = Freezed();
   }
 ''');
 
-    await _expectNotifierDiagnostic(source);
+    await assertNoDiagnostics(source);
   }
 
   Future<void> test_allowsResolvedResourceFreeFreezedStateReadAfterMutation() async {
@@ -267,7 +267,7 @@ final viewStateProvider = Provider<ViewState>(const ViewState('ready'));
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_reportsUnannotatedStateReadAfterMutation() async {
+  Future<void> test_allowsUnannotatedStateReadAfterMutation() async {
     final source = _source(
       r'''
   Future<void> saveItem() async {
@@ -285,10 +285,10 @@ final class FakeState {
 final fakeStateProvider = Provider<FakeState>(const FakeState('ready'));
 ''',
     );
-    await _expectNotifierDiagnostic(source);
+    await assertNoDiagnostics(source);
   }
 
-  Future<void> test_reportsFreezedStateContainingRepositoryAfterMutation() async {
+  Future<void> test_allowsFreezedStateContainingRepositoryReadAfterMutation() async {
     final source = _source(
       r'''
   Future<void> saveItem() async {
@@ -309,7 +309,7 @@ final repositoryStateProvider = Provider<RepositoryState>(
 );
 ''',
     );
-    await _expectNotifierDiagnostic(source);
+    await assertNoDiagnostics(source);
   }
 
   Future<void> _expectNotifierDiagnostic(String source) async {

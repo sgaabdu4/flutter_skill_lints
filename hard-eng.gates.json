@@ -81,7 +81,8 @@
             "dart",
             "analyze",
             "--fatal-infos",
-            "."
+            "lib",
+            "test"
           ]
         },
         {

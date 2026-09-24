@@ -288,6 +288,11 @@ void main() {
 final class StringsHardcodedTest extends _UiRuleTest {
   @override
   String get ruleName => 'strings_hardcoded';
+
+  Future<void> test_severityIsError() async {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
   @override
   String get needle => "Text('Save'";
   @override
@@ -331,6 +336,11 @@ void log() {
 final class L10nContextDirectAccessTest extends _UiRuleTest {
   @override
   String get ruleName => 'l10n_context_direct_access';
+
+  Future<void> test_severityIsError() async {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
   @override
   String get needle => 'context.l10n.deleteTitle';
   @override
@@ -507,6 +517,11 @@ class Avatar extends StatelessWidget {
 final class WidgetTopLevelFunctionBoundaryTest extends _UiRuleTest {
   @override
   String get ruleName => 'widget_top_level_function_boundary';
+
+  Future<void> test_severityIsError() async {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
   @override
   String get needle => 'Future<void> createSquad';
   @override

@@ -1,7 +1,9 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_hardcoded_strings.dart';
+import 'package:test/test.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
@@ -17,6 +19,10 @@ final class AvoidHardcodedStringsTest extends AnalysisRuleTest {
     _addFlutterPackage();
     rule = AvoidHardcodedStrings();
     super.setUp();
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(AvoidHardcodedStrings.code.severity, DiagnosticSeverity.ERROR);
   }
 
   void _addFlutterPackage() {

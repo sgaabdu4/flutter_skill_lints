@@ -26,6 +26,7 @@ class AvoidReturningWidgets extends AnalysisRule {
     correctionMessage:
         'Extract this into a named Widget class. Only framework build/builder '
         'overrides should return widgets directly.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidReturningWidgets()

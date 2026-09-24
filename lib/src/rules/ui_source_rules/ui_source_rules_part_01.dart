@@ -50,13 +50,13 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
 
   /// Avoid hardcoded UI strings.
   ///
-  /// Why: Flags hardcoded UI strings. Move text into a *Strings constants class.
+  /// Why: Flags hardcoded UI strings. Move text into gen-l10n ARB files and read it via AppLocalizations.
   scannerRule(
     code: const LintCode(
       'strings_hardcoded',
       'Avoid hardcoded UI strings.',
-      correctionMessage: 'Move text into a *Strings constants class.',
-      severity: DiagnosticSeverity.WARNING,
+      correctionMessage: 'Move user-facing text into the gen-l10n ARB files and read it through AppLocalizations (context.l10n).',
+      severity: DiagnosticSeverity.ERROR,
     ),
     description:
         'Flags hardcoded UI strings so the Flutter skill violation is shown during analysis.',
@@ -79,7 +79,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       'Bind localizations before reading localized strings.',
       correctionMessage:
           'Use `final l10n = context.l10n;` and then read localized keys from `l10n`.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description:
         'Flags direct context.l10n key access so widgets bind localizations once before use.',

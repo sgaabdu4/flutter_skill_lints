@@ -14,6 +14,7 @@ class PreferTextRich extends InstanceAndMethodInvocationRule {
     'prefer_text_rich',
     'Use Text.rich instead of RichText for better text scaling and accessibility.',
     correctionMessage: 'Replace RichText with Text.rich.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   PreferTextRich()

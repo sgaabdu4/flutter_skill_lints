@@ -19,8 +19,9 @@ class AvoidHardcodedStrings extends AnalysisRule {
     'avoid_hardcoded_strings',
     'Avoid hardcoded user-facing strings in widget UI.',
     correctionMessage:
-        'Move the text into localization (AppLocalizations / context.l10n) or a '
-        'dedicated *_strings.dart constant and reference it here.',
+        'Move the text into the gen-l10n ARB files and read it through '
+        'AppLocalizations (context.l10n).',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidHardcodedStrings()

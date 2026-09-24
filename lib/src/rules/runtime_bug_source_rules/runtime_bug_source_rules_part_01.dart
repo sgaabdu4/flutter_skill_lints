@@ -228,7 +228,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       'notifier_persistence_no_debounce',
       'Persistence helper has no debounce / Timer / delayed indirection.',
       correctionMessage: 'Wrap the persist call in a `Timer` (cancel-and-restart on next call) or a `Debouncer` so rapid mutations coalesce into one write.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags `_schedule*Persist` / `_persistDraft` helper methods reached from synchronous or state-writing mutation paths when their class lacks any Timer/Future.delayed/Debouncer reference. Awaited one-shot lifecycle writes are allowed.',
     scan: (reporter, context) {

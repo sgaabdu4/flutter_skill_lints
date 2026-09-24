@@ -514,24 +514,10 @@ int? _durationLiteralMs(String line) {
 /// helper inherits that helper's verdict, and a helper with no resolved use in
 /// the class stays reported.
 int? _mutationPathPersistHelperLine(SourceScannerContext context, ScannerClassSpan classSpan) {
-  final helpers = <ExecutableElement, MethodDeclaration>{};
-  final lines = <ExecutableElement, int>{};
-  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-    final match = _persistHelperPattern.firstMatch(context.source.masked[i]);
-    if (match == null) continue;
-    final offset = context.source.lineOffsets[i] + match.start;
-    final declaration = context.unit
-        .nodeCovering(offset: offset)
-        ?.thisOrAncestorMatching((node) => node is MethodDeclaration || node is FunctionBody);
-    if (declaration is! MethodDeclaration) continue;
-    final element = declaration.declaredFragment?.element;
-    if (element == null) continue;
-    helpers[element] = declaration;
-    lines[element] = i;
-  }
+  final helpers = _persistHelperDeclarations(context, classSpan);
   if (helpers.isEmpty) return null;
 
-  final classNode = helpers.values.first.thisOrAncestorOfType<ClassDeclaration>();
+  final classNode = helpers.values.first.node.thisOrAncestorOfType<ClassDeclaration>();
   if (classNode == null) return null;
   final uses = _PersistHelperUseFinder(helpers.keys.toSet());
   classNode.accept(uses);
@@ -554,10 +540,31 @@ int? _mutationPathPersistHelperLine(SourceScannerContext context, ScannerClassSp
     return verdicts[helper] = verdict;
   }
 
-  for (final entry in lines.entries) {
-    if (reachesMutationPath(entry.key)) return entry.value;
+  for (final MapEntry(key: helper, value: (:line, node: _)) in helpers.entries) {
+    if (reachesMutationPath(helper)) return line;
   }
   return null;
+}
+
+/// Resolves the `_persistHelperPattern` lines in [classSpan] to their declared
+/// class methods, in source order. Local lookalike functions are skipped.
+Map<ExecutableElement, ({MethodDeclaration node, int line})> _persistHelperDeclarations(
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+) {
+  final helpers = <ExecutableElement, ({MethodDeclaration node, int line})>{};
+  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
+    final match = _persistHelperPattern.firstMatch(context.source.masked[i]);
+    if (match == null) continue;
+    final offset = context.source.lineOffsets[i] + match.start;
+    final declaration = context.unit
+        .nodeCovering(offset: offset)
+        ?.thisOrAncestorMatching((node) => node is MethodDeclaration || node is FunctionBody);
+    if (declaration is! MethodDeclaration) continue;
+    final element = declaration.declaredFragment?.element;
+    if (element != null) helpers[element] = (node: declaration, line: i);
+  }
+  return helpers;
 }
 
 /// A helper invocation is a one-shot lifecycle write when its enclosing body is

@@ -462,22 +462,33 @@ Iterable<String> _ownedComments(
   Token first,
   Token last, {
   bool trailing = false,
-}) sync* {
+}) {
   final lineInfo = context.unit.lineInfo;
   int lineOf(int offset) => lineInfo.getLocation(offset).lineNumber;
   final previous = first.previous;
   final previousLine = previous == null || previous.isEof ? -1 : lineOf(previous.end);
-  for (Token? token = first; token != null && !token.isEof; token = token.next) {
-    for (Token? comment = token.precedingComments; comment != null; comment = comment.next) {
-      if (token == first && lineOf(comment.offset) <= previousLine) continue;
-      yield comment.lexeme;
-    }
-    if (token == last) break;
-  }
-  if (!trailing) return;
   final lastLine = lineOf(last.end);
-  for (Token? comment = last.next?.precedingComments; comment != null; comment = comment.next) {
-    if (lineOf(comment.offset) == lastLine) yield comment.lexeme;
+  final next = last.next;
+  return [
+    ..._commentTokens(first).where((comment) => lineOf(comment.offset) > previousLine),
+    for (final token in _tokensAfter(first, last)) ..._commentTokens(token),
+    if (trailing && next != null)
+      ..._commentTokens(next).where((comment) => lineOf(comment.offset) == lastLine),
+  ].map((comment) => comment.lexeme);
+}
+
+Iterable<Token> _commentTokens(Token token) sync* {
+  for (Token? comment = token.precedingComments; comment != null; comment = comment.next) {
+    yield comment;
+  }
+}
+
+/// Tokens after [first] up to and including [last].
+Iterable<Token> _tokensAfter(Token first, Token last) sync* {
+  if (first == last) return;
+  for (Token? token = first.next; token != null && !token.isEof; token = token.next) {
+    yield token;
+    if (token == last) return;
   }
 }
 

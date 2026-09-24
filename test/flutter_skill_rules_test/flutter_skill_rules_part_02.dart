@@ -248,6 +248,37 @@ class TodosNotifier extends Notifier<int> {
 ''');
   }
 
+  Future<void> test_shadowedDirectMountedGuardStillReports() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+class FakeRef {
+  bool get mounted => true;
+}
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  int _revision = 0;
+  Future<void> load() async {
+    final ref = FakeRef();
+    final ticket = _revision;
+    await Future<void>.value();
+    if (!ref.mounted || ticket != _revision) return;
+    state = 1;
+  }
+  Future<void> loadOther(Ref ref) async {
+    final ticket = _revision;
+    await Future<void>.value();
+    if (!ref.mounted || ticket != _revision) return;
+    state = 2;
+  }
+}
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf('state = 1'), 5),
+      lint(source.indexOf('state = 2'), 5),
+    ]);
+  }
+
   Future<void> test_impureSuffixCanInvalidateMountedGuard() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';

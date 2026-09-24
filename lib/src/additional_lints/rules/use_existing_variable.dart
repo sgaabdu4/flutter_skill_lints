@@ -44,7 +44,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final variables = <_VariableInfo>[];
     for (final statement in node.statements) {
       final hasSideEffect = _MayHaveSideEffect.check(statement);
-      if (hasSideEffect && statement is VariableDeclarationStatement) variables.clear();
       _reportDuplicateExpressions(statement, variables);
       if (hasSideEffect) variables.clear();
       _collectVariableDeclarations(statement, variables);
@@ -116,110 +115,138 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
-    // Skip simple identifiers — they're trivial
-    // (also avoids matching sub-expressions of larger matches)
+    // Identifiers are too small to report, but an explicit getter may mutate
+    // values used by a later expression in the same statement.
+    _invalidateAfter(node);
+  }
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    super.visitAssignmentExpression(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitPrefixedIdentifier(PrefixedIdentifier node) {
     if (_checkExpression(node)) return;
     super.visitPrefixedIdentifier(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitPropertyAccess(PropertyAccess node) {
     if (_checkExpression(node)) return;
     super.visitPropertyAccess(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
     if (_checkExpression(node)) return;
     super.visitMethodInvocation(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     if (_checkExpression(node)) return;
     super.visitInstanceCreationExpression(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitIndexExpression(IndexExpression node) {
     if (_checkExpression(node)) return;
     super.visitIndexExpression(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitBinaryExpression(BinaryExpression node) {
     if (_checkExpression(node)) return;
     super.visitBinaryExpression(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitConditionalExpression(ConditionalExpression node) {
     if (_checkExpression(node)) return;
     super.visitConditionalExpression(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
     if (_checkExpression(node)) return;
     super.visitFunctionExpressionInvocation(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitCascadeExpression(CascadeExpression node) {
     if (_checkExpression(node)) return;
     super.visitCascadeExpression(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitPostfixExpression(PostfixExpression node) {
     if (_checkExpression(node)) return;
     super.visitPostfixExpression(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitPrefixExpression(PrefixExpression node) {
     if (_checkExpression(node)) return;
     super.visitPrefixExpression(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitAsExpression(AsExpression node) {
     if (_checkExpression(node)) return;
     super.visitAsExpression(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitIsExpression(IsExpression node) {
     if (_checkExpression(node)) return;
     super.visitIsExpression(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitListLiteral(ListLiteral node) {
     if (_checkExpression(node)) return;
     super.visitListLiteral(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitSetOrMapLiteral(SetOrMapLiteral node) {
     if (_checkExpression(node)) return;
     super.visitSetOrMapLiteral(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitAwaitExpression(AwaitExpression node) {
     if (_checkExpression(node)) return;
     super.visitAwaitExpression(node);
+    _invalidateAfter(node);
   }
 
   @override
   void visitParenthesizedExpression(ParenthesizedExpression node) {
     if (_checkExpression(node)) return;
     super.visitParenthesizedExpression(node);
+    _invalidateAfter(node);
+  }
+
+  void _invalidateAfter(AstNode node) {
+    if (_MayHaveSideEffect.check(node)) variables.clear();
   }
 
   // Stop at nested function boundaries — different execution context

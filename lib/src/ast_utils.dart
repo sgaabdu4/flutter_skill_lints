@@ -259,7 +259,9 @@ bool _returnsWhenUnmounted(
   final condition = expression.unParenthesized;
   if (additionalCondition?.call(condition) ?? false) return true;
   if (condition is PrefixExpression && condition.operator.lexeme == '!') {
-    return isTargetProperty(condition.operand.unParenthesized, targetName, 'mounted');
+    final mounted = condition.operand.unParenthesized;
+    return isTargetProperty(mounted, targetName, 'mounted') &&
+        (targetName != 'ref' || isRiverpodRefAccess(mounted));
   }
   if (condition is BinaryExpression && condition.operator.lexeme == '||') {
     return _returnsWhenUnmounted(condition.rightOperand, targetName, additionalCondition) ||

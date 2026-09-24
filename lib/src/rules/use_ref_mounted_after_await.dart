@@ -78,7 +78,7 @@ bool _resolvedMountedHelperGuard(Expression condition, ClassDeclaration owner) {
 
 bool _trueRequiresMounted(Expression expression) {
   final value = expression.unParenthesized;
-  if (isTargetProperty(value, 'ref', 'mounted')) return _isRiverpodRefAccess(value);
+  if (isTargetProperty(value, 'ref', 'mounted')) return isRiverpodRefAccess(value);
   if (value is BinaryExpression && value.operator.lexeme == '&&') {
     return _trueRequiresMounted(value.rightOperand) ||
         _trueRequiresMounted(value.leftOperand) && isPureMountedGuardSuffix(value.rightOperand);
@@ -87,16 +87,4 @@ bool _trueRequiresMounted(Expression expression) {
     return _trueRequiresMounted(value.leftOperand) && _trueRequiresMounted(value.rightOperand);
   }
   return false;
-}
-
-bool _isRiverpodRefAccess(Expression expression) {
-  final ref = switch (expression) {
-    PrefixedIdentifier(:final prefix) => prefix,
-    PropertyAccess(:final target) => target,
-    _ => null,
-  };
-  final element = ref is SimpleIdentifier ? ref.element : null;
-  if (element is! PropertyAccessorElement) return false;
-  final library = element.library.uri.toString();
-  return library.startsWith('package:riverpod/') || library.startsWith('package:flutter_riverpod/');
 }

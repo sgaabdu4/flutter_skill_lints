@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
@@ -44,8 +45,8 @@ final List<ScannerRule> servicesExtendedSourceRules = [
 
   /// Do not allocate Random per call.
   ///
-  /// Why: Flags Random construction inside methods. Hoist Random to a module-level final and
-  /// reuse it.
+  /// Why: Flags dart:math Random construction inside any function, method or closure body.
+  /// Hoist Random to a module-level final and reuse it.
   scannerRule(
     code: const LintCode(
       'service_random_per_call',
@@ -53,15 +54,12 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       correctionMessage: 'Hoist Random to a module-level final and reuse it.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags Random construction inside methods so the Flutter skill violation is shown during analysis.',
+    description: 'Flags dart:math Random construction inside function, method and closure bodies so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      for (final method in context.methods) {
-        for (var i = method.start; i <= method.end; i++) {
-          final line = context.source.masked[i];
-          if (RegExp(r'\b(?:math\.)?Random\s*\(').hasMatch(line)) {
-            reporter.report(context, i, line.indexOf('Random'));
-          }
-        }
+      final visitor = _PerCallRandomVisitor();
+      context.unit.accept(visitor);
+      for (final offset in visitor.offsets) {
+        reporter.reportOffset(context, offset);
       }
     },
   ),
@@ -336,4 +334,20 @@ bool _insideStableInfrastructureProviderFactory(SourceScannerContext context, in
     return element.name == 'Service' &&
         element.library.identifier == 'package:appwrite/src/service.dart';
   });
+}
+
+final class _PerCallRandomVisitor extends RecursiveAstVisitor<void> {
+  final offsets = <int>[];
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final type = node.staticType;
+    if (type is InterfaceType &&
+        type.element.name == 'Random' &&
+        type.element.library.uri.toString() == 'dart:math' &&
+        node.thisOrAncestorOfType<FunctionBody>() != null) {
+      offsets.add(node.constructorName.type.name.offset);
+    }
+    super.visitInstanceCreationExpression(node);
+  }
 }

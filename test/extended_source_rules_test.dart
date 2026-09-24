@@ -536,6 +536,8 @@ final class ServiceRandomPerCallTest extends _ServicesExtendedRuleTest {
   String get ruleName => 'service_random_per_call';
   @override
   String get source => '''
+import 'dart:math' as math;
+
 class RetryDelay {
   int next() {
     final rng = math.Random();
@@ -545,6 +547,40 @@ class RetryDelay {
 ''';
   @override
   String get needle => 'Random';
+
+  Future<void> test_reportsTopLevelFunctionAndClosure() async {
+    const source = '''
+import 'dart:math';
+
+Duration jitter() {
+  final perCall = Random();
+  return Duration(milliseconds: perCall.nextInt(100));
+}
+
+final pick = () => Random(7).nextBool();
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'Random();', ruleName),
+      compatLint(analyzedSource, 'Random(7)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsHoistedModuleAndStaticRandom() async {
+    await assertAllows('''
+import 'dart:math' as math;
+
+final _rng = math.Random();
+
+class RetryDelay {
+  static final _shared = math.Random();
+
+  int next() => _rng.nextInt(10) + _shared.nextInt(10);
+}
+
+Duration jitter() => Duration(milliseconds: _rng.nextInt(100));
+''');
+  }
 }
 
 @reflectiveTest

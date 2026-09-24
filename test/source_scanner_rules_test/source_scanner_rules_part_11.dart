@@ -1643,6 +1643,57 @@ class ProductNotifier extends AnyNotifier<int> {
   }
 }
 
+@reflectiveTest
+final class DatasourceConcreteHttpClientTest extends _NetworkRuleTest {
+  @override
+  String get ruleName => 'datasource_concrete_http_client';
+  @override
+  String get needle => 'Dio _dio;';
+  @override
+  String get path => '$testPackageLibPath/features/products/data/product_remote_datasource.dart';
+  @override
+  String get source => r'''
+import 'package:dio/dio.dart';
+
+class ProductRemoteDatasource {
+  ProductRemoteDatasource(this._dio);
+
+  final Dio _dio;
+}
+''';
+
+  Future<void> test_reportsConcreteClientsAndWrappers() async {
+    addHttpService();
+    const source = r'''
+import 'package:http/http.dart' as http;
+import 'package:test/core/network/http_service.dart';
+
+abstract interface class IOrderRemoteDataSource {}
+
+class OrderApi implements IOrderRemoteDataSource {
+  OrderApi(http.Client client, this._http);
+
+  final HttpService _http;
+}
+''';
+    final datasourcePath = '$testPackageLibPath/features/orders/data/order_api.dart';
+    newFile(datasourcePath, source);
+
+    await assertDiagnosticsInFile(datasourcePath, [
+      compatLint(source, 'http.Client client', ruleName),
+      compatLint(source, 'HttpService _http;', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsHttpServiceInterface() async {
+    addProductChain();
+    await assertNoDiagnosticsInFile(
+      '$testPackageLibPath/features/products/data/product_remote_datasource.dart',
+    );
+    await assertNoDiagnosticsInFile(httpServicePath);
+  }
+}
+
 abstract class _TestRuleTest extends _SourceRuleTest {
   @override
   List<ScannerRule> get rules => testSourceRules;

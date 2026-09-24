@@ -1,6 +1,7 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/riverpod_type_checkers.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
@@ -260,6 +261,31 @@ final List<ScannerRule> dataCrashSourceRules = [
       }
     },
   ),
+
+  /// Datasources take HTTP interfaces, not concrete clients.
+  ///
+  /// Why: networking.md injects `IHttpService`-style interfaces into datasources;
+  /// constructors take interfaces, not concrete clients.
+  scannerRule(
+    code: const LintCode(
+      'datasource_concrete_http_client',
+      'Datasources must depend on an HTTP interface, not a concrete client.',
+      correctionMessage: 'Inject IHttpService or a project equivalent interface instead of Dio, http.Client, HttpClient or a concrete HTTP wrapper.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags Datasource/DataSource fields and constructor parameters typed as an HTTP client or a concrete project class that reaches one.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+      final root = _rootPackage(context);
+      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+        final element = declaration.declaredFragment?.element;
+        if (element == null || !_isDatasource(element)) continue;
+        for (final offset in _concreteHttpDependencyOffsets(declaration, root)) {
+          _reportOffset(reporter, context, offset);
+        }
+      }
+    },
+  ),
 ];
 
 void _reportOffset(ScannerRuleReporter reporter, SourceScannerContext context, int offset) {
@@ -351,6 +377,70 @@ bool _wrapsHttpClient(InterfaceElement element, String? root) =>
     root != null &&
     _packageOf(element) == root &&
     (_holdsHttpClient(element) || _libraryImplementors(element).any(_holdsHttpClient));
+
+/// Whether [element] reaches an HTTP client through root-package fields,
+/// constructor parameters or same-library implementors, within four hops.
+bool _reachesHttpClient(
+  InterfaceElement element,
+  String? root, [
+  int depth = 0,
+  Set<InterfaceElement>? visited,
+]) {
+  if (_httpClientChecker.isSuperOf(element)) return true;
+  if (depth >= 4 || root == null || _packageOf(element) != root) return false;
+  if (!(visited ??= {}).add(element)) return false;
+  final next = <InterfaceElement>[
+    for (final field in element.fields)
+      if (!field.isStatic) ?_interfaceOf(field.type),
+    for (final constructor in element.constructors)
+      for (final parameter in constructor.formalParameters) ?_interfaceOf(parameter.type),
+    ..._libraryImplementors(element),
+  ];
+  return next.any((candidate) => _reachesHttpClient(candidate, root, depth + 1, visited));
+}
+
+InterfaceElement? _interfaceOf(DartType type) => type is InterfaceType ? type.element : null;
+
+bool _isDatasourceName(String? name) =>
+    name != null && (name.endsWith('Datasource') || name.endsWith('DataSource'));
+
+bool _isDatasource(InterfaceElement element) =>
+    _isDatasourceName(element.name) ||
+    element.allSupertypes.any((supertype) => _isDatasourceName(supertype.element.name));
+
+/// A dependency type that is an HTTP client, or a concrete project class that
+/// reaches one.
+bool _isConcreteHttpDependency(DartType type, String? root) {
+  if (_httpClientChecker.isAssignableFromType(type)) return true;
+  final element = _interfaceOf(type);
+  return element is ClassElement && !element.isAbstract && _reachesHttpClient(element, root);
+}
+
+List<int> _concreteHttpDependencyOffsets(ClassDeclaration declaration, String? root) {
+  final body = declaration.body;
+  if (body is! BlockClassBody) return const [];
+  final offsets = <int>[];
+  for (final member in body.members) {
+    switch (member) {
+      case FieldDeclaration(isStatic: false, :final fields):
+        for (final variable in fields.variables) {
+          final type = variable.declaredFragment?.element.type;
+          if (type != null && _isConcreteHttpDependency(type, root)) {
+            offsets.add(fields.type?.offset ?? variable.offset);
+          }
+        }
+      case ConstructorDeclaration(:final parameters):
+        for (final parameter in parameters.parameters) {
+          if (parameter is FieldFormalParameter) continue;
+          final type = parameter.declaredFragment?.element.type;
+          if (type != null && _isConcreteHttpDependency(type, root)) offsets.add(parameter.offset);
+        }
+      default:
+        break;
+    }
+  }
+  return offsets;
+}
 
 bool _isHttpCall(MethodInvocation node, String? root) {
   final element = node.methodName.element;

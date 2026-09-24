@@ -8,20 +8,21 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Use sealed class for Freezed declarations.
 ///
-/// Why: Bans @freezed abstract class declarations. Replace abstract class with sealed class for
-/// Freezed types.
+/// Why: The skill requires `sealed class` for every `@freezed` declaration, so a resolved
+/// Freezed annotation on an `abstract` or plain class is reported. Replace it with a sealed
+/// class.
 final class UseSealedFreezedClasses extends AnalysisRule {
   static const LintCode code = LintCode(
     'use_sealed_freezed_classes',
     'Use sealed class for Freezed declarations.',
-    correctionMessage: 'Replace abstract class with sealed class for Freezed types.',
+    correctionMessage: 'Declare Freezed types as sealed class, not abstract or plain class.',
     severity: DiagnosticSeverity.ERROR,
   );
 
   UseSealedFreezedClasses()
     : super(
         name: 'use_sealed_freezed_classes',
-        description: 'Bans @freezed abstract class declarations.',
+        description: 'Bans @freezed abstract and plain (non-sealed) class declarations.',
       );
 
   @override
@@ -41,8 +42,12 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    if (node.abstractKeyword == null) return;
-    if (!hasAnnotationNamed(node, const {'freezed', 'Freezed'})) return;
-    rule.reportAtToken(node.abstractKeyword!);
+    if (node.sealedKeyword != null) return;
+    final isFreezed = node.metadata.any((annotation) {
+      final element = annotation.elementAnnotation;
+      return element != null && isFreezedAnnotation(element);
+    });
+    if (!isFreezed) return;
+    rule.reportAtToken(node.abstractKeyword ?? node.classKeyword);
   }
 }

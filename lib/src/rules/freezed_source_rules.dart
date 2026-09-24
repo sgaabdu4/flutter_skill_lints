@@ -74,8 +74,9 @@ final List<ScannerRule> freezedSourceRules = [
 
   /// Avoid legacy Freezed when/map helpers.
   ///
-  /// Why: Flags legacy Freezed when/maybeWhen/maybeMap invocations. Use Dart pattern matching
-  /// and switch expressions.
+  /// Why: Flags the generated Freezed pattern helpers (`when`, `map`, `maybeWhen`,
+  /// `maybeMap`, `whenOrNull`, `mapOrNull`), including implicit-`this` calls inside
+  /// the Freezed class. Use Dart pattern matching and switch expressions.
   scannerRule(
     code: const LintCode(
       'freezed_legacy_when_map',
@@ -83,7 +84,7 @@ final List<ScannerRule> freezedSourceRules = [
       correctionMessage: 'Use Dart pattern matching and switch expressions.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags legacy Freezed when/maybeWhen/maybeMap invocations so the Flutter skill violation is shown during analysis.',
+    description: 'Flags generated Freezed when/map/maybeWhen/maybeMap/whenOrNull/mapOrNull invocations so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       context.unit.accept(_LegacyFreezedInvocationVisitor(reporter, context));
     },
@@ -117,17 +118,18 @@ final List<ScannerRule> freezedSourceRules = [
 
   /// Use Freezed instead of manual @immutable value classes.
   ///
-  /// Why: @immutable only checks field mutability. Freezed owns equality, copyWith,
-  /// exhaustiveness, and serialization conventions, so value/state classes do not drift into
-  /// one-off hand-written models.
+  /// Why: @immutable only checks field mutability, and Freezed's `@unfreezed` generates
+  /// mutable value/state classes. Freezed owns equality, copyWith, exhaustiveness, and
+  /// serialization conventions, so value/state classes do not drift into one-off hand-written
+  /// or mutable models.
   scannerRule(
     code: const LintCode(
       'use_freezed_instead_of_immutable',
-      'Use Freezed instead of @immutable.',
-      correctionMessage: 'Remove @immutable and rewrite the value/state class as a @freezed sealed class in its own file.',
+      'Use @freezed sealed classes instead of @immutable or @unfreezed.',
+      correctionMessage: 'Remove @immutable/@unfreezed and rewrite the value/state class as a @freezed sealed class in its own file.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags manual @immutable annotations so immutable value/state classes use the project-wide Freezed pattern.',
+    description: 'Flags manual @immutable and resolved Freezed @unfreezed annotations so value/state classes use the project-wide immutable Freezed pattern.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -136,6 +138,7 @@ final List<ScannerRule> freezedSourceRules = [
         if (index < 0) continue;
         reporter.report(context, i, index);
       }
+      _reportUnfreezedAnnotations(reporter, context);
     },
   ),
 
@@ -171,6 +174,21 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 ];
 
+void _reportUnfreezedAnnotations(ScannerRuleReporter reporter, SourceScannerContext context) {
+  for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+    for (final annotation in declaration.metadata) {
+      final element = annotation.element;
+      if (element?.name != 'unfreezed' ||
+          element?.library?.uri.toString() !=
+              'package:freezed_annotation/freezed_annotation.dart') {
+        continue;
+      }
+      final location = context.unit.lineInfo.getLocation(annotation.offset);
+      reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+    }
+  }
+}
+
 final class _LegacyFreezedInvocationVisitor extends RecursiveAstVisitor<void> {
   _LegacyFreezedInvocationVisitor(this.reporter, this.context);
 
@@ -179,8 +197,7 @@ final class _LegacyFreezedInvocationVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (const {'when', 'maybeWhen', 'maybeMap'}.contains(node.methodName.name) &&
-        _isGeneratedFreezedMethod(node)) {
+    if (_legacyFreezedHelpers.contains(node.methodName.name) && _isGeneratedFreezedMethod(node)) {
       final location = context.unit.lineInfo.getLocation(node.methodName.offset);
       reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
     }
@@ -188,9 +205,11 @@ final class _LegacyFreezedInvocationVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
+const _legacyFreezedHelpers = {'when', 'map', 'maybeWhen', 'maybeMap', 'whenOrNull', 'mapOrNull'};
+
 bool _isGeneratedFreezedMethod(MethodInvocation node) {
   final method = node.methodName.element;
-  final targetType = node.target?.staticType;
+  final targetType = node.target == null ? _enclosingThisType(node) : node.target!.staticType;
   if (method is! ExecutableElement ||
       targetType is! InterfaceType ||
       !method.firstFragment.libraryFragment.source.fullName.endsWith('.freezed.dart')) {
@@ -198,3 +217,6 @@ bool _isGeneratedFreezedMethod(MethodInvocation node) {
   }
   return isFreezedInterfaceType(targetType);
 }
+
+DartType? _enclosingThisType(AstNode node) =>
+    node.thisOrAncestorOfType<ClassDeclaration>()?.declaredFragment?.element.thisType;

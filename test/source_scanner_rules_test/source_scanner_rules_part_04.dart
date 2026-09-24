@@ -237,8 +237,70 @@ const freezed = Freezed();
     newFile('$testPackageLibPath/union.freezed.dart', r'''
 part of 'union.dart';
 mixin _$Union { String when() => 'legacy'; }
+extension UnionPatterns on Union {
+  String map() => 'legacy';
+  String? whenOrNull() => null;
+  String? mapOrNull() => null;
+  String maybeWhen() => 'legacy';
+}
 ''');
     super.setUp();
+  }
+
+  Future<void> test_reportsEveryGeneratedPatternHelper() async {
+    const source = r'''
+import 'package:freezed_annotation/freezed_annotation.dart';
+part 'union.freezed.dart';
+@freezed
+class Union with _$Union {
+  String get label => map();
+}
+String mapped(Union union) => union.map();
+String? whenNull(Union union) => union.whenOrNull();
+String? mapNull(Union union) => union.mapOrNull();
+String maybe(Union union) => union.maybeWhen();
+''';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [
+      compatLint(source, 'map();\n}', ruleName),
+      compatLint(source, 'map();\nString?', ruleName),
+      compatLint(source, 'whenOrNull();', ruleName),
+      compatLint(source, 'mapOrNull();', ruleName),
+      compatLint(source, 'maybeWhen();', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsHelpersOnConfiguredFreezedAnnotation() async {
+    newFile('$testPackageLibPath/keyed.freezed.dart', r'''
+part of 'keyed.dart';
+mixin _$Keyed { String when() => 'legacy'; }
+''');
+    const source = r'''
+import 'package:freezed_annotation/freezed_annotation.dart';
+part 'keyed.freezed.dart';
+@Freezed()
+sealed class Keyed with _$Keyed {}
+String label(Keyed keyed) => keyed.when();
+''';
+    final keyedPath = '$testPackageLibPath/keyed.dart';
+    newFile(keyedPath, source);
+    await assertDiagnosticsInFile(keyedPath, [compatLint(source, 'when();', ruleName)]);
+  }
+
+  Future<void> test_allowsSameNamedHelpersOnNonFreezedTypes() async {
+    await assertAllows(r'''
+class AsyncValue<T> {
+  R map<R>(R Function() data) => data();
+  R? whenOrNull<R>({R Function()? data}) => data?.call();
+  R? mapOrNull<R>({R Function()? data}) => data?.call();
+}
+int? label(AsyncValue<int> value, List<int> items) {
+  items.map((item) => item + 1);
+  value.map(() => 1);
+  value.mapOrNull(data: () => 1);
+  return value.whenOrNull(data: () => 1);
+}
+''');
   }
 
   @override
@@ -424,6 +486,16 @@ class UserDatasource {
 @reflectiveTest
 final class UseFreezedInsteadOfImmutableTest extends _FreezedRuleTest {
   @override
+  void setUp() {
+    newPackage('freezed_annotation').addFile('lib/freezed_annotation.dart', r'''
+class Freezed { const Freezed(); }
+const freezed = Freezed();
+const unfreezed = Freezed();
+''');
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'use_freezed_instead_of_immutable';
   @override
   String get needle => '@immutable';
@@ -443,6 +515,28 @@ class UserState {
   final String id;
 }
 ''';
+
+  Future<void> test_reportsUnfreezedStateClass() async {
+    final filePath = '$testPackageLibPath/features/users/presentation/form_state.dart';
+    const source = r'''
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@unfreezed
+sealed class FormState {}
+''';
+    newFile(filePath, source);
+    await assertDiagnosticsInFile(filePath, [compatLint(source, '@unfreezed', ruleName)]);
+  }
+
+  Future<void> test_allowsSameNamedNonFreezedUnfreezedAnnotation() async {
+    await assertAllows(r'''
+class Marker { const Marker(); }
+const unfreezed = Marker();
+
+@unfreezed
+class Draft {}
+''', path: '$testPackageLibPath/features/users/presentation/draft.dart');
+  }
 
   Future<void> test_allowsImmutableTextInComments() async {
     await assertNoDiagnostics(r'''

@@ -357,6 +357,8 @@ const _enabledAdditionalRuleCount = 280;
 
 const _modelSkillErrorDiagnostics = [
   'use_sealed_freezed_classes',
+  'freezed_legacy_when_map',
+  'use_freezed_instead_of_immutable',
   'prefer_dot_shorthands',
   'prefer_wildcard_pattern',
   'use_existing_destructuring',

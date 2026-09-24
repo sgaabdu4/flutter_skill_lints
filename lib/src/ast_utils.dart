@@ -2,17 +2,26 @@ import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/mounted_guard_utils.dart';
 
-/// Recognizes a value annotated by the actual Freezed annotation library.
+/// Recognizes a value annotated by the actual Freezed annotation library,
+/// either `@freezed` or a configured `@Freezed(...)` constructor call.
 bool isFreezedInterfaceType(InterfaceType type) =>
-    type.element.metadata.annotations.any((annotation) {
-      final owner = annotation.element;
-      return (owner?.name == 'freezed' || owner?.name == 'Freezed') &&
-          owner?.library?.uri.toString() == 'package:freezed_annotation/freezed_annotation.dart';
-    });
+    type.element.metadata.annotations.any(isFreezedAnnotation);
+
+/// Whether [annotation] resolves to `@freezed` or `@Freezed(...)` from
+/// `package:freezed_annotation`.
+bool isFreezedAnnotation(ElementAnnotation annotation) {
+  final owner = annotation.element;
+  if (owner?.library?.uri.toString() != 'package:freezed_annotation/freezed_annotation.dart') {
+    return false;
+  }
+  final name = owner is ConstructorElement ? owner.enclosingElement.name : owner?.name;
+  return name == 'freezed' || name == 'Freezed';
+}
 
 bool isGeneratedRuleContext(RuleContext context) {
   final path = context.definingUnit.file.path.replaceAll('\\', '/');

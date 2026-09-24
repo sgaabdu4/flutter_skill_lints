@@ -161,6 +161,29 @@ class Tokens {
   static const spacing = 8;
 }
 ''';
+
+  Future<void> test_allowsPrivateConstructorSingletonWithInstanceMembers() async {
+    await assertAllows(r'''
+class SharedCache {
+  SharedCache._();
+  static final SharedCache instance = SharedCache._();
+  final Map<String, String> entries = <String, String>{};
+  void put(String key, String value) => entries[key] = value;
+}
+''');
+  }
+
+  Future<void> test_allowsPrivateConstructorWithFactoryAndInstanceMembers() async {
+    await assertAllows(r'''
+class SharedCache {
+  SharedCache._();
+  static final SharedCache _instance = SharedCache._();
+  factory SharedCache() => _instance;
+  final Map<String, String> entries = <String, String>{};
+  void put(String key, String value) => entries[key] = value;
+}
+''');
+  }
 }
 
 @reflectiveTest
@@ -206,17 +229,39 @@ class User {
 @reflectiveTest
 final class FreezedLegacyWhenMapTest extends _FreezedRuleTest {
   @override
+  void setUp() {
+    newPackage('freezed_annotation').addFile('lib/freezed_annotation.dart', r'''
+class Freezed { const Freezed(); }
+const freezed = Freezed();
+''');
+    newFile('$testPackageLibPath/union.freezed.dart', r'''
+part of 'union.dart';
+mixin _$Union { String when() => 'legacy'; }
+''');
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'freezed_legacy_when_map';
   @override
   String get needle => 'when();';
   @override
+  String get path => '$testPackageLibPath/union.dart';
+  @override
   String get source => r'''
-class User {
-  Object label(Union union) => union.when();
-}
-
-class Union {}
+import 'package:freezed_annotation/freezed_annotation.dart';
+part 'union.freezed.dart';
+@freezed
+class Union with _$Union {}
+String label(Union union) => union.when();
 ''';
+
+  Future<void> test_allowsUnrelatedMethodNamedWhen() async {
+    await assertAllows(r'''
+class AsyncValue<T> { T when({required T Function() data}) => data(); }
+int label(AsyncValue<int> value) => value.when(data: () => 1);
+''');
+  }
 
   Future<void> test_allowsBareMocktailWhenCall() async {
     await assertNoDiagnostics(r'''

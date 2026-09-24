@@ -66,7 +66,7 @@ final class FlutterSkillProjectConfig extends MultiAnalysisRule {
     ),
     'cfg_e2e_entrypoint': LintCode(
       'cfg_e2e_entrypoint',
-      'Add a deterministic Flutter Driver E2E entrypoint.',
+      'Add a deterministic Flutter Driver E2E entrypoint when Driver is active.',
       correctionMessage:
           'Create lib/main_dev.dart and call enableFlutterDriverExtension() before runApp.',
       severity: DiagnosticSeverity.ERROR,
@@ -220,10 +220,26 @@ final class _ProjectConfigScanner {
       RegExp(r'(^|\n)\s*flutter\s*:', multiLine: true).hasMatch(text);
 
   void _scanFlutterE2eEntrypoint(Set<String> issues) {
+    if (!_usesFlutterDriver()) return;
     final mainDev = _read(root.getFile('lib/main_dev.dart'));
     if (mainDev == null || !_hasDeterministicFlutterE2eEntrypoint(mainDev)) {
       issues.add('cfg_e2e_entrypoint');
     }
+  }
+
+  bool _usesFlutterDriver() {
+    for (final folder in ['test_driver', 'integration_test', 'tool', 'lib']) {
+      for (final path in _dartFiles(root.getFolder(folder))) {
+        final text = _read(root.provider.getFile(path));
+        if (text == null) continue;
+        if (RegExp(
+          r'''import\s+['"]package:flutter_driver/(?:flutter_driver|driver_extension)\.dart['"]''',
+        ).hasMatch(text)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   void _scanAnalysisOptions(String text, Set<String> issues) {

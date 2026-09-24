@@ -55,6 +55,8 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (declarations.length != 1) return;
 
     final declaration = declarations.single;
+    // The companion skill names the public Crash facade crash_service.dart.
+    if (_fileNameWithoutExtension(path) == 'crash_service' && declaration.name == 'Crash') return;
     final expected = _expectedFileNameForType(declaration.name);
     final actual = _fileNameWithoutExtension(path);
     if (actual != expected) {

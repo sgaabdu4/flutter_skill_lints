@@ -376,7 +376,10 @@ final class SourceScannerContext {
     final leadingText = source.masked.sublist(annotationStart, classSpan.start + 1).join('\n');
     if (leadingText.contains('@freezed') || leadingText.contains('@Freezed')) return false;
     if (!RegExp('${classSpan.name}._\\s*\\(\\s*\\)\\s*;').hasMatch(text)) return false;
-    return !RegExp(r'\babstract\s+final\s+class\b').hasMatch(source.masked[classSpan.start]);
+    if (RegExp(r'\babstract\s+final\s+class\b').hasMatch(source.masked[classSpan.start])) {
+      return false;
+    }
+    return _namespaceHasOnlyStaticMembers(unit, classSpan.name);
   }
 
   bool requiresFreezedValueClass(ScannerClassSpan classSpan) {

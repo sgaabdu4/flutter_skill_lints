@@ -301,9 +301,7 @@ class Repository {
 }
 ''', addIgnorePrefix: addIgnorePrefix);
 
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'Future<List<Item>?>', ruleName),
-    ]);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'List<Item>?>', ruleName)]);
   }
 
   Future<void> test_reportsNullableMapDefaultParam() async {
@@ -334,6 +332,43 @@ class ProductState {
   final List<Item?> items;
 }
 ''');
+  }
+
+  Future<void> test_allowsMapTypeFollowedBySameLineTernary() async {
+    await assertAllows(r'''
+Object? select(Object? value) => value is Map<String, Object?> ? value : null;
+''');
+  }
+
+  Future<void> test_allowsMapTypeFollowedByMultilineTernary() async {
+    await assertAllows(r'''
+Object? select(Object? value) => value is Map<String, Object?>
+    ? value
+    : null;
+''');
+  }
+
+  Future<void> test_allowsNullableCallbackAcceptingNonNullableSet() async {
+    await assertAllows(r'''
+typedef ValueChanged<T> = void Function(T value);
+class Selector {
+  const Selector({this.onChanged});
+  final ValueChanged<Set<String>>? onChanged;
+}
+''');
+  }
+
+  Future<void> test_reportsNullableCollectionTypes() async {
+    const source = r'''
+List<String>? items;
+Map<String, Object?>? metadata;
+Set<int>? ids;
+''';
+    await assertDiagnostics(source, [
+      compatLint(source, 'List<String>? items', ruleName),
+      compatLint(source, 'Map<String, Object?>? metadata', ruleName),
+      compatLint(source, 'Set<int>? ids', ruleName),
+    ]);
   }
 
   Future<void> test_allowsNullableWireCollectionInDataModel() async {

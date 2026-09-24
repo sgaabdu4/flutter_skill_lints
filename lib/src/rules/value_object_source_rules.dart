@@ -1,3 +1,4 @@
+import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -288,36 +289,46 @@ void _scanDomainEntityPrimitiveFactories(
 ) {
   if (!context.isDomainPath || context.path.contains('/domain/values/')) return;
   for (final classSpan in context.classes) {
-    _reportPrimitiveFactoriesInClass(reporter, context, classSpan);
+    if (!context.hasFreezedAnnotation(classSpan) || classSpan.name.startsWith('_')) continue;
+    final declaration = context.unit.declarations
+        .whereType<ClassDeclaration>()
+        .where((candidate) => candidate.namePart.typeName.lexeme == classSpan.name)
+        .firstOrNull;
+    if (declaration == null) continue;
+    _reportPrimitiveFactoriesInClass(reporter, context, declaration);
   }
 }
 
 void _reportPrimitiveFactoriesInClass(
   ScannerRuleReporter reporter,
   SourceScannerContext context,
-  ScannerClassSpan classSpan,
+  ClassDeclaration declaration,
 ) {
-  if (!context.hasFreezedAnnotation(classSpan) || classSpan.name.startsWith('_')) return;
-  final pattern = RegExp(
-    r'\bfactory\s+' + RegExp.escape(classSpan.name) + r'\s*\.\s*([A-Za-z_]\w*)\s*\(',
-  );
-  for (var lineIndex = classSpan.start; lineIndex <= classSpan.end; lineIndex++) {
-    _reportPrimitiveFactoryLine(reporter, context, classSpan, lineIndex, pattern);
+  for (final constructor in declaration.body.members.whereType<ConstructorDeclaration>()) {
+    if (!_isPublicPrimitiveFactory(constructor)) continue;
+    final offset = constructor.factoryKeyword!.offset;
+    final line = _lineIndexForOffset(offset, context.source.lineOffsets, context.source.length);
+    reporter.report(context, line, offset - context.source.lineOffsets[line]);
   }
 }
 
-void _reportPrimitiveFactoryLine(
-  ScannerRuleReporter reporter,
-  SourceScannerContext context,
-  ScannerClassSpan classSpan,
-  int lineIndex,
-  RegExp pattern,
-) {
-  final match = pattern.firstMatch(context.source.masked[lineIndex]);
-  final factoryName = match?.group(1);
-  if (match == null || factoryName == null) return;
-  if (factoryName.startsWith('_') || factoryName == 'fromJson') return;
-  reporter.report(context, lineIndex, match.start);
+bool _isPublicPrimitiveFactory(ConstructorDeclaration constructor) {
+  final name = constructor.name?.lexeme;
+  return constructor.factoryKeyword != null &&
+      name != null &&
+      !name.startsWith('_') &&
+      name != 'fromJson' &&
+      constructor.parameters.parameters.any(_takesPrimitiveParameter);
+}
+
+bool _takesPrimitiveParameter(FormalParameter parameter) {
+  final type = parameter.declaredFragment?.element.type;
+  return type != null &&
+      (type.isDartCoreString ||
+          type.isDartCoreBool ||
+          type.isDartCoreInt ||
+          type.isDartCoreDouble ||
+          type.isDartCoreNum);
 }
 
 const _unitWords =

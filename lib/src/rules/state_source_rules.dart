@@ -1,3 +1,5 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -17,12 +19,7 @@ final List<ScannerRule> stateSourceRules = [
     description: 'Flags nullable collection types so absence is modeled explicitly instead of with List?/Map?/Set?.',
     scan: (reporter, context) {
       if (context.isTestFile || context.isDataModelPath) return;
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        final match = _nullableCollectionType.firstMatch(line);
-        if (match == null) continue;
-        reporter.report(context, i, match.start);
-      }
+      context.unit.accept(_NullableCollectionVisitor(reporter, context));
     },
   ),
 
@@ -230,9 +227,23 @@ final List<ScannerRule> stateSourceRules = [
   ),
 ];
 
-final _nullableCollectionType = RegExp(
-  r'\b(?:(?:Future|Stream)\s*<\s*)?(?:List|Set|Map|Iterable)\s*<[^;\n=(){}]+>\s*\?',
-);
+final class _NullableCollectionVisitor extends RecursiveAstVisitor<void> {
+  _NullableCollectionVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitNamedType(NamedType node) {
+    if (node.question != null &&
+        node.typeArguments != null &&
+        const {'List', 'Set', 'Map', 'Iterable'}.contains(node.name.lexeme)) {
+      final location = context.unit.lineInfo.getLocation(node.offset);
+      reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+    }
+    super.visitNamedType(node);
+  }
+}
 
 final _emptyStringDefault = RegExp(
   r'''@Default\s*\(\s*r?['"]\s*['"]\s*\)\s*(?:final\s+)?String\s+(?<defaultName>[A-Za-z_]\w*)|'''

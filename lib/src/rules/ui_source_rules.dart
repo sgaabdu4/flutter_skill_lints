@@ -233,15 +233,23 @@ bool _classDispatchesNotifierMutation(SourceScannerContext context, ScannerClass
   return false;
 }
 
-int? _awaitedNotifierResultColumn(SourceScannerContext context, int lineIndex, int methodEnd) {
+int? _awaitedNotifierResultColumn(SourceScannerContext context, int lineIndex) {
   final line = context.source.masked[lineIndex];
   final start = _awaitedNotifierResultStart.firstMatch(line);
   if (start == null) return null;
-
-  final window = sourceLineWindow(context, lineIndex, methodEnd, 8);
-  if (!_notifierReadInWindow.hasMatch(window)) return null;
   final awaitColumn = line.indexOf('await');
-  return awaitColumn >= 0 ? awaitColumn : start.start;
+  if (awaitColumn < 0) return null;
+  final offset = context.source.lineOffsets[lineIndex] + awaitColumn;
+  AstNode? awaited = context.unit.nodeCovering(offset: offset);
+  while (awaited != null && awaited is! AwaitExpression) {
+    awaited = awaited.parent;
+  }
+  if (awaited is! AwaitExpression || awaited.expression is! MethodInvocation) return null;
+  final invocation = awaited.expression as MethodInvocation;
+  if (invocation.target == null || !_notifierReadInWindow.hasMatch(invocation.toSource())) {
+    return null;
+  }
+  return awaitColumn;
 }
 
 int _notifierThenResultColumn(SourceScannerContext context, int lineIndex, int methodEnd) {

@@ -352,7 +352,14 @@ String _argumentOwnerName(ArgumentList argumentList) {
   if (parent is InstanceCreationExpression) {
     return parent.constructorName.type.name.lexeme;
   }
-  if (parent is FunctionExpressionInvocation) return parent.function.toSource();
+  if (parent is FunctionExpressionInvocation) {
+    return switch (parent.function) {
+      PropertyAccess(:final propertyName) => propertyName.name,
+      PrefixedIdentifier(:final identifier) => identifier.name,
+      SimpleIdentifier(:final name) => name,
+      _ => '',
+    };
+  }
   return '';
 }
 

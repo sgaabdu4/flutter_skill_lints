@@ -73,6 +73,65 @@ class ThingNotifier extends Notifier<int> {
 final class NotifierEnsureDepsTest extends _NotifierFixtureTest {
   @override
   String get ruleName => 'notifier_ensure_deps';
+
+  Future<void> test_allowsConstructorInjectedFinalRepository() async {
+    await assertAllows(r'''
+abstract interface class IItemsRepository {
+  Future<void> addItem(String item);
+}
+class TestableItemsNotifier {
+  TestableItemsNotifier(this._repository);
+  final IItemsRepository _repository;
+  Future<void> addItem(String item) async {
+    await _repository.addItem(item);
+  }
+}
+''');
+  }
+
+  Future<void> test_reportsUninitializedLateRepository() async {
+    const source = r'''
+abstract interface class IItemsRepository {
+  Future<void> addItem(String item);
+}
+class UninitializedItemsNotifier {
+  late IItemsRepository _repository;
+  Future<void> addItem(String item) async {
+    await _repository.addItem(item);
+  }
+}
+''';
+    await assertDiagnostics(source, [
+      compatLint(source, '  Future<void> addItem(String item) async {', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsNullableConstructorInjectedRepository() async {
+    const source = r'''
+abstract interface class IItemsRepository { Future<void> addItem(String item); }
+class TestableItemsNotifier {
+  TestableItemsNotifier(this._repository);
+  final IItemsRepository? _repository;
+  Future<void> addItem(String item) async { await _repository!.addItem(item); }
+}
+''';
+    await assertDiagnostics(source, [
+      compatLint(source, '  Future<void> addItem(String item) async {', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsDynamicConstructorInjectedRepository() async {
+    const source = r'''
+class TestableItemsNotifier {
+  TestableItemsNotifier(this._repository);
+  final dynamic _repository;
+  Future<void> addItem(String item) async { await _repository.addItem(item); }
+}
+''';
+    await assertDiagnostics(source, [
+      compatLint(source, '  Future<void> addItem(String item) async {', ruleName),
+    ]);
+  }
 }
 
 @reflectiveTest

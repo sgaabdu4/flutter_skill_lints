@@ -3,6 +3,7 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
 /// Warns when a file containing tests does not end with `_test.dart`.
@@ -40,7 +41,17 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (_testFunctions.contains(node.methodName.name)) {
+    if (!_testFunctions.contains(node.methodName.name)) return;
+    final target = node.target;
+    if (target != null && (target is! SimpleIdentifier || target.element is! PrefixElement)) {
+      return;
+    }
+    final element = node.methodName.element;
+    if (element is! TopLevelFunctionElement) return;
+    final library = element.library.identifier;
+    if (library.startsWith('package:test/') ||
+        library.startsWith('package:test_api/') ||
+        library.startsWith('package:flutter_test/')) {
       rule.reportAtNode(node.methodName);
     }
   }

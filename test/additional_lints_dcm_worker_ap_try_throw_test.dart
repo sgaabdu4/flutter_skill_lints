@@ -218,6 +218,49 @@ Never f() => throw 'failed';
     await assertDiagnostics(source, [lint(source.indexOf('throw'), "throw 'failed'".length)]);
   }
 
+  Future<void> test_validatedValueObjectArgumentGuard_noLint() async {
+    final core = getFile('$dartSdkPath/lib/core/core.dart');
+    core.writeAsStringSync(
+      core.readAsStringSync().replaceFirst(
+        'ArgumentError([dynamic message, @Since("2.14") String? name]);',
+        '''ArgumentError([dynamic message, @Since("2.14") String? name]);
+  ArgumentError.value(Object? value, [String? name, String? message]);''',
+      ),
+    );
+    final path = '$testPackageLibPath/features/items/domain/values/required_text.dart';
+    newFile(path, r'''
+final class RequiredText {
+  RequiredText._(this.value);
+  final String value;
+
+  factory RequiredText.from(String value) {
+    if (value.isEmpty) {
+      throw ArgumentError.value(value, 'value', 'must not be empty');
+    }
+    return RequiredText._(value);
+  }
+}
+''');
+    await assertNoDiagnosticsInFile(path);
+  }
+
+  Future<void> test_unrelatedThrowInValueObject_stillReports() async {
+    final path = '$testPackageLibPath/features/items/domain/values/required_text.dart';
+    const source = r'''
+final class RequiredText {
+  RequiredText._();
+  factory RequiredText.from(String value) {
+    if (value.isEmpty) throw 'unexpected';
+    return RequiredText._();
+  }
+}
+''';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [
+      lint(source.indexOf("throw 'unexpected'"), "throw 'unexpected'".length),
+    ]);
+  }
+
   Future<void> test_rethrow_noLint() async {
     await assertNoDiagnostics(r'''
 void f() {

@@ -1,3 +1,7 @@
+import 'package:analyzer/dart/analysis/utilities.dart';
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -130,8 +134,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
       if (!_isMainEntrypoint(context)) return;
       final runAppLine = _firstRunAppInvocationLine(context);
       if (runAppLine == null) return;
-      final initLine = _firstLineMatching(context, RegExp(r'\bCrash\s*\.\s*init\s*\('));
-      if (initLine == null || initLine > runAppLine) {
+      if (!_awaitsResolvedCrashInitializer(context, runAppLine)) {
         reporter.report(context, runAppLine, context.source.masked[runAppLine].indexOf('runApp'));
       }
     },
@@ -162,6 +165,105 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     },
   ),
 ];
+
+bool _awaitsResolvedCrashInitializer(SourceScannerContext context, int runAppLine) {
+  final runAppOffset =
+      context.source.lineOffsets[runAppLine] + context.source.masked[runAppLine].indexOf('runApp');
+  for (final main in context.unit.declarations.whereType<FunctionDeclaration>()) {
+    if (main.name.lexeme != 'main' || main.functionExpression.body is! BlockFunctionBody) {
+      continue;
+    }
+    final body = main.functionExpression.body as BlockFunctionBody;
+    if (body.block.statements
+        .where((statement) => statement.offset < runAppOffset)
+        .any(_statementAwaitsCrashInitializer)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool _statementAwaitsCrashInitializer(Statement statement) {
+  if (statement is! ExpressionStatement || statement.expression is! AwaitExpression) return false;
+  final awaited = (statement.expression as AwaitExpression).expression;
+  if (awaited is! MethodInvocation) return false;
+  return _isResolvedCrashInitCall(awaited) ||
+      _resolvedMethodCallsCrashInit(awaited.methodName.element);
+}
+
+bool _isResolvedCrashInitCall(MethodInvocation call) {
+  final method = call.methodName.element;
+  return method is MethodElement &&
+      method.name == 'init' &&
+      method.isStatic &&
+      method.enclosingElement is ClassElement &&
+      (method.enclosingElement as ClassElement).name == 'Crash';
+}
+
+bool _resolvedMethodCallsCrashInit(Element? element) {
+  if (element is! MethodElement) return false;
+  final declaration = _methodDeclarationFor(element);
+  if (declaration == null) return false;
+  final shadows = _CrashShadowVisitor();
+  declaration.accept(shadows);
+  if (shadows.hasShadow) return false;
+  final initializer = _directCrashInitializer(declaration.body);
+  if (initializer == null) return false;
+  final crashClass = element.firstFragment.libraryFragment.scope.lookup('Crash').getter;
+  return crashClass is ClassElement &&
+      crashClass.name == 'Crash' &&
+      crashClass.methods.any((method) => method.name == 'init' && method.isStatic);
+}
+
+MethodDeclaration? _methodDeclarationFor(MethodElement element) {
+  final fragment = element.firstFragment;
+  final offset = fragment.nameOffset;
+  if (offset == null) return null;
+  final source = fragment.libraryFragment.source;
+  final unit = parseString(content: source.contents.data, throwIfDiagnostics: false).unit;
+  AstNode? declaration = unit.nodeCovering(offset: offset);
+  while (declaration != null && declaration is! MethodDeclaration) {
+    declaration = declaration.parent;
+  }
+  return declaration is MethodDeclaration ? declaration : null;
+}
+
+MethodInvocation? _directCrashInitializer(FunctionBody methodBody) {
+  final expression = switch (methodBody) {
+    ExpressionFunctionBody(:final expression) => expression,
+    BlockFunctionBody(:final block) when block.statements.length == 1 =>
+      switch (block.statements.single) {
+        ReturnStatement(:final expression?) => expression,
+        ExpressionStatement(:final expression) when expression is AwaitExpression => expression,
+        _ => null,
+      },
+    _ => null,
+  };
+  final initializer = expression is AwaitExpression ? expression.expression : expression;
+  if (initializer is! MethodInvocation ||
+      initializer.target is! SimpleIdentifier ||
+      (initializer.target! as SimpleIdentifier).name != 'Crash' ||
+      initializer.methodName.name != 'init') {
+    return null;
+  }
+  return initializer;
+}
+
+final class _CrashShadowVisitor extends RecursiveAstVisitor<void> {
+  bool hasShadow = false;
+
+  @override
+  void visitRegularFormalParameter(RegularFormalParameter node) {
+    if (node.name?.lexeme == 'Crash') hasShadow = true;
+    super.visitRegularFormalParameter(node);
+  }
+
+  @override
+  void visitVariableDeclaration(VariableDeclaration node) {
+    if (node.name.lexeme == 'Crash') hasShadow = true;
+    super.visitVariableDeclaration(node);
+  }
+}
 
 void _reportDuplicateAnnotationIds({
   required ScannerRuleReporter reporter,

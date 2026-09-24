@@ -243,6 +243,88 @@ final class UserService {
     ]);
   }
 
+  Future<void> test_reportsPublicConstructorNextToPrivateConstructor() async {
+    const source = '''
+final class RunService {
+  RunService();
+  RunService._();
+
+  static final RunService instance = RunService._();
+
+  Future<void> run() async {}
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'static final RunService instance', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsPublicGetterOverPrivateField() async {
+    const source = '''
+final class TokenService {
+  TokenService._();
+
+  static final TokenService instance = TokenService._();
+
+  final String _token = 'token';
+
+  String get token => _token;
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'static final TokenService instance', ruleName),
+    ]);
+  }
+
+  /// #51: cache singletons belong to service_singleton, including the factory-exposed shape.
+  Future<void> test_reportsFactoryAndInstanceCacheSingletons() async {
+    const source = '''
+class SharedCache {
+  SharedCache._();
+  static final SharedCache instance = SharedCache._();
+  final Map<String, String> entries = <String, String>{};
+  void put(String key, String value) => entries[key] = value;
+}
+
+class SharedCacheWithFactory {
+  SharedCacheWithFactory._();
+  static final SharedCacheWithFactory _instance = SharedCacheWithFactory._();
+  factory SharedCacheWithFactory() => _instance;
+  final Map<String, String> entries = <String, String>{};
+  void put(String key, String value) => entries[key] = value;
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'static final SharedCache instance', ruleName),
+      compatLint(analyzedSource, 'factory SharedCacheWithFactory()', ruleName),
+    ]);
+  }
+
+  /// #51 control: constant and registry instances are not singletons.
+  Future<void> test_allowsConstantAndRegistryInstances() async {
+    await assertAllows('''
+final class Money {
+  const Money(this.cents);
+
+  static const zero = Money(0);
+
+  final int cents;
+}
+
+final class Palette {
+  Palette._(this.hex);
+
+  static final light = Palette._(0xFFFFFF);
+  static final dark = Palette._(0x000000);
+
+  final int hex;
+}
+''');
+  }
+
   Future<void> test_reportsDebugInjectionSeam() async {
     const source = '''
 final class UserService {

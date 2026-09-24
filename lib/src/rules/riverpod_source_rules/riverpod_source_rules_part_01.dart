@@ -69,6 +69,24 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     },
   ),
 
+  /// Keep WidgetRef inside widgets.
+  ///
+  /// Why: `Ref` and `WidgetRef` stay separate; `WidgetRef` is for widgets only.
+  /// A service, repository or other non-widget class holding or accepting a
+  /// `WidgetRef` ties its lifetime to a widget element. Move the logic into a
+  /// generated provider/notifier that uses `Ref`.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_widget_ref_outside_widget',
+      'WidgetRef is for widgets only.',
+      correctionMessage: 'Move this logic into a generated provider or notifier and use its Ref instead of WidgetRef.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags WidgetRef types used inside classes that are not Widget or State subclasses.',
+    scan: _reportWidgetRefOutsideWidgets,
+  ),
+
   /// Do not alias generated providers.
   ///
   /// Why: Generated provider names are the single source of truth. A top-level

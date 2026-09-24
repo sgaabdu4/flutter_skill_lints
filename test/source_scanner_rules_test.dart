@@ -52,6 +52,7 @@ void main() {
     defineReflectiveTests(RiverpodServiceLocatorTest);
     defineReflectiveTests(RiverpodManualProviderTest);
     defineReflectiveTests(RiverpodGeneratedProviderAliasTest);
+    defineReflectiveTests(RiverpodWidgetRefOutsideWidgetTest);
     defineReflectiveTests(RiverpodNotifierOverrideWithValueTest);
     defineReflectiveTests(RiverpodConsumerStateDerivedCacheTest);
     defineReflectiveTests(RiverpodWidgetProviderArgWrapperTest);
@@ -300,6 +301,8 @@ $source''';
     newPackage('flutter').addFile('lib/widgets.dart', r'''
 class BuildContext {}
 class Widget {}
+abstract class StatefulWidget extends Widget {}
+abstract class State<T extends StatefulWidget> {}
 ''');
   }
 }

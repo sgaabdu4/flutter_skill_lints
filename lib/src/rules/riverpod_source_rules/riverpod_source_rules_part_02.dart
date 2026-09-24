@@ -337,3 +337,46 @@ final class _ProviderDerivedFieldFinder extends RecursiveAstVisitor<void> {
     return type is InterfaceType && _widgetRef.isAssignableFromType(type);
   }
 }
+
+const _flutterWidgetOrState = TypeChecker.any([
+  TypeChecker.fromName('Widget', packageName: 'flutter'),
+  TypeChecker.fromName('State', packageName: 'flutter'),
+]);
+
+void _reportWidgetRefOutsideWidgets(ScannerRuleReporter reporter, SourceScannerContext context) {
+  final finder = _WidgetRefTypeFinder();
+  context.unit.accept(finder);
+  for (final node in finder.nodes) {
+    final location = context.unit.lineInfo.getLocation(node.offset);
+    reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+  }
+}
+
+final class _WidgetRefTypeFinder extends RecursiveAstVisitor<void> {
+  final nodes = <NamedType>[];
+
+  @override
+  void visitNamedType(NamedType node) {
+    final element = node.element;
+    if (element is InterfaceElement && _widgetRef.isExactly(element) && _isOutsideWidget(node)) {
+      nodes.add(node);
+    }
+    super.visitNamedType(node);
+  }
+
+  bool _isOutsideWidget(AstNode node) {
+    final owner = node.thisOrAncestorMatching(
+      (candidate) =>
+          candidate is ClassDeclaration ||
+          candidate is MixinDeclaration ||
+          candidate is EnumDeclaration,
+    );
+    final element = switch (owner) {
+      ClassDeclaration(:final declaredFragment?) => declaredFragment.element,
+      MixinDeclaration(:final declaredFragment?) => declaredFragment.element,
+      EnumDeclaration(:final declaredFragment?) => declaredFragment.element,
+      _ => null,
+    };
+    return element != null && !_flutterWidgetOrState.isSuperOf(element);
+  }
+}

@@ -333,6 +333,91 @@ int read(Ref ref, ProviderFamily<int, String> family) {
 }
 
 @reflectiveTest
+final class RiverpodWidgetRefOutsideWidgetTest extends _RiverpodRuleTest {
+  @override
+  void setUp() {
+    newPackage('flutter_riverpod').addFile('lib/flutter_riverpod.dart', r'''
+import 'package:flutter/widgets.dart';
+
+class WidgetRef {
+  void read(Object provider) {}
+}
+
+abstract class ConsumerWidget extends Widget {
+  Widget build(BuildContext context, WidgetRef ref);
+}
+
+abstract class ConsumerStatefulWidget extends StatefulWidget {}
+
+abstract class ConsumerState<T extends ConsumerStatefulWidget> extends State<T> {
+  WidgetRef get ref => WidgetRef();
+}
+''');
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'riverpod_widget_ref_outside_widget';
+  @override
+  String get needle => 'WidgetRef ref;';
+  @override
+  bool get addIgnorePrefix => false;
+  @override
+  String get source => r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class CartSyncService {
+  CartSyncService(this.ref);
+
+  final WidgetRef ref;
+
+  void sync() => ref.read(Object());
+}
+''';
+
+  Future<void> test_reportsServiceMethodParameter() async {
+    const source = r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class CheckoutService {
+  void submit(WidgetRef ref) => ref.read(Object());
+}
+''';
+    await assertDiagnostics(source, [compatLint(source, 'WidgetRef ref)', ruleName)]);
+  }
+
+  Future<void> test_allowsWidgetsStatesAndMixinsOnState() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class CartBadge extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Widget();
+}
+
+class CartPage extends ConsumerStatefulWidget {}
+
+class _CartPageState extends ConsumerState<CartPage> {
+  void refresh(WidgetRef other) => other.read(Object());
+}
+
+mixin CartActions<T extends ConsumerStatefulWidget> on ConsumerState<T> {
+  void clear(WidgetRef other) => other.read(Object());
+}
+
+extension CartRef on WidgetRef {
+  void clearCart() => read(Object());
+}
+''', addIgnorePrefix: false);
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(rule.diagnosticCodes.single.severity, DiagnosticSeverity.ERROR);
+  }
+}
+
+@reflectiveTest
 final class RiverpodGeneratedProviderAliasTest extends _RiverpodRuleTest {
   @override
   void setUp() {

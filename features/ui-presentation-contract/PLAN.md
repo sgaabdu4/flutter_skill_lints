@@ -43,7 +43,7 @@ N/A — analyzer lint behavior only; no app surface.
 ## Verification
 
 Result: Passed
-Evidence: `dart format lib test`, `dart analyze` (no issues) and `dart test` (all pass) after each step; a real Flutter probe app analyzed with this worktree reports every reproduction and leaves every control clean.
+Evidence: `dart format lib test`, `dart analyze` (no issues) and `dart test` (2,161 passed) after each step; the full native Draft gate passed all 13 checks; a real Flutter probe app analyzed with this worktree reports every reproduction and leaves every control clean.
 E2E: Passed — probe app `probe-ui-presentation-contract` analyzed with the plugin from this worktree.
 Delivery target: Merge
 Delivery: Pending — coordinator review.

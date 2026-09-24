@@ -13,7 +13,8 @@ Read [building-flutter-apps-lint-inventory.md](building-flutter-apps-lint-invent
 
 ## `avoid_throw` typed-failure boundary
 
-`avoid_throw` accepts a statically resolved subtype of `dart:core Exception`
+`avoid_throw` reports at error severity. It accepts a statically resolved
+subtype of `dart:core Exception`
 outside presentation code, including the documented parser `FormatException`
 case. A direct throw of the base `Exception`, an `Error` subtype, `dynamic`, or
 an untyped value remains a diagnostic. A resolved `dart:core`
@@ -32,6 +33,13 @@ reads that parameter directly or through a `final` local initialized from it
 (`final trimmed = input.trim(); if (trimmed.isEmpty) ...`). Guards on `var`
 locals, reassigned locals, or locals unrelated to the parameter still report,
 as do other throws in the factory.
+
+The scoped-provider stub from the Riverpod codegen guidance is allowed: a
+top-level function annotated with the resolved `riverpod_annotation`
+`@Riverpod(...)` that declares `dependencies:` and whose expression body is
+`throw UnimplementedError()`, because it must be overridden before use.
+`@riverpod` providers, block bodies, other thrown values, and same-named
+non-Riverpod annotations still report.
 
 Typed throws still report in resolved Flutter `Widget`/`State` members, in
 closures passed to resolved Flutter widget callbacks, and in methods on

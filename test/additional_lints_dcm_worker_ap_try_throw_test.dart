@@ -1,9 +1,11 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_identical_exception_handling_blocks.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_try_statements.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_throw.dart';
+import 'package:test/test.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
@@ -199,6 +201,7 @@ final class AvoidThrowTest extends AnalysisRuleTest {
     rule = AvoidThrow();
     _addFlutterPackage();
     _addRiverpodPackage();
+    _addRiverpodAnnotationPackage();
     super.setUp();
     _patchCoreSdk();
   }
@@ -219,6 +222,14 @@ final class AvoidThrowTest extends AnalysisRuleTest {
         .replaceFirst('class Error {\n  Error();', '''class Error {
   Error();
   external static Never throwWithStackTrace(Object error, StackTrace stackTrace);''')
+        .replaceFirst(
+          'class UnsupportedError extends Error {',
+          '''class UnimplementedError extends Error {
+  UnimplementedError([String? message]);
+}
+
+class UnsupportedError extends Error {''',
+        )
         .replaceFirst('int codeUnitAt(int index);', 'int codeUnitAt(int index);\n  String trim();')
         .replaceFirst(
           'abstract interface class StackTrace {}',
@@ -252,6 +263,72 @@ abstract class Notifier<T> {
   late T state;
 }
 ''');
+  }
+
+  void _addRiverpodAnnotationPackage() {
+    newPackage('riverpod_annotation').addFile('lib/riverpod_annotation.dart', r'''
+class Ref {}
+final class Riverpod {
+  const Riverpod({bool keepAlive = false, List<Object>? dependencies});
+}
+const riverpod = Riverpod();
+''');
+  }
+
+  void test_severity_error() {
+    expect(AvoidThrow.code.severity, DiagnosticSeverity.ERROR);
+  }
+
+  Future<void> test_scopedProviderOverrideStub_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+@Riverpod(dependencies: [])
+Future<int> scopedValue(Ref ref) => throw UnimplementedError();
+''');
+  }
+
+  Future<void> test_nonScopedOrNonStubProviderThrow_lint() async {
+    newFile('$testPackageLibPath/local_riverpod.dart', r'''
+final class Riverpod {
+  const Riverpod({List<Object>? dependencies});
+}
+''');
+    const source = r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'local_riverpod.dart' as local;
+
+@riverpod
+Future<int> unscoped(Ref ref) => throw UnimplementedError('unscoped');
+
+@Riverpod(dependencies: [])
+Future<int> scopedString(Ref ref) => throw 'scoped';
+
+@Riverpod(dependencies: [])
+Future<int> scopedOtherError(Ref ref) => throw UnsupportedError('scoped');
+
+@Riverpod(dependencies: [])
+Future<int> scopedBlock(Ref ref) {
+  throw UnimplementedError('block');
+}
+
+Future<int> plain(Ref ref) => throw UnimplementedError('plain');
+
+@local.Riverpod(dependencies: [])
+Future<int> localAnnotation(Ref ref) => throw UnimplementedError('local');
+''';
+
+    await assertDiagnostics(source, [
+      for (final thrown in [
+        "throw UnimplementedError('unscoped')",
+        "throw 'scoped'",
+        "throw UnsupportedError('scoped')",
+        "throw UnimplementedError('block')",
+        "throw UnimplementedError('plain')",
+        "throw UnimplementedError('local')",
+      ])
+        lint(source.indexOf(thrown), thrown.length),
+    ]);
   }
 
   Future<void> test_throwStatement_lint() async {

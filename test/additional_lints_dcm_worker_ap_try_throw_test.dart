@@ -305,6 +305,9 @@ Future<int> unscoped(Ref ref) => throw UnimplementedError('unscoped');
 Future<int> scopedString(Ref ref) => throw 'scoped';
 
 @Riverpod(dependencies: [])
+Future<int> scopedMessage(Ref ref) => throw UnimplementedError('message');
+
+@Riverpod(dependencies: [])
 Future<int> scopedOtherError(Ref ref) => throw UnsupportedError('scoped');
 
 @Riverpod(dependencies: [])
@@ -322,6 +325,7 @@ Future<int> localAnnotation(Ref ref) => throw UnimplementedError('local');
       for (final thrown in [
         "throw UnimplementedError('unscoped')",
         "throw 'scoped'",
+        "throw UnimplementedError('message')",
         "throw UnsupportedError('scoped')",
         "throw UnimplementedError('block')",
         "throw UnimplementedError('plain')",

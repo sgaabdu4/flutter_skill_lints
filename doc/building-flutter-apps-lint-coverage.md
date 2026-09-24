@@ -37,8 +37,9 @@ as do other throws in the factory.
 The scoped-provider stub from the Riverpod codegen guidance is allowed: a
 top-level function annotated with the resolved `riverpod_annotation`
 `@Riverpod(...)` that declares `dependencies:` and whose expression body is
-`throw UnimplementedError()`, because it must be overridden before use.
-`@riverpod` providers, block bodies, other thrown values, and same-named
+the bare `throw UnimplementedError()`, because it must be overridden before
+use. A message argument, `@riverpod` providers, block bodies, other thrown
+values, and same-named
 non-Riverpod annotations still report.
 
 Typed throws still report in resolved Flutter `Widget`/`State` members, in

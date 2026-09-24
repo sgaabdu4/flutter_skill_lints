@@ -21,7 +21,7 @@ Authority: Autonomous package repair authorized by the user; confined to `avoid_
 - [x] `var`, reassigned, and parameter-unrelated locals, plus unrelated throws in the factory, still report.
 - [x] Resolved static `dart:core` `Error.throwWithStackTrace` applies the direct-throw contract to its error argument, including presentation contexts.
 - [x] The caught error plus the stack trace of the same catch clause is allowed; a mismatched stack, a fresh `Error`, or an untyped value reports; a same-named non-core API is ignored.
-- [x] The documented scoped-provider stub (resolved `riverpod_annotation` `@Riverpod` with `dependencies:`, top-level expression body `throw UnimplementedError()`) is allowed; `@riverpod`, block bodies, other thrown values, un-annotated functions and a same-named local annotation report.
+- [x] The documented scoped-provider stub (resolved `riverpod_annotation` `@Riverpod` with `dependencies:`, top-level expression body of the bare `throw UnimplementedError()`) is allowed; `UnimplementedError('message')`, `@riverpod`, block bodies, other thrown values, un-annotated functions and a same-named local annotation report.
 - [x] `avoid_throw` reports at `DiagnosticSeverity.ERROR`, asserted by a test.
 - [x] `_isValueObjectArgumentGuard` split into helpers to stay under the complexity gate.
 - [x] Coverage doc updated for all behaviours and the severity.

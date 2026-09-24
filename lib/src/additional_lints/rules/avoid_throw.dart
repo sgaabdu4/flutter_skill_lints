@@ -250,6 +250,7 @@ bool _isScopedProviderOverrideStub(ThrowExpression node) {
   }
   final error = node.expression;
   return error is InstanceCreationExpression &&
+      error.argumentList.arguments.isEmpty &&
       _isCoreClassType(error.staticType, 'UnimplementedError') &&
       function.metadata.any(_isScopedRiverpodAnnotation);
 }

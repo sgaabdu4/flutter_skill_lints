@@ -275,13 +275,13 @@ Runtime-bug surface (0.7.0) — `runtime_bug_source_rules`:
   as `clock`, `delay`, `generator`, `authenticator`, or `createExecution` must
   be required and wired at the provider/composition root, not optional/defaulted.
 - `keepalive_watches_unbounded_collection` — `@Riverpod(keepAlive: true)`
-  whose `build()` derives and retains a new collection from `s.logs` /
-  `s.items` / `s.entries` / `s.posts` etc. keeps that derived collection for
-  the session. A pure projection provider that returns the source list
-  reference is allowed, and so is a derived provider whose watched source
-  resolves (across files, via the generated `@ProviderFor`) to a
-  `@Riverpod(keepAlive: true)` declaration, matching the performance guide's
-  all-keepAlive lifecycle rule.
+  whose `build()` returns or derives from `s.logs` / `s.items` /
+  `s.entries` / `s.posts` etc. retains every entry for the session, including
+  a pure projection that returns the source list reference (the skill's
+  NEVER example); derive a bounded projection such as `s.count` instead. A
+  provider whose watched source resolves (across files, via the generated
+  `@ProviderFor`) to a `@Riverpod(keepAlive: true)` declaration is allowed,
+  matching the performance guide's all-keepAlive lifecycle rule.
 - `datasource_missing_batch_loader` — abstract `*LocalDatasource` /
   `*RemoteDatasource` with 5+ single-value async getters and no
   `loadAll` / `getAll` / `readAll` / `loadSettings` / `getSnapshot` forces

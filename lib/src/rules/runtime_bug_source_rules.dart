@@ -195,24 +195,6 @@ final _watchUnboundedCollection = RegExp(
   r'(?:logs|items|entries|history|records|events|messages|notifications|posts|comments|rows|results|all)\b',
 );
 
-final _directCollectionProjection = RegExp(
-  r'\breturn\s+ref\s*\.\s*watch\s*\([\s\S]*?\.select\s*\([\s\S]*?=>\s*\w+\s*\.\s*'
-  r'(?:logs|items|entries|history|records|events|messages|notifications|posts|comments|rows|results|all)'
-  r'\s*\)\s*\)\s*;',
-);
-
-final _expressionCollectionProjection = RegExp(
-  r'=>\s*ref\s*\.\s*watch\s*\([\s\S]*?\.select\s*\([\s\S]*?=>\s*\w+\s*\.\s*'
-  r'(?:logs|items|entries|history|records|events|messages|notifications|posts|comments|rows|results|all)'
-  r'\s*\)\s*\)\s*;',
-);
-
-final _localCollectionProjection = RegExp(
-  r'\bfinal\s+(\w+)\s*=\s*ref\s*\.\s*watch\s*\([\s\S]*?\.select\s*\([\s\S]*?=>\s*\w+\s*\.\s*'
-  r'(?:logs|items|entries|history|records|events|messages|notifications|posts|comments|rows|results|all)'
-  r'\s*\)\s*\)\s*;\s*return\s+\1\s*;',
-);
-
 final _datasourceInterfaceSignature = RegExp(
   r'\babstract\s+(?:interface\s+)?class\s+I?\w*(?:Local|Remote)Datasource\b',
 );
@@ -606,10 +588,13 @@ int? _findFunctionDeclarationAfter(SourceScannerContext context, int annotationL
   return null;
 }
 
+/// Last line of the top-level function declared on [fnLine], for block and
+/// `=>` expression bodies alike.
 int? _findFunctionBodyEnd(SourceScannerContext context, int fnLine) {
-  final state = _BraceScanState();
-  for (var i = fnLine; i < context.source.length && i < fnLine + 200; i++) {
-    if (_scanBraceLine(state, context.source.masked[i])) return i;
+  final lineInfo = context.unit.lineInfo;
+  for (final declaration in context.unit.declarations.whereType<FunctionDeclaration>()) {
+    if (lineInfo.getLocation(declaration.name.offset).lineNumber - 1 != fnLine) continue;
+    return lineInfo.getLocation(declaration.end - 1).lineNumber - 1;
   }
   return null;
 }
@@ -656,7 +641,6 @@ int? _unboundedCollectionWatchColumn(SourceScannerContext context, int startLine
   if (watchStart < 0) return null;
   final window = sourceLineWindow(context, startLine, endLine, 8);
   if (!_watchUnboundedCollection.hasMatch(window)) return null;
-  if (_isPureCollectionProjection(window)) return null;
   if (_watchesKeepAliveProvider(context, startLine, watchStart)) return null;
   return watchStart;
 }
@@ -702,12 +686,6 @@ bool _isRiverpodAnnotationType(DartType? type, String name) {
   final element = type?.element;
   return element?.name == name &&
       (element?.library?.uri.toString().startsWith('package:riverpod_annotation/') ?? false);
-}
-
-bool _isPureCollectionProjection(String window) {
-  return _directCollectionProjection.hasMatch(window) ||
-      _expressionCollectionProjection.hasMatch(window) ||
-      _localCollectionProjection.hasMatch(window);
 }
 
 bool _lineHasNumericNamedArg(SourceScannerContext context, int saveLine, int methodEnd) {

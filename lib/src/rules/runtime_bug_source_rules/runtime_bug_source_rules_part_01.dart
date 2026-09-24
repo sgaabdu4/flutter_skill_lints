@@ -324,10 +324,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'keepalive_watches_unbounded_collection',
       'keepAlive notifier watches an unbounded collection getter.',
-      correctionMessage: 'Return a bounded projection (e.g. `s.lastNDays` / `s.count`) instead of deriving and retaining a new collection from the full source list.',
+      correctionMessage: 'Return a bounded projection (e.g. `s.count`) instead of returning or deriving from the full source collection.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags `@Riverpod(keepAlive: true)` notifiers whose build() derives retained state from `s.<unboundedCollectionName>` of a provider that is not resolved as `@Riverpod(keepAlive: true)`.',
+    description: 'Flags `@Riverpod(keepAlive: true)` providers whose build() returns or derives from `s.<unboundedCollectionName>` of a provider that is not resolved as `@Riverpod(keepAlive: true)`.',
     scan: _scanKeepAliveUnboundedCollections,
   ),
 

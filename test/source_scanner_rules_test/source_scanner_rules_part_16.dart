@@ -216,8 +216,8 @@ class ProgressNotifier {
 }
 ''';
 
-  Future<void> test_allowsPureProjection() async {
-    await assertAllows(r'''
+  Future<void> test_reportsLocalPureProjection() async {
+    final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
 }
@@ -230,30 +230,62 @@ class ProgressNotifier {
     return logs;
   }
 }
-''');
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'ref.watch(', ruleName)]);
   }
 
-  Future<void> test_allowsDirectPureProjection() async {
-    await assertAllows(r'''
+  Future<void> test_reportsDirectPureProjection() async {
+    final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
 }
+class Ref {}
 
 @Riverpod(keepAlive: true)
-Object historyLogs(Object ref) {
+Object historyLogs(Ref ref) {
   return ref.watch(historyProvider.select((s) => s.logs));
 }
-''');
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'ref.watch(', ruleName)]);
   }
 
-  Future<void> test_allowsExpressionBodyPureProjection() async {
+  /// The skill's NEVER example (common-patterns/debounce-gate-batch.md).
+  Future<void> test_reportsSkillNeverExpressionBodyProjection() async {
+    final analyzedSource = _analyzedSource(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+class Ref {}
+class Log {}
+
+@Riverpod(keepAlive: true)
+List<Log> session(Ref ref) => ref.watch(provider.select((s) => s.logs));
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'ref.watch(', ruleName)]);
+  }
+
+  /// The skill's DO counterpart (common-patterns/debounce-gate-batch.md).
+  Future<void> test_allowsSkillDoBoundedProjection() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
 }
+class Ref {}
 
 @Riverpod(keepAlive: true)
-Object historyLogs(Object ref) => ref.watch(historyProvider.select((s) => s.logs));
+int sessionCount(Ref ref) => ref.watch(provider.select((s) => s.count));
+''');
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+class Ref {}
+
+@Riverpod(keepAlive: true)
+Object sessionCount(Ref ref) => ref.watch(provider.select((s) => s.count));
 ''');
   }
 

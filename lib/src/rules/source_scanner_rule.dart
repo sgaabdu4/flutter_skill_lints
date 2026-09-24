@@ -479,6 +479,7 @@ final class SourceScannerContext {
   bool get isAtomicNoProviderPath =>
       path.contains('/core/widgets/atoms/') ||
       path.contains('/core/widgets/molecules/') ||
+      path.contains('/core/widgets/organisms/') ||
       path.contains('/core/widgets/templates/');
 
   bool get isPresentationWidgetFile {

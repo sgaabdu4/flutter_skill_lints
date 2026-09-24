@@ -49,6 +49,26 @@ void build(ref, context) {
     newFile(path, analyzedSource);
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'ref.read', ruleName)]);
   }
+
+  Future<void> test_reportsSharedOrganismProviderWatch() async {
+    final analyzedSource = _analyzedSource(r'''
+void build(ref, provider) {
+  ref.watch(provider);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/widgets/organisms/order_summary.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'ref.watch', ruleName)]);
+  }
+
+  Future<void> test_allowsProviderAccessInScreens() async {
+    await assertAllows(r'''
+void build(ref, provider) {
+  ref.watch(provider);
+}
+''', path: '$testPackageLibPath/features/orders/presentation/screens/orders_screen.dart');
+  }
 }
 
 @reflectiveTest

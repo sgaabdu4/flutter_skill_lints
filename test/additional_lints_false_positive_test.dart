@@ -36,7 +36,8 @@ abstract class _AdditionalLintRuleTest extends AnalysisRuleTest {
   }
 
   void _addFlutterPackage() {
-    newPackage('flutter').addFile('lib/widgets.dart', r'''
+    newPackage('flutter')
+      ..addFile('lib/widgets.dart', r'''
 class BuildContext {}
 class Key {
   const Key(String value);
@@ -60,6 +61,15 @@ class SliverList extends Widget {
 }
 class Icon extends Widget {
   const Icon();
+}
+''')
+      ..addFile('lib/widget_previews.dart', r'''
+base class Preview {
+  const Preview({String? name});
+}
+
+abstract base class MultiPreview {
+  const MultiPreview();
 }
 ''');
   }
@@ -123,6 +133,36 @@ Widget tile() => const Widget();
 ''';
 
     await assertDiagnostics(source, [lint(source.indexOf('tile'), 'tile'.length)]);
+  }
+
+  Future<void> test_allowsResolvedPreviewFunction() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widget_previews.dart';
+import 'package:flutter/widgets.dart';
+
+@Preview(name: 'Tile')
+Widget tilePreview() => const Widget();
+
+final class TilePreviews {
+  @Preview(name: 'Tile static')
+  static Widget tileStaticPreview() => const Widget();
+}
+''');
+  }
+
+  Future<void> test_reportsFunctionUnderLookalikePreviewAnnotation() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class Preview {
+  const Preview({String? name});
+}
+
+@Preview(name: 'Tile')
+Widget tilePreview() => const Widget();
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('tilePreview'), 'tilePreview'.length)]);
   }
 
   Future<void> test_reportsHelperReturningWidgetList() async {

@@ -26,7 +26,8 @@ final class AvoidHardcodedStringsTest extends AnalysisRuleTest {
   }
 
   void _addFlutterPackage() {
-    newPackage('flutter').addFile('lib/widgets.dart', r'''
+    newPackage('flutter')
+      ..addFile('lib/widgets.dart', r'''
 class Widget {
   const Widget();
 }
@@ -52,6 +53,15 @@ class InputField extends Widget {
   const InputField({this.hintText});
   final String? hintText;
 }
+''')
+      ..addFile('lib/widget_previews.dart', r'''
+base class Preview {
+  const Preview({String? name});
+}
+
+abstract base class MultiPreview {
+  const MultiPreview();
+}
 ''');
   }
 
@@ -63,6 +73,31 @@ Widget build() => const Text('Save');
 ''';
 
     await assertDiagnostics(source, [lint(source.indexOf("'Save'"), "'Save'".length)]);
+  }
+
+  Future<void> test_sampleTextInsideResolvedPreview_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widget_previews.dart';
+import 'package:flutter/widgets.dart';
+
+@Preview(name: 'Button')
+Widget buttonPreview() => const AppButton(label: 'Suture Kit');
+''');
+  }
+
+  Future<void> test_textUnderLookalikePreviewAnnotation_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class Preview {
+  const Preview({String? name});
+}
+
+@Preview(name: 'Button')
+Widget buttonPreview() => const AppButton(label: 'Suture Kit');
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf("'Suture Kit'"), "'Suture Kit'".length)]);
   }
 
   Future<void> test_textFromVariable_noLint() async {

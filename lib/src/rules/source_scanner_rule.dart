@@ -219,6 +219,18 @@ final class SourceScannerContext {
   final List<ScannerClassSpan> classes;
   final List<ScannerMethodSpan> methods;
 
+  late final List<(int, int)> _widgetPreviewLines = [
+    for (final declaration in widgetPreviewDeclarations(unit))
+      (
+        unit.lineInfo.getLocation(declaration.offset).lineNumber - 1,
+        unit.lineInfo.getLocation(declaration.end).lineNumber - 1,
+      ),
+  ];
+
+  /// Whether [lineIndex] lies inside a resolved `@Preview` declaration.
+  bool isWidgetPreviewLine(int lineIndex) =>
+      _widgetPreviewLines.any((range) => lineIndex >= range.$1 && lineIndex <= range.$2);
+
   bool isRedirectWatch(int lineIndex) =>
       source.masked[lineIndex].contains('ref.watch(') && near(lineIndex, 'redirect:', 12);
 

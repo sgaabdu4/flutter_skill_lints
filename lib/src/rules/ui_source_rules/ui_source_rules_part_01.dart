@@ -62,7 +62,8 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
         'Flags hardcoded UI strings so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
-        if (context.hasHardcodedUiString(context.source.code[i])) {
+        if (context.hasHardcodedUiString(context.source.code[i]) &&
+            !context.isWidgetPreviewLine(i)) {
           reporter.report(context, i, 0);
         }
       }
@@ -158,7 +159,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
         final line = context.source.masked[i];
         if (depth == 0) {
           final column = _topLevelFunctionColumn(line);
-          if (column >= 0) reporter.report(context, i, column);
+          if (column >= 0 && !context.isWidgetPreviewLine(i)) reporter.report(context, i, column);
         }
         depth += braceDelta(line);
         if (depth < 0) depth = 0;

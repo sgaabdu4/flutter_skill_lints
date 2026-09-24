@@ -51,6 +51,8 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    if (enclosingWidgetPreview(node) != null) return;
+
     final arguments = node.argumentList.arguments;
 
     final type = node.staticType;

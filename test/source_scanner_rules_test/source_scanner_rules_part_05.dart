@@ -319,6 +319,45 @@ final text = Text('Save');
     await assertNoDiagnosticsInFile(filePath);
   }
 
+  Future<void> test_allowsSampleTextInsideResolvedPreview() async {
+    await assertAllows(r'''
+import 'package:flutter/widget_previews.dart';
+
+class Text {
+  Text(String data);
+}
+
+@Preview(name: 'Card')
+Text cardPreview() => Text('Suture Kit');
+''', path: '$testPackageLibPath/features/probe/presentation/widgets/card_preview.dart');
+  }
+
+  Future<void> test_reportsTextUnderLookalikePreviewAnnotation() async {
+    final filePath = '$testPackageLibPath/features/probe/presentation/widgets/card_preview.dart';
+    final analyzedSource = _analyzedSource(r'''
+class Preview {
+  const Preview({String? name});
+}
+
+class Text {
+  Text(String data);
+}
+
+@Preview(name: 'Card')
+Text cardPreview() => Text('Suture Kit');
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(filePath, analyzedSource);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(
+        analyzedSource,
+        "Text cardPreview() => Text('Suture Kit')",
+        ruleName,
+        lineStart: true,
+      ),
+    ]);
+  }
+
   Future<void> test_allowsHardcodedLookingTextInsideDebugPrintWithParen() async {
     await assertAllows(r'''
 class Text {
@@ -541,6 +580,31 @@ bool _canShowAction(Object state) => true;
 
     await assertDiagnosticsInFile(path, [
       compatLint(analyzedSource, 'bool _canShowAction', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsResolvedPreviewFunction() async {
+    await assertAllows(r'''
+import 'package:flutter/widget_previews.dart';
+
+@Preview(name: 'Squad actions')
+Widget squadActionsPreview() => SquadActionsBar();
+''', path: path);
+  }
+
+  Future<void> test_reportsFunctionUnderLookalikePreviewAnnotation() async {
+    final analyzedSource = _analyzedSource(r'''
+class Preview {
+  const Preview({String? name});
+}
+
+@Preview(name: 'Squad actions')
+Widget squadActionsPreview() => SquadActionsBar();
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, 'Widget squadActionsPreview', ruleName, lineStart: true),
     ]);
   }
 

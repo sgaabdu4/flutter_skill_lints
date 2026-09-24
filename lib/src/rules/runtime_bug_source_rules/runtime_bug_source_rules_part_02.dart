@@ -12,7 +12,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
       'notifier_zero_value_save_no_guard',
       'Save call passes numeric fields without a positive-value guard.',
       correctionMessage: 'Wrap the `ref.read(...notifier).save*(...)` call in `if (amount > 0 || count > 0)` (or equivalent) so empty submissions cannot persist.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags `ref.read(...notifier).save*(amount: .., count: ..)` (and similar numeric named-args such as `duration`, `distance`, `weight`, `size`, `total`) without a `> 0` / `isNotEmpty` guard in the same method body.',
     scan: (reporter, context) {
@@ -152,7 +152,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
       'notifier_param_requires_value_object',
       'Unit-bearing primitive local passed to notifier save call.',
       correctionMessage: 'Wrap the local in a domain Value Object (e.g. `Distance.fromMeters(distance)`) at the boundary; the notifier should accept the VO, not the primitive.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags `double|int <name>(Meters|Seconds|Kilometers|Miles|Cents|Percent)` local declarations followed by a `ref.read(...notifier).save*(...)` call in the same method.',
     scan: (reporter, context) {

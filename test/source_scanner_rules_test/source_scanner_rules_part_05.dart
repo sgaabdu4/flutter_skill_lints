@@ -153,6 +153,10 @@ final class StyleRawTokenTest extends _UiRuleTest {
   @override
   String get source => 'final inset = EdgeInsets.all(8);';
 
+  void test_reportsAsError() {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
   Future<void> test_allowsRawTokensInThemeDefinitions() async {
     await assertAllows('''
 class Color {
@@ -260,6 +264,10 @@ final class StyleRawTextStyleTest extends _UiRuleTest {
   String get needle => 'TextStyle()';
   @override
   String get source => 'final style = TextStyle();';
+
+  void test_reportsAsError() {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
 
   Future<void> test_allowsTextStyleInThemeDefinitions() async {
     await assertAllows('''

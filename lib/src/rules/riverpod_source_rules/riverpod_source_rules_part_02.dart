@@ -136,6 +136,31 @@ bool _isMutationRunCallback(AstNode node) {
       _isRiverpodMutationElement(invocation.methodName.element?.enclosingElement, 'Mutation');
 }
 
+/// Collects Riverpod AsyncValue when/map dispatch calls; `whenData` is a
+/// transform, not a union match, so it is not collected.
+final class _AsyncValueWhenMapCalls extends RecursiveAstVisitor<void> {
+  final nodes = <MethodInvocation>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (_asyncValueWhenMapNames.contains(node.methodName.name) &&
+        _isRiverpodLibrary(node.methodName.element?.library) &&
+        _isRiverpodAsyncValue(node.realTarget?.staticType)) {
+      nodes.add(node);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+const _asyncValueWhenMapNames = {'when', 'maybeWhen', 'whenOrNull', 'map', 'maybeMap', 'mapOrNull'};
+
+bool _isRiverpodAsyncValue(DartType? type) =>
+    type is InterfaceType &&
+    [type, ...type.allSupertypes].any(
+      (candidate) =>
+          candidate.element.name == 'AsyncValue' && _isRiverpodLibrary(candidate.element.library),
+    );
+
 bool _isRiverpodLibrary(LibraryElement? library) {
   final uri = library?.uri.toString() ?? '';
   return uri.startsWith('package:riverpod/') || uri.startsWith('package:flutter_riverpod/');

@@ -353,6 +353,28 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     },
   ),
 
+  /// Match AsyncValue with a sealed switch, not when/map helpers.
+  ///
+  /// Why: The skill matches unions with a Dart `switch` and never `.when()` or
+  /// `.map()`. Riverpod AsyncValue is sealed, so the skill switches over
+  /// `AsyncData(:final value)`, `AsyncError(:final error)` and `AsyncLoading()`.
+  scannerRule(
+    code: const LintCode(
+      'async_value_switch_over_when',
+      'Match AsyncValue with a switch, not when/map.',
+      correctionMessage: 'Use switch (value) { AsyncData(:final value) => ..., AsyncError(:final error) => ..., AsyncLoading() => ... }.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags Riverpod AsyncValue when/maybeWhen/whenOrNull/map/maybeMap/mapOrNull calls so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      final calls = _AsyncValueWhenMapCalls();
+      context.unit.accept(calls);
+      for (final call in calls.nodes) {
+        _reportAtOffset(reporter, context, call.methodName.offset);
+      }
+    },
+  ),
+
   /// Keep derived providers alive when all watched dependencies are keepAlive.
   ///
   /// Why: Follows the building-flutter-apps provider decision tree for computed or

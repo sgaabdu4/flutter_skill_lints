@@ -20,6 +20,7 @@ arch_model_missing_to_entity
 arch_repository_generated_extends
 arch_widget_path
 async_context_mounted_style
+async_value_switch_over_when
 atom_widget_layer_dependency
 atomic_provider_access
 avoid_any_version

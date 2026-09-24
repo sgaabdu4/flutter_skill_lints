@@ -2,8 +2,8 @@
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 189 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 197 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 190 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 198 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 280 additional diagnostics.
 - Total unique diagnostics: 471.
 
@@ -39,6 +39,7 @@ Core skill rules already covered before this pass:
   `riverpod_consumer_state_derived_cache`, `riverpod_watch_no_select`,
   `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`,
   `riverpod_mutation_top_level`, `riverpod_mutation_ref_read`,
+  `async_value_switch_over_when`,
   `riverpod_auto_dispose_keepalive_dependencies`,
   `riverpod_keepalive_family`, `use_ref_invalidate`.
 - Async safety: `use_ref_mounted_after_await`,
@@ -131,7 +132,7 @@ hover description and correction text.
 | `dart-patterns-records.md` | `records_map_return`, `typed_id_raw_id`, `avoid_null_bang`, `prefer_wildcard_pattern`, `prefer_class_destructuring`, `use_existing_destructuring` |
 | `extensions-utilities.md` | `ui_snackbar_boundary`, `datetime_now_requires_timezone_intent`, `avoid_magic_literals`, `use_context_is_current_modal_route`, `dart_static_namespace`, `service_static_side_effect`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures` |
 | `flutter-optimizations.md` | `avoid_shrink_wrap`, `perf_listview_children`, `perf_build_work`, `a11y_text_scale_clamp`, `flutter_key_created_in_build`, `flutter_unique_or_global_key`, `flutter_opacity_widget`, `flutter_save_layer_filter`, `flutter_clip_save_layer`, `flutter_intrinsic_layout`, `flutter_animated_builder_child`, `flutter_widget_operator_equals`, `use_dedicated_media_query_methods`, `prefer_compute_over_isolate_run` |
-| `freezed-sealed.md` | `use_sealed_freezed_classes`, `use_freezed_instead_of_immutable`, `freezed_one_class_per_file`, `freezed_missing_private_constructor`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map`, `arch_domain_json_annotation`, `cfg_explicit_to_json` |
+| `freezed-sealed.md` | `use_sealed_freezed_classes`, `use_freezed_instead_of_immutable`, `freezed_one_class_per_file`, `freezed_missing_private_constructor`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map`, `async_value_switch_over_when`, `arch_domain_json_annotation`, `cfg_explicit_to_json` |
 | `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_test_close_missing`, `avoid_unvalidated_persisted_map_cast`, runtime boundary for historical TypeId permanence |
 | `localization.md` | `strings_hardcoded`, `l10n_context_direct_access` |
 | `mixins.md` | `mixin_mixin_class`, `mixin_name_suffix`, `mixin_mutable_state` |
@@ -153,6 +154,7 @@ Dart-source drift parity:
 - `riverpod_mutation_experimental_warning`
 - `riverpod_mutation_top_level`
 - `riverpod_mutation_ref_read`
+- `async_value_switch_over_when`
 - `state_freezed_nullable_error`
 
 Architecture/Freezed:

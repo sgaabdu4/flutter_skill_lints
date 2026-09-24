@@ -388,6 +388,112 @@ void onPressed(Ref ref) {
   }
 }
 
+const _asyncValueDispatchStub = r'''
+sealed class AsyncValue<T> {}
+final class AsyncData<T> extends AsyncValue<T> {
+  AsyncData(this.value);
+  final T value;
+}
+final class AsyncError<T> extends AsyncValue<T> {
+  AsyncError(this.error);
+  final Object error;
+}
+final class AsyncLoading<T> extends AsyncValue<T> {}
+extension AsyncValueExtensions<T> on AsyncValue<T> {
+  R when<R>({
+    required R Function(T value) data,
+    required R Function() loading,
+    required R Function(Object error) error,
+  }) => throw StateError('synthetic');
+  R maybeWhen<R>({R Function(T value)? data, required R Function() orElse}) =>
+      throw StateError('synthetic');
+  R? whenOrNull<R>({R Function(T value)? data}) => throw StateError('synthetic');
+  R map<R>({required R Function(AsyncData<T> data) data}) => throw StateError('synthetic');
+  R maybeMap<R>({R Function(AsyncData<T> data)? data, required R Function() orElse}) =>
+      throw StateError('synthetic');
+  R? mapOrNull<R>({R Function(AsyncData<T> data)? data}) => throw StateError('synthetic');
+  AsyncValue<R> whenData<R>(R Function(T value) cb) => throw StateError('synthetic');
+}
+''';
+
+/// freezed-sealed.md:9 matches unions with `switch`, never `.when()`/`.map()`;
+/// Riverpod AsyncValue is sealed (freezed-sealed.md:136-146).
+@reflectiveTest
+final class AsyncValueSwitchOverWhenTest extends _RiverpodRuleTest {
+  @override
+  void setUp() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', _asyncValueDispatchStub);
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'async_value_switch_over_when';
+  @override
+  String get needle => 'when(';
+  @override
+  String get source => r'''
+import 'package:riverpod/riverpod.dart';
+
+String label(AsyncValue<int> result) => result.when(
+  data: (value) => '$value',
+  loading: () => 'loading',
+  error: (error) => 'error',
+);
+''';
+
+  Future<void> test_reportsEveryWhenAndMapHelper() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+class ResultView {
+  Object build(AsyncValue<int> result) => [
+    result.maybeWhen(orElse: () => 0),
+    result.whenOrNull(data: (value) => value),
+    result.map(data: (data) => data.value),
+    result.maybeMap(orElse: () => 0),
+    result.mapOrNull(data: (data) => data.value),
+  ];
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      for (final helper in const ['maybeWhen(', 'whenOrNull(', 'map(', 'maybeMap(', 'mapOrNull('])
+        compatLint(analyzedSource, helper, ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillSealedSwitchAndWhenData() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+class ResultView {
+  Object build(AsyncValue<int> result) => (
+    switch (result) {
+      AsyncData(:final value) => '$value',
+      AsyncError(:final error) => 'Error: $error',
+      AsyncLoading() => 'loading',
+    },
+    result.whenData((value) => value + 1),
+  );
+}
+''');
+  }
+
+  Future<void> test_allowsSameNamedLocalAsyncValue() async {
+    await assertAllows(r'''
+class AsyncValue<T> {
+  R when<R>({required R Function(T value) data}) => throw StateError('synthetic');
+  R map<R>(R Function(T value) cb) => throw StateError('synthetic');
+}
+
+Object label(AsyncValue<int> result) => (
+  result.when(data: (value) => value),
+  result.map((value) => value),
+);
+''');
+  }
+}
+
 @reflectiveTest
 final class RiverpodAutoDisposeKeepAliveDependenciesTest extends _RiverpodRuleTest {
   @override

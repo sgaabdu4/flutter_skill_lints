@@ -27,6 +27,7 @@ proof records outside the analysis server boundary.
 | Riverpod `Mutation<T>()` declarations carry an experimental note | `riverpod_mutation_experimental_warning` |
 | Riverpod mutations are file-scope finals | `riverpod_mutation_top_level` |
 | `tsx.get`, not `ref.read`, inside `Mutation.run` | `riverpod_mutation_ref_read` |
+| Riverpod `AsyncValue` is matched with a sealed `switch`, not `when`/`map` | `async_value_switch_over_when` |
 | Computed auto-dispose providers whose watched dependencies are all known `keepAlive` become keepAlive too | `riverpod_auto_dispose_keepalive_dependencies` |
 | Non-family feature presentation notifiers stay keepAlive unless documented as ephemeral | `riverpod_feature_notifier_keepalive` |
 | No `dynamic` except JSON maps | `avoid_dynamic_except_json_maps` |

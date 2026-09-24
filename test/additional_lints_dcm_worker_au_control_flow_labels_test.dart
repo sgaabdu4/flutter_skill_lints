@@ -218,6 +218,48 @@ class Registry {
 ''');
   }
 
+  Future<void> test_effectfulConjunctiveIdentityGuard_lint() async {
+    const source = r'''
+typedef Handler = void Function(Object error);
+class Registry {
+  Handler? current;
+  bool replaceAndPermit() {
+    current = (error) {};
+    return true;
+  }
+  Handler install() {
+    void handle(Object error) {}
+    current = handle;
+    return (_) {
+      if (current == handle && replaceAndPermit()) current = null;
+    };
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
+  }
+
+  Future<void> test_effectfulStatementBeforeCleanup_lint() async {
+    const source = r'''
+typedef Handler = void Function(Object error);
+class Registry {
+  Handler? current;
+  void replace() { current = (error) {}; }
+  Handler install() {
+    void handle(Object error) {}
+    current = handle;
+    return (_) {
+      if (current == handle) {
+        replace();
+        current = null;
+      }
+    };
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
+  }
+
   Future<void> test_disjunctiveIdentityGuard_lint() async {
     const source = r'''
 typedef Handler = void Function(Object error);

@@ -34,6 +34,19 @@ bool isPureMountedGuardSuffix(Expression expression) {
   return false;
 }
 
+/// A notifier's inherited Riverpod ref, rather than a same-named local value.
+bool isRiverpodRefAccess(Expression expression) {
+  final ref = switch (expression) {
+    PrefixedIdentifier(:final prefix) => prefix,
+    PropertyAccess(:final target) => target,
+    _ => null,
+  };
+  final element = ref is SimpleIdentifier ? ref.element : null;
+  if (element is! PropertyAccessorElement) return false;
+  final library = element.library.uri.toString();
+  return library.startsWith('package:riverpod/') || library.startsWith('package:flutter_riverpod/');
+}
+
 bool _isStablePrivateField(VariableElement variable) {
   if (variable is! FieldElement || !variable.isPrivate || variable.isStatic || variable.isLate) {
     return false;

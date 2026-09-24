@@ -242,6 +242,81 @@ void run(Counter counter) {
 ''');
   }
 
+  Future<void> test_reportsPureReadBeforeEffectWithinInitializer() async {
+    const source = r'''
+int increment() => 1;
+void run(int left, int right) {
+  final cached = left + right;
+  final result = (left + right) + increment();
+  print((cached, result));
+}
+''';
+    await assertDiagnostics(source, [lint(source.lastIndexOf('left + right'), 12)]);
+  }
+
+  Future<void> test_awaitOrderPreservesFreshReads() async {
+    const source = r'''
+class Counter { int value = 0; }
+Future<void> before(Counter counter) async {
+  final cached = counter.value + 1;
+  final result = (counter.value + 1) + await Future<int>.value(2);
+  print((cached, result));
+}
+Future<void> after(Counter counter) async {
+  final cached = counter.value + 1;
+  final result = await Future<int>.value(2) + (counter.value + 1);
+  print((cached, result));
+}
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf('counter.value + 1', source.indexOf('final result')), 17),
+    ]);
+  }
+
+  Future<void> test_expressionArgumentOrderRespectsMutation() async {
+    const source = r'''
+class Counter { int value = 0; }
+int mutate(Counter counter) => ++counter.value;
+void sink(int first, int second) {}
+void unsafe(Counter counter, int right) {
+  final cached = counter.value + right;
+  sink(mutate(counter), counter.value + right);
+  print(cached);
+}
+void safe(Counter counter, int right) {
+  final cached = counter.value + right;
+  sink(counter.value + right, mutate(counter));
+  print(cached);
+}
+''';
+    await assertDiagnostics(source, [lint(source.lastIndexOf('counter.value + right'), 21)]);
+  }
+
+  Future<void> test_assignmentOrderRespectsMutation() async {
+    const source = r'''
+class Counter { int value = 0; }
+void sink(int first, int second) {}
+void stale(Counter counter, int right) {
+  final cached = counter.value + right;
+  sink(counter.value = 9, counter.value + right);
+  print(cached);
+}
+void safe(Counter counter, int right) {
+  final cached = counter.value + right;
+  sink(counter.value + right, counter.value = 9);
+  print(cached);
+}
+void declarations(Counter counter, int right) {
+  final cached = counter.value + right;
+  final changed = counter.value = 9, later = counter.value + right;
+  print((cached, changed, later));
+}
+''';
+    await assertDiagnostics(source, [
+      lint(source.lastIndexOf('counter.value + right', source.indexOf('void declarations')), 21),
+    ]);
+  }
+
   Future<void> test_multipleDeclarationsDoNotReuseValueAcrossEffect() async {
     await assertNoDiagnostics(r'''
 class Counter {

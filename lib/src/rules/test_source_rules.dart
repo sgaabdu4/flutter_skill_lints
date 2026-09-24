@@ -202,7 +202,7 @@ bool _mockImplementsConcreteContract(ClassDeclaration declaration) {
 }
 
 bool _isAllowedExternalMockBoundary(ClassElement element) =>
-    switch ((element.library.uri.toString(), element.name)) {
+    switch ((element.firstFragment.libraryFragment.source.uri.toString(), element.name)) {
       ('package:appwrite/services/account.dart', 'Account') => true,
       ('package:appwrite/services/tables_db.dart', 'TablesDB') => true,
       ('package:appwrite/services/teams.dart', 'Teams') => true,

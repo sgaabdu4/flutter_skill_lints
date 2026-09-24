@@ -8,13 +8,16 @@ final class TestMockConcreteTest extends _TestFileRuleTest {
   void setUp() {
     final appwrite = newPackage('appwrite');
     appwrite.addFile('lib/appwrite.dart', r'''
-export 'services/account.dart';
-export 'services/tables_db.dart';
-export 'services/teams.dart';
+part 'services/account.dart';
+part 'services/tables_db.dart';
+part 'services/teams.dart';
 ''');
-    appwrite.addFile('lib/services/account.dart', 'class Account {}');
-    appwrite.addFile('lib/services/tables_db.dart', 'class TablesDB {}');
-    appwrite.addFile('lib/services/teams.dart', 'class Teams {}');
+    appwrite.addFile('lib/services/account.dart', "part of '../appwrite.dart'; class Account {}");
+    appwrite.addFile(
+      'lib/services/tables_db.dart',
+      "part of '../appwrite.dart'; class TablesDB {}",
+    );
+    appwrite.addFile('lib/services/teams.dart', "part of '../appwrite.dart'; class Teams {}");
     final youtube = newPackage('youtube_player_iframe');
     youtube.addFile('lib/youtube_player_iframe.dart', r'''
 export 'src/controller/youtube_player_controller.dart';
@@ -65,7 +68,7 @@ class MockBridge extends Mock implements IConcreteBridge {}
     ]);
   }
 
-  Future<void> test_allowsExternalSdkBoundaryMocks() async {
+  Future<void> test_allowsExternalSdkPartDeclarations() async {
     final filePath = '$testPackageRootPath/test/helpers/appwrite_test_utils.dart';
     newFile(filePath, r'''
 import 'package:appwrite/appwrite.dart';

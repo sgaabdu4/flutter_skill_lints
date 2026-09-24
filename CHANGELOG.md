@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.12.11] - 2026-09-24
+
+- Fix allowed SDK mock detection for service declarations in Dart library parts;
+  local concrete contracts and unrelated package lookalikes still report.
+- Reject callback cleanup exceptions when a later condition or a preceding
+  statement can replace the callback before the guarded cleanup.
+- Require mounted guards to use the notifier's resolved Riverpod reference;
+  same-named local values and another provider's reference do not qualify.
+- Respect expression evaluation order when suggesting an existing variable:
+  report pure repeats before an effect, and avoid stale reuse after calls,
+  assignments, getters, or awaits.
+
 ## [0.12.10] - 2026-09-24
 
 - Resolve test mock contracts by their declaration type, including aliases.

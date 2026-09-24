@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/mounted_guard_utils.dart';
 
 /// Warns when a function is declared inside another function body.
 class AvoidLocalFunctions extends AnalysisRule {
@@ -104,9 +105,8 @@ bool _guardsCleanupWrite(
 
   final thenStatement = ifStatement.thenStatement;
   if (thenStatement is Block) {
-    return thenStatement.statements.any(
-      (statement) => _writesCallbackSlot(statement, slot, callbackElement),
-    );
+    return thenStatement.statements.isNotEmpty &&
+        _writesCallbackSlot(thenStatement.statements.first, slot, callbackElement);
   }
   return _writesCallbackSlot(thenStatement, slot, callbackElement);
 }
@@ -116,7 +116,10 @@ AstNode? _requiredIdentityCondition(AstNode? comparison) {
   while (condition != null) {
     final parent = condition.parent;
     if (parent is ParenthesizedExpression ||
-        (parent is BinaryExpression && parent.operator.lexeme == '&&')) {
+        (parent is BinaryExpression &&
+            parent.operator.lexeme == '&&' &&
+            (!identical(parent.leftOperand, condition) ||
+                isPureMountedGuardSuffix(parent.rightOperand)))) {
       condition = parent;
       continue;
     }

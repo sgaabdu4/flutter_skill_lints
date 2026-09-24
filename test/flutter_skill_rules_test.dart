@@ -1,5 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_dynamic_except_json_maps.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_legacy_riverpod_apis.dart';
@@ -17,6 +18,7 @@ import 'package:flutter_skill_lints/src/rules/use_ref_invalidate.dart';
 import 'package:flutter_skill_lints/src/rules/use_ref_mounted_after_await.dart';
 import 'package:flutter_skill_lints/src/rules/use_sealed_freezed_classes.dart';
 import 'package:flutter_skill_lints/src/rules/use_unawaited_for_fire_and_forget_futures.dart';
+import 'package:test/test.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_01.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_02.dart';
@@ -108,7 +110,16 @@ abstract class State<T extends StatefulWidget> {
   }
 
   void _addRiverpodPackage() {
-    newPackage('riverpod').addFile('lib/riverpod.dart', r'''
+    newPackage('state_notifier').addFile('lib/state_notifier.dart', r'''
+abstract class StateNotifier<T> {
+  StateNotifier(T state);
+}
+''');
+    newPackage('riverpod')
+      ..addFile('lib/legacy.dart', r'''
+export 'package:state_notifier/state_notifier.dart' show StateNotifier;
+''')
+      ..addFile('lib/riverpod.dart', r'''
 class Ref {
   bool get mounted => true;
   T read<T>(Object provider) => throw UnimplementedError();
@@ -162,7 +173,8 @@ class StreamProvider<T> {
 }
 ''');
     newPackage('flutter_riverpod')
-        .addFile('lib/flutter_riverpod.dart', "export 'package:riverpod/riverpod.dart';\n");
+      ..addFile('lib/flutter_riverpod.dart', "export 'package:riverpod/riverpod.dart';\n")
+      ..addFile('lib/legacy.dart', "export 'package:riverpod/legacy.dart';\n");
   }
 
   void _addFreezedPackage() {

@@ -208,6 +208,67 @@ import 'package:riverpod/riverpod.dart';
 int load(Ref ref) => ref.read(Object());
 ''');
   }
+
+  Future<void> test_reportsLegacyImportAndStateNotifier() async {
+    const source = r'''
+import 'package:flutter_riverpod/legacy.dart';
+
+class Counter extends StateNotifier<int> {
+  Counter() : super(0);
+}
+''';
+    await assertDiagnostics(source, [
+      lintFor(source, "'package:flutter_riverpod/legacy.dart'"),
+      lintFor(source, 'StateNotifier<int>'),
+    ]);
+  }
+
+  Future<void> test_reportsRiverpodLegacyImport() async {
+    const source = r'''
+import 'package:riverpod/legacy.dart';
+
+StateNotifier<int>? counter;
+''';
+    await assertDiagnostics(source, [
+      lintFor(source, "'package:riverpod/legacy.dart'"),
+      lintFor(source, 'StateNotifier<int>?'),
+    ]);
+  }
+
+  Future<void> test_reportsRefAliasAndLegacyRefTypes() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+typedef GreetingRef = Ref;
+
+String greeting(GreetingRef ref) => 'Hello';
+String legacy(AutoDisposeRef ref) => 'Hello';
+''';
+    await assertDiagnostics(source, [
+      lintForLast(source, 'GreetingRef'),
+      lintFor(source, 'AutoDisposeRef'),
+    ]);
+  }
+
+  Future<void> test_allowsUserTypesNamedLikeRiverpodApis() async {
+    await assertNoDiagnostics(r'''
+class Provider<T> {
+  Provider(T value);
+}
+
+class ImageRef {}
+
+class StateNotifier<T> {}
+
+final provider = Provider<int>(1);
+ImageRef? image;
+StateNotifier<int>? notifier;
+''');
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(AvoidLegacyRiverpodApis.code.severity, DiagnosticSeverity.ERROR);
+  }
 }
 
 @reflectiveTest

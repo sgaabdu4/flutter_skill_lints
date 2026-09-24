@@ -62,6 +62,12 @@ final class ScannerRuleReporter {
     final length = lineLength == 0 ? 1 : (lineLength - safeColumn).clamp(1, lineLength);
     _rule.reportAtOffset(offset, length);
   }
+
+  /// Reports from [offset] to the end of its source line.
+  void reportOffset(SourceScannerContext context, int offset) {
+    final lineIndex = context.source.lineOffsets.lastIndexWhere((start) => start <= offset);
+    report(context, lineIndex, offset - context.source.lineOffsets[lineIndex]);
+  }
 }
 
 String sourceClassSignature(SourceScannerContext context, ScannerClassSpan classSpan) {

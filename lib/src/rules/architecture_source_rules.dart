@@ -25,15 +25,11 @@ final List<ScannerRule> architectureSourceRules = [
     ),
     description: 'Flags Flutter or package imports from domain files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      if (context.isTestFile) return;
-      for (var i = 0; i < context.source.length; i++) {
-        final code = context.source.code[i];
-        if (_isAllowedDomainImport(code)) continue;
-        if (context.isDomainPath &&
-            RegExp(r'''^\s*import\s+['"](?:package:flutter|dart:ui|package:[^'"]+)''')
-                .hasMatch(code)) {
-          reporter.report(context, i, context.source.masked[i].indexOf('import'));
-        }
+      if (context.isTestFile || !context.isDomainPath) return;
+      for (final directive in context.unit.directives.whereType<ImportDirective>()) {
+        final uri = _resolvedImportUri(context, directive);
+        if (uri == null || _isAllowedDomainImport(uri)) continue;
+        reporter.reportOffset(context, directive.offset);
       }
     },
   ),
@@ -292,11 +288,19 @@ bool _isLayerContract(Element? element, String role) {
       element.isInterface;
 }
 
-bool _isAllowedDomainImport(String line) {
-  final packageImport = RegExp(r'''^\s*import\s+['"]package:([^'"]+)['"]''').firstMatch(line);
-  if (packageImport == null) return false;
+/// Domain allows pure Dart SDK libraries, freezed_annotation, and /domain/ libraries only.
+bool _isAllowedDomainImport(Uri uri) {
+  if (uri.isScheme('dart')) return uri.path != 'io' && uri.path != 'ui';
+  if (uri.toString() == 'package:freezed_annotation/freezed_annotation.dart') return true;
+  return uri.path.contains('/domain/');
+}
 
-  final importedPath = packageImport.group(1) ?? '';
-  return importedPath == 'freezed_annotation/freezed_annotation.dart' ||
-      importedPath.contains('/domain/');
+/// The imported library URI, with relative imports resolved against this library.
+Uri? _resolvedImportUri(SourceScannerContext context, ImportDirective directive) {
+  final importedLibrary = directive.libraryImport?.importedLibrary;
+  if (importedLibrary != null) return importedLibrary.uri;
+  final uri = directive.uri.stringValue;
+  if (uri == null) return null;
+  final libraryUri = context.unit.declaredFragment?.source.uri;
+  return libraryUri == null ? Uri.tryParse(uri) : libraryUri.resolve(uri);
 }

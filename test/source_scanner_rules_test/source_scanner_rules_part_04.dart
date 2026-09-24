@@ -660,6 +660,56 @@ final class AuthError {}
       ),
     ]);
   }
+
+  Future<void> test_reportsDartIoImportFromDomain() async {
+    final filePath = '$testPackageLibPath/features/files/domain/entities/stored_file.dart';
+    const source = r'''
+// ignore_for_file: unused_import
+import 'dart:io';
+
+final class StoredFile {}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [compatLint(source, "import 'dart:io';", ruleName)]);
+  }
+
+  Future<void> test_reportsRelativeCoreExtensionImportFromDomain() async {
+    newFile('$testPackageLibPath/core/extensions/num_extensions.dart', r'''
+extension NumExtensions on num {
+  num get doubled => this * 2;
+}
+''');
+    final filePath = '$testPackageLibPath/features/runs/domain/entities/run.dart';
+    const source = r'''
+// ignore_for_file: unused_import
+import '../../../../core/extensions/num_extensions.dart';
+
+final class Run {}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, "import '../../../../core/extensions/num_extensions.dart';", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsRelativeDomainAndPureDartImports() async {
+    newFile('$testPackageLibPath/features/runs/domain/values/run_id.dart', r'''
+final class RunId {}
+''');
+    final filePath = '$testPackageLibPath/features/runs/domain/entities/run.dart';
+    newFile(filePath, r'''
+// ignore_for_file: unused_import
+import 'dart:math' as math;
+
+import '../values/run_id.dart';
+
+final class Run {}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
 }
 
 @reflectiveTest

@@ -3,6 +3,7 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
 /// Warns when an expression duplicates the initializer of an existing variable
@@ -42,7 +43,10 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitBlock(Block node) {
     final variables = <_VariableInfo>[];
     for (final statement in node.statements) {
+      final hasSideEffect = _MayHaveSideEffect.check(statement);
+      if (hasSideEffect && statement is VariableDeclarationStatement) variables.clear();
       _reportDuplicateExpressions(statement, variables);
+      if (hasSideEffect) variables.clear();
       _collectVariableDeclarations(statement, variables);
     }
   }
@@ -57,14 +61,16 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _collectVariableDeclarations(Statement statement, List<_VariableInfo> variables) {
-    if (statement is! VariableDeclarationStatement) {
-      if (_MayHaveSideEffect.check(statement)) variables.clear();
-      return;
-    }
+    if (statement is! VariableDeclarationStatement) return;
     if (!statement.variables.isFinal && !statement.variables.isConst) return;
     for (final variable in statement.variables.variables) {
       final initializer = variable.initializer;
-      if (initializer == null || _isTrivialExpression(initializer)) continue;
+      if (initializer == null) continue;
+      if (_MayHaveSideEffect.check(initializer)) {
+        variables.clear();
+        continue;
+      }
+      if (_isTrivialExpression(initializer)) continue;
       variables.add((name: variable.name.lexeme, initializerSource: initializer.toSource()));
     }
   }
@@ -237,6 +243,7 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
     final source = expression.toSource();
     for (final variable in variables) {
       if (source == variable.initializerSource) {
+        if (_MayHaveSideEffect.check(expression)) return false;
         matches.add((node: expression, variableName: variable.name));
         return true; // Don't recurse — we matched the whole expression
       }
@@ -248,10 +255,26 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
 class _MayHaveSideEffect extends RecursiveAstVisitor<void> {
   bool found = false;
 
-  static bool check(Statement statement) {
+  static bool check(AstNode node) {
     final visitor = _MayHaveSideEffect();
-    statement.accept(visitor);
+    node.accept(visitor);
     return visitor.found;
+  }
+
+  @override
+  void visitAwaitExpression(AwaitExpression node) {
+    found = true;
+  }
+
+  @override
+  void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
+    found = true;
+  }
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    if (!node.isConst) found = true;
+    super.visitInstanceCreationExpression(node);
   }
 
   @override
@@ -271,6 +294,41 @@ class _MayHaveSideEffect extends RecursiveAstVisitor<void> {
   }
 
   @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (_isDeclaredGetter(node.element)) found = true;
+  }
+
+  @override
+  void visitBinaryExpression(BinaryExpression node) {
+    final operator = node.operator.lexeme;
+    if (operator != '&&' && operator != '||' && operator != '??') {
+      final operatorOwner = node.element?.library.uri.toString();
+      if (operatorOwner != 'dart:core') found = true;
+    }
+    super.visitBinaryExpression(node);
+  }
+
+  @override
+  void visitPrefixedIdentifier(PrefixedIdentifier node) {
+    if (_isDeclaredGetter(node.identifier.element)) found = true;
+    super.visitPrefixedIdentifier(node);
+  }
+
+  @override
+  void visitPropertyAccess(PropertyAccess node) {
+    if (_isDeclaredGetter(node.propertyName.element)) found = true;
+    super.visitPropertyAccess(node);
+  }
+
+  @override
+  void visitIndexExpression(IndexExpression node) {
+    found = true;
+  }
+
+  bool _isDeclaredGetter(Element? element) =>
+      element is PropertyAccessorElement && element.isOriginDeclaration;
+
+  @override
   void visitPostfixExpression(PostfixExpression node) {
     if (node.operator.lexeme == '++' || node.operator.lexeme == '--') {
       found = true;
@@ -281,9 +339,14 @@ class _MayHaveSideEffect extends RecursiveAstVisitor<void> {
 
   @override
   void visitPrefixExpression(PrefixExpression node) {
-    if (node.operator.lexeme == '++' || node.operator.lexeme == '--') {
+    final operator = node.operator.lexeme;
+    if (operator == '++' || operator == '--') {
       found = true;
       return;
+    }
+    if ((operator == '-' || operator == '~') &&
+        node.element?.library.uri.toString() != 'dart:core') {
+      found = true;
     }
     super.visitPrefixExpression(node);
   }

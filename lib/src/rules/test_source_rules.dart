@@ -1,3 +1,6 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -69,30 +72,17 @@ final List<ScannerRule> testSourceRules = [
 
   /// Mocks should implement interfaces, not concrete classes.
   ///
-  /// Why: Flags mocks that implement concrete classes. Mock I* contracts instead of concrete
-  /// implementations.
+  /// Why: A mock must implement a non-constructable contract rather than a
+  /// concrete class. The contract's declared name does not determine this.
   scannerRule(
     code: const LintCode(
       'test_mock_concrete',
       'Mocks should implement interfaces, not concrete classes.',
-      correctionMessage: 'Mock I* contracts instead of concrete implementations.',
+      correctionMessage: 'Mock an abstract contract instead of a concrete implementation.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags mocks that implement concrete classes so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      final concreteMockPattern = RegExp(
-        r'class\s+Mock\w+\s+extends\s+Mock\s+implements\s+((?!I)[A-Z]\w+)',
-      );
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (!context.isTestFile) continue;
-        final match = concreteMockPattern.firstMatch(line);
-        if (match == null) continue;
-        final mockedType = match.group(1);
-        if (mockedType == null || _isAllowedExternalMockBoundary(mockedType)) continue;
-        reporter.report(context, i, line.indexOf('class'));
-      }
-    },
+    scan: _scanConcreteMockContracts,
   ),
 
   /// Avoid unbounded pumpAndSettle in tests.
@@ -190,13 +180,37 @@ final List<ScannerRule> testSourceRules = [
   ),
 ];
 
-const Set<String> _allowedExternalMockBoundaryTypes = {
-  'Account',
-  'TablesDB',
-  'Teams',
-  'YoutubePlayerController',
-  'YoutubePlayerValue',
-};
+void _scanConcreteMockContracts(ScannerRuleReporter reporter, SourceScannerContext context) {
+  if (!context.isTestFile) return;
+  for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+    if (!_mockImplementsConcreteContract(declaration)) continue;
+    final location = context.unit.lineInfo.getLocation(declaration.offset);
+    reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+  }
+}
 
-bool _isAllowedExternalMockBoundary(String typeName) =>
-    _allowedExternalMockBoundaryTypes.contains(typeName);
+bool _mockImplementsConcreteContract(ClassDeclaration declaration) {
+  final superclass = declaration.extendsClause?.superclass.element;
+  if (superclass is! ClassElement || superclass.name != 'Mock') return false;
+  return (declaration.implementsClause?.interfaces ?? <NamedType>[]).any((interface) {
+    final type = interface.type;
+    final element = type is InterfaceType ? type.element : null;
+    return element is ClassElement &&
+        element.isConstructable &&
+        !_isAllowedExternalMockBoundary(element);
+  });
+}
+
+bool _isAllowedExternalMockBoundary(ClassElement element) =>
+    switch ((element.library.uri.toString(), element.name)) {
+      ('package:appwrite/services/account.dart', 'Account') => true,
+      ('package:appwrite/services/tables_db.dart', 'TablesDB') => true,
+      ('package:appwrite/services/teams.dart', 'Teams') => true,
+      (
+        'package:youtube_player_iframe/src/controller/youtube_player_controller.dart',
+        'YoutubePlayerController',
+      ) =>
+        true,
+      ('package:youtube_player_iframe/src/player_value.dart', 'YoutubePlayerValue') => true,
+      _ => false,
+    };

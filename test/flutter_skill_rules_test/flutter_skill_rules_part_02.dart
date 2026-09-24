@@ -184,3 +184,334 @@ void example() {
 ''');
   }
 }
+
+@reflectiveTest
+final class UseRefMountedAfterAwaitTest extends _FlutterSkillRuleTest {
+  @override
+  void setUp() {
+    rule = UseRefMountedAfterAwait();
+    super.setUp();
+  }
+
+  Future<void> test_reportsRefAfterAwait() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+final provider = Object();
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  Future<void> load() async {
+    await Future<void>.value();
+    ref.read(provider);
+  }
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, 'ref.read(provider)')]);
+  }
+
+  Future<void> test_allowsGuardedRefAfterAwait() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+final provider = Object();
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  Future<void> load() async {
+    await Future<void>.value();
+    if (!ref.mounted) return;
+    ref.read(provider);
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsCompoundMountedAndRevisionGuard() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  int _revision = 0;
+  Future<void> load() async {
+    final ticket = _revision;
+    await Future<void>.value();
+    if (!ref.mounted || ticket != _revision) return;
+    state = 1;
+  }
+}
+''');
+  }
+
+  Future<void> test_impureSuffixCanInvalidateMountedGuard() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  bool invalidateAndReturnFalse() => false;
+  Future<void> load() async {
+    await Future<void>.value();
+    if (!ref.mounted || invalidateAndReturnFalse()) return;
+    state = 1;
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
+  }
+
+  Future<void> test_lazyLocalSuffixCannotInvalidateMountedGuard() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  bool invalidateAndReturnFalse() => false;
+  Future<void> load() async {
+    late final stale = invalidateAndReturnFalse();
+    await Future<void>.value();
+    if (!ref.mounted || stale) return;
+    state = 1;
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
+  }
+
+  Future<void> test_lazyStaticFieldSuffixCannotInvalidateMountedGuard() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  static bool invalidateAndReturnFalse() => false;
+  static final bool _stale = invalidateAndReturnFalse();
+  Future<void> load() async {
+    await Future<void>.value();
+    if (!ref.mounted || _stale) return;
+    state = 1;
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
+  }
+
+  Future<void> test_overriddenFieldSuffixCannotInvalidateMountedGuard() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  int revision = 0;
+  Future<void> load() async {
+    await Future<void>.value();
+    if (!ref.mounted || revision == 1) return;
+    state = 1;
+  }
+}
+class Child extends TodosNotifier {
+  @override
+  int get revision => 0;
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
+  }
+
+  Future<void> test_awaitInSurvivingElseRequiresFreshGuard() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  Future<void> load() async {
+    await Future<void>.value();
+    if (!ref.mounted) return;
+    else { await Future<void>.value(); }
+    state = 1;
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
+  }
+
+  Future<void> test_incompleteMountedGuardStillReports() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  Future<void> load(bool shouldReturn) async {
+    await Future<void>.value();
+    if (!ref.mounted) {
+      if (shouldReturn) return;
+    }
+    state = 1;
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
+  }
+
+  Future<void> test_mountedReturnBranchCannotUseStateBeforeReturn() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  Future<void> load() async {
+    await Future<void>.value();
+    if (!ref.mounted) {
+      state = 1;
+      return;
+    }
+    state = 2;
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
+  }
+
+  Future<void> test_conjunctiveMountedGuardStillReports() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  Future<void> load(bool stale) async {
+    await Future<void>.value();
+    if (!ref.mounted && stale) return;
+    state = 1;
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
+  }
+
+  Future<void> test_allowsResolvedPrivateMountedHelper() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  int _revision = 0;
+  bool _isCurrent(int ticket) => ref.mounted && ticket == _revision;
+  Future<void> load() async {
+    final ticket = _revision;
+    await Future<void>.value();
+    if (!_isCurrent(ticket)) return;
+    state = 1;
+  }
+}
+''');
+  }
+
+  Future<void> test_revisionOnlyHelperStillReports() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  int revision = 0;
+  bool _isCurrent(int ticket) => ticket == revision;
+  Future<void> load() async {
+    final ticket = revision;
+    await Future<void>.value();
+    if (!_isCurrent(ticket)) return;
+    state = 1;
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
+  }
+
+  Future<void> test_mixinOverriddenPrivateHelperStillReports() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  int revision = 0;
+  bool _isCurrent(int ticket) => ticket == revision && ref.mounted;
+  Future<void> load() async {
+    final ticket = revision;
+    await Future<void>.value();
+    if (!_isCurrent(ticket)) return;
+    state = 1;
+  }
+}
+mixin UnsafeGuard on TodosNotifier {
+  @override
+  bool _isCurrent(int ticket) => true;
+}
+class Child extends TodosNotifier with UnsafeGuard {}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
+  }
+
+  Future<void> test_helperCannotTrustGettersOverloadsOrShadowedRef() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+class Value {
+  @override
+  bool operator ==(Object other) => true;
+  @override
+  int get hashCode => 0;
+}
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  bool get invalidatingFlag => true;
+  final first = Value();
+  final second = Value();
+  bool _getterGuard() => ref.mounted && invalidatingFlag;
+  bool _overloadedGuard() => ref.mounted && first == second;
+  bool _shadowedGuard(Ref ref) => ref.mounted;
+  Future<void> viaGetter() async {
+    await Future<void>.value();
+    if (!_getterGuard()) return;
+    state = 1;
+  }
+  Future<void> viaOverload() async {
+    await Future<void>.value();
+    if (!_overloadedGuard()) return;
+    state = 2;
+  }
+  Future<void> viaShadow(Ref other) async {
+    await Future<void>.value();
+    if (!_shadowedGuard(other)) return;
+    state = 3;
+  }
+}
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf('state = 1'), 5),
+      lint(source.indexOf('state = 2'), 5),
+      lint(source.indexOf('state = 3'), 5),
+    ]);
+  }
+
+  Future<void> test_helperCannotTrustOverriddenRefGetter() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  final alternateRef = Ref();
+  @override
+  Ref get ref => alternateRef;
+  bool _isCurrent() => ref.mounted;
+  Future<void> load() async {
+    await Future<void>.value();
+    if (!_isCurrent()) return;
+    state = 1;
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
+  }
+}

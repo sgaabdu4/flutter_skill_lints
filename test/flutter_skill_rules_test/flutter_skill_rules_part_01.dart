@@ -98,53 +98,6 @@ class _SheetContent extends StatelessWidget {
 }
 
 @reflectiveTest
-final class UseRefMountedAfterAwaitTest extends _FlutterSkillRuleTest {
-  @override
-  void setUp() {
-    rule = UseRefMountedAfterAwait();
-    super.setUp();
-  }
-
-  Future<void> test_reportsRefAfterAwait() async {
-    const source = r'''
-import 'package:riverpod/riverpod.dart';
-
-final provider = Object();
-
-class TodosNotifier extends Notifier<int> {
-  @override
-  int build() => 0;
-
-  Future<void> load() async {
-    await Future<void>.value();
-    ref.read(provider);
-  }
-}
-''';
-    await assertDiagnostics(source, [lintFor(source, 'ref.read(provider)')]);
-  }
-
-  Future<void> test_allowsGuardedRefAfterAwait() async {
-    await assertNoDiagnostics(r'''
-import 'package:riverpod/riverpod.dart';
-
-final provider = Object();
-
-class TodosNotifier extends Notifier<int> {
-  @override
-  int build() => 0;
-
-  Future<void> load() async {
-    await Future<void>.value();
-    if (!ref.mounted) return;
-    ref.read(provider);
-  }
-}
-''');
-  }
-}
-
-@reflectiveTest
 final class UseContextMountedAfterAwaitTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {

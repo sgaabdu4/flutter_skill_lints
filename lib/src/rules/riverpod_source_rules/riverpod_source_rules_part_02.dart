@@ -246,3 +246,94 @@ bool _isProviderAliasValue(Expression expression) {
   };
   return element is PropertyAccessorElement && element.variable is TopLevelVariableElement;
 }
+
+const _consumerState = TypeChecker.fromName('ConsumerState', packageName: 'flutter_riverpod');
+const _widgetRef = TypeChecker.fromName('WidgetRef', packageName: 'flutter_riverpod');
+
+/// ConsumerState fields that store a `ref.watch`/`ref.read` result or a value derived from it.
+void _reportResolvedConsumerStateCaches(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  Set<int> reportedLines,
+) {
+  for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+    final element = declaration.declaredFragment?.element;
+    final body = declaration.body;
+    if (element == null || body is! BlockClassBody || !_consumerState.isSuperOf(element)) {
+      continue;
+    }
+    final finder = _ProviderDerivedFieldFinder(element);
+    declaration.accept(finder);
+    for (final member in body.members.whereType<FieldDeclaration>()) {
+      for (final variable in member.fields.variables) {
+        if (!finder.fields.contains(variable.declaredFragment?.element)) continue;
+        final location = context.unit.lineInfo.getLocation(variable.name.offset);
+        final line = location.lineNumber - 1;
+        if (!reportedLines.add(line)) continue;
+        reporter.report(context, line, location.columnNumber - 1);
+      }
+    }
+  }
+}
+
+final class _ProviderDerivedFieldFinder extends RecursiveAstVisitor<void> {
+  _ProviderDerivedFieldFinder(this.owner);
+
+  final InterfaceElement owner;
+  final fields = <Element>{};
+  final _derivedLocals = <Element>{};
+
+  @override
+  void visitVariableDeclaration(VariableDeclaration node) {
+    final initializer = node.initializer;
+    final element = node.declaredFragment?.element;
+    if (initializer != null && element != null && _isProviderDerived(initializer)) {
+      if (element is FieldElement) {
+        if (element.enclosingElement == owner && !element.isStatic) fields.add(element);
+      } else {
+        _derivedLocals.add(element);
+      }
+    }
+    super.visitVariableDeclaration(node);
+  }
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    final target = node.writeElement;
+    final field = target is PropertyAccessorElement ? target.variable : target;
+    if (field is FieldElement &&
+        field.enclosingElement == owner &&
+        !field.isStatic &&
+        _isProviderDerived(node.rightHandSide)) {
+      fields.add(field);
+    }
+    super.visitAssignmentExpression(node);
+  }
+
+  bool _isProviderDerived(Expression expression) {
+    final value = expression.unParenthesized;
+    return switch (value) {
+      MethodInvocation(:final target?, :final methodName) =>
+        _isWidgetRefRead(target, methodName.name) || _isProviderDerived(target),
+      PropertyAccess(:final target?) => _isProviderDerived(target),
+      PrefixedIdentifier(:final prefix) => _isProviderDerived(prefix),
+      IndexExpression(:final target?) => _isProviderDerived(target),
+      AwaitExpression(:final expression) => _isProviderDerived(expression),
+      PostfixExpression(:final operand, operator: Token(lexeme: '!')) => _isProviderDerived(
+        operand,
+      ),
+      BinaryExpression(:final leftOperand, :final rightOperand, operator: Token(lexeme: '??')) =>
+        _isProviderDerived(leftOperand) || _isProviderDerived(rightOperand),
+      ConditionalExpression(:final thenExpression, :final elseExpression) =>
+        _isProviderDerived(thenExpression) || _isProviderDerived(elseExpression),
+      SimpleIdentifier(:final element) => _derivedLocals.contains(element),
+      _ => false,
+    };
+  }
+
+  bool _isWidgetRefRead(Expression target, String method) {
+    if (method != 'watch' && method != 'read') return false;
+    final type = target.staticType;
+    return type is InterfaceType && _widgetRef.isAssignableFromType(type);
+  }
+}

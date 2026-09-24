@@ -124,14 +124,24 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       correctionMessage: 'Move the cache to one @riverpod source of truth or compute it locally without mutable cache fields.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags ConsumerState cache/source fields used with ref.watch so provider-derived data has one Riverpod source of truth.',
+    description:
+        'Flags ConsumerState cache/source fields and fields assigned from ref.watch/ref.read '
+        'results so provider-derived data has one Riverpod source of truth.',
     scan: (reporter, context) {
+      final reportedLines = <int>{};
       for (final classSpan in context.classes) {
         if (!_isConsumerStateClass(context, classSpan)) continue;
         if (!_classContainsRefWatch(context, classSpan)) continue;
 
-        reportDirectClassMemberMatches(reporter, context, classSpan, _derivedCacheField);
+        for (final lineIndex in directClassMemberLines(context, classSpan)) {
+          final line = context.source.masked[lineIndex];
+          final match = _derivedCacheField.firstMatch(line);
+          if (match == null) continue;
+          reportedLines.add(lineIndex);
+          reporter.report(context, lineIndex, line.indexOf(match.group(1)!, match.start));
+        }
       }
+      _reportResolvedConsumerStateCaches(reporter, context, reportedLines);
     },
   ),
 

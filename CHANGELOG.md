@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.12.13] - 2026-09-24
+
+- Restrict direct `SizedBox` spacing suggestions to equivalent uniform interior
+  separators; preserve edge gaps, conditional children, keys and axis semantics.
+- Resolve Flutter widget collection types before recommending collection-for
+  builders. Numeric data transformations and custom API lookalikes remain valid.
+- Limit fold suggestions to append-once widget builders that do not depend on
+  the accumulated list. Filtered, reordered and accumulating folds remain valid.
+- Preserve fixed-length list construction, immutable fold seeds, evaluated gap
+  expressions and alignment modes whose layout changes when spacers are removed.
+
 ## [0.12.12] - 2026-09-24
 
 - Recognize `dart:ui Path.close()` as a drawing operation, while continuing to

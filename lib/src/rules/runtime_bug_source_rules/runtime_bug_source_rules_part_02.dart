@@ -36,7 +36,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
       'text_field_on_changed_no_debounce',
       'TextField onChanged triggers expensive work without debounce.',
       correctionMessage: 'Debounce asynchronous work in the notifier or event handler using the project latency budget.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags awaited work, HTTP calls and asynchronous or unresolved notifier calls in TextField/TextFormField callbacks without debounce. Resolved synchronous void updates are not assumed to start async work.',
     scan: (reporter, context) {
@@ -64,7 +64,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
       'slider_on_changed_no_debounce',
       'Slider onChanged triggers expensive work without debounce or onChangeEnd.',
       correctionMessage: 'Move the notifier call to `onChangeEnd`, or debounce with a Timer. `onChanged` should only update local UI state.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags Slider/RangeSlider/CupertinoSlider callbacks with asynchronous or unresolved notifier calls, HTTP calls or awaited work without debounce.',
     scan: (reporter, context) {
@@ -91,7 +91,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
       'scroll_listener_no_throttle',
       'ScrollController.addListener fires expensive work without throttle.',
       correctionMessage: 'Throttle the callback with a Timer or guard with a last-fired-at timestamp; scroll callbacks run per pixel.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags `<ScrollController>.addListener(...)` callbacks that call a notifier method or await async work without Timer/throttle in the same file.',
     scan: (reporter, context) {
@@ -120,7 +120,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
       'user_visible_duration_too_long',
       'User-visible debounce, animation, or hard wait exceeds the snappy budget.',
       correctionMessage: 'Reduce foreground debounce/wait durations: search/realtime <=150ms, animations <=120ms, persistence or Future.delayed hard waits <=50ms. Move sync/retry/domain waits to background owners.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags long Duration literals in UI/notifier/app-flow debounce, Timer, Future.delayed, animation, and transition contexts while ignoring tests, repositories, datasources, services, retry/backoff, rest timers, reminders, and sync/backfill settle timers.',
     scan: (reporter, context) {

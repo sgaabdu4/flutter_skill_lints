@@ -662,7 +662,9 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
         expect(
           audit.where(
             (line) =>
-                line.trimLeft().startsWith('error -') && !line.contains('riverpod_read_init_state'),
+                line.trimLeft().startsWith('error -') &&
+                !line.contains('riverpod_read_init_state') &&
+                !line.contains('text_field_on_changed_no_debounce'),
           ),
           isEmpty,
         );

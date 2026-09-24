@@ -286,7 +286,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       'widget_derived_collection_logic',
       'Widget helper derives collections.',
       correctionMessage: 'Move filtering, mapping, sorting, and lookup/index construction to a notifier or computed provider; widgets render the selected value.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags widget helper methods/namespaces that return collections and perform filter/map/sort/lookup work.',
     scan: (reporter, context) {
@@ -379,7 +379,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       'perf_build_work',
       'Avoid expensive work in build().',
       correctionMessage: 'Move sorting, filtering, formatting, and regex creation out of build.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags expensive collection or formatting work inside build methods so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
@@ -404,7 +404,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       'perf_listview_children',
       'Prefer ListView.builder for dynamic lists.',
       correctionMessage: 'Use builder/sliver variants instead of ListView(children: ...).',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags ListView(children: ...) usage so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {

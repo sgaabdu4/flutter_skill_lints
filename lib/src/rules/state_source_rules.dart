@@ -88,7 +88,7 @@ final List<ScannerRule> stateSourceRules = [
       'state_raw_response',
       'Do not store raw API responses in state.',
       correctionMessage: 'Extract the fields needed by the UI.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags raw JSON or response values stored in UI state so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {

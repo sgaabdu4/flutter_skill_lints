@@ -232,37 +232,42 @@ bool _isCaughtPairPropagation(AstNode node, Expression error, Expression stackTr
 
 bool _isValueObjectArgumentGuard(ThrowExpression node, String path) {
   if (!path.replaceAll('\\', '/').contains('/domain/values/')) return false;
-  final error = node.expression;
-  if (error is! InstanceCreationExpression || error.constructorName.element?.name != 'value') {
-    return false;
+  final parameter = _argumentErrorValueParameter(node.expression);
+  if (parameter == null) return false;
+  IfStatement? guard;
+  for (AstNode? parent = node.parent; parent != null; parent = parent.parent) {
+    if (parent is IfStatement && _contains(parent.thenStatement, node)) guard ??= parent;
+    if (parent is ConstructorDeclaration) {
+      return parent.factoryKeyword != null &&
+          guard != null &&
+          _referencesParameter(guard.expression, parameter, parent.body, {});
+    }
   }
-  final type = error.staticType;
-  if (type is! InterfaceType ||
-      type.element.name != 'ArgumentError' ||
-      type.element.library.identifier != 'dart:core') {
-    return false;
+  return false;
+}
+
+/// The formal parameter passed as the value of a `dart:core`
+/// `ArgumentError.value(...)` creation, if [error] is one.
+FormalParameterElement? _argumentErrorValueParameter(Expression error) {
+  if (error is! InstanceCreationExpression ||
+      error.constructorName.element?.name != 'value' ||
+      !_isCoreClassType(error.staticType, 'ArgumentError')) {
+    return null;
   }
   final arguments = error.argumentList.arguments;
-  if (arguments.isEmpty) return false;
+  if (arguments.isEmpty) return null;
   final value = arguments.first.argumentExpression;
   final parameter = value is SimpleIdentifier ? value.element : null;
-  if (parameter is! FormalParameterElement) return false;
-  IfStatement? guard;
-  ConstructorDeclaration? factory;
-  for (AstNode? parent = node.parent; parent != null; parent = parent.parent) {
-    if (parent is IfStatement &&
-        parent.thenStatement.offset <= node.offset &&
-        parent.thenStatement.end >= node.end) {
-      guard ??= parent;
-    }
-    if (parent is ConstructorDeclaration) {
-      factory = parent;
-      break;
-    }
-  }
-  if (factory == null || factory.factoryKeyword == null || guard == null) return false;
-  return _referencesParameter(guard.expression, parameter, factory.body, {});
+  return parameter is FormalParameterElement ? parameter : null;
 }
+
+bool _contains(AstNode outer, AstNode inner) =>
+    outer.offset <= inner.offset && outer.end >= inner.end;
+
+bool _isCoreClassType(DartType? type, String name) =>
+    type is InterfaceType &&
+    type.element.name == name &&
+    type.element.library.identifier == 'dart:core';
 
 /// Whether [expression] reads [parameter] directly or through a `final` local
 /// of [body] whose initializer (transitively) reads it.

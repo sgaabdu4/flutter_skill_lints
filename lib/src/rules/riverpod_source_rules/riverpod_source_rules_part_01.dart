@@ -195,24 +195,20 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     description: 'Flags standalone Riverpod signal/event providers so mutation state stays in one notifier source of truth.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (final classSpan in context.classes) {
-        if (!_eventSignalProviderName.hasMatch(classSpan.name)) continue;
-        if (!_hasRiverpodAnnotation(context, classSpan)) continue;
-        reporter.report(
-          context,
-          classSpan.start,
-          context.source.masked[classSpan.start].indexOf('class'),
-        );
-      }
-
-      for (var i = 0; i < context.source.length; i++) {
-        if (!context.hasNearbyAnnotation(i, const {'riverpod', 'Riverpod'})) continue;
-        final line = context.source.masked[i];
-        final match = _eventSignalFunctionProvider.firstMatch(line);
-        if (match == null) continue;
-        final name = match.group(1);
+      for (final declaration in context.unit.declarations) {
+        final (name, offset) = switch (declaration) {
+          // riverpod_generator names `FooEventNotifier` `fooEventProvider`.
+          ClassDeclaration(:final metadata, :final namePart, :final classKeyword)
+              when metadata.any(_isRiverpodAnnotation) =>
+            (_classProviderName(namePart.typeName.lexeme), classKeyword.offset),
+          FunctionDeclaration(:final metadata, :final name)
+              when metadata.any(_isRiverpodAnnotation) =>
+            (_functionProviderGeneratedName(name.lexeme), name.offset),
+          _ => (null, 0),
+        };
         if (name == null || !_eventSignalProviderName.hasMatch(name)) continue;
-        reporter.report(context, i, line.indexOf(name));
+        final location = context.unit.lineInfo.getLocation(offset);
+        reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
       }
     },
   ),

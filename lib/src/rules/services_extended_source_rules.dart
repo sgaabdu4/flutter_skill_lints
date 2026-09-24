@@ -193,7 +193,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
     code: const LintCode(
       'riverpod_config_destructuring',
       'Destructure config values read from providers.',
-      correctionMessage: 'Use an object pattern such as `final BackendConfig(:endpoint, :apiKey) = ref.watch(backendConfigProvider);` instead of reading properties from a config local.',
+      correctionMessage: 'Use an object pattern such as `final BackendConfig(:endpoint, :apiKey) = ref.watch(backendConfigProvider);` instead of reading properties from a config local. For one field, read it inline: `ref.watch(backendConfigProvider).endpoint`.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags a local initialized from ref.watch/ref.read of a provider whose resolved value is a `*Config` class when the local is only used through property reads.',

@@ -120,6 +120,63 @@ class TodosNotifier extends Notifier<int> {
 }
 ''');
   }
+
+  Future<void> test_reportsHelperThatReadsStateTransitively() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    _prime();
+    _warm();
+    return 0;
+  }
+
+  void _prime() {
+    if (state > 0) return;
+  }
+
+  void _warm() => this._touch();
+
+  void _touch() => print(state);
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, '_prime()'), lintFor(source, '_warm()')]);
+  }
+
+  Future<void> test_allowsHelpersThatOnlyWriteOrReadAfterAwait() async {
+    await assertNoDiagnostics(r'''
+import 'dart:async';
+
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    _seed();
+    unawaited(_later());
+    _register(() => state);
+    return 0;
+  }
+
+  void _seed() {
+    state = 1;
+  }
+
+  Future<void> _later() async {
+    await Future<void>.value();
+    state = state + 1;
+  }
+
+  void _register(int Function() read) {}
+}
+''');
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(AvoidSyncNotifierStateRead.code.severity, DiagnosticSeverity.ERROR);
+  }
 }
 
 @reflectiveTest

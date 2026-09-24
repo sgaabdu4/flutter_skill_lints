@@ -1,5 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_commented_out_code.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_returning_widgets.dart';
@@ -10,6 +11,7 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_single_wid
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_closest_build_context.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_existing_variable.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_sliver_prefix.dart';
+import 'package:test/test.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 part 'additional_lints_false_positive_test/use_existing_variable_cases.dart';
@@ -36,7 +38,8 @@ abstract class _AdditionalLintRuleTest extends AnalysisRuleTest {
   }
 
   void _addFlutterPackage() {
-    newPackage('flutter').addFile('lib/widgets.dart', r'''
+    newPackage('flutter')
+      ..addFile('lib/widgets.dart', r'''
 class BuildContext {}
 class Key {
   const Key(String value);
@@ -60,6 +63,15 @@ class SliverList extends Widget {
 }
 class Icon extends Widget {
   const Icon();
+}
+''')
+      ..addFile('lib/widget_previews.dart', r'''
+base class Preview {
+  const Preview({String? name});
+}
+
+abstract base class MultiPreview {
+  const MultiPreview();
 }
 ''');
   }
@@ -111,6 +123,10 @@ final class AvoidReturningWidgetsFalsePositiveTest extends _AdditionalLintRuleTe
     super.setUp();
   }
 
+  Future<void> test_severityIsError() async {
+    expect(AvoidReturningWidgets.code.severity, DiagnosticSeverity.ERROR);
+  }
+
   Future<void> test_reportsHelperReturningWidget() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
@@ -119,6 +135,36 @@ Widget tile() => const Widget();
 ''';
 
     await assertDiagnostics(source, [lint(source.indexOf('tile'), 'tile'.length)]);
+  }
+
+  Future<void> test_allowsResolvedPreviewFunction() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widget_previews.dart';
+import 'package:flutter/widgets.dart';
+
+@Preview(name: 'Tile')
+Widget tilePreview() => const Widget();
+
+final class TilePreviews {
+  @Preview(name: 'Tile static')
+  static Widget tileStaticPreview() => const Widget();
+}
+''');
+  }
+
+  Future<void> test_reportsFunctionUnderLookalikePreviewAnnotation() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class Preview {
+  const Preview({String? name});
+}
+
+@Preview(name: 'Tile')
+Widget tilePreview() => const Widget();
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('tilePreview'), 'tilePreview'.length)]);
   }
 
   Future<void> test_reportsHelperReturningWidgetList() async {

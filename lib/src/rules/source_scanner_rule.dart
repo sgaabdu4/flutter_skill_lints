@@ -219,6 +219,18 @@ final class SourceScannerContext {
   final List<ScannerClassSpan> classes;
   final List<ScannerMethodSpan> methods;
 
+  late final List<(int, int)> _widgetPreviewLines = [
+    for (final declaration in widgetPreviewDeclarations(unit))
+      (
+        unit.lineInfo.getLocation(declaration.offset).lineNumber - 1,
+        unit.lineInfo.getLocation(declaration.end).lineNumber - 1,
+      ),
+  ];
+
+  /// Whether [lineIndex] lies inside a resolved `@Preview` declaration.
+  bool isWidgetPreviewLine(int lineIndex) =>
+      _widgetPreviewLines.any((range) => lineIndex >= range.$1 && lineIndex <= range.$2);
+
   bool isRedirectWatch(int lineIndex) =>
       source.masked[lineIndex].contains('ref.watch(') && near(lineIndex, 'redirect:', 12);
 
@@ -269,7 +281,7 @@ final class SourceScannerContext {
   }
 
   bool hasHardcodedUiString(String code) {
-    if (path.endsWith('_strings.dart') || path.contains('/l10n/')) return false;
+    if (path.contains('/l10n/')) return false;
     if (isTestFile) return false;
     return RegExp(r'''\b(?:Text|Tooltip|Semantics)\s*\(\s*['"][^'"]+['"]''').hasMatch(code) ||
         RegExp(r'''\b(?:title|label|tooltip|hintText|helperText|errorText)\s*:\s*['"][^'"]+['"]''')

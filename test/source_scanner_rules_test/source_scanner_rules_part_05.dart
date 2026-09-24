@@ -473,6 +473,11 @@ void main() {
 final class StringsHardcodedTest extends _UiRuleTest {
   @override
   String get ruleName => 'strings_hardcoded';
+
+  Future<void> test_severityIsError() async {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
   @override
   String get needle => "Text('Save'";
   @override
@@ -486,17 +491,59 @@ class Text {
 final text = Text('Save');
 ''';
 
-  Future<void> test_allowsStringsDefinitionFiles() async {
+  Future<void> test_reportsStringsDefinitionFiles() async {
     final filePath = '$testPackageLibPath/features/settings/settings_strings.dart';
-    newFile(filePath, r'''
+    const source = r'''
 class Text {
   Text(String data);
 }
 
 final text = Text('Save');
-''');
+''';
+    newFile(filePath, source);
 
-    await assertNoDiagnosticsInFile(filePath);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, "final text = Text('Save')", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSampleTextInsideResolvedPreview() async {
+    await assertAllows(r'''
+import 'package:flutter/widget_previews.dart';
+
+class Text {
+  Text(String data);
+}
+
+@Preview(name: 'Card')
+Text cardPreview() => Text('Suture Kit');
+''', path: '$testPackageLibPath/features/probe/presentation/widgets/card_preview.dart');
+  }
+
+  Future<void> test_reportsTextUnderLookalikePreviewAnnotation() async {
+    final filePath = '$testPackageLibPath/features/probe/presentation/widgets/card_preview.dart';
+    final analyzedSource = _analyzedSource(r'''
+class Preview {
+  const Preview({String? name});
+}
+
+class Text {
+  Text(String data);
+}
+
+@Preview(name: 'Card')
+Text cardPreview() => Text('Suture Kit');
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(filePath, analyzedSource);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(
+        analyzedSource,
+        "Text cardPreview() => Text('Suture Kit')",
+        ruleName,
+        lineStart: true,
+      ),
+    ]);
   }
 
   Future<void> test_allowsHardcodedLookingTextInsideDebugPrintWithParen() async {
@@ -516,6 +563,11 @@ void log() {
 final class L10nContextDirectAccessTest extends _UiRuleTest {
   @override
   String get ruleName => 'l10n_context_direct_access';
+
+  Future<void> test_severityIsError() async {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
   @override
   String get needle => 'context.l10n.deleteTitle';
   @override
@@ -692,6 +744,11 @@ class Avatar extends StatelessWidget {
 final class WidgetTopLevelFunctionBoundaryTest extends _UiRuleTest {
   @override
   String get ruleName => 'widget_top_level_function_boundary';
+
+  Future<void> test_severityIsError() async {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
   @override
   String get needle => 'Future<void> createSquad';
   @override
@@ -711,6 +768,31 @@ bool _canShowAction(Object state) => true;
 
     await assertDiagnosticsInFile(path, [
       compatLint(analyzedSource, 'bool _canShowAction', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsResolvedPreviewFunction() async {
+    await assertAllows(r'''
+import 'package:flutter/widget_previews.dart';
+
+@Preview(name: 'Squad actions')
+Widget squadActionsPreview() => SquadActionsBar();
+''', path: path);
+  }
+
+  Future<void> test_reportsFunctionUnderLookalikePreviewAnnotation() async {
+    final analyzedSource = _analyzedSource(r'''
+class Preview {
+  const Preview({String? name});
+}
+
+@Preview(name: 'Squad actions')
+Widget squadActionsPreview() => SquadActionsBar();
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, 'Widget squadActionsPreview', ruleName, lineStart: true),
     ]);
   }
 

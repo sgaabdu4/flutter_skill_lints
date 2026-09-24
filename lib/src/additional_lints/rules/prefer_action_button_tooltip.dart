@@ -12,6 +12,7 @@ class PreferActionButtonTooltip extends InstanceCreationExpressionRule {
     'prefer_action_button_tooltip',
     'Define a tooltip for action buttons.',
     correctionMessage: 'Add a tooltip that describes the button action.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   PreferActionButtonTooltip()

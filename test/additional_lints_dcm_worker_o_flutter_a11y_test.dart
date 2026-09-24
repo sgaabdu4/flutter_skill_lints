@@ -1,9 +1,12 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missing_image_alt.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_action_button_tooltip.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_define_hero_tag.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_text_rich.dart';
+import 'package:test/test.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
@@ -11,6 +14,7 @@ void main() {
     defineReflectiveTests(PreferActionButtonTooltipTest);
     defineReflectiveTests(AvoidMissingImageAltTest);
     defineReflectiveTests(PreferDefineHeroTagTest);
+    defineReflectiveTests(PreferTextRichTest);
   });
 }
 
@@ -95,6 +99,10 @@ class Text extends Widget {
   final String data;
 }
 
+class RichText extends Widget {
+  const RichText({required Object text});
+}
+
 T findWidget<T extends Widget>() => throw StateError('test helper');
 ''');
   }
@@ -106,6 +114,10 @@ final class PreferActionButtonTooltipTest extends _FlutterA11yRuleTest {
   void setUp() {
     rule = PreferActionButtonTooltip();
     super.setUp();
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(PreferActionButtonTooltip.code.severity, DiagnosticSeverity.ERROR);
   }
 
   Future<void> test_iconButtonMissingTooltip_lint() async {
@@ -178,6 +190,10 @@ final class AvoidMissingImageAltTest extends _FlutterA11yRuleTest {
   void setUp() {
     rule = AvoidMissingImageAlt();
     super.setUp();
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(AvoidMissingImageAlt.code.severity, DiagnosticSeverity.ERROR);
   }
 
   Future<void> test_imageMissingSemanticLabel_lint() async {
@@ -376,6 +392,37 @@ Widget build() {
     onPressed: () {},
   );
 }
+''');
+  }
+}
+
+@reflectiveTest
+final class PreferTextRichTest extends _FlutterA11yRuleTest {
+  @override
+  void setUp() {
+    rule = PreferTextRich();
+    super.setUp();
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(PreferTextRich.code.severity, DiagnosticSeverity.ERROR);
+  }
+
+  Future<void> test_richText_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+Widget build() => const RichText(text: 'Total');
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('RichText('), 'RichText'.length)]);
+  }
+
+  Future<void> test_text_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+Widget build() => const Text('Total');
 ''');
   }
 }

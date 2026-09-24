@@ -98,6 +98,8 @@ hive_test_close_missing
 implicit_null_fallback
 keepalive_watches_unbounded_collection
 l10n_context_direct_access
+l10n_notifier_localized_copy
+l10n_string_concatenation
 linear_id_lookup_in_hot_path
 mixin_mixin_class
 mixin_mutable_state
@@ -203,6 +205,9 @@ widget_derived_collection_logic
 widget_infra_dependency_boundary
 widget_local_mutation_flag
 widget_material_boundary
+widget_preview_import_leak
+widget_preview_platform_dependency
+widget_preview_screen
 widget_top_level_function_boundary
 widget_try_catch_boundary
 ```

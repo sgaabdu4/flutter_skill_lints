@@ -14,6 +14,7 @@ class AvoidMissingImageAlt extends NodeRegistrationRule {
     'avoid_missing_image_alt',
     'Provide a semantic label for images or explicitly exclude them from semantics.',
     correctionMessage: 'Add semanticLabel or set excludeFromSemantics: true for decorative images.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidMissingImageAlt()

@@ -299,9 +299,19 @@ $source''';
   }
 
   void _addFlutterPackage() {
-    newPackage('flutter').addFile('lib/widgets.dart', r'''
+    newPackage('flutter')
+      ..addFile('lib/widgets.dart', r'''
 class BuildContext {}
 class Widget {}
+''')
+      ..addFile('lib/widget_previews.dart', r'''
+base class Preview {
+  const Preview({String? name});
+}
+
+abstract base class MultiPreview {
+  const MultiPreview();
+}
 ''');
   }
 }

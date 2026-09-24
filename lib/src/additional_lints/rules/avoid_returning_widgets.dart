@@ -26,6 +26,7 @@ class AvoidReturningWidgets extends AnalysisRule {
     correctionMessage:
         'Extract this into a named Widget class. Only framework build/builder '
         'overrides should return widgets directly.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidReturningWidgets()
@@ -59,13 +60,14 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
-    if (_isAllowedFrameworkWidgetMethod(node)) return;
+    if (_isAllowedFrameworkWidgetMethod(node) || hasWidgetPreviewAnnotation(node)) return;
 
     _checkReturnType(node.returnType, node.name);
   }
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
+    if (hasWidgetPreviewAnnotation(node)) return;
     _checkReturnType(node.returnType, node.name);
   }
 

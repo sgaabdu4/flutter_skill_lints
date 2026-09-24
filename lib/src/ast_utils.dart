@@ -2,6 +2,7 @@ import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/mounted_guard_utils.dart';
@@ -90,6 +91,53 @@ bool isEnclosedClassAssignableTo(AstNode node, TypeChecker checker) {
 BlockClassBody? classBodyOf(ClassDeclaration node) {
   final body = node.body;
   return body is BlockClassBody ? body : null;
+}
+
+/// Flutter widget preview annotations: `@Preview` and `MultiPreview` subclasses.
+const flutterWidgetPreviewChecker = TypeChecker.any([
+  TypeChecker.fromName('Preview', packageName: 'flutter'),
+  TypeChecker.fromName('MultiPreview', packageName: 'flutter'),
+]);
+
+/// Whether [node] carries a resolved Flutter widget preview annotation.
+bool hasWidgetPreviewAnnotation(AnnotatedNode node) => widgetPreviewAnnotation(node) != null;
+
+/// The resolved Flutter widget preview annotation on [node], if any.
+Annotation? widgetPreviewAnnotation(AnnotatedNode node) {
+  for (final annotation in node.metadata) {
+    final type = switch (annotation.element) {
+      ConstructorElement(:final returnType) => returnType,
+      PropertyAccessorElement(:final returnType) => returnType,
+      _ => null,
+    };
+    if (type != null && flutterWidgetPreviewChecker.isAssignableFromType(type)) return annotation;
+  }
+  return null;
+}
+
+/// The resolved `@Preview` function, method, or constructor enclosing [node].
+AnnotatedNode? enclosingWidgetPreview(AstNode node) {
+  for (AstNode? current = node; current != null; current = current.parent) {
+    if (current is FunctionDeclaration ||
+        current is MethodDeclaration ||
+        current is ConstructorDeclaration) {
+      final declaration = current as AnnotatedNode;
+      if (hasWidgetPreviewAnnotation(declaration)) return declaration;
+    }
+  }
+  return null;
+}
+
+/// Top-level functions and class members annotated with a resolved `@Preview`.
+Iterable<AnnotatedNode> widgetPreviewDeclarations(CompilationUnit unit) sync* {
+  for (final declaration in unit.declarations) {
+    if (declaration is FunctionDeclaration && hasWidgetPreviewAnnotation(declaration)) {
+      yield declaration;
+    } else if (declaration is ClassDeclaration) {
+      final members = classBodyOf(declaration)?.members ?? const <ClassMember>[];
+      yield* members.where(hasWidgetPreviewAnnotation);
+    }
+  }
 }
 
 BlockClassBody? flutterStateBody(ClassDeclaration node) {
@@ -673,3 +721,59 @@ bool isImmediatelyInvoked(FunctionExpression function) {
           parent.methodName.name == 'call' &&
           identical(parent.target, expression);
 }
+
+/// The literal text of a string literal, ignoring interpolated expressions.
+String? stringLiteralText(Expression expression) {
+  if (expression is SimpleStringLiteral) return expression.value;
+
+  if (expression is AdjacentStrings) {
+    final buffer = StringBuffer();
+    for (final string in expression.strings) {
+      final part = stringLiteralText(string);
+      if (part != null) buffer.write(part);
+    }
+    return buffer.toString();
+  }
+
+  if (expression is StringInterpolation) {
+    final buffer = StringBuffer();
+    for (final element in expression.elements) {
+      if (element is InterpolationString) buffer.write(element.value);
+    }
+    return buffer.toString();
+  }
+
+  return null;
+}
+
+/// Whether [value] contains a Latin letter.
+bool hasLetter(String value) => _letter.hasMatch(value);
+
+final RegExp _letter = RegExp('[A-Za-z]');
+
+/// Whether a named argument [name] carries user-facing copy.
+bool isUserFacingLabel(String name) => _userFacingLabels.contains(name.toLowerCase());
+
+const _userFacingLabels = {
+  'text',
+  'data',
+  'label',
+  'labeltext',
+  'hint',
+  'hinttext',
+  'helpertext',
+  'errortext',
+  'title',
+  'subtitle',
+  'tooltip',
+  'semanticslabel',
+  'semanticlabel',
+  'message',
+  'placeholder',
+  'prefixtext',
+  'suffixtext',
+  'toptext',
+  'bottomtext',
+  'description',
+  'heading',
+};

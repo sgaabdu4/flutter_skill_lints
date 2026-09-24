@@ -52,6 +52,7 @@ Core skill rules already covered before this pass:
   `freezed_one_class_per_file`, `dart_static_namespace`.
 - Architecture: `arch_domain_import`, `arch_storage_sdk_import`, `arch_domain_serialization`,
   `arch_interface_contract`, `arch_concrete_dependency`,
+  `arch_repository_inline_entity_mapping`,
   `arch_datasource_try_catch`, `arch_widget_path`, `atomic_provider_access`,
   `typed_id_raw_id`, `records_map_return`, `avoid_object_map_cast`,
   `vo_public_raw_constructor`, `domain_entity_primitive_factory`,

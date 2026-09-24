@@ -374,7 +374,7 @@ RegExp _nestedIdLookup(String loopVar) => RegExp(
   r'\.\s*(?:indexWhere|firstWhere)\s*\(\s*'
   r'(?:\([A-Za-z_]\w*\)|[A-Za-z_]\w*)\s*=>\s*[A-Za-z_]\w*\s*\.\s*id\s*==\s*'
   '${RegExp.escape(loopVar)}'
-  r'\s*\.',
+  r'\b',
 );
 
 int? _findBlockEnd(SourceScannerContext context, int startLine, int maxLine) {

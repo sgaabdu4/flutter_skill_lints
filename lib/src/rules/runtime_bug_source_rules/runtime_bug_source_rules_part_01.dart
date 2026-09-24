@@ -136,9 +136,9 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       'nested_linear_lookup_by_id',
       'Nested loop performs an inner linear id lookup.',
       correctionMessage: 'Build a lookup map before the loop and read by id inside the loop instead of calling indexWhere/firstWhere repeatedly.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags `for (final item in items) { otherItems.indexWhere((x) => x.id == item.otherId) }` patterns.',
+    description: 'Flags `for (final item in items) { otherItems.indexWhere((x) => x.id == item.otherId) }` patterns, including loops over id lists such as `x.id == id`.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final method in context.methods) {

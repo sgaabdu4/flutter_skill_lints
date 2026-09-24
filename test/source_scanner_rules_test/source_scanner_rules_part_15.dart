@@ -374,6 +374,24 @@ void cache(Map<String, Item> cache, List<Item> items, String itemId) {
 ''');
   }
 
+  Future<void> test_reportsLookupOverIdListInNotifier() async {
+    const source =
+        '''
+$_item
+class ItemNotifier {
+  void removeAll(List<Item> items, List<String> ids) {
+    for (final id in ids) {
+      final index = items.indexWhere((item) => item.id == id);
+      if (index >= 0) items.removeAt(index);
+    }
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
+  }
+
   Future<void> test_allowsOneOffRepositoryMutation() async {
     await assertAllows('''
 final class StoredValue {
@@ -505,6 +523,35 @@ class ItemRepository {
     final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
 
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
+  }
+
+  Future<void> test_reportsLookupOverIdListInNotifier() async {
+    const source = r'''
+class ItemNotifier {
+  void removeAll(List<Object> items, List<String> ids) {
+    for (final id in ids) {
+      final index = items.indexWhere((item) => item.id == id);
+      if (index >= 0) items.removeAt(index);
+    }
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
+  }
+
+  Future<void> test_allowsLookupByUnrelatedLongerName() async {
+    await assertAllows(r'''
+class ItemNotifier {
+  void removeAll(List<Object> items, List<String> ids, String idx) {
+    for (final id in ids) {
+      final index = items.indexWhere((item) => item.id == idx);
+      if (index >= 0) print(id);
+    }
+  }
+}
+''');
   }
 
   Future<void> test_allowsPreIndexedMap() async {

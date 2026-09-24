@@ -147,6 +147,15 @@ void main() {
     expect(message, isNot(contains('configure')));
   });
 
+  test('repeated id lookup diagnostics are errors', () {
+    for (final name in ['linear_id_lookup_in_hot_path', 'nested_linear_lookup_by_id']) {
+      final rule = flutterSkillRules.singleWhere((rule) => rule.name == name);
+      final code = rule.diagnosticCodes.singleWhere((code) => code.lowerCaseName == name);
+
+      expect(code.severity, DiagnosticSeverity.ERROR, reason: name);
+    }
+  });
+
   test('ref-read-in-build diagnostic explains callback reads', () {
     final registry = _RecordingPluginRegistry('flutter_skill_lints_additional');
     final plugin = AdditionalLintsPlugin();

@@ -297,6 +297,8 @@ $source''';
     newPackage('flutter').addFile('lib/widgets.dart', r'''
 class BuildContext {}
 class Widget {}
+class StatefulWidget extends Widget {}
+abstract class State<T extends StatefulWidget> {}
 ''');
   }
 }

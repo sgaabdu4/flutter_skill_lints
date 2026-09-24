@@ -1,5 +1,7 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -104,49 +106,52 @@ final List<ScannerRule> stateSourceRules = [
 
   /// Do not surface raw exception strings in state.
   ///
-  /// Why: Flags `error: e.toString()` state updates. Convert failures to
-  /// structured app exceptions or user-safe messages before they enter UI state.
+  /// Why: Flags String `error:` arguments built from the caught exception, such as
+  /// `e.toString()`, `'Failed: $e'` or `e.message`. Translate failures to a typed
+  /// AppError before they enter UI state.
   scannerRule(
     code: const LintCode(
       'state_raw_error_to_string',
       'Do not surface raw exception strings in state.',
-      correctionMessage: 'Use AppException or another structured, user-safe error message.',
+      correctionMessage:
+          'Store a typed AppError, for example AppError.from(e), instead of the exception text.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags raw error toString state updates so the Flutter skill violation is shown during analysis.',
+    description: 'Flags String error arguments built from a caught exception or its toString so failures stay typed.',
     scan: (reporter, context) {
-      final rawErrorString = RegExp(r'\berror\s*:\s*[A-Za-z_]\w*\.toString\(\)');
-      for (var i = 0; i < context.source.length; i++) {
-        final match = rawErrorString.firstMatch(context.source.masked[i]);
-        if (match != null) {
-          reporter.report(context, i, match.start);
-        }
+      final finder = _RawErrorStringFinder();
+      context.unit.accept(finder);
+      for (final node in finder.nodes) {
+        final location = context.unit.lineInfo.getLocation(node.offset);
+        reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
       }
     },
   ),
 
-  /// Freezed state should not carry nullable raw error strings.
+  /// Notifier state should not carry raw error strings.
   ///
-  /// Why: Flags String? error fields in Freezed state classes. Model failures as
-  /// AsyncError, failure unions, or structured app exceptions.
+  /// Why: AppError is the sole error type in notifier state. Flags String error
+  /// fields and Freezed factory parameters in `*State` classes; a Flutter
+  /// widget State is not notifier state.
   scannerRule(
     code: const LintCode(
       'state_freezed_nullable_error',
-      'Do not store nullable raw error strings in Freezed state.',
-      correctionMessage: 'Use AsyncError, a failure union, or a structured app exception.',
+      'Do not store raw error strings in notifier state.',
+      correctionMessage: 'Use a typed AppError field and pattern-match it in the UI.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags String? error fields in Freezed state classes so the Flutter skill violation is shown during analysis.',
+    description: 'Flags String error fields and factory parameters in state classes so failures stay typed as AppError.',
     scan: (reporter, context) {
-      final nullableError = RegExp(r'\bString\?\s+error\b');
-      for (final classSpan in context.classes) {
-        if (!context.hasFreezedAnnotation(classSpan)) continue;
-        if (!classSpan.name.endsWith('State')) continue;
-        for (var i = classSpan.start; i <= classSpan.end; i++) {
-          final match = nullableError.firstMatch(context.source.masked[i]);
-          if (match != null) {
-            reporter.report(context, i, match.start);
-          }
+      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+        final element = declaration.declaredFragment?.element;
+        if (element == null || !(element.name ?? '').endsWith('State') || _isWidgetState(element)) {
+          continue;
+        }
+        final body = declaration.body;
+        if (body is! BlockClassBody) continue;
+        for (final node in _stringErrorDeclarations(body.members)) {
+          final location = context.unit.lineInfo.getLocation(node.offset);
+          reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
         }
       }
     },
@@ -259,3 +264,88 @@ final _boolStringSentinel = RegExp(
 );
 
 final _bareStateMounted = RegExp(r'(^|[^A-Za-z0-9_\.])(?:this\.)?mounted\b');
+
+final _errorName = RegExp('error', caseSensitive: false);
+
+bool _isStringType(DartType? type) => type != null && type.isDartCoreString;
+
+/// A Flutter `State<T>` holds widget-local state, not notifier state.
+bool _isWidgetState(ClassElement element) => element.allSupertypes.any(
+  (type) =>
+      type.element.name == 'State' &&
+      type.element.library.uri.toString().startsWith('package:flutter/'),
+);
+
+Iterable<AstNode> _stringErrorDeclarations(NodeList<ClassMember> members) sync* {
+  for (final member in members) {
+    if (member is FieldDeclaration && !member.isStatic) {
+      for (final variable in member.fields.variables) {
+        final field = variable.declaredFragment?.element;
+        if (_errorName.hasMatch(variable.name.lexeme) && _isStringType(field?.type)) {
+          yield member.fields.type ?? variable;
+        }
+      }
+    }
+    if (member is ConstructorDeclaration && member.redirectedConstructor != null) {
+      // Freezed turns redirecting factory parameters into state fields.
+      for (final parameter in member.parameters.parameters) {
+        final element = parameter.declaredFragment?.element;
+        final name = parameter.name?.lexeme ?? '';
+        if (_errorName.hasMatch(name) && _isStringType(element?.type)) yield parameter;
+      }
+    }
+  }
+}
+
+final class _RawErrorStringFinder extends RecursiveAstVisitor<void> {
+  final nodes = <NamedArgument>[];
+
+  @override
+  void visitNamedArgument(NamedArgument node) {
+    final value = node.argumentExpression;
+    if (node.name.lexeme == 'error' &&
+        _isStringType(value.staticType) &&
+        _containsRawErrorText(value)) {
+      nodes.add(node);
+    }
+    super.visitNamedArgument(node);
+  }
+}
+
+/// The value reads the caught exception or stack trace, or stringifies an object.
+bool _containsRawErrorText(Expression value) {
+  final finder = _RawErrorTextFinder();
+  value.accept(finder);
+  return finder.found;
+}
+
+final class _RawErrorTextFinder extends RecursiveAstVisitor<void> {
+  bool found = false;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final target = node.target;
+    if (node.methodName.name == 'toString' && target != null && !_isStringType(target.staticType)) {
+      found = true;
+      return;
+    }
+    super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    final element = node.element;
+    if (element is! LocalVariableElement) return;
+    for (AstNode? ancestor = node.parent; ancestor != null; ancestor = ancestor.parent) {
+      if (ancestor is CatchClause &&
+          (ancestor.exceptionParameter?.declaredFragment?.element == element ||
+              ancestor.stackTraceParameter?.declaredFragment?.element == element)) {
+        found = true;
+        return;
+      }
+    }
+  }
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {}
+}

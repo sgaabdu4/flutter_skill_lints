@@ -854,8 +854,6 @@ final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
     }
     if (isExpressionTargetIdentifier(node)) return;
     if (classMemberNameIsDeclaration(node)) return;
-    // A named argument label such as `context:` is not a read.
-    if (node.parent is Label) return;
     if (_accepts(node)) this.node = node;
   }
 

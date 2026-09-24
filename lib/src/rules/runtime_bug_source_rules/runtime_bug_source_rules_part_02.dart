@@ -38,7 +38,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
       correctionMessage: 'Debounce asynchronous work in the notifier or event handler using the project latency budget.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags awaited work, HTTP calls and asynchronous or unresolved notifier calls in TextField/TextFormField callbacks without debounce. Resolved synchronous void updates are not assumed to start async work.',
+    description: 'Flags TextField/TextFormField onChanged callbacks (lambdas or tear-offs) that reach asynchronous or remote work (await, Future/Stream-typed calls, async callees, unresolved calls) without debounce in the file or in the project callee\'s file. Synchronous state-only updates are allowed.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -66,7 +66,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
       correctionMessage: 'Move the notifier call to `onChangeEnd`, or debounce with a Timer. `onChanged` should only update local UI state.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags Slider/RangeSlider/CupertinoSlider callbacks with asynchronous or unresolved notifier calls, HTTP calls or awaited work without debounce.',
+    description: 'Flags Slider/RangeSlider/CupertinoSlider onChanged callbacks (lambdas or tear-offs) that reach asynchronous or remote work (await, Future/Stream-typed calls, async callees, unresolved calls) without debounce.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
@@ -319,23 +319,30 @@ bool _isAwaitedCollectionLoad(
       (lineIndex - 1 >= loopStart && _awaitKeyword.hasMatch(context.source.masked[lineIndex - 1]));
 }
 
+/// Whether the `onChanged` callback of the input at [column] reaches
+/// asynchronous or remote work (#37): an `await`, a Future/Stream-typed call,
+/// an async callee, or a call that does not resolve. A lambda body is walked;
+/// a tear-off is judged by its resolved callee. Callees declared in this
+/// project are followed (other files through [_ParsedWorkFinder]), so
+/// synchronous state-only updates (`copyWith`, local validation) stay clean;
+/// SDK and package callees are judged by their resolved signature.
 bool _onChangedHasWork(SourceScannerContext context, int lineIndex, int column) {
   final callback = _onChangedCallback(context, context.source.lineOffsets[lineIndex] + column);
   if (callback == null) return false;
-  final startLine = context.unit.lineInfo.getLocation(callback.offset).lineNumber - 1;
-  final endLine = context.unit.lineInfo.getLocation(callback.end).lineNumber - 1;
-  final start = callback.offset - context.source.lineOffsets[startLine];
-  final segment = context.source.masked
-      .sublist(startLine, endLine + 1)
-      .join('\n')
-      .substring(start, start + callback.length);
-  for (final work in _expensiveOnChangedWork.allMatches(segment)) {
-    if (!work.group(0)!.contains('notifier') ||
-        !_isSimpleSynchronousStateUpdate(context, callback.offset + work.end - 1)) {
-      return true;
-    }
+  final finder = _AsyncWorkFinder(context);
+  switch (callback.unParenthesized) {
+    case FunctionExpression(:final body):
+      body.accept(finder);
+    case final SimpleIdentifier tearOff:
+      finder.checkTearOff(tearOff, tearOff.element);
+    case final PrefixedIdentifier tearOff:
+      finder.checkTearOff(tearOff, tearOff.identifier.element);
+    case final PropertyAccess tearOff:
+      finder.checkTearOff(tearOff, tearOff.propertyName.element);
+    case final other:
+      other.accept(finder);
   }
-  return false;
+  return finder.found;
 }
 
 Expression? _onChangedCallback(SourceScannerContext context, int offset) {
@@ -354,215 +361,486 @@ Expression? _onChangedCallback(SourceScannerContext context, int offset) {
   return null;
 }
 
-bool _isSimpleSynchronousStateUpdate(SourceScannerContext context, int offset) {
-  AstNode? node = context.unit.nodeCovering(offset: offset);
-  while (node != null && node is! MethodInvocation) {
-    node = node.parent;
+final class _AsyncWorkFinder extends RecursiveAstVisitor<void> {
+  _AsyncWorkFinder(this.context);
+
+  final SourceScannerContext context;
+  final _followed = <Element>{};
+  final _parsed = <String, CompilationUnit?>{};
+  var _depth = 0;
+  bool found = false;
+
+  void checkTearOff(Expression tearOff, Element? element) {
+    final type = tearOff.staticType;
+    if (type is! FunctionType || _isAsyncType(type.returnType)) {
+      found = true;
+      return;
+    }
+    if (element is MethodElement ||
+        element is TopLevelFunctionElement ||
+        element is LocalFunctionElement) {
+      _follow(element as ExecutableElement);
+    }
   }
-  if (node is! MethodInvocation) return false;
-  if (!node.argumentList.arguments.every((argument) {
-    final value = argument.argumentExpression;
-    return value is SimpleIdentifier && value.element is FormalParameterElement ||
-        _isPrimitiveLiteral(value);
-  })) {
-    return false;
+
+  @override
+  void visitAwaitExpression(AwaitExpression node) => found = true;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    _checkInvocation(node, node.methodName.element);
+    if (!found) super.visitMethodInvocation(node);
   }
-  final method = node.methodName.element;
-  if (method is! ExecutableElement ||
-      method.isAbstract ||
-      method.isExternal ||
-      !method.fragments.every((fragment) => fragment.isSynchronous) ||
-      node.staticType is! VoidType) {
-    return false;
+
+  @override
+  void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
+    _checkInvocation(node, node.element);
+    if (!found) super.visitFunctionExpressionInvocation(node);
   }
-  final body = _declaredMethodBody(context, method);
-  final declaration = body?.parent;
-  if (declaration is! MethodDeclaration) return false;
-  final parameters = {
-    for (final parameter in declaration.parameters?.parameters ?? <FormalParameter>[])
-      parameter.name?.lexeme,
-  };
-  return switch (body) {
-    ExpressionFunctionBody(:final expression) => _isDirectStateAssignment(
-      context,
-      expression,
-      parameters,
-    ),
-    BlockFunctionBody(:final block) => _isLocalStateUpdate(context, block, parameters),
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final constructor = node.constructorName.element;
+    if (constructor == null || _isAsyncType(node.staticType)) {
+      found = true;
+      return;
+    }
+    _follow(constructor);
+    if (!found) super.visitInstanceCreationExpression(node);
+  }
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    final setter = node.writeElement;
+    if (setter is SetterElement && !setter.isOriginVariable) _follow(setter);
+    if (!found) super.visitAssignmentExpression(node);
+  }
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    final getter = node.element;
+    if (getter is GetterElement && !getter.isOriginVariable) _follow(getter);
+  }
+
+  void _checkInvocation(InvocationExpression node, Element? element) {
+    if (node.staticInvokeType is! FunctionType || _isAsyncType(node.staticType)) {
+      found = true;
+      return;
+    }
+    if (element is ExecutableElement) _follow(element);
+  }
+
+  void _follow(ExecutableElement element) {
+    if (found) return;
+    if (!element.fragments.every((fragment) => fragment.isSynchronous) ||
+        _isAsyncType(element.returnType)) {
+      found = true;
+      return;
+    }
+    if (_depth >= 4 || !_followed.add(element.baseElement)) return;
+    final fragment = element.firstFragment;
+    final source = fragment.libraryFragment.source;
+    _depth++;
+    if (source == context.unit.declaredFragment?.source) {
+      _enclosingExecutable(context.unit.nodeCovering(offset: fragment.offset))?.accept(this);
+    } else if (_parsedProjectUnit(source.uri, source.fullName, () => source.contents.data)
+        case final unit?) {
+      _enclosingExecutable(unit.nodeCovering(offset: fragment.offset))
+          ?.accept(_ParsedWorkFinder(this, element));
+    }
+    _depth--;
+  }
+
+  /// The parsed unit of a callee file in this project. SDK and package
+  /// callees are judged by their resolved signature. A file that owns a
+  /// debounce mechanism is trusted, as [_fileHasDebounce] trusts the widget
+  /// file: debouncing in the notifier is the documented fix.
+  CompilationUnit? _parsedProjectUnit(Uri uri, String path, String Function() content) {
+    final current = context.unit.declaredFragment?.source.uri;
+    final isProject = switch ((uri.scheme, current?.scheme)) {
+      ('package', 'package') => uri.pathSegments.first == current?.pathSegments.first,
+      ('file', 'file') => true,
+      _ => false,
+    };
+    if (!isProject) return null;
+    return _parsed.putIfAbsent(path, () {
+      final text = content();
+      if (_sourceHasDebounce(SourceScannerSource(text))) return null;
+      return parseString(content: text, throwIfDiagnostics: false).unit;
+    });
+  }
+}
+
+/// Walks a callee declaration parsed from another project file (#37). The
+/// parse is unresolved, so names are typed through the callee's element
+/// model: locals and parameters, members of the enclosing type, extensions
+/// and the library scope. A call that cannot be typed is unresolved and
+/// counts as work.
+final class _ParsedWorkFinder extends RecursiveAstVisitor<void> {
+  _ParsedWorkFinder(this.finder, ExecutableElement callee)
+    : fragment = callee.firstFragment.libraryFragment,
+      enclosing = callee.enclosingElement,
+      thisType = switch (callee.enclosingElement) {
+        InterfaceElement(:final thisType) => thisType,
+        ExtensionElement(:final extendedType) => extendedType,
+        _ => null,
+      } {
+    for (final parameter in callee.formalParameters) {
+      if (parameter.name case final name?) locals[name] = parameter.type;
+    }
+  }
+
+  final _AsyncWorkFinder finder;
+  final LibraryFragment fragment;
+  final Element? enclosing;
+  final DartType? thisType;
+  final locals = <String, DartType?>{};
+  final localFunctions = <String>{};
+
+  LibraryElement get library => fragment.element;
+
+  @override
+  void visitAwaitExpression(AwaitExpression node) => finder.found = true;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (finder.found) return;
+    final target = node.realTarget;
+    final name = node.methodName.name;
+    if (target != null || !localFunctions.contains(name)) {
+      _check(target == null ? _resolveName(name) : _resolveMember(target, name));
+    }
+    node.target?.accept(this);
+    node.argumentList.accept(this);
+  }
+
+  @override
+  void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
+    _check(_typeOf(node.function));
+    super.visitFunctionExpressionInvocation(node);
+  }
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final constructorName = node.constructorName;
+    final named = constructorName.type;
+    final name = constructorName.name?.name;
+    final constructor = switch ((_typeOfAnnotation(named), named.importPrefix)) {
+      (InterfaceType(:final element), _) =>
+        name == null ? element.unnamedConstructor : element.getNamedConstructor(name),
+      (_, final prefix?) when name == null => switch (_lookup(prefix.name.lexeme)) {
+        final InterfaceElement type => type.getNamedConstructor(named.name.lexeme),
+        _ => null,
+      },
+      _ => null,
+    };
+    _check(constructor);
+    super.visitInstanceCreationExpression(node);
+  }
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    final setter = switch (node.leftHandSide) {
+      SimpleIdentifier(:final name) when !locals.containsKey(name) =>
+        _setter(thisType, name) ?? fragment.scope.lookup(name).setter,
+      PrefixedIdentifier(:final prefix, :final identifier) => _setter(
+        _typeOf(prefix),
+        identifier.name,
+      ),
+      PropertyAccess(:final realTarget, :final propertyName) => _setter(
+        _typeOf(realTarget),
+        propertyName.name,
+      ),
+      _ => null,
+    };
+    if (setter is SetterElement && !setter.isOriginVariable) finder._follow(setter);
+    super.visitAssignmentExpression(node);
+  }
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) => _followGetter(_resolveName(node.name));
+
+  @override
+  void visitPrefixedIdentifier(PrefixedIdentifier node) {
+    node.prefix.accept(this);
+    _followGetter(_resolveMember(node.prefix, node.identifier.name));
+  }
+
+  @override
+  void visitPropertyAccess(PropertyAccess node) {
+    node.target?.accept(this);
+    _followGetter(_resolveMember(node.realTarget, node.propertyName.name));
+  }
+
+  @override
+  void visitVariableDeclaration(VariableDeclaration node) {
+    super.visitVariableDeclaration(node);
+    final declared = switch (node.parent) {
+      VariableDeclarationList(:final type?) => type,
+      _ => null,
+    };
+    locals[node.name.lexeme] = declared == null
+        ? _typeOf(node.initializer)
+        : _typeOfAnnotation(declared);
+  }
+
+  @override
+  void visitForEachPartsWithDeclaration(ForEachPartsWithDeclaration node) {
+    super.visitForEachPartsWithDeclaration(node);
+    final variable = node.loopVariable;
+    final iterable = _typeOf(node.iterable);
+    locals[variable.name.lexeme] = switch (variable.type) {
+      final type? => _typeOfAnnotation(type),
+      null when iterable is InterfaceType =>
+        iterable.asInstanceOf(library.typeProvider.iterableElement)?.typeArguments.first,
+      null => null,
+    };
+  }
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {
+    for (final parameter in node.parameters?.parameters ?? const <FormalParameter>[]) {
+      if (parameter.name case final name?) {
+        locals[name.lexeme] = switch (parameter.type) {
+          final type? => _typeOfAnnotation(type),
+          null => null,
+        };
+      }
+    }
+    super.visitFunctionExpression(node);
+  }
+
+  @override
+  void visitFunctionDeclarationStatement(FunctionDeclarationStatement node) {
+    localFunctions.add(node.functionDeclaration.name.lexeme);
+    super.visitFunctionDeclarationStatement(node);
+  }
+
+  @override
+  void visitCatchClause(CatchClause node) {
+    final exceptionType = node.exceptionType;
+    if (node.exceptionParameter?.name case final name?) {
+      locals[name.lexeme] = exceptionType == null
+          ? library.typeProvider.objectType
+          : _typeOfAnnotation(exceptionType);
+    }
+    if (node.stackTraceParameter?.name case final name?) {
+      locals[name.lexeme] = library.typeProvider.objectType;
+    }
+    super.visitCatchClause(node);
+  }
+
+  @override
+  void visitDeclaredVariablePattern(DeclaredVariablePattern node) {
+    locals[node.name.lexeme] = switch (node.type) {
+      final type? => _typeOfAnnotation(type),
+      null => null,
+    };
+    super.visitDeclaredVariablePattern(node);
+  }
+
+  /// Follows a resolved callee, checks a callable value, or reports an
+  /// unresolved call.
+  void _check(Object? callee) {
+    switch (callee) {
+      case InterfaceElement(:final unnamedConstructor?):
+        finder._follow(unnamedConstructor);
+      case final GetterElement getter:
+        _followGetter(getter);
+        _checkCallable(getter.returnType);
+      case final ExecutableElement executable:
+        finder._follow(executable);
+      case final DartType type:
+        _checkCallable(type);
+      case _:
+        finder.found = true;
+    }
+  }
+
+  void _checkCallable(DartType type) {
+    if (type is FunctionType) {
+      if (_isAsyncType(type.returnType)) finder.found = true;
+      return;
+    }
+    final call = type is InterfaceType ? type.lookUpMethod('call', library) : null;
+    if (call == null) {
+      finder.found = true;
+    } else {
+      finder._follow(call);
+    }
+  }
+
+  void _followGetter(Object? element) {
+    if (element is GetterElement && !element.isOriginVariable) finder._follow(element);
+  }
+
+  Element? _lookup(String name) => fragment.scope.lookup(name).getter;
+
+  /// An unqualified name: a local, a member of the enclosing type, or a
+  /// library-scope declaration. A local of unknown type is `null`.
+  Object? _resolveName(String name) {
+    if (locals.containsKey(name)) return locals[name];
+    return _member(thisType, name) ??
+        switch (enclosing) {
+          final InstanceElement own => own.getMethod(name) ?? own.getGetter(name),
+          _ => null,
+        } ??
+        _lookup(name);
+  }
+
+  /// `target.name`: a static member, an import-prefixed declaration, or an
+  /// instance member of the target's type.
+  Object? _resolveMember(Expression target, String name) {
+    if (target is SuperExpression) return _member(thisType, name, inherited: true);
+    switch (_staticTarget(target)) {
+      case PrefixElement(:final scope):
+        return scope.lookup(name).getter;
+      case final InterfaceElement type:
+        return type.getNamedConstructor(name) ?? type.getMethod(name) ?? type.getGetter(name);
+      case final InstanceElement type:
+        return type.getMethod(name) ?? type.getGetter(name);
+    }
+    final type = _typeOf(target);
+    if (type is FunctionType && name == 'call') return type;
+    return _member(type, name);
+  }
+
+  Element? _staticTarget(Expression target) {
+    switch (target) {
+      case SimpleIdentifier(:final name)
+          when !locals.containsKey(name) && _member(thisType, name) == null:
+        final element = _lookup(name);
+        return element is PrefixElement || element is InstanceElement ? element : null;
+      case PrefixedIdentifier(:final prefix, :final identifier):
+        if (_staticTarget(prefix) case PrefixElement(:final scope)) {
+          final element = scope.lookup(identifier.name).getter;
+          return element is InstanceElement ? element : null;
+        }
+    }
+    return null;
+  }
+
+  Object? _member(DartType? type, String name, {bool inherited = false}) {
+    if (type is InterfaceType) {
+      final member =
+          type.lookUpMethod(name, library, inherited: inherited) ??
+          type.lookUpGetter(name, library, inherited: inherited);
+      if (member != null) return member;
+    }
+    if (type == null) return null;
+    for (final extension in fragment.accessibleExtensions) {
+      final member = extension.getMethod(name) ?? extension.getGetter(name);
+      if (member != null && _isOn(type, extension.extendedType)) return member;
+    }
+    return null;
+  }
+
+  bool _isOn(DartType type, DartType extended) => switch (extended) {
+    TypeParameterType() => true,
+    InterfaceType(:final element) =>
+      type is InterfaceType &&
+          (type.element == element || type.allSupertypes.any((s) => s.element == element)),
     _ => false,
   };
-}
 
-bool _isLocalStateUpdate(SourceScannerContext context, Block block, Set<String?> parameters) {
-  final locals = <String>{};
-  for (final statement in block.statements) {
-    if (statement is ExpressionStatement &&
-        _isDirectStateAssignment(context, statement.expression, parameters)) {
-      continue;
-    }
-    if (statement is VariableDeclarationStatement && statement.variables.isFinal) {
-      if (!_recordValidatedLocals(statement.variables, parameters, locals)) return false;
-      continue;
-    }
-    if (statement is IfStatement &&
-        statement.elseStatement == null &&
-        _isLocalValidation(statement.expression, parameters, locals) &&
-        _onlyReturns(statement.thenStatement)) {
-      continue;
-    }
-    return false;
-  }
-  return true;
-}
+  SetterElement? _setter(DartType? type, String name) =>
+      type is InterfaceType ? type.lookUpSetter(name, library) : null;
 
-bool _recordValidatedLocals(
-  VariableDeclarationList declaration,
-  Set<String?> parameters,
-  Set<String> locals,
-) {
-  for (final variable in declaration.variables) {
-    final initializer = variable.initializer;
-    if (initializer == null || !_isLocalValidation(initializer, parameters, locals)) return false;
-    locals.add(variable.name.lexeme);
+  DartType? _typeOf(Expression? expression) {
+    final type = switch (expression) {
+      ParenthesizedExpression(:final expression) => _typeOf(expression),
+      ThisExpression() => thisType,
+      SimpleIdentifier(:final name) => _valueType(_resolveName(name)),
+      PrefixedIdentifier(:final prefix, :final identifier) => _valueType(
+        _resolveMember(prefix, identifier.name),
+      ),
+      PropertyAccess(:final realTarget, :final propertyName) => _valueType(
+        _resolveMember(realTarget, propertyName.name),
+      ),
+      MethodInvocation(:final realTarget, :final methodName) => _returnType(
+        realTarget == null
+            ? _resolveName(methodName.name)
+            : _resolveMember(realTarget, methodName.name),
+      ),
+      InstanceCreationExpression(:final constructorName) => _typeOfAnnotation(constructorName.type),
+      AsExpression(:final type) => _typeOfAnnotation(type),
+      PostfixExpression(:final operand) => _typeOf(operand),
+      CascadeExpression(:final target) => _typeOf(target),
+      StringLiteral() => library.typeProvider.stringType,
+      IntegerLiteral() => library.typeProvider.intType,
+      DoubleLiteral() => library.typeProvider.doubleType,
+      BooleanLiteral() => library.typeProvider.boolType,
+      _ => null,
+    };
+    return type is TypeParameterType ? null : type;
   }
-  return true;
-}
 
-bool _onlyReturns(Statement statement) =>
-    statement is ReturnStatement && statement.expression == null ||
-    statement is Block && statement.statements.every(_onlyReturns);
+  DartType? _valueType(Object? element) => switch (element) {
+    final DartType type => type,
+    GetterElement(:final returnType) => returnType,
+    ExecutableElement(:final type) => type,
+    _ => null,
+  };
 
-bool _isLocalValidation(Expression value, Set<String?> parameters, Set<String> locals) {
-  if (value is SimpleIdentifier) {
-    return parameters.contains(value.name) || locals.contains(value.name);
-  }
-  if (value is PrefixedIdentifier) {
-    return (value.identifier.name == 'isEmpty' || value.identifier.name == 'isNotEmpty') &&
-        value.prefix.staticType?.isDartCoreString == true &&
-        _isLocalValidation(value.prefix, parameters, locals);
-  }
-  if (value is PropertyAccess) {
-    return (value.propertyName.name == 'isEmpty' || value.propertyName.name == 'isNotEmpty') &&
-        value.target != null &&
-        value.target!.staticType?.isDartCoreString == true &&
-        _isLocalValidation(value.target!, parameters, locals);
-  }
-  if (value is PrefixExpression && value.operator.lexeme == '!') {
-    return _isLocalValidation(value.operand, parameters, locals);
-  }
-  return _isPrimitiveLiteral(value);
-}
+  DartType? _returnType(Object? callee) => switch (callee) {
+    InterfaceElement(:final thisType) => thisType,
+    GetterElement(:final returnType) => _callReturnType(returnType),
+    ExecutableElement(:final returnType) => returnType,
+    final DartType type => _callReturnType(type),
+    _ => null,
+  };
 
-FunctionBody? _declaredMethodBody(SourceScannerContext context, ExecutableElement method) {
-  final fragment = method.firstFragment;
-  final offset = fragment.nameOffset;
-  if (offset == null) return null;
-  final source = fragment.libraryFragment.source;
-  final unit = source == context.unit.declaredFragment?.source
-      ? context.unit
-      : parseString(content: source.contents.data, throwIfDiagnostics: false).unit;
-  AstNode? declaration = unit.nodeCovering(offset: offset);
-  while (declaration != null && declaration is! MethodDeclaration) {
-    declaration = declaration.parent;
-  }
-  return declaration is MethodDeclaration ? declaration.body : null;
-}
+  DartType? _callReturnType(DartType type) => switch (type) {
+    FunctionType(:final returnType) => returnType,
+    InterfaceType() => type.lookUpMethod('call', library)?.returnType,
+    _ => null,
+  };
 
-bool _isDirectStateAssignment(
-  SourceScannerContext context,
-  Expression expression,
-  Set<String?> parameters,
-) {
-  if (expression is! AssignmentExpression || expression.operator.lexeme != '=') return false;
-  final target = expression.leftHandSide;
-  final writesState =
-      target is SimpleIdentifier && target.name == 'state' ||
-      target is PropertyAccess &&
-          target.target is ThisExpression &&
-          target.propertyName.name == 'state';
-  if (!writesState) return false;
-  final value = expression.rightHandSide;
-  return value is SimpleIdentifier && parameters.contains(value.name) ||
-      _isPrimitiveLiteral(value) ||
-      _isStateCopyWith(context, value, parameters);
-}
-
-bool _isStateCopyWith(SourceScannerContext context, Expression value, Set<String?> parameters) {
-  if (value is FunctionExpressionInvocation && value.function is PropertyAccess) {
-    final access = value.function as PropertyAccess;
-    final target = access.target;
-    final getter = access.propertyName.element;
-    final stateType = target?.staticType;
-    if (target is! SimpleIdentifier ||
-        target.name != 'state' ||
-        access.propertyName.name != 'copyWith' ||
-        getter is! GetterElement ||
-        !getter.firstFragment.libraryFragment.source.fullName.endsWith('.freezed.dart') ||
-        stateType is! InterfaceType ||
-        value.staticType != stateType ||
-        !isFreezedInterfaceType(stateType)) {
-      return false;
-    }
-    return value.argumentList.arguments.every(
-      (argument) => _isLocalValidation(argument.argumentExpression, parameters, const <String>{}),
+  DartType? _typeOfAnnotation(TypeAnnotation annotation) {
+    if (annotation is! NamedType) return null;
+    final prefix = annotation.importPrefix?.name.lexeme;
+    final scope = prefix == null
+        ? fragment.scope
+        : switch (_lookup(prefix)) {
+            PrefixElement(:final scope) => scope,
+            _ => null,
+          };
+    final element = scope?.lookup(annotation.name.lexeme).getter;
+    if (element is! InterfaceElement) return null;
+    final dynamicType = library.typeProvider.dynamicType;
+    final arguments = [
+      for (final argument in annotation.typeArguments?.arguments ?? const <TypeAnnotation>[])
+        _typeOfAnnotation(argument) ?? dynamicType,
+    ];
+    return element.instantiate(
+      typeArguments: arguments.length == element.typeParameters.length
+          ? arguments
+          : [for (final _ in element.typeParameters) dynamicType],
+      nullabilitySuffix: annotation.question == null
+          ? NullabilitySuffix.none
+          : NullabilitySuffix.question,
     );
   }
-  if (value is! MethodInvocation || value.methodName.name != 'copyWith') return false;
-  final target = value.target;
-  if (target is! SimpleIdentifier || target.name != 'state') return false;
-  final method = value.methodName.element;
-  if (method is! ExecutableElement ||
-      method.isAbstract ||
-      method.isExternal ||
-      !method.fragments.every((fragment) => fragment.isSynchronous)) {
-    return false;
-  }
-  if (!value.argumentList.arguments.every((argument) {
-    final input = argument.argumentExpression;
-    return input is SimpleIdentifier && parameters.contains(input.name) ||
-        _isPrimitiveLiteral(input);
-  })) {
-    return false;
-  }
-  final body = _declaredMethodBody(context, method);
-  return body is ExpressionFunctionBody && _isPureStateConstructor(body.expression, parameters);
 }
 
-bool _isPureStateConstructor(Expression value, Set<String?> parameters) {
-  if (value is! InstanceCreationExpression) return false;
-  if (value.constructorName.element?.isConst != true) return false;
-  return value.argumentList.arguments.every(
-    (argument) => _isPureStateConstructorArgument(argument.argumentExpression, parameters),
-  );
+bool _isAsyncType(DartType? type) =>
+    type != null && (type.isDartAsyncFuture || type.isDartAsyncFutureOr || type.isDartAsyncStream);
+
+AstNode? _enclosingExecutable(AstNode? node) {
+  while (node != null &&
+      node is! MethodDeclaration &&
+      node is! ConstructorDeclaration &&
+      node is! FunctionDeclaration) {
+    node = node.parent;
+  }
+  return node;
 }
 
-bool _isPureStateConstructorArgument(Expression value, Set<String?> parameters) {
-  if (value is SimpleIdentifier) return parameters.contains(value.name);
-  if (value is PropertyAccess) {
-    final getter = value.propertyName.element;
-    return value.target is ThisExpression &&
-        getter is GetterElement &&
-        getter.isOriginVariable &&
-        getter.variable is FieldElement &&
-        !getter.variable.isLate;
-  }
-  if (value is BinaryExpression && value.operator.lexeme == '??') {
-    return _isPureStateConstructorArgument(value.leftOperand, parameters) &&
-        _isPureStateConstructorArgument(value.rightOperand, parameters);
-  }
-  return _isPrimitiveLiteral(value);
-}
+bool _fileHasDebounce(SourceScannerContext context) => _sourceHasDebounce(context.source);
 
-bool _isPrimitiveLiteral(Expression value) =>
-    value is BooleanLiteral ||
-    value is IntegerLiteral ||
-    value is DoubleLiteral ||
-    value is NullLiteral ||
-    value is SimpleStringLiteral;
-
-bool _fileHasDebounce(SourceScannerContext context) {
-  for (var i = 0; i < context.source.length; i++) {
-    if (_debounceMechanism.hasMatch(context.source.masked[i])) return true;
+bool _sourceHasDebounce(SourceScannerSource source) {
+  for (var i = 0; i < source.length; i++) {
+    if (_debounceMechanism.hasMatch(source.masked[i])) return true;
   }
   return false;
 }

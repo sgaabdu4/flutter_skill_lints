@@ -294,12 +294,16 @@ Runtime-bug surface (0.7.0) — `runtime_bug_source_rules`:
   a notifier `save*` call should be wrapped at the widget→notifier boundary
   in a domain Value Object.
 - `text_field_on_changed_no_debounce` — `TextField` /  `TextFormField` /
-  `CupertinoTextField` / `SearchBar` `onChanged` doing async or notifier work
-  without a `Timer` / `Debouncer` / `Future.delayed` in the file fires per
-  keystroke.
+  `CupertinoTextField` / `SearchBar` `onChanged` (lambda or tear-off) that
+  reaches async or remote work (an `await`, a Future/Stream-typed call, an
+  async callee, or an unresolved call) without a `Timer` / `Debouncer` /
+  `Future.delayed` in the file fires per keystroke. Project callees in other
+  files are followed too, and a callee file that owns such a debounce counts
+  as debounced. Synchronous state-only form updates (`copyWith` plus local
+  validation) are allowed.
 - `slider_on_changed_no_debounce` — `Slider` / `RangeSlider` / `CupertinoSlider`
-  `onChanged` doing notifier or async work fires continuously during drag;
-  move to `onChangeEnd` or debounce.
+  `onChanged` (lambda or tear-off) that reaches async or remote work fires
+  continuously during drag; move to `onChangeEnd` or debounce.
 - `scroll_listener_no_throttle` — `_scrollController.addListener(...)` doing
   notifier or async work without a `Timer` / `Debouncer` in the file fires
   on every scroll tick.

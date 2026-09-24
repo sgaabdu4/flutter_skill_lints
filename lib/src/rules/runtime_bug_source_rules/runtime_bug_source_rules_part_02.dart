@@ -265,14 +265,15 @@ bool _hasZeroValueGuard(MethodInvocation call) {
         _conditionMatches(parent.expression, _isPositiveCheck)) {
       return true;
     }
-    if (parent is Block) {
-      for (final statement in parent.statements.takeWhile((statement) => statement != child)) {
-        if (statement is IfStatement && _isEarlyReturnZeroGuard(statement)) return true;
-      }
-    }
+    if (parent is Block && _exitsBeforeChild(parent, child)) return true;
   }
   return false;
 }
+
+/// Whether a statement of [block] before [child] is an `if (x <= 0) return;` guard.
+bool _exitsBeforeChild(Block block, AstNode child) => block.statements
+    .takeWhile((statement) => statement != child)
+    .any((statement) => statement is IfStatement && _isEarlyReturnZeroGuard(statement));
 
 bool _isEarlyReturnZeroGuard(IfStatement statement) {
   if (statement.elseStatement != null) return false;

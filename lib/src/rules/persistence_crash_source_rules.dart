@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
@@ -709,28 +711,49 @@ final class _HiveImportScope {
 final _localHiveFactsCache = Expando<_HiveFacts>('flutter_skill_lints_local_hive_facts');
 final _reachableHiveFactsCache = Expando<_HiveFacts>('flutter_skill_lints_reachable_hive_facts');
 
+/// The `typeId` of a resolved hive_ce `@HiveType`, or null for any other annotation.
+int? _hiveTypeId(ElementAnnotation? annotation) => _isHiveAnnotation(annotation, 'HiveType')
+    ? annotation?.computeConstantValue()?.getField('typeId')?.toIntValue()
+    : null;
+
+/// The `reservedTypeIds` of a resolved hive_ce `@GenerateAdapters`, or null for any
+/// other annotation.
+Set<int>? _reservedTypeIds(ElementAnnotation? annotation) {
+  if (!_isHiveAnnotation(annotation, 'GenerateAdapters')) return null;
+  final reserved = annotation?.computeConstantValue()?.getField('reservedTypeIds')?.toSetValue();
+  return reserved?.map((value) => value.toIntValue()).whereType<int>().toSet();
+}
+
 _HiveFacts _localHiveFacts(LibraryElement library) {
   final cached = _localHiveFactsCache[library];
   if (cached != null) return cached;
   final facts = _HiveFacts();
   for (final element in library.children) {
     for (final annotation in element.metadata.annotations) {
-      if (_isHiveAnnotation(annotation, 'HiveType')) {
-        final typeId = annotation.computeConstantValue()?.getField('typeId')?.toIntValue();
-        if (typeId != null) facts.types.add(_HiveTypeFact(element, typeId));
-      } else if (_isHiveAnnotation(annotation, 'GenerateAdapters')) {
-        final reserved = annotation
-            .computeConstantValue()
-            ?.getField('reservedTypeIds')
-            ?.toSetValue();
-        if (reserved == null) continue;
-        final ids = reserved.map((value) => value.toIntValue()).whereType<int>().toSet();
-        facts.adapters.add(_HiveAdapterFact(element, ids));
-      }
+      final typeId = _hiveTypeId(annotation);
+      if (typeId != null) facts.types.add(_HiveTypeFact(element, typeId));
+      final reserved = _reservedTypeIds(annotation);
+      if (reserved != null) facts.adapters.add(_HiveAdapterFact(element, reserved));
     }
   }
   _localHiveFactsCache[library] = facts;
   return facts;
+}
+
+/// Walks same-package libraries depth-first from [roots], visiting each once.
+/// [visit] returns whether to continue into the library's imports and exports.
+void _walkPackageLibraries(
+  Iterable<LibraryElement> roots,
+  String packageRoot,
+  bool Function(LibraryElement library) visit,
+) {
+  final pending = [...roots];
+  final seen = <LibraryElement>{};
+  while (pending.isNotEmpty) {
+    final library = pending.removeLast();
+    if (!seen.add(library) || !_isPackageLibrary(library, packageRoot)) continue;
+    if (visit(library)) pending.addAll(_libraryDependencies(library));
+  }
 }
 
 /// Facts declared in [root] and every same-package library its imports reach.
@@ -738,14 +761,10 @@ _HiveFacts _reachableHiveFacts(LibraryElement root, String packageRoot) {
   final cached = _reachableHiveFactsCache[root];
   if (cached != null) return cached;
   final facts = _HiveFacts();
-  final pending = [root];
-  final seen = <LibraryElement>{};
-  while (pending.isNotEmpty) {
-    final library = pending.removeLast();
-    if (!seen.add(library) || !_isPackageLibrary(library, packageRoot)) continue;
+  _walkPackageLibraries([root], packageRoot, (library) {
     facts.addAll(_localHiveFacts(library));
-    pending.addAll(_libraryDependencies(library));
-  }
+    return true;
+  });
   _reachableHiveFactsCache[root] = facts;
   return facts;
 }
@@ -773,20 +792,44 @@ List<_HiveImportScope> _hiveImportScopes(CompilationUnit unit, String packageRoo
       ExportDirective() => directive.libraryExport?.exportedLibrary,
     };
     if (imported == null) continue;
-    final pending = [imported];
-    final seen = <LibraryElement>{};
-    while (pending.isNotEmpty) {
-      final library = pending.removeLast();
-      if (!seen.add(library) || !_isPackageLibrary(library, packageRoot)) continue;
-      if (isGeneratedSourcePath(library.firstFragment.source.fullName)) {
-        pending.addAll(_libraryDependencies(library));
-        continue;
-      }
+    _walkPackageLibraries([imported], packageRoot, (library) {
+      if (isGeneratedSourcePath(library.firstFragment.source.fullName)) return true;
       scopes.add(_HiveImportScope(directive, _reachableHiveFacts(library, packageRoot)));
-    }
+      return false;
+    });
   }
   return scopes;
 }
+
+/// A Hive fact seen through the import scope at [scope].
+typedef _ScopedHiveFact = ({Object fact, Element element, int scope});
+
+Element _hiveFactElement(Object fact) => switch (fact) {
+  _HiveTypeFact(:final element) || _HiveAdapterFact(:final element) => element,
+  _ => throw ArgumentError.value(fact, 'fact'),
+};
+
+/// Facts reachable through [scopes] that are not declared in [localElements].
+List<_ScopedHiveFact> _nonLocalHiveFacts(
+  List<_HiveImportScope> scopes,
+  Set<Element> localElements,
+) => [
+  for (var index = 0; index < scopes.length; index++)
+    for (final fact in [...scopes[index].facts.types, ...scopes[index].facts.adapters])
+      if (!localElements.contains(_hiveFactElement(fact)))
+        (fact: fact, element: _hiveFactElement(fact), scope: index),
+];
+
+/// Whether [first] and [second] conflict and no single scope already contains both.
+bool _meetsFirstInUnit(
+  List<_HiveImportScope> scopes,
+  _ScopedHiveFact first,
+  _ScopedHiveFact second,
+  bool Function(Object first, Object second) conflicts,
+) =>
+    first.element != second.element &&
+    conflicts(first.fact, second.fact) &&
+    !scopes.any((scope) => scope.facts.containsAll([first.element, second.element]));
 
 /// Directives where two non-local facts first meet: no single import scope already
 /// contains both, so no deeper analyzed library reports the pair.
@@ -795,25 +838,13 @@ Set<NamespaceDirective> _joinDirectives(
   Set<Element> localElements,
   bool Function(Object first, Object second) conflicts,
 ) {
-  final directives = <NamespaceDirective>{};
-  final facts = <(Object, Element, int)>[];
-  for (var index = 0; index < scopes.length; index++) {
-    final scope = scopes[index];
-    for (final fact in [...scope.facts.types, ...scope.facts.adapters]) {
-      final element = fact is _HiveTypeFact ? fact.element : (fact as _HiveAdapterFact).element;
-      if (!localElements.contains(element)) facts.add((fact, element, index));
-    }
-  }
-  for (var i = 0; i < facts.length; i++) {
-    for (var j = i + 1; j < facts.length; j++) {
-      final (first, firstElement, firstScope) = facts[i];
-      final (second, secondElement, secondScope) = facts[j];
-      if (firstElement == secondElement || !conflicts(first, second)) continue;
-      if (scopes.any((scope) => scope.facts.containsAll([firstElement, secondElement]))) continue;
-      directives.add(scopes[firstScope > secondScope ? firstScope : secondScope].directive);
-    }
-  }
-  return directives;
+  final facts = _nonLocalHiveFacts(scopes, localElements);
+  return {
+    for (var i = 0; i < facts.length; i++)
+      for (var j = i + 1; j < facts.length; j++)
+        if (_meetsFirstInUnit(scopes, facts[i], facts[j], conflicts))
+          scopes[math.max(facts[i].scope, facts[j].scope)].directive,
+  };
 }
 
 bool _isDefiningUnit(SourceScannerContext context, LibraryElement library) =>
@@ -824,31 +855,43 @@ void _reportDuplicateHiveTypeIds(ScannerRuleReporter reporter, SourceScannerCont
   if (library == null) return;
   final packageRoot = _packageRoot(context);
   final reachable = _reachableHiveFacts(library, packageRoot);
-  final unitFragment = context.unit.declaredFragment;
   final seenInUnit = <int, Element>{};
   for (final declaration in context.unit.declarations) {
     final element = declaration.declaredFragment?.element;
     if (element == null) continue;
     for (final annotation in declaration.metadata) {
-      if (!_isHiveAnnotation(annotation.elementAnnotation, 'HiveType')) continue;
-      final typeId = annotation.elementAnnotation
-          ?.computeConstantValue()
-          ?.getField('typeId')
-          ?.toIntValue();
+      final typeId = _hiveTypeId(annotation.elementAnnotation);
       if (typeId == null) continue;
       final earlier = seenInUnit.putIfAbsent(typeId, () => element);
-      final collidesElsewhere = reachable.types.any(
-        (fact) =>
-            fact.typeId == typeId &&
-            fact.element != element &&
-            fact.element.firstFragment.libraryFragment != unitFragment,
-      );
-      if (earlier != element || collidesElsewhere) {
+      if (earlier != element || _collidesOutsideUnit(context, reachable, typeId, element)) {
         _reportAtOffset(reporter, context, annotation.offset);
       }
     }
   }
-  if (!_isDefiningUnit(context, library)) return;
+  if (_isDefiningUnit(context, library)) {
+    _reportDuplicateHiveTypeIdJoins(reporter, context, library, packageRoot);
+  }
+}
+
+/// Whether a @HiveType declared outside this unit but reachable from it reuses [typeId].
+bool _collidesOutsideUnit(
+  SourceScannerContext context,
+  _HiveFacts reachable,
+  int typeId,
+  Element element,
+) => reachable.types.any(
+  (fact) =>
+      fact.typeId == typeId &&
+      fact.element != element &&
+      fact.element.firstFragment.libraryFragment != context.unit.declaredFragment,
+);
+
+void _reportDuplicateHiveTypeIdJoins(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  LibraryElement library,
+  String packageRoot,
+) {
   final local = _localHiveFacts(library).types.map((fact) => fact.element).toSet();
   final joins = _joinDirectives(
     _hiveImportScopes(context.unit, packageRoot),
@@ -867,14 +910,8 @@ void _reportUnreservedHiveTypeIds(ScannerRuleReporter reporter, SourceScannerCon
   final packageRoot = _packageRoot(context);
   final reachable = _reachableHiveFacts(library, packageRoot);
   for (final annotation in _unitAnnotations(context.unit)) {
-    final elementAnnotation = annotation.elementAnnotation;
-    if (!_isHiveAnnotation(elementAnnotation, 'GenerateAdapters')) continue;
-    final reserved = elementAnnotation
-        ?.computeConstantValue()
-        ?.getField('reservedTypeIds')
-        ?.toSetValue();
-    if (reserved == null) continue;
-    final ids = reserved.map((value) => value.toIntValue()).whereType<int>().toSet();
+    final ids = _reservedTypeIds(annotation.elementAnnotation);
+    if (ids == null) continue;
     if (reachable.types.any((fact) => !ids.contains(fact.typeId))) {
       _reportAtOffset(reporter, context, annotation.offset);
     }

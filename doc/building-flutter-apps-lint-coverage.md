@@ -2,10 +2,10 @@
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 187 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 195 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 191 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 199 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 280 additional diagnostics.
-- Total unique diagnostics: 471.
+- Total unique diagnostics: 475.
 
 ## Full Rule Inventory
 
@@ -84,7 +84,8 @@ Core skill rules already covered before this pass:
 - Tests/config: `flutter_skill_project_config`, `test_provider_container`,
   `test_uncontrolled_scope`, `test_create_container`, `test_mock_concrete`,
   `test_pump_and_settle`, `test_tap_at`, `test_inline_value_key`,
-  `test_first_match_finder`.
+  `test_first_match_finder`, `test_notifier_override`,
+  `test_text_label_selector`, `test_e2e_blind_sleep`.
 - Effective Dart/config shape: canonical configs require
    `always_declare_return_types`, `type_annotate_public_apis`,
    `avoid_positional_boolean_parameters`,
@@ -126,7 +127,7 @@ hover description and correction text.
 | `atomic-design.md` | `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`, `atomic_provider_access`, `arch_widget_path`, `widget_material_boundary`, runtime boundary for cross-feature widget promotion |
 | `common-patterns.md` | `router_string_nav`, `router_gorouter_of`, `router_untyped_navigator_push`, `router_direct_route_call`, `router_raw_route_definition`, `router_modal_local_helpers`, `router_container_navigation_escape`, `router_context_navigation_extension`, `router_navigation_wrapper_api`, `router_pop_then_push`, `pop_fallback_helper_must_check_navigator_stack` (mounted + root/local Navigator fallback), `router_redirect_watch`, `router_redirect_loading_bounce`, `router_splash_waits_for_initial_sync`, `router_complex_extra`, `router_impure_redirect`, `router_shell_tab_push`, `guard_context_pop`, `use_context_is_current_modal_route`, `avoid_route_param_throw_in_build`, `state_broad_invalidation`, `widget_local_mutation_flag`, `storage_clear_preserves_migration_state`, runtime boundary for UX-specific debounce duration |
 | `crashlytics.md` | `crash_direct_firebase_call`, `crash_init_before_run_app`, `crash_possible_pii`, `destructive_failure_logged_before_reconcile`, runtime boundary for CI symbol upload |
-| `dart-mcp-e2e-testing.md` | `cfg_e2e_entrypoint`, `avoid_flutter_host_driver_imports`, `test_inline_value_key`, `test_tap_at`, `test_first_match_finder`, runtime boundary for real device, logs, source-of-truth, cleanup, and multi-actor proof |
+| `dart-mcp-e2e-testing.md` | `cfg_e2e_entrypoint`, `avoid_flutter_host_driver_imports`, `test_inline_value_key`, `test_tap_at`, `test_first_match_finder`, `test_e2e_blind_sleep`, runtime boundary for real device, logs, source-of-truth, cleanup, and multi-actor proof |
 | `dart-patterns-records.md` | `records_map_return`, `typed_id_raw_id`, `avoid_null_bang`, `prefer_wildcard_pattern`, `prefer_class_destructuring`, `use_existing_destructuring` |
 | `extensions-utilities.md` | `ui_snackbar_boundary`, `datetime_now_requires_timezone_intent`, `avoid_magic_literals`, `use_context_is_current_modal_route`, `dart_static_namespace`, `service_static_side_effect`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures` |
 | `flutter-optimizations.md` | `avoid_shrink_wrap`, `perf_listview_children`, `perf_build_work`, `a11y_text_scale_clamp`, `flutter_key_created_in_build`, `flutter_unique_or_global_key`, `flutter_opacity_widget`, `flutter_save_layer_filter`, `flutter_clip_save_layer`, `flutter_intrinsic_layout`, `flutter_animated_builder_child`, `flutter_widget_operator_equals`, `use_dedicated_media_query_methods`, `prefer_compute_over_isolate_run` |
@@ -134,12 +135,12 @@ hover description and correction text.
 | `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_test_close_missing`, `avoid_unvalidated_persisted_map_cast`, runtime boundary for historical TypeId permanence |
 | `localization.md` | `strings_hardcoded`, `l10n_context_direct_access` |
 | `mixins.md` | `mixin_mixin_class`, `mixin_name_suffix`, `mixin_mutable_state` |
-| `performance.md` | `riverpod_watch_no_select`, `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `perf_listview_children`, `perf_build_work`, `state_empty_string_sentinel`, `state_bool_string_sentinel`, `state_raw_response`, `state_raw_error_to_string`, `a11y_text_scale_clamp`, `flutter_*` optimization rules |
+| `performance.md` | `riverpod_watch_no_select`, `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `perf_listview_children`, `perf_build_work`, `state_empty_string_sentinel`, `state_bool_string_sentinel`, `state_raw_response`, `state_raw_error_to_string`, `a11y_text_scale_clamp`, `notifier_timer_without_on_dispose`, `flutter_*` optimization rules |
 | `presentation-widgets.md` | `presentation_widget_navigation_forbidden`, `presentation_widget_controller_state`, `presentation_widget_infrastructure_dependency` |
 | `riverpod-codegen.md` | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_manual_provider`, `riverpod_consumer_state_derived_cache`, `riverpod_consumer_state_provider_subscription`, `riverpod_listen_manual_forbidden`, `riverpod_event_counter_signal_forbidden`, `service_provider_watch_dependency`, `riverpod_watch_no_select`, `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`, `riverpod_auto_dispose_keepalive_dependencies`, `riverpod_feature_notifier_keepalive`, `riverpod_keepalive_family`, `use_ref_invalidate`; Riverpod-owned dependency/scoping/provider-shape diagnostics stay with `riverpod_lint` |
 	| `services-and-singletons.md` | `service_singleton`, `service_static_side_effect`, `service_random_per_call`, `hidden_dependency_fallback`, `hidden_dependency_default_param`, `service_inline_concrete_dependency`, `service_provider_watch_dependency`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures`, `fire_forget_in_tests`, `appwrite_blocking_function_execution_in_client` |
 | `state-management.md` | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `async_context_mounted_style`, `avoid_mounted_check_in_finally`, `avoid_sync_notifier_state_read`, `avoid_silent_repository_null_return`, `notifier_ensure_deps`, `notifier_watch_method`, `riverpod_event_counter_signal_forbidden`, `widget_awaits_notifier_result`, `widget_local_mutation_flag`, `state_empty_string_sentinel`, `state_bool_string_sentinel`, `state_broad_invalidation`, `state_freezed_nullable_error`, runtime boundary for source-of-truth freshness |
-| `testing.md` | `cfg_e2e_entrypoint`, `test_provider_container`, `test_uncontrolled_scope`, `test_create_container`, `test_mock_concrete`, `test_pump_and_settle`, `test_tap_at`, `test_inline_value_key`, `test_first_match_finder`, runtime boundary for event-contract and cross-runtime drift proof |
+| `testing.md` | `cfg_e2e_entrypoint`, `test_provider_container`, `test_uncontrolled_scope`, `test_create_container`, `test_mock_concrete`, `test_pump_and_settle`, `test_tap_at`, `test_inline_value_key`, `test_first_match_finder`, `test_notifier_override`, `test_text_label_selector`, runtime boundary for event-contract and cross-runtime drift proof |
 
 ## Added In This Pass
 

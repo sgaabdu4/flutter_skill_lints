@@ -141,6 +141,10 @@ void main() {
     defineReflectiveTests(TestTapAtTest);
     defineReflectiveTests(TestInlineValueKeyTest);
     defineReflectiveTests(TestFirstMatchFinderTest);
+    defineReflectiveTests(TestNotifierOverrideTest);
+    defineReflectiveTests(TestE2eBlindSleepTest);
+    defineReflectiveTests(TestTextLabelSelectorTest);
+    defineReflectiveTests(NotifierTimerWithoutOnDisposeTest);
     defineReflectiveTests(DomainEmptyStringSentinelTest);
     defineReflectiveTests(VoPublicRawConstructorTest);
     defineReflectiveTests(DomainEntityPrimitiveFactoryTest);
@@ -300,8 +304,8 @@ class Widget {}
 ''');
   }
 
-  /// Opt-in stubs for rules that resolve Flutter, flutter_test, mocktail and
-  /// go_router elements.
+  /// Opt-in stubs for rules that resolve Flutter, flutter_test, mocktail,
+  /// riverpod and go_router elements.
   void _addTestingNavigationPackages() {
     newPackage('flutter')
       ..addFile('lib/foundation.dart', r'''
@@ -359,20 +363,61 @@ class Finder extends FinderBase<Object> {}
 class CommonFinders {
   const CommonFinders();
   Finder text(String text) => Finder();
+  Finder textContaining(Pattern pattern) => Finder();
+  Finder widgetWithText(Type widgetType, String text) => Finder();
   Finder byType(Type type) => Finder();
   Finder byKey(Key key) => Finder();
+  Finder descendant({required Finder of, required Finder matching}) => Finder();
 }
 const find = CommonFinders();
-class WidgetTester {
+class WidgetController {
   Future<void> tap(FinderBase<Object> finder) async {}
+  Future<void> longPress(FinderBase<Object> finder) async {}
+  Future<void> drag(FinderBase<Object> finder, Object offset) async {}
+  Future<void> enterText(FinderBase<Object> finder, String text) async {}
+}
+class WidgetTester extends WidgetController {
   Future<void> pump([Duration? duration]) async {}
 }
+const Object findsOneWidget = Object();
+void expect(Object? actual, Object? matcher) {}
+void test(String description, Object? Function() body) {}
+void testWidgets(String description, Future<void> Function(WidgetTester) callback) {}
 ''');
     newPackage('test_api').addFile('lib/fake.dart', 'abstract class Fake {}');
     newPackage('mocktail').addFile('lib/mocktail.dart', r'''
 export 'package:test_api/fake.dart' show Fake;
 class Mock {
   dynamic noSuchMethod(Invocation invocation) => null;
+}
+''');
+    newPackage('riverpod').addFile('lib/riverpod.dart', r'''
+class Ref {
+  void onDispose(void Function() callback) {}
+}
+class Override {}
+abstract class AnyNotifier<StateT, ValueT> {
+  Ref get ref => Ref();
+}
+abstract class Notifier<StateT> extends AnyNotifier<StateT, StateT> {
+  StateT build();
+}
+abstract class AsyncNotifier<ValueT> extends AnyNotifier<Object?, ValueT> {
+  Future<ValueT> build();
+}
+class NotifierProvider<NotifierT extends AnyNotifier<StateT, StateT>, StateT> {
+  NotifierProvider(NotifierT Function() create);
+  Override overrideWith(NotifierT Function() create) => Override();
+  Override overrideWithBuild(StateT Function(Ref ref, NotifierT notifier) build) => Override();
+  Override overrideWithValue(StateT value) => Override();
+}
+class NotifierProviderFamily<NotifierT extends AnyNotifier<StateT, StateT>, StateT, ArgT> {
+  Override overrideWith2(NotifierT Function(ArgT arg) create) => Override();
+}
+class Provider<ValueT> {
+  Provider(ValueT Function(Ref ref) create);
+  Override overrideWith(ValueT Function(Ref ref) create) => Override();
+  Override overrideWithValue(ValueT value) => Override();
 }
 ''');
     newPackage('go_router').addFile('lib/go_router.dart', r'''

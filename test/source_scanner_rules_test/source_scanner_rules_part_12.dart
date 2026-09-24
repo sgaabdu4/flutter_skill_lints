@@ -359,6 +359,363 @@ void main() {
   }
 }
 
+@reflectiveTest
+final class TestNotifierOverrideTest extends _TestFileRuleTest {
+  @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'test_notifier_override';
+  @override
+  String get needle => 'overrideWith(FakeProductNames.new)';
+  @override
+  String get source => '''
+import 'package:riverpod/riverpod.dart';
+
+class ProductNames extends Notifier<List<String>> {
+  @override
+  List<String> build() => const [];
+}
+
+class FakeProductNames extends ProductNames {
+  @override
+  List<String> build() => const ['fake'];
+}
+
+final productNamesProvider = NotifierProvider<ProductNames, List<String>>(ProductNames.new);
+final overrides = [productNamesProvider.overrideWith(FakeProductNames.new)];
+''';
+
+  Future<void> test_reportsFamilyNotifierOverride() async {
+    const source = '''
+import 'package:riverpod/riverpod.dart';
+
+class ProductDetail extends AsyncNotifier<String> {
+  @override
+  Future<String> build() async => '';
+}
+
+final NotifierProviderFamily<ProductDetail, Object?, String> productDetailProvider =
+    throw ArgumentError('stub');
+final overrides = [productDetailProvider.overrideWith2((id) => ProductDetail())];
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    final filePath = '$testPackageRootPath/test/product_detail_test.dart';
+    newFile(filePath, analyzedSource);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, 'overrideWith2((id)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillBuildValueAndRepositoryOverrides() async {
+    await assertAllows('''
+import 'package:riverpod/riverpod.dart';
+
+abstract interface class IProductRepository {}
+class FakeProductRepository implements IProductRepository {}
+
+class Counter extends Notifier<int> {
+  @override
+  int build() => 0;
+}
+
+final counterProvider = NotifierProvider<Counter, int>(Counter.new);
+final productRepositoryProvider = Provider<IProductRepository>((ref) => FakeProductRepository());
+final overrides = [
+  counterProvider.overrideWithBuild((ref, notifier) => 42),
+  counterProvider.overrideWithValue(1),
+  productRepositoryProvider.overrideWith((ref) => FakeProductRepository()),
+  productRepositoryProvider.overrideWithValue(FakeProductRepository()),
+];
+''', path: '$testPackageRootPath/test/overrides_test.dart');
+  }
+
+  Future<void> test_allowsNotifierOverrideOutsideTests() async {
+    await assertAllows('''
+import 'package:riverpod/riverpod.dart';
+
+class Auth extends Notifier<bool> {
+  @override
+  bool build() => true;
+}
+
+class SignedOutAuth extends Auth {
+  @override
+  bool build() => false;
+}
+
+final authProvider = NotifierProvider<Auth, bool>(Auth.new);
+final overrides = [authProvider.overrideWith(SignedOutAuth.new)];
+''', path: '$testPackageLibPath/main_dev.dart');
+  }
+}
+
+@reflectiveTest
+final class TestE2eBlindSleepTest extends _TestRuleTest {
+  @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'test_e2e_blind_sleep';
+  @override
+  String get path => '$testPackageRootPath/integration_test/app_flow_test.dart';
+  @override
+  String get needle => 'Future<void>.delayed(const Duration(seconds: 2));';
+  @override
+  String get source => '''
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets('flow', (tester) async {
+    await Future<void>.delayed(const Duration(seconds: 2));
+    await tester.pump();
+  });
+}
+''';
+
+  Future<void> test_reportsHostDriverDelay() async {
+    const source = '''
+Future<void> main() async {
+  await Future.delayed(const Duration(milliseconds: 500));
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    final filePath = '$testPackageRootPath/test_driver/app_driver.dart';
+    newFile(filePath, analyzedSource);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, 'Future.delayed(const Duration(milliseconds: 500));', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsPollingLoopAndUnawaitedDelay() async {
+    await assertAllows('''
+import 'dart:async';
+
+Future<void> waitUntil(bool Function() ready) async {
+  while (!ready()) {
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+  }
+}
+
+void scheduleLater() {
+  unawaited(Future<void>.delayed(const Duration(seconds: 1)));
+}
+''', path: '$testPackageRootPath/integration_test/helpers/wait_helpers.dart');
+  }
+
+  Future<void> test_allowsDelayOutsideE2e() async {
+    await assertAllows('''
+Future<void> settle() async {
+  await Future<void>.delayed(const Duration(milliseconds: 10));
+}
+''', path: '$testPackageRootPath/test/unit/settle_test.dart');
+  }
+
+  Future<void> test_allowsLocalDelayedLookalike() async {
+    await assertAllows('''
+class Clock {
+  static Future<void> delayed(Duration duration) async {}
+}
+
+Future<void> main() async {
+  await Clock.delayed(const Duration(seconds: 1));
+}
+''', path: '$testPackageRootPath/integration_test/clock_test.dart');
+  }
+}
+
+@reflectiveTest
+final class TestTextLabelSelectorTest extends _TestFileRuleTest {
+  @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'test_text_label_selector';
+  @override
+  String get needle => "find.text('Save'));";
+  @override
+  String get source => '''
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets('saves', (tester) async {
+    await tester.tap(find.text('Save'));
+  });
+}
+''';
+
+  Future<void> test_reportsWidgetWithTextAndNestedLabelFinders() async {
+    const source = '''
+import 'package:flutter_test/flutter_test.dart';
+
+class ElevatedButton {}
+
+void main() {
+  testWidgets('edits', (tester) async {
+    await tester.longPress(find.widgetWithText(ElevatedButton, 'Delete'));
+    await tester.enterText(find.descendant(of: find.byType(ElevatedButton), matching: find.textContaining('Name')), 'x');
+  });
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    final filePath = '$testPackageRootPath/test/edit_test.dart';
+    newFile(filePath, analyzedSource);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, "find.widgetWithText(ElevatedButton, 'Delete'));", ruleName),
+      compatLint(analyzedSource, "find.textContaining('Name')), 'x');", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillTextAssertionsAndKeyTaps() async {
+    await assertAllows('''
+import 'package:flutter/foundation.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+abstract final class AppWidgetKeys {
+  static const saveButton = ValueKey<String>('save_button');
+}
+
+void main() {
+  testWidgets('lists products', (tester) async {
+    await tester.tap(find.byKey(AppWidgetKeys.saveButton));
+    expect(find.text('Widget'), findsOneWidget);
+  });
+}
+''', path: '$testPackageRootPath/test/product_list_test.dart');
+  }
+
+  Future<void> test_allowsStableTextInE2e() async {
+    await assertAllows('''
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets('e2e', (tester) async {
+    await tester.tap(find.text('Save'));
+  });
+}
+''', path: '$testPackageRootPath/integration_test/save_flow_test.dart');
+  }
+
+  Future<void> test_allowsNonLiteralLabel() async {
+    await assertAllows('''
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets('localized', (tester) async {
+    const label = 'Save';
+    await tester.tap(find.text(label));
+  });
+}
+''', path: '$testPackageRootPath/test/localized_test.dart');
+  }
+}
+
+@reflectiveTest
+final class NotifierTimerWithoutOnDisposeTest extends _NotifierRuleTest {
+  @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'notifier_timer_without_on_dispose';
+  @override
+  String get needle => '_debounce;';
+  @override
+  String get source => '''
+import 'dart:async';
+import 'package:riverpod/riverpod.dart';
+
+class ProductSearch extends Notifier<List<String>> {
+  Timer? _debounce;
+
+  @override
+  List<String> build() => const <String>[];
+
+  void onQueryChanged(String query) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {});
+  }
+}
+''';
+
+  Future<void> test_reportsSkillDraftNotifierAsWritten() async {
+    const source = '''
+import 'dart:async';
+import 'package:riverpod/riverpod.dart';
+
+class DraftNotifier extends AsyncNotifier<String> {
+  Timer? _persistTimer;
+
+  @override
+  Future<String> build() async => '';
+
+  void schedulePersist() {
+    _persistTimer?.cancel();
+    _persistTimer = Timer(const Duration(milliseconds: 50), () {});
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '_persistTimer;', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsTimerCancelledInOnDispose() async {
+    await assertAllows('''
+import 'dart:async';
+import 'package:riverpod/riverpod.dart';
+
+class ProductSearchOk extends Notifier<List<String>> {
+  Timer? _debounce;
+
+  @override
+  List<String> build() {
+    ref.onDispose(() => _debounce?.cancel());
+    return const <String>[];
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsTimerOutsideNotifier() async {
+    await assertAllows('''
+import 'dart:async';
+
+class Ticker {
+  Timer? _timer;
+  void stop() => _timer?.cancel();
+}
+''');
+  }
+
+  Future<void> test_allowsLocalTimerLookalike() async {
+    await assertAllows('''
+import 'package:riverpod/riverpod.dart';
+
+class Timer {}
+
+class Stopwatch extends Notifier<int> {
+  Timer? _timer;
+
+  @override
+  int build() => 0;
+}
+''');
+  }
+}
+
 abstract class _ValueObjectRuleTest extends _SourceRuleTest {
   @override
   List<ScannerRule> get rules => valueObjectSourceRules;

@@ -8,7 +8,7 @@ Make the error-reporting and networking lints match `error-reporting.md`, `netwo
 
 ## Repository context
 
-Owners: `lib/src/rules/data_crash_source_rules.dart`, `lib/src/rules/hive_persistence_source_rules.dart` and `lib/src/rules/persistence_crash_source_rules.dart`. Tests are in `test/source_scanner_rules_test/source_scanner_rules_part_11.dart`, `source_scanner_rules_part_13.dart` and `test/persistence_crash_source_rules_test.dart`. Registration counts are in `test/plugin_registration_test.dart`.
+Owners: `lib/src/rules/data_crash_source_rules.dart`, `lib/src/rules/hive_persistence_source_rules.dart` and `lib/src/rules/persistence_crash_source_rules.dart`. Tests are in `test/source_scanner_rules_test/source_scanner_rules_part_crash.dart` and `source_scanner_rules_part_network.dart` (split out of `source_scanner_rules_part_11.dart` to stay under the 1,000-line limit), `source_scanner_rules_part_13.dart` and `test/persistence_crash_source_rules_test.dart`. Registration counts are in `test/plugin_registration_test.dart`.
 
 ## Decisions + authorization
 

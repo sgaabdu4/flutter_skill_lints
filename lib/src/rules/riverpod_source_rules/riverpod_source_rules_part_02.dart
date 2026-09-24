@@ -112,3 +112,21 @@ bool _hasCompleteAsyncValueDispatch(MethodInvocation invocation) {
 bool _isRiverpodMutationElement(Element? element, String name) =>
     element?.name == name &&
     (element?.library?.uri.toString().startsWith('package:riverpod/') ?? false);
+
+/// Collects `Mutation<T>()` creations that resolve to Riverpod's Mutation.
+final class _RiverpodMutationCreations extends RecursiveAstVisitor<void> {
+  final nodes = <InstanceCreationExpression>[];
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    if (_isRiverpodMutationElement(node.constructorName.type.element, 'Mutation')) {
+      nodes.add(node);
+    }
+    super.visitInstanceCreationExpression(node);
+  }
+}
+
+void _reportAtNode(ScannerRuleReporter reporter, SourceScannerContext context, AstNode node) {
+  final location = context.unit.lineInfo.getLocation(node.offset);
+  reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+}

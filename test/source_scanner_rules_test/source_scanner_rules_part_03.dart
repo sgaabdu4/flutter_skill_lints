@@ -166,46 +166,80 @@ class TodoTitle {
   }
 }
 
+const _riverpodMutationStub = r'''
+abstract class ProviderListenable<T> {}
+sealed class MutationState<T> {}
+final class MutationTransaction {
+  T get<T>(ProviderListenable<T> listenable) => throw 'synthetic';
+}
+abstract class MutationTarget {}
+final class Mutation<T> implements ProviderListenable<MutationState<T>> {
+  Future<T> run(MutationTarget target, Future<T> Function(MutationTransaction tsx) cb) =>
+      throw 'synthetic';
+}
+abstract class Ref implements MutationTarget {
+  T read<T>(ProviderListenable<T> listenable) => throw 'synthetic';
+}
+''';
+
+abstract class _RiverpodMutationRuleTest extends _RiverpodRuleTest {
+  @override
+  void setUp() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', _riverpodMutationStub);
+    super.setUp();
+  }
+}
+
 @reflectiveTest
-final class RiverpodMutationExperimentalWarningTest extends _RiverpodRuleTest {
+final class RiverpodMutationExperimentalWarningTest extends _RiverpodMutationRuleTest {
   @override
   String get ruleName => 'riverpod_mutation_experimental_warning';
   @override
-  String get needle => 'Mutation<int>()';
+  String get needle => 'Mutation<void>()';
   @override
-  String get path =>
-      '$testPackageLibPath/features/todos/presentation/notifiers/todos_notifier.dart';
+  String get path => '$testPackageLibPath/features/todos/presentation/screens/add_todo_screen.dart';
   @override
   String get source => r'''
-class Mutation<T> {
-  const Mutation();
-}
+import 'package:riverpod/riverpod.dart';
 
-final saveMutation = Mutation<int>();
+final removeTodoMutation = Mutation<void>();
 ''';
 
-  Future<void> test_allowsNearbyExperimentalWarning() async {
+  Future<void> test_allowsDocumentedTrailingExperimentalNote() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+final addTodoMutation = Mutation<void>(); // experimental API — may change without major bump
+''', path: path);
+  }
+
+  Future<void> test_allowsLeadingExperimentalNote() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+// Mutation is experimental in Riverpod 3.
+final addTodoMutation = Mutation<void>();
+''', path: path);
+  }
+
+  Future<void> test_reportsMutationBesideNeighbourExperimentalNote() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:riverpod/riverpod.dart';
+
+final addTodoMutation = Mutation<void>(); // experimental API — may change without major bump
+final removeTodoMutation = Mutation<int>();
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'Mutation<int>()', ruleName)]);
+  }
+
+  Future<void> test_allowsLocalMutationLookalike() async {
     await assertAllows(r'''
 class Mutation<T> {
   const Mutation();
 }
 
-// experimental API while Riverpod finalizes mutation support.
-final saveMutation = Mutation<int>();
-''', path: path);
-  }
-
-  Future<void> test_allowsMutationClassDeclaration() async {
-    await assertAllows(r'''
-class Mutation<T> {
-  const Mutation();
-}
-''', path: path);
-  }
-
-  Future<void> test_allowsTypedefDeclaration() async {
-    await assertAllows(r'''
-typedef Mutation<T> = Object;
+final widget = Mutation<int>();
 ''', path: path);
   }
 
@@ -221,16 +255,6 @@ const graphql = Graphql();
 
 final saveMutation = graphql.Mutation<int>();
 ''', path: path);
-  }
-
-  Future<void> test_allowsGraphqlMutationWidgetOutsideNotifier() async {
-    await assertAllows(r'''
-class Mutation<T> {
-  const Mutation();
-}
-
-final widget = Mutation<int>();
-''', path: '$testPackageLibPath/features/todos/presentation/widgets/mutation_widget.dart');
   }
 }
 

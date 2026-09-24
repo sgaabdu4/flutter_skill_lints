@@ -436,33 +436,48 @@ bool _hasKeepAliveTickerModeWorkaround(SourceScannerContext context, int annotat
   return false;
 }
 
-/// Comments owned by [declaration]: its leading comments (not a previous
-/// declaration's trailing same-line comment) and comments between its
-/// metadata and its name, such as a trailing note on the annotation line.
+/// Comments owned by [declaration]: its leading comments and comments between
+/// its metadata and its name, such as a trailing note on the annotation line.
 Iterable<String> _declarationComments(
   SourceScannerContext context,
   CompilationUnitMember declaration,
-) sync* {
-  final lineInfo = context.unit.lineInfo;
+) {
   // Documentation comments precede the first code token, so start there.
   final first = declaration.metadata.isEmpty
       ? declaration.firstTokenAfterCommentAndMetadata
       : declaration.metadata.first.beginToken;
-  final previousEnd = first.previous?.type == TokenType.EOF ? null : first.previous?.end;
-  final previousLine = previousEnd == null ? -1 : lineInfo.getLocation(previousEnd).lineNumber;
   final nameToken = switch (declaration) {
     FunctionDeclaration(:final name) => name,
     ClassDeclaration(:final namePart) => namePart.typeName,
     _ => declaration.firstTokenAfterCommentAndMetadata,
   };
-  for (Token? token = first; token != null; token = token.next) {
+  return _ownedComments(context, first, nameToken);
+}
+
+/// Comments attached to the tokens [first]..[last]. Leading comments that sit
+/// on the previous token's line belong to the previous code, not this node.
+/// With [trailing], a comment after [last] on the same line is included.
+Iterable<String> _ownedComments(
+  SourceScannerContext context,
+  Token first,
+  Token last, {
+  bool trailing = false,
+}) sync* {
+  final lineInfo = context.unit.lineInfo;
+  int lineOf(int offset) => lineInfo.getLocation(offset).lineNumber;
+  final previous = first.previous;
+  final previousLine = previous == null || previous.isEof ? -1 : lineOf(previous.end);
+  for (Token? token = first; token != null && !token.isEof; token = token.next) {
     for (Token? comment = token.precedingComments; comment != null; comment = comment.next) {
-      if (token == first && lineInfo.getLocation(comment.offset).lineNumber <= previousLine) {
-        continue;
-      }
+      if (token == first && lineOf(comment.offset) <= previousLine) continue;
       yield comment.lexeme;
     }
-    if (token == nameToken || token.isEof) break;
+    if (token == last) break;
+  }
+  if (!trailing) return;
+  final lastLine = lineOf(last.end);
+  for (Token? comment = last.next?.precedingComments; comment != null; comment = comment.next) {
+    if (lineOf(comment.offset) == lastLine) yield comment.lexeme;
   }
 }
 

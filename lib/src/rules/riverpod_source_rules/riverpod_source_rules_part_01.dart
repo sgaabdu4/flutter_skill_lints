@@ -283,18 +283,20 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
         _scanSelectViolations(reporter, context, _hasIdentitySelectCallback),
   ),
 
-  /// Mutation<T> usage should carry an experimental warning.
+  /// Riverpod Mutation<T>() declarations must carry an experimental note.
   ///
-  /// Why: Riverpod Mutation is still experimental. Keep a nearby note so code reviewers
-  /// see the API stability boundary at the call site.
+  /// Why: Riverpod Mutation is still experimental. The skill's file-scope
+  /// mutation carries the note on its own declaration so reviewers see the API
+  /// stability boundary.
   scannerRule(
     code: const LintCode(
       'riverpod_mutation_experimental_warning',
-      'Mutation<T> usage must have nearby experimental context.',
-      correctionMessage: 'Add a nearby comment that says Mutation is experimental.',
-      severity: DiagnosticSeverity.WARNING,
+      'Mutation<T> declarations must carry an experimental note.',
+      correctionMessage:
+          'Add a comment on the Mutation declaration that says the API is experimental.',
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags Mutation<T> usage without nearby experimental context so the Flutter skill violation is shown during analysis.',
+    description: 'Flags Riverpod Mutation<T>() creations whose declaration has no experimental comment so the Flutter skill violation is shown during analysis.',
     scan: _scanMutationExperimentalWarning,
   ),
 
@@ -437,29 +439,21 @@ void _reportProviderArgWrapperLocal(
 }
 
 void _scanMutationExperimentalWarning(ScannerRuleReporter reporter, SourceScannerContext context) {
-  if (!context.path.contains('/notifiers/') && !context.path.endsWith('_notifier.dart')) {
-    return;
-  }
-  final mutationUsage = RegExp(r'\bMutation\s*<');
   final experimental = RegExp(r'\bexperimental\b', caseSensitive: false);
-  for (var lineIndex = 0; lineIndex < context.source.length; lineIndex++) {
-    final line = context.source.masked[lineIndex];
-    if (_isMutationDeclaration(line)) continue;
-    final match = mutationUsage.firstMatch(line);
-    if (_isMutationMemberAccess(line, match) || match == null) continue;
-    if (context.nearOriginal(lineIndex, experimental, 5)) continue;
-    reporter.report(context, lineIndex, match.start);
+  final creations = _RiverpodMutationCreations();
+  context.unit.accept(creations);
+  for (final creation in creations.nodes) {
+    final owner = creation.thisOrAncestorMatching(
+      (node) => node is Statement || node is CompilationUnitMember || node is ClassMember,
+    );
+    if (owner == null) continue;
+    final first = owner is AnnotatedNode
+        ? (owner.metadata.isEmpty
+              ? owner.firstTokenAfterCommentAndMetadata
+              : owner.metadata.first.beginToken)
+        : owner.beginToken;
+    final comments = _ownedComments(context, first, owner.endToken, trailing: true);
+    if (comments.any(experimental.hasMatch)) continue;
+    _reportAtNode(reporter, context, creation);
   }
-}
-
-bool _isMutationDeclaration(String line) {
-  return RegExp(r'^\s*class\s+Mutation\s*<').hasMatch(line) ||
-      RegExp(r'^\s*typedef\s+Mutation\s*<').hasMatch(line) ||
-      RegExp(r'^\s*Mutation\s*<[^>]+>\s+\w+(?:<[^>]+>)?\s*\(').hasMatch(line) ||
-      RegExp(r'^\s*(?:[A-Za-z_]\w*(?:<[^>]+>)?\??|void)\s+Mutation(?:<[^>]+>)?\s*\(')
-          .hasMatch(line);
-}
-
-bool _isMutationMemberAccess(String line, RegExpMatch? match) {
-  return match != null && match.start > 0 && line[match.start - 1] == '.';
 }

@@ -100,6 +100,70 @@ Widget buttonPreview() => const AppButton(label: 'Suture Kit');
     await assertDiagnostics(source, [lint(source.indexOf("'Suture Kit'"), "'Suture Kit'".length)]);
   }
 
+  Future<void> test_textFromStringsConstantsClass_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+abstract final class AppStrings {
+  static const welcome = 'Welcome back';
+}
+
+Widget build() => const Text(AppStrings.welcome);
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('AppStrings.welcome);'), 'AppStrings.welcome'.length),
+    ]);
+  }
+
+  Future<void> test_labelFromTopLevelConstant_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+const saveLabel = 'Save';
+
+Widget build() => const AppButton(label: saveLabel);
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('saveLabel);'), 'saveLabel'.length)]);
+  }
+
+  Future<void> test_textFromLocalizationsGetter_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class AppLocalizations {
+  String get welcome => 'Welcome back';
+}
+
+Widget build(AppLocalizations l10n) => Text(l10n.welcome);
+''');
+  }
+
+  Future<void> test_constantWithoutLetters_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+abstract final class Separators {
+  static const dash = ' - ';
+}
+
+Widget build() => const Text(Separators.dash);
+''');
+  }
+
+  Future<void> test_stringsFileWidget_lint() async {
+    final filePath = '$testPackageLibPath/core/constants/app_strings.dart';
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+Widget build() => const Text('Save');
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [lint(source.indexOf("'Save'"), "'Save'".length)]);
+  }
+
   Future<void> test_textFromVariable_noLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';

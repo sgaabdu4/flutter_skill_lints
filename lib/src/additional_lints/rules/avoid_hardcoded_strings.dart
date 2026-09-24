@@ -3,17 +3,19 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when a user-facing string literal is hardcoded in widget UI code
-/// instead of being sourced from localization or a dedicated strings constant.
+/// Warns when user-facing copy in widget UI does not come from gen-l10n.
 ///
-/// Flags string literals passed as the data of a [Text] widget or to a curated
-/// set of user-facing named parameters (for example `label`, `hintText`,
-/// `title`, `tooltip`, `semanticLabel`). Constant/strings/localization files,
-/// generated sources, and tests are exempt.
+/// Flags string literals, and resolved `const` String variables or static
+/// fields (for example a `*Strings` constants class), passed as the data of a
+/// [Text] widget or to a curated set of user-facing named parameters (for
+/// example `label`, `hintText`, `title`, `tooltip`, `semanticLabel`). Sample
+/// data inside resolved `@Preview` declarations, `/l10n/` and `/generated/`
+/// sources, and tests are exempt.
 class AvoidHardcodedStrings extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_hardcoded_strings',
@@ -28,8 +30,8 @@ class AvoidHardcodedStrings extends AnalysisRule {
     : super(
         name: 'avoid_hardcoded_strings',
         description:
-            'Warns when user-facing string literals are hardcoded in widget UI '
-            'instead of being sourced from localization or a strings constant.',
+            'Warns when user-facing strings in widget UI are hardcoded literals or '
+            'String constants instead of gen-l10n AppLocalizations lookups.',
       );
 
   @override
@@ -79,19 +81,27 @@ Expression? _firstPositional(NodeList<Argument> arguments) {
 bool _isExcludedContext(RuleContext context) {
   final path = productionLibPath(context);
   if (path == null) return true;
-  return path.endsWith('_strings.dart') ||
-      path.endsWith('_constants.dart') ||
-      path.endsWith('_keys.dart') ||
-      path.contains('/constants/') ||
-      path.contains('/l10n/') ||
-      path.contains('/generated/');
+  return path.contains('/l10n/') || path.contains('/generated/');
 }
 
 bool _isUserFacingLabel(String name) => _userFacingLabels.contains(name.toLowerCase());
 
 bool _isUserFacingLiteral(Expression expression) {
-  final text = _literalText(expression);
+  final text = _literalText(expression) ?? _constantStringText(expression);
   return text != null && _hasLetter(text);
+}
+
+/// The value of a resolved `const` String variable or static field.
+String? _constantStringText(Expression expression) {
+  final element = switch (expression) {
+    SimpleIdentifier(:final element) => element,
+    PrefixedIdentifier(:final element) => element,
+    PropertyAccess(:final propertyName) => propertyName.element,
+    _ => null,
+  };
+  final variable = element is PropertyAccessorElement ? element.variable : element;
+  if (variable is! VariableElement || !variable.isConst) return null;
+  return variable.computeConstantValue()?.toStringValue();
 }
 
 String? _literalText(Expression expression) {

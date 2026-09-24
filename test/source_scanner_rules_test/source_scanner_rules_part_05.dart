@@ -306,17 +306,20 @@ class Text {
 final text = Text('Save');
 ''';
 
-  Future<void> test_allowsStringsDefinitionFiles() async {
+  Future<void> test_reportsStringsDefinitionFiles() async {
     final filePath = '$testPackageLibPath/features/settings/settings_strings.dart';
-    newFile(filePath, r'''
+    const source = r'''
 class Text {
   Text(String data);
 }
 
 final text = Text('Save');
-''');
+''';
+    newFile(filePath, source);
 
-    await assertNoDiagnosticsInFile(filePath);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, "final text = Text('Save')", ruleName),
+    ]);
   }
 
   Future<void> test_allowsSampleTextInsideResolvedPreview() async {

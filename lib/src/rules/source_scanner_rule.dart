@@ -281,7 +281,7 @@ final class SourceScannerContext {
   }
 
   bool hasHardcodedUiString(String code) {
-    if (path.endsWith('_strings.dart') || path.contains('/l10n/')) return false;
+    if (path.contains('/l10n/')) return false;
     if (isTestFile) return false;
     return RegExp(r'''\b(?:Text|Tooltip|Semantics)\s*\(\s*['"][^'"]+['"]''').hasMatch(code) ||
         RegExp(r'''\b(?:title|label|tooltip|hintText|helperText|errorText)\s*:\s*['"][^'"]+['"]''')

@@ -286,6 +286,28 @@ final List<ScannerRule> dataCrashSourceRules = [
       }
     },
   ),
+
+  /// Failed network operations throw typed errors, never null or empty fallbacks.
+  ///
+  /// Why: networking.md makes failures throw typed errors or `AppException`; a
+  /// silent `null` or empty collection hides the failure from the owning layer.
+  scannerRule(
+    code: const LintCode(
+      'network_failure_null_fallback',
+      'Failed network operations must not fall back to null or an empty collection.',
+      correctionMessage: 'Throw a typed error or AppException; return an explicit absent result only for a classified expected absence.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags catch clauses around resolved HTTP calls that catch generic or raw HTTP failures and unconditionally return null or an empty collection literal.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+      final visitor = _NetworkFallbackVisitor(_rootPackage(context));
+      context.unit.accept(visitor);
+      for (final fallback in visitor.fallbacks) {
+        _reportOffset(reporter, context, fallback.offset);
+      }
+    },
+  ),
 ];
 
 void _reportOffset(ScannerRuleReporter reporter, SourceScannerContext context, int offset) {
@@ -441,6 +463,40 @@ List<int> _concreteHttpDependencyOffsets(ClassDeclaration declaration, String? r
   }
   return offsets;
 }
+
+const _rawHttpFailureChecker = TypeChecker.any([
+  TypeChecker.fromName('DioException', packageName: 'dio'),
+  TypeChecker.fromName('ClientException', packageName: 'http'),
+  TypeChecker.fromUrl('dart:io#SocketException'),
+  TypeChecker.fromUrl('dart:io#HttpException'),
+]);
+
+/// A call to package:http, or to a method whose class reaches an HTTP client.
+bool _isNetworkCall(MethodInvocation node, String? root) {
+  final element = node.methodName.element;
+  if (element is TopLevelFunctionElement) return _packageOf(element) == 'http';
+  final owner = element?.enclosingElement;
+  return owner is InterfaceElement && _reachesHttpClient(owner, root);
+}
+
+/// An untyped catch, `on Object/Exception/Error`, or a raw HTTP failure type.
+bool _catchesGenericOrRawHttpFailure(CatchClause clause) {
+  final type = clause.exceptionType?.type;
+  if (type == null || type is DynamicType) return true;
+  if (type is InterfaceType &&
+      type.element.library.uri.toString() == 'dart:core' &&
+      const {'Object', 'Exception', 'Error'}.contains(type.element.name)) {
+    return true;
+  }
+  return _rawHttpFailureChecker.isAssignableFromType(type);
+}
+
+bool _isEmptyFallback(Expression? expression) => switch (expression?.unParenthesized) {
+  NullLiteral() => true,
+  ListLiteral(:final elements) => elements.isEmpty,
+  SetOrMapLiteral(:final elements) => elements.isEmpty,
+  _ => false,
+};
 
 bool _isHttpCall(MethodInvocation node, String? root) {
   final element = node.methodName.element;
@@ -657,6 +713,48 @@ final class _HttpCallVisitor extends RecursiveAstVisitor<void> {
   @override
   void visitMethodInvocation(MethodInvocation node) {
     if (_isHttpCall(node, root)) calls.add(node);
+    super.visitMethodInvocation(node);
+  }
+}
+
+final class _NetworkFallbackVisitor extends RecursiveAstVisitor<void> {
+  _NetworkFallbackVisitor(this.root);
+
+  final String? root;
+  final List<ReturnStatement> fallbacks = [];
+
+  @override
+  void visitTryStatement(TryStatement node) {
+    final calls = _NetworkCallVisitor(root);
+    node.body.accept(calls);
+    if (calls.found) {
+      for (final clause in node.catchClauses) {
+        if (!_catchesGenericOrRawHttpFailure(clause)) continue;
+        // Only unconditional returns: a return guarded by a status check is a
+        // classified absence, not a fallback.
+        for (final statement in clause.body.statements) {
+          if (statement is ReturnStatement && _isEmptyFallback(statement.expression)) {
+            fallbacks.add(statement);
+          }
+        }
+      }
+    }
+    super.visitTryStatement(node);
+  }
+}
+
+final class _NetworkCallVisitor extends RecursiveAstVisitor<void> {
+  _NetworkCallVisitor(this.root);
+
+  final String? root;
+  bool found = false;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (_isNetworkCall(node, root)) {
+      found = true;
+      return;
+    }
     super.visitMethodInvocation(node);
   }
 }

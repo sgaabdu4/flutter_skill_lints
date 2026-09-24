@@ -1694,6 +1694,133 @@ class OrderApi implements IOrderRemoteDataSource {
   }
 }
 
+@reflectiveTest
+final class NetworkFailureNullFallbackTest extends _NetworkRuleTest {
+  @override
+  void setUp() {
+    newPackage('hive_ce').addFile('lib/hive_ce.dart', r'''
+abstract class Box<E> {
+  Iterable<E> get values;
+}
+''');
+    super.setUp();
+    addProductChain();
+  }
+
+  @override
+  String get ruleName => 'network_failure_null_fallback';
+  @override
+  String get needle => 'return null;';
+  @override
+  String get path => '$testPackageLibPath/features/products/data/product_lookup_repository.dart';
+  @override
+  String get source => r'''
+import 'package:test/features/products/data/product_remote_datasource.dart';
+
+class ProductLookupRepository {
+  ProductLookupRepository(this._remote);
+
+  final IProductRemoteDatasource _remote;
+
+  Future<Object?> first() async {
+    try {
+      return (await _remote.fetchAll()).first;
+    } on Object {
+      return null;
+    }
+  }
+}
+''';
+
+  Future<void> test_reportsEmptyCollectionFallbacks() async {
+    const source = r'''
+import 'package:dio/dio.dart';
+import 'package:test/core/network/http_service.dart';
+
+class OrderRemoteDatasource {
+  OrderRemoteDatasource(this._http);
+
+  final IHttpService _http;
+
+  Future<List<Object?>> all() async {
+    try {
+      return [await _http.getJson(Uri(path: '/orders'))];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<Map<String, Object?>> byId() async {
+    try {
+      return {'order': await _http.getJson(Uri(path: '/orders/1'))};
+    } on DioException {
+      return {};
+    }
+  }
+}
+''';
+    final datasourcePath = '$testPackageLibPath/features/orders/data/order_remote_datasource.dart';
+    newFile(datasourcePath, source);
+
+    await assertDiagnosticsInFile(datasourcePath, [
+      compatLint(source, 'return const [];', ruleName),
+      compatLint(source, 'return {};', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsTypedAbsenceAndClassifiedStatus() async {
+    await assertAllows(r'''
+import 'package:dio/dio.dart';
+import 'package:test/features/products/data/product_remote_datasource.dart';
+
+class NotFoundException implements Exception {}
+
+class ProductLookupRepository {
+  ProductLookupRepository(this._remote);
+
+  final IProductRemoteDatasource _remote;
+
+  Future<Object?> first() async {
+    try {
+      return (await _remote.fetchAll()).first;
+    } on NotFoundException {
+      return null;
+    }
+  }
+
+  Future<Object?> maybeFirst() async {
+    try {
+      return (await _remote.fetchAll()).first;
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+}
+''', path: path);
+  }
+
+  Future<void> test_allowsLocalPersistenceRecovery() async {
+    await assertAllows(r'''
+import 'package:hive_ce/hive_ce.dart';
+
+class ProductLocalDatasource {
+  ProductLocalDatasource(this._box);
+
+  final Box<Object?> _box;
+
+  List<Object?> readAll() {
+    try {
+      return _box.values.toList();
+    } catch (_) {
+      return [];
+    }
+  }
+}
+''', path: '$testPackageLibPath/features/products/data/product_local_datasource.dart');
+  }
+}
+
 abstract class _TestRuleTest extends _SourceRuleTest {
   @override
   List<ScannerRule> get rules => testSourceRules;

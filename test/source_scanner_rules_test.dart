@@ -142,6 +142,7 @@ void main() {
     defineReflectiveTests(CrashSentryAuthTokenInSourceTest);
     defineReflectiveTests(NetworkHttpCallInWidgetOrNotifierTest);
     defineReflectiveTests(DatasourceConcreteHttpClientTest);
+    defineReflectiveTests(NetworkFailureNullFallbackTest);
     defineReflectiveTests(TestProviderContainerTest);
     defineReflectiveTests(TestUncontrolledScopeTest);
     defineReflectiveTests(TestCreateContainerTest);

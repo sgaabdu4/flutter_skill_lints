@@ -5,16 +5,18 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
   ///
   /// Why: A "save" button that persists `amount: 0` and `count: 0` creates
   /// empty rows the user did not intend. Guard with
-  /// `if (amount > 0 || count > 0)` (or `isNotEmpty` for strings/lists)
-  /// before the notifier call.
+  /// `if (amount > 0 || count > 0)` around the call, or return early with
+  /// `if (amount <= 0 && count <= 0) return;` (or `isNotEmpty` / `isEmpty` for
+  /// strings/lists). Only arguments whose resolved type is `int`, `double` or `num`
+  /// need the guard; a Value Object such as `Distance` owns its own invariants.
   scannerRule(
     code: const LintCode(
       'notifier_zero_value_save_no_guard',
       'Save call passes numeric fields without a positive-value guard.',
       correctionMessage: 'Wrap the `ref.read(...notifier).save*(...)` call in `if (amount > 0 || count > 0)` (or equivalent) so empty submissions cannot persist.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags `ref.read(...notifier).save*(amount: .., count: ..)` (and similar numeric named-args such as `duration`, `distance`, `weight`, `size`, `total`) without a `> 0` / `isNotEmpty` guard in the same method body.',
+    description: 'Flags `ref.read(...notifier).save*(amount: .., count: ..)` (and similar named args such as `duration`, `distance`, `weight`, `size`, `total`) whose resolved type is numeric, unless an enclosing `> 0` / `isNotEmpty` guard or an earlier `<= 0` / `isEmpty` early return protects the call.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final method in context.methods) {
@@ -152,7 +154,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
       'notifier_param_requires_value_object',
       'Unit-bearing primitive local passed to notifier save call.',
       correctionMessage: 'Wrap the local in a domain Value Object (e.g. `Distance.fromMeters(distance)`) at the boundary; the notifier should accept the VO, not the primitive.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags `double|int <name>(Meters|Seconds|Kilometers|Miles|Cents|Percent)` local declarations followed by a `ref.read(...notifier).save*(...)` call in the same method.',
     scan: (reporter, context) {
@@ -223,12 +225,95 @@ void _reportZeroValueSave(
 ) {
   _visitMethodLines(context, method, (lineIndex, line) {
     final match = _saveMethodCall.firstMatch(line);
-    if (match == null || !_lineHasNumericNamedArg(context, lineIndex, method.end)) return false;
-    if (_hasPositiveGuard(context, method.start, lineIndex)) return false;
+    if (match == null) return false;
+    final call = _saveInvocationAt(context, lineIndex, match.start);
+    if (call == null || !_passesNumericNamedArgument(call) || _hasZeroValueGuard(call)) {
+      return false;
+    }
     reporter.report(context, lineIndex, match.start);
     return false;
   });
 }
+
+MethodInvocation? _saveInvocationAt(SourceScannerContext context, int lineIndex, int column) {
+  final offset = context.source.lineOffsets[lineIndex] + column;
+  for (
+    AstNode? node = context.unit.nodeCovering(offset: offset);
+    node != null;
+    node = node.parent
+  ) {
+    if (node is MethodInvocation && node.operator?.offset == offset) return node;
+  }
+  return null;
+}
+
+bool _passesNumericNamedArgument(MethodInvocation call) =>
+    call.argumentList.arguments.whereType<NamedArgument>().any((argument) {
+      if (!_numericNamedArg.hasMatch('${argument.name.lexeme}:')) return false;
+      final type = argument.argumentExpression.staticType;
+      return type != null && (type.isDartCoreInt || type.isDartCoreDouble || type.isDartCoreNum);
+    });
+
+/// Whether an enclosing `if (x > 0)` wraps [call] or an earlier
+/// `if (x <= 0) return;` in an enclosing block exits before it.
+bool _hasZeroValueGuard(MethodInvocation call) {
+  AstNode child = call;
+  for (var parent = call.parent; parent != null; child = parent, parent = parent.parent) {
+    if (parent is FunctionBody) return false;
+    if (parent is IfStatement &&
+        parent.thenStatement == child &&
+        _conditionMatches(parent.expression, _isPositiveCheck)) {
+      return true;
+    }
+    if (parent is Block && _exitsBeforeChild(parent, child)) return true;
+  }
+  return false;
+}
+
+/// Whether a statement of [block] before [child] is an `if (x <= 0) return;` guard.
+bool _exitsBeforeChild(Block block, AstNode child) => block.statements
+    .takeWhile((statement) => statement != child)
+    .any((statement) => statement is IfStatement && _isEarlyReturnZeroGuard(statement));
+
+bool _isEarlyReturnZeroGuard(IfStatement statement) {
+  if (statement.elseStatement != null) return false;
+  final then = statement.thenStatement;
+  final exits =
+      then is ReturnStatement ||
+      (then is Block && then.statements.length == 1 && then.statements.single is ReturnStatement);
+  return exits && _conditionMatches(statement.expression, _isNonPositiveCheck);
+}
+
+bool _conditionMatches(Expression condition, bool Function(Expression) check) {
+  final expression = condition.unParenthesized;
+  if (check(expression)) return true;
+  if (expression is BinaryExpression && const {'&&', '||'}.contains(expression.operator.lexeme)) {
+    return _conditionMatches(expression.leftOperand, check) ||
+        _conditionMatches(expression.rightOperand, check);
+  }
+  return false;
+}
+
+bool _isPositiveCheck(Expression expression) =>
+    _isZeroComparison(expression, const {'>': 0, '>=': 1, '!=': 0}) ||
+    _isEmptinessCheck(expression, 'isNotEmpty');
+
+bool _isNonPositiveCheck(Expression expression) =>
+    _isZeroComparison(expression, const {'<=': 0, '<': 1, '==': 0}) ||
+    _isEmptinessCheck(expression, 'isEmpty');
+
+bool _isZeroComparison(Expression expression, Map<String, int> bounds) {
+  if (expression is! BinaryExpression) return false;
+  final bound = bounds[expression.operator.lexeme];
+  final right = expression.rightOperand.unParenthesized;
+  return bound != null && right is IntegerLiteral && right.value == bound;
+}
+
+bool _isEmptinessCheck(Expression expression, String property) => switch (expression) {
+  PrefixedIdentifier(:final identifier) => identifier.name == property,
+  PropertyAccess(:final propertyName) => propertyName.name == property,
+  _ => false,
+};
 
 void _reportUnitPrimitiveNotifierUse(
   ScannerRuleReporter reporter,

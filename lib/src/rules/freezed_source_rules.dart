@@ -93,7 +93,9 @@ final List<ScannerRule> freezedSourceRules = [
   ///
   /// Why: Flags domain entity and data model classes that are manual or Equatable-based.
   /// Freezed is the project-wide value-class convention, chosen to remove the mental tax
-  /// of picking between equality/copy/serialization patterns.
+  /// of picking between equality/copy/serialization patterns. A non-Freezed Hive class
+  /// annotated with a resolved hive_ce `@HiveType` is allowed: hive-persistence.md uses
+  /// "@HiveType for non-Freezed. @GenerateAdapters for Freezed."
   scannerRule(
     code: const LintCode(
       'freezed_required_value_class',
@@ -106,6 +108,7 @@ final List<ScannerRule> freezedSourceRules = [
       for (final classSpan in context.classes) {
         if (!context.requiresFreezedValueClass(classSpan)) continue;
         if (context.hasFreezedAnnotation(classSpan)) continue;
+        if (_isHiveTypeClassAt(context, classSpan.start)) continue;
         reporter.report(
           context,
           classSpan.start,
@@ -197,4 +200,15 @@ bool _isGeneratedFreezedMethod(MethodInvocation node) {
     return false;
   }
   return isFreezedInterfaceType(targetType);
+}
+
+bool _isHiveTypeClassAt(SourceScannerContext context, int lineIndex) {
+  for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+    final line = context.unit.lineInfo.getLocation(declaration.classKeyword.offset).lineNumber - 1;
+    if (line != lineIndex) continue;
+    return declaration.metadata.any(
+      (annotation) => isPackageAnnotation(annotation.elementAnnotation, 'hive_ce', 'HiveType'),
+    );
+  }
+  return false;
 }

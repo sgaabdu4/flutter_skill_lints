@@ -7,6 +7,16 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/mounted_guard_utils.dart';
 
+/// Whether [annotation] evaluates to an instance of [className] declared in [package].
+bool isPackageAnnotation(ElementAnnotation? annotation, String package, String className) {
+  final type = annotation?.computeConstantValue()?.type;
+  if (type is! InterfaceType || type.element.name != className) return false;
+  final uri = type.element.library.uri;
+  return uri.scheme == 'package' &&
+      uri.pathSegments.isNotEmpty &&
+      uri.pathSegments.first == package;
+}
+
 /// Recognizes a value annotated by the actual Freezed annotation library.
 bool isFreezedInterfaceType(InterfaceType type) =>
     type.element.metadata.annotations.any((annotation) {
@@ -15,8 +25,12 @@ bool isFreezedInterfaceType(InterfaceType type) =>
           owner?.library?.uri.toString() == 'package:freezed_annotation/freezed_annotation.dart';
     });
 
-bool isGeneratedRuleContext(RuleContext context) {
-  final path = context.definingUnit.file.path.replaceAll('\\', '/');
+bool isGeneratedRuleContext(RuleContext context) =>
+    isGeneratedSourcePath(context.definingUnit.file.path);
+
+/// Whether [path] names a generated Dart source that lint rules skip.
+bool isGeneratedSourcePath(String sourcePath) {
+  final path = sourcePath.replaceAll('\\', '/');
   return path.endsWith('.g.dart') ||
       path.endsWith('.freezed.dart') ||
       path.endsWith('.gr.dart') ||

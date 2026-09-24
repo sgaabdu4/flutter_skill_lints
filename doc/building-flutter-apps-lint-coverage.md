@@ -2,10 +2,10 @@
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 201 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 209 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 204 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 212 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 279 additional diagnostics.
-- Total unique diagnostics: 486.
+- Total unique diagnostics: 489.
 
 ## Full Rule Inventory
 
@@ -156,7 +156,7 @@ hover description and correction text.
 | `extensions-utilities.md` | `ui_snackbar_boundary`, `datetime_now_requires_timezone_intent`, `avoid_magic_literals`, `use_context_is_current_modal_route`, `dart_static_namespace`, `service_static_side_effect`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures` |
 | `flutter-optimizations.md` | `avoid_shrink_wrap`, `perf_listview_children`, `perf_build_work`, `a11y_text_scale_clamp`, `flutter_key_created_in_build`, `flutter_unique_or_global_key`, `flutter_opacity_widget`, `flutter_save_layer_filter`, `flutter_clip_save_layer`, `flutter_intrinsic_layout`, `flutter_animated_builder_child`, `flutter_widget_operator_equals`, `avoid_list_in_single_child_scroll_view`, `avoid_clip_rrect_container`, `use_dedicated_media_query_methods`, `dispose_fields` |
 | `freezed-sealed.md` | `use_sealed_freezed_classes`, `use_freezed_instead_of_immutable`, `freezed_one_class_per_file`, `freezed_missing_private_constructor`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map`, `arch_domain_json_annotation`, `cfg_explicit_to_json` |
-| `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_test_close_missing`, `avoid_unvalidated_persisted_map_cast`, runtime boundary for historical TypeId permanence |
+| `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_type_on_freezed_class`, `hive_adapter_spec_domain_type`, `notifier_hive_access`, `hive_test_close_missing`, `avoid_unvalidated_persisted_map_cast`, runtime boundary for historical TypeId permanence |
 | `layout-diagnostics.md` | `avoid_shrink_wrap`, `avoid_shrink_wrap_in_lists`, `avoid_flexible_outside_flex`, `avoid_positioned_outside_stack`, `avoid_unbounded_list_in_column`, `avoid_unbounded_text_field_in_row`, `avoid_orientation_layout`, `use_dedicated_media_query_methods`, `prefer_spacing` limited to repeated uniform gaps, runtime boundary for device-type layout checks |
 | `localization.md` | `strings_hardcoded`, `avoid_hardcoded_strings`, `l10n_context_direct_access`, `l10n_string_concatenation`, `l10n_notifier_localized_copy` |
 | `mixins.md` | `mixin_mixin_class`, `mixin_name_suffix`, `mixin_mutable_state` |
@@ -212,6 +212,9 @@ Hive/Crash/services:
 - `hive_reserved_type_ids_missing`
 - `hive_duplicate_type_id`
 - `hive_duplicate_field_id`
+- `hive_type_on_freezed_class`
+- `hive_adapter_spec_domain_type`
+- `notifier_hive_access`
 - `hive_test_close_missing`
 - `crash_direct_firebase_call`
 - `crash_init_before_run_app`
@@ -313,8 +316,10 @@ Runtime-bug surface (0.7.0) — `runtime_bug_source_rules`:
   `loadAll` / `getAll` / `readAll` / `loadSettings` / `getSnapshot` forces
   N storage hits per screen.
 - `notifier_zero_value_save_no_guard` — `ref.read(...notifier).save*(amount: ..,
-  count: ..)` (and similar numeric named args) without an `> 0` / `isNotEmpty`
-  guard persists empty rows the user did not intend.
+  count: ..)` (and similar named args whose resolved type is `int`, `double` or
+  `num`) without an enclosing `> 0` / `isNotEmpty` guard or an earlier
+  `if (amount <= 0 && count <= 0) return;` persists empty rows the user did not
+  intend. Value Object arguments such as `Distance` need no guard.
 - `notifier_param_requires_value_object` — unit-bearing primitive locals
   (`*Meters` / `*Seconds` / `*Cents` / `*Bytes` / `*Pixels` etc.) passed into
   a notifier `save*` call should be wrapped at the widget→notifier boundary

@@ -1,3 +1,4 @@
+import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -93,14 +94,41 @@ final List<ScannerRule> servicesMixinsSourceRules = [
     ),
     description: 'Flags mutable fields inside mixins so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        if (context.isMutableMixinField(i)) {
-          reporter.report(context, i, 0);
+      for (final declaration in context.unit.declarations) {
+        final (members, onStateLifecycle) = switch (declaration) {
+          MixinDeclaration(:final body) => (body.members, _isOnStateLifecycle(declaration)),
+          ClassDeclaration(:final body, mixinKeyword: _?) => (body.members, false),
+          _ => (const <ClassMember>[], false),
+        };
+        for (final field in members.whereType<FieldDeclaration>()) {
+          if (!_isMutableField(field)) continue;
+          if (onStateLifecycle &&
+              field.fields.variables.every((v) => v.name.lexeme.startsWith('_'))) {
+            continue;
+          }
+          final offset = field.firstTokenAfterCommentAndMetadata.offset;
+          reporter.report(
+            context,
+            context.source.lineOffsets.lastIndexWhere((start) => start <= offset),
+            0,
+          );
         }
       }
     },
   ),
 ];
+
+bool _isMutableField(FieldDeclaration field) =>
+    field.abstractKeyword == null &&
+    field.externalKeyword == null &&
+    !field.fields.isFinal &&
+    !field.fields.isConst;
+
+bool _isOnStateLifecycle(MixinDeclaration declaration) =>
+    declaration.onClause?.superclassConstraints.any(
+      (type) => const {'State', 'ConsumerState', 'HookConsumerState'}.contains(type.name.lexeme),
+    ) ??
+    false;
 
 final _singletonInstanceDeclaration = RegExp(
   r'\bstatic\s+(?:final\s+)?(?:[A-Za-z_]\w*(?:<[^>]+>)?\s+)?(?:get\s+)?instance\b',

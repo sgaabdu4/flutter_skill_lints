@@ -749,6 +749,53 @@ mixin CacheMixin {
       compatLint(source, 'bool _isReady = false', ruleName, lineStart: true),
     ]);
   }
+
+  Future<void> test_reportsUninitializedLateAndStaticMutableFields() async {
+    final filePath = '$testPackageLibPath/core/mixins/remember_mixin.dart';
+    const source = r'''
+mixin RememberMixin {
+  String? _cached;
+  late int _hits;
+  static var _instances = 0;
+  final String label = 'remember';
+
+  String remember(String value) {
+    _hits = _instances;
+    return _cached ??= '$value$_hits$label';
+  }
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'String? _cached;', ruleName, lineStart: true),
+      compatLint(source, 'late int _hits;', ruleName, lineStart: true),
+      compatLint(source, 'static var _instances', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsExpressionBodiedMethodsAndGetters() async {
+    final filePath = '$testPackageLibPath/core/mixins/connectivity_mixin.dart';
+    newFile(filePath, r'''
+class ConnectivityService {
+  bool get isConnected => true;
+}
+class StatefulWidget {}
+class State<T extends StatefulWidget> {
+  bool get mounted => true;
+}
+
+mixin ConnectivityMixin {
+  bool checkConnectivity(ConnectivityService service) => service.isConnected;
+}
+
+mixin RouteAwareMixin<T extends StatefulWidget> on State<T> {
+  bool get isActive => mounted;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
 }
 
 abstract class _DataCrashRuleTest extends _SourceRuleTest {

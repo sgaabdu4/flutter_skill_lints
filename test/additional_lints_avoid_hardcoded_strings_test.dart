@@ -53,6 +53,25 @@ class InputField extends Widget {
   const InputField({this.hintText});
   final String? hintText;
 }
+
+class BuildContext {}
+
+typedef ValueChanged<T> = void Function(T value);
+
+abstract class StatelessWidget extends Widget {
+  const StatelessWidget();
+  Widget build(BuildContext context);
+}
+
+abstract class StatefulWidget extends Widget {
+  const StatefulWidget();
+  State createState();
+}
+
+abstract class State<T extends StatefulWidget> {
+  T get widget => throw UnimplementedError();
+  Widget build(BuildContext context);
+}
 ''')
       ..addFile('lib/widget_previews.dart', r'''
 base class Preview {
@@ -245,6 +264,145 @@ Widget build(String name) => Text('Hello $name');
 import 'package:flutter/widgets.dart';
 
 Widget build(int count) => Text('$count');
+''');
+  }
+
+  static const _formWidget = r'''
+import 'package:flutter/widgets.dart';
+
+class ScheduleForm extends StatefulWidget {
+  const ScheduleForm({required this.onError, required this.onSelected});
+  final ValueChanged<String> onError;
+  final ValueChanged<String> onSelected;
+
+  @override
+  State<ScheduleForm> createState() => _ScheduleFormState();
+}
+''';
+
+  Future<void> test_callbackProseInState_lint() async {
+    const source =
+        '''
+$_formWidget
+class _ScheduleFormState extends State<ScheduleForm> {
+  void _submit() {
+    widget.onError('Please choose a time first');
+  }
+
+  @override
+  Widget build(BuildContext context) => const Widget();
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf("'Please choose"), "'Please choose a time first'".length),
+    ]);
+  }
+
+  Future<void> test_callbackProseInStatelessWidget_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+const _savedCopy = 'Draft saved.';
+
+class SavePanel extends StatelessWidget {
+  const SavePanel({required this.onSaved, this.onError, required this.onNotice});
+  final void Function(String message) onSaved;
+  final ValueChanged<String>? onError;
+  final void Function({required String message}) onNotice;
+
+  void _save(String name) {
+    onSaved('Saved!');
+    onError?.call('Could not save $name');
+    onNotice(message: _savedCopy);
+  }
+
+  @override
+  Widget build(BuildContext context) => const Widget();
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf("'Saved!'"), "'Saved!'".length),
+      lint(source.indexOf(r"'Could not save $name'"), r"'Could not save $name'".length),
+      lint(source.indexOf('_savedCopy);'), '_savedCopy'.length),
+    ]);
+  }
+
+  Future<void> test_callbackIdentifiersKeysAndProtocolStrings_noLint() async {
+    await assertNoDiagnostics('''
+$_formWidget
+class _ScheduleFormState extends State<ScheduleForm> {
+  void _select(Map<String, String> headers) {
+    widget.onSelected('user_42');
+    widget.onSelected('Authorization');
+    widget.onSelected('https://example.com/v1.2/items');
+    widget.onSelected('config.json');
+    widget.onSelected('');
+    widget.onSelected(headers['Authorization'] ?? '');
+  }
+
+  @override
+  Widget build(BuildContext context) => const Widget();
+}
+''');
+  }
+
+  Future<void> test_declaredMethodAndFunctionProse_noLint() async {
+    await assertNoDiagnostics('''
+$_formWidget
+class TodoNotifier {
+  void addTodo(String title) {}
+}
+
+void logEvent(String message) {}
+
+class _ScheduleFormState extends State<ScheduleForm> {
+  final notifier = TodoNotifier();
+
+  void _add() {
+    notifier.addTodo('New Todo');
+    logEvent('Form submitted by user');
+  }
+
+  @override
+  Widget build(BuildContext context) => const Widget();
+}
+''');
+  }
+
+  Future<void> test_callbackProseOutsideWidgetClass_noLint() async {
+    await assertNoDiagnostics(r'''
+class FormCallbacks {
+  const FormCallbacks({required this.onError});
+  final void Function(String) onError;
+}
+
+void notify(FormCallbacks callbacks) {
+  callbacks.onError('Please choose a time first');
+}
+''');
+  }
+
+  Future<void> test_callbackProseInsideResolvedPreview_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widget_previews.dart';
+import 'package:flutter/widgets.dart';
+
+class SavePanel extends StatelessWidget {
+  const SavePanel({required this.onSaved});
+  final ValueChanged<String> onSaved;
+
+  @Preview(name: 'Saved')
+  static Widget preview() {
+    final panel = SavePanel(onSaved: (_) {});
+    panel.onSaved('Saved to drafts');
+    return panel;
+  }
+
+  @override
+  Widget build(BuildContext context) => const Widget();
+}
 ''');
   }
 }

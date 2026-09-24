@@ -179,11 +179,11 @@ class AsyncView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final result = ref.watch(asyncProvider);
-    return result.when(
-      data: (value) => Text('$value', textDirection: TextDirection.ltr),
-      loading: () => const SizedBox.shrink(),
-      error: (error, stackTrace) => Text('$error', textDirection: TextDirection.ltr),
-    );
+    return switch (result) {
+      AsyncData(:final value) => Text('$value', textDirection: TextDirection.ltr),
+      AsyncError(:final error) => Text('$error', textDirection: TextDirection.ltr),
+      AsyncLoading() => const SizedBox.shrink(),
+    };
   }
 }
 ''');

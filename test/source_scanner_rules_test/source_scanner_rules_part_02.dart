@@ -470,8 +470,9 @@ class ItemView {
     ]);
   }
 
-  Future<void> test_allowsWholeAsyncValueWhenDispatch() async {
-    await assertAllows(r'''
+  // freezed-sealed.md:9 bans .when(); only the sealed switch is a whole-value use.
+  Future<void> test_reportsWholeAsyncValueWhenDispatch() async {
+    const source = r'''
 import 'package:riverpod/riverpod.dart';
 class Source<T> {}
 class WidgetRef {
@@ -489,7 +490,11 @@ class AsyncView {
     );
   }
 }
-''');
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(imageProvider)', ruleName),
+    ]);
   }
 
   Future<void> test_reportsWholeDispatchOnSameNamedLocalAsyncValue() async {

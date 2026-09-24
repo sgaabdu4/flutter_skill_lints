@@ -76,8 +76,32 @@ dependencies:
     sdk: flutter
 ''');
     _writeCanonicalAnalysisOptions();
+    newFile('$testPackageRootPath/test_driver/app_test.dart', r'''
+import 'package:flutter_driver/flutter_driver.dart';
+void main() { FlutterDriver.connect(); }
+''');
 
     await assertDiagnostics('void main() {}', [projectLint('cfg_e2e_entrypoint')]);
+  }
+
+  Future<void> test_allowsIntegrationTestWithoutDriverEntrypoint() async {
+    newFile('$testPackageRootPath/pubspec.yaml', r'''
+name: test
+environment:
+  sdk: ^3.10.0
+dependencies:
+  flutter:
+    sdk: flutter
+dev_dependencies:
+  integration_test:
+    sdk: flutter
+''');
+    _writeCanonicalAnalysisOptions();
+    newFile('$testPackageRootPath/integration_test/app_test.dart', r'''
+import 'package:integration_test/integration_test.dart';
+void main() { IntegrationTestWidgetsFlutterBinding.ensureInitialized(); }
+''');
+    await assertNoDiagnostics('void main() {}');
   }
 
   Future<void> test_skipsProjectConfigDiagnosticsForNonAnchorFiles() async {

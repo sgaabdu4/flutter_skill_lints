@@ -19,6 +19,11 @@ final class MissingTestAssertionTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = MissingTestAssertion();
+    newPackage('test_api')
+        .addFile('lib/src/expect/expect.dart', 'void expect(Object actual, Object matcher) {}');
+    newPackage('fake_async').addFile('lib/fake_async.dart', r'''
+void fakeAsync(void Function(Object clock) body) { body(Object()); }
+''');
     super.setUp();
   }
 
@@ -48,6 +53,77 @@ void main() {
   });
 }
 ''');
+  }
+
+  Future<void> test_resolvedLocalHelperAssertion_noLint() async {
+    newFile('$testPackageLibPath/test.dart', "export 'package:test_api/src/expect/expect.dart';");
+    newFile('$testPackageLibPath/assertions.dart', r'''
+import 'package:test/test.dart';
+void assertOutput(int value) { expect(value, 1); }
+void noAssertion(int value) { print(value); }
+''');
+    const source = r'''
+import '../lib/assertions.dart';
+void test(String name, void Function() body) {}
+void main() {
+  test('delegated assertion', () { assertOutput(1); });
+  test('no assertion', () { noAssertion(1); });
+}
+''';
+    final path = '$testPackageRootPath/test/helper_assertion_test.dart';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [
+      lint(source.indexOf("test('no assertion'"), 'test'.length),
+    ]);
+  }
+
+  Future<void> test_helperDoesNotCountUnrelatedOrDeferredAssertions() async {
+    newFile('$testPackageLibPath/test.dart', "export 'package:test_api/src/expect/expect.dart';");
+    newFile('$testPackageLibPath/assertions.dart', r'''
+import 'package:test/test.dart';
+class Fake { void expect(Object? actual, Object? matcher) {} }
+void receiverOnly() { Fake().expect(1, 1); }
+void shadowed() { void expect(Object? actual, Object? matcher) {} expect(1, 1); }
+void deferred() { () { expect(1, 1); }; }
+''');
+    const source = r'''
+import '../lib/assertions.dart';
+void test(String name, void Function() body) {}
+void main() {
+  test('receiver', () { receiverOnly(); });
+  test('shadowed', () { shadowed(); });
+  test('deferred', () { deferred(); });
+}
+''';
+    final path = '$testPackageRootPath/test/negative_helpers_test.dart';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [
+      lint(source.indexOf("test('receiver'"), 'test'.length),
+      lint(source.indexOf("test('shadowed'"), 'test'.length),
+      lint(source.indexOf("test('deferred'"), 'test'.length),
+    ]);
+  }
+
+  Future<void> test_helperWrapperPreservesResolvedAssertionIdentity() async {
+    newFile('$testPackageLibPath/test.dart', "export 'package:test_api/src/expect/expect.dart';");
+    newFile('$testPackageLibPath/assertions.dart', r'''
+import 'package:fake_async/fake_async.dart';
+import 'package:test/test.dart';
+class Holder { void expect(Object? actual, Object? matcher) {} }
+void realAssertion() { fakeAsync((_) { expect(1, 1); }); }
+void unrelatedMember() { fakeAsync((_) { Holder().expect(1, 1); }); }
+''');
+    const source = r'''
+import '../lib/assertions.dart';
+void test(String name, void Function() body) {}
+void main() {
+  test('real', () { realAssertion(); });
+  test('unrelated', () { unrelatedMember(); });
+}
+''';
+    final path = '$testPackageRootPath/test/wrapped_assertions_test.dart';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [lint(source.indexOf("test('unrelated'"), 'test'.length)]);
   }
 
   Future<void> test_testWidgetsWithExpectLater_noLint() async {
@@ -236,12 +312,19 @@ final class PreferCorrectTestFileNameTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = PreferCorrectTestFileName();
+    newPackage('flutter_test').addFile('lib/flutter_test.dart', r'''
+void testWidgets(String name, void Function(Object tester) body) {}
+''');
     super.setUp();
+    newFile('$testPackageRootPath/lib/test.dart', r'''
+void group(String name, void Function() body) {}
+void test(String name, void Function() body) {}
+''');
   }
 
   Future<void> test_fileWithTestButWrongName_lint() async {
     const source = r'''
-void test(String name, void Function() body) {}
+import 'package:test/test.dart';
 
 void main() {
   test('runs', () {});
@@ -256,7 +339,7 @@ void main() {
 
   Future<void> test_correctTestFileName_noLint() async {
     const source = r'''
-void test(String name, void Function() body) {}
+import 'package:test/test.dart';
 
 void main() {
   test('runs', () {});
@@ -265,6 +348,46 @@ void main() {
     final path = '$testPackageRootPath/test/widget_test.dart';
     newFile(path, source);
 
+    await assertDiagnosticsInFile(path, []);
+  }
+
+  Future<void> test_prefixedTestApis_lint() async {
+    const source = r'''
+import 'package:test/test.dart' as spec;
+import 'package:flutter_test/flutter_test.dart' as widgets;
+
+void main() {
+  spec.group('suite', () {});
+  spec.test('case', () {});
+  widgets.testWidgets('widget', (tester) {});
+}
+''';
+    final path = '$testPackageRootPath/test/widget_spec.dart';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [
+      lint(source.indexOf('group('), 'group'.length),
+      lint(source.indexOf('test('), 'test'.length),
+      lint(source.indexOf('testWidgets('), 'testWidgets'.length),
+    ]);
+  }
+
+  Future<void> test_unrelatedSameNamedCalls_noLint() async {
+    const source = r'''
+void group(String value) {}
+void test(String value) {}
+void testWidgets(String value) {}
+class RegExpMatch { String? group(int index) => null; }
+
+void main() {
+  group('local');
+  test('local');
+  testWidgets('local');
+  final match = RegExpMatch();
+  match.group(1);
+}
+''';
+    final path = '$testPackageRootPath/test/widget_spec.dart';
+    newFile(path, source);
     await assertDiagnosticsInFile(path, []);
   }
 }

@@ -4,6 +4,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'riverpod_source_rules/riverpod_source_rules_part_01.dart';
+part 'riverpod_source_rules/riverpod_source_rules_part_02.dart';
 
 final List<ScannerRule> riverpodSourceRules = [..._riverpodSourceRulesPart1];
 
@@ -472,27 +473,6 @@ bool _registersDisposeCleanup(
       .sublist(definition.bodyStart, definition.bodyEnd + 1)
       .join('\n');
   return RegExp(r'\bref\s*\.\s*onDispose\s*\(').hasMatch(body);
-}
-
-final class _ScalarWatchVisitor extends RecursiveAstVisitor<void> {
-  final offsets = <int>{};
-
-  @override
-  void visitMethodInvocation(MethodInvocation node) {
-    if (node.methodName.name == 'watch' && node.target?.toSource() == 'ref') {
-      final type = node.staticType;
-      if (type != null &&
-          (type.isDartCoreBool ||
-              type.isDartCoreString ||
-              type.isDartCoreInt ||
-              type.isDartCoreDouble ||
-              type.isDartCoreNum ||
-              type.element is EnumElement)) {
-        offsets.add(node.offset);
-      }
-    }
-    super.visitMethodInvocation(node);
-  }
 }
 
 int? _broadRefWatchColumn(

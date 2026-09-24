@@ -23,7 +23,10 @@ void main() {
 
     plugin.register(registry);
 
-    expect(registry.warningRules.length, _enabledAdditionalRuleCount + flutterSkillRules.length);
+    expect(
+      registry.warningRules.length,
+      _enabledAdditionalRuleCount + flutterSkillRules.length - 1,
+    );
     expect(flutterSkillRules, hasLength(_enabledFlutterSkillRuleCount));
     expect(
       flutterSkillRules
@@ -31,7 +34,7 @@ void main() {
           .toSet(),
       hasLength(_enabledFlutterSkillDiagnosticCount),
     );
-    expect(registry.lintRules, isEmpty);
+    expect(registry.lintRules.keys, ['avoid_null_bang']);
     expect(registry.warningRules.keys, hasLength(registry.warningRules.keys.toSet().length));
   });
 
@@ -41,7 +44,7 @@ void main() {
 
     plugin.register(registry);
 
-    for (final rule in registry.warningRules.values) {
+    for (final rule in [...registry.warningRules.values, ...registry.lintRules.values]) {
       expect(rule.description.trim(), isNotEmpty, reason: '${rule.name} description');
       for (final code in rule.diagnosticCodes) {
         expect(
@@ -62,6 +65,9 @@ void main() {
 
     final registeredCodes = {
       ...skillRegistry.warningRules.values.expand(
+        (rule) => rule.diagnosticCodes.map((code) => code.lowerCaseName),
+      ),
+      ...skillRegistry.lintRules.values.expand(
         (rule) => rule.diagnosticCodes.map((code) => code.lowerCaseName),
       ),
       ...additionalRegistry.warningRules.values.expand(
@@ -328,7 +334,10 @@ void main() {
     );
     expect(
       registeredNames.skip(_enabledAdditionalRuleCount).toList(),
-      flutterSkillRules.map((rule) => rule.name).toList(),
+      flutterSkillRules
+          .where((rule) => rule.name != 'avoid_null_bang')
+          .map((rule) => rule.name)
+          .toList(),
     );
   });
 }

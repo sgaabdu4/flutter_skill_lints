@@ -383,14 +383,74 @@ bool _isSimpleSynchronousStateUpdate(SourceScannerContext context, int offset) {
       parameter.name?.lexeme,
   };
   return switch (body) {
-    ExpressionFunctionBody(:final expression) => _isDirectStateAssignment(expression, parameters),
-    BlockFunctionBody(:final block) => block.statements.every(
-      (statement) =>
-          statement is ExpressionStatement &&
-          _isDirectStateAssignment(statement.expression, parameters),
+    ExpressionFunctionBody(:final expression) => _isDirectStateAssignment(
+      context,
+      expression,
+      parameters,
     ),
+    BlockFunctionBody(:final block) => _isLocalStateUpdate(context, block, parameters),
     _ => false,
   };
+}
+
+bool _isLocalStateUpdate(SourceScannerContext context, Block block, Set<String?> parameters) {
+  final locals = <String>{};
+  for (final statement in block.statements) {
+    if (statement is ExpressionStatement &&
+        _isDirectStateAssignment(context, statement.expression, parameters)) {
+      continue;
+    }
+    if (statement is VariableDeclarationStatement && statement.variables.isFinal) {
+      if (!_recordValidatedLocals(statement.variables, parameters, locals)) return false;
+      continue;
+    }
+    if (statement is IfStatement &&
+        statement.elseStatement == null &&
+        _isLocalValidation(statement.expression, parameters, locals) &&
+        _onlyReturns(statement.thenStatement)) {
+      continue;
+    }
+    return false;
+  }
+  return true;
+}
+
+bool _recordValidatedLocals(
+  VariableDeclarationList declaration,
+  Set<String?> parameters,
+  Set<String> locals,
+) {
+  for (final variable in declaration.variables) {
+    final initializer = variable.initializer;
+    if (initializer == null || !_isLocalValidation(initializer, parameters, locals)) return false;
+    locals.add(variable.name.lexeme);
+  }
+  return true;
+}
+
+bool _onlyReturns(Statement statement) =>
+    statement is ReturnStatement && statement.expression == null ||
+    statement is Block && statement.statements.every(_onlyReturns);
+
+bool _isLocalValidation(Expression value, Set<String?> parameters, Set<String> locals) {
+  if (value is SimpleIdentifier) {
+    return parameters.contains(value.name) || locals.contains(value.name);
+  }
+  if (value is PrefixedIdentifier) {
+    return (value.identifier.name == 'isEmpty' || value.identifier.name == 'isNotEmpty') &&
+        value.prefix.staticType?.isDartCoreString == true &&
+        _isLocalValidation(value.prefix, parameters, locals);
+  }
+  if (value is PropertyAccess) {
+    return (value.propertyName.name == 'isEmpty' || value.propertyName.name == 'isNotEmpty') &&
+        value.target != null &&
+        value.target!.staticType?.isDartCoreString == true &&
+        _isLocalValidation(value.target!, parameters, locals);
+  }
+  if (value is PrefixExpression && value.operator.lexeme == '!') {
+    return _isLocalValidation(value.operand, parameters, locals);
+  }
+  return _isPrimitiveLiteral(value);
 }
 
 FunctionBody? _declaredMethodBody(SourceScannerContext context, ExecutableElement method) {
@@ -408,7 +468,11 @@ FunctionBody? _declaredMethodBody(SourceScannerContext context, ExecutableElemen
   return declaration is MethodDeclaration ? declaration.body : null;
 }
 
-bool _isDirectStateAssignment(Expression expression, Set<String?> parameters) {
+bool _isDirectStateAssignment(
+  SourceScannerContext context,
+  Expression expression,
+  Set<String?> parameters,
+) {
   if (expression is! AssignmentExpression || expression.operator.lexeme != '=') return false;
   final target = expression.leftHandSide;
   final writesState =
@@ -418,7 +482,75 @@ bool _isDirectStateAssignment(Expression expression, Set<String?> parameters) {
           target.propertyName.name == 'state';
   if (!writesState) return false;
   final value = expression.rightHandSide;
-  return value is SimpleIdentifier && parameters.contains(value.name) || _isPrimitiveLiteral(value);
+  return value is SimpleIdentifier && parameters.contains(value.name) ||
+      _isPrimitiveLiteral(value) ||
+      _isStateCopyWith(context, value, parameters);
+}
+
+bool _isStateCopyWith(SourceScannerContext context, Expression value, Set<String?> parameters) {
+  if (value is FunctionExpressionInvocation && value.function is PropertyAccess) {
+    final access = value.function as PropertyAccess;
+    final target = access.target;
+    final getter = access.propertyName.element;
+    final stateType = target?.staticType;
+    if (target is! SimpleIdentifier ||
+        target.name != 'state' ||
+        access.propertyName.name != 'copyWith' ||
+        getter is! GetterElement ||
+        !getter.firstFragment.libraryFragment.source.fullName.endsWith('.freezed.dart') ||
+        stateType is! InterfaceType ||
+        value.staticType != stateType ||
+        !isFreezedInterfaceType(stateType)) {
+      return false;
+    }
+    return value.argumentList.arguments.every(
+      (argument) => _isLocalValidation(argument.argumentExpression, parameters, const <String>{}),
+    );
+  }
+  if (value is! MethodInvocation || value.methodName.name != 'copyWith') return false;
+  final target = value.target;
+  if (target is! SimpleIdentifier || target.name != 'state') return false;
+  final method = value.methodName.element;
+  if (method is! ExecutableElement ||
+      method.isAbstract ||
+      method.isExternal ||
+      !method.fragments.every((fragment) => fragment.isSynchronous)) {
+    return false;
+  }
+  if (!value.argumentList.arguments.every((argument) {
+    final input = argument.argumentExpression;
+    return input is SimpleIdentifier && parameters.contains(input.name) ||
+        _isPrimitiveLiteral(input);
+  })) {
+    return false;
+  }
+  final body = _declaredMethodBody(context, method);
+  return body is ExpressionFunctionBody && _isPureStateConstructor(body.expression, parameters);
+}
+
+bool _isPureStateConstructor(Expression value, Set<String?> parameters) {
+  if (value is! InstanceCreationExpression) return false;
+  if (value.constructorName.element?.isConst != true) return false;
+  return value.argumentList.arguments.every(
+    (argument) => _isPureStateConstructorArgument(argument.argumentExpression, parameters),
+  );
+}
+
+bool _isPureStateConstructorArgument(Expression value, Set<String?> parameters) {
+  if (value is SimpleIdentifier) return parameters.contains(value.name);
+  if (value is PropertyAccess) {
+    final getter = value.propertyName.element;
+    return value.target is ThisExpression &&
+        getter is GetterElement &&
+        getter.isOriginVariable &&
+        getter.variable is FieldElement &&
+        !getter.variable.isLate;
+  }
+  if (value is BinaryExpression && value.operator.lexeme == '??') {
+    return _isPureStateConstructorArgument(value.leftOperand, parameters) &&
+        _isPureStateConstructorArgument(value.rightOperand, parameters);
+  }
+  return _isPrimitiveLiteral(value);
 }
 
 bool _isPrimitiveLiteral(Expression value) =>

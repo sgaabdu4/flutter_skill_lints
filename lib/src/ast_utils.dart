@@ -5,6 +5,14 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
+/// Recognizes a value annotated by the actual Freezed annotation library.
+bool isFreezedInterfaceType(InterfaceType type) =>
+    type.element.metadata.annotations.any((annotation) {
+      final owner = annotation.element;
+      return (owner?.name == 'freezed' || owner?.name == 'Freezed') &&
+          owner?.library?.uri.toString() == 'package:freezed_annotation/freezed_annotation.dart';
+    });
+
 bool isGeneratedRuleContext(RuleContext context) {
   final path = context.definingUnit.file.path.replaceAll('\\', '/');
   return path.endsWith('.g.dart') ||

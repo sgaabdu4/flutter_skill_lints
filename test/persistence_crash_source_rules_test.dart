@@ -127,6 +127,181 @@ Future<void> main() async {
 }
 ''', path: '$testPackageLibPath/main.dart');
   }
+
+  Future<void> test_crashAppRunner_noDiagnostic() async {
+    await assertRuleNoDiagnostics(r'''
+abstract final class Crash {
+  static Future<void> init({required void Function() appRunner}) async { appRunner(); }
+}
+void runApp(Object app) {}
+Future<void> main() async {
+  await Crash.init(appRunner: () => runApp(Object()));
+}
+''', path: '$testPackageLibPath/main.dart');
+  }
+
+  Future<void> test_awaitedResolvedInitializer_noDiagnostic() async {
+    newFile('$testPackageLibPath/crash.dart', r'''
+abstract final class Crash {
+  static Future<void> init() async {}
+}
+class CrashReporter {
+  Future<void> initialize() => Crash.init();
+}
+''');
+    await assertRuleNoDiagnostics(r'''
+import 'crash.dart';
+void runApp(Object app) {}
+Future<void> main() async {
+  await CrashReporter().initialize();
+  runApp(Object());
+}
+''', path: '$testPackageLibPath/main.dart');
+  }
+
+  Future<void> test_shadowedCrashParameterInWrapper_stillReports() async {
+    newFile('$testPackageLibPath/crash.dart', r'''
+abstract final class Crash { static Future<void> init() async {} }
+class Other { Future<void> init() async {} }
+class CrashReporter {
+  Future<void> initialize(Other Crash) => Crash.init();
+}
+''');
+    await assertRuleDiagnostic(
+      r'''
+import 'crash.dart';
+void runApp(Object app) {}
+Future<void> main() async {
+  await CrashReporter().initialize(Other());
+  runApp(Object());
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_shadowedCrashLocalInWrapper_stillReports() async {
+    newFile('$testPackageLibPath/crash.dart', r'''
+abstract final class Crash { static Future<void> init() async {} }
+class Other { Future<void> init() async {} }
+class CrashReporter {
+  Future<void> initialize() {
+    final Crash = Other();
+    return Crash.init();
+  }
+}
+''');
+    await assertRuleDiagnostic(
+      r'''
+import 'crash.dart';
+void runApp(Object app) {}
+Future<void> main() async {
+  await CrashReporter().initialize();
+  runApp(Object());
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_unrelatedAwaitedInitializer_stillReports() async {
+    newFile('$testPackageLibPath/crash.dart', r'''
+class CrashReporter {
+  Future<void> initialize() async {}
+}
+''');
+    await assertRuleDiagnostic(
+      r'''
+import 'crash.dart';
+void runApp(Object app) {}
+Future<void> main() async {
+  await CrashReporter().initialize();
+  runApp(Object());
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_initializerInDifferentFunction_stillReports() async {
+    newFile('$testPackageLibPath/crash.dart', r'''
+abstract final class Crash { static Future<void> init() async {} }
+class CrashReporter { Future<void> initialize() => Crash.init(); }
+''');
+    await assertRuleDiagnostic(
+      r'''
+import 'crash.dart';
+void runApp(Object app) {}
+Future<void> other() async { await CrashReporter().initialize(); }
+Future<void> main() async { runApp(Object()); }
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_conditionalCrashInitInWrapper_stillReports() async {
+    newFile('$testPackageLibPath/crash.dart', r'''
+abstract final class Crash { static Future<void> init() async {} }
+class CrashReporter {
+  Future<void> initialize(bool enabled) async {
+    if (enabled) await Crash.init();
+  }
+}
+''');
+    await assertRuleDiagnostic(
+      r'''
+import 'crash.dart';
+void runApp(Object app) {}
+Future<void> main() async {
+  await CrashReporter().initialize(false);
+  runApp(Object());
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_unawaitedCrashInitInWrapper_stillReports() async {
+    newFile('$testPackageLibPath/crash.dart', r'''
+abstract final class Crash { static Future<void> init() async {} }
+class CrashReporter {
+  Future<void> initialize() async { Crash.init(); }
+}
+''');
+    await assertRuleDiagnostic(
+      r'''
+import 'crash.dart';
+void runApp(Object app) {}
+Future<void> main() async {
+  await CrashReporter().initialize();
+  runApp(Object());
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_conditionalDirectCrashInit_stillReports() async {
+    await assertRuleDiagnostic(
+      r'''
+abstract final class Crash { static Future<void> init() async {} }
+void runApp(Object app) {}
+bool shouldInitialize() => false;
+Future<void> main() async {
+  if (shouldInitialize()) await Crash.init();
+  runApp(Object());
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
 }
 
 @reflectiveTest

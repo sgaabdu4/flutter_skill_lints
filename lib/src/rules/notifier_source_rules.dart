@@ -1,3 +1,6 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -53,7 +56,9 @@ final List<ScannerRule> notifierSourceRules = [
       for (final classSpan in context.classes.where((span) => span.isNotifier)) {
         final classMethods = context.methods.where((method) => classSpan.contains(method.start));
         for (final method in classMethods) {
-          if (method.name != 'build' && _notifierNeedsEnsure(context, method)) {
+          if (method.name != 'build' &&
+              _notifierNeedsEnsure(context, method) &&
+              !_usesConstructorInjectedDependencies(context, classSpan, method)) {
             reporter.report(context, method.start, 0);
           }
         }
@@ -103,6 +108,60 @@ bool _notifierNeedsEnsure(SourceScannerContext context, ScannerMethodSpan method
   return context.isMutationMethod(method.name) &&
       !hasEnsure &&
       (hasDependency || hasNullRepositoryReturn);
+}
+
+bool _usesConstructorInjectedDependencies(
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+  ScannerMethodSpan method,
+) {
+  final body = context.source.masked.sublist(method.start, method.end + 1).join('\n');
+  if (body.contains('ref.read(') || _hasNullRepositoryReturn(body)) return false;
+  final dependencies = RegExp(r'\b(_[A-Za-z0-9_]*(?:repo|repository)[A-Za-z0-9_]*)\b')
+      .allMatches(body)
+      .map((match) => match.group(1)!)
+      .toSet();
+  if (dependencies.isEmpty) return false;
+  final declaration = context.unit.declarations
+      .whereType<ClassDeclaration>()
+      .where((candidate) => candidate.namePart.typeName.lexeme == classSpan.name)
+      .firstOrNull;
+  if (declaration == null) return false;
+  final fields = _nonNullableInjectedFields(declaration);
+  if (!fields.containsAll(dependencies)) return false;
+  return _allConstructorsInject(declaration, dependencies);
+}
+
+Set<String> _nonNullableInjectedFields(ClassDeclaration declaration) {
+  final fields = <String>{};
+  for (final field in declaration.body.members.whereType<FieldDeclaration>()) {
+    if (!field.fields.isFinal || field.fields.isLate) continue;
+    for (final variable in field.fields.variables) {
+      final type = variable.declaredFragment?.element.type;
+      if (variable.initializer == null &&
+          type != null &&
+          type is! DynamicType &&
+          type.nullabilitySuffix == NullabilitySuffix.none) {
+        fields.add(variable.name.lexeme);
+      }
+    }
+  }
+  return fields;
+}
+
+bool _allConstructorsInject(ClassDeclaration declaration, Set<String> dependencies) {
+  final constructors = declaration.body.members.whereType<ConstructorDeclaration>().toList();
+  if (constructors.isEmpty ||
+      constructors.any((constructor) => constructor.factoryKeyword != null)) {
+    return false;
+  }
+  return constructors.every((constructor) {
+    final injected = constructor.parameters.parameters
+        .whereType<FieldFormalParameter>()
+        .map((parameter) => parameter.name.lexeme)
+        .toSet();
+    return injected.containsAll(dependencies);
+  });
 }
 
 bool _hasEnsureCall(String line) =>

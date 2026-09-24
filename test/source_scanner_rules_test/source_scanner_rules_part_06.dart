@@ -109,6 +109,21 @@ class _TodoScreenState extends State<TodoScreen> {
 }
 ''';
 
+  Future<void> test_allowsAwaitedDialogBeforeSynchronousNotifierDispatch() async {
+    await assertAllows(r'''
+class ConsumerWidget extends Widget {}
+Future<T?> showDialog<T>() async => null;
+class ConfirmScreen extends ConsumerWidget {
+  Future<void> confirm() async {
+    final confirmed = await showDialog<bool>();
+    if (confirmed == true) {
+      ref.read(formProvider.notifier).update('done');
+    }
+  }
+}
+''', path: path);
+  }
+
   Future<void> test_reportsMultilineAwaitedNotifierResult() async {
     final analyzedSource = _analyzedSource(r'''
 class ConsumerState<T> extends Widget {}

@@ -121,6 +121,32 @@ Object? read(Map<String, Object?> data) => data['active-workout'];
     await assertDiagnostics(source, [lint(source.indexOf("'active-workout'"), 16)]);
   }
 
+  Future<void> test_allowsUserFeedbackThroughWidgetCallbacks() async {
+    await assertNoDiagnostics(r'''
+class Widget {
+  void Function(String) onError = (_) {};
+  void Function(String) onSuccess = (_) {};
+}
+void save(Widget widget) {
+  widget.onError('Please choose a time first');
+  widget.onSuccess('Schedule saved successfully');
+}
+''');
+  }
+
+  Future<void> test_reportsProtocolHeaderKeyBesideCallbackProse() async {
+    const source = r'''
+class Widget { void Function(String) onError = (_) {}; }
+void save(Widget widget, Map<String, String> headers) {
+  widget.onError('Please choose a time first');
+  headers['Authorization'] = 'token';
+}
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf("'Authorization'"), "'Authorization'".length),
+    ]);
+  }
+
   Future<void> test_reportsInlineDateFormatPatternArgument() async {
     const source = r'''
 class DateLike {

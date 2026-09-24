@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.12.8] - 2026-09-24
+
+- Resolve test APIs, repository interfaces, notifier dependencies, and Freezed
+  operations before suggesting changes. Unrelated methods with the same names,
+  constructor-injected dependencies, and parameterless union cases stay allowed.
+- Recognize proven synchronous state updates, whole-value provider consumption,
+  and awaited crash initialization wrappers while retaining diagnostics for
+  asynchronous work, partial reads, and missing initialization.
+- Check nullable collection type syntax directly so conditional expressions and
+  nullable callbacks do not produce collection warnings.
+- Recognize assertions in project-owned test helpers and proven collection
+  cardinality while retaining warnings for missing or invalidated proofs. Allow
+  required value-object argument guards.
+- Distinguish awaited UI confirmation from awaited notifier results, and generated
+  Freezed copyWith operations from repeated data-property reads.
+- Keep `avoid_non_null_assertion` enabled by default. The overlapping
+  `avoid_null_bang` rule remains available by explicit opt-in, so an unsafe null
+  assertion produces one diagnostic with the default configuration.
+- Scan debug-call matches in one pass instead of repeatedly copying source
+  suffixes, preserving nested-call masking and exact diagnostic offsets.
+- Require the Driver entrypoint only when Flutter Driver is used, recognize the
+  documented `Crash` facade filename, and distinguish singleton instance members
+  and one-off callback prose from static namespaces and protocol identifiers.
+
 ## [0.12.7] - 2026-09-24
 
 - Use the analyzer type system to prove Container properties are non-null. Literal

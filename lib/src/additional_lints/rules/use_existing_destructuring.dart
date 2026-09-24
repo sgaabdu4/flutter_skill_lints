@@ -4,7 +4,9 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a property is accessed directly on an object that already has a
 /// destructuring declaration in the same scope. The property should be added
@@ -148,7 +150,9 @@ class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
     if (_checkPropertyAccess(
       targetName: node.prefix.name,
       targetElement: node.prefix.element,
+      targetType: node.prefix.staticType,
       propertyName: node.identifier.name,
+      propertyElement: node.identifier.element,
       accessNode: node,
     )) {
       return; // Don't recurse into children if matched
@@ -163,7 +167,9 @@ class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
       if (_checkPropertyAccess(
         targetName: target.name,
         targetElement: target.element,
+        targetType: target.staticType,
         propertyName: node.propertyName.name,
+        propertyElement: node.propertyName.element,
         accessNode: node,
       )) {
         return;
@@ -183,9 +189,12 @@ class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
   bool _checkPropertyAccess({
     required String targetName,
     required Element? targetElement,
+    required DartType? targetType,
     required String propertyName,
+    required Element? propertyElement,
     required AstNode accessNode,
   }) {
+    if (_isGeneratedFreezedCopyWith(propertyName, propertyElement, targetType)) return false;
     // Skip if the parent is an assignment target (writing, not reading)
     final parent = accessNode.parent;
     if (parent is AssignmentExpression && parent.leftHandSide == accessNode) {
@@ -212,4 +221,18 @@ class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
     }
     return false;
   }
+}
+
+bool _isGeneratedFreezedCopyWith(
+  String propertyName,
+  Element? propertyElement,
+  DartType? targetType,
+) {
+  if (propertyName != 'copyWith' ||
+      propertyElement is! GetterElement ||
+      targetType is! InterfaceType ||
+      !propertyElement.firstFragment.libraryFragment.source.fullName.endsWith('.freezed.dart')) {
+    return false;
+  }
+  return isFreezedInterfaceType(targetType);
 }

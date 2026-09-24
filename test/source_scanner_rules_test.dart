@@ -41,6 +41,8 @@ part 'source_scanner_rules_test/source_scanner_rules_part_17.dart';
 part 'source_scanner_rules_test/source_scanner_rules_part_18.dart';
 part 'source_scanner_rules_test/source_scanner_rules_part_19.dart';
 part 'source_scanner_rules_test/source_scanner_rules_part_20.dart';
+part 'source_scanner_rules_test/source_scanner_rules_part_21.dart';
+part 'source_scanner_rules_test/source_scanner_rules_part_22.dart';
 
 void main() {
   defineReflectiveSuite(() {

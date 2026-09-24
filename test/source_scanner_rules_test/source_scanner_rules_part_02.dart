@@ -364,6 +364,110 @@ class TrainerCard {
 }
 ''');
   }
+
+  Future<void> test_allowsWholeListAndDtoPassedToWidgets() async {
+    await assertAllows(r'''
+class Source<T> {}
+class WidgetRef {
+  T watch<T>(Source<T> source) => throw StateError('synthetic');
+}
+class Item {}
+class Details {}
+class ItemsView {
+  ItemsView({required List<Item> items});
+}
+class DetailsCard {
+  DetailsCard({required Details? details});
+}
+final filteredItemsProvider = Source<List<Item>>();
+final selectedDetailsProvider = Source<Details?>();
+class View {
+  Object build(WidgetRef ref) => (
+    ItemsView(items: ref.watch(filteredItemsProvider)),
+    DetailsCard(details: ref.watch(selectedDetailsProvider)),
+  );
+}
+''');
+  }
+
+  Future<void> test_allowsWholeValuesThroughLocalBindings() async {
+    await assertAllows(r'''
+class Source<T> {}
+class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+class Item {}
+class Details {}
+class ItemsView { ItemsView({required List<Item> items}); }
+class DetailsCard { DetailsCard({required Details? details}); }
+final filteredItemsProvider = Source<List<Item>>();
+final selectedDetailsProvider = Source<Details?>();
+class View {
+  Object build(WidgetRef ref) {
+    final items = ref.watch(filteredItemsProvider);
+    final details = ref.watch(selectedDetailsProvider);
+    return (ItemsView(items: items), DetailsCard(details: details));
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsWholeAsyncStatusSwitch() async {
+    await assertAllows(r'''
+class Source<T> {}
+class WidgetRef {
+  T watch<T>(Source<T> source) => throw StateError('synthetic');
+}
+sealed class AsyncValue<T> {}
+class AsyncLoading<T> extends AsyncValue<T> {}
+class AsyncError<T> extends AsyncValue<T> {}
+class AsyncData<T> extends AsyncValue<T> {}
+final startupProvider = Source<AsyncValue<void>>();
+class View {
+  String build(WidgetRef ref) => switch (ref.watch(startupProvider)) {
+    AsyncLoading<void>() => 'loading',
+    AsyncError<void>() => 'error',
+    _ => 'home',
+  };
+}
+''');
+  }
+
+  Future<void> test_reportsPartialObjectPatternSwitch() async {
+    const source = r'''
+class Source<T> {}
+class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+class Profile { const Profile(this.name, this.age); final String name; final int age; }
+final profileProvider = Source<Profile>();
+class View {
+  String build(WidgetRef ref) => switch (ref.watch(profileProvider)) {
+    Profile(:final name) => name,
+  };
+}
+''';
+    await assertDiagnostics(source, [compatLint(source, 'ref.watch(profileProvider)', ruleName)]);
+  }
+
+  Future<void> test_reportsPartialStateReads() async {
+    const source = r'''
+class Source<T> {}
+class WidgetRef {
+  T watch<T>(Source<T> source) => throw 'synthetic';
+}
+class Profile { String get name => 'name'; }
+class AccountState { String get name => 'name'; }
+final profileProvider = Source<Profile>();
+final accountStateProvider = Source<AccountState>();
+class View {
+  Object build(WidgetRef ref) {
+    final state = ref.watch(accountStateProvider);
+    return (ref.watch(profileProvider).name, state.name);
+  }
+}
+''';
+    await assertDiagnostics(source, [
+      compatLint(source, 'ref.watch(accountStateProvider)', ruleName),
+      compatLint(source, 'ref.watch(profileProvider)', ruleName),
+    ]);
+  }
 }
 
 @reflectiveTest

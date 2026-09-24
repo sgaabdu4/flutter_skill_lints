@@ -240,7 +240,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
         for (final method in context.methods.where((method) => classSpan.contains(method.start))) {
           for (var i = method.start; i <= method.end && i < context.source.length; i++) {
             final column =
-                _awaitedNotifierResultColumn(context, i, method.end) ??
+                _awaitedNotifierResultColumn(context, i) ??
                 _notifierThenResultColumn(context, i, method.end);
             if (column < 0) continue;
             reporter.report(context, i, column);

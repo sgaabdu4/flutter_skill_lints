@@ -1,5 +1,21 @@
 part of '../source_scanner_rule.dart';
 
+bool _namespaceHasOnlyStaticMembers(CompilationUnit unit, String className) {
+  final declaration = unit.declarations
+      .whereType<ClassDeclaration>()
+      .where((candidate) => candidate.namePart.typeName.lexeme == className)
+      .firstOrNull;
+  if (declaration == null) return false;
+  return declaration.body.members.every(
+    (member) => switch (member) {
+      FieldDeclaration(:final isStatic) => isStatic,
+      MethodDeclaration(:final isStatic) => isStatic,
+      ConstructorDeclaration(:final factoryKeyword) => factoryKeyword == null,
+      _ => true,
+    },
+  );
+}
+
 final class SourceScannerSource {
   SourceScannerSource(String text) {
     original.addAll(text.split('\n'));
@@ -224,16 +240,14 @@ String _blankDebugCalls(String text, {String? structure}) {
   final buffer = StringBuffer();
   final call = RegExp(r'\b(?:debugPrint|print)\s*\(');
   var index = 0;
-  while (index < text.length) {
-    final match = call.firstMatch(structuralText.substring(index));
-    if (match == null) {
-      buffer.write(text.substring(index));
-      break;
-    }
-    final matchEnd = index + match.end;
+  for (final match in call.allMatches(structuralText)) {
+    // An outer call already consumed any nested debug calls in its body.
+    if (match.start < index) continue;
+    final matchEnd = match.end;
     buffer.write(text.substring(index, matchEnd));
     index = _blankDebugCallBody(text, structuralText, matchEnd, buffer);
   }
+  buffer.write(text.substring(index));
   return buffer.toString();
 }
 

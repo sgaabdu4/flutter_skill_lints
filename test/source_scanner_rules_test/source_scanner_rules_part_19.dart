@@ -16,6 +16,44 @@ final class ArchInterfaceContractTest extends _ArchitectureRuleTest {
   String get path => '$testPackageLibPath/features/users/data/datasources/user_datasource.dart';
   @override
   String get source => 'class UserDatasource {}';
+
+  Future<void> test_allowsResolvedImportedInterface() async {
+    newFile(
+      '$testPackageLibPath/features/items/domain/repositories/items_repository.dart',
+      'abstract interface class IItemsRepository {}',
+    );
+    final path = '$testPackageLibPath/features/items/data/repositories/items_repository.dart';
+    newFile(path, r'''
+import '../../domain/repositories/items_repository.dart';
+
+class ItemsRepository implements IItemsRepository {}
+''');
+    await assertNoDiagnosticsInFile(path);
+  }
+
+  Future<void> test_reportsSecondClassWithoutInterface() async {
+    final path = '$testPackageLibPath/features/items/data/repositories/items_repository.dart';
+    const source = r'''
+abstract interface class IItemsRepository {}
+class ItemsRepository implements IItemsRepository {}
+class MissingRepository {}
+''';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [compatLint(source, 'abstract interface class', ruleName)]);
+  }
+
+  Future<void> test_reportsConcreteInterfaceClassWithoutContract() async {
+    final path = '$testPackageLibPath/features/items/data/repositories/items_repository.dart';
+    const source = 'interface class PublicRepository {}';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [compatLint(source, 'interface class', ruleName)]);
+  }
+
+  Future<void> test_allowsAbstractInterfaceContractDeclaration() async {
+    final path = '$testPackageLibPath/features/items/domain/repositories/items_repository.dart';
+    newFile(path, 'abstract interface class IItemsRepository {}');
+    await assertNoDiagnosticsInFile(path);
+  }
 }
 
 @reflectiveTest

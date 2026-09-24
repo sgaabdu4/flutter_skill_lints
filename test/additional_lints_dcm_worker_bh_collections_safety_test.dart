@@ -99,7 +99,91 @@ final class AvoidUnsafeCollectionMethodsTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = AvoidUnsafeCollectionMethods();
+    newPackage('test_api')
+        .addFile('lib/expect.dart', 'void expect(Object? actual, Object? matcher) {}');
+    newPackage('matcher').addFile('lib/matcher.dart', 'Object hasLength(int length) => Object();');
+    newPackage('flutter_test').addFile('lib/flutter_test.dart', r'''
+export 'package:test_api/expect.dart';
+export 'package:matcher/matcher.dart';
+''');
     super.setUp();
+  }
+
+  Future<void> test_adjacentResolvedLengthAssertionProvesFirstAndSingle() async {
+    await assertNoDiagnostics(
+      r'''
+import 'package:flutter_test/flutter_test.dart';
+''' +
+          _iterableCore +
+          r'''
+void f(List<int> values) {
+  expect(values, hasLength(1));
+  expect(values.first, 1);
+  expect(values, hasLength(1));
+  expect(values.single, 1);
+}
+''',
+    );
+  }
+
+  Future<void> test_mutationAliasAwaitAndUnrelatedExpectInvalidateLengthProof() async {
+    const source =
+        r'''
+import 'package:flutter_test/flutter_test.dart';
+''' +
+        _iterableCore +
+        r'''
+void mutated(List<int> values) {
+  expect(values, hasLength(1));
+  values.clear();
+  print(values.first);
+}
+void aliased(List<int> values) {
+  final alias = values;
+  expect(values, hasLength(1));
+  alias.clear();
+  print(values.first);
+}
+Future<void> delayed(List<int> values) async {
+  expect(values, hasLength(1));
+  await Future<void>.value();
+  print(values.first);
+}
+void unrelated(List<int> values) {
+  void expect(Object? actual, Object? matcher) {}
+  expect(values, hasLength(1));
+  print(values.first);
+}
+void unproven(List<int> values) { print(values.first); }
+void sameStatementSideEffect(List<int> values) {
+  expect(values, hasLength(1));
+  consume(clearAndReturn(values), values.first);
+}
+Object? clearAndReturn(List<int> values) { values.clear(); return null; }
+void consume(Object? first, Object? second) {}
+int Function() deferred(List<int> values) {
+  expect(values, hasLength(1));
+  return () => values.first;
+}
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf('values.first', source.indexOf('void mutated')), 'values.first'.length),
+      lint(source.indexOf('values.first', source.indexOf('void aliased')), 'values.first'.length),
+      lint(
+        source.indexOf('values.first', source.indexOf('Future<void> delayed')),
+        'values.first'.length,
+      ),
+      lint(source.indexOf('values.first', source.indexOf('void unrelated')), 'values.first'.length),
+      lint(source.indexOf('values.first', source.indexOf('void unproven')), 'values.first'.length),
+      lint(
+        source.indexOf('values.first', source.indexOf('void sameStatementSideEffect')),
+        'values.first'.length,
+      ),
+      lint(
+        source.indexOf('values.first', source.indexOf('int Function() deferred')),
+        'values.first'.length,
+      ),
+    ]);
   }
 
   Future<void> test_emptyLiteralFirst_lint() async {

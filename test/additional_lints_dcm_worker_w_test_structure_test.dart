@@ -117,6 +117,18 @@ final class PreferMatchFileNameTest extends AnalysisRuleTest {
     super.setUp();
   }
 
+  Future<void> test_allowsDocumentedCrashFacadeFilename() async {
+    final path = '$testPackageRootPath/lib/core/observability/crash_service.dart';
+    newFile(path, 'class Crash {}');
+    await assertDiagnosticsInFile(path, []);
+  }
+
+  Future<void> test_reportsUnrelatedPublicTypeInCrashServiceFile() async {
+    final path = '$testPackageRootPath/lib/core/observability/crash_service.dart';
+    newFile(path, 'class Foo {}');
+    await assertDiagnosticsInFile(path, [lint(6, 3)]);
+  }
+
   Future<void> test_matchingClassName_noLint() async {
     const source = r'''
 class UserProfile {}

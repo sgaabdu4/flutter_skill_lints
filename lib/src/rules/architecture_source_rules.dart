@@ -1,3 +1,5 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -73,10 +75,8 @@ final List<ScannerRule> architectureSourceRules = [
     description: 'Flags repository or datasource files without I* contracts so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      final text = context.source.masked.join('\n');
       if ((context.isDatasourcePath || context.isRepositoryPath) &&
-          context.hasConcreteLayerClass() &&
-          !RegExp(r'\babstract\s+interface\s+class\s+I\w+').hasMatch(text)) {
+          _hasConcreteLayerWithoutInterface(context)) {
         reporter.report(context, 0, 0);
       }
     },
@@ -265,6 +265,32 @@ final List<ScannerRule> architectureSourceRules = [
     },
   ),
 ];
+
+bool _hasConcreteLayerWithoutInterface(SourceScannerContext context) {
+  for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+    if (declaration.abstractKeyword != null) continue;
+    final concreteName = declaration.namePart.typeName.lexeme;
+    if (!concreteName.endsWith('Repository') && !concreteName.endsWith('Datasource')) continue;
+    final role = concreteName.endsWith('Repository') ? 'Repository' : 'Datasource';
+    if (!_implementsLayerContract(declaration, role)) return true;
+  }
+  return false;
+}
+
+bool _implementsLayerContract(ClassDeclaration declaration, String role) {
+  final interfaces = declaration.implementsClause?.interfaces ?? <NamedType>[];
+  return interfaces.any((interface) => _isLayerContract(interface.element, role));
+}
+
+bool _isLayerContract(Element? element, String role) {
+  if (element is! ClassElement) return false;
+  final name = element.name;
+  return name != null &&
+      name.startsWith('I') &&
+      name.endsWith(role) &&
+      element.isAbstract &&
+      element.isInterface;
+}
 
 bool _isAllowedDomainImport(String line) {
   final packageImport = RegExp(r'''^\s*import\s+['"]package:([^'"]+)['"]''').firstMatch(line);

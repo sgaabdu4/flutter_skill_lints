@@ -1,4 +1,9 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> freezedSourceRules = [
@@ -80,12 +85,7 @@ final List<ScannerRule> freezedSourceRules = [
     ),
     description: 'Flags legacy Freezed when/maybeWhen/maybeMap invocations so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(r'\.(?:when|maybeWhen|maybeMap)\s*\(').hasMatch(line)) {
-          reporter.report(context, i, line.indexOf(RegExp(r'(when|maybeWhen|maybeMap)')));
-        }
-      }
+      context.unit.accept(_LegacyFreezedInvocationVisitor(reporter, context));
     },
   ),
 
@@ -170,3 +170,31 @@ final List<ScannerRule> freezedSourceRules = [
     },
   ),
 ];
+
+final class _LegacyFreezedInvocationVisitor extends RecursiveAstVisitor<void> {
+  _LegacyFreezedInvocationVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (const {'when', 'maybeWhen', 'maybeMap'}.contains(node.methodName.name) &&
+        _isGeneratedFreezedMethod(node)) {
+      final location = context.unit.lineInfo.getLocation(node.methodName.offset);
+      reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+bool _isGeneratedFreezedMethod(MethodInvocation node) {
+  final method = node.methodName.element;
+  final targetType = node.target?.staticType;
+  if (method is! ExecutableElement ||
+      targetType is! InterfaceType ||
+      !method.firstFragment.libraryFragment.source.fullName.endsWith('.freezed.dart')) {
+    return false;
+  }
+  return isFreezedInterfaceType(targetType);
+}

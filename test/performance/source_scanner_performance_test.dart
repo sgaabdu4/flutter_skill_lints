@@ -7,6 +7,27 @@ const _defaultBudgetMicroseconds = 2_000_000;
 const _lineCount = 10_000;
 
 void main() {
+  test('debug call masking preserves nested calls, following code, and offsets', () {
+    const source =
+        'debugPrint(format(print(value))); keep();\n'
+        'print(\n value\n); tail();\n'
+        'final message = "print(value)";\n'
+        'myprint(value);';
+    final scanned = SourceScannerSource(source);
+    final expected = [
+      'debugPrint(${" " * 'format(print(value))'.length}); keep();',
+      'print(',
+      ' ${" " * 'value'.length}',
+      '); tail();',
+      'final message = "print(value)";',
+      'myprint(value);',
+    ];
+    expect(scanned.code, expected);
+    expect(scanned.masked.last, 'myprint(value);');
+    expect(scanned.masked.join('\n'), hasLength(source.length));
+    expect(scanned.lineOffsets, [0, 42, 49, 56, 67, 99]);
+  });
+
   test('masks $_lineCount mixed source lines within the scanner budget', () {
     final source = List.generate(_lineCount, (index) {
       return switch (index % 4) {

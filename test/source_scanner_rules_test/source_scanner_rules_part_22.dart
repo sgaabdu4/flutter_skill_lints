@@ -153,7 +153,9 @@ class _User implements User {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsConstFactoryNamedVariant() async {
+  // Issue #38: a redirecting union case carrying a primitive declares a
+  // variant; it converts nothing.
+  Future<void> test_allowsNamedUnionCaseCarryingPrimitive() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     const source = r'''
 // ignore_for_file: uri_does_not_exist, unused_import, redirect_to_invalid_function_type
@@ -175,7 +177,7 @@ class _EmptyUser implements User {
 ''';
     newFile(filePath, source);
 
-    await assertDiagnosticsInFile(filePath, [compatLint(source, 'factory User.empty', ruleName)]);
+    await assertNoDiagnosticsInFile(filePath);
   }
 
   Future<void> test_allowsParameterlessFreezedUnionVariants() async {
@@ -253,7 +255,8 @@ class AuthFailure implements BackendFailure {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_statusCodeRequiresOptionalNullableInteger() async {
+  // Issue #64: exception union cases may carry required or optional primitives.
+  Future<void> test_allowsExceptionUnionCasesCarryingPrimitives() async {
     final filePath = '$testPackageLibPath/core/domain/backend_failure.dart';
     const source = r'''
 // ignore_for_file: redirect_to_invalid_function_type
@@ -269,13 +272,12 @@ class RequiredFailure implements BackendFailure { const RequiredFailure({require
 class TextFailure implements BackendFailure { const TextFailure({this.statusCode}); final String? statusCode; }
 ''';
     newFile(filePath, source);
-    await assertDiagnosticsInFile(filePath, [
-      compatLint(source, 'factory BackendFailure.requiredStatus', ruleName),
-      compatLint(source, 'factory BackendFailure.textStatus', ruleName),
-    ]);
+    await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_preservesPrimitiveFactoryErrorsForExceptionUnion() async {
+  // Issues #38/#64: union cases are allowed; body factories that take
+  // primitives still report.
+  Future<void> test_reportsBodyFactoriesBesideUnionCases() async {
     final filePath = '$testPackageLibPath/core/domain/backend_failure.dart';
     const source = r'''
 // ignore_for_file: redirect_to_invalid_function_type
@@ -298,15 +300,13 @@ class PositionalFailure implements BackendFailure { const PositionalFailure([thi
     newFile(filePath, source);
 
     await assertDiagnosticsInFile(filePath, [
-      compatLint(source, 'factory BackendFailure.invalidId', ruleName),
-      compatLint(source, 'factory BackendFailure.requiredMessage', ruleName),
-      compatLint(source, 'factory BackendFailure.positional', ruleName),
       compatLint(source, 'factory BackendFailure.translated', ruleName),
       compatLint(source, 'factory BackendFailure.fromPrimitives', ruleName),
     ]);
   }
 
-  Future<void> test_preservesOptionalPrimitiveErrorOnNonExceptionUnion() async {
+  // Issue #38: data unions outside Exception hierarchies are also union cases.
+  Future<void> test_allowsNonExceptionUnionCaseCarryingPrimitive() async {
     final filePath = '$testPackageLibPath/core/domain/result.dart';
     const source = r'''
 // ignore_for_file: redirect_to_invalid_function_type
@@ -322,47 +322,56 @@ class EmptyResult implements Result { const EmptyResult(); }
 ''';
     newFile(filePath, source);
 
-    await assertDiagnosticsInFile(filePath, [compatLint(source, 'factory Result.ready', ruleName)]);
+    await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_preservesErrorForLocalExceptionLookalike() async {
-    final filePath = '$testPackageLibPath/core/domain/backend_failure.dart';
-    const source = r'''
-// ignore_for_file: redirect_to_invalid_function_type
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-class Exception {}
-@freezed
-sealed class BackendFailure implements Exception {
-  const factory BackendFailure.network({String? message}) = NetworkFailure;
-  const factory BackendFailure.auth() = AuthFailure;
-}
-class NetworkFailure implements BackendFailure { const NetworkFailure({this.message}); final String? message; }
-class AuthFailure implements BackendFailure { const AuthFailure(); }
-''';
-    newFile(filePath, source);
-
-    await assertDiagnosticsInFile(filePath, [
-      compatLint(source, 'factory BackendFailure.network', ruleName),
-    ]);
-  }
-
-  Future<void> test_preservesErrorForSingleExceptionFactory() async {
-    final filePath = '$testPackageLibPath/core/domain/backend_failure.dart';
-    const source = r'''
+  // Issues #38/#64: the skill's AppError (state-management-lifecycle.md:126-135)
+  // verbatim in core/domain.
+  Future<void> test_allowsSkillAppErrorUnion() async {
+    final filePath = '$testPackageLibPath/core/domain/app_error.dart';
+    newFile(filePath, r'''
 // ignore_for_file: redirect_to_invalid_function_type
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 @freezed
-sealed class BackendFailure implements Exception {
-  const factory BackendFailure.network({String? message}) = NetworkFailure;
+sealed class AppError {
+  const factory AppError.network(String message) = NetworkError;
+  const factory AppError.validation(String field, String message) = ValidationError;
+  const factory AppError.notFound(String resource) = NotFoundError;
+  const factory AppError.unauthorized() = UnauthorizedError;
+  const factory AppError.unexpected(Object error) = UnexpectedError;
 }
-class NetworkFailure implements BackendFailure { const NetworkFailure({this.message}); final String? message; }
+class NetworkError implements AppError { const NetworkError(this.message); final String message; }
+class ValidationError implements AppError {
+  const ValidationError(this.field, this.message);
+  final String field;
+  final String message;
+}
+class NotFoundError implements AppError { const NotFoundError(this.resource); final String resource; }
+class UnauthorizedError implements AppError { const UnauthorizedError(); }
+class UnexpectedError implements AppError { const UnexpectedError(this.error); final Object error; }
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsBodyFactoryOnDataUnion() async {
+    final filePath = '$testPackageLibPath/core/domain/result.dart';
+    const source = r'''
+// ignore_for_file: redirect_to_invalid_function_type
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class Result {
+  const factory Result.ready({String? message}) = ReadyResult;
+  factory Result.fromCode(int code) => ReadyResult(message: '$code');
+}
+class ReadyResult implements Result { const ReadyResult({this.message}); final String? message; }
 ''';
     newFile(filePath, source);
 
     await assertDiagnosticsInFile(filePath, [
-      compatLint(source, 'factory BackendFailure.network', ruleName),
+      compatLint(source, 'factory Result.fromCode', ruleName),
     ]);
   }
 }

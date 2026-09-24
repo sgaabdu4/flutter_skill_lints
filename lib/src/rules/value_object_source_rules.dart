@@ -73,7 +73,9 @@ final List<ScannerRule> valueObjectSourceRules = [
   /// email, int age)`) is a boundary in the wrong layer. Primitive → Value
   /// Object conversion belongs to data models, notifiers, or import services.
   /// Domain entities accept VO-typed parameters via the anonymous Freezed
-  /// constructor so invalid state is unrepresentable.
+  /// constructor so invalid state is unrepresentable. Redirecting Freezed union
+  /// cases such as the skill's `AppError.network(String message)` convert
+  /// nothing and stay allowed.
   scannerRule(
     code: const LintCode(
       'domain_entity_primitive_factory',
@@ -317,58 +319,23 @@ void _reportPrimitiveFactoriesInClass(
   SourceScannerContext context,
   ClassDeclaration declaration,
 ) {
-  final isExceptionUnion = _isExceptionUnion(declaration);
   for (final constructor in declaration.body.members.whereType<ConstructorDeclaration>()) {
     if (!_isPublicPrimitiveFactory(constructor)) continue;
-    if (isExceptionUnion && _isNullableDiagnosticRedirect(constructor)) continue;
     final offset = constructor.factoryKeyword!.offset;
     final line = _lineIndexForOffset(offset, context.source.lineOffsets, context.source.length);
     reporter.report(context, line, offset - context.source.lineOffsets[line]);
   }
 }
 
-bool _isExceptionUnion(ClassDeclaration declaration) {
-  if (declaration.sealedKeyword == null) return false;
-  final supertypes = [
-    ...?declaration.implementsClause?.interfaces,
-    ?declaration.extendsClause?.superclass,
-  ];
-  final implementsCoreError = supertypes.any(
-    (type) =>
-        type.element?.library?.uri.toString() == 'dart:core' &&
-        (type.name.lexeme == 'Exception' || type.name.lexeme == 'Error'),
-  );
-  if (!implementsCoreError) return false;
-  return declaration.body.members
-          .whereType<ConstructorDeclaration>()
-          .where(
-            (constructor) => constructor.name != null && constructor.redirectedConstructor != null,
-          )
-          .length >=
-      2;
-}
-
-bool _isNullableDiagnosticRedirect(ConstructorDeclaration constructor) {
-  if (constructor.redirectedConstructor == null) return false;
-  return constructor.parameters.parameters.every((parameter) {
-    if (!parameter.isOptionalNamed ||
-        parameter.defaultClause != null ||
-        parameter.type?.question == null) {
-      return false;
-    }
-    final type = parameter.declaredFragment?.element.type;
-    return switch (parameter.name?.lexeme) {
-      'message' || 'type' => type?.isDartCoreString == true,
-      'code' || 'statusCode' => type?.isDartCoreInt == true,
-      'response' => type?.isDartCoreObject == true,
-      _ => false,
-    };
-  });
-}
-
+/// A named factory with a body that takes primitives (`User.fromPrimitives`).
+///
+/// A redirecting factory (`const factory AppError.network(String message) =
+/// NetworkError;`) declares a Freezed union case and converts nothing, so it
+/// is not a primitive factory (issues #38, #64).
 bool _isPublicPrimitiveFactory(ConstructorDeclaration constructor) {
   final name = constructor.name?.lexeme;
   return constructor.factoryKeyword != null &&
+      constructor.redirectedConstructor == null &&
       name != null &&
       !name.startsWith('_') &&
       name != 'fromJson' &&

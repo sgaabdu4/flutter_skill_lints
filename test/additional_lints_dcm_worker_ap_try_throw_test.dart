@@ -259,9 +259,11 @@ class TextButton extends Widget {
 
   void _addRiverpodPackage() {
     newPackage('riverpod').addFile('lib/riverpod.dart', r'''
-abstract class Notifier<T> {
-  late T state;
+abstract class AnyNotifier<StateT, ValueT> {
+  late StateT state;
 }
+abstract class $Notifier<StateT> extends AnyNotifier<StateT, StateT> {}
+abstract class Notifier<T> extends $Notifier<T> {}
 ''');
   }
 
@@ -568,6 +570,52 @@ final class CounterNotifier extends Notifier<int> {
         'throw const FormatException(\'invalid\')'.length,
       ),
     ]);
+  }
+
+  // Issue #86: a typed throw inside a @riverpod codegen notifier reports like
+  // a hand-written Notifier (state-management-lifecycle.md:92).
+  Future<void> test_codegenRiverpodNotifierTypedThrow_lint() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+abstract class _$P86Form extends $Notifier<String> {}
+
+class P86Form extends _$P86Form {
+  void submit(String value) {
+    if (value.isEmpty) throw const FormatException('empty');
+    state = value;
+  }
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(
+        source.indexOf('throw const FormatException'),
+        'throw const FormatException(\'empty\')'.length,
+      ),
+    ]);
+  }
+
+  // Issue #86: typed infrastructure failures stay allowed in datasources
+  // (networking.md:25).
+  Future<void> test_datasourceTypedThrowNextToCodegenNotifier_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+final class P86Parser {
+  int parse(String raw) {
+    final value = int.tryParse(raw);
+    if (value == null) throw FormatException('not a number');
+    return value;
+  }
+}
+
+abstract class _$P86Form extends $Notifier<String> {}
+
+class P86Form extends _$P86Form {
+  void submit(String value) => state = value;
+}
+''');
   }
 
   Future<void> test_validatedValueObjectArgumentGuard_noLint() async {

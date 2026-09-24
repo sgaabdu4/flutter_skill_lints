@@ -27,6 +27,12 @@ an error paired with another stack, or a saved pair passed through helper
 parameters, is judged by the error's static type. Same-named APIs outside
 `dart:core` are ignored.
 
+Presentation code includes Riverpod notifier methods. A class counts as a
+notifier when its resolved supertypes reach `AnyNotifier`, `Notifier`,
+`AsyncNotifier` or `StreamNotifier` from `riverpod`, or `StateNotifier`. That
+covers `@riverpod` codegen notifiers (`class Form extends _$Form`), whose
+generated base extends `$Notifier`, not the hand-written `Notifier`.
+
 A validated Value Object factory under `domain/values/` may throw
 `ArgumentError.value(<parameter>, ...)` from an `if` guard whose condition
 reads that parameter directly or through a `final` local initialized from it

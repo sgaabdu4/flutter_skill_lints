@@ -1,7 +1,9 @@
+import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:analyzer/source/line_info.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when commented-out code is found.
@@ -37,13 +39,17 @@ class _Visitor extends SimpleAstVisitor<void> {
   static final _assignmentPattern = RegExp(r'^[a-zA-Z_]\w*(\.\w+)*\s*[+\-*/]?=\s');
   static final _returnPattern = RegExp(r'^return\s');
   static final _cascadePattern = RegExp(r'^\.\.[a-zA-Z]');
-  static final _functionCallPattern = RegExp(r'^[a-zA-Z_]\w*(\.\w+)*\s*(<[^>]*>)?\s*\(');
+  // Formatted Dart never puts whitespace between a callee and its `(`;
+  // prose such as `Glucose (fasting)` does.
+  static final _functionCallPattern = RegExp(r'^[a-zA-Z_]\w*(\.\w+)*(<[^>]*>)?\(');
   static final _whitespacePattern = RegExp(r'\s+');
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    final allComments = _collectAllComments(node);
-    final groups = _groupConsecutiveComments(allComments);
+    final lineInfo = node.lineInfo;
+    final trailing = <Token>{};
+    final allComments = _collectAllComments(node, lineInfo, trailing);
+    final groups = _groupConsecutiveComments(allComments, lineInfo, trailing);
 
     for (final group in groups) {
       final stripped = group.map((t) => _stripCommentPrefix(t.lexeme)).join('\n').trim();
@@ -66,22 +72,36 @@ class _Visitor extends SimpleAstVisitor<void> {
   static const _maxComments = 500;
 
   /// Collects all single-line comment tokens (`//`) from the token stream,
-  /// excluding doc comments (`///`) and ignore directives.
-  List<Token> _collectAllComments(CompilationUnit node) {
+  /// excluding doc comments (`///`) and ignore directives. Comments that
+  /// follow code on the same line are added to [trailing].
+  List<Token> _collectAllComments(CompilationUnit node, LineInfo lineInfo, Set<Token> trailing) {
     final comments = <Token>[];
     Token? token = node.beginToken;
     while (token != null && !token.isEof) {
-      _addSingleLineComments(token.precedingComments, comments);
+      _addSingleLineComments(token, comments, lineInfo, trailing);
       if (comments.length >= _maxComments) return comments;
       token = token.next;
     }
-    if (token != null) _addSingleLineComments(token.precedingComments, comments);
+    if (token != null) _addSingleLineComments(token, comments, lineInfo, trailing);
     return comments;
   }
 
-  void _addSingleLineComments(Token? comment, List<Token> comments) {
+  void _addSingleLineComments(
+    Token owner,
+    List<Token> comments,
+    LineInfo lineInfo,
+    Set<Token> trailing,
+  ) {
+    final code = owner.previous;
+    final codeLine = code == null || code.type == TokenType.EOF
+        ? null
+        : lineInfo.getLocation(code.end).lineNumber;
+    Token? comment = owner.precedingComments;
     while (comment != null && comments.length < _maxComments) {
-      if (_isSingleLineComment(comment)) comments.add(comment);
+      if (_isSingleLineComment(comment)) {
+        comments.add(comment);
+        if (lineInfo.getLocation(comment.offset).lineNumber == codeLine) trailing.add(comment);
+      }
       comment = comment.next;
     }
   }
@@ -98,8 +118,13 @@ class _Visitor extends SimpleAstVisitor<void> {
     return true;
   }
 
-  /// Groups comment tokens that appear on consecutive lines.
-  List<List<Token>> _groupConsecutiveComments(List<Token> comments) {
+  /// Groups whole-line comments on consecutive lines. A comment that follows
+  /// code on its line stands alone.
+  List<List<Token>> _groupConsecutiveComments(
+    List<Token> comments,
+    LineInfo lineInfo,
+    Set<Token> trailing,
+  ) {
     if (comments.isEmpty) return [];
 
     final groups = <List<Token>>[];
@@ -108,17 +133,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     for (var i = 1; i < comments.length; i++) {
       final prev = comments[i - 1];
       final curr = comments[i];
+      final nextLine =
+          lineInfo.getLocation(curr.offset).lineNumber ==
+          lineInfo.getLocation(prev.offset).lineNumber + 1;
 
-      // Check if comments are on consecutive lines by comparing offsets.
-      // A single-line comment ends at its token end. If the next comment
-      // starts on the very next line, group them together.
-      final prevEnd = prev.end;
-      final currStart = curr.offset;
-      final gap = currStart - prevEnd;
-
-      // Allow small gaps (whitespace + newline between consecutive lines).
-      // Typically the gap is just \n + indentation spaces.
-      if (gap < _maxAdjacentCommentGap && !_hasBlankLineBetween(prev, curr)) {
+      if (nextLine && !trailing.contains(prev) && !trailing.contains(curr)) {
         currentGroup.add(curr);
       } else {
         groups.add(currentGroup);
@@ -127,16 +146,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
     groups.add(currentGroup);
     return groups;
-  }
-
-  /// Maximum character offset gap between two comment tokens to consider them
-  /// adjacent (accounts for newline + indentation).
-  static const _maxAdjacentCommentGap = 150;
-
-  /// Checks whether there is a blank line between two comment tokens.
-  bool _hasBlankLineBetween(Token a, Token b) {
-    final gap = b.offset - a.end;
-    return gap > _maxAdjacentCommentGap;
   }
 
   /// Strips the `//` prefix and optional leading space from a comment.
@@ -290,7 +299,24 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   /// Checks if a line looks like a function or method call.
+  ///
+  /// A line that opens more parentheses than it closes starts a multi-line
+  /// call. A complete line must parse as a Dart statement, so descriptive text
+  /// such as `Glucose(GOD-POD Method)` is not treated as a call.
   bool _looksLikeFunctionCall(String line) {
-    return _functionCallPattern.hasMatch(line);
+    if (!_functionCallPattern.hasMatch(line)) return false;
+    if (_countOf(line, '(') > _countOf(line, ')')) return true;
+    return _parsesAsStatement(line);
+  }
+
+  static int _countOf(String text, String char) => char.allMatches(text).length;
+
+  static bool _parsesAsStatement(String line) {
+    final statement = line.endsWith(';') ? line : '$line;';
+    final result = parseString(
+      content: 'void _commentProbe() {\n$statement\n}\n',
+      throwIfDiagnostics: false,
+    );
+    return result.errors.isEmpty;
   }
 }

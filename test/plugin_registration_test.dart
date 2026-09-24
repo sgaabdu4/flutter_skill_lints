@@ -133,6 +133,29 @@ void main() {
     expect(message, contains('Future.wait'));
   });
 
+  test('router-extra diagnostic points to typed route params, not a codec', () {
+    final rule = flutterSkillRules.singleWhere((rule) => rule.name == 'router_complex_extra');
+    final code = rule.diagnosticCodes.singleWhere(
+      (code) => code.lowerCaseName == 'router_complex_extra',
+    );
+    final message = code.correctionMessage ?? '';
+
+    expect(message, contains('stable IDs'));
+    expect(message, contains('path/query params'));
+    expect(message, contains('typed routes'));
+    expect(message, isNot(contains('extraCodec')));
+    expect(message, isNot(contains('configure')));
+  });
+
+  test('repeated id lookup diagnostics are errors', () {
+    for (final name in ['linear_id_lookup_in_hot_path', 'nested_linear_lookup_by_id']) {
+      final rule = flutterSkillRules.singleWhere((rule) => rule.name == name);
+      final code = rule.diagnosticCodes.singleWhere((code) => code.lowerCaseName == name);
+
+      expect(code.severity, DiagnosticSeverity.ERROR, reason: name);
+    }
+  });
+
   test('ref-read-in-build diagnostic explains callback reads', () {
     final registry = _RecordingPluginRegistry('flutter_skill_lints_additional');
     final plugin = AdditionalLintsPlugin();

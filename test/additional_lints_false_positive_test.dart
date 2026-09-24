@@ -1,6 +1,7 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_commented_out_code.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_returning_widgets.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_class_destructuring.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_explicit_function_type.dart';
@@ -23,6 +24,7 @@ void main() {
     defineReflectiveTests(UseExistingVariableFalsePositiveTest);
     defineReflectiveTests(PreferClassDestructuringFalsePositiveTest);
     defineReflectiveTests(UseSliverPrefixFalsePositiveTest);
+    defineReflectiveTests(AvoidCommentedOutCodeFalsePositiveTest);
   });
 }
 
@@ -562,5 +564,108 @@ class CatalogSliverList extends StatelessWidget {
   Widget build(BuildContext context) => const SliverList();
 }
 ''');
+  }
+}
+
+@reflectiveTest
+final class AvoidCommentedOutCodeFalsePositiveTest extends _AdditionalLintRuleTest {
+  @override
+  void setUp() {
+    rule = AvoidCommentedOutCode();
+    super.setUp();
+  }
+
+  Future<void> test_allowsParenthesizedHyphenatedDescription() async {
+    await assertNoDiagnostics(r'''
+abstract final class CommentProbe {
+  static const fbs = '60-100'; // Glucose (GOD-POD Method)
+}
+''');
+  }
+
+  Future<void> test_allowsParenthesizedDescriptionThatWouldParseAsCall() async {
+    await assertNoDiagnostics(r'''
+abstract final class CommentProbe {
+  static const ldl = '0-130'; // Cholesterol (total)
+}
+''');
+  }
+
+  Future<void> test_allowsUnspacedDescriptionThatDoesNotParse() async {
+    await assertNoDiagnostics(r'''
+abstract final class CommentProbe {
+  static const fbs = '60-100'; // Glucose(GOD-POD Method)
+}
+''');
+  }
+
+  Future<void> test_doesNotGroupTrailingDescriptionsWithLaterCode() async {
+    const source = r'''
+abstract final class CommentProbe {
+  static const fbs = '60-100'; // Glucose (GOD-POD Method)
+  static const ldl = '0-130'; // Cholesterol (total)
+}
+
+void commentControls() {
+  // foo(bar);
+  // final x = 1;
+}
+''';
+    final start = source.indexOf('// foo');
+    final end = source.indexOf('// final x = 1;') + '// final x = 1;'.length;
+    await assertDiagnostics(source, [lint(start, end - start)]);
+  }
+
+  Future<void> test_reportsCommentedOutCallStatement() async {
+    const source = r'''
+void run() {
+  // foo(bar);
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('// foo'), '// foo(bar);'.length)]);
+  }
+
+  Future<void> test_reportsCommentedOutCallWithoutSemicolon() async {
+    const source = r'''
+void run() {
+  // foo(bar)
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('// foo'), '// foo(bar)'.length)]);
+  }
+
+  Future<void> test_reportsCommentedOutDeclaration() async {
+    const source = r'''
+void run() {
+  // final x = 1;
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('// final'), '// final x = 1;'.length)]);
+  }
+
+  Future<void> test_reportsCommentedOutMultilineCall() async {
+    const source = r'''
+void run() {
+  // save(
+  //   item,
+  // );
+}
+''';
+    final start = source.indexOf('// save(');
+    final end = source.indexOf('// );') + '// );'.length;
+    await assertDiagnostics(source, [lint(start, end - start)]);
+  }
+
+  Future<void> test_reportsCommentedOutBlock() async {
+    const source = r'''
+void run() {
+  // if (ready) {
+  //   doThing();
+  // }
+}
+''';
+    final start = source.indexOf('// if');
+    final end = source.lastIndexOf('// }') + '// }'.length;
+    await assertDiagnostics(source, [lint(start, end - start)]);
   }
 }

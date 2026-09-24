@@ -379,12 +379,13 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ///
   /// Why: Flags typed route `$extra`, GoRouterState.extra reads, and direct navigation
   /// `extra:` payloads. Route state must survive serialization, redirects, reloads, and
-  /// modal pops; pass stable IDs or configure an explicit codec instead.
+  /// modal pops; pass stable IDs or path/query params through typed routes instead.
+  /// An extraCodec does not make `extra` acceptable: the skill never uses it.
   scannerRule(
     code: const LintCode(
       'router_complex_extra',
       'Avoid GoRouter extra for route state.',
-      correctionMessage: 'Pass stable route IDs/path params, or configure and test an explicit GoRouter extraCodec.',
+      correctionMessage: 'Pass stable IDs or path/query params through typed routes; do not use GoRouter extra, even with a codec.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description:

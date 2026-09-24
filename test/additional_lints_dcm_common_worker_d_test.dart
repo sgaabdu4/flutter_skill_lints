@@ -117,6 +117,22 @@ void f(Object value) {
 
     await assertDiagnostics(source, [lint(source.indexOf('__);'), 2)]);
   }
+
+  Future<void> test_privateNamedConstructorReferences_noLint() async {
+    await assertNoDiagnostics(r'''
+final class Cache {
+  Cache._();
+  static final Cache instance = ._();
+}
+
+final class Message {
+  Message._(this.text);
+  final String text;
+}
+
+Message create() => Message._('hello');
+''');
+  }
 }
 
 @reflectiveTest

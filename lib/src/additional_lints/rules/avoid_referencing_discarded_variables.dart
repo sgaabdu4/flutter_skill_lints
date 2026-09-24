@@ -3,6 +3,7 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
 /// Warns when an underscore-only variable is read after being declared.
@@ -37,6 +38,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   void visitSimpleIdentifier(SimpleIdentifier node) {
     if (!_isDiscardedName(node.name)) return;
     if (node.inDeclarationContext() || !node.inGetterContext()) return;
+    if (node.element is ConstructorElement) return;
 
     final parent = node.parent;
     if (parent is DeclaredIdentifier && parent.name.lexeme == node.name) return;

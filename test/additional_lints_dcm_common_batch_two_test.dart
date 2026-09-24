@@ -80,11 +80,81 @@ final status = Status.values[0];
     ]);
   }
 
+  Future<void> test_importPrefixedEnumValuesByIndex_lint() async {
+    newFile('$testPackageLibPath/status.dart', 'enum Status { ready, done }');
+    const source = r'''
+import 'status.dart' as model;
+
+final status = model.Status.values[0];
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf('model.Status.values[0]'), 'model.Status.values[0]'.length),
+    ]);
+  }
+
+  Future<void> test_enumTypeAliasValuesByIndex_lint() async {
+    const source = r'''
+enum Status { ready, done }
+typedef StatusAlias = Status;
+
+final status = StatusAlias.values[0];
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf('StatusAlias.values[0]'), 'StatusAlias.values[0]'.length),
+    ]);
+  }
+
+  Future<void> test_importPrefixedEnumTypeAliasValuesByIndex_lint() async {
+    newFile('$testPackageLibPath/status.dart', '''
+enum Status { ready, done }
+typedef StatusAlias = Status;
+''');
+    const source = r'''
+import 'status.dart' as model;
+
+final status = model.StatusAlias.values[0];
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf('model.StatusAlias.values[0]'), 'model.StatusAlias.values[0]'.length),
+    ]);
+  }
+
   Future<void> test_enumValueDirect_noLint() async {
     await assertNoDiagnostics(r'''
 enum Status { ready, done }
 
 final status = Status.ready;
+''');
+  }
+
+  Future<void> test_mapFieldNamedValuesByIndex_noLint() async {
+    await assertNoDiagnostics(r'''
+final class MemoryStore {
+  final Map<String, Object?> values = {};
+}
+
+Object? read(MemoryStore store) => store.values['key'];
+''');
+  }
+
+  Future<void> test_nonEnumStaticValuesByIndex_noLint() async {
+    await assertNoDiagnostics(r'''
+abstract final class Lookup {
+  static const values = ['first'];
+}
+
+String read() => Lookup.values[0];
+''');
+  }
+
+  Future<void> test_nonEnumTypeAliasValuesByIndex_noLint() async {
+    await assertNoDiagnostics(r'''
+abstract final class Lookup {
+  static const values = ['first'];
+}
+typedef LookupAlias = Lookup;
+
+String read() => LookupAlias.values[0];
 ''');
   }
 }

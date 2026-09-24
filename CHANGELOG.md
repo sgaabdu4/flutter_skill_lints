@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.12] - 2026-09-24
+
+- Recognize `dart:ui Path.close()` as a drawing operation, while continuing to
+  report genuine resources that require disposal, closing, or cancellation.
+- Resolve enum ownership, including typedefs and import prefixes, before
+  reporting indexed `values` access. Ordinary map fields remain valid.
+- Distinguish private named constructors from discarded-variable reads.
+
 ## [0.12.11] - 2026-09-24
 
 - Fix allowed SDK mock detection for service declarations in Dart library parts;

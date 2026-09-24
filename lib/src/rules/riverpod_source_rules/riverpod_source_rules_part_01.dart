@@ -58,12 +58,33 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     ),
     description: 'Flags manual Riverpod provider declarations so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
+      final reportedLines = <int>{};
       for (var i = 0; i < context.source.length; i++) {
         final match = _manualProviderDeclarationMatch(context, i);
         if (match == null) continue;
+        reportedLines.add(i);
         reporter.report(context, i, match.column);
       }
+      _reportResolvedManualProviders(reporter, context, reportedLines);
     },
+  ),
+
+  /// Do not alias generated providers.
+  ///
+  /// Why: Generated provider names are the single source of truth. A top-level
+  /// or static `final cartAliasProvider = cartProvider;` creates a second name
+  /// for the same provider. Rename the annotated function/class and regenerate.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_generated_provider_alias',
+      'Do not alias generated providers.',
+      correctionMessage:
+          'Rename the annotated function/class, regenerate .g.dart, and update call sites instead.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags top-level or static declarations whose value is an existing provider variable.',
+    scan: _reportProviderAliases,
   ),
 
   /// Do not override generated notifier providers with state values.

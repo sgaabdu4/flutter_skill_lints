@@ -2,6 +2,34 @@
 
 part of '../source_scanner_rules_test.dart';
 
+const _riverpodProviderStub = r'''
+abstract class ProviderOrFamily {}
+
+abstract class ProviderBase<T> extends ProviderOrFamily {}
+
+abstract class $FunctionalProvider<T> extends ProviderBase<T> {}
+
+class Ref {}
+
+final class Provider<T> extends $FunctionalProvider<T> {
+  Provider(T Function(Ref ref) create);
+
+  static const family = ProviderFamilyBuilder();
+}
+
+final class ProviderFamily<T, A> extends ProviderOrFamily {
+  ProviderFamily(T Function(Ref ref, A arg) create);
+
+  Provider<T> call(A arg) => throw UnimplementedError();
+}
+
+final class ProviderFamilyBuilder {
+  const ProviderFamilyBuilder();
+
+  ProviderFamily<T, A> call<T, A>(T Function(Ref ref, A arg) create) => ProviderFamily(create);
+}
+''';
+
 abstract class _RiverpodRuleTest extends _SourceRuleTest {
   @override
   List<ScannerRule> get rules => riverpodSourceRules;
@@ -103,6 +131,12 @@ final class RiverpodServiceLocatorTest extends _RiverpodRuleTest {
 
 @reflectiveTest
 final class RiverpodManualProviderTest extends _RiverpodRuleTest {
+  @override
+  void setUp() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', _riverpodProviderStub);
+    super.setUp();
+  }
+
   @override
   String get ruleName => 'riverpod_manual_provider';
   @override
@@ -227,6 +261,137 @@ class ProviderScope {
 
 final scope = ProviderScope(child: Object());
 ''');
+  }
+
+  Future<void> test_reportsResolvedTypedAndReturnedProviders() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+final Provider<int> typedProvider = Provider<int>((ref) => 2);
+
+Provider<int> buildProvider() => Provider<int>((ref) => 6);
+
+final ProviderFamily<int, String> lengthProvider =
+    Provider.family<int, String>((ref, id) => id.length);
+''';
+    await assertDiagnostics(source, [
+      compatLint(source, 'Provider<int>((ref) => 2)', ruleName),
+      compatLint(source, 'Provider<int>((ref) => 6)', ruleName),
+      compatLint(source, 'Provider.family<int, String>', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsResolvedUntypedProvidersOnce() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+final plainProvider = Provider<int>((ref) => 1);
+final multiLineProvider =
+    Provider<int>(
+  (ref) => 5,
+);
+''';
+    await assertDiagnostics(source, [
+      compatLint(source, 'final plainProvider', ruleName),
+      compatLint(source, 'final multiLineProvider', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsGeneratedProviderSubclassesAndFamilyCalls() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+final class ItemProvider extends $FunctionalProvider<int> {
+  ItemProvider._();
+}
+
+final itemProvider = ItemProvider._();
+
+int read(Ref ref, ProviderFamily<int, String> family) {
+  final provider = family('id');
+  return provider.hashCode;
+}
+''', addIgnorePrefix: false);
+  }
+}
+
+@reflectiveTest
+final class RiverpodGeneratedProviderAliasTest extends _RiverpodRuleTest {
+  @override
+  void setUp() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', _riverpodProviderStub);
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'riverpod_generated_provider_alias';
+  @override
+  String get needle => 'cartAliasProvider = cartProvider;';
+  @override
+  String get source => r'''
+import 'package:riverpod/riverpod.dart';
+
+final class CartProvider extends $FunctionalProvider<int> {
+  CartProvider._();
+}
+
+final cartProvider = CartProvider._();
+
+final cartAliasProvider = cartProvider;
+''';
+
+  Future<void> test_reportsGetterStaticAndFamilyAliases() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+final class CartProvider extends $FunctionalProvider<int> {
+  CartProvider._();
+}
+
+final class ItemFamily extends ProviderOrFamily {
+  ItemFamily._();
+
+  CartProvider call(String id) => CartProvider._();
+}
+
+final cartProvider = CartProvider._();
+final itemProvider = ItemFamily._();
+
+CartProvider get cartGetterAlias => cartProvider;
+
+abstract final class Providers {
+  static final cart = cartProvider;
+}
+
+final firstItemProvider = itemProvider('first');
+''';
+    await assertDiagnostics(source, [
+      compatLint(source, 'cartGetterAlias =>', ruleName),
+      compatLint(source, 'cart = cartProvider;', ruleName),
+      compatLint(source, 'firstItemProvider =', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsGeneratedDeclarationsLocalsAndManualProviders() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+final class CartProvider extends $FunctionalProvider<int> {
+  CartProvider._();
+}
+
+final cartProvider = CartProvider._();
+final manualProvider = Provider<int>((ref) => 1);
+
+int read() {
+  final provider = cartProvider;
+  return provider.hashCode;
+}
+''', addIgnorePrefix: false);
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(rule.diagnosticCodes.single.severity, DiagnosticSeverity.ERROR);
   }
 }
 

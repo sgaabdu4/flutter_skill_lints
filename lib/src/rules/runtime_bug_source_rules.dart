@@ -131,7 +131,7 @@ final _userVisibleDelaySignal = RegExp(
 );
 
 final _backgroundDurationExemption = RegExp(
-  r'retry|backoff|timeout|poll|ceiling|sync|backfill|rest|reminder|notification|alarm|snooze|cleanup|temp|expiry|expiration|ttl|ticker|periodic|interval|dismiss|snack|toast|overlay|banner',
+  r'retry|backoff|timeout|poll|ceiling|(?<!a)sync|backfill|rest|reminder|notification|alarm|snooze|cleanup|temp|expiry|expiration|ttl|ticker|periodic|interval|dismiss|snack|toast|overlay|banner',
   caseSensitive: false,
 );
 

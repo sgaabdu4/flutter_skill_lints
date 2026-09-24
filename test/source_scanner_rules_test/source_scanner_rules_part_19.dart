@@ -117,6 +117,48 @@ class UserRepository {
   final UserDatasource _datasource;
 }
 ''';
+
+  static const _providerPrelude = r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Ref {}
+
+abstract interface class IOrderRepository {}
+
+class HiveOrderRepository implements IOrderRepository {}
+''';
+
+  Future<void> test_reportsProviderReturningConcreteRepository() async {
+    final filePath = '$testPackageLibPath/features/orders/repositories/order_repository.dart';
+    const source =
+        '''
+$_providerPrelude
+@Riverpod(keepAlive: true)
+HiveOrderRepository orderRepository(Ref ref) => HiveOrderRepository();
+
+@Riverpod(keepAlive: true)
+Future<HiveOrderRepository> asyncOrderRepository(Ref ref) async => HiveOrderRepository();
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'HiveOrderRepository orderRepository', ruleName),
+      compatLint(source, 'Future<HiveOrderRepository> asyncOrderRepository', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsProviderReturningRepositoryInterface() async {
+    await assertAllows('''
+$_providerPrelude
+@Riverpod(keepAlive: true)
+IOrderRepository orderRepository(Ref ref) => HiveOrderRepository();
+
+@Riverpod(keepAlive: true)
+Future<IOrderRepository> asyncOrderRepository(Ref ref) async => HiveOrderRepository();
+''', path: '$testPackageLibPath/features/orders/repositories/order_repository.dart');
+  }
 }
 
 @reflectiveTest

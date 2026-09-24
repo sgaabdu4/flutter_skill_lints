@@ -1,6 +1,8 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> architectureSourceRules = [
@@ -130,23 +132,35 @@ final List<ScannerRule> architectureSourceRules = [
     },
   ),
 
-  /// Layer constructors should depend on interfaces.
+  /// Layer constructors and providers should use interfaces.
   ///
-  /// Why: Flags concrete repository or datasource constructor dependencies. Take
-  /// I*Repository/I*Datasource interfaces instead of concrete classes.
+  /// Why: Flags concrete repository or datasource constructor dependencies, and repository or
+  /// datasource providers whose declared return type is a concrete class implementing an
+  /// abstract interface class. Take and return I*Repository/I*Datasource interfaces instead.
   scannerRule(
     code: const LintCode(
       'arch_concrete_dependency',
-      'Layer constructors should depend on interfaces.',
-      correctionMessage: 'Take I*Repository/I*Datasource interfaces instead of concrete classes.',
+      'Layer constructors and providers should use interfaces.',
+      correctionMessage:
+          'Take I*Repository/I*Datasource interfaces in constructors and return the interface '
+          'type from providers instead of concrete classes.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags concrete repository or datasource constructor dependencies so the Flutter skill violation is shown during analysis.',
+    description: 'Flags concrete repository or datasource constructor dependencies and provider return types so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isRepositoryPath && !context.isDatasourcePath) return;
       for (var i = 0; i < context.source.length; i++) {
         if (context.hasConcreteLayerDependencyLine(context.source.masked[i])) {
           reporter.report(context, i, 0);
+        }
+      }
+      for (final function in context.unit.declarations.whereType<FunctionDeclaration>()) {
+        if (!hasAnnotationNamed(function, const {'riverpod', 'Riverpod'})) continue;
+        final returnType = function.returnType;
+        final element = function.declaredFragment?.element;
+        if (returnType == null || element == null) continue;
+        if (_isConcreteImplementationOfInterface(_unwrapFuture(element.returnType))) {
+          reporter.reportOffset(context, returnType.offset);
         }
       }
     },
@@ -321,6 +335,27 @@ bool _isAllowedDomainImport(Uri uri) {
   if (uri.isScheme('dart')) return uri.path != 'io' && uri.path != 'ui';
   if (uri.toString() == 'package:freezed_annotation/freezed_annotation.dart') return true;
   return uri.path.contains('/domain/');
+}
+
+DartType _unwrapFuture(DartType type) {
+  if (type is InterfaceType &&
+      type.element.library.isDartAsync &&
+      (type.element.name == 'Future' || type.element.name == 'FutureOr') &&
+      type.typeArguments.length == 1) {
+    return type.typeArguments.single;
+  }
+  return type;
+}
+
+/// A concrete class that implements an `abstract interface class` contract.
+bool _isConcreteImplementationOfInterface(DartType type) {
+  if (type is! InterfaceType) return false;
+  final element = type.element;
+  if (element is! ClassElement || element.isAbstract) return false;
+  return element.allSupertypes.any((supertype) {
+    final contract = supertype.element;
+    return contract is ClassElement && contract.isAbstract && contract.isInterface;
+  });
 }
 
 const _storageSdkPackages = {

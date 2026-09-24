@@ -161,7 +161,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       'appwrite_blocking_function_execution_in_client',
       'Long-running Appwrite Function execution waits synchronously on the client.',
       correctionMessage: 'Pass `xasync: true`, treat the response as an async-start acknowledgement, then reconcile the source of truth with bounded polling/realtime.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags Appwrite `createExecution(...)` calls in likely long-running/destructive client methods unless the call explicitly passes `xasync: true`.',
     scan: _scanBlockingFunctionExecutions,
@@ -180,7 +180,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       'destructive_failure_logged_before_reconcile',
       'Destructive mutation reports failure before source-of-truth reconciliation.',
       correctionMessage: 'Call a reconcile/verify/waitFor source-of-truth check first, then log/report the exception only when reconciliation fails.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags Crash/Sentry/Firebase error reporting before a later reconcile/verify call inside delete/remove/deactivate methods.',
     scan: (reporter, context) {

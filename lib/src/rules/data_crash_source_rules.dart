@@ -11,7 +11,7 @@ final List<ScannerRule> dataCrashSourceRules = [
       'data_log_rethrow',
       'Avoid log-and-rethrow in data layers.',
       correctionMessage: 'Let callers log once at the boundary.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags log-and-rethrow patterns in data layers so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
@@ -35,7 +35,7 @@ final List<ScannerRule> dataCrashSourceRules = [
       'crash_possible_pii',
       'Crash reporting may include PII.',
       correctionMessage: 'Do not send email, name, phone, token, password, address, or user IDs.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags possible PII values sent to crash reporting so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {

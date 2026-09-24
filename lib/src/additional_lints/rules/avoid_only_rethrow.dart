@@ -35,6 +35,7 @@ class AvoidOnlyRethrow extends TryStatementCheckRule {
     'avoid_only_rethrow',
     'Catch clause contains only a rethrow statement.',
     correctionMessage: 'Remove the redundant try-catch block.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidOnlyRethrow()

@@ -36,6 +36,7 @@ class AvoidMountedCheckInFinally extends TryStatementCheckRule {
     correctionMessage:
         "Wrap the trailing statements in 'if (mounted) { ... }' instead — "
         "'return' in 'finally' swallows in-flight exceptions.",
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidMountedCheckInFinally()

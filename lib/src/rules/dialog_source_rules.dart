@@ -168,7 +168,7 @@ final List<ScannerRule> dialogSourceRules = [
       'widget_calls_notifier_teardown_after_await',
       'Widget calls notifier.reset/clear/dispose after awaiting a notifier mutation.',
       correctionMessage: 'Move the teardown into the notifier method on its success path. Widgets dispatch and observe state; they do not orchestrate notifier lifecycle.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags reset/clear/dispose calls that follow an awaited notifier mutation in non-notifier files so the notifier owns its own teardown.',
     scan: (reporter, context) {

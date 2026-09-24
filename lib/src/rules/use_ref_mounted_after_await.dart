@@ -14,6 +14,7 @@ final class UseRefMountedAfterAwait extends GeneratedMethodDeclarationCheckRule 
     'use_ref_mounted_after_await',
     "Don't use ref or state after an await in Notifier methods without checking ref.mounted.",
     correctionMessage: "Add 'if (!ref.mounted) return;' immediately after the await.",
+    severity: DiagnosticSeverity.ERROR,
   );
 
   UseRefMountedAfterAwait()

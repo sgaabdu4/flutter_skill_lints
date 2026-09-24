@@ -86,26 +86,28 @@ Widget build() => const Row(children: [
     const source = r'''
 import 'package:flutter/widgets.dart';
 
-Widget build() => const Column(children: [Text('a'), SizedBox(height: 8), Text('b')]);
+Widget build() => const Column(children: [Text('a'), SizedBox(height: 8), Text('b'), SizedBox(height: 8), Text('c')]);
 ''';
     await assertDiagnostics(source, [
       lint(source.indexOf('SizedBox(height: 8)'), 'SizedBox(height: 8)'.length),
+      lint(source.lastIndexOf('SizedBox(height: 8)'), 'SizedBox(height: 8)'.length),
     ]);
   }
 
-  Future<void> test_spaceBetweenPreservesUniformGaps_lint() async {
-    const source = r'''
+  Future<void> test_skillSingleGapAndSpaceBetweenGaps_noLint() async {
+    await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
-Widget build() => const Row(
+abstract final class Spacing {
+  static const double s8 = 8;
+}
+
+Widget statusRow() => const Row(children: [Text('icon'), SizedBox(width: Spacing.s8), Text('message')]);
+Widget spaced() => const Row(
   mainAxisAlignment: MainAxisAlignment.spaceBetween,
   children: [Text('a'), SizedBox(width: 8), Text('b'), SizedBox(width: 8), Text('c')],
 );
-''';
-    await assertDiagnostics(source, [
-      lint(source.indexOf('SizedBox(width: 8)'), 'SizedBox(width: 8)'.length),
-      lint(source.lastIndexOf('SizedBox(width: 8)'), 'SizedBox(width: 8)'.length),
-    ]);
+''');
   }
 
   Future<void> test_constantTokenWithCenterAlignment_lint() async {
@@ -115,11 +117,12 @@ import 'package:flutter/widgets.dart';
 const double gap = 8;
 Widget build() => const Row(
   mainAxisAlignment: MainAxisAlignment.center,
-  children: [Text('a'), SizedBox(width: gap), Text('b')],
+  children: [Text('a'), SizedBox(width: gap), Text('b'), SizedBox(width: gap), Text('c')],
 );
 ''';
     await assertDiagnostics(source, [
       lint(source.indexOf('SizedBox(width: gap)'), 'SizedBox(width: gap)'.length),
+      lint(source.lastIndexOf('SizedBox(width: gap)'), 'SizedBox(width: gap)'.length),
     ]);
   }
 
@@ -130,21 +133,20 @@ import 'package:flutter/widgets.dart';
 const chosenAlignment = MainAxisAlignment.end;
 Widget row() => const Row(
   mainAxisAlignment: .center,
-  children: [Text('a'), SizedBox(width: 4 + 4), Text('b')],
+  children: [Text('a'), SizedBox(width: 4 + 4), Text('b'), SizedBox(width: 4 + 4), Text('c')],
 );
 Widget aliased() => const Row(
   mainAxisAlignment: chosenAlignment,
-  children: [Text('a'), SizedBox(width: 8), Text('b')],
+  children: [Text('a'), SizedBox(width: 8), Text('b'), SizedBox(width: 8), Text('c')],
 );
 Widget flex() => const Flex(
   direction: .horizontal,
-  children: [Text('a'), SizedBox(width: 8), Text('b')],
+  children: [Text('a'), SizedBox(width: 8), Text('b'), SizedBox(width: 8), Text('c')],
 );
 ''';
     await assertDiagnostics(source, [
-      lint(source.indexOf('SizedBox(width: 4 + 4)'), 'SizedBox(width: 4 + 4)'.length),
-      lint(source.indexOf('SizedBox(width: 8)'), 'SizedBox(width: 8)'.length),
-      lint(source.lastIndexOf('SizedBox(width: 8)'), 'SizedBox(width: 8)'.length),
+      for (final gap in RegExp(r'SizedBox\(width: (?:4 \+ 4|8)\)').allMatches(source))
+        lint(gap.start, gap.end - gap.start),
     ]);
   }
 
@@ -165,14 +167,14 @@ Widget mixed() => const Row(children: [Text('a'), SizedBox(width: 8), Text('b'),
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
-Widget wrongAxis() => const Column(children: [Text('a'), SizedBox(width: 8), Text('b')]);
+Widget wrongAxis() => const Column(children: [Text('a'), SizedBox(width: 8), Text('b'), SizedBox(width: 8), Text('c')]);
 Widget dynamicAxis(Axis direction) => Flex(
   direction: direction,
-  children: const [Text('a'), SizedBox(width: 8), Text('b')],
+  children: const [Text('a'), SizedBox(width: 8), Text('b'), SizedBox(width: 8), Text('c')],
 );
 Widget wrongFlexAxis() => const Flex(
   direction: Axis.vertical,
-  children: [Text('a'), SizedBox(width: 8), Text('b')],
+  children: [Text('a'), SizedBox(width: 8), Text('b'), SizedBox(width: 8), Text('c')],
 );
 Widget conditional(bool show) => Row(children: [
   const Text('a'), const SizedBox(width: 8), if (show) const Text('b'), const Text('c'),
@@ -194,15 +196,15 @@ class Gap {
 
 Widget around() => const Row(
   mainAxisAlignment: MainAxisAlignment.spaceAround,
-  children: [Text('a'), SizedBox(width: 8), Text('b')],
+  children: [Text('a'), SizedBox(width: 8), Text('b'), SizedBox(width: 8), Text('c')],
 );
 Widget evenly() => const Row(
   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  children: [Text('a'), SizedBox(width: 8), Text('b')],
+  children: [Text('a'), SizedBox(width: 8), Text('b'), SizedBox(width: 8), Text('c')],
 );
 Widget dynamicAlignment(MainAxisAlignment alignment) => Row(
   mainAxisAlignment: alignment,
-  children: const [Text('a'), SizedBox(width: 8), Text('b')],
+  children: const [Text('a'), SizedBox(width: 8), Text('b'), SizedBox(width: 8), Text('c')],
 );
 Widget calledGap() => Row(children: [
   const Text('a'), SizedBox(width: nextGap()), const Text('b'),
@@ -221,11 +223,12 @@ import 'package:flutter/widgets.dart' as f;
 
 f.Widget build() => const f.Flex(
   direction: f.Axis.horizontal,
-  children: [f.Text('a'), f.SizedBox(width: 8), f.Text('b')],
+  children: [f.Text('a'), f.SizedBox(width: 8), f.Text('b'), f.SizedBox(width: 8), f.Text('c')],
 );
 ''';
     await assertDiagnostics(source, [
       lint(source.indexOf('f.SizedBox(width: 8)'), 'f.SizedBox(width: 8)'.length),
+      lint(source.lastIndexOf('f.SizedBox(width: 8)'), 'f.SizedBox(width: 8)'.length),
     ]);
   }
 
@@ -237,7 +240,7 @@ class SizedBox extends f.Widget {
   const SizedBox({double? width});
 }
 
-f.Widget build() => const f.Row(children: [f.Text('a'), SizedBox(width: 8), f.Text('b')]);
+f.Widget build() => const f.Row(children: [f.Text('a'), SizedBox(width: 8), f.Text('b'), SizedBox(width: 8), f.Text('c')]);
 ''');
   }
 
@@ -251,7 +254,7 @@ class AxisHolder {
 
 f.Widget build(AxisHolder holder) => f.Flex(
   direction: holder.horizontal,
-  children: const [f.Text('a'), f.SizedBox(width: 8), f.Text('b')],
+  children: const [f.Text('a'), f.SizedBox(width: 8), f.Text('b'), f.SizedBox(width: 8), f.Text('c')],
 );
 ''');
   }

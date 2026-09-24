@@ -13,6 +13,7 @@ class UseDedicatedMediaQueryMethods extends MethodInvocationRule {
     'use_dedicated_media_query_methods',
     'Avoid using {0} to access only one property of MediaQueryData. Using aspects of the MediaQuery avoids unnecessary rebuilds.',
     correctionMessage: 'Use the dedicated `{1}` method instead.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   UseDedicatedMediaQueryMethods()

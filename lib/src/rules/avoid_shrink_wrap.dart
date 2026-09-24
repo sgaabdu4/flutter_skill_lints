@@ -15,6 +15,7 @@ final class AvoidShrinkWrap extends AnalysisRule {
     'avoid_shrink_wrap',
     'Avoid shrinkWrap: true.',
     correctionMessage: 'Use slivers or constrained layouts instead of shrinkWrap.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidShrinkWrap()

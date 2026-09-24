@@ -45,7 +45,6 @@ import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_any_or_eve
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_async_callback_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_center_over_align_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_class_destructuring_fix.dart';
-import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_compute_over_isolate_run_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_const_border_radius_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_constrained_box_over_container_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_container_fix.dart';
@@ -260,7 +259,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_async_call
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_caret_version_syntax.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_center_over_align.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_class_destructuring.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_compute_over_isolate_run.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_const_border_radius.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_constrained_box_over_container.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_container.dart';
@@ -472,7 +470,6 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidStateConstructors());
     registry.registerWarningRule(AvoidStatelessWidgetInitializedFields());
     registry.registerWarningRule(PreferAsyncCallback());
-    registry.registerWarningRule(PreferComputeOverIsolateRun());
     registry.registerWarningRule(PreferConstBorderRadius());
     registry.registerWarningRule(AvoidWrappingInPadding());
     registry.registerWarningRule(CheckForEqualsInRenderObjectSetters());
@@ -639,10 +636,6 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerFixForRule(AvoidRefReadInsideBuild.code, AvoidRefReadInsideBuildFix.new);
     registry.registerFixForRule(AvoidStateConstructors.code, AvoidStateConstructorsFix.new);
     registry.registerFixForRule(PreferAsyncCallback.code, PreferAsyncCallbackFix.new);
-    registry.registerFixForRule(
-      PreferComputeOverIsolateRun.code,
-      PreferComputeOverIsolateRunFix.new,
-    );
     registry.registerFixForRule(PreferConstBorderRadius.code, PreferConstBorderRadiusFix.new);
     registry.registerFixForRule(
       PreferConstrainedBoxOverContainer.code,

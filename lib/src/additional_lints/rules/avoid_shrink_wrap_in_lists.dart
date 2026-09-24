@@ -15,6 +15,7 @@ class AvoidShrinkWrapInLists extends InstanceAndMethodInvocationRule {
     'avoid_shrink_wrap_in_lists',
     'Avoid using shrinkWrap in ListView.',
     correctionMessage: 'Use CustomScrollView with SliverList or constrain the list height.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidShrinkWrapInLists()

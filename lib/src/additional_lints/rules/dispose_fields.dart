@@ -18,6 +18,7 @@ class DisposeFields extends ClassDeclarationRule {
     'dispose_fields',
     "Field '{0}' is not disposed. Call '{0}.{1}()' in dispose().",
     correctionMessage: "Add '{0}.{1}()' in the dispose() method to prevent memory leaks.",
+    severity: DiagnosticSeverity.ERROR,
   );
 
   DisposeFields()

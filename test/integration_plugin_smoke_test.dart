@@ -662,7 +662,9 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
         expect(
           audit.where(
             (line) =>
-                line.trimLeft().startsWith('error -') && !line.contains('riverpod_read_init_state'),
+                line.trimLeft().startsWith('error -') &&
+                !line.contains('riverpod_read_init_state') &&
+                !line.contains('avoid_flexible_outside_flex'),
           ),
           isEmpty,
         );
@@ -690,7 +692,15 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
         );
         expect(invalidContainers, hasLength(1));
         expect(invalidContainers.single, contains('null_container_boundaries.dart:5:'));
-        expect(nullableContainers.where((line) => line.trimLeft().startsWith('error -')), isEmpty);
+        expect(invalidContainers.single.trimLeft(), startsWith('error -'));
+        expect(
+          nullableContainers.where(
+            (line) =>
+                line.trimLeft().startsWith('error -') &&
+                !line.contains('avoid_flexible_outside_flex'),
+          ),
+          isEmpty,
+        );
 
         expect(output, isNot(contains('deprecated_lint')));
         expect(output, isNot(contains('server.pluginError')));

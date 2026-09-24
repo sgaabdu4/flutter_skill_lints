@@ -20,6 +20,7 @@ import 'package:flutter_skill_lints/src/rules/freezed_extended_source_rules.dart
 import 'package:flutter_skill_lints/src/rules/freezed_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/guard_context_pop.dart';
 import 'package:flutter_skill_lints/src/rules/hive_persistence_source_rules.dart';
+import 'package:flutter_skill_lints/src/rules/layout_diagnostics_rules.dart';
 import 'package:flutter_skill_lints/src/rules/material_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/notifier_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/persistence_crash_source_rules.dart';
@@ -67,6 +68,7 @@ final List<AbstractAnalysisRule> flutterSkillRules = [
   ...uiSourceRules,
   ...materialSourceRules,
   ...flutterOptimizationSourceRules,
+  ...layoutDiagnosticsRules,
   ...stateSourceRules,
   ...routerSourceRules,
   ...routerExtendedSourceRules,

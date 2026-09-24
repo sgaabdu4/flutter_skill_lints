@@ -657,7 +657,51 @@ int? _unboundedCollectionWatchColumn(SourceScannerContext context, int startLine
   final window = sourceLineWindow(context, startLine, endLine, 8);
   if (!_watchUnboundedCollection.hasMatch(window)) return null;
   if (_isPureCollectionProjection(window)) return null;
+  if (_watchesKeepAliveProvider(context, startLine, watchStart)) return null;
   return watchStart;
+}
+
+/// Whether the `ref.watch(...)` at [column] reads a generated provider whose
+/// source declaration is `@Riverpod(keepAlive: true)`. A keepAlive source
+/// already retains the collection for the session, so a keepAlive derived
+/// provider over it follows the performance guide's lifecycle-matching rule.
+bool _watchesKeepAliveProvider(SourceScannerContext context, int lineIndex, int column) {
+  AstNode? node = context.unit.nodeCovering(offset: context.source.lineOffsets[lineIndex] + column);
+  while (node != null && !(node is MethodInvocation && node.methodName.name == 'watch')) {
+    node = node.parent;
+  }
+  if (node is! MethodInvocation) return false;
+  final arguments = node.argumentList.arguments;
+  if (arguments.isEmpty) return false;
+  var provider = arguments.first.argumentExpression.unParenthesized;
+  if (provider is MethodInvocation && provider.methodName.name == 'select') {
+    provider = provider.target ?? provider;
+  }
+  final element = switch (provider) {
+    SimpleIdentifier(:final element) => element,
+    PrefixedIdentifier(:final identifier) => identifier.element,
+    _ => null,
+  };
+  final variable = element is PropertyAccessorElement ? element.variable : element;
+  if (variable is! TopLevelVariableElement) return false;
+  final source = variable.metadata.annotations
+      .map((annotation) => annotation.computeConstantValue())
+      .where((value) => _isRiverpodAnnotationType(value?.type, 'ProviderFor'))
+      .map((value) => value?.getField('value'))
+      .firstOrNull;
+  final declaration = source?.toTypeValue()?.element ?? source?.toFunctionValue();
+  if (declaration == null) return false;
+  return declaration.metadata.annotations.any((annotation) {
+    final value = annotation.computeConstantValue();
+    return _isRiverpodAnnotationType(value?.type, 'Riverpod') &&
+        value?.getField('keepAlive')?.toBoolValue() == true;
+  });
+}
+
+bool _isRiverpodAnnotationType(DartType? type, String name) {
+  final element = type?.element;
+  return element?.name == name &&
+      (element?.library?.uri.toString().startsWith('package:riverpod_annotation/') ?? false);
 }
 
 bool _isPureCollectionProjection(String window) {

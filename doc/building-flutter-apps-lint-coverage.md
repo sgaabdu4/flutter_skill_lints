@@ -278,7 +278,10 @@ Runtime-bug surface (0.7.0) — `runtime_bug_source_rules`:
   whose `build()` derives and retains a new collection from `s.logs` /
   `s.items` / `s.entries` / `s.posts` etc. keeps that derived collection for
   the session. A pure projection provider that returns the source list
-  reference is allowed.
+  reference is allowed, and so is a derived provider whose watched source
+  resolves (across files, via the generated `@ProviderFor`) to a
+  `@Riverpod(keepAlive: true)` declaration, matching the performance guide's
+  all-keepAlive lifecycle rule.
 - `datasource_missing_batch_loader` — abstract `*LocalDatasource` /
   `*RemoteDatasource` with 5+ single-value async getters and no
   `loadAll` / `getAll` / `readAll` / `loadSettings` / `getSnapshot` forces

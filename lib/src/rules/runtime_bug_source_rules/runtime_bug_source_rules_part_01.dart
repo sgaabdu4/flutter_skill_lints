@@ -327,7 +327,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       correctionMessage: 'Return a bounded projection (e.g. `s.lastNDays` / `s.count`) instead of deriving and retaining a new collection from the full source list.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags `@Riverpod(keepAlive: true)` notifiers whose build() derives retained state from `s.<unboundedCollectionName>`.',
+    description: 'Flags `@Riverpod(keepAlive: true)` notifiers whose build() derives retained state from `s.<unboundedCollectionName>` of a provider that is not resolved as `@Riverpod(keepAlive: true)`.',
     scan: _scanKeepAliveUnboundedCollections,
   ),
 

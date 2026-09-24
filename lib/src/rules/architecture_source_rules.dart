@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
@@ -128,24 +129,26 @@ final List<ScannerRule> architectureSourceRules = [
     },
   ),
 
-  /// Avoid try/catch in datasources.
+  /// Don't catch in a datasource only to rethrow.
   ///
-  /// Why: Flags try/catch blocks inside datasource files. Let errors propagate and catch once
-  /// at the notifier boundary.
+  /// Why: A trailing catch clause that only rethrows adds nothing. Datasources may
+  /// catch to translate, classify, recover or roll back; otherwise let errors
+  /// propagate to the notifier boundary.
   scannerRule(
     code: const LintCode(
       'arch_datasource_try_catch',
-      'Avoid try/catch in datasources.',
-      correctionMessage: 'Let errors propagate and catch once at the notifier boundary.',
+      "Don't catch in a datasource only to rethrow.",
+      correctionMessage: 'Delete the catch and let errors propagate to the notifier boundary, or translate, recover or roll back in it.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags try/catch blocks inside datasource files so the Flutter skill violation is shown during analysis.',
+    description: 'Flags datasource catch clauses that only rethrow, while allowing translation, recovery and rollback catches.',
     scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (context.isDatasourcePath && RegExp(r'\btry\s*\{').hasMatch(line)) {
-          reporter.report(context, i, line.indexOf('try'));
-        }
+      if (!context.isDatasourcePath) return;
+      final finder = _RethrowOnlyCatchFinder();
+      context.unit.accept(finder);
+      for (final clause in finder.clauses) {
+        final location = context.unit.lineInfo.getLocation(clause.offset);
+        reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
       }
     },
   ),
@@ -299,4 +302,22 @@ bool _isAllowedDomainImport(String line) {
   final importedPath = packageImport.group(1) ?? '';
   return importedPath == 'freezed_annotation/freezed_annotation.dart' ||
       importedPath.contains('/domain/');
+}
+
+/// A trailing catch clause whose body is only `rethrow`. An earlier one can
+/// still matter: it keeps its error type out of a later catch.
+final class _RethrowOnlyCatchFinder extends RecursiveAstVisitor<void> {
+  final clauses = <CatchClause>[];
+
+  @override
+  void visitTryStatement(TryStatement node) {
+    final clause = node.catchClauses.lastOrNull;
+    final statement = clause?.body.statements.singleOrNull;
+    if (clause != null &&
+        statement is ExpressionStatement &&
+        statement.expression is RethrowExpression) {
+      clauses.add(clause);
+    }
+    super.visitTryStatement(node);
+  }
 }

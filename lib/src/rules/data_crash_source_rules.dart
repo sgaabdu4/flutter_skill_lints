@@ -1,27 +1,30 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> dataCrashSourceRules = [
   /// Avoid log-and-rethrow in data layers.
   ///
-  /// Why: Flags log-and-rethrow patterns in data layers. Let callers log once at the
-  /// boundary.
+  /// Why: A catch that only reports the error and rethrows adds nothing: the
+  /// notifier catches and reports it again. Delete the try/catch, or translate,
+  /// recover, roll back, or swallow + log a local-first remote mirror instead.
   scannerRule(
     code: const LintCode(
       'data_log_rethrow',
       'Avoid log-and-rethrow in data layers.',
-      correctionMessage: 'Let callers log once at the boundary.',
-      severity: DiagnosticSeverity.WARNING,
+      correctionMessage: 'Delete the try/catch and let the notifier catch and report once, or translate the error to a typed domain error.',
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags log-and-rethrow patterns in data layers so the Flutter skill violation is shown during analysis.',
+    description: 'Flags data-layer catch clauses that only log or report the caught error before rethrowing.',
     scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (context.isDataPath &&
-            RegExp(r'\b(?:print|debugPrint|log)\s*\(').hasMatch(line) &&
-            context.near(i, 'rethrow', 6)) {
-          reporter.report(context, i, 0);
-        }
+      if (!context.isDataPath) return;
+      final finder = _LogRethrowFinder();
+      context.unit.accept(finder);
+      for (final statement in finder.statements) {
+        final location = context.unit.lineInfo.getLocation(statement.offset);
+        reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
       }
     },
   ),
@@ -52,3 +55,68 @@ final List<ScannerRule> dataCrashSourceRules = [
     },
   ),
 ];
+
+/// Catch clauses whose body is only reporting calls followed by `rethrow`.
+final class _LogRethrowFinder extends RecursiveAstVisitor<void> {
+  final statements = <Statement>[];
+
+  @override
+  void visitCatchClause(CatchClause node) {
+    final body = node.body.statements;
+    if (body.length > 1 &&
+        _isRethrow(body.last) &&
+        body.take(body.length - 1).every((statement) => _isReportingCall(statement, node))) {
+      statements.add(body.first);
+    }
+    super.visitCatchClause(node);
+  }
+}
+
+bool _isRethrow(Statement statement) =>
+    statement is ExpressionStatement && statement.expression is RethrowExpression;
+
+bool _isReportingCall(Statement statement, CatchClause clause) {
+  if (statement is! ExpressionStatement) return false;
+  final expression = statement.expression;
+  final call = expression is AwaitExpression ? expression.expression : expression;
+  if (call is! MethodInvocation) return false;
+  return _isLogFunction(call.methodName.element) || _receivesCaughtError(call, clause);
+}
+
+bool _isLogFunction(Element? element) {
+  if (element == null || element.enclosingElement is! LibraryElement) return false;
+  final library = element.library?.uri.toString() ?? '';
+  return switch (element.name) {
+    'print' => library == 'dart:core',
+    'log' => library == 'dart:developer',
+    'debugPrint' => library.startsWith('package:flutter/'),
+    _ => false,
+  };
+}
+
+/// Passing the caught error or stack trace on makes the call a report.
+bool _receivesCaughtError(MethodInvocation call, CatchClause clause) {
+  final caught = {
+    clause.exceptionParameter?.declaredFragment?.element,
+    clause.stackTraceParameter?.declaredFragment?.element,
+  }..remove(null);
+  if (caught.isEmpty) return false;
+  final finder = _ElementReferenceFinder(caught);
+  call.argumentList.accept(finder);
+  return finder.found;
+}
+
+final class _ElementReferenceFinder extends RecursiveAstVisitor<void> {
+  _ElementReferenceFinder(this.elements);
+
+  final Set<Element?> elements;
+  bool found = false;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (elements.contains(node.element)) found = true;
+  }
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {}
+}

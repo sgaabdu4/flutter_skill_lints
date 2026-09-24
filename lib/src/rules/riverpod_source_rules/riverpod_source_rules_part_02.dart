@@ -72,8 +72,9 @@ bool _isWholeValueUse(Expression value) {
   if (parent is ForEachParts && parent.iterable == value) return true;
   if (parent is NamedArgument || parent is ArgumentList) {
     final arguments = parent is NamedArgument ? parent.parent : parent;
-    if (arguments is ArgumentList && arguments.parent is InstanceCreationExpression) {
-      return true;
+    final creation = arguments?.parent;
+    if (arguments is ArgumentList && creation is InstanceCreationExpression) {
+      return !_isWholeStateIntoAppWidget(value, creation);
     }
   }
   if (parent is SwitchExpression && parent.expression == value) {
@@ -87,6 +88,56 @@ bool _isWholeValueUse(Expression value) {
   }
   if (parent is ReturnStatement && value.staticType?.isDartCoreList == true) return true;
   return false;
+}
+
+/// performance.md:26-27: reusable widgets receive minimal immutable view data,
+/// and binding boundaries select specific fields. A watched class with more
+/// than one field passed whole into an app widget hands it the whole state.
+/// Records, collections and SDK values stay whole-value inputs (primitives and
+/// enums are exempt earlier). Framework widgets take framework config such as
+/// a RouterConfig, not reusable-widget view data.
+bool _isWholeStateIntoAppWidget(Expression value, InstanceCreationExpression creation) {
+  final type = value.staticType;
+  final widget = creation.constructorName.type.element;
+  return type is InterfaceType &&
+      widget is InterfaceElement &&
+      _isAppWidget(widget) &&
+      !type.allSupertypes.any(
+        (supertype) => supertype.isDartCoreIterable || supertype.isDartCoreMap,
+      ) &&
+      _publicFieldCount(type) > 1;
+}
+
+bool _isAppWidget(InterfaceElement element) =>
+    !_isFlutterLibrary(element.library) &&
+    element.allSupertypes.any(
+      (type) => type.element.name == 'Widget' && _isFlutterLibrary(type.element.library),
+    );
+
+bool _isFlutterLibrary(LibraryElement library) =>
+    library.uri.toString().startsWith('package:flutter/');
+
+/// Counts public instance fields plus public abstract getters, because Freezed
+/// declares a class's fields as abstract getters on its generated mixin. SDK
+/// types (DateTime, Duration, Uri) count as single values.
+int _publicFieldCount(InterfaceType type) {
+  final names = <String?>{};
+  for (final element in [
+    type.element,
+    for (final supertype in type.allSupertypes) supertype.element,
+  ]) {
+    if (element.library.uri.isScheme('dart')) continue;
+    names
+      ..addAll([
+        for (final field in element.fields)
+          if (!field.isStatic && !field.isOriginGetterSetter && field.isPublic) field.name,
+      ])
+      ..addAll([
+        for (final getter in element.getters)
+          if (!getter.isStatic && getter.isAbstract && getter.isPublic) getter.name,
+      ]);
+  }
+  return names.length;
 }
 
 bool _isRiverpodMutationElement(Element? element, String name) =>

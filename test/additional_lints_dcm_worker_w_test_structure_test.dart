@@ -147,6 +147,26 @@ final class PreferMatchFileNameTest extends AnalysisRuleTest {
     await assertDiagnosticsInFile(path, [lint(21, 9)]);
   }
 
+  Future<void> test_allowsInterfacePrefixFileName() async {
+    final path =
+        '$testPackageRootPath/lib/features/probe/domain/repositories/i_probe_b_items_repository.dart';
+    newFile(path, '''
+abstract interface class IProbeBItemsRepository {
+  Future<void> save(String item);
+}
+''');
+    await assertDiagnosticsInFile(path, []);
+  }
+
+  Future<void> test_reportsInterfacePrefixFileNameForConcreteClass() async {
+    const source = '''
+class IProbeBItemsRepository {}
+''';
+    final path = '$testPackageRootPath/lib/features/probe/data/i_probe_b_items_repository.dart';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [lint(source.indexOf('IProbe'), 22)]);
+  }
+
   Future<void> test_matchingClassName_noLint() async {
     const source = r'''
 class UserProfile {}

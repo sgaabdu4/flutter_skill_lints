@@ -276,6 +276,20 @@ bool isNotifierClass(ClassDeclaration node) {
       superName.startsWith(r'_$');
 }
 
+/// Whether [node] carries the resolved `@riverpod` / `@Riverpod(...)` codegen annotation.
+bool hasRiverpodCodegenAnnotation(AnnotatedNode node) {
+  return node.metadata.any((annotation) {
+    final element = annotation.element;
+    final isRiverpod = switch (element) {
+      ConstructorElement(:final enclosingElement) => enclosingElement.name == 'Riverpod',
+      PropertyAccessorElement(:final name) => name == 'riverpod',
+      _ => false,
+    };
+    final library = element?.library?.uri.toString() ?? '';
+    return isRiverpod && library.startsWith('package:riverpod_annotation/');
+  });
+}
+
 bool hasAnnotationNamed(AnnotatedNode node, Set<String> names) {
   for (final annotation in node.metadata) {
     final name = annotation.name.name;

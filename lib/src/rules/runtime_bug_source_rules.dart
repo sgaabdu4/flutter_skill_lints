@@ -486,9 +486,31 @@ int? _unguardedAsyncStateWriteLine(SourceScannerContext context, ScannerMethodSp
     if (awaitLine == null) continue;
     if (!_notifierStateWrite.hasMatch(line)) continue;
     if (_hasStaleGuardBetween(context, awaitLine + 1, i - 1)) return null;
+    if (_hasRefMountedGuardBefore(context, awaitLine, i)) return null;
     return i;
   }
   return null;
+}
+
+/// `if (!ref.mounted) return;` on the notifier's Riverpod ref, after the await and in a block
+/// enclosing the state write.
+bool _hasRefMountedGuardBefore(SourceScannerContext context, int awaitLine, int writeLine) {
+  final column = _notifierStateWrite.firstMatch(context.source.masked[writeLine])?.start ?? 0;
+  AstNode? node = context.unit.nodeCovering(offset: context.source.lineOffsets[writeLine] + column);
+  while (node != null && node is! FunctionBody) {
+    final parent = node.parent;
+    if (parent is Block && _blockGuardsBefore(context, parent, node, awaitLine)) return true;
+    node = parent;
+  }
+  return false;
+}
+
+/// Whether [block] has `if (!ref.mounted) return;` after [awaitLine] and before [child].
+bool _blockGuardsBefore(SourceScannerContext context, Block block, AstNode child, int awaitLine) {
+  return block.statements.takeWhile((statement) => statement != child).any((statement) {
+    final line = context.unit.lineInfo.getLocation(statement.offset).lineNumber - 1;
+    return line > awaitLine && statementIsMountedReturnGuard(statement, 'ref');
+  });
 }
 
 bool _hasStaleGuardBetween(SourceScannerContext context, int startLine, int endLine) {

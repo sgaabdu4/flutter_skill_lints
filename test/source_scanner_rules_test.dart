@@ -51,6 +51,8 @@ void main() {
     defineReflectiveTests(RiverpodReadInitStateTest);
     defineReflectiveTests(RiverpodServiceLocatorTest);
     defineReflectiveTests(RiverpodManualProviderTest);
+    defineReflectiveTests(RiverpodGeneratedProviderAliasTest);
+    defineReflectiveTests(RiverpodWidgetRefOutsideWidgetTest);
     defineReflectiveTests(RiverpodNotifierOverrideWithValueTest);
     defineReflectiveTests(RiverpodConsumerStateDerivedCacheTest);
     defineReflectiveTests(RiverpodWidgetProviderArgWrapperTest);
@@ -127,6 +129,7 @@ void main() {
     defineReflectiveTests(RouterModalLocalHelpersTest);
     defineReflectiveTests(RouterProviderScopeNavigationReadTest);
     defineReflectiveTests(NotifierLocalDependencyCacheTest);
+    defineReflectiveTests(NotifierStoredRefFieldTest);
     defineReflectiveTests(NotifierEnsureDepsTest);
     defineReflectiveTests(NotifierWatchMethodTest);
     defineReflectiveTests(ServiceSingletonTest);
@@ -303,6 +306,8 @@ $source''';
       ..addFile('lib/widgets.dart', r'''
 class BuildContext {}
 class Widget {}
+abstract class StatefulWidget extends Widget {}
+abstract class State<T extends StatefulWidget> {}
 ''')
       ..addFile('lib/widget_previews.dart', r'''
 base class Preview {

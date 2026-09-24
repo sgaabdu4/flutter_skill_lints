@@ -58,12 +58,51 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     ),
     description: 'Flags manual Riverpod provider declarations so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
+      final reportedLines = <int>{};
       for (var i = 0; i < context.source.length; i++) {
         final match = _manualProviderDeclarationMatch(context, i);
         if (match == null) continue;
+        reportedLines.add(i);
         reporter.report(context, i, match.column);
       }
+      _reportResolvedManualProviders(reporter, context, reportedLines);
     },
+  ),
+
+  /// Keep WidgetRef inside widgets.
+  ///
+  /// Why: `Ref` and `WidgetRef` stay separate; `WidgetRef` is for widgets only.
+  /// A service, repository or other non-widget class holding or accepting a
+  /// `WidgetRef` ties its lifetime to a widget element. Move the logic into a
+  /// generated provider/notifier that uses `Ref`.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_widget_ref_outside_widget',
+      'WidgetRef is for widgets only.',
+      correctionMessage: 'Move this logic into a generated provider or notifier and use its Ref instead of WidgetRef.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags WidgetRef types used inside classes that are not Widget or State subclasses.',
+    scan: _reportWidgetRefOutsideWidgets,
+  ),
+
+  /// Do not alias generated providers.
+  ///
+  /// Why: Generated provider names are the single source of truth. A top-level
+  /// or static `final cartAliasProvider = cartProvider;` creates a second name
+  /// for the same provider. Rename the annotated function/class and regenerate.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_generated_provider_alias',
+      'Do not alias generated providers.',
+      correctionMessage:
+          'Rename the annotated function/class, regenerate .g.dart, and update call sites instead.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags top-level or static declarations whose value is an existing provider variable.',
+    scan: _reportProviderAliases,
   ),
 
   /// Do not override generated notifier providers with state values.
@@ -103,14 +142,24 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       correctionMessage: 'Move the cache to one @riverpod source of truth or compute it locally without mutable cache fields.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags ConsumerState cache/source fields used with ref.watch so provider-derived data has one Riverpod source of truth.',
+    description:
+        'Flags ConsumerState cache/source fields and fields assigned from ref.watch/ref.read '
+        'results so provider-derived data has one Riverpod source of truth.',
     scan: (reporter, context) {
+      final reportedLines = <int>{};
       for (final classSpan in context.classes) {
         if (!_isConsumerStateClass(context, classSpan)) continue;
         if (!_classContainsRefWatch(context, classSpan)) continue;
 
-        reportDirectClassMemberMatches(reporter, context, classSpan, _derivedCacheField);
+        for (final lineIndex in directClassMemberLines(context, classSpan)) {
+          final line = context.source.masked[lineIndex];
+          final fieldName = _derivedCacheField.firstMatch(line)?.group(1);
+          if (fieldName == null) continue;
+          reportedLines.add(lineIndex);
+          reporter.report(context, lineIndex, line.indexOf(fieldName));
+        }
       }
+      _reportResolvedConsumerStateCaches(reporter, context, reportedLines);
     },
   ),
 
@@ -397,7 +446,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       'riverpod_feature_notifier_keepalive',
       'Feature notifiers should use keepAlive.',
       correctionMessage: 'Change @riverpod to @Riverpod(keepAlive: true), or add an autoDispose rationale comment.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description:
         'Flags non-family feature presentation notifiers that auto-dispose without rationale.',

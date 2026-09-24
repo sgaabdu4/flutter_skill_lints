@@ -255,8 +255,8 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'notifier_async_init_stale_state_write',
       'Async notifier init/restore/load writes state after await without a stale guard.',
-      correctionMessage: 'Capture a generation/request token before the await and return if it is stale before assigning `state`.',
-      severity: DiagnosticSeverity.WARNING,
+      correctionMessage: 'Capture a generation/request token before the await and return if it is stale before assigning `state`, or return when `!ref.mounted`.',
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags private notifier init/restore/load methods that await and then assign state without an obvious generation/request/stale guard.',
     scan: _scanAsyncNotifierStaleStateWrites,

@@ -701,4 +701,8 @@ class DraftNotifier {
 }
 ''', path: '$testPackageLibPath/core/notifiers/draft_notifier.dart');
   }
+
+  Future<void> test_severityIsError() async {
+    expect(rule.diagnosticCodes.single.severity, DiagnosticSeverity.ERROR);
+  }
 }

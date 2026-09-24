@@ -414,6 +414,23 @@ class Helper {
 @reflectiveTest
 final class NotifierAsyncInitStaleStateWriteTest extends _RuntimeBugRuleTest {
   @override
+  void setUp() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', r'''
+class Ref {
+  bool get mounted => true;
+  T read<T>(Object provider) => throw UnimplementedError();
+}
+
+abstract class Notifier<T> {
+  Ref get ref => Ref();
+  late T state;
+  T build();
+}
+''');
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'notifier_async_init_stale_state_write';
   @override
   String get needle => 'state = state.copyWith(isRestoringDraft: false)';
@@ -458,6 +475,58 @@ class ActiveWorkoutNotifier extends _$ActiveWorkoutNotifier {
 }
 ''');
   }
+
+  Future<void> test_allowsSkillRefMountedGuard() async {
+    await assertAllows(
+      _productEditorSource('''
+    final product = await ref.read<Future<String>>(productRepositoryProvider);
+    if (!ref.mounted) return;
+    state = state.copyWith(name: product);'''),
+      addIgnorePrefix: false,
+    );
+  }
+
+  Future<void> test_reportsMountedGuardOnNonRiverpodRefOrBeforeAwait() async {
+    final source = _productEditorSource('''
+    if (!ref.mounted) return;
+    final product = await ref.read<Future<String>>(productRepositoryProvider);
+    final other = _FakeRef();
+    if (!other.mounted) return;
+    state = state.copyWith(name: product);''');
+    await assertDiagnostics(source, [
+      compatLint(source, 'state = state.copyWith(name: product)', ruleName),
+    ]);
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(rule.diagnosticCodes.single.severity, DiagnosticSeverity.ERROR);
+  }
+
+  String _productEditorSource(String body) =>
+      '''
+import 'package:riverpod/riverpod.dart';
+
+final productRepositoryProvider = Object();
+
+class _FakeRef {
+  bool get mounted => true;
+}
+
+class ProductFormState {
+  const ProductFormState();
+
+  ProductFormState copyWith({String? name}) => this;
+}
+
+class ProductEditor extends Notifier<ProductFormState> {
+  @override
+  ProductFormState build() => const ProductFormState();
+
+  Future<void> _loadProduct(String id) async {
+$body
+  }
+}
+''';
 
   Future<void> test_allowsNonNotifierClass() async {
     await assertAllows(r'''

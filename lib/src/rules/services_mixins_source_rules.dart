@@ -185,56 +185,72 @@ final class _SingletonShape {
   static _SingletonShape? of(ClassDeclaration declaration) {
     final classElement = declaration.declaredFragment?.element;
     if (classElement == null) return null;
-    bool isSelf(DartType? type) => type is InterfaceType && type.element == classElement;
+    final stored = _storedSelfInstance(declaration, classElement);
+    if (stored == null) return null;
 
-    final backing = <FieldElement>[];
-    for (final field in declaration.body.members.whereType<FieldDeclaration>()) {
-      if (!field.isStatic || field.fields.isConst) continue;
-      for (final variable in field.fields.variables) {
-        final element = variable.declaredFragment?.element;
-        if (element is FieldElement && isSelf(element.type)) backing.add(element);
-      }
-    }
-    if (backing.length != 1) return null;
-    final stored = backing.single;
-
-    int? exposureOffset;
-    var hasPublicDataApi = false;
-    for (final member in declaration.body.members) {
-      final offset = member.firstTokenAfterCommentAndMetadata.offset;
-      switch (member) {
-        case FieldDeclaration(:final fields):
-          for (final variable in fields.variables) {
-            if (variable.name.lexeme.startsWith('_')) continue;
-            if (variable.declaredFragment?.element == stored) {
-              exposureOffset ??= offset;
-            } else {
-              hasPublicDataApi = true;
-            }
-          }
-        case MethodDeclaration(:final name) when !name.lexeme.startsWith('_'):
-          final element = member.declaredFragment?.element;
-          if (member.isStatic && member.isGetter && isSelf(element?.returnType)) {
-            exposureOffset ??= offset;
-          } else if (member.isGetter || member.isSetter || !_returnsNothing(element?.returnType)) {
-            hasPublicDataApi = true;
-          }
-        case ConstructorDeclaration(factoryKeyword: _?, name: final name)
-            when !(name?.lexeme.startsWith('_') ?? false) && _reads(member.body, stored):
-          exposureOffset ??= offset;
-        default:
-          break;
-      }
-    }
-    if (exposureOffset == null) return null;
+    final members = declaration.body.members;
+    final exposure = members.where((member) => _exposes(member, stored, classElement)).firstOrNull;
+    if (exposure == null) return null;
 
     return _SingletonShape._(
-      exposureOffset: exposureOffset,
+      exposureOffset: exposure.firstTokenAfterCommentAndMetadata.offset,
       hasPublicConstructor: classElement.constructors.any((constructor) => constructor.isPublic),
       hasMutableBacking: !stored.isFinal,
-      hasPublicDataApi: hasPublicDataApi,
+      hasPublicDataApi: members.any((member) => _isPublicDataMember(member, stored, classElement)),
     );
   }
+}
+
+bool _isSelf(DartType? type, ClassElement classElement) =>
+    type is InterfaceType && type.element == classElement;
+
+bool _isPrivate(String name) => name.startsWith('_');
+
+/// The single non-const static field typed as the class itself, or null.
+FieldElement? _storedSelfInstance(ClassDeclaration declaration, ClassElement classElement) {
+  final stored = [
+    for (final field in declaration.body.members.whereType<FieldDeclaration>())
+      if (field.isStatic && !field.fields.isConst)
+        for (final variable in field.fields.variables)
+          if (variable.declaredFragment?.element case final FieldElement element
+              when _isSelf(element.type, classElement))
+            element,
+  ];
+  return stored.length == 1 ? stored.single : null;
+}
+
+/// Whether [member] hands out the stored instance: the public field itself, a public static
+/// getter typed as the class, or a public factory constructor that returns it.
+bool _exposes(ClassMember member, FieldElement stored, ClassElement classElement) {
+  return switch (member) {
+    FieldDeclaration(:final fields) => fields.variables.any(
+      (variable) =>
+          !_isPrivate(variable.name.lexeme) && variable.declaredFragment?.element == stored,
+    ),
+    MethodDeclaration(:final name, isStatic: true, isGetter: true) =>
+      !_isPrivate(name.lexeme) &&
+          _isSelf(member.declaredFragment?.element.returnType, classElement),
+    ConstructorDeclaration(factoryKeyword: _?, :final name) =>
+      !_isPrivate(name?.lexeme ?? '') && _reads(member.body, stored),
+    _ => false,
+  };
+}
+
+/// Public state or data: any other public field, getter or setter, or a public method whose
+/// resolved return type is not `void` or `Future<void>`.
+bool _isPublicDataMember(ClassMember member, FieldElement stored, ClassElement classElement) {
+  return switch (member) {
+    FieldDeclaration(:final fields) => fields.variables.any(
+      (variable) =>
+          !_isPrivate(variable.name.lexeme) && variable.declaredFragment?.element != stored,
+    ),
+    MethodDeclaration(:final name) when !_isPrivate(name.lexeme) =>
+      !_exposes(member, stored, classElement) &&
+          (member.isGetter ||
+              member.isSetter ||
+              !_returnsNothing(member.declaredFragment?.element.returnType)),
+    _ => false,
+  };
 }
 
 bool _returnsNothing(DartType? type) {

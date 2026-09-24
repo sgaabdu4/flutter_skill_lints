@@ -149,35 +149,41 @@ bool _hasMapperExtensionElsewhere(ClassElement model) {
 Set<String> _indexMapperExtensionTargets(AnalysisSession session) {
   final targets = <String>{};
   for (final path in session.analysisContext.contextRoot.analyzedFiles()) {
-    final normalized = path.replaceAll('\\', '/');
-    if (!normalized.endsWith('.dart') || !normalized.contains('/lib/')) continue;
-    final String content;
-    try {
-      content = session.resourceProvider.getFile(path).readAsStringSync();
-    } on FileSystemException {
-      continue;
-    }
-    if (!content.contains('extension') ||
-        !_entityMapperNames.any((name) => content.contains(name))) {
-      continue;
-    }
-    final parsed = session.getParsedUnit(path);
-    final fileUri = session.uriConverter.pathToUri(path);
-    if (parsed is! ParsedUnitResult || fileUri == null) continue;
-    final libraryUris = [
-      fileUri,
-      for (final directive in parsed.unit.directives.whereType<ImportDirective>())
-        if (directive.uri.stringValue case final uri?) fileUri.resolve(uri),
-    ];
-    for (final extension in parsed.unit.declarations.whereType<ExtensionDeclaration>()) {
-      final extendedType = extension.onClause?.extendedType;
-      if (extendedType is! NamedType || !_declaresEntityMapper(extension.body)) continue;
-      for (final uri in libraryUris) {
-        targets.add('$uri#${extendedType.name.lexeme}');
-      }
+    if (_mayDeclareMapperExtension(session, path)) {
+      _addMapperExtensionTargets(session, path, targets);
     }
   }
   return targets;
+}
+
+bool _mayDeclareMapperExtension(AnalysisSession session, String path) {
+  final normalized = path.replaceAll('\\', '/');
+  if (!normalized.endsWith('.dart') || !normalized.contains('/lib/')) return false;
+  final String content;
+  try {
+    content = session.resourceProvider.getFile(path).readAsStringSync();
+  } on FileSystemException {
+    return false;
+  }
+  return content.contains('extension') && _entityMapperNames.any(content.contains);
+}
+
+void _addMapperExtensionTargets(AnalysisSession session, String path, Set<String> targets) {
+  final parsed = session.getParsedUnit(path);
+  final fileUri = session.uriConverter.pathToUri(path);
+  if (parsed is! ParsedUnitResult || fileUri == null) return;
+  final libraryUris = [
+    fileUri,
+    for (final directive in parsed.unit.directives.whereType<ImportDirective>())
+      if (directive.uri.stringValue case final uri?) fileUri.resolve(uri),
+  ];
+  for (final extension in parsed.unit.declarations.whereType<ExtensionDeclaration>()) {
+    final extendedType = extension.onClause?.extendedType;
+    if (extendedType is! NamedType || !_declaresEntityMapper(extension.body)) continue;
+    for (final uri in libraryUris) {
+      targets.add('$uri#${extendedType.name.lexeme}');
+    }
+  }
 }
 
 final class _InlineEntityMappingVisitor extends RecursiveAstVisitor<void> {

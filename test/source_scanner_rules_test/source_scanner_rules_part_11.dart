@@ -212,6 +212,49 @@ class TestableItemsNotifier {
 final class NotifierWatchMethodTest extends _NotifierFixtureTest {
   @override
   String get ruleName => 'notifier_watch_method';
+
+  static const _prelude = r'''
+class Notifier<T> {
+  Ref get ref => Ref();
+}
+
+class Ref {
+  Object watch(Object provider) => Object();
+  void listen(Object provider, void Function(Object? previous, Object next) listener) {}
+}
+
+final authProvider = Object();
+''';
+
+  /// async-mutations.md:61: use ref.listen in build() for side effects.
+  Future<void> test_reportsListenOutsideBuild() async {
+    final analyzedSource = _analyzedSource('''$_prelude
+class SessionNotifier extends Notifier<int> {
+  int build() => 0;
+
+  void startListening() {
+    ref.listen(authProvider, (previous, next) {});
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'void startListening', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsWatchAndListenInBuild() async {
+    await assertAllows('''$_prelude
+class SessionNotifier extends Notifier<int> {
+  int build() {
+    ref.watch(authProvider);
+    ref.listen(authProvider, (previous, next) {});
+    return 0;
+  }
+
+  void listen() {}
+}
+''');
+  }
 }
 
 abstract class _ServicesMixinsRuleTest extends _SourceRuleTest {

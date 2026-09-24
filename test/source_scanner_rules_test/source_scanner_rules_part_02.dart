@@ -203,6 +203,22 @@ class InitialSyncStatusNotifier extends _$InitialSyncStatusNotifier {
 @reflectiveTest
 final class RiverpodWatchNoSelectTest extends _RiverpodRuleTest {
   @override
+  void setUp() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', r'''
+class AsyncValue<T> {
+}
+extension AsyncValueExtensions<T> on AsyncValue<T> {
+  R when<R>({
+    required R Function(T value) data,
+    required R Function() loading,
+    required R Function(Object error) error,
+  }) => throw StateError('synthetic');
+}
+''');
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'riverpod_watch_no_select';
   @override
   String get needle => 'ref.watch(provider)';
@@ -408,6 +424,99 @@ class View {
   }
 }
 ''');
+  }
+
+  Future<void> test_allowsWholeListIteration() async {
+    await assertAllows(r'''
+class Source<T> {}
+class WidgetRef {
+  T watch<T>(Source<T> source) => throw StateError('synthetic');
+}
+final itemCollectionProvider = Source<List<int>>();
+
+class ListView {
+  List<int> build(WidgetRef ref) {
+    final items = ref.watch(itemCollectionProvider);
+    return [for (final item in items) item];
+  }
+}
+
+''');
+  }
+
+  Future<void> test_reportsSelectingOneIndexedListItem() async {
+    const source = r'''
+class Source<T> {}
+class WidgetRef {
+  T watch<T>(Source<T> source) => throw StateError('synthetic');
+}
+final itemCollectionProvider = Source<List<int>>();
+
+class ItemView {
+  int build(WidgetRef ref, int index) {
+    final items = ref.watch(itemCollectionProvider);
+    return items[index];
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(itemCollectionProvider)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsWholeAsyncValueWhenDispatch() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+class Source<T> {}
+class WidgetRef {
+  T watch<T>(Source<T> source) => throw StateError('synthetic');
+}
+final imageProvider = Source<AsyncValue<int>>();
+
+class AsyncView {
+  Object build(WidgetRef ref) {
+    final image = ref.watch(imageProvider);
+    return image.when(
+      data: (value) => value,
+      loading: () => 'loading',
+      error: (error) => 'error',
+    );
+  }
+}
+''');
+  }
+
+  Future<void> test_reportsWholeDispatchOnSameNamedLocalAsyncValue() async {
+    const source = r'''
+class Source<T> {}
+class WidgetRef {
+  T watch<T>(Source<T> source) => throw StateError('synthetic');
+}
+class AsyncValue<T> {
+  Object when({
+    required Object Function(T value) data,
+    required Object Function() loading,
+    required Object Function(Object error) error,
+  }) => Object();
+}
+final imageProvider = Source<AsyncValue<int>>();
+
+class AsyncView {
+  Object build(WidgetRef ref) {
+    final image = ref.watch(imageProvider);
+    return image.when(
+      data: (value) => value,
+      loading: () => 'loading',
+      error: (error) => 'error',
+    );
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(imageProvider)', ruleName),
+    ]);
   }
 
   Future<void> test_allowsWholeAsyncStatusSwitch() async {

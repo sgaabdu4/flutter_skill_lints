@@ -25,8 +25,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_riverpod: ^3.4.3
-  riverpod_annotation: ^4.0.7
+  flutter_riverpod: 3.4.3
+  riverpod_annotation: 4.0.7
+  freezed_annotation: 3.1.0
+  sentry_flutter: 9.30.1
+
+dev_dependencies:
+  build_runner: ^2.5.0
+  freezed: 4.0.2
 ''');
         final analysisOptionsPath = '${app.path}/analysis_options.yaml';
         await _writeFile(analysisOptionsPath, _analysisOptions(packageRoot));
@@ -153,6 +159,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final flagProvider = Provider<bool?>((ref) => null);
 final structuredProvider = Provider<List<String>>((ref) => []);
+final asyncProvider = Provider<AsyncValue<int>>((ref) => const AsyncData<int>(1));
 
 class WatchBoundaries extends ConsumerWidget {
   const WatchBoundaries({super.key});
@@ -164,6 +171,99 @@ class WatchBoundaries extends ConsumerWidget {
     final identity = ref.watch(flagProvider.select((value) => value));
     return Text('$flag $entries $identity', textDirection: TextDirection.ltr);
   }
+}
+
+class AsyncView extends ConsumerWidget {
+  const AsyncView({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final result = ref.watch(asyncProvider);
+    return result.when(
+      data: (value) => Text('$value', textDirection: TextDirection.ltr),
+      loading: () => const SizedBox.shrink(),
+      error: (error, stackTrace) => Text('$error', textDirection: TextDirection.ltr),
+    );
+  }
+}
+''');
+
+        await _writeFile('${app.path}/lib/atomic_update_boundaries.dart', r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'atomic_update_boundaries.freezed.dart';
+
+final progressProvider = NotifierProvider<ProgressNotifier, ProgressState>(
+  ProgressNotifier.new,
+);
+
+@freezed
+sealed class ProgressState with _$ProgressState {
+  const factory ProgressState({required bool loading, int? value}) = _ProgressState;
+}
+
+Future<int> requestValue() async => 1;
+Future<void> saveValue() async {}
+
+class ProgressNotifier extends Notifier<ProgressState> {
+  @override
+  ProgressState build() => const ProgressState(loading: false);
+
+  int revision = 0;
+
+  Future<void> refresh() async {
+    final ticket = ++revision;
+    state = state.copyWith(loading: true);
+    final value = await requestValue();
+    if (!ref.mounted || ticket != revision) return;
+    state = state.copyWith(loading: false, value: value);
+  }
+
+  Future<void> refreshThenSave() async {
+    final ticket = ++revision;
+    state = state.copyWith(loading: true);
+    final value = await requestValue();
+    if (!ref.mounted || ticket != revision) return;
+    await saveValue();
+    state = state.copyWith(loading: false, value: value);
+  }
+
+  Future<void> refreshSameDataField() async {
+    final ticket = ++revision;
+    state = state.copyWith(value: 0);
+    final value = await requestValue();
+    if (!ref.mounted || ticket != revision) return;
+    state = state.copyWith(loading: false, value: value);
+  }
+
+  Future<void> refreshWithLateTicket() async {
+    state = state.copyWith(loading: true);
+    final value = await requestValue();
+    final ticket = ++revision;
+    if (!ref.mounted || ticket != revision) return;
+    state = state.copyWith(loading: false, value: value);
+  }
+}
+''');
+
+        await _writeFile('${app.path}/lib/sentry_mutation_boundaries.dart', r'''
+import 'dart:async';
+
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+void sentryBuilderProbe() {
+  SentryFlutter.init((options) {
+    options.maxBreadcrumbs = 0;
+    options = SentryFlutterOptions();
+    scheduleMicrotask(() {
+      options.maxBreadcrumbs = 1;
+    });
+  });
+}
+
+void sentryOptionsOutsideBuilder(SentryFlutterOptions options) {
+  options.maxBreadcrumbs = 0;
 }
 ''');
 
@@ -424,6 +524,13 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
           reason: 'flutter pub get failed:\n${pubGet.stdout}\n${pubGet.stderr}',
         );
 
+        final build = await _run('dart', ['run', 'build_runner', 'build'], app);
+        expect(
+          build.exitCode,
+          0,
+          reason: 'Freezed generation failed:\n${build.stdout}\n${build.stderr}',
+        );
+
         final analyze = await _run('dart', ['analyze'], app);
         final output = '${analyze.stdout}\n${analyze.stderr}';
 
@@ -448,7 +555,46 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
             .split('\n')
             .where((line) => line.contains('riverpod_watch_no_select'));
         expect(broadWatches, hasLength(1));
-        expect(broadWatches.single, contains('watch_boundaries.dart:13:'));
+        expect(broadWatches.single, contains('watch_boundaries.dart:14:'));
+        final atomicUpdates = output
+            .split('\n')
+            .where(
+              (line) =>
+                  line.contains('atomic_update_boundaries.dart') &&
+                  line.contains('require_atomic_async_updates'),
+            );
+        expect(atomicUpdates, hasLength(3), reason: output);
+        for (final lineNumber in [38, 46, 54]) {
+          expect(
+            atomicUpdates.any(
+              (line) => line.contains('atomic_update_boundaries.dart:$lineNumber:'),
+            ),
+            isTrue,
+            reason: output,
+          );
+        }
+        final sentryMutations = output
+            .split('\n')
+            .where(
+              (line) =>
+                  line.contains('sentry_mutation_boundaries.dart') &&
+                  line.contains('avoid_mutating_parameters'),
+            );
+        expect(sentryMutations, hasLength(3), reason: output);
+        expect(
+          sentryMutations.any((line) => line.contains('sentry_mutation_boundaries.dart:7:')),
+          isFalse,
+          reason: output,
+        );
+        for (final lineNumber in [8, 10, 16]) {
+          expect(
+            sentryMutations.any(
+              (line) => line.contains('sentry_mutation_boundaries.dart:$lineNumber:'),
+            ),
+            isTrue,
+            reason: output,
+          );
+        }
         expect(output, contains('riverpod_select_identity_forbidden'));
         final contexts = output
             .split('\n')
@@ -583,6 +729,7 @@ plugins:
 analyzer:
   exclude:
     - "**/*.g.dart"
+    - "**/*.freezed.dart"
 ''';
 
 String _analysisOptionsWithDeprecatedLint(String packageRoot) =>

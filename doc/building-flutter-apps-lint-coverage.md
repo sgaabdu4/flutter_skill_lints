@@ -11,6 +11,25 @@ This audit covers both plugin surfaces:
 
 Read [building-flutter-apps-lint-inventory.md](building-flutter-apps-lint-inventory.md).
 
+## `avoid_throw` typed-failure boundary
+
+`avoid_throw` accepts a statically resolved subtype of `dart:core Exception`
+outside presentation code, including the documented parser `FormatException`
+case. A direct throw of the base `Exception`, an `Error` subtype, `dynamic`, or
+an untyped value remains a diagnostic. This boundary describes direct throw
+expressions; it makes no claim about method-based error propagation.
+
+Typed throws still report in resolved Flutter `Widget`/`State` members, in
+closures passed to resolved Flutter widget callbacks, and in methods on
+classes that resolve to Riverpod `Notifier`, `AsyncNotifier`, `StreamNotifier`,
+or `StateNotifier` types. Direct same-unit top-level function and method
+references passed to Flutter widget callbacks are also tracked, including
+explicit generic tear-offs. The analyzer cannot prove whether a downstream
+caller catches a thrown failure, follow
+callback variables or references across files, or discover every UI call
+graph. Unknown and dynamically typed values therefore remain diagnostics
+rather than being inferred as recoverable.
+
 ## Existing Coverage
 
 Core skill rules already covered before this pass:

@@ -364,6 +364,33 @@ class AuthRemoteDatasource {
 @reflectiveTest
 final class ServiceProviderWatchDependencyTest extends _ServicesExtendedRuleTest {
   @override
+  void setUp() {
+    newPackage('sdk').addFile('lib/sdk.dart', r'''
+class Client {
+  const Client();
+}
+
+class Repository<T> {
+  const Repository();
+}
+''');
+    newPackage('appwrite')
+      ..addFile('lib/src/service.dart', 'class Service {}')
+      ..addFile('lib/appwrite.dart', r'''
+import 'src/service.dart';
+
+class TablesDB extends Service {
+  TablesDB(Object client);
+}
+
+class Account extends Service {
+  Account(Object client);
+}
+''');
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'service_provider_watch_dependency';
   @override
   String get needle => 'ref.watch(flutterLocalNotificationsPluginProvider)';
@@ -414,6 +441,194 @@ IAuthLocalDatasource authLocalDatasource(Ref ref) {
     await assertDiagnostics(analyzedSource, [
       compatLint(analyzedSource, 'ref.watch(storageLocalDatasourceProvider)', ruleName),
     ]);
+  }
+
+  Future<void> test_allowsCollectionProjectionNamedQueue() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Ref {
+  List<int> watch(Object provider) => const [1, 2];
+}
+
+typedef QueueProjection = ({List<int> items, int count});
+final itemSourceProvider = Object();
+
+@Riverpod(keepAlive: true)
+QueueProjection selectedItemsQueue(Ref ref) {
+  final items = ref.watch(itemSourceProvider);
+  return (items: List.unmodifiable(items), count: items.length);
+}
+''');
+  }
+
+  Future<void> test_allowsCollectionProjectionWhoseElementLooksLikeService() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+const riverpod = Riverpod();
+
+class ItemService {
+  const ItemService(this.code);
+  final String code;
+}
+
+class Ref {
+  List<ItemService> watch(Object provider) => const [];
+}
+
+final sourceServicesProvider = Object();
+final searchProvider = Object();
+
+@riverpod
+List<ItemService> filteredItemServices(Ref ref) {
+  final search = ref.watch(searchProvider);
+  final services = ref.watch(sourceServicesProvider);
+  return services.where((service) => service.code.contains(search.toString())).toList();
+}
+''');
+  }
+
+  Future<void> test_reportsTypedStableServiceWatchWithGenericFactoryName() async {
+    const source = r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Ref {
+  Object watch(Object provider) => Object();
+}
+
+abstract interface class IQueueService {}
+class QueueService implements IQueueService {
+  QueueService(Object client);
+}
+final clientProvider = Object();
+
+@Riverpod(keepAlive: true)
+IQueueService createQueue(Ref ref) => QueueService(ref.watch(clientProvider));
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(clientProvider)', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsGenericInfrastructureReturnType() async {
+    const source = r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Item {}
+abstract interface class IRepository<T> {}
+class Repository<T> implements IRepository<T> {
+  Repository(Object client);
+}
+class Ref { Object watch(Object provider) => Object(); }
+final clientProvider = Object();
+final accountClientProvider = Object();
+
+@Riverpod(keepAlive: true)
+IRepository<Item> repository(Ref ref) => Repository<Item>(ref.watch(clientProvider));
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(clientProvider)', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsQualifiedInfrastructureReturnTypeThroughFuture() async {
+    const source = r'''
+import 'package:sdk/sdk.dart' as sdk;
+
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Ref { Object watch(Object provider) => Object(); }
+final clientProvider = Object();
+
+@Riverpod(keepAlive: true)
+Future<sdk.Repository<int>> repository(Ref ref) async {
+  ref.watch(clientProvider);
+  return const sdk.Repository<int>();
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(clientProvider)', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsAppwriteTablesAndAccountServicesByResolvedBase() async {
+    const source = r'''
+import 'package:appwrite/appwrite.dart' as appwrite;
+
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Ref { Object watch(Object provider) => Object(); }
+final clientProvider = Object();
+
+@Riverpod(keepAlive: true)
+appwrite.TablesDB appwriteTablesDB(Ref ref) =>
+    appwrite.TablesDB(ref.watch(clientProvider));
+
+@Riverpod(keepAlive: true)
+Future<appwrite.Account> appwriteAccount(Ref ref) async {
+  return appwrite.Account(ref.watch(accountClientProvider));
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(clientProvider)', ruleName),
+      compatLint(analyzedSource, 'ref.watch(accountClientProvider)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsLocalServiceBaseLookalike() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Service {}
+class TablesDB extends Service {
+  TablesDB(Object client);
+}
+class Ref { Object watch(Object provider) => Object(); }
+final clientProvider = Object();
+
+@Riverpod(keepAlive: true)
+TablesDB localTablesDB(Ref ref) => TablesDB(ref.watch(clientProvider));
+''');
+  }
+
+  Future<void> test_doesNotUnwrapUserDefinedFutureName() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Future<T> {
+  const Future();
+}
+
+abstract interface class IRepository<T> {}
+class Ref { Object watch(Object provider) => Object(); }
+final dependencyProvider = Object();
+
+@Riverpod(keepAlive: true)
+Future<IRepository<int>> projectedValue(Ref ref) {
+  ref.watch(dependencyProvider);
+  return const Future<IRepository<int>>();
+}
+''');
   }
 
   Future<void> test_allowsReadDependency() async {

@@ -9,10 +9,17 @@ final class TestMockConcreteTest extends _TestFileRuleTest {
     final appwrite = newPackage('appwrite');
     appwrite.addFile('lib/appwrite.dart', r'''
 part 'services/account.dart';
+part 'services/functions.dart';
+part 'services/storage.dart';
 part 'services/tables_db.dart';
 part 'services/teams.dart';
 ''');
     appwrite.addFile('lib/services/account.dart', "part of '../appwrite.dart'; class Account {}");
+    appwrite.addFile(
+      'lib/services/functions.dart',
+      "part of '../appwrite.dart'; class Functions {}",
+    );
+    appwrite.addFile('lib/services/storage.dart', "part of '../appwrite.dart'; class Storage {}");
     appwrite.addFile(
       'lib/services/tables_db.dart',
       "part of '../appwrite.dart'; class TablesDB {}",
@@ -73,6 +80,8 @@ class MockBridge extends Mock implements IConcreteBridge {}
     newFile(filePath, r'''
 import 'package:appwrite/appwrite.dart';
 class Mock {}
+class MockFunctions extends Mock implements Functions {}
+class MockStorage extends Mock implements Storage {}
 class MockTablesDB extends Mock implements TablesDB {}
 class MockAccount extends Mock implements Account {}
 class MockTeams extends Mock implements Teams {}
@@ -105,6 +114,33 @@ class MockAccount extends Mock implements Account {}
     await assertDiagnosticsInFile(filePath, [
       compatLint(analyzedSource, 'class MockAccount', ruleName),
     ]);
+  }
+
+  Future<void> test_localFunctionsAndStorageConcreteNamesStillReport() async {
+    const source = r'''
+class Mock {}
+class Functions {}
+class Storage {}
+class MockFunctions extends Mock implements Functions {}
+class MockStorage extends Mock implements Storage {}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    final filePath = '$testPackageRootPath/test/local_sdk_services_test.dart';
+    newFile(filePath, analyzedSource);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, 'class MockFunctions', ruleName),
+      compatLint(analyzedSource, 'class MockStorage', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsLocalFunctionsAndStorageInterfaces() async {
+    await assertAllows(r'''
+class Mock { dynamic noSuchMethod(Invocation invocation) => null; }
+abstract interface class Functions { void execute(); }
+abstract interface class Storage { void save(); }
+class MockFunctions extends Mock implements Functions {}
+class MockStorage extends Mock implements Storage {}
+''', path: '$testPackageRootPath/test/sdk_interface_mocks_test.dart');
   }
 
   Future<void> test_concreteAliasStillReports() async {

@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.12.14] - 2026-09-25
+
+- Resolve provider return types before classifying stable infrastructure; computed
+  collections and records remain reactive values, while actual resources retain checks.
+- Recognize full list iteration and complete Riverpod async-state dispatch without
+  exempting indexed leaf reads or unrelated APIs.
+- Accept mounted, revision-guarded loading-to-result state transitions; retain
+  diagnostics for unsafe guards, intervening awaits and conflicting writes.
+- Recognize the resolved Sentry options builder while retaining rebinding,
+  deferred mutation and writes outside the builder, including cascaded writes.
+- Recognize Appwrite Functions and Storage SDK mock boundaries by their actual
+  declarations; same-named local concrete contracts remain diagnosed.
+- Validate captured notifier dependencies instead of relying on initializer
+  helper names; retain late reads, unused captures and unsafe initialization.
+
+- Permit direct throws of typed recoverable exceptions at parser and infrastructure boundaries;
+  retain warnings in resolved UI callbacks and notifier methods, and for
+  untyped failures and programmer errors.
+- Recognize actual Mocktail and Mockito verification getters as test assertions;
+  retain warnings for unrelated or shadowed lookalikes and deferred checks.
+
 ## [0.12.13] - 2026-09-24
 
 - Restrict direct `SizedBox` spacing suggestions to equivalent uniform interior

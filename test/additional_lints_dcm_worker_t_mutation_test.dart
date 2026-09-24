@@ -60,6 +60,7 @@ void f() {
 final class AvoidMutatingParametersTest extends AnalysisRuleTest {
   @override
   void setUp() {
+    _addSentryFlutterPackage();
     rule = AvoidMutatingParameters();
     super.setUp();
   }
@@ -86,6 +87,203 @@ void rename(User user) {
 ''';
 
     await assertDiagnostics(source, [lint(source.lastIndexOf('name ='), 'name'.length)]);
+  }
+
+  Future<void> test_parameterCascadePropertyWrite_lint() async {
+    const source = r'''
+class User {
+  String name = '';
+}
+
+void rename(User user) {
+  user..name = 'Ada';
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.lastIndexOf('name ='), 'name'.length)]);
+  }
+
+  Future<void> test_shadowedLocalCascadeDoesNotMutateParameter() async {
+    const source = r'''
+class Options {
+  int value = 0;
+}
+
+void configure(Options options) {
+  {
+    final options = Options();
+    options..value = 1;
+  }
+}
+''';
+
+    await assertNoDiagnostics(source);
+  }
+
+  Future<void> test_sentryFlutterOptionsBuilderCallback_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+void initialize(Object transport) {
+  SentryFlutter.init((options) {
+    options.transport = transport;
+  });
+}
+''');
+  }
+
+  Future<void> test_sentryFlutterOptionsBuilderCascade_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+void initialize(Object transport) {
+  SentryFlutter.init((options) {
+    options..transport = transport;
+  });
+}
+''');
+  }
+
+  Future<void> test_shadowedSdkOptionsMutationInCallback_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+void initialize(Object transport) {
+  SentryFlutter.init((options) {
+    if (true) {
+      final options = SentryFlutterOptions();
+      options..transport = transport;
+    }
+  });
+}
+''');
+  }
+
+  Future<void> test_sentryFlutterOptionsCallbackReassignment_lint() async {
+    const source = r'''
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+void initialize(Object transport) {
+  SentryFlutter.init((options) {
+    options = SentryFlutterOptions();
+    options.transport = transport;
+  });
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('options ='), 'options'.length)]);
+  }
+
+  Future<void> test_sentryFlutterOptionsMutationOutsideBuilderCallback_lint() async {
+    const source = r'''
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+void configureOptions(SentryFlutterOptions options, Object transport) {
+  options.transport = transport;
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('transport ='), 'transport'.length)]);
+  }
+
+  Future<void> test_sentryFlutterOptionsMutationInDeferredClosure_lint() async {
+    const source = r'''
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+void scheduleLater(void Function() callback) {}
+
+void initialize(Object transport) {
+  SentryFlutter.init((options) {
+    scheduleLater(() {
+      options.transport = transport;
+    });
+  });
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('transport ='), 'transport'.length)]);
+  }
+
+  Future<void> test_sentryFlutterOptionsCascadeMutationInDeferredClosure_lint() async {
+    const source = r'''
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+void scheduleLater(void Function() callback) {}
+
+void initialize(Object transport) {
+  SentryFlutter.init((options) {
+    scheduleLater(() {
+      options..transport = transport;
+    });
+  });
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('transport ='), 'transport'.length)]);
+  }
+
+  Future<void> test_shadowedOptionsMutationInDeferredClosure_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+void scheduleLater(void Function() callback) {}
+
+void initialize(Object transport) {
+  SentryFlutter.init((options) {
+    scheduleLater(() {
+      final options = SentryFlutterOptions();
+      options.transport = transport;
+    });
+  });
+}
+''');
+  }
+
+  Future<void> test_localFakeSentryFlutterTypes_lint() async {
+    const source = r'''
+import 'dart:async';
+
+typedef FlutterOptionsConfiguration = FutureOr<void> Function(SentryFlutterOptions);
+
+class SentryFlutterOptions {
+  Object? transport;
+}
+
+class SentryFlutter {
+  static Future<void> init(FlutterOptionsConfiguration optionsConfiguration) async {}
+}
+
+void initialize(Object transport) {
+  SentryFlutter.init((options) {
+    options.transport = transport;
+  });
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('transport ='), 'transport'.length)]);
+  }
+
+  void _addSentryFlutterPackage() {
+    final sentryFlutter = newPackage('sentry_flutter');
+    sentryFlutter.addFile('lib/src/sentry_flutter_options.dart', r'''
+class SentryFlutterOptions {
+  Object? transport;
+}
+''');
+    sentryFlutter.addFile('lib/src/sentry_flutter.dart', r'''
+import 'dart:async';
+import 'sentry_flutter_options.dart';
+
+typedef FlutterOptionsConfiguration = FutureOr<void> Function(SentryFlutterOptions);
+
+mixin SentryFlutter {
+  static Future<void> init(FlutterOptionsConfiguration optionsConfiguration) async {}
+}
+''');
+    sentryFlutter.addFile('lib/sentry_flutter.dart', r'''
+export 'src/sentry_flutter.dart';
+export 'src/sentry_flutter_options.dart';
+''');
   }
 
   Future<void> test_localMutation_noLint() async {

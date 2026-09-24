@@ -75,13 +75,11 @@ final class _AssertionFinder extends RecursiveAstVisitor<void> {
   final String projectRoot;
   final Map<String, CompilationUnit> parsedHelpers;
   final Set<String> shadowedAssertions;
-  static const _assertionFunctions = {
-    'expect',
-    'expectLater',
-    'fail',
-    'verify',
-    'verifyInOrder',
-    'verifyNever',
+  static const _assertionFunctions = {'expect', 'expectLater', 'fail'};
+  static const _verificationGetters = {'verify', 'verifyInOrder', 'verifyNever'};
+  static const _verificationLibraries = {
+    'package:mocktail/src/mocktail.dart',
+    'package:mockito/src/mock.dart',
   };
   static const _assertionCallbackWrappers = {'fakeAsync'};
 
@@ -94,8 +92,15 @@ final class _AssertionFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (_assertionFunctions.contains(node.methodName.name) &&
+    final methodName = node.methodName.name;
+    if (_assertionFunctions.contains(methodName) &&
         (assertionScope == null || _isResolvedAssertion(node))) {
+      hasAssertion = true;
+      return;
+    }
+
+    if (_verificationGetters.contains(methodName) &&
+        _isResolvedVerificationGetter(_methodInvocationElement(node))) {
       hasAssertion = true;
       return;
     }
@@ -114,6 +119,71 @@ final class _AssertionFinder extends RecursiveAstVisitor<void> {
 
     super.visitMethodInvocation(node);
   }
+
+  @override
+  void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
+    if (_isResolvedVerificationGetter(_functionExpressionElement(node.function))) {
+      hasAssertion = true;
+      return;
+    }
+
+    super.visitFunctionExpressionInvocation(node);
+  }
+
+  Element? _methodInvocationElement(MethodInvocation node) {
+    final resolvedElement = node.methodName.element;
+    if (resolvedElement != null || assertionScope == null) return resolvedElement;
+
+    final methodName = node.methodName.name;
+    final target = node.target;
+    if (target == null) {
+      if (shadowedAssertions.contains(methodName)) return null;
+      return assertionScope!.lookup(methodName).getter;
+    }
+
+    final prefixName = switch (target) {
+      SimpleIdentifier(:final name) => name,
+      _ => null,
+    };
+    if (prefixName == null || shadowedAssertions.contains(prefixName)) return null;
+    final prefix = assertionScope!.lookup(prefixName).getter;
+    return prefix is PrefixElement ? prefix.scope.lookup(methodName).getter : null;
+  }
+
+  Element? _functionExpressionElement(Expression function) {
+    final resolvedElement = switch (function) {
+      SimpleIdentifier(:final element) => element,
+      PrefixedIdentifier(:final identifier) => identifier.element,
+      PropertyAccess(:final propertyName) => propertyName.element,
+      ParenthesizedExpression(:final expression) => _functionExpressionElement(expression),
+      _ => null,
+    };
+    if (resolvedElement != null || assertionScope == null) return resolvedElement;
+
+    return switch (function) {
+      SimpleIdentifier(:final name) =>
+        shadowedAssertions.contains(name) ? null : assertionScope!.lookup(name).getter,
+      PrefixedIdentifier(:final prefix, :final identifier) => _prefixedVerificationElement(
+        prefix.name,
+        identifier.name,
+      ),
+      PropertyAccess(target: SimpleIdentifier(:final name), :final propertyName) =>
+        _prefixedVerificationElement(name, propertyName.name),
+      ParenthesizedExpression(:final expression) => _functionExpressionElement(expression),
+      _ => null,
+    };
+  }
+
+  Element? _prefixedVerificationElement(String prefixName, String memberName) {
+    if (shadowedAssertions.contains(prefixName)) return null;
+    final prefix = assertionScope!.lookup(prefixName).getter;
+    return prefix is PrefixElement ? prefix.scope.lookup(memberName).getter : null;
+  }
+
+  bool _isResolvedVerificationGetter(Element? element) =>
+      element is GetterElement &&
+      _verificationGetters.contains(element.name) &&
+      _verificationLibraries.contains(element.library.identifier);
 
   bool _isResolvedAssertion(MethodInvocation node) {
     if (node.target != null || shadowedAssertions.contains(node.methodName.name)) return false;

@@ -24,6 +24,53 @@ final class MissingTestAssertionTest extends AnalysisRuleTest {
     newPackage('fake_async').addFile('lib/fake_async.dart', r'''
 void fakeAsync(void Function(Object clock) body) { body(Object()); }
 ''');
+    final mocktail = newPackage('mocktail');
+    mocktail.addFile('lib/mocktail.dart', "export 'src/mocktail.dart';");
+    mocktail.addFile('lib/src/mocktail.dart', r'''
+final class VerificationResult {
+  void called(int count) {}
+}
+
+typedef Verify = VerificationResult Function<T>(T Function() invocation);
+typedef VerifyInOrder = List<VerificationResult> Function<T>(List<T Function()> invocations);
+
+Verify _makeVerify(bool never) => <T>(T Function() invocation) => VerificationResult();
+VerifyInOrder _makeVerifyInOrder() => <T>(List<T Function()> invocations) => [];
+
+Verify get verify => _makeVerify(false);
+Verify get verifyNever => _makeVerify(true);
+VerifyInOrder get verifyInOrder => _makeVerifyInOrder();
+''');
+    final mockito = newPackage('mockito');
+    mockito.addFile('lib/mockito.dart', r'''
+export 'src/mock.dart' show verify, verifyInOrder, verifyNever;
+''');
+    mockito.addFile('lib/src/mock.dart', r'''
+final class VerificationResult {
+  void called(Object matcher) {}
+}
+
+typedef Verification = VerificationResult Function<T>(T matchingInvocation);
+typedef VerificationInOrder = List<VerificationResult> Function<T>(
+  List<T> matchingInvocations,
+);
+
+Verification _makeVerify(bool never) => <T>(T matchingInvocation) => VerificationResult();
+VerificationInOrder _makeVerifyInOrder() => <T>(List<T> matchingInvocations) => [];
+
+Verification get verify => _makeVerify(false);
+Verification get verifyNever => _makeVerify(true);
+VerificationInOrder get verifyInOrder => _makeVerifyInOrder();
+''');
+    newPackage('other').addFile('lib/other.dart', r'''
+final class VerificationResult {
+  void called(int count) {}
+}
+
+typedef Verify = VerificationResult Function<T>(T Function() invocation);
+
+Verify get verify => <T>(T Function() invocation) => VerificationResult();
+''');
     super.setUp();
   }
 
@@ -156,8 +203,8 @@ void main() {
 ''');
   }
 
-  Future<void> test_verifyOnlyTest_noLint() async {
-    await assertNoDiagnostics(r'''
+  Future<void> test_unitStubVerifyOnlyTest_lint() async {
+    const source = r'''
 void test(String name, void Function() body) {}
 
 final class VerificationResult {
@@ -173,22 +220,21 @@ void main() {
     }).called(1);
   });
 }
-''');
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf("test('persists through dependency'"), 'test'.length),
+    ]);
   }
 
-  Future<void> test_asyncVerifyOnlyTest_noLint() async {
+  Future<void> test_mocktailGetterVerifyOnlyTest_noLint() async {
     await assertNoDiagnostics(r'''
-void test(String name, Future<void> Function() body) {}
+import 'package:mocktail/mocktail.dart';
 
-final class VerificationResult {
-  void called(int count) {}
-}
-
-VerificationResult verify(void Function() body) => VerificationResult();
+void test(String name, void Function() body) {}
 
 void main() {
-  test('persists through dependency', () async {
-    await Future<void>.value();
+  test('verifies persisted behavior', () {
     verify(() {
       print('save');
     }).called(1);
@@ -197,40 +243,345 @@ void main() {
 ''');
   }
 
-  Future<void> test_verifyInOrderOnlyTest_noLint() async {
+  Future<void> test_prefixedMocktailGetterVerifyOnlyTest_noLint() async {
     await assertNoDiagnostics(r'''
+import 'package:mocktail/mocktail.dart' as mocktail;
+
+void test(String name, void Function() body) {}
+
+void main() {
+  test('verifies persisted behavior through an import prefix', () {
+    mocktail.verify(() => 'save').called(1);
+  });
+}
+''');
+  }
+
+  Future<void> test_asyncVerifyOnlyTest_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:mocktail/mocktail.dart';
+
 void test(String name, Future<void> Function() body) {}
-void verifyInOrder(List<void Function()> calls) {}
+
+void main() {
+  test('persists through dependency', () async {
+    await Future<void>.value();
+    verify(() {
+      print('save');
+    }).called(1);
+  });
+  }
+''');
+  }
+
+  Future<void> test_mocktailVerifyInOrderOnlyTest_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:mocktail/mocktail.dart';
+
+void test(String name, Future<void> Function() body) {}
 
 void main() {
   test('persists in order', () async {
     await Future<void>.value();
     verifyInOrder([
-      () {
-        print('first');
-      },
-      () {
-        print('second');
-      },
+      () => 'first',
+      () => 'second',
     ]);
   });
 }
 ''');
   }
 
-  Future<void> test_verifyNeverOnlyTest_noLint() async {
+  Future<void> test_prefixedMocktailVerifyInOrderOnlyTest_noLint() async {
     await assertNoDiagnostics(r'''
+import 'package:mocktail/mocktail.dart' as mocktail;
+
 void test(String name, void Function() body) {}
-void verifyNever(void Function() body) {}
 
 void main() {
-  test('skips dependency', () {
-    verifyNever(() {
-      print('save');
-    });
+  test('verifies order through an import prefix', () {
+    mocktail.verifyInOrder([
+      () => 'first',
+      () => 'second',
+    ]);
   });
 }
 ''');
+  }
+
+  Future<void> test_mocktailVerifyNeverOnlyTest_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:mocktail/mocktail.dart';
+
+void test(String name, void Function() body) {}
+
+void main() {
+  test('skips dependency', () {
+    verifyNever(() => 'save');
+  });
+}
+''');
+  }
+
+  Future<void> test_prefixedMocktailVerifyNeverOnlyTest_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:mocktail/mocktail.dart' as mocktail;
+
+void test(String name, void Function() body) {}
+
+void main() {
+  test('skips dependency through an import prefix', () {
+    mocktail.verifyNever(() => 'delete');
+  });
+}
+''');
+  }
+
+  Future<void> test_mockitoVerifyGetterOnlyTest_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:mockito/mockito.dart';
+
+void test(String name, void Function() body) {}
+
+void main() {
+  test('verifies calls with Mockito verify', () {
+    verify('save').called(1);
+  });
+}
+''');
+  }
+
+  Future<void> test_prefixedMockitoVerifyGetterOnlyTest_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:mockito/mockito.dart' as mockito;
+
+void test(String name, void Function() body) {}
+
+void main() {
+  test('verifies calls with prefixed Mockito verify', () {
+    mockito.verify('save').called(1);
+  });
+}
+''');
+  }
+
+  Future<void> test_mockitoVerifyNeverGetterOnlyTest_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:mockito/mockito.dart';
+
+void test(String name, void Function() body) {}
+
+void main() {
+  test('verifies calls with Mockito verifyNever', () {
+    verifyNever('delete').called(0);
+  });
+}
+''');
+  }
+
+  Future<void> test_prefixedMockitoVerifyNeverGetterOnlyTest_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:mockito/mockito.dart' as mockito;
+
+void test(String name, void Function() body) {}
+
+void main() {
+  test('verifies calls with prefixed Mockito verifyNever', () {
+    mockito.verifyNever('delete').called(0);
+  });
+}
+''');
+  }
+
+  Future<void> test_mockitoVerifyInOrderGetterOnlyTest_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:mockito/mockito.dart';
+
+void test(String name, void Function() body) {}
+
+void main() {
+  test('verifies call order with Mockito', () {
+    verifyInOrder(['first', 'second']);
+  });
+}
+''');
+  }
+
+  Future<void> test_prefixedMockitoVerifyInOrderGetterOnlyTest_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:mockito/mockito.dart' as mockito;
+
+void test(String name, void Function() body) {}
+
+void main() {
+  test('verifies call order with prefixed Mockito', () {
+    mockito.verifyInOrder(['first', 'second']);
+  });
+}
+''');
+  }
+
+  Future<void> test_fakeMemberVerifyGetter_lint() async {
+    const source = r'''
+void test(String name, void Function() body) {}
+
+final class VerificationResult {
+  void called(int count) {}
+}
+
+typedef Verify = VerificationResult Function<T>(T Function() invocation);
+
+final class FakeVerifier {
+  Verify get verify => <T>(T Function() invocation) => VerificationResult();
+}
+
+void main() {
+  final fake = FakeVerifier();
+  test('fake verification member', () {
+    fake.verify(() => 'save').called(1);
+  });
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf("test('fake verification member'"), 'test'.length),
+    ]);
+  }
+
+  Future<void> test_differentLibraryVerifyGetter_lint() async {
+    const source = r'''
+import 'package:other/other.dart' as other;
+
+void test(String name, void Function() body) {}
+
+void main() {
+  test('other library verification', () {
+    other.verify(() => 'save').called(1);
+  });
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf("test('other library verification'"), 'test'.length),
+    ]);
+  }
+
+  Future<void> test_localVerifyGetter_lint() async {
+    const source = r'''
+void test(String name, void Function() body) {}
+
+final class VerificationResult {
+  void called(int count) {}
+}
+
+typedef Verify = VerificationResult Function<T>(T Function() invocation);
+Verify get verify => <T>(T Function() invocation) => VerificationResult();
+
+void main() {
+  test('local getter is not an assertion', () {
+    verify(() => 'save').called(1);
+  });
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf("test('local getter is not an assertion'"), 'test'.length),
+    ]);
+  }
+
+  Future<void> test_deferredMocktailGetter_lint() async {
+    const source = r'''
+import 'package:mocktail/mocktail.dart';
+
+void test(String name, void Function() body) {}
+
+void main() {
+  test('defers verification until after the test', () {
+    final verifyLater = () => verify(() => 'save').called(1);
+    print(verifyLater);
+  });
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf("test('defers verification until after the test'"), 'test'.length),
+    ]);
+  }
+
+  Future<void> test_resolvedMocktailHelperAssertion_noLint() async {
+    newFile('$testPackageLibPath/assertions.dart', r'''
+import 'package:mocktail/mocktail.dart' as mocktail;
+
+void assertSaved() {
+  mocktail.verify(() => 'save').called(1);
+}
+''');
+    const source = r'''
+import '../lib/assertions.dart';
+
+void test(String name, void Function() body) {}
+
+void main() {
+  test('delegates to a Mocktail verification helper', () {
+    assertSaved();
+  });
+}
+''';
+    final path = '$testPackageRootPath/test/mocktail_helper_assertion_test.dart';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, []);
+  }
+
+  Future<void> test_shadowedMocktailBindingsInHelper_lint() async {
+    newFile('$testPackageLibPath/assertions.dart', r'''
+import 'package:mocktail/mocktail.dart';
+
+void shadowedVerifier() {
+  void verify<T>(T invocation) {}
+  verify('save');
+}
+''');
+    newFile('$testPackageLibPath/shadowed_prefix_assertions.dart', r'''
+import 'package:mocktail/mocktail.dart' as mocktail;
+
+typedef _LocalVerify = _LocalVerificationResult Function<T>(T Function() invocation);
+
+final class _LocalVerificationResult {
+  void called(int count) {}
+}
+
+final class _LocalMocktail {
+  _LocalVerify get verify => <T>(T Function() invocation) => _LocalVerificationResult();
+}
+
+void shadowedPrefix() {
+  final mocktail = _LocalMocktail();
+  mocktail.verify(() => 'save').called(1);
+}
+''');
+    const source = r'''
+import '../lib/assertions.dart';
+import '../lib/shadowed_prefix_assertions.dart';
+
+void test(String name, void Function() body) {}
+
+void main() {
+  test('uses a shadowing local verifier', () {
+    shadowedVerifier();
+  });
+  test('uses a shadowing local prefix', () {
+    shadowedPrefix();
+  });
+}
+''';
+    final path = '$testPackageRootPath/test/shadowed_mocktail_helper_test.dart';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [
+      lint(source.indexOf("test('uses a shadowing local verifier'"), 'test'.length),
+      lint(source.indexOf("test('uses a shadowing local prefix'"), 'test'.length),
+    ]);
   }
 
   Future<void> test_assertionOnlyInNestedHelper_lint() async {

@@ -87,17 +87,26 @@ class ProductCardSample extends ProductCard {
 ''');
   }
 
-  Future<void> test_allowsResolvedMultiPreviewClass() async {
-    await assertNoDiagnostics(r'''
+  Future<void> test_reportsBoundaryLiteralInsideMultiPreviewClass() async {
+    const source = r'''
 import 'package:flutter/widget_previews.dart';
 
 final class TextScalePreviews extends MultiPreview {
   const TextScalePreviews();
 
+  static const _scales = {'large': 2.0, 'huge': 3.0};
+
   @override
-  List<Preview> get previews => [Preview(name: 'Large', textScaleFactor: 2.5)];
+  List<Preview> get previews => [
+    Preview(name: 'Large', textScaleFactor: 2.5),
+    Preview(name: 'Huge', textScaleFactor: _scales['huge']),
+  ];
 }
-''');
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf("_scales['huge']") + '_scales['.length, "'huge'".length),
+    ]);
   }
 
   Future<void> test_reportsSampleDataUnderLookalikePreviewAnnotation() async {

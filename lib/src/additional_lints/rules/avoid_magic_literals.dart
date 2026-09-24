@@ -10,8 +10,7 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 /// named constants, value objects, or semantic helpers.
 ///
 /// Deterministic sample data inside resolved Flutter `@Preview` functions,
-/// methods, and constructors, and inside `Preview` / `MultiPreview` classes, is
-/// exempt; look-alike annotations still report.
+/// methods, and constructors is exempt; look-alike annotations still report.
 class AvoidMagicLiterals extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_magic_literals',
@@ -141,15 +140,7 @@ bool _isAllowedLiteralContext(AstNode node) {
       _isDirectVariableInitializer(node) ||
       _isInDefaultFormalParameter(node) ||
       _isInEnumConstant(node) ||
-      _isInWidgetPreview(node);
-}
-
-bool _isInWidgetPreview(AstNode node) {
-  if (enclosingWidgetPreview(node) != null) return true;
-  final declaration = enclosingClass(node);
-  return declaration != null &&
-      (hasWidgetPreviewAnnotation(declaration) ||
-          isClassAssignableTo(declaration, flutterWidgetPreviewChecker));
+      enclosingWidgetPreview(node) != null;
 }
 
 bool _isInDirective(AstNode node) => node.thisOrAncestorOfType<Directive>() != null;

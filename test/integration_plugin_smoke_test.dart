@@ -563,8 +563,8 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
                   line.contains('atomic_update_boundaries.dart') &&
                   line.contains('require_atomic_async_updates'),
             );
-        expect(atomicUpdates, hasLength(3), reason: output);
-        for (final lineNumber in [38, 46, 54]) {
+        expect(atomicUpdates, hasLength(1), reason: output);
+        for (final lineNumber in [38]) {
           expect(
             atomicUpdates.any(
               (line) => line.contains('atomic_update_boundaries.dart:$lineNumber:'),

@@ -207,6 +207,11 @@ final class RiverpodWatchNoSelectTest extends _RiverpodRuleTest {
     newPackage('riverpod').addFile('lib/riverpod.dart', r'''
 class AsyncValue<T> {
 }
+abstract class ProviderListenable<T> {}
+sealed class MutationState<T> {
+  bool get isPending => false;
+}
+final class Mutation<T> implements ProviderListenable<MutationState<T>> {}
 extension AsyncValueExtensions<T> on AsyncValue<T> {
   R when<R>({
     required R Function(T value) data,
@@ -540,6 +545,70 @@ class View {
 ''');
   }
 
+  Future<void> test_allowsSealedUnionVariantSwitch() async {
+    await assertAllows(r'''
+class Source<T> {}
+class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+class User {}
+sealed class AuthState {}
+class Authenticated extends AuthState { Authenticated(this.user); final User user; }
+class Unauthenticated extends AuthState {}
+class AuthLoading extends AuthState {}
+class HomeScreen { const HomeScreen({required User user}); }
+class LoginScreen { const LoginScreen(); }
+class LoadingScreen { const LoadingScreen(); }
+final authProvider = Source<AuthState>();
+class View {
+  Object build(WidgetRef ref) {
+    final auth = ref.watch(authProvider);
+    return switch (auth) {
+      Authenticated(:final user) => HomeScreen(user: user),
+      Unauthenticated() => const LoginScreen(),
+      AuthLoading() => const LoadingScreen(),
+    };
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsAsyncValueVariantDestructuring() async {
+    await assertAllows(r'''
+class Source<T> {}
+class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+sealed class AsyncValue<T> {}
+class AsyncData<T> extends AsyncValue<T> { AsyncData(this.value); final T value; }
+class AsyncError<T> extends AsyncValue<T> { AsyncError(this.error); final Object error; }
+class AsyncLoading<T> extends AsyncValue<T> {}
+final myAsyncProvider = Source<AsyncValue<int>>();
+class View {
+  String build(WidgetRef ref) {
+    final asyncData = ref.watch(myAsyncProvider);
+    return switch (asyncData) {
+      AsyncData(:final value) => value.toString(),
+      AsyncError(:final error) => '$error',
+      AsyncLoading() => 'loading',
+    };
+  }
+}
+''');
+  }
+
+  Future<void> test_reportsSealedBaseTypeFieldPattern() async {
+    const source = r'''
+class Source<T> {}
+class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+sealed class Session { const Session(this.token); final String token; }
+class ActiveSession extends Session { const ActiveSession(super.token); }
+final signInProvider = Source<Session>();
+class View {
+  String build(WidgetRef ref) => switch (ref.watch(signInProvider)) {
+    Session(:final token) => token,
+  };
+}
+''';
+    await assertDiagnostics(source, [compatLint(source, 'ref.watch(signInProvider)', ruleName)]);
+  }
+
   Future<void> test_reportsPartialObjectPatternSwitch() async {
     const source = r'''
 class Source<T> {}
@@ -575,6 +644,34 @@ class View {
     await assertDiagnostics(source, [
       compatLint(source, 'ref.watch(accountStateProvider)', ruleName),
       compatLint(source, 'ref.watch(profileProvider)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsMutationStateFlags() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+class WidgetRef {
+  T watch<T>(ProviderListenable<T> source) => throw 'synthetic';
+}
+final removeTodoMutation = Mutation<void>();
+class View {
+  Object build(WidgetRef ref) => ref.watch(removeTodoMutation).isPending;
+}
+''');
+  }
+
+  Future<void> test_reportsLocalMutationStateLookalike() async {
+    const source = r'''
+class Source<T> {}
+class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+class MutationState { bool get isPending => false; }
+final removeTodoMutation = Source<MutationState>();
+class View {
+  Object build(WidgetRef ref) => ref.watch(removeTodoMutation).isPending;
+}
+''';
+    await assertDiagnostics(source, [
+      compatLint(source, 'ref.watch(removeTodoMutation)', ruleName),
     ]);
   }
 

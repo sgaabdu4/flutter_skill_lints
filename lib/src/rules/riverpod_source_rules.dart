@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
@@ -419,14 +420,76 @@ bool _isKeepAliveRiverpodAnnotation(SourceScannerContext context, int lineIndex)
 }
 
 bool _hasKeepAliveTickerModeWorkaround(SourceScannerContext context, int annotationLine) {
-  return context.nearOriginal(
-    annotationLine,
-    RegExp(
-      r'(?:#4709|riverpod#4709|TickerMode|pausedActiveSubscriptionCount)',
-      caseSensitive: false,
-    ),
-    6,
+  final workaround = RegExp(
+    r'(?:#4709|riverpod#4709|TickerMode|pausedActiveSubscriptionCount)',
+    caseSensitive: false,
   );
+  final lineInfo = context.unit.lineInfo;
+  for (final declaration in context.unit.declarations) {
+    if (!declaration.metadata.any(
+      (annotation) => lineInfo.getLocation(annotation.offset).lineNumber - 1 == annotationLine,
+    )) {
+      continue;
+    }
+    return _declarationComments(context, declaration).any(workaround.hasMatch);
+  }
+  return false;
+}
+
+/// Comments owned by [declaration]: its leading comments and comments between
+/// its metadata and its name, such as a trailing note on the annotation line.
+Iterable<String> _declarationComments(
+  SourceScannerContext context,
+  CompilationUnitMember declaration,
+) {
+  // Documentation comments precede the first code token, so start there.
+  final first = declaration.metadata.isEmpty
+      ? declaration.firstTokenAfterCommentAndMetadata
+      : declaration.metadata.first.beginToken;
+  final nameToken = switch (declaration) {
+    FunctionDeclaration(:final name) => name,
+    ClassDeclaration(:final namePart) => namePart.typeName,
+    _ => declaration.firstTokenAfterCommentAndMetadata,
+  };
+  return _ownedComments(context, first, nameToken);
+}
+
+/// Comments attached to the tokens [first]..[last]. Leading comments that sit
+/// on the previous token's line belong to the previous code, not this node.
+/// With [trailing], a comment after [last] on the same line is included.
+Iterable<String> _ownedComments(
+  SourceScannerContext context,
+  Token first,
+  Token last, {
+  bool trailing = false,
+}) {
+  final lineInfo = context.unit.lineInfo;
+  int lineOf(int offset) => lineInfo.getLocation(offset).lineNumber;
+  final previous = first.previous;
+  final previousLine = previous == null || previous.isEof ? -1 : lineOf(previous.end);
+  final lastLine = lineOf(last.end);
+  final next = last.next;
+  return [
+    ..._commentTokens(first).where((comment) => lineOf(comment.offset) > previousLine),
+    for (final token in _tokensAfter(first, last)) ..._commentTokens(token),
+    if (trailing && next != null)
+      ..._commentTokens(next).where((comment) => lineOf(comment.offset) == lastLine),
+  ].map((comment) => comment.lexeme);
+}
+
+Iterable<Token> _commentTokens(Token token) sync* {
+  for (Token? comment = token.precedingComments; comment != null; comment = comment.next) {
+    yield comment;
+  }
+}
+
+/// Tokens after [first] up to and including [last].
+Iterable<Token> _tokensAfter(Token first, Token last) sync* {
+  if (first == last) return;
+  for (Token? token = first.next; token != null && !token.isEof; token = token.next) {
+    yield token;
+    if (token == last) return;
+  }
 }
 
 bool _hasFamilySignatureAfterKeepAlive(SourceScannerContext context, int annotationLine) {

@@ -17,6 +17,8 @@ final class _ScalarWatchVisitor extends RecursiveAstVisitor<void> {
         offsets.add(node.offset);
       }
       if (_consumesWholeWatch(node)) offsets.add(node.offset);
+      // The skill allows MutationState flags (isPending, hasError, ...) for simple checks.
+      if (_isRiverpodMutationElement(type?.element, 'MutationState')) offsets.add(node.offset);
     }
     super.visitMethodInvocation(node);
   }
@@ -81,9 +83,12 @@ bool _isWholeValueUse(Expression value) {
     }
   }
   if (parent is SwitchExpression && parent.expression == value) {
+    final scrutinee = value.staticType?.element;
     return parent.cases.every((branch) {
       final pattern = branch.guardedPattern.pattern;
-      return pattern is WildcardPattern || pattern is ObjectPattern && pattern.fields.isEmpty;
+      return pattern is WildcardPattern ||
+          pattern is ObjectPattern &&
+              (pattern.fields.isEmpty || _isSealedVariantPattern(pattern, scrutinee));
     });
   }
   if (parent is ReturnStatement && value.staticType?.isDartCoreList == true) return true;
@@ -106,3 +111,61 @@ bool _hasCompleteAsyncValueDispatch(MethodInvocation invocation) {
       .toSet();
   return branches.containsAll(const {'data', 'loading', 'error'});
 }
+
+bool _isRiverpodMutationElement(Element? element, String name) =>
+    element?.name == name &&
+    (element?.library?.uri.toString().startsWith('package:riverpod/') ?? false);
+
+/// Collects `Mutation<T>()` creations that resolve to Riverpod's Mutation.
+final class _RiverpodMutationCreations extends RecursiveAstVisitor<void> {
+  final nodes = <InstanceCreationExpression>[];
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    if (_isRiverpodMutationElement(node.constructorName.type.element, 'Mutation')) {
+      nodes.add(node);
+    }
+    super.visitInstanceCreationExpression(node);
+  }
+}
+
+void _reportAtOffset(ScannerRuleReporter reporter, SourceScannerContext context, int offset) {
+  final location = context.unit.lineInfo.getLocation(offset);
+  reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+}
+
+/// Collects Riverpod `read` calls made inside a Riverpod `Mutation.run` callback.
+final class _RiverpodReadsInMutationRun extends RecursiveAstVisitor<void> {
+  final nodes = <MethodInvocation>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.methodName.name == 'read' &&
+        _isRiverpodLibrary(node.methodName.element?.library) &&
+        node.thisOrAncestorMatching(_isMutationRunCallback) != null) {
+      nodes.add(node);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+bool _isMutationRunCallback(AstNode node) {
+  if (node is! FunctionExpression) return false;
+  final arguments = node.parent;
+  final invocation = arguments?.parent;
+  return arguments is ArgumentList &&
+      invocation is MethodInvocation &&
+      invocation.methodName.name == 'run' &&
+      _isRiverpodMutationElement(invocation.methodName.element?.enclosingElement, 'Mutation');
+}
+
+bool _isRiverpodLibrary(LibraryElement? library) {
+  final uri = library?.uri.toString() ?? '';
+  return uri.startsWith('package:riverpod/') || uri.startsWith('package:flutter_riverpod/');
+}
+
+/// A sealed-union variant pattern such as `Authenticated(:final user)` or
+/// `AsyncData(:final value)` dispatches on the whole watched value; select
+/// cannot express that exhaustive switch.
+bool _isSealedVariantPattern(ObjectPattern pattern, Element? scrutinee) =>
+    scrutinee is ClassElement && scrutinee.isSealed && pattern.type.element != scrutinee;

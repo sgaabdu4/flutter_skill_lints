@@ -59,6 +59,8 @@ void main() {
     defineReflectiveTests(RiverpodSelectArrowSyntaxTest);
     defineReflectiveTests(RiverpodSelectIdentityForbiddenTest);
     defineReflectiveTests(RiverpodMutationExperimentalWarningTest);
+    defineReflectiveTests(RiverpodMutationTopLevelTest);
+    defineReflectiveTests(RiverpodMutationRefReadTest);
     defineReflectiveTests(RiverpodAutoDisposeKeepAliveDependenciesTest);
     defineReflectiveTests(RiverpodFeatureNotifierKeepaliveTest);
     defineReflectiveTests(RiverpodKeepaliveFamilyTest);

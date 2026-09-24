@@ -99,6 +99,32 @@ final class RiverpodServiceLocatorTest extends _RiverpodRuleTest {
   String get needle => 'class ServiceLocator';
   @override
   String get source => 'class ServiceLocator {}';
+
+  Future<void> test_reportsPrefixedLocatorAndFactoryClasses() async {
+    const source = r'''
+class AppServiceLocator {
+  final Map<Type, Object> registry = {};
+}
+
+abstract class ApiServiceFactory {}
+
+class LegacyBackendProvider {}
+''';
+    await assertDiagnostics(source, [
+      compatLint(source, 'class AppServiceLocator', ruleName),
+      compatLint(source, 'class ApiServiceFactory', ruleName),
+      compatLint(source, 'class LegacyBackendProvider', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsNamesThatOnlyContainTheBannedWords() async {
+    await assertAllows(r'''
+class ServiceLocatorException implements Exception {}
+class BackendProviderConfig {}
+// class ServiceFactory {}
+const note = 'class ServiceLocator {}';
+''');
+  }
 }
 
 @reflectiveTest

@@ -1,7 +1,9 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> testSourceRules = [
@@ -131,28 +133,19 @@ final List<ScannerRule> testSourceRules = [
     },
   ),
 
-  /// Avoid inline ValueKey strings.
+  /// Avoid inline string widget keys.
   ///
-  /// Why: Flags inline ValueKey string literals outside key registries. Centralize widget
-  /// keys in a key registry.
+  /// Why: Flags `Key('...')` / `ValueKey('...')` string literals outside key registries.
+  /// Centralize widget keys in a key registry.
   scannerRule(
     code: const LintCode(
       'test_inline_value_key',
-      'Avoid inline ValueKey strings.',
+      'Avoid inline string widget keys.',
       correctionMessage: 'Centralize widget keys in a key registry.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags inline ValueKey string literals outside key registries so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        final code = context.source.code[i];
-        if (!context.isKeyRegistryFile &&
-            RegExp(r"""\bValueKey(?:<[^>]+>)?\s*\(\s*(?:const\s+)?["']""").hasMatch(code)) {
-          reporter.report(context, i, line.indexOf('ValueKey'));
-        }
-      }
-    },
+    description: 'Flags inline Key/ValueKey string literals outside key registries so the Flutter skill violation is shown during analysis.',
+    scan: _scanInlineStringKeys,
   ),
 
   /// Avoid first-match widget finders in tests.
@@ -166,17 +159,7 @@ final List<ScannerRule> testSourceRules = [
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags first-match widget finder usage in tests so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        final hasByIcon = line.contains('find.byIcon');
-        final hasFinderFirst =
-            line.contains('.first') && (line.contains('find.') || line.contains('Finder'));
-        if (context.isTestFile && (hasByIcon || hasFinderFirst)) {
-          reporter.report(context, i, 0);
-        }
-      }
-    },
+    scan: _scanFirstMatchFinders,
   ),
 ];
 
@@ -191,7 +174,7 @@ void _scanConcreteMockContracts(ScannerRuleReporter reporter, SourceScannerConte
 
 bool _mockImplementsConcreteContract(ClassDeclaration declaration) {
   final superclass = declaration.extendsClause?.superclass.element;
-  if (superclass is! ClassElement || superclass.name != 'Mock') return false;
+  if (superclass is! ClassElement || !_testDoubleBaseChecker.isExactly(superclass)) return false;
   return (declaration.implementsClause?.interfaces ?? <NamedType>[]).any((interface) {
     final type = interface.type;
     final element = type is InterfaceType ? type.element : null;
@@ -216,3 +199,69 @@ bool _isAllowedExternalMockBoundary(ClassElement element) =>
       ('package:youtube_player_iframe/src/player_value.dart', 'YoutubePlayerValue') => true,
       _ => false,
     };
+
+const _testDoubleBaseChecker = TypeChecker.any([
+  TypeChecker.fromName('Mock', packageName: 'mocktail'),
+  TypeChecker.fromName('Mock', packageName: 'mockito'),
+  TypeChecker.fromName('Fake', packageName: 'test_api'),
+]);
+
+const _widgetKeyChecker = TypeChecker.any([
+  TypeChecker.fromName('Key', packageName: 'flutter'),
+  TypeChecker.fromName('ValueKey', packageName: 'flutter'),
+]);
+
+const _finderChecker = TypeChecker.fromName('FinderBase', packageName: 'flutter_test');
+
+void _scanInlineStringKeys(ScannerRuleReporter reporter, SourceScannerContext context) {
+  if (context.isKeyRegistryFile) return;
+  final visitor = _NodeCollector<InstanceCreationExpression>();
+  context.unit.accept(visitor);
+  for (final creation in visitor.nodes) {
+    final keyClass = creation.constructorName.element?.enclosingElement;
+    if (keyClass == null || !_widgetKeyChecker.isExactly(keyClass)) continue;
+    final value = creation.argumentList.arguments.firstOrNull;
+    if (value is! StringLiteral) continue;
+    _reportNode(reporter, context, creation.constructorName);
+  }
+}
+
+void _scanFirstMatchFinders(ScannerRuleReporter reporter, SourceScannerContext context) {
+  if (!context.isTestFile) return;
+  final reportedLines = <int>{};
+  for (var i = 0; i < context.source.length; i++) {
+    if (!context.source.masked[i].contains('find.byIcon')) continue;
+    reporter.report(context, i, 0);
+    reportedLines.add(i);
+  }
+  final visitor = _NodeCollector<SimpleIdentifier>();
+  context.unit.accept(visitor);
+  for (final identifier in visitor.nodes) {
+    if (identifier.name != 'first') continue;
+    final parent = identifier.parent;
+    final target = switch (parent) {
+      PropertyAccess() when parent.propertyName == identifier => parent.realTarget,
+      PrefixedIdentifier() when parent.identifier == identifier => parent.prefix,
+      _ => null,
+    };
+    final type = target?.staticType;
+    if (type == null || !_finderChecker.isAssignableFromType(type)) continue;
+    final line = context.unit.lineInfo.getLocation(identifier.offset).lineNumber - 1;
+    if (reportedLines.add(line)) _reportNode(reporter, context, identifier);
+  }
+}
+
+void _reportNode(ScannerRuleReporter reporter, SourceScannerContext context, AstNode node) {
+  final location = context.unit.lineInfo.getLocation(node.offset);
+  reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+}
+
+final class _NodeCollector<T extends AstNode> extends GeneralizingAstVisitor<void> {
+  final nodes = <T>[];
+
+  @override
+  void visitNode(AstNode node) {
+    if (node is T) nodes.add(node);
+    super.visitNode(node);
+  }
+}

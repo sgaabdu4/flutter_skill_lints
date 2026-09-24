@@ -35,6 +35,7 @@ export 'src/player_value.dart';
       'class YoutubePlayerController {}',
     );
     youtube.addFile('lib/src/player_value.dart', 'class YoutubePlayerValue {}');
+    _addTestingNavigationPackages();
     super.setUp();
   }
 
@@ -44,14 +45,14 @@ export 'src/player_value.dart';
   String get needle => 'class MockUserRepository';
   @override
   String get source => '''
-class Mock {}
+import 'package:mocktail/mocktail.dart';
 class UserRepository {}
 class MockUserRepository extends Mock implements UserRepository {}
 ''';
 
   Future<void> test_allowsAbstractContractsWithoutNamingPrefix() async {
     await assertAllows(r'''
-class Mock { dynamic noSuchMethod(Invocation invocation) => null; }
+import 'package:mocktail/mocktail.dart';
 abstract interface class TestBridge { void send(); }
 abstract class BackendPort { void send(); }
 class MockTestBridge extends Mock implements TestBridge {}
@@ -63,7 +64,7 @@ class MockAlias extends Mock implements BridgeAlias {}
 
   Future<void> test_reportsConcreteContractWithInterfacePrefix() async {
     const source = r'''
-class Mock { dynamic noSuchMethod(Invocation invocation) => null; }
+import 'package:mocktail/mocktail.dart';
 interface class IConcreteBridge { void send() {} }
 class MockBridge extends Mock implements IConcreteBridge {}
 ''';
@@ -79,7 +80,7 @@ class MockBridge extends Mock implements IConcreteBridge {}
     final filePath = '$testPackageRootPath/test/helpers/appwrite_test_utils.dart';
     newFile(filePath, r'''
 import 'package:appwrite/appwrite.dart';
-class Mock {}
+import 'package:mocktail/mocktail.dart';
 class MockFunctions extends Mock implements Functions {}
 class MockStorage extends Mock implements Storage {}
 class MockTablesDB extends Mock implements TablesDB {}
@@ -94,7 +95,7 @@ class MockTeams extends Mock implements Teams {}
     final filePath = '$testPackageRootPath/test/core/widgets/exercise_demo_sheet_test.dart';
     newFile(filePath, r'''
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
-class Mock {}
+import 'package:mocktail/mocktail.dart';
 class MockYoutubePlayerController extends Mock implements YoutubePlayerController {}
 class MockYoutubePlayerValue extends Mock implements YoutubePlayerValue {}
 ''');
@@ -104,7 +105,7 @@ class MockYoutubePlayerValue extends Mock implements YoutubePlayerValue {}
 
   Future<void> test_localConcreteSdkNameStillReports() async {
     const source = r'''
-class Mock {}
+import 'package:mocktail/mocktail.dart';
 class Account {}
 class MockAccount extends Mock implements Account {}
 ''';
@@ -118,7 +119,7 @@ class MockAccount extends Mock implements Account {}
 
   Future<void> test_localFunctionsAndStorageConcreteNamesStillReport() async {
     const source = r'''
-class Mock {}
+import 'package:mocktail/mocktail.dart';
 class Functions {}
 class Storage {}
 class MockFunctions extends Mock implements Functions {}
@@ -135,7 +136,7 @@ class MockStorage extends Mock implements Storage {}
 
   Future<void> test_allowsLocalFunctionsAndStorageInterfaces() async {
     await assertAllows(r'''
-class Mock { dynamic noSuchMethod(Invocation invocation) => null; }
+import 'package:mocktail/mocktail.dart';
 abstract interface class Functions { void execute(); }
 abstract interface class Storage { void save(); }
 class MockFunctions extends Mock implements Functions {}
@@ -145,7 +146,7 @@ class MockStorage extends Mock implements Storage {}
 
   Future<void> test_concreteAliasStillReports() async {
     const source = r'''
-class Mock {}
+import 'package:mocktail/mocktail.dart';
 class ConcreteBridge {}
 typedef BridgeAlias = ConcreteBridge;
 class MockBridge extends Mock implements BridgeAlias {}
@@ -156,6 +157,40 @@ class MockBridge extends Mock implements BridgeAlias {}
     await assertDiagnosticsInFile(filePath, [
       compatLint(analyzedSource, 'class MockBridge', ruleName),
     ]);
+  }
+
+  Future<void> test_reportsFakeOfConcreteContract() async {
+    const source = r'''
+import 'package:mocktail/mocktail.dart';
+class ProductRepository {}
+class FakeProductRepository extends Fake implements ProductRepository {}
+''';
+    final filePath = '$testPackageRootPath/test/fake_concrete_test.dart';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    newFile(filePath, analyzedSource);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, 'class FakeProductRepository', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillFakeOfInterface() async {
+    await assertAllows(r'''
+import 'package:mocktail/mocktail.dart';
+abstract interface class IProductRepository { Future<List<Object>> fetchAll(); }
+class FakeProductRepository extends Fake implements IProductRepository {
+  List<Object> items = [];
+  @override
+  Future<List<Object>> fetchAll() async => items;
+}
+''', path: '$testPackageRootPath/test/fake_interface_test.dart');
+  }
+
+  Future<void> test_allowsLocalClassNamedMock() async {
+    await assertAllows(r'''
+class Mock {}
+class ProductRepository {}
+class MockProductRepository extends Mock implements ProductRepository {}
+''', path: '$testPackageRootPath/test/local_mock_name_test.dart');
   }
 }
 
@@ -193,23 +228,62 @@ final class TestTapAtTest extends _TestFileRuleTest {
 @reflectiveTest
 final class TestInlineValueKeyTest extends _TestRuleTest {
   @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'test_inline_value_key';
   @override
   String get needle => "ValueKey('todo-row')";
   @override
   String get source => r'''
-class ValueKey<T> {
-  const ValueKey(T value);
-}
+import 'package:flutter/foundation.dart';
 
 void main() {
   const ValueKey('todo-row');
 }
 ''';
+
+  Future<void> test_reportsInlineKeyFactoryString() async {
+    const source = r'''
+import 'package:flutter/foundation.dart';
+
+void main() {
+  const Key('probe.save');
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, "Key('probe.save')", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsRegistryConstantKeys() async {
+    await assertAllows(r'''
+import 'package:flutter/foundation.dart';
+
+abstract final class AppWidgetKeys {
+  static const productCloseButton = 'product.close.button';
+}
+
+void main() {
+  const ValueKey(AppWidgetKeys.productCloseButton);
+  const Key(AppWidgetKeys.productCloseButton);
+}
+''');
+  }
 }
 
 @reflectiveTest
 final class TestFirstMatchFinderTest extends _TestFileRuleTest {
+  @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
   @override
   String get ruleName => 'test_first_match_finder';
   @override
@@ -230,6 +304,31 @@ void main() {
 ''');
 
     await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsFirstOnFinder() async {
+    const source = r'''
+import 'package:flutter_test/flutter_test.dart';
+
+Future<void> tapFirst(WidgetTester tester) async {
+  await tester.tap(find.byType(Object).first);
+}
+''';
+    final filePath = '$testPackageRootPath/test/first_finder_test.dart';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    newFile(filePath, analyzedSource);
+    await assertDiagnosticsInFile(filePath, [compatLint(analyzedSource, 'first);', ruleName)]);
+  }
+
+  Future<void> test_allowsIterableFirstInsideFinderArgument() async {
+    await assertAllows(r'''
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  final names = <String>['a'];
+  find.text(names.first);
+}
+''', path: '$testPackageRootPath/test/finder_argument_test.dart');
   }
 }
 

@@ -299,4 +299,104 @@ class BuildContext {}
 class Widget {}
 ''');
   }
+
+  /// Opt-in stubs for rules that resolve Flutter, flutter_test, mocktail and
+  /// go_router elements.
+  void _addTestingNavigationPackages() {
+    newPackage('flutter')
+      ..addFile('lib/foundation.dart', r'''
+abstract class Key {
+  const factory Key(String value) = ValueKey<String>;
+  const Key.empty();
+}
+class ValueKey<T> extends Key {
+  const ValueKey(this.value) : super.empty();
+  final T value;
+}
+''')
+      ..addFile('lib/material.dart', r'''
+export 'foundation.dart';
+export 'widgets.dart';
+import 'widgets.dart';
+class RouteSettings {
+  const RouteSettings({this.name});
+  final String? name;
+}
+class NavigatorState {
+  bool canPop() => true;
+  void pop<T extends Object?>([T? result]) {}
+  Future<bool> maybePop<T extends Object?>([T? result]) async => true;
+  Future<T?> push<T extends Object?>(Object route) async => null;
+}
+class Navigator {
+  static NavigatorState of(BuildContext context, {bool rootNavigator = false}) => NavigatorState();
+  static NavigatorState? maybeOf(BuildContext context, {bool rootNavigator = false}) => null;
+  static void pop<T extends Object?>(BuildContext context, [T? result]) {}
+}
+class GlobalKey<T extends Object> {
+  GlobalKey();
+  BuildContext? get currentContext => null;
+  T? get currentState => null;
+}
+Future<T?> showDialog<T>({
+  required BuildContext context,
+  required Widget Function(BuildContext) builder,
+  RouteSettings? routeSettings,
+}) async => null;
+Future<T?> showModalBottomSheet<T>({
+  required BuildContext context,
+  required Widget Function(BuildContext) builder,
+  RouteSettings? routeSettings,
+}) async => null;
+''');
+    newPackage('flutter_test').addFile('lib/flutter_test.dart', r'''
+import 'package:flutter/foundation.dart';
+class FinderBase<T> {
+  FinderBase<T> get first => this;
+}
+class Finder extends FinderBase<Object> {}
+class CommonFinders {
+  const CommonFinders();
+  Finder text(String text) => Finder();
+  Finder byType(Type type) => Finder();
+  Finder byKey(Key key) => Finder();
+}
+const find = CommonFinders();
+class WidgetTester {
+  Future<void> tap(FinderBase<Object> finder) async {}
+  Future<void> pump([Duration? duration]) async {}
+}
+''');
+    newPackage('test_api').addFile('lib/fake.dart', 'abstract class Fake {}');
+    newPackage('mocktail').addFile('lib/mocktail.dart', r'''
+export 'package:test_api/fake.dart' show Fake;
+class Mock {
+  dynamic noSuchMethod(Invocation invocation) => null;
+}
+''');
+    newPackage('go_router').addFile('lib/go_router.dart', r'''
+import 'package:flutter/widgets.dart';
+class GoRouter {
+  static GoRouter of(BuildContext context) => GoRouter();
+  void go(String location, {Object? extra}) {}
+  Future<T?> push<T extends Object?>(String location, {Object? extra}) async => null;
+}
+abstract class GoRouteData {
+  const GoRouteData();
+  String get location => '';
+  void go(BuildContext context) {}
+  Future<T?> push<T>(BuildContext context) async => null;
+}
+class StatefulNavigationShell {
+  int get currentIndex => 0;
+  void goBranch(int index, {bool initialLocation = false}) {}
+}
+extension GoRouterHelper on BuildContext {
+  bool canPop() => true;
+  void pop<T extends Object?>([T? result]) {}
+  void go(String location, {Object? extra}) {}
+  Future<T?> push<T extends Object?>(String location, {Object? extra}) async => null;
+}
+''');
+  }
 }

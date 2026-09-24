@@ -36,7 +36,8 @@ final class _RepeatedIdLookupVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
-/// `items.firstWhere((item) => item.id == ...)` or `indexWhere` on an Iterable.
+/// `items.firstWhere((item) => item.id == ...)` or `indexWhere` on an Iterable
+/// whose predicate compares the element's `id`.
 bool _isLinearIdLookup(MethodInvocation node) {
   final name = node.methodName.name;
   if (name != 'firstWhere' && name != 'indexWhere') return false;
@@ -46,12 +47,9 @@ bool _isLinearIdLookup(MethodInvocation node) {
   final predicate = arguments.isEmpty ? null : arguments.first;
   if (predicate is! FunctionExpression) return false;
   final parameters = predicate.parameters?.parameters;
-  final body = predicate.body;
-  if (parameters == null || parameters.length != 1 || body is! ExpressionFunctionBody) return false;
-  final comparison = body.expression;
-  return comparison is BinaryExpression &&
-      comparison.operator.type == TokenType.EQ_EQ &&
-      _isIdOf(comparison.leftOperand, parameters.single.declaredFragment?.element);
+  final parameter = parameters?.length == 1 ? parameters?.single.declaredFragment?.element : null;
+  if (parameter == null) return false;
+  return _comparesIdOf(predicate.body, parameter);
 }
 
 /// A `for` loop whose body compares the loop item's `id`, e.g.
@@ -63,9 +61,12 @@ bool _isManualIdLookupLoop(ForLoopParts parts, Statement body) {
       variables.variables.single.declaredFragment?.element,
     _ => null,
   };
-  if (loopVariable == null) return false;
-  final finder = _IdComparisonFinder(loopVariable);
-  body.accept(finder);
+  return loopVariable != null && _comparesIdOf(body, loopVariable);
+}
+
+bool _comparesIdOf(AstNode node, Element variable) {
+  final finder = _IdComparisonFinder(variable);
+  node.accept(finder);
   return finder.found;
 }
 

@@ -392,6 +392,28 @@ class ItemNotifier {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
   }
 
+  Future<void> test_reportsCompoundAndBlockPredicatesInLoop() async {
+    const source =
+        '''
+$_item
+void apply(List<Item> items, List<String> ids, bool active) {
+  for (final id in ids) {
+    final first = items.firstWhere((item) => item.id == id && active);
+    final index = items.indexWhere((item) {
+      return item.id == id;
+    });
+    print('\$first \$index');
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '.firstWhere(', ruleName),
+      compatLint(analyzedSource, '.indexWhere(', ruleName),
+    ]);
+  }
+
   Future<void> test_allowsOneOffRepositoryMutation() async {
     await assertAllows('''
 final class StoredValue {

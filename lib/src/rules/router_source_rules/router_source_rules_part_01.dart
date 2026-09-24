@@ -40,11 +40,25 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     ),
     description: 'Flags synchronous context.pop followed by push navigation so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
+      final reportedLines = <int>{};
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
         if (RegExp(r'\bcontext\s*\.\s*pop\s*\(').hasMatch(line) && context.near(i, '.push', 4)) {
           reporter.report(context, i, line.indexOf('context'));
+          reportedLines.add(i);
         }
+      }
+      for (final pop in collectNodes<MethodInvocation>(context.unit)) {
+        if (!isResolvedNavigationPop(pop)) continue;
+        final pushesAfterPop = followingBlockStatements(pop).any(
+          (statement) => collectNodes<MethodInvocation>(statement).any(
+            (call) => call.methodName.name.startsWith('push') && isResolvedForwardNavigation(call),
+          ),
+        );
+        if (!pushesAfterPop) continue;
+        if (!reportedLines.add(context.unit.lineInfo.getLocation(pop.offset).lineNumber - 1))
+          continue;
+        reporter.reportNode(context, pop);
       }
     },
   ),
@@ -274,11 +288,22 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     description:
         'Flags raw page navigation so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
+      final reportedLines = <int>{};
       for (var i = 0; i < context.source.length; i++) {
         final column = _directRouteNavigationColumn(context, i);
         if (column != null) {
           reporter.report(context, i, column);
+          reportedLines.add(i);
         }
+      }
+      for (final call in collectNodes<MethodInvocation>(context.unit)) {
+        final targetType = call.realTarget?.staticType;
+        if (targetType == null || !goRouterChecker.isAssignableFromType(targetType)) continue;
+        if (!isResolvedForwardNavigation(call)) continue;
+        if (!reportedLines.add(context.unit.lineInfo.getLocation(call.offset).lineNumber - 1)) {
+          continue;
+        }
+        reporter.reportNode(context, call);
       }
     },
   ),
@@ -351,6 +376,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     ),
     description: 'Flags container and navigatorKey context navigation escape hatches.',
     scan: (reporter, context) {
+      final reportedLines = <int>{};
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
         final navigatorContext = RegExp(
@@ -359,6 +385,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
         ).firstMatch(line);
         if (navigatorContext != null) {
           reporter.report(context, i, navigatorContext.start);
+          reportedLines.add(i);
           continue;
         }
 
@@ -371,6 +398,15 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
           continue;
         }
         reporter.report(context, i, match.start);
+      }
+      for (final identifier in collectNodes<SimpleIdentifier>(context.unit)) {
+        if (identifier.name != 'currentContext') continue;
+        final target = _propertyTarget(identifier);
+        if (target == null || !_isNavigatorGlobalKey(target.staticType)) continue;
+        if (!reportedLines.add(context.unit.lineInfo.getLocation(target.offset).lineNumber - 1)) {
+          continue;
+        }
+        reporter.reportNode(context, target);
       }
     },
   ),
@@ -504,4 +540,26 @@ void _reportPopFallbackHelper(
   if (!_popFallbackBodyLooksLikeHelper(body)) return;
   if (_popFallbackHasRequiredSafetyChecks(body)) return;
   reporter.report(context, lineIndex, column);
+}
+
+Expression? _propertyTarget(SimpleIdentifier identifier) => switch (identifier.parent) {
+  final PropertyAccess access when access.propertyName == identifier => access.realTarget,
+  final PrefixedIdentifier prefixed when prefixed.identifier == identifier => prefixed.prefix,
+  _ => null,
+};
+
+const _globalKeyChecker = TypeChecker.fromName('GlobalKey', packageName: 'flutter');
+const _navigatorStateChecker = TypeChecker.fromName('NavigatorState', packageName: 'flutter');
+
+bool _isNavigatorGlobalKey(DartType? type) {
+  if (type is! InterfaceType) return false;
+  final key = [
+    type,
+    ...type.element.allSupertypes,
+  ].whereType<InterfaceType>().where((candidate) => _globalKeyChecker.isExactlyType(candidate));
+  return key.any(
+    (candidate) =>
+        candidate.typeArguments.length == 1 &&
+        _navigatorStateChecker.isAssignableFromType(candidate.typeArguments.single),
+  );
 }

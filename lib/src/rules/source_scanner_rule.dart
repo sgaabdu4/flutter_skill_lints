@@ -62,6 +62,11 @@ final class ScannerRuleReporter {
     final length = lineLength == 0 ? 1 : (lineLength - safeColumn).clamp(1, lineLength);
     _rule.reportAtOffset(offset, length);
   }
+
+  void reportNode(SourceScannerContext context, AstNode node) {
+    final location = context.unit.lineInfo.getLocation(node.offset);
+    report(context, location.lineNumber - 1, location.columnNumber - 1);
+  }
 }
 
 String sourceClassSignature(SourceScannerContext context, ScannerClassSpan classSpan) {

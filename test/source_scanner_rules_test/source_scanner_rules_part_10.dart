@@ -5,6 +5,12 @@ part of '../source_scanner_rules_test.dart';
 @reflectiveTest
 final class RouterDirectRouteCallTest extends _RouterRuleTest {
   @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'router_direct_route_call';
   @override
   String get needle => 'context.go';
@@ -256,6 +262,37 @@ class StartButton {
     await assertDiagnosticsInFile(libraryPath, [compatLint(librarySource, 'context.go', ruleName)]);
     await assertNoDiagnosticsInFile(partPath);
   }
+
+  Future<void> test_reportsInjectedRouterNavigation() async {
+    const source = r'''
+import 'package:go_router/go_router.dart';
+
+GoRouter readRouter() => GoRouter();
+
+void openHome() {
+  readRouter().go('/home');
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, "readRouter().go('/home');", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsTypedRouteNavigation() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+void openHome(BuildContext context) {
+  const HomeRoute().go(context);
+}
+''');
+  }
 }
 
 @reflectiveTest
@@ -413,6 +450,12 @@ void open(context) {
 @reflectiveTest
 final class RouterProviderScopeNavigationReadTest extends _RouterRuleTest {
   @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'router_container_navigation_escape';
   @override
   String get needle => 'ProviderScope.containerOf';
@@ -491,6 +534,34 @@ void open(context) {
 void open(ref, context) {
   ref.read(featureNavigationCoordinatorProvider).present(context, NumberPickerModalRoute());
 }
+''');
+  }
+
+  Future<void> test_reportsNavigatorGlobalKeyCurrentContext() async {
+    const source = r'''
+import 'package:flutter/material.dart';
+
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
+BuildContext? escape() {
+  return rootNavigatorKey.currentContext;
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'rootNavigatorKey.currentContext;', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsNonNavigatorGlobalKeyCurrentContext() async {
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+
+class FormState {}
+
+final formKey = GlobalKey<FormState>();
+
+BuildContext? formContext() => formKey.currentContext;
 ''');
   }
 }

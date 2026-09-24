@@ -226,6 +226,12 @@ class ProductRoute extends GoRouteData {}
 @reflectiveTest
 final class RouterPopThenPushTest extends _RouterRuleTest {
   @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'router_pop_then_push';
   @override
   String get needle => 'context.pop()';
@@ -236,6 +242,49 @@ void navigate(context) {
   context.push('/next');
 }
 ''';
+
+  Future<void> test_reportsNavigatorPopThenTypedRoutePush() async {
+    const source = r'''
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class CreateExerciseRoute extends GoRouteData {
+  const CreateExerciseRoute();
+}
+
+Future<void> onCreateTapped(BuildContext context) async {
+  Navigator.of(context).pop();
+  await const CreateExerciseRoute().push<String>(context);
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'Navigator.of(context).pop();', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillPopWithResultThenCallerPush() async {
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+enum CreateChoice { exercise }
+
+class CreateExerciseRoute extends GoRouteData {
+  const CreateExerciseRoute();
+}
+
+Future<void> onCreateTapped(BuildContext context) async {
+  Navigator.of(context).pop(CreateChoice.exercise);
+}
+
+Future<void> openCreateSheet(BuildContext context, Future<CreateChoice?> sheet) async {
+  final choice = await sheet;
+  if (choice != CreateChoice.exercise) return;
+  await const CreateExerciseRoute().push<String>(context);
+}
+''');
+  }
 }
 
 @reflectiveTest

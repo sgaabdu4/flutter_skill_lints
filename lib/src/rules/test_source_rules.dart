@@ -1,9 +1,9 @@
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> testSourceRules = [
@@ -215,14 +215,12 @@ const _finderChecker = TypeChecker.fromName('FinderBase', packageName: 'flutter_
 
 void _scanInlineStringKeys(ScannerRuleReporter reporter, SourceScannerContext context) {
   if (context.isKeyRegistryFile) return;
-  final visitor = _NodeCollector<InstanceCreationExpression>();
-  context.unit.accept(visitor);
-  for (final creation in visitor.nodes) {
+  for (final creation in collectNodes<InstanceCreationExpression>(context.unit)) {
     final keyClass = creation.constructorName.element?.enclosingElement;
     if (keyClass == null || !_widgetKeyChecker.isExactly(keyClass)) continue;
     final value = creation.argumentList.arguments.firstOrNull;
     if (value is! StringLiteral) continue;
-    _reportNode(reporter, context, creation.constructorName);
+    reporter.reportNode(context, creation.constructorName);
   }
 }
 
@@ -234,9 +232,7 @@ void _scanFirstMatchFinders(ScannerRuleReporter reporter, SourceScannerContext c
     reporter.report(context, i, 0);
     reportedLines.add(i);
   }
-  final visitor = _NodeCollector<SimpleIdentifier>();
-  context.unit.accept(visitor);
-  for (final identifier in visitor.nodes) {
+  for (final identifier in collectNodes<SimpleIdentifier>(context.unit)) {
     if (identifier.name != 'first') continue;
     final parent = identifier.parent;
     final target = switch (parent) {
@@ -247,21 +243,6 @@ void _scanFirstMatchFinders(ScannerRuleReporter reporter, SourceScannerContext c
     final type = target?.staticType;
     if (type == null || !_finderChecker.isAssignableFromType(type)) continue;
     final line = context.unit.lineInfo.getLocation(identifier.offset).lineNumber - 1;
-    if (reportedLines.add(line)) _reportNode(reporter, context, identifier);
-  }
-}
-
-void _reportNode(ScannerRuleReporter reporter, SourceScannerContext context, AstNode node) {
-  final location = context.unit.lineInfo.getLocation(node.offset);
-  reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
-}
-
-final class _NodeCollector<T extends AstNode> extends GeneralizingAstVisitor<void> {
-  final nodes = <T>[];
-
-  @override
-  void visitNode(AstNode node) {
-    if (node is T) nodes.add(node);
-    super.visitNode(node);
+    if (reportedLines.add(line)) reporter.reportNode(context, identifier);
   }
 }

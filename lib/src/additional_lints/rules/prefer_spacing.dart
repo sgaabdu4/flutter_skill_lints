@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
@@ -81,6 +82,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       (arg) => arg.name.lexeme == 'spacing',
     );
     if (hasSpacingArg) return;
+    if (!_preservesMainAxisDistribution(argumentList)) return;
 
     // Find the children argument
     final childrenArg = argumentList.arguments.whereType<NamedArgument>().firstWhereOrNull(
@@ -92,13 +94,53 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     // Pattern 1: Direct list literal with SizedBox spacers
     if (childrenExpr is ListLiteral) {
-      _checkDirectSizedBoxInList(childrenExpr, match.$2);
+      final axis = match.$2 ?? _literalFlexAxis(argumentList);
+      if (axis != null) _checkDirectSizedBoxInList(childrenExpr, axis);
     }
+  }
+
+  FlexAxis? _literalFlexAxis(ArgumentList arguments) {
+    final direction = arguments.arguments
+        .whereType<NamedArgument>()
+        .firstWhereOrNull((argument) => argument.name.lexeme == 'direction')
+        ?.argumentExpression;
+    final name = _flutterEnumConstantName(direction, 'Axis');
+    return switch (name) {
+      'horizontal' => FlexAxis.horizontal,
+      'vertical' => FlexAxis.vertical,
+      _ => null,
+    };
+  }
+
+  bool _preservesMainAxisDistribution(ArgumentList arguments) {
+    final alignment = arguments.arguments
+        .whereType<NamedArgument>()
+        .firstWhereOrNull((argument) => argument.name.lexeme == 'mainAxisAlignment')
+        ?.argumentExpression;
+    if (alignment == null) return true;
+    final name = _flutterEnumConstantName(alignment, 'MainAxisAlignment');
+    return const {'start', 'center', 'end', 'spaceBetween'}.contains(name);
+  }
+
+  String? _flutterEnumConstantName(Expression? expression, String enumName) {
+    final type = expression?.staticType;
+    if (type is! InterfaceType ||
+        !TypeChecker.fromName(enumName, packageName: 'flutter').isExactlyType(type)) {
+      return null;
+    }
+    final constant = expression?.computeConstantValue()?.value;
+    if (constant == null || !constant.hasKnownValue) return null;
+    final variable = constant.variable;
+    if (variable is FieldElement && variable.isEnumConstant) return variable.name;
+    final index = constant.getField('index')?.toIntValue();
+    if (index == null) return null;
+    final members = type.element.fields.where((field) => field.isEnumConstant).toList();
+    return index >= 0 && index < members.length ? members[index].name : null;
   }
 
   /// Pattern 1: Direct SizedBox widgets used as spacers in a children list.
   /// Only triggers when all SizedBox spacers have the same value (uniform).
-  void _checkDirectSizedBoxInList(ListLiteral list, FlexAxis? parentAxis) {
+  void _checkDirectSizedBoxInList(ListLiteral list, FlexAxis parentAxis) {
     final sizedBoxes = _uniformSizedBoxes(list, parentAxis);
     if (sizedBoxes == null) return;
     for (final sizedBox in sizedBoxes) {
@@ -106,18 +148,50 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  List<Expression>? _uniformSizedBoxes(ListLiteral list, FlexAxis? parentAxis) {
-    if (list.elements.length < 3) return null;
+  List<Expression>? _uniformSizedBoxes(ListLiteral list, FlexAxis parentAxis) {
+    if (list.elements.length < 3 || list.elements.length.isEven) return null;
     final sizedBoxes = <Expression>[];
     String? uniformValue;
-    for (final element in list.elements.whereType<Expression>()) {
-      final spacingInfo = _extractSizedBoxSpacingFromExpr(element);
-      if (spacingInfo == null || !_matchesAxis(spacingInfo.$1, parentAxis)) continue;
+    for (var index = 0; index < list.elements.length; index++) {
+      final element = list.elements[index];
+      if (index.isEven) {
+        if (!_isRetainedChild(element, parentAxis)) return null;
+        continue;
+      }
+      final spacingInfo = _constantSeparator(element, parentAxis);
+      if (spacingInfo == null || element is! Expression) return null;
       sizedBoxes.add(element);
       uniformValue ??= spacingInfo.$2;
       if (uniformValue != spacingInfo.$2) return null;
     }
-    return sizedBoxes.isEmpty ? null : sizedBoxes;
+    return sizedBoxes;
+  }
+
+  bool _isRetainedChild(CollectionElement element, FlexAxis axis) {
+    if (element is! Expression) return false;
+    final spacing = _extractSizedBoxSpacingFromExpr(element);
+    return spacing == null || !_matchesAxis(spacing.$1, axis);
+  }
+
+  (String, String)? _constantSeparator(CollectionElement element, FlexAxis axis) {
+    if (element is! Expression) return null;
+    final spacing = _extractSizedBoxSpacingFromExpr(element);
+    if (spacing == null || !_matchesAxis(spacing.$1, axis)) return null;
+    return _hasConstantExtent(element, spacing.$1) ? spacing : null;
+  }
+
+  bool _hasConstantExtent(Expression element, String axis) {
+    final arguments = switch (element) {
+      InstanceCreationExpression(:final argumentList) => argumentList.arguments,
+      MethodInvocation(:final argumentList) => argumentList.arguments,
+      _ => null,
+    };
+    final extent = arguments
+        ?.whereType<NamedArgument>()
+        .firstWhereOrNull((argument) => argument.name.lexeme == axis)
+        ?.argumentExpression;
+    final value = extent?.computeConstantValue()?.value;
+    return value?.toIntValue() != null || value?.toDoubleValue() != null;
   }
 
   bool _matchesAxis(String axis, FlexAxis? parentAxis) {
@@ -228,7 +302,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     for (final arg in args) {
       if (arg is NamedArgument) {
         final name = arg.name.lexeme;
-        if (name == 'key') continue;
+        if (name == 'key') return null;
         if ((name == 'height' || name == 'width') && spacingParam == null) {
           spacingParam = name;
           spacingValue = arg.argumentExpression.toSource();

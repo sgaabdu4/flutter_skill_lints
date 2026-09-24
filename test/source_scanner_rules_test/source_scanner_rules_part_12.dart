@@ -446,6 +446,36 @@ class _UsdMoney extends Money {
     ]);
   }
 
+  Future<void> test_allowsCompositeCanonicalRedirect() async {
+    await assertAllows(r'''
+// ignore_for_file: redirect_to_non_class
+enum Currency { usd, eur }
+class Money {
+  const Money._();
+  const factory Money({required int cents, required Currency currency}) = _Money;
+  factory Money.usd(double dollars) => Money(cents: (dollars * 100).round(), currency: .usd);
+}
+''', path: '$testPackageLibPath/core/domain/values/money.dart');
+  }
+
+  Future<void> test_reportsSingleFieldAndNonConstPublicRedirects() async {
+    final filePath = '$testPackageLibPath/core/domain/values/email.dart';
+    const source = r'''
+// ignore_for_file: redirect_to_non_class
+class Email {
+  const factory Email({required String value}) = _Email;
+  factory Email.raw(String value) = _RawEmail;
+  const Email._();
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'const factory Email({required String value}) = _Email;', ruleName),
+      compatLint(source, 'factory Email.raw(String value) = _RawEmail;', ruleName),
+    ]);
+  }
+
   Future<void> test_reportsPassthroughPublicFactory() async {
     final filePath = '$testPackageLibPath/core/domain/values/weight_adjustment.dart';
     const source = r'''

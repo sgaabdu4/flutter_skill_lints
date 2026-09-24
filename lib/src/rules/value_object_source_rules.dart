@@ -45,7 +45,10 @@ final List<ScannerRule> valueObjectSourceRules = [
   /// _Meters;`) skips invariants — callers can pass `-1` and the type system
   /// shrugs. Make the raw redirect private (`._meters`) and expose a validated
   /// factory (`factory Distance.fromMeters(double m) { assert(m >= 0); ... }`)
-  /// so every Distance carries proof of its invariant.
+  /// so every Distance carries proof of its invariant. Const and non-const
+  /// redirects are both checked. The unnamed redirect of a composite Value
+  /// Object with two or more named fields (the skill's `Money({required int
+  /// cents, required Currency currency})`) is the documented canonical shape.
   scannerRule(
     code: const LintCode(
       'vo_public_raw_constructor',
@@ -216,7 +219,7 @@ void _scanPublicRawRedirectFactories(ScannerRuleReporter reporter, SourceScanner
   if (!context.path.contains('/domain/values/')) return;
   final source = context.source.masked.join('\n');
   final lineOffsets = _sourceLineOffsets(context);
-  _reportRawRedirectFactories(reporter, context, source, lineOffsets);
+  _reportRawRedirectFactories(context, reporter);
   _reportPassthroughFactories(reporter, context, source, lineOffsets);
 }
 
@@ -228,22 +231,35 @@ List<int> _sourceLineOffsets(SourceScannerContext context) {
   return offsets;
 }
 
-void _reportRawRedirectFactories(
-  ScannerRuleReporter reporter,
-  SourceScannerContext context,
-  String source,
-  List<int> lineOffsets,
-) {
-  final pattern = RegExp(
-    r'\bconst\s+factory\s+([A-Z]\w*)(?:\s*\.\s*([A-Za-z_]\w*))?\s*\(([^)]*)\)\s*=\s*_\w+\s*;',
-    dotAll: true,
-  );
-  for (final match in pattern.allMatches(source)) {
-    final constructorName = match.group(2);
-    if (constructorName != null && constructorName.startsWith('_')) continue;
-    if (match.group(3)!.trim().isEmpty) continue;
-    _reportFactoryMatch(reporter, context, match.start, lineOffsets);
+void _reportRawRedirectFactories(SourceScannerContext context, ScannerRuleReporter reporter) {
+  for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+    for (final constructor in declaration.body.members.whereType<ConstructorDeclaration>()) {
+      if (!_isPublicRawRedirect(constructor) || _isCompositeCanonicalRedirect(constructor)) {
+        continue;
+      }
+      final offset = constructor.firstTokenAfterCommentAndMetadata.offset;
+      final line = _lineIndexForOffset(offset, context.source.lineOffsets, context.source.length);
+      reporter.report(context, line, offset - context.source.lineOffsets[line]);
+    }
   }
+}
+
+bool _isPublicRawRedirect(ConstructorDeclaration constructor) {
+  final redirect = constructor.redirectedConstructor;
+  return constructor.factoryKeyword != null &&
+      redirect != null &&
+      redirect.type.name.lexeme.startsWith('_') &&
+      !(constructor.name?.lexeme.startsWith('_') ?? false) &&
+      constructor.parameters.parameters.isNotEmpty;
+}
+
+/// value-objects.md `Money`: the unnamed redirect of a composite Value Object
+/// whose invariant is carried by two or more named component fields.
+bool _isCompositeCanonicalRedirect(ConstructorDeclaration constructor) {
+  final parameters = constructor.parameters.parameters;
+  return constructor.name == null &&
+      parameters.length >= 2 &&
+      parameters.every((parameter) => parameter.isNamed);
 }
 
 void _reportPassthroughFactories(

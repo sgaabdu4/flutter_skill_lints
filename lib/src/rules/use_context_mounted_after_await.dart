@@ -3,6 +3,7 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
@@ -16,6 +17,7 @@ final class UseContextMountedAfterAwait extends AnalysisRule {
     "Don't use BuildContext after an await without checking context.mounted.",
     correctionMessage:
         "Capture State.context before the await, then check 'if (!context.mounted) return;'.",
+    severity: DiagnosticSeverity.ERROR,
   );
 
   UseContextMountedAfterAwait()
@@ -33,6 +35,7 @@ final class UseContextMountedAfterAwait extends AnalysisRule {
     final visitor = _Visitor(this);
     registry.addMethodDeclaration(this, visitor);
     registry.addFunctionDeclaration(this, visitor);
+    registry.addFunctionExpression(this, visitor);
   }
 }
 
@@ -57,10 +60,25 @@ final class _Visitor extends SimpleAstVisitor<void> {
     );
   }
 
+  /// Async callbacks such as `onPressed: () async { ... }` resume after their awaits too.
+  @override
+  void visitFunctionExpression(FunctionExpression node) {
+    if (node.parent is FunctionDeclaration || !node.body.isAsynchronous) return;
+    _checkBody(node.body, hasContextBinding: _closureBindsContext(node.body));
+  }
+
   void _checkBody(FunctionBody body, {required bool hasContextBinding}) {
     if (body is! BlockFunctionBody) return;
     final scanner = _ContextAsyncStatementScanner(rule, hasContextBinding: hasContextBinding);
     scanner.scanBlock(body.block);
+  }
+
+  /// A callback's `context` is a captured parameter or local unless it resolves to
+  /// the `State.context` getter.
+  static bool _closureBindsContext(FunctionBody body) {
+    final finder = _ContextIdentifierFinder();
+    body.accept(finder);
+    return finder.node?.element is! PropertyAccessorElement;
   }
 
   static bool _parametersDeclareContext(FormalParameterList? parameters) {
@@ -148,6 +166,15 @@ final class _ContextAsyncStatementScanner {
     return expression is PropertyAccess &&
         expression.target is ThisExpression &&
         expression.propertyName.name == 'context';
+  }
+}
+
+final class _ContextIdentifierFinder extends RecursiveAstVisitor<void> {
+  SimpleIdentifier? node;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (node.name == 'context') this.node ??= node;
   }
 }
 

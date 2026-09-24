@@ -182,6 +182,42 @@ class DemoState extends State<Demo> {
 }
 ''');
   }
+
+  Future<void> test_reportsContextAfterAwaitInAsyncCallback() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+void showDone(BuildContext context) {}
+
+class Tap extends StatelessWidget {
+  const Tap({required this.onTap, required this.onLongPress});
+  final Future<void> Function() onTap;
+  final Future<void> Function() onLongPress;
+  @override
+  Widget build(BuildContext context) => this;
+}
+
+class Demo extends StatelessWidget {
+  const Demo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Tap(
+      onTap: () async {
+        await Future<void>.value();
+        showDone(context);
+      },
+      onLongPress: () async {
+        await Future<void>.value();
+        if (!context.mounted) return;
+        showDone(context);
+      },
+    );
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('context);'), 7)]);
+  }
 }
 
 @reflectiveTest

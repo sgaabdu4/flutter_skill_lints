@@ -207,6 +207,11 @@ final class RiverpodWatchNoSelectTest extends _RiverpodRuleTest {
     newPackage('riverpod').addFile('lib/riverpod.dart', r'''
 class AsyncValue<T> {
 }
+abstract class ProviderListenable<T> {}
+sealed class MutationState<T> {
+  bool get isPending => false;
+}
+final class Mutation<T> implements ProviderListenable<MutationState<T>> {}
 extension AsyncValueExtensions<T> on AsyncValue<T> {
   R when<R>({
     required R Function(T value) data,
@@ -575,6 +580,34 @@ class View {
     await assertDiagnostics(source, [
       compatLint(source, 'ref.watch(accountStateProvider)', ruleName),
       compatLint(source, 'ref.watch(profileProvider)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsMutationStateFlags() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+class WidgetRef {
+  T watch<T>(ProviderListenable<T> source) => throw 'synthetic';
+}
+final removeTodoMutation = Mutation<void>();
+class View {
+  Object build(WidgetRef ref) => ref.watch(removeTodoMutation).isPending;
+}
+''');
+  }
+
+  Future<void> test_reportsLocalMutationStateLookalike() async {
+    const source = r'''
+class Source<T> {}
+class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+class MutationState { bool get isPending => false; }
+final removeTodoMutation = Source<MutationState>();
+class View {
+  Object build(WidgetRef ref) => ref.watch(removeTodoMutation).isPending;
+}
+''';
+    await assertDiagnostics(source, [
+      compatLint(source, 'ref.watch(removeTodoMutation)', ruleName),
     ]);
   }
 

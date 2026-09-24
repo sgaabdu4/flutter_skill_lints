@@ -17,6 +17,8 @@ final class _ScalarWatchVisitor extends RecursiveAstVisitor<void> {
         offsets.add(node.offset);
       }
       if (_consumesWholeWatch(node)) offsets.add(node.offset);
+      // The skill allows MutationState flags (isPending, hasError, ...) for simple checks.
+      if (_isRiverpodMutationElement(type?.element, 'MutationState')) offsets.add(node.offset);
     }
     super.visitMethodInvocation(node);
   }
@@ -106,3 +108,7 @@ bool _hasCompleteAsyncValueDispatch(MethodInvocation invocation) {
       .toSet();
   return branches.containsAll(const {'data', 'loading', 'error'});
 }
+
+bool _isRiverpodMutationElement(Element? element, String name) =>
+    element?.name == name &&
+    (element?.library?.uri.toString().startsWith('package:riverpod/') ?? false);

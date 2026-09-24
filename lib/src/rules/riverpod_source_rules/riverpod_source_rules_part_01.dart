@@ -226,7 +226,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       'riverpod_watch_no_select',
       'Prefer select when watching state in leaf widgets.',
       correctionMessage: 'Use ref.watch(provider.select((value) => value.field)).',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags broad ref.watch calls that do not use select so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
@@ -369,7 +369,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       'riverpod_keepalive_family',
       'Avoid keepAlive family providers.',
       correctionMessage: 'Use auto-dispose families unless the cache is bounded.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags keepAlive Riverpod families with required parameters so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {

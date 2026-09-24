@@ -1,6 +1,5 @@
 import 'package:analysis_server_plugin/registry.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_any_version.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_declaring_call_method.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_dependency_overrides.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_duplicate_initializers.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_duplicate_mixins.dart';
@@ -44,7 +43,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_type_over_
 /// Registers additional clean-room DCM-inspired lint rules.
 void registerDcmExpansionLints(PluginRegistry registry) {
   registry.registerWarningRule(AvoidAnyVersion());
-  registry.registerWarningRule(AvoidDeclaringCallMethod());
   registry.registerWarningRule(AvoidDependencyOverrides());
   registry.registerWarningRule(AvoidDuplicateInitializers());
   registry.registerWarningRule(AvoidDuplicateMixins());

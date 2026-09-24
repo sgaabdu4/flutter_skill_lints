@@ -237,7 +237,6 @@ avoid_constant_conditions
 avoid_constant_switches
 avoid_continue
 avoid_contradictory_expressions
-avoid_declaring_call_method
 avoid_default_tostring
 avoid_dependency_overrides
 avoid_disposing_late_fields
@@ -403,7 +402,6 @@ incorrect_firebase_parameter_name
 keep_state_below_its_widget
 match_lib_folder_structure
 missing_test_assertion
-move_records_to_typedefs
 no_boolean_literal_compare
 no_empty_block
 no_equal_then_else

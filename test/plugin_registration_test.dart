@@ -313,6 +313,10 @@ void main() {
       'prefer_overriding_parent_equality',
       'list_all_equatable_fields',
       'prefer_equatable_mixin',
+      // No skill basis; the skill's own Debouncer.call and inline record
+      // signatures (dart-patterns-records.md:61-80) contradict them.
+      'avoid_declaring_call_method',
+      'move_records_to_typedefs',
     ]) {
       expect(paths, isNot(contains(forbidden)));
     }
@@ -353,7 +357,7 @@ void main() {
 
 const _enabledFlutterSkillRuleCount = 187;
 const _enabledFlutterSkillDiagnosticCount = 195;
-const _enabledAdditionalRuleCount = 280;
+const _enabledAdditionalRuleCount = 278;
 
 const _modelSkillErrorDiagnostics = [
   'use_sealed_freezed_classes',
@@ -369,6 +373,8 @@ const _modelSkillErrorDiagnostics = [
   'prefer_wildcard_pattern',
   'use_existing_destructuring',
   'datetime_now_requires_timezone_intent',
+  'domain_entity_primitive_factory',
+  'avoid_returning_widgets',
 ];
 
 Iterable<String> _documentedLintCodes(String text) sync* {

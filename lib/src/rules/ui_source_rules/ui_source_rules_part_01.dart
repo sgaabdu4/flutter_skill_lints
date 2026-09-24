@@ -406,14 +406,9 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       correctionMessage: 'Use builder/sliver variants instead of ListView(children: ...).',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags ListView(children: ...) usage so the Flutter skill violation is shown during analysis.',
+    description: 'Flags ListView(children: ...) whose children are built from dynamic data (mapped/generated collections, collection-for, or non-constant spreads).',
     scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(r'\bListView\s*\([^)]*\bchildren\s*:').hasMatch(line)) {
-          reporter.report(context, i, line.indexOf('ListView'));
-        }
-      }
+      context.unit.accept(_DynamicListViewChildrenVisitor(reporter, context));
     },
   ),
 ];
@@ -548,14 +543,36 @@ void _reportCollectionWork(
   SourceScannerContext context,
   ScannerMethodSpan method,
 ) {
+  final expressionBody = _expressionBodyOf(context, method);
+  final bodyStart = expressionBody?.offset;
+  final firstLine = bodyStart == null
+      ? method.start + 1
+      : context.unit.lineInfo.getLocation(bodyStart).lineNumber - 1;
+  final lastLine = expressionBody == null
+      ? method.end
+      : context.unit.lineInfo.getLocation(expressionBody.end).lineNumber - 1;
   for (
-    var lineIndex = method.start + 1;
-    lineIndex <= method.end && lineIndex < context.source.length;
+    var lineIndex = firstLine;
+    lineIndex <= lastLine && lineIndex < context.source.length;
     lineIndex++
   ) {
-    final match = _collectionWork.firstMatch(context.source.masked[lineIndex]);
+    final line = context.source.masked[lineIndex];
+    final from = lineIndex == firstLine && bodyStart != null
+        ? bodyStart - context.source.lineOffsets[lineIndex]
+        : 0;
+    final match = _collectionWork.firstMatch(line.substring(from));
     if (match == null) continue;
-    reporter.report(context, lineIndex, match.start);
+    reporter.report(context, lineIndex, from + match.start);
     return;
   }
+}
+
+ExpressionFunctionBody? _expressionBodyOf(SourceScannerContext context, ScannerMethodSpan method) {
+  final line = context.source.masked[method.start];
+  final column = line.indexOf(method.name);
+  if (column < 0) return null;
+  final node = context.unit.nodeCovering(offset: context.source.lineOffsets[method.start] + column);
+  final declaration = node?.thisOrAncestorOfType<MethodDeclaration>();
+  final body = declaration?.body;
+  return body is ExpressionFunctionBody ? body : null;
 }

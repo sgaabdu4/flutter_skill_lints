@@ -271,7 +271,36 @@ final class PerfListviewChildrenTest extends _UiRuleTest {
   @override
   String get needle => 'ListView(children';
   @override
-  String get source => 'final list = ListView(children: []);';
+  String get source => r'''
+class ListView {
+  ListView({List<Object> children = const []});
+}
+ListView list(List<String> items) => ListView(children: items.map((item) => item).toList());
+''';
+
+  Future<void> test_reportsWrappedDynamicChildren() async {
+    final analyzedSource = _analyzedSource(r'''
+class ListView {
+  ListView({List<Object> children = const []});
+}
+ListView list(List<String> items) => ListView(
+  children: [for (final item in items) item],
+);
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'ListView(\n', ruleName)]);
+  }
+
+  Future<void> test_allowsStaticChildren() async {
+    await assertAllows(r'''
+class ListView {
+  ListView({List<Object> children = const []});
+}
+const header = 'header';
+ListView list() => ListView(children: const ['a', 'b']);
+ListView other() => ListView(children: [header, if (header.isEmpty) 'empty']);
+''');
+  }
 }
 
 abstract class _StateRuleTest extends _SourceRuleTest {

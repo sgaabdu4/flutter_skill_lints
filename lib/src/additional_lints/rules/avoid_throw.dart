@@ -207,7 +207,8 @@ bool _isValueObjectArgumentGuard(ThrowExpression node, String path) {
   final arguments = error.argumentList.arguments;
   if (arguments.isEmpty) return false;
   final value = arguments.first.argumentExpression;
-  if (value is! SimpleIdentifier || value.element is! FormalParameterElement) return false;
+  final parameter = value is SimpleIdentifier ? value.element : null;
+  if (parameter is! FormalParameterElement) return false;
   IfStatement? guard;
   ConstructorDeclaration? factory;
   for (AstNode? parent = node.parent; parent != null; parent = parent.parent) {
@@ -221,7 +222,58 @@ bool _isValueObjectArgumentGuard(ThrowExpression node, String path) {
       break;
     }
   }
-  return factory?.factoryKeyword != null &&
-      guard != null &&
-      RegExp('\\b${RegExp.escape(value.name)}\\b').hasMatch(guard.expression.toSource());
+  if (factory == null || factory.factoryKeyword == null || guard == null) return false;
+  return _referencesParameter(guard.expression, parameter, factory.body, {});
+}
+
+/// Whether [expression] reads [parameter] directly or through a `final` local
+/// of [body] whose initializer (transitively) reads it.
+bool _referencesParameter(
+  Expression expression,
+  FormalParameterElement parameter,
+  FunctionBody body,
+  Set<Element> visited,
+) {
+  final identifiers = <SimpleIdentifier>[];
+  expression.accept(_IdentifierCollector(identifiers));
+  for (final identifier in identifiers) {
+    final element = identifier.element;
+    if (element == parameter) return true;
+    if (element is! LocalVariableElement || !element.isFinal || !visited.add(element)) continue;
+    final initializer = _localInitializer(body, element);
+    if (initializer != null && _referencesParameter(initializer, parameter, body, visited)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+Expression? _localInitializer(FunctionBody body, LocalVariableElement local) {
+  final declarations = <VariableDeclaration>[];
+  body.accept(_LocalDeclarationCollector(declarations));
+  for (final declaration in declarations) {
+    if (declaration.declaredFragment?.element == local) return declaration.initializer;
+  }
+  return null;
+}
+
+final class _IdentifierCollector extends RecursiveAstVisitor<void> {
+  const _IdentifierCollector(this.identifiers);
+
+  final List<SimpleIdentifier> identifiers;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) => identifiers.add(node);
+}
+
+final class _LocalDeclarationCollector extends RecursiveAstVisitor<void> {
+  const _LocalDeclarationCollector(this.declarations);
+
+  final List<VariableDeclaration> declarations;
+
+  @override
+  void visitVariableDeclaration(VariableDeclaration node) {
+    declarations.add(node);
+    super.visitVariableDeclaration(node);
+  }
 }

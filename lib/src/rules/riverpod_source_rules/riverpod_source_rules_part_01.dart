@@ -300,6 +300,59 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     scan: _scanMutationExperimentalWarning,
   ),
 
+  /// Riverpod mutations are file-scope finals.
+  ///
+  /// Why: The skill declares one mutation as one file-scope `final` so the same
+  /// instance is shared across rebuilds and consumers. A Mutation created in
+  /// build(), a method, or a class field is a new or class-owned instance.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_mutation_top_level',
+      'Declare Mutation<T> as a file-scope final.',
+      correctionMessage:
+          'Move the Mutation to a top-level final so rebuilds and consumers share one instance.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags Riverpod Mutation<T>() creations that are not the initializer of a top-level final so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      final creations = _RiverpodMutationCreations();
+      context.unit.accept(creations);
+      for (final creation in creations.nodes) {
+        final variable = creation.parent;
+        final list = variable?.parent;
+        if (variable is VariableDeclaration &&
+            variable.initializer == creation &&
+            list is VariableDeclarationList &&
+            list.isFinal &&
+            list.parent is TopLevelVariableDeclaration) {
+          continue;
+        }
+        _reportAtNode(reporter, context, creation);
+      }
+    },
+  ),
+
+  /// Use tsx.get instead of ref.read inside Mutation.run.
+  ///
+  /// Why: The skill reads providers through the mutation transaction because
+  /// tsx.get keeps them alive until the mutation completes; ref.read does not.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_mutation_ref_read',
+      'Use tsx.get instead of ref.read inside Mutation.run.',
+      correctionMessage: 'Read providers through the mutation transaction (tsx.get) so they stay alive until the mutation completes.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags Riverpod read calls inside a Riverpod Mutation.run callback so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      final reads = _RiverpodReadsInMutationRun();
+      context.unit.accept(reads);
+      for (final read in reads.nodes) {
+        _reportAtNode(reporter, context, read);
+      }
+    },
+  ),
+
   /// Keep derived providers alive when all watched dependencies are keepAlive.
   ///
   /// Why: Follows the building-flutter-apps provider decision tree for computed or

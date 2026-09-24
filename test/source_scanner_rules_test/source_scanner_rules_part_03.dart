@@ -259,6 +259,136 @@ final saveMutation = graphql.Mutation<int>();
 }
 
 @reflectiveTest
+final class RiverpodMutationTopLevelTest extends _RiverpodMutationRuleTest {
+  @override
+  String get ruleName => 'riverpod_mutation_top_level';
+  @override
+  String get needle => 'Mutation<void>()';
+  @override
+  String get source => r'''
+import 'package:riverpod/riverpod.dart';
+
+class AddTodoScreen {
+  Object build() {
+    final localMutation = Mutation<void>();
+    return localMutation;
+  }
+}
+''';
+
+  Future<void> test_allowsDocumentedFileScopeFinal() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+final addTodoMutation = Mutation<void>(); // experimental API — may change without major bump
+''');
+  }
+
+  Future<void> test_reportsStaticClassField() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+class TodoMutations {
+  static final addTodo = Mutation<void>();
+}
+''';
+    await assertDiagnostics(source, [compatLint(source, needle, ruleName)]);
+  }
+
+  Future<void> test_reportsNonFinalTopLevel() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+var addTodoMutation = Mutation<void>();
+''';
+    await assertDiagnostics(source, [compatLint(source, needle, ruleName)]);
+  }
+
+  Future<void> test_allowsLocalMutationLookalike() async {
+    await assertAllows(r'''
+class Mutation<T> {}
+
+Object build() {
+  final localMutation = Mutation<void>();
+  return localMutation;
+}
+''');
+  }
+}
+
+@reflectiveTest
+final class RiverpodMutationRefReadTest extends _RiverpodMutationRuleTest {
+  @override
+  String get ruleName => 'riverpod_mutation_ref_read';
+  @override
+  String get needle => 'ref.read(todoListProvider)';
+  @override
+  String get source => r'''
+import 'package:riverpod/riverpod.dart';
+
+final todoListProvider = _Listenable();
+final class _Listenable implements ProviderListenable<Object> {}
+final removeTodoMutation = Mutation<void>();
+
+void onPressed(Ref ref) {
+  removeTodoMutation.run(ref, (tsx) async {
+    ref.read(todoListProvider);
+  });
+}
+''';
+
+  Future<void> test_allowsDocumentedTransactionGet() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+final todoListProvider = _Listenable();
+final class _Listenable implements ProviderListenable<Object> {}
+final addTodoMutation = Mutation<void>();
+
+void onPressed(Ref ref) {
+  addTodoMutation.run(ref, (tsx) async {
+    tsx.get(todoListProvider);
+  });
+}
+''');
+  }
+
+  Future<void> test_allowsRefReadOutsideMutationCallback() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+final todoListProvider = _Listenable();
+final class _Listenable implements ProviderListenable<Object> {}
+final addTodoMutation = Mutation<void>();
+
+void onPressed(Ref ref) {
+  ref.read(todoListProvider);
+  addTodoMutation.run(ref, (tsx) async {});
+}
+''');
+  }
+
+  Future<void> test_allowsReadInLookalikeRun() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+final todoListProvider = _Listenable();
+final class _Listenable implements ProviderListenable<Object> {}
+class Job {
+  Future<void> run(Object target, Future<void> Function(Object tsx) cb) => cb(target);
+}
+final job = Job();
+
+void onPressed(Ref ref) {
+  job.run(ref, (tsx) async {
+    ref.read(todoListProvider);
+  });
+}
+''');
+  }
+}
+
+@reflectiveTest
 final class RiverpodAutoDisposeKeepAliveDependenciesTest extends _RiverpodRuleTest {
   @override
   String get ruleName => 'riverpod_auto_dispose_keepalive_dependencies';

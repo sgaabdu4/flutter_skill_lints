@@ -130,3 +130,33 @@ void _reportAtNode(ScannerRuleReporter reporter, SourceScannerContext context, A
   final location = context.unit.lineInfo.getLocation(node.offset);
   reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
 }
+
+/// Collects Riverpod `read` calls made inside a Riverpod `Mutation.run` callback.
+final class _RiverpodReadsInMutationRun extends RecursiveAstVisitor<void> {
+  final nodes = <MethodInvocation>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.methodName.name == 'read' &&
+        _isRiverpodLibrary(node.methodName.element?.library) &&
+        node.thisOrAncestorMatching(_isMutationRunCallback) != null) {
+      nodes.add(node);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+bool _isMutationRunCallback(AstNode node) {
+  if (node is! FunctionExpression) return false;
+  final arguments = node.parent;
+  final invocation = arguments?.parent;
+  return arguments is ArgumentList &&
+      invocation is MethodInvocation &&
+      invocation.methodName.name == 'run' &&
+      _isRiverpodMutationElement(invocation.methodName.element?.enclosingElement, 'Mutation');
+}
+
+bool _isRiverpodLibrary(LibraryElement? library) {
+  final uri = library?.uri.toString() ?? '';
+  return uri.startsWith('package:riverpod/') || uri.startsWith('package:flutter_riverpod/');
+}

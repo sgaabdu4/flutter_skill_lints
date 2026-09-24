@@ -182,6 +182,33 @@ class ItemNotifier {
 ''');
   }
 
+  // Row 21: the skill's indexOfByKey (collections-helpers.md) subscripted in place.
+  Future<void> test_reportsIndexOfByKeySubscriptedInPlace() async {
+    const source = r'''
+class ItemNotifier {
+  Item? itemById(List<Item> items, String itemId) {
+    return items.indexOfByKey((item) => item.id)[itemId];
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '.indexOfByKey(', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillCachedIndexOfByKey() async {
+    await assertAllows(r'''
+class ItemNotifier {
+  List<Item?> itemsByIds(List<Item> items, List<String> ids) {
+    final itemsById = items.indexOfByKey((item) => item.id);
+    return [for (final id in ids) itemsById[id]];
+  }
+}
+''');
+  }
+
   Future<void> test_allowsReturnedIndexMap() async {
     await assertAllows(r'''
 Map<String, Item> itemsById(List<Item> items) {

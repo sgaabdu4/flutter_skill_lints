@@ -376,6 +376,8 @@ const _modelSkillErrorDiagnostics = [
   'domain_entity_primitive_factory',
   'avoid_returning_widgets',
   'prefer_class_destructuring',
+  'ad_hoc_id_index_lookup',
+  'ui_snackbar_boundary',
 ];
 
 Iterable<String> _documentedLintCodes(String text) sync* {

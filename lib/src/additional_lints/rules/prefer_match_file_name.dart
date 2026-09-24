@@ -57,6 +57,11 @@ final class _Visitor extends SimpleAstVisitor<void> {
     final declaration = declarations.single;
     // The companion skill names the public Crash facade crash_service.dart.
     if (_fileNameWithoutExtension(path) == 'crash_service' && declaration.name == 'Crash') return;
+    // Current-date intent rules require the companion skill's canonical helper.
+    if (path.endsWith('/core/extensions/date_time_extensions.dart') &&
+        declaration.name == 'DateTimeX') {
+      return;
+    }
     final expected = _expectedFileNameForType(declaration.name);
     final actual = _fileNameWithoutExtension(path);
     if (actual != expected) {

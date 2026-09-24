@@ -220,6 +220,151 @@ class InvalidFailure implements BackendFailure {
 ''');
     await assertNoDiagnosticsInFile(filePath);
   }
+
+  Future<void> test_allowsNullableDiagnosticPayloadOnExceptionUnion() async {
+    final filePath = '$testPackageLibPath/core/domain/backend_failure.dart';
+    newFile(filePath, r'''
+// ignore_for_file: redirect_to_invalid_function_type
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class BackendFailure implements Exception {
+  const factory BackendFailure.network({
+    String? message,
+    int? code,
+    String? type,
+    Object? response,
+  }) = NetworkFailure;
+  const factory BackendFailure.auth({String? message}) = AuthFailure;
+}
+class NetworkFailure implements BackendFailure {
+  const NetworkFailure({this.message, this.code, this.type, this.response});
+  final String? message;
+  final int? code;
+  final String? type;
+  final Object? response;
+}
+class AuthFailure implements BackendFailure {
+  const AuthFailure({this.message});
+  final String? message;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_statusCodeRequiresOptionalNullableInteger() async {
+    final filePath = '$testPackageLibPath/core/domain/backend_failure.dart';
+    const source = r'''
+// ignore_for_file: redirect_to_invalid_function_type
+import 'package:freezed_annotation/freezed_annotation.dart';
+@freezed
+sealed class BackendFailure implements Exception {
+  const factory BackendFailure.http({int? statusCode}) = HttpFailure;
+  const factory BackendFailure.requiredStatus({required int statusCode}) = RequiredFailure;
+  const factory BackendFailure.textStatus({String? statusCode}) = TextFailure;
+}
+class HttpFailure implements BackendFailure { const HttpFailure({this.statusCode}); final int? statusCode; }
+class RequiredFailure implements BackendFailure { const RequiredFailure({required this.statusCode}); final int statusCode; }
+class TextFailure implements BackendFailure { const TextFailure({this.statusCode}); final String? statusCode; }
+''';
+    newFile(filePath, source);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'factory BackendFailure.requiredStatus', ruleName),
+      compatLint(source, 'factory BackendFailure.textStatus', ruleName),
+    ]);
+  }
+
+  Future<void> test_preservesPrimitiveFactoryErrorsForExceptionUnion() async {
+    final filePath = '$testPackageLibPath/core/domain/backend_failure.dart';
+    const source = r'''
+// ignore_for_file: redirect_to_invalid_function_type
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class BackendFailure implements Exception {
+  const factory BackendFailure.network({String? message}) = NetworkFailure;
+  const factory BackendFailure.invalidId({String? userId}) = InvalidIdFailure;
+  const factory BackendFailure.requiredMessage({required String message}) = RequiredFailure;
+  const factory BackendFailure.positional([String? message]) = PositionalFailure;
+  factory BackendFailure.translated({String? message}) => NetworkFailure(message: message);
+  factory BackendFailure.fromPrimitives(String id) => const NetworkFailure();
+}
+class NetworkFailure implements BackendFailure { const NetworkFailure({this.message}); final String? message; }
+class InvalidIdFailure implements BackendFailure { const InvalidIdFailure({this.userId}); final String? userId; }
+class RequiredFailure implements BackendFailure { const RequiredFailure({required this.message}); final String message; }
+class PositionalFailure implements BackendFailure { const PositionalFailure([this.message]); final String? message; }
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'factory BackendFailure.invalidId', ruleName),
+      compatLint(source, 'factory BackendFailure.requiredMessage', ruleName),
+      compatLint(source, 'factory BackendFailure.positional', ruleName),
+      compatLint(source, 'factory BackendFailure.translated', ruleName),
+      compatLint(source, 'factory BackendFailure.fromPrimitives', ruleName),
+    ]);
+  }
+
+  Future<void> test_preservesOptionalPrimitiveErrorOnNonExceptionUnion() async {
+    final filePath = '$testPackageLibPath/core/domain/result.dart';
+    const source = r'''
+// ignore_for_file: redirect_to_invalid_function_type
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class Result {
+  const factory Result.ready({String? message}) = ReadyResult;
+  const factory Result.empty() = EmptyResult;
+}
+class ReadyResult implements Result { const ReadyResult({this.message}); final String? message; }
+class EmptyResult implements Result { const EmptyResult(); }
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [compatLint(source, 'factory Result.ready', ruleName)]);
+  }
+
+  Future<void> test_preservesErrorForLocalExceptionLookalike() async {
+    final filePath = '$testPackageLibPath/core/domain/backend_failure.dart';
+    const source = r'''
+// ignore_for_file: redirect_to_invalid_function_type
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+class Exception {}
+@freezed
+sealed class BackendFailure implements Exception {
+  const factory BackendFailure.network({String? message}) = NetworkFailure;
+  const factory BackendFailure.auth() = AuthFailure;
+}
+class NetworkFailure implements BackendFailure { const NetworkFailure({this.message}); final String? message; }
+class AuthFailure implements BackendFailure { const AuthFailure(); }
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'factory BackendFailure.network', ruleName),
+    ]);
+  }
+
+  Future<void> test_preservesErrorForSingleExceptionFactory() async {
+    final filePath = '$testPackageLibPath/core/domain/backend_failure.dart';
+    const source = r'''
+// ignore_for_file: redirect_to_invalid_function_type
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@freezed
+sealed class BackendFailure implements Exception {
+  const factory BackendFailure.network({String? message}) = NetworkFailure;
+}
+class NetworkFailure implements BackendFailure { const NetworkFailure({this.message}); final String? message; }
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'factory BackendFailure.network', ruleName),
+    ]);
+  }
 }
 
 abstract class _DomainEntityParameterRuleTest extends _ValueObjectRuleTest {

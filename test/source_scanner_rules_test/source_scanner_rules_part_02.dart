@@ -468,6 +468,25 @@ class View {
       compatLint(source, 'ref.watch(profileProvider)', ruleName),
     ]);
   }
+
+  Future<void> test_conditionalWholeListClearButPartialStateWarns() async {
+    const source = r'''
+class Source<T> {}
+class WidgetRef { T watch<T>(Source<T> source) => throw 0; }
+class State { const State(this.count); final int count; }
+class ListPanel { ListPanel({required List<String> items, required int count}); }
+final itemsProvider = Source<List<String>>();
+final stateProvider = Source<State>();
+class View {
+  Object build(WidgetRef ref, bool loading) {
+    final items = loading ? const <String>[] : ref.watch(itemsProvider);
+    final state = loading ? const State(0) : ref.watch(stateProvider);
+    return ListPanel(items: items, count: state.count);
+  }
+}
+''';
+    await assertDiagnostics(source, [compatLint(source, 'ref.watch(stateProvider)', ruleName)]);
+  }
 }
 
 @reflectiveTest

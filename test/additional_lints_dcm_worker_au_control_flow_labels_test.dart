@@ -166,6 +166,308 @@ void f() {
 ''');
   }
 
+  Future<void> test_identityGuardedCallback_noLint() async {
+    await assertNoDiagnostics(r'''
+typedef Handler = void Function(Object error);
+
+class Registry {
+  Handler? current;
+
+  Handler install() {
+    final previous = current;
+    void handle(Object error) {}
+    current = handle;
+    return (_) {
+      if (current == handle) current = previous;
+    };
+  }
+}
+''');
+  }
+
+  Future<void> test_invertedIdentityGuard_lint() async {
+    const source = r'''
+typedef Handler = void Function(Object error);
+class Registry {
+  Handler? current;
+  Handler install() {
+    void handle(Object error) {}
+    current = handle;
+    return (_) {
+      if (current != handle) current = null;
+    };
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
+  }
+
+  Future<void> test_parenthesizedConjunctiveIdentityGuard_noLint() async {
+    await assertNoDiagnostics(r'''
+typedef Handler = void Function(Object error);
+class Registry {
+  Handler? current;
+  Handler install(bool mounted) {
+    void handle(Object error) {}
+    current = handle;
+    return (_) {
+      if ((identical(current, handle)) && mounted) current = null;
+    };
+  }
+}
+''');
+  }
+
+  Future<void> test_disjunctiveIdentityGuard_lint() async {
+    const source = r'''
+typedef Handler = void Function(Object error);
+class Registry {
+  Handler? current;
+  Handler install(bool force) {
+    void handle(Object error) {}
+    current = handle;
+    return (_) {
+      if (current == handle || force) current = null;
+    };
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
+  }
+
+  Future<void> test_coreIdenticalGuard_noLint() async {
+    await assertNoDiagnostics(r'''
+typedef Handler = void Function(Object error);
+
+class Registry {
+  Handler? current;
+
+  Handler install() {
+    final previous = current;
+    void handle(Object error) {}
+    current = handle;
+    return (_) {
+      if (identical(current, handle)) current = previous;
+    };
+  }
+}
+''');
+  }
+
+  Future<void> test_staticAndNestedInstanceCallbackSlots_noLint() async {
+    await assertNoDiagnostics(r'''
+typedef Handler = void Function(Object error);
+
+class GlobalHandler {
+  static Handler? current;
+}
+
+class Dispatcher {
+  static final Dispatcher instance = Dispatcher();
+  Handler? current;
+}
+
+Handler install() {
+  final previousGlobal = GlobalHandler.current;
+  final previousInstance = Dispatcher.instance.current;
+  void handleGlobal(Object error) {}
+  void handleInstance(Object error) {}
+  GlobalHandler.current = handleGlobal;
+  Dispatcher.instance.current = handleInstance;
+  return (_) {
+    if (GlobalHandler.current == handleGlobal) {
+      GlobalHandler.current = previousGlobal;
+    }
+    if (Dispatcher.instance.current == handleInstance) {
+      Dispatcher.instance.current = previousInstance;
+    }
+  };
+}
+''');
+  }
+
+  Future<void> test_callbackWithoutCleanupIdentity_lint() async {
+    const source = r'''
+typedef Handler = void Function(Object error);
+
+void register(Handler handler) {}
+
+void install() {
+  void handle(Object error) {}
+  register(handle);
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
+  }
+
+  Future<void> test_comparisonOutsideCleanup_lint() async {
+    const source = r'''
+typedef Handler = void Function(Object error);
+
+class Registry {
+  Handler? current;
+
+  void install() {
+    void handle(Object error) {}
+    current = handle;
+    if (current == handle) current = null;
+  }
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
+  }
+
+  Future<void> test_cleanupChecksDifferentSlot_lint() async {
+    const source = r'''
+typedef Handler = void Function(Object error);
+
+class Registry {
+  Handler? current;
+  Handler? unrelated;
+
+  Handler install() {
+    void handle(Object error) {}
+    current = handle;
+    return (_) {
+      if (unrelated == handle) unrelated = null;
+    };
+  }
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
+  }
+
+  Future<void> test_cleanupChecksDifferentReceiver_lint() async {
+    const source = r'''
+typedef Handler = void Function(Object error);
+
+class Registry {
+  Handler? current;
+}
+
+Handler install(Registry first, Registry second) {
+  void handle(Object error) {}
+  first.current = handle;
+  return (_) {
+    if (second.current == handle) second.current = null;
+  };
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
+  }
+
+  Future<void> test_identityComparisonWithoutCleanupWrite_lint() async {
+    const source = r'''
+typedef Handler = void Function(Object error);
+
+class Registry {
+  Handler? current;
+
+  Handler install() {
+    void handle(Object error) {}
+    current = handle;
+    return (_) {
+      if (current == handle) print('still installed');
+    };
+  }
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
+  }
+
+  Future<void> test_identityGuardWithNoOpSlotWrite_lint() async {
+    const source = r'''
+typedef Handler = void Function(Object error);
+
+class Registry {
+  Handler? current;
+
+  Handler install() {
+    void handle(Object error) {}
+    current = handle;
+    return (_) {
+      if (current == handle) current = handle;
+    };
+  }
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
+  }
+
+  Future<void> test_identityGuardWithUnrelatedConditionalWrite_lint() async {
+    const source = r'''
+typedef Handler = void Function(Object error);
+
+class Registry {
+  Handler? current;
+
+  Handler install(bool clear) {
+    final previous = current;
+    void handle(Object error) {}
+    current = handle;
+    return (_) {
+      if (current == handle) print('still installed');
+      if (clear) current = previous;
+    };
+  }
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
+  }
+
+  Future<void> test_shadowedCallbackName_lint() async {
+    const source = r'''
+typedef Handler = void Function(Object error);
+
+class Registry {
+  Handler? current;
+
+  Handler install() {
+    void handle(Object error) {}
+    current = handle;
+    return (_) {
+      final Handler handle = (error) {};
+      if (current == handle) current = null;
+    };
+  }
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
+  }
+
+  Future<void> test_unrelatedIdenticalMethod_lint() async {
+    const source = r'''
+typedef Handler = void Function(Object error);
+
+class Checker {
+  bool identical(Object? first, Object? second) => first == second;
+}
+
+class Registry {
+  Handler? current;
+  final Checker checker = Checker();
+
+  Handler install() {
+    void handle(Object error) {}
+    current = handle;
+    return (_) {
+      if (checker.identical(current, handle)) current = null;
+    };
+  }
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
+  }
+
   Future<void> test_severity_info() async {
     expect(AvoidLocalFunctions.code.severity, DiagnosticSeverity.INFO);
   }

@@ -129,6 +129,24 @@ final class PreferMatchFileNameTest extends AnalysisRuleTest {
     await assertDiagnosticsInFile(path, [lint(6, 3)]);
   }
 
+  Future<void> test_allowsDocumentedDateTimeHelperFilename() async {
+    final path = '$testPackageRootPath/lib/core/extensions/date_time_extensions.dart';
+    newFile(path, 'abstract final class DateTimeX {}');
+    await assertDiagnosticsInFile(path, []);
+  }
+
+  Future<void> test_reportsDifferentTypeInDateTimeHelperFilename() async {
+    final path = '$testPackageRootPath/lib/core/extensions/date_time_extensions.dart';
+    newFile(path, 'class Clock {}');
+    await assertDiagnosticsInFile(path, [lint(6, 5)]);
+  }
+
+  Future<void> test_reportsDateTimeHelperOutsideCanonicalPath() async {
+    final path = '$testPackageRootPath/lib/other/date_time_extensions.dart';
+    newFile(path, 'abstract final class DateTimeX {}');
+    await assertDiagnosticsInFile(path, [lint(21, 9)]);
+  }
+
   Future<void> test_matchingClassName_noLint() async {
     const source = r'''
 class UserProfile {}

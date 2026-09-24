@@ -2,6 +2,7 @@ import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -132,10 +133,10 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     description: 'Flags main entrypoints that call runApp before Crash.init() so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!_isMainEntrypoint(context)) return;
-      final runAppLine = _firstRunAppInvocationLine(context);
-      if (runAppLine == null) return;
-      if (!_awaitsResolvedCrashInitializer(context, runAppLine)) {
-        reporter.report(context, runAppLine, context.source.masked[runAppLine].indexOf('runApp'));
+      final runApp = _firstRunAppInvocation(context);
+      if (runApp == null) return;
+      if (!_awaitsResolvedCrashInitializer(context, runApp.offset)) {
+        reporter.report(context, runApp.line, runApp.column);
       }
     },
   ),
@@ -166,9 +167,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
   ),
 ];
 
-bool _awaitsResolvedCrashInitializer(SourceScannerContext context, int runAppLine) {
-  final runAppOffset =
-      context.source.lineOffsets[runAppLine] + context.source.masked[runAppLine].indexOf('runApp');
+bool _awaitsResolvedCrashInitializer(SourceScannerContext context, int runAppOffset) {
   for (final main in context.unit.declarations.whereType<FunctionDeclaration>()) {
     if (main.name.lexeme != 'main' || main.functionExpression.body is! BlockFunctionBody) {
       continue;
@@ -180,7 +179,185 @@ bool _awaitsResolvedCrashInitializer(SourceScannerContext context, int runAppLin
       return true;
     }
   }
+  return _awaitsTopLevelCrashAppRunner(context, runAppOffset);
+}
+
+bool _awaitsTopLevelCrashAppRunner(SourceScannerContext context, int runAppOffset) {
+  final runAppInvocations = _RunAppInvocationVisitor();
+  context.unit.accept(runAppInvocations);
+  if (runAppInvocations.count != 1) return false;
+  final functions = context.unit.declarations.whereType<FunctionDeclaration>().toList();
+  final main = functions.where((function) => function.name.lexeme == 'main').firstOrNull;
+  final runner = functions
+      .where(
+        (function) =>
+            function.name.lexeme != 'main' &&
+            function.offset <= runAppOffset &&
+            runAppOffset < function.end,
+      )
+      .firstOrNull;
+  if (main == null || runner == null || !_hasAwaitedCrashAppRunner(runner, runAppOffset)) {
+    return false;
+  }
+
+  final byElement = <Element, FunctionDeclaration>{};
+  for (final function in functions) {
+    final element = function.declaredFragment?.element;
+    if (element != null) byElement[element] = function;
+  }
+  return _reachesStartupRunner(main, runner, byElement, <Element>{});
+}
+
+bool _hasAwaitedCrashAppRunner(FunctionDeclaration runner, int runAppOffset) {
+  final body = runner.functionExpression.body;
+  if (body is! BlockFunctionBody) return false;
+  for (final statement in body.block.statements) {
+    if (_mayExitBeforeInitializer(statement)) return false;
+    final initializer = _awaitedCrashInit(statement);
+    if (initializer != null && _appRunnerContainsRunApp(initializer, runAppOffset)) return true;
+  }
   return false;
+}
+
+MethodInvocation? _awaitedCrashInit(Statement statement) {
+  if (statement is! ExpressionStatement || statement.expression is! AwaitExpression) return null;
+  final awaited = (statement.expression as AwaitExpression).expression;
+  return awaited is MethodInvocation && _isResolvedCrashInitCall(awaited) ? awaited : null;
+}
+
+bool _appRunnerContainsRunApp(MethodInvocation initializer, int runAppOffset) {
+  final method = initializer.methodName.element;
+  return initializer.argumentList.arguments.whereType<NamedArgument>().any((argument) {
+    final callback = argument.argumentExpression;
+    final parameter = argument.correspondingParameter;
+    return parameter?.name == 'appRunner' &&
+        parameter?.enclosingElement == method &&
+        callback is FunctionExpression &&
+        callback.offset <= runAppOffset &&
+        runAppOffset < callback.end;
+  });
+}
+
+bool _reachesStartupRunner(
+  FunctionDeclaration current,
+  FunctionDeclaration runner,
+  Map<Element, FunctionDeclaration> byElement,
+  Set<Element> visited,
+) {
+  if (identical(current, runner)) return true;
+  final currentElement = current.declaredFragment?.element;
+  if (currentElement == null || !visited.add(currentElement)) return false;
+  final calls = _startupForwardedCalls(current);
+  if (calls == null) return false;
+  for (final call in calls) {
+    final target = byElement[call.methodName.element];
+    if (target != null && _reachesStartupRunner(target, runner, byElement, visited)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+List<MethodInvocation>? _startupForwardedCalls(FunctionDeclaration current) {
+  final body = current.functionExpression.body;
+  if (body is ExpressionFunctionBody) {
+    final call = _forwardedCall(body.expression, current);
+    return call == null ? [] : [call];
+  }
+  if (body is! BlockFunctionBody) return [];
+  final calls = <MethodInvocation>[];
+  for (final statement in body.block.statements) {
+    if (_blocksStartupPath(statement)) return null;
+    final call = _awaitedOrReturnedCall(statement, current);
+    if (call != null) calls.add(call);
+    if (statement is ReturnStatement) break;
+  }
+  return calls;
+}
+
+bool _blocksStartupPath(Statement statement) =>
+    (statement is! ReturnStatement && _mayExitBeforeInitializer(statement)) ||
+    _containsRunApp(statement);
+
+bool _abruptlyExits(Statement statement) =>
+    statement is ReturnStatement ||
+    (statement is ExpressionStatement && statement.expression is ThrowExpression);
+
+bool _mayExitBeforeInitializer(Statement statement) {
+  if (_abruptlyExits(statement)) return true;
+  final visitor = _EarlyExitVisitor();
+  statement.accept(visitor);
+  return visitor.found;
+}
+
+final class _EarlyExitVisitor extends RecursiveAstVisitor<void> {
+  bool found = false;
+
+  @override
+  void visitReturnStatement(ReturnStatement node) {
+    found = true;
+  }
+
+  @override
+  void visitThrowExpression(ThrowExpression node) {
+    found = true;
+  }
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {}
+
+  @override
+  void visitFunctionDeclarationStatement(FunctionDeclarationStatement node) {}
+}
+
+MethodInvocation? _awaitedOrReturnedCall(Statement statement, FunctionDeclaration owner) {
+  if (statement is ExpressionStatement && statement.expression is AwaitExpression) {
+    final awaited = (statement.expression as AwaitExpression).expression;
+    return awaited is MethodInvocation ? awaited : null;
+  }
+  if (statement case ReturnStatement(expression: final expression?)) {
+    return _forwardedCall(expression, owner);
+  }
+  return null;
+}
+
+MethodInvocation? _forwardedCall(Expression expression, FunctionDeclaration owner) {
+  if (expression is AwaitExpression) {
+    return expression.expression is MethodInvocation
+        ? expression.expression as MethodInvocation
+        : null;
+  }
+  final returnType = owner.returnType?.type;
+  if (returnType is! InterfaceType ||
+      returnType.element.name != 'Future' ||
+      returnType.element.library.identifier != 'dart:async') {
+    return null;
+  }
+  return expression is MethodInvocation ? expression : null;
+}
+
+bool _containsRunApp(AstNode node) {
+  final visitor = _RunAppInvocationVisitor();
+  node.accept(visitor);
+  return visitor.found;
+}
+
+final class _RunAppInvocationVisitor extends RecursiveAstVisitor<void> {
+  int? firstOffset;
+  int count = 0;
+
+  bool get found => firstOffset != null;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final previous = firstOffset;
+    if (node.methodName.name == 'runApp' &&
+        (previous == null || node.methodName.offset < previous)) {
+      firstOffset = node.methodName.offset;
+    }
+    if (node.methodName.name == 'runApp') count++;
+    super.visitMethodInvocation(node);
+  }
 }
 
 bool _statementAwaitsCrashInitializer(Statement statement) {
@@ -338,17 +515,13 @@ bool _isMainEntrypoint(SourceScannerContext context) {
       (normalized.startsWith('lib/main_') && normalized.endsWith('.dart'));
 }
 
-int? _firstRunAppInvocationLine(SourceScannerContext context) {
-  for (var i = 0; i < context.source.length; i++) {
-    final line = context.source.masked[i];
-    if (!RegExp(r'\brunApp\s*\(').hasMatch(line)) continue;
-    if (RegExp(r'^\s*(?:void|Future(?:<[^>]+>)?|[A-Za-z_][A-Za-z0-9_<>,? ]+)\s+runApp\s*\(')
-        .hasMatch(line)) {
-      continue;
-    }
-    return i;
-  }
-  return null;
+({int line, int column, int offset})? _firstRunAppInvocation(SourceScannerContext context) {
+  final visitor = _RunAppInvocationVisitor();
+  context.unit.accept(visitor);
+  final offset = visitor.firstOffset;
+  if (offset == null) return null;
+  final line = context.source.lineOffsets.lastIndexWhere((start) => start <= offset);
+  return (line: line, column: offset - context.source.lineOffsets[line], offset: offset);
 }
 
 String _statementFrom(SourceScannerContext context, int startLine) {

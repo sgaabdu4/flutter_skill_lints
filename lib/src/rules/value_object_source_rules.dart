@@ -304,12 +304,53 @@ void _reportPrimitiveFactoriesInClass(
   SourceScannerContext context,
   ClassDeclaration declaration,
 ) {
+  final isExceptionUnion = _isExceptionUnion(declaration);
   for (final constructor in declaration.body.members.whereType<ConstructorDeclaration>()) {
     if (!_isPublicPrimitiveFactory(constructor)) continue;
+    if (isExceptionUnion && _isNullableDiagnosticRedirect(constructor)) continue;
     final offset = constructor.factoryKeyword!.offset;
     final line = _lineIndexForOffset(offset, context.source.lineOffsets, context.source.length);
     reporter.report(context, line, offset - context.source.lineOffsets[line]);
   }
+}
+
+bool _isExceptionUnion(ClassDeclaration declaration) {
+  if (declaration.sealedKeyword == null) return false;
+  final supertypes = [
+    ...?declaration.implementsClause?.interfaces,
+    ?declaration.extendsClause?.superclass,
+  ];
+  final implementsCoreError = supertypes.any(
+    (type) =>
+        type.element?.library?.uri.toString() == 'dart:core' &&
+        (type.name.lexeme == 'Exception' || type.name.lexeme == 'Error'),
+  );
+  if (!implementsCoreError) return false;
+  return declaration.body.members
+          .whereType<ConstructorDeclaration>()
+          .where(
+            (constructor) => constructor.name != null && constructor.redirectedConstructor != null,
+          )
+          .length >=
+      2;
+}
+
+bool _isNullableDiagnosticRedirect(ConstructorDeclaration constructor) {
+  if (constructor.redirectedConstructor == null) return false;
+  return constructor.parameters.parameters.every((parameter) {
+    if (!parameter.isOptionalNamed ||
+        parameter.defaultClause != null ||
+        parameter.type?.question == null) {
+      return false;
+    }
+    final type = parameter.declaredFragment?.element.type;
+    return switch (parameter.name?.lexeme) {
+      'message' || 'type' => type?.isDartCoreString == true,
+      'code' || 'statusCode' => type?.isDartCoreInt == true,
+      'response' => type?.isDartCoreObject == true,
+      _ => false,
+    };
+  });
 }
 
 bool _isPublicPrimitiveFactory(ConstructorDeclaration constructor) {

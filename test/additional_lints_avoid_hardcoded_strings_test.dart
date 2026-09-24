@@ -315,10 +315,13 @@ class SavePanel extends StatelessWidget {
   final ValueChanged<String>? onError;
   final void Function({required String message}) onNotice;
 
-  void _save(String name) {
+  void _save(String name, void Function(String message) report) {
     onSaved('Saved!');
     onError?.call('Could not save $name');
     onNotice(message: _savedCopy);
+    report('Name is required.');
+    final void Function(String) announce = onSaved;
+    announce('Saving draft');
   }
 
   @override
@@ -330,6 +333,8 @@ class SavePanel extends StatelessWidget {
       lint(source.indexOf("'Saved!'"), "'Saved!'".length),
       lint(source.indexOf(r"'Could not save $name'"), r"'Could not save $name'".length),
       lint(source.indexOf('_savedCopy);'), '_savedCopy'.length),
+      lint(source.indexOf("'Name is required.'"), "'Name is required.'".length),
+      lint(source.indexOf("'Saving draft'"), "'Saving draft'".length),
     ]);
   }
 

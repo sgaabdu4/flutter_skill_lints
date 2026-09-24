@@ -90,6 +90,22 @@ abstract final class Crash {
 }
 ''', path: '$testPackageLibPath/core/services/crash_service.dart');
   }
+
+  Future<void> test_reportsOtherCoreCrashFiles() async {
+    await assertRuleDiagnostic(
+      r'''
+class FirebaseCrashlytics {
+  static final instance = FirebaseCrashlytics();
+  Future<void> recordError(Object error, StackTrace stack) async {}
+}
+Future<void> installHandlers() async {
+  await FirebaseCrashlytics.instance.recordError(Exception('x'), StackTrace.current);
+}
+''',
+      'FirebaseCrashlytics.instance.recordError',
+      path: '$testPackageLibPath/core/crash/crash_handlers.dart',
+    );
+  }
 }
 
 @reflectiveTest

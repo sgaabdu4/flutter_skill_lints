@@ -504,9 +504,7 @@ bool _containsMatch(SourceScannerContext context, RegExp pattern) {
 
 bool _isCrashServiceContext(SourceScannerContext context) {
   final normalized = context.path.replaceAll('\\', '/').toLowerCase();
-  return normalized.endsWith('/crash_service.dart') ||
-      normalized.endsWith('/crash.dart') ||
-      normalized.contains('/core/crash/');
+  return normalized.endsWith('/crash_service.dart');
 }
 
 bool _isMainEntrypoint(SourceScannerContext context) {

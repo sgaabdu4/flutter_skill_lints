@@ -1901,6 +1901,129 @@ class HelpLink extends StatelessWidget {
   }
 }
 
+@reflectiveTest
+final class NetworkRawHttpFailureInWidgetOrNotifierTest extends _NetworkRuleTest {
+  @override
+  String get ruleName => 'network_raw_http_failure_in_widget_or_notifier';
+  @override
+  String get needle => 'on DioException catch (_)';
+  @override
+  String get path => '$testPackageLibPath/features/products/presentation/product_notifier.dart';
+  @override
+  String get source => r'''
+import 'package:dio/dio.dart';
+import 'package:riverpod/riverpod.dart';
+
+final Future<void> Function() load = throw 0;
+
+class ProductNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  Future<void> refresh() async {
+    try {
+      await load();
+      state = 1;
+    } on DioException catch (_) {
+      state = -1;
+    }
+  }
+}
+''';
+
+  Future<void> test_reportsStatusReadsAndRawTypeTests() async {
+    const source = r'''
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/widgets.dart';
+import 'package:http/http.dart' as http;
+import 'package:riverpod/riverpod.dart';
+
+class ProductNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void apply(Response<Object?> response, http.Response legacy, Object error) {
+    if (response.statusCode == 404) state = -1;
+    if (legacy.statusCode == 401) state = -2;
+    if (error is SocketException) state = -3;
+  }
+
+  Future<void> retry(Future<void> Function() load) async {
+    try {
+      await load();
+    } on http.ClientException {
+      state = -4;
+    }
+  }
+}
+
+class ProductPanel extends StatefulWidget {
+  const ProductPanel();
+}
+
+class _ProductPanelState extends State<ProductPanel> {
+  bool missing(DioException error) => error.response?.statusCode == 404;
+
+  @override
+  Widget build(BuildContext context) => const Text('panel');
+}
+''';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(source, 'response.statusCode == 404', ruleName),
+      compatLint(source, 'legacy.statusCode == 401', ruleName),
+      compatLint(source, 'error is SocketException', ruleName),
+      compatLint(source, 'on http.ClientException', ruleName),
+      compatLint(source, 'error.response?.statusCode', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsTypedFailuresAndDatasourceClassification() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+class AppException implements Exception {}
+
+final Future<void> Function() load = throw 0;
+
+class ProductNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  Future<void> refresh() async {
+    try {
+      await load();
+    } on AppException {
+      state = -1;
+    } on Exception {
+      state = -2;
+    }
+  }
+}
+''', path: path);
+    await assertAllows(r'''
+import 'package:dio/dio.dart';
+
+class AppException implements Exception {}
+
+class ProductRemoteDatasource {
+  Future<Object?> read(Future<Response<Object?>> Function() get) async {
+    try {
+      final response = await get();
+      if (response.statusCode == 404) return null;
+      return response.data;
+    } on DioException {
+      throw AppException();
+    }
+  }
+}
+''', path: '$testPackageLibPath/features/products/data/product_remote_datasource.dart');
+  }
+}
+
 abstract class _TestRuleTest extends _SourceRuleTest {
   @override
   List<ScannerRule> get rules => testSourceRules;

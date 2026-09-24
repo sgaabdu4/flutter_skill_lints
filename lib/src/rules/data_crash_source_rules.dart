@@ -335,6 +335,30 @@ final List<ScannerRule> dataCrashSourceRules = [
       }
     },
   ),
+
+  /// Widgets and notifiers render typed results, not raw HTTP failures.
+  ///
+  /// Why: networking.md classifies response status once at the infrastructure
+  /// boundary and forbids catching raw HTTP failures in widgets or notifiers.
+  scannerRule(
+    code: const LintCode(
+      'network_raw_http_failure_in_widget_or_notifier',
+      'Widgets and notifiers must not handle raw HTTP failures or response status codes.',
+      correctionMessage: 'Classify status and raw failures in the datasource or HTTP service, then handle typed results or AppException here.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags raw dio/http/dart:io failure catches and type tests, and HTTP response statusCode reads, inside Widget, State and Riverpod notifier classes.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+      for (final declaration in _widgetOrNotifierClasses(context)) {
+        final visitor = _RawHttpFailureVisitor();
+        declaration.accept(visitor);
+        for (final offset in visitor.offsets) {
+          _reportOffset(reporter, context, offset);
+        }
+      }
+    },
+  ),
 ];
 
 void _reportOffset(ScannerRuleReporter reporter, SourceScannerContext context, int offset) {
@@ -500,6 +524,12 @@ const _rawHttpFailureChecker = TypeChecker.any([
   TypeChecker.fromName('ClientException', packageName: 'http'),
   TypeChecker.fromUrl('dart:io#SocketException'),
   TypeChecker.fromUrl('dart:io#HttpException'),
+]);
+
+const _httpResponseChecker = TypeChecker.any([
+  TypeChecker.fromName('Response', packageName: 'dio'),
+  TypeChecker.fromName('BaseResponse', packageName: 'http'),
+  TypeChecker.fromUrl('dart:io#HttpClientResponse'),
 ]);
 
 /// A call to package:http, or to a method whose class reaches an HTTP client.
@@ -824,5 +854,38 @@ final class _WidgetSecretVisitor extends RecursiveAstVisitor<void> {
       offsets.add(node.offset);
     }
     super.visitNamedArgument(node);
+  }
+}
+
+final class _RawHttpFailureVisitor extends RecursiveAstVisitor<void> {
+  final List<int> offsets = [];
+
+  @override
+  void visitCatchClause(CatchClause node) {
+    final type = node.exceptionType?.type;
+    if (type != null && _rawHttpFailureChecker.isAssignableFromType(type)) offsets.add(node.offset);
+    super.visitCatchClause(node);
+  }
+
+  @override
+  void visitIsExpression(IsExpression node) {
+    final type = node.type.type;
+    if (type != null && _rawHttpFailureChecker.isAssignableFromType(type)) offsets.add(node.offset);
+    super.visitIsExpression(node);
+  }
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    final element = node.element;
+    final owner = element?.enclosingElement;
+    if (element is GetterElement &&
+        element.name == 'statusCode' &&
+        owner is InterfaceElement &&
+        _httpResponseChecker.isSuperOf(owner)) {
+      final parent = node.parent;
+      offsets.add(
+        parent is PrefixedIdentifier || parent is PropertyAccess ? parent!.offset : node.offset,
+      );
+    }
   }
 }

@@ -144,6 +144,7 @@ void main() {
     defineReflectiveTests(DatasourceConcreteHttpClientTest);
     defineReflectiveTests(NetworkFailureNullFallbackTest);
     defineReflectiveTests(NetworkSecretInWidgetTest);
+    defineReflectiveTests(NetworkRawHttpFailureInWidgetOrNotifierTest);
     defineReflectiveTests(TestProviderContainerTest);
     defineReflectiveTests(TestUncontrolledScopeTest);
     defineReflectiveTests(TestCreateContainerTest);

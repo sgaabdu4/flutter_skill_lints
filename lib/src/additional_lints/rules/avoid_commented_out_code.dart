@@ -1,3 +1,4 @@
+import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
@@ -37,7 +38,9 @@ class _Visitor extends SimpleAstVisitor<void> {
   static final _assignmentPattern = RegExp(r'^[a-zA-Z_]\w*(\.\w+)*\s*[+\-*/]?=\s');
   static final _returnPattern = RegExp(r'^return\s');
   static final _cascadePattern = RegExp(r'^\.\.[a-zA-Z]');
-  static final _functionCallPattern = RegExp(r'^[a-zA-Z_]\w*(\.\w+)*\s*(<[^>]*>)?\s*\(');
+  // Formatted Dart never puts whitespace between a callee and its `(`;
+  // prose such as `Glucose (fasting)` does.
+  static final _functionCallPattern = RegExp(r'^[a-zA-Z_]\w*(\.\w+)*(<[^>]*>)?\(');
   static final _whitespacePattern = RegExp(r'\s+');
 
   @override
@@ -290,7 +293,24 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   /// Checks if a line looks like a function or method call.
+  ///
+  /// A line that opens more parentheses than it closes starts a multi-line
+  /// call. A complete line must parse as a Dart statement, so descriptive text
+  /// such as `Glucose(GOD-POD Method)` is not treated as a call.
   bool _looksLikeFunctionCall(String line) {
-    return _functionCallPattern.hasMatch(line);
+    if (!_functionCallPattern.hasMatch(line)) return false;
+    if (_countOf(line, '(') > _countOf(line, ')')) return true;
+    return _parsesAsStatement(line);
+  }
+
+  static int _countOf(String text, String char) => char.allMatches(text).length;
+
+  static bool _parsesAsStatement(String line) {
+    final statement = line.endsWith(';') ? line : '$line;';
+    final result = parseString(
+      content: 'void _commentProbe() {\n$statement\n}\n',
+      throwIfDiagnostics: false,
+    );
+    return result.errors.isEmpty;
   }
 }

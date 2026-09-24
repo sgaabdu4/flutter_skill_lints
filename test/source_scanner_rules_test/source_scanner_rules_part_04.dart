@@ -247,6 +247,8 @@ extension UnionPatterns on Union {
     super.setUp();
   }
 
+  // Issue #50 (reopened): map, whenOrNull and mapOrNull are banned like when,
+  // maybeWhen and maybeMap (freezed-sealed.md:9).
   Future<void> test_reportsEveryGeneratedPatternHelper() async {
     const source = r'''
 import 'package:freezed_annotation/freezed_annotation.dart';

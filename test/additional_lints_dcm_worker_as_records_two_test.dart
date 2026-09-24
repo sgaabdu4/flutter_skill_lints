@@ -87,6 +87,8 @@ void f() {
     ]);
   }
 
+  // Issue #75: the skill's RIGHT example (dart-patterns-records.md:61-65) keeps
+  // two positional fields; named records are preferred only for 3+ fields.
   Future<void> test_skillPositionalPairAndWildcardDestructuring_noLint() async {
     await assertNoDiagnostics(r'''
 (String, int) userInfo() => ('Alice', 30);

@@ -197,7 +197,46 @@ final class AvoidThrowTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = AvoidThrow();
+    _addFlutterPackage();
+    _addRiverpodPackage();
     super.setUp();
+    _patchCoreFormatExceptionConstructor();
+  }
+
+  void _patchCoreFormatExceptionConstructor() {
+    final core = getFile('$dartSdkPath/lib/core/core.dart');
+    final source = core.readAsStringSync().replaceFirst(
+      'class FormatException implements Exception {}',
+      'class FormatException implements Exception { const FormatException([String? message]); }',
+    );
+    core.writeAsStringSync(source);
+  }
+
+  void _addFlutterPackage() {
+    newPackage('flutter').addFile('lib/widgets.dart', r'''
+abstract class Widget {}
+class SizedBox extends Widget {
+  const SizedBox();
+}
+class BuildContext {}
+abstract class StatelessWidget extends Widget {
+  Widget build(BuildContext context);
+}
+abstract class State<T> {
+  Widget build(BuildContext context);
+}
+class TextButton extends Widget {
+  const TextButton({void Function()? onPressed});
+}
+''');
+  }
+
+  void _addRiverpodPackage() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', r'''
+abstract class Notifier<T> {
+  late T state;
+}
+''');
   }
 
   Future<void> test_throwStatement_lint() async {
@@ -216,6 +255,223 @@ Never f() => throw 'failed';
 ''';
 
     await assertDiagnostics(source, [lint(source.indexOf('throw'), "throw 'failed'".length)]);
+  }
+
+  Future<void> test_documentedParserFormatException_noLint() async {
+    await assertNoDiagnostics(r'''
+Map<String, dynamic> parsePayload(String body) {
+  final Object? decoded = body;
+  if (decoded case Map<String, dynamic> payload) return payload;
+  throw const FormatException();
+}
+''');
+  }
+
+  Future<void> test_typedExceptionSubtypeOutsidePresentation_noLint() async {
+    await assertNoDiagnostics(r'''
+final class RepositoryFailure implements Exception {
+  const RepositoryFailure();
+}
+
+Never fail() => throw const RepositoryFailure();
+''');
+  }
+
+  Future<void> test_baseExceptionErrorsAndUntypedValues_lint() async {
+    const source = r'''
+void baseException() => throw Exception('base');
+final class FatalFailure extends Error {}
+final class HybridFailure extends Error implements Exception {}
+void stateError() => throw FatalFailure();
+void hybridError() => throw HybridFailure();
+void untyped(dynamic value) => throw value;
+void stringFailure() => throw 'failure';
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('throw Exception'), 'throw Exception(\'base\')'.length),
+      lint(source.indexOf('throw FatalFailure'), 'throw FatalFailure()'.length),
+      lint(source.indexOf('throw HybridFailure'), 'throw HybridFailure()'.length),
+      lint(source.indexOf('throw value'), 'throw value'.length),
+      lint(source.indexOf("throw 'failure'"), "throw 'failure'".length),
+    ]);
+  }
+
+  Future<void> test_nonExceptionFormatExceptionLookalike_lint() async {
+    const source = r'''
+final class FormatException {
+  const FormatException();
+}
+
+Never decode() => throw const FormatException();
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('throw const FormatException'), 'throw const FormatException()'.length),
+    ]);
+  }
+
+  Future<void> test_widgetAndStateBuildStillReportTypedThrows() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+final class PayloadWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => throw const FormatException('invalid');
+}
+
+final class PayloadState extends State<Object> {
+  @override
+  Widget build(BuildContext context) => throw const FormatException('invalid');
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(
+        source.indexOf('throw const FormatException'),
+        'throw const FormatException(\'invalid\')'.length,
+      ),
+      lint(
+        source.indexOf('throw const FormatException', source.indexOf('final class PayloadState')),
+        'throw const FormatException(\'invalid\')'.length,
+      ),
+    ]);
+  }
+
+  Future<void> test_widgetHelperMethodStillReportsTypedThrow() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+final class PayloadWidget extends StatelessWidget {
+  void parsePayload() => throw const FormatException();
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('throw const FormatException'), 'throw const FormatException()'.length),
+    ]);
+  }
+
+  Future<void> test_sameUnitFlutterCallbackFunctionAndGenericTearoffsStillReport() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+void topLevelSubmit() => throw const FormatException();
+void genericTopLevelSubmit<T>() => throw const FormatException();
+
+final class StateController {
+  void submit() => throw const FormatException();
+  void submitWithType<T>() => throw const FormatException();
+}
+
+final class PayloadState extends State<Object> {
+  void load() => throw const FormatException();
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+
+void registerCallbacks(StateController controller, PayloadState state) {
+  TextButton(onPressed: topLevelSubmit);
+  TextButton(onPressed: genericTopLevelSubmit<int>);
+  TextButton(onPressed: controller.submit);
+  TextButton(onPressed: controller.submitWithType<int>);
+  TextButton(onPressed: state.load);
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('throw const FormatException'), 'throw const FormatException()'.length),
+      lint(
+        source.indexOf('throw const FormatException', source.indexOf('void genericTopLevelSubmit')),
+        'throw const FormatException()'.length,
+      ),
+      lint(
+        source.indexOf(
+          'throw const FormatException',
+          source.indexOf('final class StateController'),
+        ),
+        'throw const FormatException()'.length,
+      ),
+      lint(
+        source.indexOf('throw const FormatException', source.indexOf('void submitWithType')),
+        'throw const FormatException()'.length,
+      ),
+      lint(
+        source.indexOf('throw const FormatException', source.indexOf('final class PayloadState')),
+        'throw const FormatException()'.length,
+      ),
+    ]);
+  }
+
+  Future<void> test_resolvedWidgetCallbackAndDeferredThrowStillReport() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+void registerAction() {
+  TextButton(
+    onPressed: () {
+      Future<void>.delayed(
+        Duration.zero,
+        () => throw const FormatException('invalid'),
+      );
+    },
+  );
+}
+
+''';
+
+    await assertDiagnostics(source, [
+      lint(
+        source.indexOf('throw const FormatException'),
+        'throw const FormatException(\'invalid\')'.length,
+      ),
+    ]);
+  }
+
+  Future<void> test_lookalikeWidgetCallbackDoesNotCreateUiBoundary() async {
+    await assertNoDiagnostics(r'''
+class FakeTextButton {
+  const FakeTextButton({void Function()? onPressed});
+}
+
+void registerAction() {
+  FakeTextButton(onPressed: () => throw const FormatException());
+}
+''');
+  }
+
+  Future<void> test_genericErrorCallbackDoesNotHideUntypedThrow() async {
+    const source = r'''
+void registerFailureHandler() {
+  Future<void>.value().catchError((Object error) => throw error);
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('throw error'), 'throw error'.length)]);
+  }
+
+  Future<void> test_actualRiverpodNotifierMutationStillReportsTypedThrow() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+final class CounterNotifier extends Notifier<int> {
+  void increment() {
+    state = 1;
+    throw const FormatException('invalid');
+  }
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(
+        source.indexOf('throw const FormatException'),
+        'throw const FormatException(\'invalid\')'.length,
+      ),
+    ]);
   }
 
   Future<void> test_validatedValueObjectArgumentGuard_noLint() async {

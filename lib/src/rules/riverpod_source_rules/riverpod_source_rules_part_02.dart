@@ -67,6 +67,13 @@ final class _VariableUses extends RecursiveAstVisitor<void> {
 
 bool _isWholeValueUse(Expression value) {
   final parent = value.parent;
+  if (parent is ForEachParts && parent.iterable == value) return true;
+  if (parent is MethodInvocation &&
+      parent.target == value &&
+      parent.methodName.name == 'when' &&
+      _hasCompleteAsyncValueDispatch(parent)) {
+    return true;
+  }
   if (parent is NamedArgument || parent is ArgumentList) {
     final arguments = parent is NamedArgument ? parent.parent : parent;
     if (arguments is ArgumentList && arguments.parent is InstanceCreationExpression) {
@@ -81,4 +88,21 @@ bool _isWholeValueUse(Expression value) {
   }
   if (parent is ReturnStatement && value.staticType?.isDartCoreList == true) return true;
   return false;
+}
+
+bool _hasCompleteAsyncValueDispatch(MethodInvocation invocation) {
+  final method = invocation.methodName.element;
+  final owner = method?.enclosingElement;
+  final ownerLibrary = owner?.library?.uri.toString() ?? '';
+  if (method?.name != 'when' ||
+      (owner?.name != 'AsyncValue' && owner?.name != 'AsyncValueExtensions') ||
+      !(ownerLibrary.startsWith('package:riverpod/') ||
+          ownerLibrary.startsWith('package:flutter_riverpod/'))) {
+    return false;
+  }
+  final branches = invocation.argumentList.arguments
+      .whereType<NamedArgument>()
+      .map((argument) => argument.name.lexeme)
+      .toSet();
+  return branches.containsAll(const {'data', 'loading', 'error'});
 }

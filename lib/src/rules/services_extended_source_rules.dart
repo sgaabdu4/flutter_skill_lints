@@ -1,3 +1,6 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -241,10 +244,6 @@ final _inlineConcreteDependency = RegExp(
   r'Client|Plugin|Queue|Manager|Storage|Activities|EventBus)|FlutterLocalNotificationsPlugin|'
   r'DefaultCacheManager|RemoteMutationQueue|LiveActivities)\s*\(',
 );
-final _stableInfrastructureProviderSignature = RegExp(
-  r'\b(?:Future\s*<[^>]+>|Stream\s*<[^>]+>|[A-ZI][A-Za-z0-9_<>,? ]*)\s+'
-  r'([a-zA-Z_]\w*)\s*\(\s*Ref\s+ref\b',
-);
 final _stableInfrastructureName = RegExp(
   r'(?:Service|Repository|Datasource|DataSource|Client|Plugin|Queue|Manager|Storage|'
   r'Activities|EventBus)\b',
@@ -312,11 +311,29 @@ bool _insideStableInfrastructureProviderFactory(SourceScannerContext context, in
   final window = context.source.masked.sublist(start, lineIndex + 1).join(' ');
   if (!RegExp(r'@(?:R|r)iverpod\b').hasMatch(window)) return false;
 
-  final match = _stableInfrastructureProviderSignature.firstMatch(window);
-  if (match == null) return false;
+  final line = context.source.masked[lineIndex];
+  final watchColumn = line.indexOf('ref.watch(');
+  if (watchColumn < 0) return false;
+  final offset = context.source.lineOffsets[lineIndex] + watchColumn;
+  AstNode? node = context.unit.nodeCovering(offset: offset);
+  while (node != null && node is! FunctionDeclaration) {
+    node = node.parent;
+  }
+  final function = node is FunctionDeclaration ? node.declaredFragment?.element : null;
+  if (function is! TopLevelFunctionElement) return false;
 
-  final signature = match.group(0) ?? '';
-  final functionName = match.group(1) ?? '';
-  return _stableInfrastructureName.hasMatch(signature) ||
-      _stableInfrastructureName.hasMatch(functionName);
+  var returnType = function.returnType;
+  if (returnType is InterfaceType &&
+      returnType.element.library.uri.toString() == 'dart:async' &&
+      (returnType.element.name == 'Future' || returnType.element.name == 'Stream') &&
+      returnType.typeArguments.length == 1) {
+    returnType = returnType.typeArguments.single;
+  }
+  if (returnType is! InterfaceType) return false;
+  if (_stableInfrastructureName.hasMatch(returnType.element.name ?? '')) return true;
+  return returnType.allSupertypes.any((supertype) {
+    final element = supertype.element;
+    return element.name == 'Service' &&
+        element.library.identifier == 'package:appwrite/src/service.dart';
+  });
 }

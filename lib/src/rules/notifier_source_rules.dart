@@ -1,7 +1,5 @@
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/element/nullability_suffix.dart';
-import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/rules/notifier_dependency_capture.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> notifierSourceRules = [
@@ -39,26 +37,23 @@ final List<ScannerRule> notifierSourceRules = [
     },
   ),
 
-  /// Mutation methods must initialize dependencies before writes.
+  /// Mutation methods must resolve dependencies before writes or awaits.
   ///
-  /// Why: Flags Notifier mutation methods that write before dependency initialization. Call
-  /// an _ensure... helper before using repositories or ref.read dependencies.
+  /// Why: Flags Notifier mutation methods that use repositories or provider reads without
+  /// capturing their operation in a final local before the first state write or await.
   scannerRule(
     code: const LintCode(
       'notifier_ensure_deps',
       'Mutation methods must initialize dependencies before writes.',
-      correctionMessage:
-          'Call an _ensure... helper before using repositories or ref.read dependencies.',
+      correctionMessage: 'Capture the operation from ref.read(...) in a final local before the first state write or await.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags Notifier mutation methods that write before dependency initialization so the Flutter skill violation is shown during analysis.',
+    description: 'Flags Notifier mutation methods that access dependencies without resolving their operation before state writes or awaits.',
     scan: (reporter, context) {
       for (final classSpan in context.classes.where((span) => span.isNotifier)) {
         final classMethods = context.methods.where((method) => classSpan.contains(method.start));
         for (final method in classMethods) {
-          if (method.name != 'build' &&
-              _notifierNeedsEnsure(context, method) &&
-              !_usesConstructorInjectedDependencies(context, classSpan, method)) {
+          if (method.name != 'build' && notifierNeedsDependencyEnsure(context, classSpan, method)) {
             reporter.report(context, method.start, 0);
           }
         }
@@ -94,87 +89,6 @@ final List<ScannerRule> notifierSourceRules = [
     },
   ),
 ];
-
-bool _notifierNeedsEnsure(SourceScannerContext context, ScannerMethodSpan method) {
-  var hasEnsure = false;
-  var hasDependency = false;
-  var hasNullRepositoryReturn = false;
-  for (var i = method.start; i <= method.end; i++) {
-    final line = context.source.masked[i];
-    hasEnsure = hasEnsure || _hasEnsureCall(line);
-    hasDependency = hasDependency || _hasMutationDependency(line);
-    hasNullRepositoryReturn = hasNullRepositoryReturn || _hasNullRepositoryReturn(line);
-  }
-  return context.isMutationMethod(method.name) &&
-      !hasEnsure &&
-      (hasDependency || hasNullRepositoryReturn);
-}
-
-bool _usesConstructorInjectedDependencies(
-  SourceScannerContext context,
-  ScannerClassSpan classSpan,
-  ScannerMethodSpan method,
-) {
-  final body = context.source.masked.sublist(method.start, method.end + 1).join('\n');
-  if (body.contains('ref.read(') || _hasNullRepositoryReturn(body)) return false;
-  final dependencies = RegExp(r'\b(_[A-Za-z0-9_]*(?:repo|repository)[A-Za-z0-9_]*)\b')
-      .allMatches(body)
-      .map((match) => match.group(1)!)
-      .toSet();
-  if (dependencies.isEmpty) return false;
-  final declaration = context.unit.declarations
-      .whereType<ClassDeclaration>()
-      .where((candidate) => candidate.namePart.typeName.lexeme == classSpan.name)
-      .firstOrNull;
-  if (declaration == null) return false;
-  final fields = _nonNullableInjectedFields(declaration);
-  if (!fields.containsAll(dependencies)) return false;
-  return _allConstructorsInject(declaration, dependencies);
-}
-
-Set<String> _nonNullableInjectedFields(ClassDeclaration declaration) {
-  final fields = <String>{};
-  for (final field in declaration.body.members.whereType<FieldDeclaration>()) {
-    if (!field.fields.isFinal || field.fields.isLate) continue;
-    for (final variable in field.fields.variables) {
-      final type = variable.declaredFragment?.element.type;
-      if (variable.initializer == null &&
-          type != null &&
-          type is! DynamicType &&
-          type.nullabilitySuffix == NullabilitySuffix.none) {
-        fields.add(variable.name.lexeme);
-      }
-    }
-  }
-  return fields;
-}
-
-bool _allConstructorsInject(ClassDeclaration declaration, Set<String> dependencies) {
-  final constructors = declaration.body.members.whereType<ConstructorDeclaration>().toList();
-  if (constructors.isEmpty ||
-      constructors.any((constructor) => constructor.factoryKeyword != null)) {
-    return false;
-  }
-  return constructors.every((constructor) {
-    final injected = constructor.parameters.parameters
-        .whereType<FieldFormalParameter>()
-        .map((parameter) => parameter.name.lexeme)
-        .toSet();
-    return injected.containsAll(dependencies);
-  });
-}
-
-bool _hasEnsureCall(String line) =>
-    line.contains('_ensure') || RegExp(r'\bensure[A-Z]\w*\s*\(').hasMatch(line);
-
-bool _hasMutationDependency(String line) =>
-    line.contains('_repository') ||
-    line.contains('_repo') ||
-    line.contains('Repository') ||
-    line.contains('ref.read(');
-
-bool _hasNullRepositoryReturn(String line) =>
-    RegExp(r'if\s*\(\s*_\w*(?:repo|repository)\w*\s*==\s*null\s*\)\s*return').hasMatch(line);
 
 final _notifierLocalDependencyField = RegExp(
   r'^\s+(?:(?:late|final)\s+)*(?:I?[A-Z][A-Za-z0-9_]*(?:Repository|Service|Datasource|DataSource))\??\s+(_[A-Za-z0-9_]*(?:repo|repository|service|datasource|dataSource)[A-Za-z0-9_]*)\s*(?:[=;])',

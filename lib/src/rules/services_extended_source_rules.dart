@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
@@ -181,6 +182,34 @@ final List<ScannerRule> servicesExtendedSourceRules = [
     },
   ),
 
+  /// Destructure config values read from providers.
+  ///
+  /// Why: The config -> client -> services chain reads config through an
+  /// object pattern, `final BackendConfig(:endpoint, :apiKey) =
+  /// ref.watch(backendConfigProvider);`, so the fields a client needs are
+  /// named where the provider is read. A config local that is only read
+  /// through its properties should be destructured instead.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_config_destructuring',
+      'Destructure config values read from providers.',
+      correctionMessage: 'Use an object pattern such as `final BackendConfig(:endpoint, :apiKey) = ref.watch(backendConfigProvider);` instead of reading properties from a config local.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags a local initialized from ref.watch/ref.read of a provider whose resolved value is a `*Config` class when the local is only used through property reads.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+
+      for (var i = 0; i < context.source.length; i++) {
+        for (final match in _refWatchOrRead.allMatches(context.source.masked[i])) {
+          if (_isPropertyOnlyConfigLocal(context, i, match.start)) {
+            reporter.report(context, i, match.start);
+          }
+        }
+      }
+    },
+  ),
+
   /// Do not hide nullable values behind primitive/string fallback defaults.
   ///
   /// Why: `value ?? false`, `value ?? 0`, `value ?? ''`, chained fallbacks, and
@@ -252,6 +281,7 @@ final _inlineConcreteDependency = RegExp(
   r'Client|Plugin|Queue|Manager|Storage|Activities|EventBus)|FlutterLocalNotificationsPlugin|'
   r'DefaultCacheManager|RemoteMutationQueue|LiveActivities)\s*\(',
 );
+final _refWatchOrRead = RegExp(r'\bref\.(?:watch|read)\(');
 final _stableInfrastructureName = RegExp(
   r'(?:Service|Repository|Datasource|DataSource|Client|Plugin|Queue|Manager|Storage|'
   r'Activities|EventBus)\b',
@@ -392,6 +422,49 @@ bool _isStableInfrastructureType(DartType type) {
     return element.name == 'Service' &&
         element.library.identifier == 'package:appwrite/src/service.dart';
   });
+}
+
+/// Whether the `ref.watch`/`ref.read` at [column] initializes a local whose
+/// resolved type is a `*Config` class and whose every use is a property read.
+bool _isPropertyOnlyConfigLocal(SourceScannerContext context, int lineIndex, int column) {
+  final offset = context.source.lineOffsets[lineIndex] + column;
+  final read = context.unit.nodeCovering(offset: offset)?.thisOrAncestorOfType<MethodInvocation>();
+  if (read == null) return false;
+  final value = read.parent is AwaitExpression ? read.parent : read;
+  final declaration = value?.parent;
+  if (declaration is! VariableDeclaration || declaration.initializer != value) return false;
+  final local = declaration.declaredFragment?.element;
+  if (local is! LocalVariableElement) return false;
+  final type = local.type;
+  if (type is! InterfaceType || !(type.element.name ?? '').endsWith('Config')) return false;
+
+  final uses = _LocalUses(local);
+  declaration.thisOrAncestorOfType<FunctionBody>()?.accept(uses);
+  return uses.propertyReads > 0 && uses.otherUses == 0;
+}
+
+/// Counts property reads of [local] (`config.endpoint`) and every other use.
+final class _LocalUses extends RecursiveAstVisitor<void> {
+  _LocalUses(this.local);
+
+  final LocalVariableElement local;
+  int propertyReads = 0;
+  int otherUses = 0;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (node.element != local) return;
+    final property = switch (node.parent) {
+      PrefixedIdentifier(:final prefix, :final identifier) when prefix == node => identifier,
+      PropertyAccess(:final target, :final propertyName) when target == node => propertyName,
+      _ => null,
+    };
+    if (property?.element is GetterElement) {
+      propertyReads++;
+    } else {
+      otherUses++;
+    }
+  }
 }
 
 bool _isAsyncWrapper(InterfaceType type) {

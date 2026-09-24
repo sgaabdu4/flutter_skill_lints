@@ -2,10 +2,10 @@
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 187 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 195 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 188 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 196 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 280 additional diagnostics.
-- Total unique diagnostics: 471.
+- Total unique diagnostics: 472.
 
 ## Full Rule Inventory
 
@@ -136,9 +136,9 @@ hover description and correction text.
 | `mixins.md` | `mixin_mixin_class`, `mixin_name_suffix`, `mixin_mutable_state` |
 | `performance.md` | `riverpod_watch_no_select`, `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `perf_listview_children`, `perf_build_work`, `state_empty_string_sentinel`, `state_bool_string_sentinel`, `state_raw_response`, `state_raw_error_to_string`, `a11y_text_scale_clamp`, `flutter_*` optimization rules |
 | `presentation-widgets.md` | `presentation_widget_navigation_forbidden`, `presentation_widget_controller_state`, `presentation_widget_infrastructure_dependency` |
-| `riverpod-codegen.md` | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_manual_provider`, `riverpod_consumer_state_derived_cache`, `riverpod_consumer_state_provider_subscription`, `riverpod_listen_manual_forbidden`, `riverpod_event_counter_signal_forbidden`, `service_provider_watch_dependency`, `riverpod_watch_no_select`, `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`, `riverpod_auto_dispose_keepalive_dependencies`, `riverpod_feature_notifier_keepalive`, `riverpod_keepalive_family`, `use_ref_invalidate`; Riverpod-owned dependency/scoping/provider-shape diagnostics stay with `riverpod_lint` |
+| `riverpod-codegen.md` | `avoid_legacy_riverpod_apis`, `riverpod_read_init_state`, `riverpod_service_locator`, `riverpod_manual_provider`, `riverpod_consumer_state_derived_cache`, `riverpod_consumer_state_provider_subscription`, `riverpod_listen_manual_forbidden`, `riverpod_event_counter_signal_forbidden`, `service_provider_watch_dependency`, `riverpod_config_destructuring`, `riverpod_watch_no_select`, `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`, `riverpod_auto_dispose_keepalive_dependencies`, `riverpod_feature_notifier_keepalive`, `riverpod_keepalive_family`, `use_ref_invalidate`; Riverpod-owned dependency/scoping/provider-shape diagnostics stay with `riverpod_lint` |
 	| `services-and-singletons.md` | `service_singleton`, `service_static_side_effect`, `service_random_per_call`, `hidden_dependency_fallback`, `hidden_dependency_default_param`, `service_inline_concrete_dependency`, `service_provider_watch_dependency`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures`, `fire_forget_in_tests`, `appwrite_blocking_function_execution_in_client` |
-| `state-management.md` | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `async_context_mounted_style`, `avoid_mounted_check_in_finally`, `avoid_sync_notifier_state_read`, `avoid_silent_repository_null_return`, `notifier_ensure_deps`, `notifier_watch_method`, `riverpod_event_counter_signal_forbidden`, `widget_awaits_notifier_result`, `widget_local_mutation_flag`, `state_empty_string_sentinel`, `state_bool_string_sentinel`, `state_broad_invalidation`, `state_freezed_nullable_error`, runtime boundary for source-of-truth freshness |
+| `state-management.md` | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `async_context_mounted_style`, `avoid_mounted_check_in_finally`, `avoid_sync_notifier_state_read`, `avoid_silent_repository_null_return`, `notifier_ensure_deps`, `notifier_watch_method`, `service_provider_watch_dependency`, `riverpod_event_counter_signal_forbidden`, `widget_awaits_notifier_result`, `widget_local_mutation_flag`, `state_empty_string_sentinel`, `state_bool_string_sentinel`, `state_broad_invalidation`, `state_freezed_nullable_error`, runtime boundary for source-of-truth freshness |
 | `testing.md` | `cfg_e2e_entrypoint`, `test_provider_container`, `test_uncontrolled_scope`, `test_create_container`, `test_mock_concrete`, `test_pump_and_settle`, `test_tap_at`, `test_inline_value_key`, `test_first_match_finder`, runtime boundary for event-contract and cross-runtime drift proof |
 
 ## Added In This Pass
@@ -270,9 +270,14 @@ Runtime-bug surface (0.7.0) — `runtime_bug_source_rules`:
   `_storage.read` / `_box.get` with no `Map<String, ...>` memoization field
   re-hits storage every call.
 - `service_provider_watch_dependency` — service/repository/datasource/client
-  provider factories must wire stable infrastructure deps with `ref.read`, not
-  `ref.watch`; watching a resolved reactive state or config value (for example
-  rebuilding a client from a live config provider) is allowed.
+  provider factories and Riverpod notifier members (including `build()`) must
+  wire stable infrastructure deps with `ref.read`, not `ref.watch`; watching a
+  resolved reactive state or config value (for example rebuilding a client from
+  a live config provider) is allowed.
+- `riverpod_config_destructuring` — a local read from `ref.watch`/`ref.read`
+  of a provider whose resolved value is a `*Config` class, and used only
+  through property reads, must be destructured
+  (`final BackendConfig(:endpoint, :apiKey) = ref.watch(backendConfigProvider);`).
 - `hidden_dependency_default_param` — constructor/function dependency seams such
   as `clock`, `delay`, `generator`, `authenticator`, or `createExecution` must
   be required and wired at the provider/composition root, not optional/defaulted.

@@ -886,6 +886,106 @@ class ProductsNotifier extends AnyNotifier {
 }
 
 @reflectiveTest
+final class RiverpodConfigDestructuringTest extends _ServicesExtendedRuleTest {
+  static const _stubs = r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Provider<T> {}
+class Ref {
+  T watch<T>(Provider<T> provider) => throw UnimplementedError();
+  T read<T>(Provider<T> provider) => throw UnimplementedError();
+}
+
+class BackendConfig {
+  const BackendConfig(this.endpoint, this.apiKey);
+  final String endpoint;
+  final String apiKey;
+  String describe() => endpoint;
+}
+class HttpClient {
+  HttpClient(String endpoint, String apiKey);
+  HttpClient.fromConfig(BackendConfig config);
+}
+final backendConfigProvider = Provider<BackendConfig>();
+''';
+
+  @override
+  String get ruleName => 'riverpod_config_destructuring';
+  @override
+  String get needle => 'ref.watch(backendConfigProvider)';
+  @override
+  String get source =>
+      '''
+$_stubs
+@Riverpod(keepAlive: true)
+HttpClient backendClient(Ref ref) {
+  final config = ref.watch(backendConfigProvider);
+  return HttpClient(config.endpoint, config.apiKey);
+}
+''';
+
+  Future<void> test_reportsAwaitedReadConfigLocal() async {
+    const source =
+        '''
+$_stubs
+final appConfigProvider = Provider<Future<BackendConfig>>();
+
+Future<HttpClient> connect(Ref ref) async {
+  final config = await ref.read(appConfigProvider);
+  return HttpClient(config.endpoint, config.apiKey);
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.read(appConfigProvider)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillDestructuredConfig() async {
+    await assertAllows('''
+$_stubs
+@Riverpod(keepAlive: true)
+HttpClient backendClient(Ref ref) {
+  final BackendConfig(:endpoint, :apiKey) = ref.watch(backendConfigProvider);
+  return HttpClient(endpoint, apiKey);
+}
+''');
+  }
+
+  Future<void> test_allowsConfigUsedBeyondPropertyReads() async {
+    await assertAllows('''
+$_stubs
+class Cart {
+  final List<int> items = const [];
+}
+final cartProvider = Provider<Cart>();
+
+HttpClient wholeConfig(Ref ref) {
+  final config = ref.watch(backendConfigProvider);
+  print(config.endpoint);
+  return HttpClient.fromConfig(config);
+}
+
+String configMethod(Ref ref) {
+  final config = ref.read(backendConfigProvider);
+  return config.describe();
+}
+
+void unusedConfig(Ref ref) {
+  final config = ref.watch(backendConfigProvider);
+}
+
+int nonConfigValue(Ref ref) {
+  final cart = ref.watch(cartProvider);
+  return cart.items.length;
+}
+''');
+  }
+}
+
+@reflectiveTest
 final class MixinMixinClassTest extends _ServicesMixinsRuleTest {
   @override
   String get ruleName => 'mixin_mixin_class';

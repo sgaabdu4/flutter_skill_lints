@@ -140,6 +140,7 @@ void main() {
     defineReflectiveTests(CrashFacadePublicApiTest);
     defineReflectiveTests(CrashErrorRecursionTest);
     defineReflectiveTests(CrashSentryAuthTokenInSourceTest);
+    defineReflectiveTests(NetworkHttpCallInWidgetOrNotifierTest);
     defineReflectiveTests(TestProviderContainerTest);
     defineReflectiveTests(TestUncontrolledScopeTest);
     defineReflectiveTests(TestCreateContainerTest);

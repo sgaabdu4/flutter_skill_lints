@@ -2,6 +2,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/riverpod_type_checkers.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> dataCrashSourceRules = [
@@ -232,6 +234,32 @@ final List<ScannerRule> dataCrashSourceRules = [
       }
     },
   ),
+
+  /// Widgets and notifiers never call HTTP clients.
+  ///
+  /// Why: networking.md keeps every HTTP call in datasources or infrastructure
+  /// services; widgets and notifiers reach data through repositories.
+  scannerRule(
+    code: const LintCode(
+      'network_http_call_in_widget_or_notifier',
+      'Widgets and notifiers must not call HTTP clients.',
+      correctionMessage:
+          'Call a repository; keep HTTP calls in datasources or infrastructure services.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags resolved dio, http and dart:io client calls, and calls on project wrappers that directly hold one, inside Widget, State and Riverpod notifier classes.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+      final root = _rootPackage(context);
+      for (final declaration in _widgetOrNotifierClasses(context)) {
+        final visitor = _HttpCallVisitor(root);
+        declaration.accept(visitor);
+        for (final call in visitor.calls) {
+          _reportOffset(reporter, context, call.offset);
+        }
+      }
+    },
+  ),
 ];
 
 void _reportOffset(ScannerRuleReporter reporter, SourceScannerContext context, int offset) {
@@ -273,6 +301,63 @@ bool _isInsideCrashFacade(AstNode node) {
   return crash != null &&
       crash.name == 'Crash' &&
       crash.methods.any((method) => method.isStatic && method.name == 'init');
+}
+
+const _httpClientChecker = TypeChecker.any([
+  TypeChecker.fromName('Dio', packageName: 'dio'),
+  TypeChecker.fromName('Client', packageName: 'http'),
+  TypeChecker.fromUrl('dart:io#HttpClient'),
+]);
+
+const _widgetOrNotifierChecker = TypeChecker.any([
+  TypeChecker.fromName('Widget', packageName: 'flutter'),
+  TypeChecker.fromName('State', packageName: 'flutter'),
+  TypeChecker.fromName('AnyNotifier', packageName: 'riverpod'),
+  notifierChecker,
+]);
+
+String? _rootPackage(SourceScannerContext context) =>
+    _packageOf(context.unit.declaredFragment?.element);
+
+Iterable<ClassDeclaration> _widgetOrNotifierClasses(SourceScannerContext context) =>
+    context.unit.declarations.whereType<ClassDeclaration>().where((declaration) {
+      final element = declaration.declaredFragment?.element;
+      return element != null && _widgetOrNotifierChecker.isSuperOf(element);
+    });
+
+/// Whether [element] declares an HTTP client field or constructor parameter.
+bool _holdsHttpClient(InterfaceElement element) =>
+    element.fields.any(
+      (field) => !field.isStatic && _httpClientChecker.isAssignableFromType(field.type),
+    ) ||
+    element.constructors.any(
+      (constructor) => constructor.formalParameters.any(
+        (parameter) => _httpClientChecker.isAssignableFromType(parameter.type),
+      ),
+    );
+
+/// Classes in [element]'s library that implement it, such as HttpService for
+/// IHttpService.
+Iterable<InterfaceElement> _libraryImplementors(InterfaceElement element) =>
+    element.library.classes.where(
+      (candidate) =>
+          candidate != element &&
+          candidate.allSupertypes.any((supertype) => supertype.element == element),
+    );
+
+/// One hop: a root-package class, or an interface implemented in its library,
+/// that directly holds an HTTP client.
+bool _wrapsHttpClient(InterfaceElement element, String? root) =>
+    root != null &&
+    _packageOf(element) == root &&
+    (_holdsHttpClient(element) || _libraryImplementors(element).any(_holdsHttpClient));
+
+bool _isHttpCall(MethodInvocation node, String? root) {
+  final element = node.methodName.element;
+  if (element is TopLevelFunctionElement) return _packageOf(element) == 'http';
+  final owner = element?.enclosingElement;
+  if (owner is! InterfaceElement) return false;
+  return _httpClientChecker.isSuperOf(owner) || _wrapsHttpClient(owner, root);
 }
 
 bool _isFalseLiteral(Expression expression) {
@@ -470,5 +555,18 @@ final class _PackageReferenceVisitor extends RecursiveAstVisitor<void> {
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
     if (_packageOf(node.element) == package) found = true;
+  }
+}
+
+final class _HttpCallVisitor extends RecursiveAstVisitor<void> {
+  _HttpCallVisitor(this.root);
+
+  final String? root;
+  final List<MethodInvocation> calls = [];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (_isHttpCall(node, root)) calls.add(node);
+    super.visitMethodInvocation(node);
   }
 }

@@ -1371,6 +1371,278 @@ const sentryDsn = String.fromEnvironment('SENTRY_DSN');
   }
 }
 
+abstract class _NetworkRuleTest extends _DataCrashRuleTest {
+  @override
+  void setUp() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', r'''
+abstract class AnyNotifier<StateT> {
+  StateT get state => throw 0;
+  set state(StateT value) {}
+}
+
+abstract class Notifier<StateT> extends AnyNotifier<StateT> {
+  StateT build();
+}
+''');
+    newPackage('dio').addFile('lib/dio.dart', r'''
+class BaseOptions {
+  BaseOptions({String? baseUrl, Map<String, Object?>? headers});
+}
+
+class Options {
+  Options({Map<String, Object?>? headers});
+}
+
+class Response<T> {
+  T? data;
+  int? statusCode;
+}
+
+class DioException implements Exception {
+  Response<Object?>? response;
+}
+
+abstract class Dio {
+  factory Dio([BaseOptions? options]) => throw 0;
+  Future<Response<T>> get<T>(String path, {Options? options});
+}
+''');
+    newPackage('http').addFile('lib/http.dart', r'''
+class ClientException implements Exception {}
+
+abstract class BaseResponse {
+  int get statusCode => 0;
+}
+
+class Response extends BaseResponse {}
+
+class Client {
+  Future<Response> get(Uri url) async => Response();
+}
+
+Future<Response> get(Uri url) async => Response();
+''');
+    super.setUp();
+    // The analyzer mock SDK omits dart:io HTTP types; add the real signatures.
+    final io = sdkRoot.getFile('lib/io/io.dart');
+    io.writeAsStringSync('''
+${io.readAsStringSync()}
+abstract interface class HttpClientResponse {
+  int get statusCode;
+}
+
+abstract interface class HttpClientRequest {
+  Future<HttpClientResponse> close();
+}
+
+abstract interface class HttpClient {
+  factory HttpClient() => throw 0;
+  Future<HttpClientRequest> getUrl(Uri url);
+}
+
+class SocketException implements Exception {}
+
+class HttpException implements Exception {}
+''');
+  }
+
+  @override
+  void _addFlutterPackage() {
+    newPackage('flutter').addFile('lib/widgets.dart', r'''
+class BuildContext {}
+
+abstract class Widget {
+  const Widget();
+}
+
+abstract class StatelessWidget extends Widget {
+  const StatelessWidget();
+  Widget build(BuildContext context);
+}
+
+abstract class StatefulWidget extends Widget {
+  const StatefulWidget();
+}
+
+abstract class State<T extends StatefulWidget> {
+  Widget build(BuildContext context);
+}
+
+class Text extends StatelessWidget {
+  const Text(String data);
+  @override
+  Widget build(BuildContext context) => this;
+}
+''');
+  }
+
+  String get httpServicePath => '$testPackageLibPath/core/network/http_service.dart';
+
+  /// The skill's IHttpService boundary with a Dio-backed implementation.
+  void addHttpService() {
+    newFile(httpServicePath, r'''
+import 'package:dio/dio.dart';
+
+abstract interface class IHttpService {
+  Future<Object?> getJson(Uri uri);
+}
+
+class HttpService implements IHttpService {
+  HttpService(this._dio);
+
+  final Dio _dio;
+
+  @override
+  Future<Object?> getJson(Uri uri) async => (await _dio.get<Object?>('$uri')).data;
+}
+''');
+  }
+
+  /// The skill's datasource and repository chain on top of [addHttpService].
+  void addProductChain() {
+    addHttpService();
+    newFile('$testPackageLibPath/features/products/data/product_remote_datasource.dart', r'''
+import 'package:test/core/network/http_service.dart';
+
+abstract interface class IProductRemoteDatasource {
+  Future<List<Object?>> fetchAll();
+}
+
+class ProductRemoteDatasource implements IProductRemoteDatasource {
+  const ProductRemoteDatasource(this._http);
+
+  final IHttpService _http;
+
+  @override
+  Future<List<Object?>> fetchAll() async => switch (await _http.getJson(Uri(path: '/p'))) {
+        List<Object?> items => items,
+        _ => throw FormatException(),
+      };
+}
+''');
+    newFile('$testPackageLibPath/features/products/data/product_repository.dart', r'''
+import 'package:test/features/products/data/product_remote_datasource.dart';
+
+abstract interface class IProductRepository {
+  Future<List<Object?>> fetchAll();
+}
+
+class ProductRepository implements IProductRepository {
+  const ProductRepository(this._remote);
+
+  final IProductRemoteDatasource _remote;
+
+  @override
+  Future<List<Object?>> fetchAll() => _remote.fetchAll();
+}
+''');
+  }
+}
+
+@reflectiveTest
+final class NetworkHttpCallInWidgetOrNotifierTest extends _NetworkRuleTest {
+  @override
+  String get ruleName => 'network_http_call_in_widget_or_notifier';
+  @override
+  String get needle => "Dio().get<Object?>('/x')";
+  @override
+  String get path =>
+      '$testPackageLibPath/features/products/presentation/screens/product_screen.dart';
+  @override
+  String get source => r'''
+import 'package:dio/dio.dart';
+import 'package:flutter/widgets.dart';
+
+class ProductScreen extends StatelessWidget {
+  const ProductScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    Future<void> load() => Dio().get<Object?>('/x');
+    return const Text('products');
+  }
+}
+''';
+
+  Future<void> test_reportsNotifierClientCalls() async {
+    const source = r'''
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
+import 'package:riverpod/riverpod.dart';
+
+class ProductNotifier extends Notifier<int> {
+  final Dio _dio = Dio();
+
+  @override
+  int build() => 0;
+
+  Future<void> load() async {
+    await _dio.get<Object?>('/x');
+    await http.get(Uri(path: '/y'));
+    await HttpClient().getUrl(Uri(path: '/z'));
+  }
+}
+''';
+    final notifierPath = '$testPackageLibPath/features/products/presentation/product_notifier.dart';
+    newFile(notifierPath, source);
+
+    await assertDiagnosticsInFile(notifierPath, [
+      compatLint(source, "_dio.get<Object?>('/x')", ruleName),
+      compatLint(source, "http.get(Uri(path: '/y'))", ruleName),
+      compatLint(source, "HttpClient().getUrl(Uri(path: '/z'))", ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsStateCallOnHttpServiceWrapper() async {
+    addHttpService();
+    const source = r'''
+import 'package:flutter/widgets.dart';
+import 'package:test/core/network/http_service.dart';
+
+final IHttpService httpService = throw 0;
+
+class ProductPanel extends StatefulWidget {
+  const ProductPanel();
+}
+
+class _ProductPanelState extends State<ProductPanel> {
+  Future<void> load() => httpService.getJson(Uri(path: '/p'));
+
+  @override
+  Widget build(BuildContext context) => const Text('panel');
+}
+''';
+    final panelPath = '$testPackageLibPath/features/products/presentation/product_panel.dart';
+    newFile(panelPath, source);
+
+    await assertDiagnosticsInFile(panelPath, [
+      compatLint(source, "httpService.getJson(Uri(path: '/p'))", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsRepositoryDatasourceHttpChain() async {
+    addProductChain();
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+import 'package:test/features/products/data/product_repository.dart';
+
+final IProductRepository repository = throw 0;
+
+class ProductNotifier extends AnyNotifier<int> {
+  Future<void> load() async {
+    state = (await repository.fetchAll()).length;
+  }
+}
+''', path: '$testPackageLibPath/features/products/presentation/product_notifier.dart');
+    await assertNoDiagnosticsInFile(httpServicePath);
+    await assertNoDiagnosticsInFile(
+      '$testPackageLibPath/features/products/data/product_remote_datasource.dart',
+    );
+  }
+}
+
 abstract class _TestRuleTest extends _SourceRuleTest {
   @override
   List<ScannerRule> get rules => testSourceRules;

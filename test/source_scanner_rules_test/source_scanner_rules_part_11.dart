@@ -1056,21 +1056,98 @@ void installHandlers() {
     ]);
   }
 
-  Future<void> test_allowsCrashlyticsHandlersInCrashService() async {
-    await assertAllows(r'''
+  Future<void> test_reportsCustomHandlerInsideCrashFacade() async {
+    const source = r'''
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+
+abstract final class Crash {
+  static Future<void> init({required FutureOr<void> Function() appRunner}) async {
+    FlutterError.onError = FlutterError.presentError;
+    await appRunner();
+  }
+}
+''';
+    newFile(crashServicePath, source);
+
+    await assertDiagnosticsInFile(crashServicePath, [
+      compatLint(source, 'FlutterError.onError =', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsCrashlyticsHandlersOutsideCrashFacade() async {
+    const source = r'''
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
+
+void installHandlers() {
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+}
+''';
+    newFile(crashServicePath, source);
+
+    await assertDiagnosticsInFile(crashServicePath, [
+      compatLint(source, 'FlutterError.onError =', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsBootstrapHandlers() async {
+    const source = r'''
 import 'dart:ui';
 
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 
-void installHandlers() {
+Future<void> bootstrap() async {
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
   PlatformDispatcher.instance.onError = (error, stack) {
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     return true;
   };
 }
-''', path: crashServicePath);
+''';
+    final bootstrapPath = '$testPackageLibPath/bootstrap.dart';
+    newFile(bootstrapPath, source);
+
+    await assertDiagnosticsInFile(bootstrapPath, [
+      compatLint(source, 'FlutterError.onError =', ruleName),
+      compatLint(source, 'PlatformDispatcher.instance.onError =', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsCrashlyticsHandlersInsideCrashFacade() async {
+    newFile(crashServicePath, r'''
+import 'dart:async';
+import 'dart:ui';
+
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
+
+abstract final class Crash {
+  static Future<void> init({required FutureOr<void> Function() appRunner}) async {
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+    await appRunner();
+  }
+}
+''');
+    final mainPath = '$testPackageLibPath/main.dart';
+    newFile(mainPath, r'''
+import 'core/crash/crash_service.dart';
+
+void runApp(Object app) {}
+
+Future<void> main() async {
+  await Crash.init(appRunner: () => runApp(Object()));
+}
+''');
+
+    await assertNoDiagnosticsInFile(crashServicePath);
+    await assertNoDiagnosticsInFile(mainPath);
   }
 
   Future<void> test_allowsReadingHandler() async {

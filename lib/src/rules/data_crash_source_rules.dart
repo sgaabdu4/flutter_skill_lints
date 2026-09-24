@@ -92,21 +92,22 @@ final List<ScannerRule> dataCrashSourceRules = [
   ///
   /// Why: error-reporting.md makes startup one owner and lets SDK-managed error
   /// integration replace hand-wired framework and dispatcher handlers. Only the
-  /// Crashlytics branch inside crash_service.dart assigns them, to the SDK handler.
+  /// Crashlytics branch inside the resolved `Crash` facade assigns them, to the SDK
+  /// handler.
   scannerRule(
     code: const LintCode(
       'crash_custom_global_error_handler',
       'Avoid hand-wired FlutterError.onError or PlatformDispatcher.onError handlers.',
-      correctionMessage: 'Let the crash SDK integration own framework and dispatcher errors; wire Crashlytics handlers only inside crash_service.dart.',
+      correctionMessage: 'Let the crash SDK integration own framework and dispatcher errors; wire Crashlytics handlers only inside the Crash facade.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags assignments to FlutterError.onError or PlatformDispatcher.onError unless crash_service.dart assigns a FirebaseCrashlytics handler.',
+    description: 'Flags assignments to FlutterError.onError or PlatformDispatcher.onError unless the Crash facade assigns a FirebaseCrashlytics handler.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       final visitor = _GlobalErrorHandlerVisitor();
       context.unit.accept(visitor);
       for (final assignment in visitor.assignments) {
-        if (_isCrashServiceFile(context) &&
+        if (_isInsideCrashFacade(assignment) &&
             _referencesPackage(assignment.rightHandSide, 'firebase_crashlytics')) {
           continue;
         }
@@ -263,6 +264,15 @@ bool _isCrashReportCall(MethodInvocation node) {
   if (_isSentryPackage(package)) return element?.name == 'captureException';
   return package == 'firebase_crashlytics' &&
       (element?.name == 'recordError' || element?.name == 'recordFlutterError');
+}
+
+/// Whether [node] sits inside the `Crash` facade class that declares a static
+/// `init`, resolved through the enclosing class element rather than the file path.
+bool _isInsideCrashFacade(AstNode node) {
+  final crash = node.thisOrAncestorOfType<ClassDeclaration>()?.declaredFragment?.element;
+  return crash != null &&
+      crash.name == 'Crash' &&
+      crash.methods.any((method) => method.isStatic && method.name == 'init');
 }
 
 bool _isFalseLiteral(Expression expression) {

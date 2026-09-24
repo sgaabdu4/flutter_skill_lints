@@ -68,6 +68,29 @@ class User {
   final String orgId;
 }
 ''';
+
+  Future<void> test_reportsFreezedRawIntIds() async {
+    const source = r'''
+// ignore_for_file: redirect_to_non_class
+class Order {
+  const factory Order({required int userId, required int productId}) = _Order;
+}
+''';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [
+      compatLint(source, '  const factory Order', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsTypedIdsAndSingleRawId() async {
+    await assertAllows(r'''
+// ignore_for_file: redirect_to_non_class
+extension type UserId(int value) {}
+class Order {
+  const factory Order({required UserId userId, required int productId, int? count}) = _Order;
+}
+''', path: path);
+  }
 }
 
 @reflectiveTest

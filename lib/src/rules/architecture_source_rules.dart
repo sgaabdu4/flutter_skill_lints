@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -195,8 +196,9 @@ final List<ScannerRule> architectureSourceRules = [
 
   /// Use typed IDs for entities with multiple String IDs.
   ///
-  /// Why: Flags domain entities with multiple raw String ID fields. Use extension types or
-  /// value objects for IDs.
+  /// Why: The skill forbids raw `String`/`int` IDs once a feature has several ID types.
+  /// Flags domain files with two or more resolved `String`/`int` `...Id` fields or Freezed
+  /// redirect parameters. Use extension types or value objects for IDs.
   scannerRule(
     code: const LintCode(
       'typed_id_raw_id',
@@ -204,17 +206,16 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Use extension types or value objects for IDs.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags domain entities with multiple raw String ID fields so the Flutter skill violation is shown during analysis.',
+    description: 'Flags domain files with multiple raw String/int ID fields or Freezed redirect parameters so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isDomainPath) return;
-      final idFields = <int>[];
-      for (var i = 0; i < context.source.length; i++) {
-        if (RegExp(r'\bfinal\s+String\s+\w*Id\s*;').hasMatch(context.source.masked[i])) {
-          idFields.add(i);
-        }
-      }
-      if (idFields.length > 1) {
-        reporter.report(context, idFields.first, 0);
+      final idOffsets = _rawIdOffsets(context.unit);
+      if (idOffsets.length > 1) {
+        reporter.report(
+          context,
+          context.unit.lineInfo.getLocation(idOffsets.first).lineNumber - 1,
+          0,
+        );
       }
     },
   ),
@@ -300,3 +301,31 @@ bool _isAllowedDomainImport(String line) {
   return importedPath == 'freezed_annotation/freezed_annotation.dart' ||
       importedPath.contains('/domain/');
 }
+
+/// Offsets of `final String/int xId` fields and redirecting-factory parameters.
+List<int> _rawIdOffsets(CompilationUnit unit) {
+  final offsets = <int>[];
+  for (final declaration in unit.declarations.whereType<ClassDeclaration>()) {
+    for (final member in declaration.body.members) {
+      if (member is FieldDeclaration && member.fields.isFinal) {
+        for (final variable in member.fields.variables) {
+          if (_isRawId(variable.name.lexeme, variable.declaredFragment?.element.type)) {
+            offsets.add(member.firstTokenAfterCommentAndMetadata.offset);
+          }
+        }
+      }
+      if (member is ConstructorDeclaration && member.redirectedConstructor != null) {
+        for (final parameter in member.parameters.parameters) {
+          final name = parameter.name?.lexeme;
+          if (name != null && _isRawId(name, parameter.declaredFragment?.element.type)) {
+            offsets.add(member.firstTokenAfterCommentAndMetadata.offset);
+          }
+        }
+      }
+    }
+  }
+  return offsets;
+}
+
+bool _isRawId(String name, DartType? type) =>
+    name.endsWith('Id') && type != null && (type.isDartCoreString || type.isDartCoreInt);

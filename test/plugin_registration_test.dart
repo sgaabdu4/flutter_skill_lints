@@ -363,6 +363,7 @@ const _modelSkillErrorDiagnostics = [
   'domain_raw_required_string',
   'domain_unit_primitive',
   'avoid_throw',
+  'typed_id_raw_id',
   'prefer_dot_shorthands',
   'prefer_wildcard_pattern',
   'use_existing_destructuring',

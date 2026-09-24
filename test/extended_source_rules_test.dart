@@ -267,6 +267,256 @@ class Shell {
   @override
   bool get lineStart => true;
 
+  @override
+  void setUp() {
+    newPackage('flutter').addFile('lib/material.dart', '''
+class BuildContext {}
+abstract class Widget {
+  const Widget();
+}
+abstract class StatelessWidget extends Widget {
+  const StatelessWidget();
+  Widget build(BuildContext context);
+}
+class SizedBox extends Widget {
+  const SizedBox();
+}
+class NavigationBar extends Widget {
+  const NavigationBar({int selectedIndex = 0, void Function(int)? onDestinationSelected, List<Widget> destinations = const []});
+}
+class NavigationRail extends Widget {
+  const NavigationRail({int? selectedIndex, void Function(int)? onDestinationSelected});
+}
+class BottomNavigationBar extends Widget {
+  const BottomNavigationBar({int currentIndex = 0, void Function(int)? onTap});
+}
+class TextButton extends Widget {
+  const TextButton({void Function()? onPressed});
+}
+''');
+    newPackage('go_router').addFile('lib/go_router.dart', '''
+import 'package:flutter/material.dart';
+abstract class GoRouteData {
+  const GoRouteData();
+  void go(BuildContext context) {}
+  Future<T?> push<T>(BuildContext context) async => null;
+}
+class StatefulNavigationShell extends Widget {
+  const StatefulNavigationShell();
+  int get currentIndex => 0;
+  void goBranch(int index, {bool initialLocation = false}) {}
+}
+''');
+    super.setUp();
+  }
+
+  Future<void> test_reportsInlineTabCallbackPush() async {
+    const source = '''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+class AppShellInlineScaffold extends StatelessWidget {
+  const AppShellInlineScaffold({required this.navigationShell});
+
+  final StatefulNavigationShell navigationShell;
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(
+      selectedIndex: navigationShell.currentIndex,
+      onDestinationSelected: (index) => unawaited(const HomeRoute().push<void>(context)),
+    );
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'const HomeRoute().push<void>(context)),', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsPushInMethodReferencedByTabCallback() async {
+    const source = '''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+class AppShellScaffold extends StatelessWidget {
+  const AppShellScaffold({required this.navigationShell});
+
+  final StatefulNavigationShell navigationShell;
+
+  Future<void> onTab(BuildContext context, int index) async {
+    if (index == 0) {
+      await const HomeRoute().push<void>(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(
+      selectedIndex: navigationShell.currentIndex,
+      onDestinationSelected: (index) => onTab(context, index),
+    );
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'const HomeRoute().push<void>(context);', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsTypedGoInBottomNavigationTap() async {
+    const source = '''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+class AppShellScaffold extends StatelessWidget {
+  const AppShellScaffold({required this.navigationShell});
+
+  final StatefulNavigationShell navigationShell;
+
+  void _onTap(int index) {}
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomNavigationBar(
+      currentIndex: navigationShell.currentIndex,
+      onTap: (index) => const HomeRoute().go(context),
+    );
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'const HomeRoute().go(context),', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsMixedTabCallbackOnce() async {
+    const source = '''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+class AppShellMixedScaffold extends StatelessWidget {
+  const AppShellMixedScaffold({required this.navigationShell});
+
+  final StatefulNavigationShell navigationShell;
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationRail(
+      selectedIndex: navigationShell.currentIndex,
+      onDestinationSelected: (index) => index == 0
+          ? unawaited(const HomeRoute().push<void>(context))
+          : navigationShell.goBranch(index),
+    );
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '          ? unawaited', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsSkillGoBranchTearOff() async {
+    await assertAllows('''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+class AppShellScaffold extends StatelessWidget {
+  const AppShellScaffold({required this.navigationShell});
+
+  final StatefulNavigationShell navigationShell;
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomNavigationBar(
+      currentIndex: navigationShell.currentIndex,
+      onTap: navigationShell.goBranch,
+    );
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsNonTabPushInShellClass() async {
+    await assertAllows('''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+class AppShellScaffold extends StatelessWidget {
+  const AppShellScaffold({required this.navigationShell});
+
+  final StatefulNavigationShell navigationShell;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(onPressed: () => unawaited(const HomeRoute().push<void>(context)));
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsTabPushWithoutShell() async {
+    await assertAllows('''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+class PlainTabs extends StatelessWidget {
+  const PlainTabs();
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(onDestinationSelected: (index) => unawaited(const HomeRoute().push<void>(context)));
+  }
+}
+''');
+  }
+
   Future<void> test_allowsStandaloneRoutePushInFileWithShellRoute() async {
     await assertAllows('''
 class MainShellRoute {

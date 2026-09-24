@@ -12,6 +12,7 @@ final class AvoidRouteParamThrowInBuild extends GeneratedMethodInvocationCheckRu
     'avoid_route_param_throw_in_build',
     "Don't throw from route-param lookups in build().",
     correctionMessage: 'Use a nullable by-id provider and render fallback UI instead.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidRouteParamThrowInBuild()

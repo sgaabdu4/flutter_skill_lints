@@ -12,7 +12,7 @@ final List<ScannerRule> routerExtendedSourceRules = [
       'Keep GoRouter redirect decisions in a pure resolver.',
       correctionMessage:
           'Move redirect branching into a resolve...Redirect function and matrix-test it.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags inline branching inside GoRouter redirect closures so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
@@ -39,7 +39,7 @@ final List<ScannerRule> routerExtendedSourceRules = [
       'router_shell_tab_push',
       'Do not push shell tab routes.',
       correctionMessage: 'Use StatefulNavigationShell.goBranch for tab changes.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags typed route push calls in shell navigation widgets so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {

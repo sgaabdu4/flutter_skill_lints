@@ -62,7 +62,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
       'pop_fallback_helper_must_check_navigator_stack',
       'BuildContext pop fallback helper does not check Navigator stacks.',
       correctionMessage: 'Check `mounted`, root `Navigator.maybeOf(...).canPop()`, and local `Navigator.maybeOf(...).canPop()` before fallback navigation.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags BuildContext pop fallback helpers that call canPop/pop without checking mounted plus root/local Navigator stacks first.',
     scan: _scanPopFallbackHelpers,

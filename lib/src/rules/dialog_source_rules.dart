@@ -15,7 +15,7 @@ final List<ScannerRule> dialogSourceRules = [
       'dialog_widget_subscribes_to_mutable_provider',
       'Dialog/sheet widget watches a provider its own action also mutates.',
       correctionMessage: 'Pass an immutable snapshot value object via the constructor. The dialog must not subscribe to state its own action mutates.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags dialog/sheet widgets that ref.watch and ref.read(...notifier).<method>() on the same provider so the Flutter skill modal snapshot pattern is shown during analysis.',
     scan: (reporter, context) {
@@ -35,7 +35,7 @@ final List<ScannerRule> dialogSourceRules = [
       'modal_high_frequency_watch_not_leaf',
       'Modal parent watches a high-frequency provider field.',
       correctionMessage: 'Extract the ticking/progress controls to a leaf ConsumerWidget and watch seconds/progress/isRunning there instead of in the sheet/dialog parent.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags dialog/sheet classes that watch timer, ticker, progress, or running-state provider fields in build().',
     scan: (reporter, context) {
@@ -188,7 +188,7 @@ final List<ScannerRule> dialogSourceRules = [
       'popscope_bypass_uses_go_not_pop',
       'Pop navigation after an awaited modal triggers PopScope interception.',
       correctionMessage: 'Use a typed `<Route>().go(context)` (or `context.go(...)`) for intentional navigation after an awaited modal; pop navigation triggers PopScope.onPopInvoked.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description:
         'Flags context.pop* calls that follow an awaited modal helper inside the same method.',
@@ -225,7 +225,7 @@ final List<ScannerRule> dialogSourceRules = [
       'modal_helper_requires_route_settings',
       'show modal helper missing routeSettings.',
       correctionMessage: 'Pass `routeSettings: const RouteSettings(name: "...")` so the dialog/sheet shows up in observer logs and analytics.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags showDialog/showModalBottomSheet calls without a routeSettings argument.',
     scan: (reporter, context) {

@@ -302,7 +302,6 @@ avoid_magic_literals
 avoid_map_keys_contains
 avoid_missed_calls
 avoid_missing_completer_stack_trace
-avoid_missing_controller
 avoid_missing_image_alt
 avoid_missing_interpolation
 avoid_missing_test_files

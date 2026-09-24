@@ -313,6 +313,7 @@ void main() {
       'prefer_overriding_parent_equality',
       'list_all_equatable_fields',
       'prefer_equatable_mixin',
+      'avoid_missing_controller',
     ]) {
       expect(paths, isNot(contains(forbidden)));
     }
@@ -338,7 +339,7 @@ void main() {
 
 const _enabledFlutterSkillRuleCount = 192;
 const _enabledFlutterSkillDiagnosticCount = 200;
-const _enabledAdditionalRuleCount = 280;
+const _enabledAdditionalRuleCount = 279;
 
 Iterable<String> _documentedLintCodes(String text) sync* {
   var depth = 0;

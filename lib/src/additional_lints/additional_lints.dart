@@ -159,7 +159,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_magic_liter
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_map_keys_contains.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missed_calls.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missing_completer_stack_trace.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missing_controller.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missing_image_alt.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missing_interpolation.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missing_test_files.dart';
@@ -375,7 +374,6 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidLongRecords());
     registry.registerWarningRule(AvoidMapKeysContains());
     registry.registerWarningRule(AvoidMissingCompleterStackTrace());
-    registry.registerWarningRule(AvoidMissingController());
     registry.registerWarningRule(AvoidMissingImageAlt());
     registry.registerWarningRule(AvoidMissingInterpolation());
     registry.registerWarningRule(AvoidMissingTestFiles());

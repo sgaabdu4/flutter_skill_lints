@@ -70,6 +70,7 @@ void main() {
     defineReflectiveTests(UseFreezedInsteadOfImmutableTest);
     defineReflectiveTests(FreezedOneClassPerFileTest);
     defineReflectiveTests(ArchDomainImportTest);
+    defineReflectiveTests(ArchStorageSdkImportTest);
     defineReflectiveTests(ArchDomainSerializationTest);
     defineReflectiveTests(ArchInterfaceContractTest);
     defineReflectiveTests(ArchRepositoryGeneratedExtendsTest);

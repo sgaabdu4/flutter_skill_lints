@@ -2,10 +2,10 @@
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 187 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 195 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 188 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 196 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 280 additional diagnostics.
-- Total unique diagnostics: 471.
+- Total unique diagnostics: 472.
 
 ## Full Rule Inventory
 
@@ -50,7 +50,7 @@ Core skill rules already covered before this pass:
   `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`,
   `freezed_legacy_when_map`, `use_freezed_instead_of_immutable`,
   `freezed_one_class_per_file`, `dart_static_namespace`.
-- Architecture: `arch_domain_import`, `arch_domain_serialization`,
+- Architecture: `arch_domain_import`, `arch_storage_sdk_import`, `arch_domain_serialization`,
   `arch_interface_contract`, `arch_concrete_dependency`,
   `arch_datasource_try_catch`, `arch_widget_path`, `atomic_provider_access`,
   `typed_id_raw_id`, `records_map_return`, `avoid_object_map_cast`,
@@ -122,7 +122,7 @@ hover description and correction text.
 | --- | --- |
 | `analysis-options.md` | `cfg_analysis_options_canonical`, `cfg_strict_analysis`, `cfg_required_lints`, `cfg_generated_exclude`, `cfg_prohibited_lint_plugins`, `avoid_flutter_skill_lint_suppression` |
 | `analysis_options.yaml` | Canonical include/plugins/analyzer/linter block; duplicate checks leave `flutter_lints` and `riverpod_lint` owned rules to those packages |
-| `architecture.md` | `arch_domain_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_repository_generated_extends`, `arch_concrete_dependency`, `arch_datasource_try_catch`, `arch_widget_path`, `arch_model_missing_to_entity`, `arch_model_extends_entity`, `atomic_provider_access`, `avoid_object_map_cast`, `avoid_inline_error_codes`, `avoid_local_contract_key_constants`, runtime boundary for dual persistence owners |
+| `architecture.md` | `arch_domain_import`, `arch_storage_sdk_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_repository_generated_extends`, `arch_concrete_dependency`, `arch_datasource_try_catch`, `arch_widget_path`, `arch_model_missing_to_entity`, `arch_model_extends_entity`, `atomic_provider_access`, `avoid_object_map_cast`, `avoid_inline_error_codes`, `avoid_local_contract_key_constants`, runtime boundary for dual persistence owners |
 | `atomic-design.md` | `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`, `atomic_provider_access`, `arch_widget_path`, `widget_material_boundary`, runtime boundary for cross-feature widget promotion |
 | `common-patterns.md` | `router_string_nav`, `router_gorouter_of`, `router_untyped_navigator_push`, `router_direct_route_call`, `router_raw_route_definition`, `router_modal_local_helpers`, `router_container_navigation_escape`, `router_context_navigation_extension`, `router_navigation_wrapper_api`, `router_pop_then_push`, `pop_fallback_helper_must_check_navigator_stack` (mounted + root/local Navigator fallback), `router_redirect_watch`, `router_redirect_loading_bounce`, `router_splash_waits_for_initial_sync`, `router_complex_extra`, `router_impure_redirect`, `router_shell_tab_push`, `guard_context_pop`, `use_context_is_current_modal_route`, `avoid_route_param_throw_in_build`, `state_broad_invalidation`, `widget_local_mutation_flag`, `storage_clear_preserves_migration_state`, runtime boundary for UX-specific debounce duration |
 | `crashlytics.md` | `crash_direct_firebase_call`, `crash_init_before_run_app`, `crash_possible_pii`, `destructive_failure_logged_before_reconcile`, runtime boundary for CI symbol upload |

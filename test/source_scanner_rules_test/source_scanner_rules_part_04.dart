@@ -713,6 +713,53 @@ final class Run {}
 }
 
 @reflectiveTest
+final class ArchStorageSdkImportTest extends _ArchitectureRuleTest {
+  @override
+  String get ruleName => 'arch_storage_sdk_import';
+  @override
+  String get needle => "import 'dart:io';";
+  @override
+  String get path => '$testPackageLibPath/features/notes/presentation/notifiers/note_notifier.dart';
+  @override
+  String get source => r'''
+import 'dart:io';
+
+final class NoteNotifier {}
+''';
+
+  Future<void> test_reportsStorageSdkImportsInScreensRepositoriesAndServices() async {
+    const imports = r'''
+// ignore_for_file: uri_does_not_exist, unused_import
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+''';
+    for (final filePath in [
+      '$testPackageLibPath/features/notes/presentation/screens/notes_screen.dart',
+      '$testPackageLibPath/features/notes/repositories/note_repository.dart',
+      '$testPackageLibPath/core/services/note_sync_service.dart',
+    ]) {
+      newFile(filePath, imports);
+      await assertDiagnosticsInFile(filePath, [
+        compatLint(imports, "import 'package:hive_ce_flutter/", ruleName),
+        compatLint(imports, "import 'package:shared_preferences/", ruleName),
+      ]);
+    }
+  }
+
+  Future<void> test_allowsStorageSdkImportsInLocalDatasourcesAndMixins() async {
+    await assertAllows(r'''
+// ignore_for_file: uri_does_not_exist
+import 'dart:io';
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
+import 'package:path_provider/path_provider.dart';
+''', path: '$testPackageLibPath/features/notes/data/datasources/note_local_datasource.dart');
+    await assertAllows(r'''
+import 'dart:io';
+''', path: '$testPackageLibPath/core/services/appwrite_pagination_mixin.dart');
+  }
+}
+
+@reflectiveTest
 final class ArchDomainSerializationTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'arch_domain_serialization';

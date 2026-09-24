@@ -34,6 +34,34 @@ final List<ScannerRule> architectureSourceRules = [
     },
   ),
 
+  /// Storage SDKs live in local datasources only.
+  ///
+  /// Why: architecture.md forbids `dart:io`, Hive CE, SharedPreferences, secure storage, and
+  /// path_provider imports in `presentation/`, `*_notifier.dart`, `*_service.dart`, and
+  /// `*_repository.dart` files. Storage lives in `Local<X>Datasource`, exposed via
+  /// `<X>Repository`. Reusable presentation widgets report the same imports through
+  /// `presentation_widget_infrastructure_dependency`.
+  scannerRule(
+    code: const LintCode(
+      'arch_storage_sdk_import',
+      'Storage SDK imports belong in local datasources.',
+      correctionMessage:
+          'Move the storage SDK or dart:io call into a Local<X>Datasource and expose it '
+          'through the <X>Repository interface.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags storage SDK and dart:io imports in presentation, notifier, service, and repository files.',
+    scan: (reporter, context) {
+      if (context.isTestFile || context.isPresentationWidgetFile) return;
+      if (!_isStorageSdkForbiddenFile(context.path)) return;
+      for (final directive in context.unit.directives.whereType<ImportDirective>()) {
+        final uri = _resolvedImportUri(context, directive);
+        if (uri == null || !_isStorageSdkImport(uri)) continue;
+        reporter.reportOffset(context, directive.offset);
+      }
+    },
+  ),
+
   /// Domain code must not own JSON serialization.
   ///
   /// Why: Flags JSON serialization members in domain files. Move fromJson/toJson code to data
@@ -293,6 +321,29 @@ bool _isAllowedDomainImport(Uri uri) {
   if (uri.isScheme('dart')) return uri.path != 'io' && uri.path != 'ui';
   if (uri.toString() == 'package:freezed_annotation/freezed_annotation.dart') return true;
   return uri.path.contains('/domain/');
+}
+
+const _storageSdkPackages = {
+  'hive_ce',
+  'hive_ce_flutter',
+  'shared_preferences',
+  'flutter_secure_storage',
+  'path_provider',
+};
+
+bool _isStorageSdkImport(Uri uri) {
+  if (uri.isScheme('dart')) return uri.path == 'io';
+  return uri.isScheme('package') &&
+      uri.pathSegments.isNotEmpty &&
+      _storageSdkPackages.contains(uri.pathSegments.first);
+}
+
+bool _isStorageSdkForbiddenFile(String path) {
+  final normalized = path.replaceAll('\\', '/');
+  return normalized.contains('/presentation/') ||
+      normalized.endsWith('_notifier.dart') ||
+      normalized.endsWith('_service.dart') ||
+      normalized.endsWith('_repository.dart');
 }
 
 /// The imported library URI, with relative imports resolved against this library.

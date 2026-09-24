@@ -164,6 +164,22 @@ final ContentRepository repository = ContentRepository();
     ]);
   }
 
+  Future<void> test_reportsStorageSdkImports() async {
+    final analyzedSource = _analyzedSource(r'''
+// ignore_for_file: uri_does_not_exist
+import 'dart:io';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:path_provider/path_provider.dart';
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, "import 'dart:io'", ruleName),
+      compatLint(analyzedSource, "import 'package:flutter_secure_storage/", ruleName),
+      compatLint(analyzedSource, "import 'package:path_provider/", ruleName),
+    ]);
+  }
+
   Future<void> test_reportsProviderReads() async {
     final analyzedSource = _analyzedSource(r'''
 void build(WidgetRef ref) {

@@ -341,6 +341,7 @@ class GlobalKey<T extends Object> {
 Future<T?> showDialog<T>({
   required BuildContext context,
   required Widget Function(BuildContext) builder,
+  bool barrierDismissible = true,
   RouteSettings? routeSettings,
 }) async => null;
 Future<T?> showModalBottomSheet<T>({

@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
@@ -60,11 +61,14 @@ final List<ScannerRule> dialogSourceRules = [
     description: 'Flags code that runs after Navigator.pop inside a dialog/sheet widget so the modal snapshot pattern is shown during analysis.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (final classSpan in context.classes) {
-        if (_isDialogHostClass(context, classSpan)) {
-          _reportDialogPostPopMutation(reporter, context, classSpan);
-        }
+      final dialogSpans = [
+        for (final classSpan in context.classes)
+          if (_isDialogHostClass(context, classSpan)) classSpan,
+      ];
+      for (final classSpan in dialogSpans) {
+        _reportDialogPostPopMutation(reporter, context, classSpan);
       }
+      _reportDialogPostPopNavigation(reporter, context, dialogSpans);
     },
   ),
 
@@ -218,8 +222,8 @@ final List<ScannerRule> dialogSourceRules = [
   /// Why: Without a route name, the dialog/sheet route does not appear in
   /// observer logs, analytics, or `GoRouter` debug output as anything other
   /// than `?`. Pass `routeSettings: const RouteSettings(name: '<feature>-<intent>')`
-  /// at every call site (including app-wide wrappers like `showAppDialog` /
-  /// `showAppBottomSheet`).
+  /// wherever a Flutter modal launcher is called; app helpers such as
+  /// `showAppSheet` pass it once inside the helper.
   scannerRule(
     code: const LintCode(
       'modal_helper_requires_route_settings',
@@ -227,17 +231,13 @@ final List<ScannerRule> dialogSourceRules = [
       correctionMessage: 'Pass `routeSettings: const RouteSettings(name: "...")` so the dialog/sheet shows up in observer logs and analytics.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags showDialog/showModalBottomSheet calls without a routeSettings argument.',
+    description: 'Flags Flutter modal launchers (showDialog, showModalBottomSheet, ...) called without a routeSettings argument.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        final match = _showModalCall.firstMatch(line);
-        if (match == null) continue;
-        final args = _collectArgList(context, i, match.end);
-        if (args == null) continue;
-        if (_routeSettingsArg.hasMatch(args)) continue;
-        reporter.report(context, i, match.start);
+      for (final call in collectNodes<MethodInvocation>(context.unit)) {
+        if (_isFlutterModalLauncherWithoutRouteSettings(call)) {
+          reporter.reportNode(context, call.methodName);
+        }
       }
     },
   ),
@@ -411,22 +411,14 @@ void _reportTeardownMatches(
   }
 }
 
-final _showModalCall = RegExp(
-  r'\b(?:show(?:Dialog|ModalBottomSheet)|show[A-Z]\w*(?:Dialog|Sheet|BottomSheet))'
-  r'(?:\s*<[^>]*>)?\s*\(',
-);
-
-final _routeSettingsArg = RegExp(r'\brouteSettings\s*:');
-
-String? _collectArgList(SourceScannerContext context, int startLine, int startCol) {
-  final state = _ArgumentCollectionState();
-  for (var i = startLine; i < context.source.length && i < startLine + 40; i++) {
-    final line = context.source.masked[i];
-    final from = i == startLine ? startCol - 1 : 0;
-    if (_collectArgumentLine(state, line, from < 0 ? 0 : from)) return state.buffer.toString();
-    state.buffer.write('\n');
+bool _isFlutterModalLauncherWithoutRouteSettings(MethodInvocation call) {
+  final element = call.methodName.element;
+  if (element is! TopLevelFunctionElement) return false;
+  if (!element.library.identifier.startsWith('package:flutter/')) return false;
+  if (!element.formalParameters.any((parameter) => parameter.name == 'routeSettings')) {
+    return false;
   }
-  return null;
+  return namedArgumentExpression(call.argumentList, 'routeSettings') == null;
 }
 
 void _reportDialogPostPopMutation(
@@ -441,6 +433,29 @@ void _reportDialogPostPopMutation(
     _rememberPopInvocation(state, i, line);
     state.depth += braceDelta(line);
     if (state.hasPop && state.depth < state.popDepth) state.clearPop();
+  }
+}
+
+/// Reports resolved navigation (another pop, or a typed-route / go_router /
+/// Navigator push) that runs after a resolved pop in the same block. Offenders
+/// the line scanner already reports are skipped.
+void _reportDialogPostPopNavigation(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  List<ScannerClassSpan> dialogSpans,
+) {
+  int lineOf(AstNode node) => context.unit.lineInfo.getLocation(node.offset).lineNumber - 1;
+  for (final pop in collectNodes<MethodInvocation>(context.unit)) {
+    if (!isResolvedNavigationPop(pop)) continue;
+    final popLine = lineOf(pop);
+    if (!dialogSpans.any((span) => span.contains(popLine))) continue;
+    final offender = followingBlockStatements(pop)
+        .expand(collectNodes<MethodInvocation>)
+        .where((call) => isResolvedNavigationPop(call) || isResolvedForwardNavigation(call))
+        .firstOrNull;
+    if (offender == null) continue;
+    if (_postPopOffender.hasMatch(context.source.masked[lineOf(offender)])) continue;
+    reporter.reportNode(context, offender);
   }
 }
 
@@ -462,20 +477,6 @@ void _rememberPopInvocation(_DialogPopState state, int lineIndex, String line) {
   if (_popInvocation.hasMatch(line)) state.recordPop(lineIndex);
 }
 
-bool _collectArgumentLine(_ArgumentCollectionState state, String line, int start) {
-  for (var column = start; column < line.length; column++) {
-    final char = line[column];
-    if (char == '(') {
-      state.depth++;
-      state.sawOpen = true;
-    } else if (char == ')' && --state.depth == 0 && state.sawOpen) {
-      return true;
-    }
-    if (state.sawOpen) state.buffer.write(char);
-  }
-  return false;
-}
-
 final class _DialogPopState {
   int depth = 0;
   int popLine = -1;
@@ -492,12 +493,6 @@ final class _DialogPopState {
     popLine = -1;
     popDepth = -1;
   }
-}
-
-final class _ArgumentCollectionState {
-  final buffer = StringBuffer();
-  int depth = 0;
-  bool sawOpen = false;
 }
 
 // ---------------------------------------------------------------------------

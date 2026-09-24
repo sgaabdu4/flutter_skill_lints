@@ -111,4 +111,37 @@ extension ContextExtensions on Object {
 
     await assertNoDiagnosticsInFile(filePath);
   }
+
+  Future<void> test_skillBuildContextExtensionsOwner_noLint() async {
+    final filePath = '$testPackageLibPath/core/extensions/build_context_extensions.dart';
+    newFile(filePath, r'''
+class ModalRoute {
+  static ModalRoute? of(Object context) => ModalRoute();
+  bool get isCurrent => true;
+}
+
+extension BuildContextX on Object {
+  bool get isCurrentModalRoute => ModalRoute.of(this)?.isCurrent ?? false;
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_otherExtensionsFile_lint() async {
+    final filePath = '$testPackageLibPath/core/extensions/route_extensions.dart';
+    const source = r'''
+class ModalRoute {
+  static ModalRoute? of(Object context) => ModalRoute();
+  bool get isCurrent => true;
+}
+
+extension RouteX on Object {
+  bool get isCurrentModalRoute => ModalRoute.of(this)?.isCurrent ?? false;
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [lint(source.indexOf('isCurrent ??'), 9)]);
+  }
 }

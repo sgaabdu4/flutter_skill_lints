@@ -245,15 +245,23 @@ Object showDialog(Object c, {required Object builder}) => Object();
 @reflectiveTest
 final class ModalHelperShowGeneralDialogTest extends _DialogRuleTest {
   @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'modal_helper_requires_route_settings';
   @override
   String get needle => 'showDialog<T>(';
   @override
   String get source => r'''
-Future<T?> openHelp<T>(Object context) => showDialog<T>(
+import 'package:flutter/material.dart';
+
+Future<T?> openHelp<T>(BuildContext context) => showDialog<T>(
   context: context,
   barrierDismissible: true,
-  builder: (_) => Object(),
+  builder: (_) => Widget(),
 );
 ''';
 
@@ -261,10 +269,12 @@ Future<T?> openHelp<T>(Object context) => showDialog<T>(
     // Inline call without "helper" wrapper still flagged if no routeSettings,
     // confirm rule fires regardless of surrounding context.
     final analyzedSource = _analyzedSource(r'''
-Future<T?> openHelp<T>(Object context) => showDialog<T>(
+import 'package:flutter/material.dart';
+
+Future<T?> openHelp<T>(BuildContext context) => showDialog<T>(
   context: context,
-  routeSettings: const Object(),
-  builder: (_) => Object(),
+  routeSettings: const RouteSettings(name: 'confirm'),
+  builder: (_) => Widget(),
 );
 ''', addIgnorePrefix: addIgnorePrefix);
     await assertNoDiagnostics(analyzedSource);

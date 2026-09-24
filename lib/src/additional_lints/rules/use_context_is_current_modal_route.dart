@@ -111,7 +111,8 @@ class _Visitor extends RecursiveAstVisitor<void> {
 
 bool _isAllowedOwner(RuleContext context) {
   final path = context.definingUnit.file.path.replaceAll('\\', '/');
-  return path.endsWith('/lib/core/extensions/context_extensions.dart') ||
+  return path.endsWith('/lib/core/extensions/build_context_extensions.dart') ||
+      path.endsWith('/lib/core/extensions/context_extensions.dart') ||
       path.endsWith('.g.dart') ||
       path.endsWith('.freezed.dart');
 }

@@ -21,11 +21,11 @@ Designed for Riverpod + codegen Flutter apps.
 
 | Surface | Count |
 | --- | ---: |
-| Flutter skill warning rules | 207 |
-| Flutter skill diagnostic codes | 215 |
+| Flutter skill warning rules | 208 |
+| Flutter skill diagnostic codes | 216 |
 | Additional Dart/Flutter warning rules | 238 |
 | Additional Dart/Flutter diagnostic codes | 279 |
-| Total unique diagnostic codes | 492 |
+| Total unique diagnostic codes | 493 |
 | Quick fixes | 63 |
 | Assists | 1 |
 

@@ -360,8 +360,8 @@ void main() {
   });
 }
 
-const _enabledFlutterSkillRuleCount = 207;
-const _enabledFlutterSkillDiagnosticCount = 215;
+const _enabledFlutterSkillRuleCount = 208;
+const _enabledFlutterSkillDiagnosticCount = 216;
 const _enabledAdditionalRuleCount = 279;
 
 Iterable<String> _documentedLintCodes(String text) sync* {

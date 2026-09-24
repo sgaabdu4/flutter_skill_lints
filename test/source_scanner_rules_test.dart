@@ -136,6 +136,7 @@ void main() {
     defineReflectiveTests(ServiceInlineConcreteDependencyTest);
     defineReflectiveTests(HiddenDependencyDefaultParamTest);
     defineReflectiveTests(ServiceProviderWatchDependencyTest);
+    defineReflectiveTests(RiverpodConfigDestructuringTest);
     defineReflectiveTests(MixinMixinClassTest);
     defineReflectiveTests(MixinNameSuffixTest);
     defineReflectiveTests(MixinMutableStateTest);

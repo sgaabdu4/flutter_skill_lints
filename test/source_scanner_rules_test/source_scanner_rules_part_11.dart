@@ -362,305 +362,100 @@ class AuthRemoteDatasource {
 }
 
 @reflectiveTest
-final class ServiceProviderWatchDependencyTest extends _ServicesExtendedRuleTest {
-  @override
-  void setUp() {
-    newPackage('sdk').addFile('lib/sdk.dart', r'''
-class Client {
-  const Client();
-}
-
-class Repository<T> {
-  const Repository();
-}
-''');
-    newPackage('appwrite')
-      ..addFile('lib/src/service.dart', 'class Service {}')
-      ..addFile('lib/appwrite.dart', r'''
-import 'src/service.dart';
-
-class TablesDB extends Service {
-  TablesDB(Object client);
-}
-
-class Account extends Service {
-  Account(Object client);
-}
-''');
-    super.setUp();
-  }
-
-  @override
-  String get ruleName => 'service_provider_watch_dependency';
-  @override
-  String get needle => 'ref.watch(flutterLocalNotificationsPluginProvider)';
-  @override
-  String get source => r'''
+final class RiverpodConfigDestructuringTest extends _ServicesExtendedRuleTest {
+  static const _stubs = r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
 }
 
-class FlutterLocalNotificationsPlugin {}
-class NotificationTapPayloadBus {}
-abstract interface class INotificationService {}
-class NotificationService implements INotificationService {
-  NotificationService({
-    required FlutterLocalNotificationsPlugin plugin,
-    required NotificationTapPayloadBus tapPayloadBus,
-  });
-}
-
-@Riverpod(keepAlive: true)
-INotificationService notificationService(Ref ref) {
-  final service = NotificationService(
-    plugin: ref.watch(flutterLocalNotificationsPluginProvider),
-    tapPayloadBus: ref.read(notificationTapPayloadBusProvider),
-  );
-  return service;
-}
-''';
-
-  Future<void> test_reportsRepositoryFactoryWatch() async {
-    const source = r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class StorageLocalDatasource {}
-abstract interface class IAuthLocalDatasource {}
-class AuthLocalDatasource implements IAuthLocalDatasource {
-  AuthLocalDatasource(StorageLocalDatasource storage);
-}
-
-@Riverpod(keepAlive: true)
-IAuthLocalDatasource authLocalDatasource(Ref ref) {
-  return AuthLocalDatasource(ref.watch(storageLocalDatasourceProvider));
-}
-''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'ref.watch(storageLocalDatasourceProvider)', ruleName),
-    ]);
-  }
-
-  Future<void> test_allowsCollectionProjectionNamedQueue() async {
-    await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
+class Provider<T> {}
 class Ref {
-  List<int> watch(Object provider) => const [1, 2];
+  T watch<T>(Provider<T> provider) => throw UnimplementedError();
+  T read<T>(Provider<T> provider) => throw UnimplementedError();
 }
 
-typedef QueueProjection = ({List<int> items, int count});
-final itemSourceProvider = Object();
-
-@Riverpod(keepAlive: true)
-QueueProjection selectedItemsQueue(Ref ref) {
-  final items = ref.watch(itemSourceProvider);
-  return (items: List.unmodifiable(items), count: items.length);
+class BackendConfig {
+  const BackendConfig(this.endpoint, this.apiKey);
+  final String endpoint;
+  final String apiKey;
+  String describe() => endpoint;
 }
-''');
-  }
-
-  Future<void> test_allowsCollectionProjectionWhoseElementLooksLikeService() async {
-    await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
+class HttpClient {
+  HttpClient(String endpoint, String apiKey);
+  HttpClient.fromConfig(BackendConfig config);
 }
-const riverpod = Riverpod();
-
-class ItemService {
-  const ItemService(this.code);
-  final String code;
-}
-
-class Ref {
-  List<ItemService> watch(Object provider) => const [];
-}
-
-final sourceServicesProvider = Object();
-final searchProvider = Object();
-
-@riverpod
-List<ItemService> filteredItemServices(Ref ref) {
-  final search = ref.watch(searchProvider);
-  final services = ref.watch(sourceServicesProvider);
-  return services.where((service) => service.code.contains(search.toString())).toList();
-}
-''');
-  }
-
-  Future<void> test_reportsTypedStableServiceWatchWithGenericFactoryName() async {
-    const source = r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class Ref {
-  Object watch(Object provider) => Object();
-}
-
-abstract interface class IQueueService {}
-class QueueService implements IQueueService {
-  QueueService(Object client);
-}
-final clientProvider = Object();
-
-@Riverpod(keepAlive: true)
-IQueueService createQueue(Ref ref) => QueueService(ref.watch(clientProvider));
+final backendConfigProvider = Provider<BackendConfig>();
 ''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'ref.watch(clientProvider)', ruleName),
-    ]);
-  }
 
-  Future<void> test_reportsGenericInfrastructureReturnType() async {
-    const source = r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class Item {}
-abstract interface class IRepository<T> {}
-class Repository<T> implements IRepository<T> {
-  Repository(Object client);
-}
-class Ref { Object watch(Object provider) => Object(); }
-final clientProvider = Object();
-final accountClientProvider = Object();
-
+  @override
+  String get ruleName => 'riverpod_config_destructuring';
+  @override
+  String get needle => 'ref.watch(backendConfigProvider)';
+  @override
+  String get source =>
+      '''
+$_stubs
 @Riverpod(keepAlive: true)
-IRepository<Item> repository(Ref ref) => Repository<Item>(ref.watch(clientProvider));
+HttpClient backendClient(Ref ref) {
+  final config = ref.watch(backendConfigProvider);
+  return HttpClient(config.endpoint, config.apiKey);
+}
 ''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'ref.watch(clientProvider)', ruleName),
-    ]);
-  }
 
-  Future<void> test_reportsQualifiedInfrastructureReturnTypeThroughFuture() async {
-    const source = r'''
-import 'package:sdk/sdk.dart' as sdk;
+  Future<void> test_reportsAwaitedReadConfigLocal() async {
+    const source =
+        '''
+$_stubs
+final appConfigProvider = Provider<Future<BackendConfig>>();
 
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class Ref { Object watch(Object provider) => Object(); }
-final clientProvider = Object();
-
-@Riverpod(keepAlive: true)
-Future<sdk.Repository<int>> repository(Ref ref) async {
-  ref.watch(clientProvider);
-  return const sdk.Repository<int>();
+Future<HttpClient> connect(Ref ref) async {
+  final config = await ref.read(appConfigProvider);
+  return HttpClient(config.endpoint, config.apiKey);
 }
 ''';
     final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
     await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'ref.watch(clientProvider)', ruleName),
+      compatLint(analyzedSource, 'ref.read(appConfigProvider)', ruleName),
     ]);
   }
 
-  Future<void> test_reportsAppwriteTablesAndAccountServicesByResolvedBase() async {
-    const source = r'''
-import 'package:appwrite/appwrite.dart' as appwrite;
-
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class Ref { Object watch(Object provider) => Object(); }
-final clientProvider = Object();
-
+  Future<void> test_allowsSkillDestructuredConfig() async {
+    await assertAllows('''
+$_stubs
 @Riverpod(keepAlive: true)
-appwrite.TablesDB appwriteTablesDB(Ref ref) =>
-    appwrite.TablesDB(ref.watch(clientProvider));
-
-@Riverpod(keepAlive: true)
-Future<appwrite.Account> appwriteAccount(Ref ref) async {
-  return appwrite.Account(ref.watch(accountClientProvider));
-}
-''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'ref.watch(clientProvider)', ruleName),
-      compatLint(analyzedSource, 'ref.watch(accountClientProvider)', ruleName),
-    ]);
-  }
-
-  Future<void> test_allowsLocalServiceBaseLookalike() async {
-    await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class Service {}
-class TablesDB extends Service {
-  TablesDB(Object client);
-}
-class Ref { Object watch(Object provider) => Object(); }
-final clientProvider = Object();
-
-@Riverpod(keepAlive: true)
-TablesDB localTablesDB(Ref ref) => TablesDB(ref.watch(clientProvider));
-''');
-  }
-
-  Future<void> test_doesNotUnwrapUserDefinedFutureName() async {
-    await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class Future<T> {
-  const Future();
-}
-
-abstract interface class IRepository<T> {}
-class Ref { Object watch(Object provider) => Object(); }
-final dependencyProvider = Object();
-
-@Riverpod(keepAlive: true)
-Future<IRepository<int>> projectedValue(Ref ref) {
-  ref.watch(dependencyProvider);
-  return const Future<IRepository<int>>();
+HttpClient backendClient(Ref ref) {
+  final BackendConfig(:endpoint, :apiKey) = ref.watch(backendConfigProvider);
+  return HttpClient(endpoint, apiKey);
 }
 ''');
   }
 
-  Future<void> test_allowsReadDependency() async {
-    await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
+  Future<void> test_allowsConfigUsedBeyondPropertyReads() async {
+    await assertAllows('''
+$_stubs
+class Cart {
+  final List<int> items = const [];
+}
+final cartProvider = Provider<Cart>();
+
+HttpClient wholeConfig(Ref ref) {
+  final config = ref.watch(backendConfigProvider);
+  print(config.endpoint);
+  return HttpClient.fromConfig(config);
 }
 
-class FlutterLocalNotificationsPlugin {}
-abstract interface class INotificationService {}
-class NotificationService implements INotificationService {
-  NotificationService({required FlutterLocalNotificationsPlugin plugin});
+String configMethod(Ref ref) {
+  final config = ref.read(backendConfigProvider);
+  return config.describe();
 }
 
-@Riverpod(keepAlive: true)
-INotificationService notificationService(Ref ref) {
-  return NotificationService(plugin: ref.read(flutterLocalNotificationsPluginProvider));
-}
-''');
-  }
-
-  Future<void> test_allowsComputedProviderWatch() async {
-    await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
+void unusedConfig(Ref ref) {
+  final config = ref.watch(backendConfigProvider);
 }
 
-const riverpod = Riverpod();
-
-@riverpod
-int selectedCount(Ref ref) {
-  return ref.watch(counterProvider);
+int nonConfigValue(Ref ref) {
+  final cart = ref.watch(cartProvider);
+  return cart.items.length;
 }
 ''');
   }

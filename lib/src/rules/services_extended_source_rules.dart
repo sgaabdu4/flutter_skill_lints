@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
@@ -150,25 +151,61 @@ final List<ScannerRule> servicesExtendedSourceRules = [
   /// Why: Service, repository, datasource, client, plugin, queue, and manager
   /// factories wire stable infrastructure dependencies. Watching those deps
   /// makes the factory reactive for no product reason and can recreate services
-  /// unexpectedly. Use ref.read for composition-root wiring; reserve ref.watch
-  /// for computed state that must update when inputs update.
+  /// unexpectedly. Notifier members, including `build()`, read stable
+  /// infrastructure the same way and watch only reactive state. Use ref.read
+  /// for composition-root wiring; reserve ref.watch for the provider that
+  /// intentionally owns reactivity, such as rebuilding a client from live
+  /// config or credential state.
   scannerRule(
     code: const LintCode(
       'service_provider_watch_dependency',
       'Use ref.read for stable infrastructure dependencies.',
-      correctionMessage: 'In service/repository/datasource/client provider factories, use ref.read for stable dependency wiring.',
+      correctionMessage: 'In service/repository/datasource/client provider factories and notifier members, use ref.read for stable dependency wiring.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags ref.watch inside stable infrastructure provider factories so services are not recreated reactively for wiring-only dependencies.',
+    description: 'Flags ref.watch of stable infrastructure providers inside stable infrastructure provider factories, and ref.watch of resolved stable infrastructure values inside Riverpod notifier members. Watching resolved reactive state or config values is allowed.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
 
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        final column = line.indexOf('ref.watch(');
-        if (column < 0) continue;
-        if (!_insideStableInfrastructureProviderFactory(context, i)) continue;
-        reporter.report(context, i, column);
+        for (
+          var column = line.indexOf('ref.watch(');
+          column >= 0;
+          column = line.indexOf('ref.watch(', column + 1)
+        ) {
+          final watch = _stableInfrastructureFactoryWatch(context, i, column);
+          if (watch == null || _watchesReactiveValue(watch)) continue;
+          reporter.report(context, i, column);
+        }
+      }
+    },
+  ),
+
+  /// Destructure config values read from providers.
+  ///
+  /// Why: The config -> client -> services chain reads config through an
+  /// object pattern, `final BackendConfig(:endpoint, :apiKey) =
+  /// ref.watch(backendConfigProvider);`, so the fields a client needs are
+  /// named where the provider is read. A config local that is only read
+  /// through its properties should be destructured instead.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_config_destructuring',
+      'Destructure config values read from providers.',
+      correctionMessage: 'Use an object pattern such as `final BackendConfig(:endpoint, :apiKey) = ref.watch(backendConfigProvider);` instead of reading properties from a config local. For one field, read it inline: `ref.watch(backendConfigProvider).endpoint`.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags a local initialized from ref.watch/ref.read of a provider whose resolved value is a `*Config` class when the local is only used through property reads.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+
+      for (var i = 0; i < context.source.length; i++) {
+        for (final match in _refWatchOrRead.allMatches(context.source.masked[i])) {
+          if (_isPropertyOnlyConfigLocal(context, i, match.start)) {
+            reporter.report(context, i, match.start);
+          }
+        }
       }
     },
   ),
@@ -244,6 +281,7 @@ final _inlineConcreteDependency = RegExp(
   r'Client|Plugin|Queue|Manager|Storage|Activities|EventBus)|FlutterLocalNotificationsPlugin|'
   r'DefaultCacheManager|RemoteMutationQueue|LiveActivities)\s*\(',
 );
+final _refWatchOrRead = RegExp(r'\bref\.(?:watch|read)\(');
 final _stableInfrastructureName = RegExp(
   r'(?:Service|Repository|Datasource|DataSource|Client|Plugin|Queue|Manager|Storage|'
   r'Activities|EventBus)\b',
@@ -306,34 +344,133 @@ RegExpMatch? _implicitNullFallbackMatch(String line) {
       _primitiveNullFallback.firstMatch(line);
 }
 
-bool _insideStableInfrastructureProviderFactory(SourceScannerContext context, int lineIndex) {
+/// Returns the `ref.watch` invocation at [column] when it sits inside a
+/// `@riverpod` factory whose resolved return type is stable infrastructure,
+/// or when a Riverpod notifier member watches a resolved stable
+/// infrastructure value.
+MethodInvocation? _stableInfrastructureFactoryWatch(
+  SourceScannerContext context,
+  int lineIndex,
+  int column,
+) {
+  final offset = context.source.lineOffsets[lineIndex] + column;
+  final covering = context.unit.nodeCovering(offset: offset);
+  final watch = covering?.thisOrAncestorOfType<MethodInvocation>();
+  if (watch == null || watch.methodName.name != 'watch') return null;
+  if (_isRiverpodNotifierMember(watch)) {
+    final value = watch.staticType;
+    return value != null && _isStableInfrastructureType(value) && !_isPersistStorage(watch)
+        ? watch
+        : null;
+  }
+
   final start = lineIndex - 12 < 0 ? 0 : lineIndex - 12;
   final window = context.source.masked.sublist(start, lineIndex + 1).join(' ');
-  if (!RegExp(r'@(?:R|r)iverpod\b').hasMatch(window)) return false;
+  if (!RegExp(r'@(?:R|r)iverpod\b').hasMatch(window)) return null;
+  final declaration = watch.thisOrAncestorOfType<FunctionDeclaration>();
+  final function = declaration?.declaredFragment?.element;
+  if (function is! TopLevelFunctionElement) return null;
+  return _isStableInfrastructureType(function.returnType) ? watch : null;
+}
 
-  final line = context.source.masked[lineIndex];
-  final watchColumn = line.indexOf('ref.watch(');
-  if (watchColumn < 0) return false;
-  final offset = context.source.lineOffsets[lineIndex] + watchColumn;
-  AstNode? node = context.unit.nodeCovering(offset: offset);
-  while (node != null && node is! FunctionDeclaration) {
-    node = node.parent;
-  }
-  final function = node is FunctionDeclaration ? node.declaredFragment?.element : null;
-  if (function is! TopLevelFunctionElement) return false;
+/// Whether [watch] sits in a class whose resolved supertypes include
+/// Riverpod's `AnyNotifier`, the base of `Notifier`, `AsyncNotifier`,
+/// `StreamNotifier` and the generated `_$X` classes.
+bool _isRiverpodNotifierMember(MethodInvocation watch) {
+  final element = watch.thisOrAncestorOfType<ClassDeclaration>()?.declaredFragment?.element;
+  if (element == null) return false;
+  return element.allSupertypes.any(
+    (supertype) => supertype.element.name == 'AnyNotifier' && _isRiverpodLibrary(supertype.element),
+  );
+}
 
-  var returnType = function.returnType;
-  if (returnType is InterfaceType &&
-      returnType.element.library.uri.toString() == 'dart:async' &&
-      (returnType.element.name == 'Future' || returnType.element.name == 'Stream') &&
-      returnType.typeArguments.length == 1) {
-    returnType = returnType.typeArguments.single;
+/// Whether [watch] is the storage argument of Riverpod's notifier
+/// `persist(...)`, which the skill watches inside `build()`.
+bool _isPersistStorage(MethodInvocation watch) {
+  final arguments = watch.parent;
+  final persist = arguments?.parent;
+  if (arguments is! ArgumentList || persist is! MethodInvocation) return false;
+  final element = persist.methodName.element;
+  return element is MethodElement &&
+      element.name == 'persist' &&
+      _isRiverpodLibrary(element) &&
+      arguments.arguments.first == watch;
+}
+
+bool _isRiverpodLibrary(Element element) =>
+    element.library?.uri.toString().startsWith('package:riverpod/') ?? false;
+
+/// A watched provider whose resolved value is not stable infrastructure is
+/// reactive state or config (Notifier/AsyncNotifier state or a plain value
+/// provider), so the factory intentionally rebuilds when it changes.
+/// Unresolved or `Object`/`dynamic` values stay reported.
+bool _watchesReactiveValue(MethodInvocation watch) {
+  final value = watch.staticType;
+  if (value is! InterfaceType || value.isDartCoreObject) return false;
+  return !_isStableInfrastructureType(value);
+}
+
+bool _isStableInfrastructureType(DartType type) {
+  var valueType = type;
+  while (valueType is InterfaceType && _isAsyncWrapper(valueType)) {
+    valueType = valueType.typeArguments.single;
   }
-  if (returnType is! InterfaceType) return false;
-  if (_stableInfrastructureName.hasMatch(returnType.element.name ?? '')) return true;
-  return returnType.allSupertypes.any((supertype) {
+  if (valueType is! InterfaceType) return false;
+  if (_stableInfrastructureName.hasMatch(valueType.element.name ?? '')) return true;
+  return valueType.allSupertypes.any((supertype) {
     final element = supertype.element;
     return element.name == 'Service' &&
         element.library.identifier == 'package:appwrite/src/service.dart';
   });
+}
+
+/// Whether the `ref.watch`/`ref.read` at [column] initializes a local whose
+/// resolved type is a `*Config` class and whose every use is a property read.
+bool _isPropertyOnlyConfigLocal(SourceScannerContext context, int lineIndex, int column) {
+  final offset = context.source.lineOffsets[lineIndex] + column;
+  final read = context.unit.nodeCovering(offset: offset)?.thisOrAncestorOfType<MethodInvocation>();
+  if (read == null) return false;
+  final value = read.parent is AwaitExpression ? read.parent : read;
+  final declaration = value?.parent;
+  if (declaration is! VariableDeclaration || declaration.initializer != value) return false;
+  final local = declaration.declaredFragment?.element;
+  if (local is! LocalVariableElement) return false;
+  final type = local.type;
+  if (type is! InterfaceType || !(type.element.name ?? '').endsWith('Config')) return false;
+
+  final uses = _LocalUses(local);
+  declaration.thisOrAncestorOfType<FunctionBody>()?.accept(uses);
+  return uses.propertyReads > 0 && uses.otherUses == 0;
+}
+
+/// Counts property reads of [local] (`config.endpoint`) and every other use.
+final class _LocalUses extends RecursiveAstVisitor<void> {
+  _LocalUses(this.local);
+
+  final LocalVariableElement local;
+  int propertyReads = 0;
+  int otherUses = 0;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (node.element != local) return;
+    final property = switch (node.parent) {
+      PrefixedIdentifier(:final prefix, :final identifier) when prefix == node => identifier,
+      PropertyAccess(:final target, :final propertyName) when target == node => propertyName,
+      _ => null,
+    };
+    if (property?.element is GetterElement) {
+      propertyReads++;
+    } else {
+      otherUses++;
+    }
+  }
+}
+
+bool _isAsyncWrapper(InterfaceType type) {
+  if (type.typeArguments.length != 1) return false;
+  final name = type.element.name;
+  final library = type.element.library.uri.toString();
+  return (library == 'dart:async' && (name == 'Future' || name == 'Stream')) ||
+      (library.startsWith('package:riverpod/') && name == 'AsyncValue');
 }

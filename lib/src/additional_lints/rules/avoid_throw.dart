@@ -11,7 +11,9 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when an untyped or non-recoverable value is thrown.
 ///
-/// Typed [Exception] subtypes, including `FormatException`, may be thrown by
+/// Resolved `dart:core` `Error.throwWithStackTrace` calls follow the same
+/// contract, except when they propagate the error and stack trace caught by
+/// the same enclosing catch clause. Typed [Exception] subtypes, including `FormatException`, may be thrown by
 /// parsers and infrastructure code. Throws in resolved Flutter `Widget` or
 /// `State` members, Flutter widget callbacks, and Riverpod notifier methods
 /// remain warnings. Direct same-unit function and method references passed to
@@ -38,6 +40,7 @@ class AvoidThrow extends AnalysisRule {
     if (isGeneratedRuleContext(context)) return;
     final visitor = _Visitor(this, context.definingUnit.file.path);
     registry.addThrowExpression(this, visitor);
+    registry.addMethodInvocation(this, visitor);
   }
 }
 
@@ -54,6 +57,20 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (_isRecoverableException(node.expression.staticType) && !_isPresentationContext(node)) {
       return;
     }
+    rule.reportAtNode(node);
+  }
+
+  /// Applies the direct-throw contract to resolved `dart:core`
+  /// `Error.throwWithStackTrace`, except when it propagates the error and
+  /// stack trace caught by the same enclosing catch clause.
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (!_isCoreThrowWithStackTrace(node.methodName.element)) return;
+    final arguments = node.argumentList.arguments;
+    if (arguments.length != 2) return;
+    final error = arguments[0].argumentExpression;
+    if (_isCaughtPairPropagation(node, error, arguments[1].argumentExpression)) return;
+    if (_isRecoverableException(error.staticType) && !_isPresentationContext(node)) return;
     rule.reportAtNode(node);
   }
 
@@ -190,6 +207,27 @@ bool _isRecoverableException(DartType? type) {
 
   final element = type.element;
   return element.name != 'Exception' || element.library.identifier != 'dart:core';
+}
+
+bool _isCoreThrowWithStackTrace(Element? element) {
+  if (element is! MethodElement || !element.isStatic || element.name != 'throwWithStackTrace') {
+    return false;
+  }
+  final owner = element.enclosingElement;
+  return owner is ClassElement && owner.name == 'Error' && owner.library.identifier == 'dart:core';
+}
+
+bool _isCaughtPairPropagation(AstNode node, Expression error, Expression stackTrace) {
+  if (error is! SimpleIdentifier || stackTrace is! SimpleIdentifier) return false;
+  for (var clause = node.thisOrAncestorOfType<CatchClause>(); clause != null;) {
+    final caughtError = clause.exceptionParameter?.declaredFragment?.element;
+    if (caughtError != null && caughtError == error.element) {
+      final caughtStack = clause.stackTraceParameter?.declaredFragment?.element;
+      return caughtStack != null && caughtStack == stackTrace.element;
+    }
+    clause = clause.parent?.thisOrAncestorOfType<CatchClause>();
+  }
+  return false;
 }
 
 bool _isValueObjectArgumentGuard(ThrowExpression node, String path) {

@@ -17,7 +17,7 @@ Authority: Owner decision in the builder brief: every lint that enforces a skill
 
 - `hive_duplicate_field_id` compares resolved `HiveField` indexes per class or enum, not per file.
 - `hive_duplicate_type_id` and `hive_reserved_type_ids_missing` resolve hive_ce annotations and walk same-package imports through the resolved `LibraryElement` graph. A collision is reported where it first meets: on the local annotation, or on the import directive when no single imported library already contains both declarations. Generated libraries such as the Hive registrar are not analyzed, so their imports stand in for them. Libraries that never meet in any import graph are not compared.
-- `hive_reserved_type_ids_missing` requires every `@HiveType` id in the registration scope to appear in `reservedTypeIds`, as the skill's `reservedTypeIds: {0}` example does.
+- `hive_reserved_type_ids_missing` requires every `@HiveType` id in the registration scope to appear in `reservedTypeIds`, even below `firstTypeId`, as the skill's `firstTypeId: 1, reservedTypeIds: {0}` example does. The coordinator accepted this membership rule.
 - New rules: `hive_type_on_freezed_class`, `hive_adapter_spec_domain_type` (resolved `T` declared under `/domain/`), `notifier_hive_access` (hive_ce references inside a class whose resolved supertypes include a Riverpod Notifier).
 - `freezed_required_value_class` skips classes with a resolved hive_ce `@HiveType`.
 - `notifier_zero_value_save_no_guard` counts only named arguments whose resolved type is numeric and accepts the skill's `if (amount <= 0 && count <= 0) return;` guard.
@@ -36,11 +36,11 @@ Authority: Owner decision in the builder brief: every lint that enforces a skill
 Result: Passed
 Evidence: Baseline `dart test` passed 2,144 tests before changes. The audit rows in `data-hive-sync.json` reproduced in the probe project.
 Current baseline: 2,164 tests pass; `dart analyze` reports no issues.
-Execution: One builder, commits per green step: severities, resolved Hive rules, zero-value guard.
+Execution: One builder, commits per green step: severities, resolved Hive rules, zero-value guard, then a complexity split of the new Hive and zero-guard helpers for the `dead-code-duplicates` gate (no rule behavior change).
 
 ## Risks + recovery
 
-The import-graph approach cannot compare two `@HiveType` classes that no library imports together. Registration always imports them, directly or through the generated registrar, so real collisions meet in an analyzed library. Revert the Hive commit to restore the previous same-file checks.
+Known limit (accepted by the coordinator): `hive_duplicate_type_id` and `hive_reserved_type_ids_missing` never compare two `@HiveType` classes that no library imports together; there is no disk scan. Registration always imports them, directly or through the generated registrar, so real collisions meet in an analyzed library. Revert the Hive commit to restore the previous same-file checks.
 
 ## ux_reference
 

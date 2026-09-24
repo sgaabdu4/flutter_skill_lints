@@ -409,6 +409,116 @@ class Helper {
 }
 ''');
   }
+
+  Future<void> test_allowsAwaitedResourceHandleLifecycleWrites() async {
+    await assertAllows(r'''
+class Store {
+  Future<void> write(String handle) async {}
+}
+class Remote {
+  Future<String> create() async => 'synthetic';
+}
+class Resource {
+  const Resource(this.handle);
+  final String handle;
+}
+class ResourceNotifier {
+  ResourceNotifier(this.store, this.remote);
+  final Store store;
+  final Remote remote;
+
+  Future<void> createResource() async {
+    final handle = await remote.create();
+    await _persistResourceHandle(handle);
+  }
+  Future<void> reuseResource(Resource existing) async {
+    await _persistResourceHandle(existing.handle);
+  }
+  Future<void> _persistResourceHandle(String handle) async {
+    await store.write(handle);
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsStateWriteAfterAwaitedLifecycleResult() async {
+    await assertAllows(r'''
+class Remote {
+  Future<String> create() async => 'synthetic';
+}
+class ResourceNotifier {
+  ResourceNotifier(this.remote);
+  final Remote remote;
+  String state = '';
+
+  Future<void> createResource() async {
+    final handle = await remote.create();
+    state = handle;
+    await _persistResourceHandle(handle);
+  }
+  Future<void> _persistResourceHandle(String handle) async {}
+}
+''');
+  }
+
+  Future<void> test_allowsLookalikeLocalPersistFunctionInSetter() async {
+    await assertAllows(r'''
+class ResourceNotifier {
+  String state = '';
+
+  void rename(String handle) {
+    Future<void> _persistResourceHandle(String value) async {}
+    state = handle;
+    _persistResourceHandle(handle);
+  }
+  Future<void> reuseResource(String handle) async {
+    await _persistResourceHandle(handle);
+  }
+  Future<void> _persistResourceHandle(String handle) async {}
+}
+''');
+  }
+
+  Future<void> test_reportsAsyncSetterPersistingAfterStateWrite() async {
+    const source = r'''
+class ThemeNotifier {
+  String state = 'light';
+
+  Future<void> setTheme(String mode) async {
+    state = mode;
+    await _persistTheme();
+  }
+  Future<void> _persistTheme() async {}
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'Future<void> _persistTheme(', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsSyncDraftUpdateCallingAsyncPersist() async {
+    const source = r'''
+class DraftNotifier {
+  String state = '';
+
+  Future<void> reuseDraft(String draft) async {
+    await _persistDraft(draft);
+  }
+  void updateDraft(String draft) {
+    state = draft;
+    _persistDraft(draft);
+  }
+  Future<void> _persistDraft(String draft) async {}
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'Future<void> _persistDraft(', ruleName),
+    ]);
+  }
 }
 
 @reflectiveTest

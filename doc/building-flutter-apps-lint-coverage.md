@@ -250,8 +250,10 @@ Runtime-bug surface (0.7.0) — `runtime_bug_source_rules`:
   before `.clear()` and restore them after, unless the wipe is intentionally
   destructive.
 - `notifier_persistence_no_debounce` — a notifier with `_schedule*Persist` /
-  `_persistDraft` helper but no `Timer` / `Future.delayed` / `Debouncer`
-  coalesces nothing; queue/generation tokens prevent stale writes only.
+  `_persistDraft` helper reached from a synchronous or state-writing mutation
+  path but no `Timer` / `Future.delayed` / `Debouncer` coalesces nothing;
+  queue/generation tokens prevent stale writes only. Awaited one-shot
+  lifecycle writes are allowed.
 - `riverpod_listen_manual_forbidden` — `ref.listenManual(...)` is forbidden;
   use `ref.listen` in `build` for widget UI side effects, or move durable
   subscriptions to provider/notifier/service lifecycle.
@@ -269,8 +271,8 @@ Runtime-bug surface (0.7.0) — `runtime_bug_source_rules`:
   re-hits storage every call.
 - `service_provider_watch_dependency` — service/repository/datasource/client
   provider factories must wire stable infrastructure deps with `ref.read`, not
-  `ref.watch`; reserve `ref.watch` for providers whose output is intentionally
-  reactive.
+  `ref.watch`; watching a resolved reactive state or config value (for example
+  rebuilding a client from a live config provider) is allowed.
 - `hidden_dependency_default_param` — constructor/function dependency seams such
   as `clock`, `delay`, `generator`, `authenticator`, or `createExecution` must
   be required and wired at the provider/composition root, not optional/defaulted.

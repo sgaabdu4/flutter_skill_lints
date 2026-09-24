@@ -151,7 +151,8 @@ final List<ScannerRule> servicesExtendedSourceRules = [
   /// factories wire stable infrastructure dependencies. Watching those deps
   /// makes the factory reactive for no product reason and can recreate services
   /// unexpectedly. Use ref.read for composition-root wiring; reserve ref.watch
-  /// for computed state that must update when inputs update.
+  /// for the provider that intentionally owns reactivity, such as rebuilding a
+  /// client from live config or credential state.
   scannerRule(
     code: const LintCode(
       'service_provider_watch_dependency',
@@ -159,7 +160,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       correctionMessage: 'In service/repository/datasource/client provider factories, use ref.read for stable dependency wiring.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags ref.watch inside stable infrastructure provider factories so services are not recreated reactively for wiring-only dependencies.',
+    description: 'Flags ref.watch of stable infrastructure providers inside stable infrastructure provider factories. Watching resolved reactive state or config values is allowed.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
 

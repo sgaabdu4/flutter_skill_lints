@@ -230,14 +230,14 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       correctionMessage: 'Wrap the persist call in a `Timer` (cancel-and-restart on next call) or a `Debouncer` so rapid mutations coalesce into one write.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description: 'Flags `_schedule*Persist` / `_persistDraft` helper methods that lack any Timer/Future.delayed/Debouncer reference inside their class.',
+    description: 'Flags `_schedule*Persist` / `_persistDraft` helper methods reached from synchronous or state-writing mutation paths when their class lacks any Timer/Future.delayed/Debouncer reference. Awaited one-shot lifecycle writes are allowed.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final classSpan in context.classes) {
         if (!classSpan.isNotifier) continue;
         if (!_hasPersistHelper(context, classSpan)) continue;
         if (_hasDebounceMechanism(context, classSpan)) continue;
-        final helperLine = _persistHelperLine(context, classSpan);
+        final helperLine = _mutationPathPersistHelperLine(context, classSpan);
         if (helperLine == null) continue;
         final line = context.source.masked[helperLine];
         final col = _persistHelperPattern.firstMatch(line)?.start ?? 0;

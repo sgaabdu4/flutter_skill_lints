@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
@@ -506,11 +507,127 @@ int? _durationLiteralMs(String line) {
   return seconds == null ? null : seconds * 1000;
 }
 
-int? _persistHelperLine(SourceScannerContext context, ScannerClassSpan classSpan) {
+/// Returns the first persist helper line in [classSpan] that a synchronous or
+/// repeated mutation path reaches. Awaited one-shot lifecycle writes (for
+/// example a resource handle saved after an awaited create) do not need a
+/// debounce.
+int? _mutationPathPersistHelperLine(SourceScannerContext context, ScannerClassSpan classSpan) {
+  final helpers = <ExecutableElement, MethodDeclaration>{};
+  final lines = <ExecutableElement, int>{};
   for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-    if (_persistHelperPattern.hasMatch(context.source.masked[i])) return i;
+    final match = _persistHelperPattern.firstMatch(context.source.masked[i]);
+    if (match == null) continue;
+    final offset = context.source.lineOffsets[i] + match.start;
+    final declaration = context.unit
+        .nodeCovering(offset: offset)
+        ?.thisOrAncestorMatching((node) => node is MethodDeclaration || node is FunctionBody);
+    if (declaration is! MethodDeclaration) continue;
+    final element = declaration.declaredFragment?.element;
+    if (element == null) continue;
+    helpers[element] = declaration;
+    lines[element] = i;
+  }
+  if (helpers.isEmpty) return null;
+
+  final classNode = helpers.values.first.thisOrAncestorOfType<ClassDeclaration>();
+  if (classNode == null) return null;
+  final uses = _PersistHelperUseFinder(helpers.keys.toSet());
+  classNode.accept(uses);
+
+  final verdicts = <ExecutableElement, bool>{};
+  bool reachesMutationPath(ExecutableElement helper) {
+    final known = verdicts[helper];
+    if (known != null) return known;
+    verdicts[helper] = false;
+    final helperUses = uses.uses[helper] ?? const <SimpleIdentifier>[];
+    final verdict =
+        helperUses.isEmpty ||
+        helperUses.any((use) {
+          final caller = use.thisOrAncestorOfType<MethodDeclaration>()?.declaredFragment?.element;
+          if (caller != null && helpers.containsKey(caller)) {
+            return reachesMutationPath(caller);
+          }
+          return !_isAwaitedLifecycleCall(use);
+        });
+    return verdicts[helper] = verdict;
+  }
+
+  for (final entry in lines.entries) {
+    if (reachesMutationPath(entry.key)) return entry.value;
   }
   return null;
+}
+
+/// A helper invocation is a one-shot lifecycle write when its enclosing body is
+/// asynchronous and either never writes `state` or awaited another result
+/// before the call. Synchronous bodies, tear-offs and async setters that write
+/// `state` without awaiting a lifecycle result are repeated mutation paths.
+bool _isAwaitedLifecycleCall(SimpleIdentifier use) {
+  final parent = use.parent;
+  if (parent is! MethodInvocation || parent.methodName != use) return false;
+  final body = use.thisOrAncestorOfType<FunctionBody>();
+  if (body == null || !body.isAsynchronous) return false;
+  final facts = _AsyncBodyFacts(body);
+  body.accept(facts);
+  if (!facts.writesState) return true;
+  return facts.awaitEnds.any((end) => end <= parent.offset);
+}
+
+final class _PersistHelperUseFinder extends RecursiveAstVisitor<void> {
+  _PersistHelperUseFinder(this.helpers);
+
+  final Set<ExecutableElement> helpers;
+  final uses = <ExecutableElement, List<SimpleIdentifier>>{};
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    final element = node.element?.baseElement;
+    if (element is ExecutableElement && helpers.contains(element)) {
+      (uses[element] ??= []).add(node);
+    }
+  }
+}
+
+final class _AsyncBodyFacts extends RecursiveAstVisitor<void> {
+  _AsyncBodyFacts(this.body);
+
+  final FunctionBody body;
+  final awaitEnds = <int>[];
+  bool writesState = false;
+
+  @override
+  void visitBlockFunctionBody(BlockFunctionBody node) {
+    if (node == body) super.visitBlockFunctionBody(node);
+  }
+
+  @override
+  void visitExpressionFunctionBody(ExpressionFunctionBody node) {
+    if (node == body) super.visitExpressionFunctionBody(node);
+  }
+
+  @override
+  void visitAwaitExpression(AwaitExpression node) {
+    awaitEnds.add(node.end);
+    super.visitAwaitExpression(node);
+  }
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    final target = node.leftHandSide;
+    final writesStateMember = switch (target) {
+      SimpleIdentifier(name: 'state') => true,
+      PropertyAccess(target: ThisExpression(), propertyName: SimpleIdentifier(name: 'state')) =>
+        true,
+      _ => false,
+    };
+    final written = node.writeElement;
+    if (writesStateMember &&
+        written is! LocalVariableElement &&
+        written is! FormalParameterElement) {
+      writesState = true;
+    }
+    super.visitAssignmentExpression(node);
+  }
 }
 
 int? _unguardedAsyncStateWriteLine(SourceScannerContext context, ScannerMethodSpan method) {

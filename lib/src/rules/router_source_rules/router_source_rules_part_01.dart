@@ -56,9 +56,8 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
           ),
         );
         if (!pushesAfterPop) continue;
-        if (!reportedLines.add(context.unit.lineInfo.getLocation(pop.offset).lineNumber - 1))
-          continue;
-        reporter.reportNode(context, pop);
+        final line = context.unit.lineInfo.getLocation(pop.offset).lineNumber - 1;
+        if (reportedLines.add(line)) reporter.reportNode(context, pop);
       }
     },
   ),

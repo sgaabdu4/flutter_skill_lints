@@ -139,6 +139,40 @@ class Ref {}
 Object todoProvider(Ref ref, String todoId) => Object();
 ''');
   }
+
+  Future<void> test_allowsDocumentedWorkaroundNoteOnAnnotationLine() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Ref {}
+
+@Riverpod(keepAlive: true) // keepAlive: Riverpod #4709 workaround
+Object todoProvider(Ref ref, String todoId) => Object();
+''');
+  }
+
+  Future<void> test_reportsFamilyBesideNeighbourWorkaroundNote() async {
+    final analyzedSource = _analyzedSource(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Ref {}
+
+// keepAlive: Riverpod #4709 workaround
+@Riverpod(keepAlive: true)
+Object pinnedTodo(Ref ref, String todoId) => Object();
+
+@Riverpod(keepAlive: true)
+Object cachedTodo(Ref ref, String todoId) => Object();
+''', addIgnorePrefix: addIgnorePrefix);
+    final offset = analyzedSource.lastIndexOf(needle);
+    await assertDiagnostics(analyzedSource, [
+      lint(offset, analyzedSource.indexOf('\n', offset) - offset, name: ruleName),
+    ]);
+  }
 }
 
 abstract class _FreezedRuleTest extends _SourceRuleTest {

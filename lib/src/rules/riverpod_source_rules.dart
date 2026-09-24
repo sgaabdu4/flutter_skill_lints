@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
@@ -419,14 +420,50 @@ bool _isKeepAliveRiverpodAnnotation(SourceScannerContext context, int lineIndex)
 }
 
 bool _hasKeepAliveTickerModeWorkaround(SourceScannerContext context, int annotationLine) {
-  return context.nearOriginal(
-    annotationLine,
-    RegExp(
-      r'(?:#4709|riverpod#4709|TickerMode|pausedActiveSubscriptionCount)',
-      caseSensitive: false,
-    ),
-    6,
+  final workaround = RegExp(
+    r'(?:#4709|riverpod#4709|TickerMode|pausedActiveSubscriptionCount)',
+    caseSensitive: false,
   );
+  final lineInfo = context.unit.lineInfo;
+  for (final declaration in context.unit.declarations) {
+    if (!declaration.metadata.any(
+      (annotation) => lineInfo.getLocation(annotation.offset).lineNumber - 1 == annotationLine,
+    )) {
+      continue;
+    }
+    return _declarationComments(context, declaration).any(workaround.hasMatch);
+  }
+  return false;
+}
+
+/// Comments owned by [declaration]: its leading comments (not a previous
+/// declaration's trailing same-line comment) and comments between its
+/// metadata and its name, such as a trailing note on the annotation line.
+Iterable<String> _declarationComments(
+  SourceScannerContext context,
+  CompilationUnitMember declaration,
+) sync* {
+  final lineInfo = context.unit.lineInfo;
+  // Documentation comments precede the first code token, so start there.
+  final first = declaration.metadata.isEmpty
+      ? declaration.firstTokenAfterCommentAndMetadata
+      : declaration.metadata.first.beginToken;
+  final previousEnd = first.previous?.type == TokenType.EOF ? null : first.previous?.end;
+  final previousLine = previousEnd == null ? -1 : lineInfo.getLocation(previousEnd).lineNumber;
+  final nameToken = switch (declaration) {
+    FunctionDeclaration(:final name) => name,
+    ClassDeclaration(:final namePart) => namePart.typeName,
+    _ => declaration.firstTokenAfterCommentAndMetadata,
+  };
+  for (Token? token = first; token != null; token = token.next) {
+    for (Token? comment = token.precedingComments; comment != null; comment = comment.next) {
+      if (token == first && lineInfo.getLocation(comment.offset).lineNumber <= previousLine) {
+        continue;
+      }
+      yield comment.lexeme;
+    }
+    if (token == nameToken || token.isEof) break;
+  }
 }
 
 bool _hasFamilySignatureAfterKeepAlive(SourceScannerContext context, int annotationLine) {

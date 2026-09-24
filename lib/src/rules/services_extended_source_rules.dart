@@ -165,10 +165,15 @@ final List<ScannerRule> servicesExtendedSourceRules = [
 
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        final column = line.indexOf('ref.watch(');
-        if (column < 0) continue;
-        if (!_insideStableInfrastructureProviderFactory(context, i)) continue;
-        reporter.report(context, i, column);
+        for (
+          var column = line.indexOf('ref.watch(');
+          column >= 0;
+          column = line.indexOf('ref.watch(', column + 1)
+        ) {
+          final watch = _stableInfrastructureFactoryWatch(context, i, column);
+          if (watch == null || _watchesReactiveValue(watch)) continue;
+          reporter.report(context, i, column);
+        }
       }
     },
   ),
@@ -306,34 +311,55 @@ RegExpMatch? _implicitNullFallbackMatch(String line) {
       _primitiveNullFallback.firstMatch(line);
 }
 
-bool _insideStableInfrastructureProviderFactory(SourceScannerContext context, int lineIndex) {
+/// Returns the `ref.watch` invocation at [column] when it sits inside a
+/// `@riverpod` factory whose resolved return type is stable infrastructure.
+MethodInvocation? _stableInfrastructureFactoryWatch(
+  SourceScannerContext context,
+  int lineIndex,
+  int column,
+) {
   final start = lineIndex - 12 < 0 ? 0 : lineIndex - 12;
   final window = context.source.masked.sublist(start, lineIndex + 1).join(' ');
-  if (!RegExp(r'@(?:R|r)iverpod\b').hasMatch(window)) return false;
+  if (!RegExp(r'@(?:R|r)iverpod\b').hasMatch(window)) return null;
 
-  final line = context.source.masked[lineIndex];
-  final watchColumn = line.indexOf('ref.watch(');
-  if (watchColumn < 0) return false;
-  final offset = context.source.lineOffsets[lineIndex] + watchColumn;
-  AstNode? node = context.unit.nodeCovering(offset: offset);
-  while (node != null && node is! FunctionDeclaration) {
-    node = node.parent;
-  }
-  final function = node is FunctionDeclaration ? node.declaredFragment?.element : null;
-  if (function is! TopLevelFunctionElement) return false;
+  final offset = context.source.lineOffsets[lineIndex] + column;
+  final covering = context.unit.nodeCovering(offset: offset);
+  final watch = covering?.thisOrAncestorOfType<MethodInvocation>();
+  if (watch == null || watch.methodName.name != 'watch') return null;
+  final declaration = watch.thisOrAncestorOfType<FunctionDeclaration>();
+  final function = declaration?.declaredFragment?.element;
+  if (function is! TopLevelFunctionElement) return null;
+  return _isStableInfrastructureType(function.returnType) ? watch : null;
+}
 
-  var returnType = function.returnType;
-  if (returnType is InterfaceType &&
-      returnType.element.library.uri.toString() == 'dart:async' &&
-      (returnType.element.name == 'Future' || returnType.element.name == 'Stream') &&
-      returnType.typeArguments.length == 1) {
-    returnType = returnType.typeArguments.single;
+/// A watched provider whose resolved value is not stable infrastructure is
+/// reactive state or config (Notifier/AsyncNotifier state or a plain value
+/// provider), so the factory intentionally rebuilds when it changes.
+/// Unresolved or `Object`/`dynamic` values stay reported.
+bool _watchesReactiveValue(MethodInvocation watch) {
+  final value = watch.staticType;
+  if (value is! InterfaceType || value.isDartCoreObject) return false;
+  return !_isStableInfrastructureType(value);
+}
+
+bool _isStableInfrastructureType(DartType type) {
+  var valueType = type;
+  while (valueType is InterfaceType && _isAsyncWrapper(valueType)) {
+    valueType = valueType.typeArguments.single;
   }
-  if (returnType is! InterfaceType) return false;
-  if (_stableInfrastructureName.hasMatch(returnType.element.name ?? '')) return true;
-  return returnType.allSupertypes.any((supertype) {
+  if (valueType is! InterfaceType) return false;
+  if (_stableInfrastructureName.hasMatch(valueType.element.name ?? '')) return true;
+  return valueType.allSupertypes.any((supertype) {
     final element = supertype.element;
     return element.name == 'Service' &&
         element.library.identifier == 'package:appwrite/src/service.dart';
   });
+}
+
+bool _isAsyncWrapper(InterfaceType type) {
+  if (type.typeArguments.length != 1) return false;
+  final name = type.element.name;
+  final library = type.element.library.uri.toString();
+  return (library == 'dart:async' && (name == 'Future' || name == 'Stream')) ||
+      (library.startsWith('package:riverpod/') && name == 'AsyncValue');
 }

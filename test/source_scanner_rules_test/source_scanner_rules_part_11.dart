@@ -387,6 +387,7 @@ class Account extends Service {
   Account(Object client);
 }
 ''');
+    newPackage('riverpod').addFile('lib/riverpod.dart', 'sealed class AsyncValue<T> {}');
     super.setUp();
   }
 
@@ -663,6 +664,118 @@ int selectedCount(Ref ref) {
   return ref.watch(counterProvider);
 }
 ''');
+  }
+
+  Future<void> test_allowsWatchedReactiveCredentialState() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Provider<T> {}
+class Ref {
+  T watch<T>(Provider<T> provider) => throw UnimplementedError();
+}
+
+abstract interface class IApiService {}
+class ApiService implements IApiService {
+  ApiService(String credential);
+}
+final credentialProvider = Provider<String>();
+
+@Riverpod(keepAlive: true)
+IApiService apiService(Ref ref) => ApiService(ref.watch(credentialProvider));
+''');
+  }
+
+  Future<void> test_allowsClientRebuiltFromLiveConfig() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Provider<T> {}
+class Ref {
+  T watch<T>(Provider<T> provider) => throw UnimplementedError();
+}
+
+class AppConfig {
+  const AppConfig(this.endpoint);
+  final String endpoint;
+}
+class ApiClient {
+  ApiClient(String endpoint);
+}
+final appConfigProvider = Provider<Future<AppConfig>>();
+
+@Riverpod(keepAlive: true)
+Future<ApiClient> apiClient(Ref ref) async {
+  final config = await ref.watch(appConfigProvider);
+  return ApiClient(config.endpoint);
+}
+''');
+  }
+
+  Future<void> test_reportsStableClientWatchBesideReactiveCredential() async {
+    const source = r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Provider<T> {}
+class Ref {
+  T watch<T>(Provider<T> provider) => throw UnimplementedError();
+}
+
+class HttpClient {}
+abstract interface class IApiService {}
+class ApiService implements IApiService {
+  ApiService(String credential, HttpClient client);
+}
+final credentialProvider = Provider<String>();
+final httpClientProvider = Provider<HttpClient>();
+
+@Riverpod(keepAlive: true)
+IApiService apiService(Ref ref) =>
+    ApiService(ref.watch(credentialProvider), ref.watch(httpClientProvider));
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(httpClientProvider)', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsStableDependencyValuesThroughAsyncWrappers() async {
+    const source = r'''
+import 'package:appwrite/appwrite.dart' as appwrite;
+import 'package:riverpod/riverpod.dart';
+
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Provider<T> {}
+class Ref {
+  T watch<T>(Provider<T> provider) => throw UnimplementedError();
+}
+
+class StorageLocalDatasource {}
+abstract interface class IAuthRepository {}
+class AuthRepository implements IAuthRepository {
+  AuthRepository(Object storage, Object account);
+}
+final storageProvider = Provider<AsyncValue<StorageLocalDatasource>>();
+final accountProvider = Provider<Future<appwrite.Account>>();
+
+@Riverpod(keepAlive: true)
+IAuthRepository authRepository(Ref ref) =>
+    AuthRepository(ref.watch(storageProvider), ref.watch(accountProvider));
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(storageProvider)', ruleName),
+      compatLint(analyzedSource, 'ref.watch(accountProvider)', ruleName),
+    ]);
   }
 }
 

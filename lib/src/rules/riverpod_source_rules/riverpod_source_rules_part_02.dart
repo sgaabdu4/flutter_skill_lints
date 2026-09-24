@@ -83,9 +83,12 @@ bool _isWholeValueUse(Expression value) {
     }
   }
   if (parent is SwitchExpression && parent.expression == value) {
+    final scrutinee = value.staticType?.element;
     return parent.cases.every((branch) {
       final pattern = branch.guardedPattern.pattern;
-      return pattern is WildcardPattern || pattern is ObjectPattern && pattern.fields.isEmpty;
+      return pattern is WildcardPattern ||
+          pattern is ObjectPattern &&
+              (pattern.fields.isEmpty || _isSealedVariantPattern(pattern, scrutinee));
     });
   }
   if (parent is ReturnStatement && value.staticType?.isDartCoreList == true) return true;
@@ -160,3 +163,9 @@ bool _isRiverpodLibrary(LibraryElement? library) {
   final uri = library?.uri.toString() ?? '';
   return uri.startsWith('package:riverpod/') || uri.startsWith('package:flutter_riverpod/');
 }
+
+/// A sealed-union variant pattern such as `Authenticated(:final user)` or
+/// `AsyncData(:final value)` dispatches on the whole watched value; select
+/// cannot express that exhaustive switch.
+bool _isSealedVariantPattern(ObjectPattern pattern, Element? scrutinee) =>
+    scrutinee is ClassElement && scrutinee.isSealed && pattern.type.element != scrutinee;

@@ -153,10 +153,10 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
 
         for (final lineIndex in directClassMemberLines(context, classSpan)) {
           final line = context.source.masked[lineIndex];
-          final match = _derivedCacheField.firstMatch(line);
-          if (match == null) continue;
+          final fieldName = _derivedCacheField.firstMatch(line)?.group(1);
+          if (fieldName == null) continue;
           reportedLines.add(lineIndex);
-          reporter.report(context, lineIndex, line.indexOf(match.group(1)!, match.start));
+          reporter.report(context, lineIndex, line.indexOf(fieldName));
         }
       }
       _reportResolvedConsumerStateCaches(reporter, context, reportedLines);

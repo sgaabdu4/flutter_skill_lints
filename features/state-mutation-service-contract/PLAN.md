@@ -49,7 +49,7 @@ N/A — analyzer diagnostics only; no app surface.
 ## Verification
 
 Result: Passed
-Evidence: `dart format lib test` made no changes. `dart analyze` found no issues. `dart test`: all tests passed (see final report counts). In the consumer probe, errors fired at add_todo_screen.dart:10 (experimental note), :14 and :23 (top-level), and :37 (ref.read). They also fired at codegen_providers.dart:27 (keepAlive family next to a neighbour's note), at :108, :113 and :118 (locator/factory), and at auth_gate_screen.dart:90 (base-type field read). The doc controls (add_todo_screen.dart:7 and :33, the `isPending` watches, and the auth_gate union and AsyncValue switches) were clean.
+Evidence: `dart format lib test` made no changes. `dart analyze` found no issues. `dart test`: 2,162 tests passed (1 skipped). `hard-eng.py check --plan-stage Draft` passed every gate after `_ownedComments` was split to clear the complexity gate. In the consumer probe, errors fired at add_todo_screen.dart:10 (experimental note), :14 and :23 (top-level), and :37 (ref.read). They also fired at codegen_providers.dart:27 (keepAlive family next to a neighbour's note), at :108, :113 and :118 (locator/factory), and at auth_gate_screen.dart:90 (base-type field read). The doc controls (add_todo_screen.dart:7 and :33, the `isPending` watches, and the auth_gate union and AsyncValue switches) were clean.
 E2E: Passed — real Flutter consumer probe analyzed with the plugin at this worktree; the reproductions and controls behaved as listed above.
 Delivery target: Merge
 Delivery: Pending — branch `fix/state-mutation-service-contract`, not pushed.

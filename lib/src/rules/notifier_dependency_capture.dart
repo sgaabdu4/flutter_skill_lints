@@ -37,6 +37,40 @@ bool notifierNeedsDependencyEnsure(
   return missingCapture && !_usesConstructorInjectedDependencies(context, classSpan, method);
 }
 
+/// Notifier fields that hold a repository or service, or cache a resolved
+/// `ref.read` of a non-value dependency in their initializer or an assignment.
+Iterable<VariableDeclaration> notifierDependencyCacheFields(ClassDeclaration declaration) sync* {
+  final members = classBodyOf(declaration)?.members ?? const <ClassMember>[];
+  final assigned = _FieldProviderReadAssignments();
+  declaration.accept(assigned);
+  for (final member in members.whereType<FieldDeclaration>()) {
+    if (member.isStatic) continue;
+    for (final variable in member.fields.variables) {
+      final field = variable.declaredFragment?.element;
+      if (field == null) continue;
+      final cachesRead =
+          _isResolvedDependencyRead(variable.initializer) || assigned.fields.contains(field);
+      if (_isRepositoryOrServiceType(field.type) ||
+          cachesRead && _containsDependencyType(field.type, <InterfaceElement>{})) {
+        yield variable;
+      }
+    }
+  }
+}
+
+final class _FieldProviderReadAssignments extends RecursiveAstVisitor<void> {
+  final fields = <Element>{};
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    final setter = node.writeElement;
+    if (setter is PropertyAccessorElement && _isResolvedDependencyRead(node.rightHandSide)) {
+      fields.add(setter.variable);
+    }
+    super.visitAssignmentExpression(node);
+  }
+}
+
 bool _hasResolvedDependencyCaptureBeforeMutation(
   SourceScannerContext context,
   ScannerClassSpan classSpan,

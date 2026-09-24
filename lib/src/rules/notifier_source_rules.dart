@@ -1,3 +1,4 @@
+import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/notifier_dependency_capture.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
@@ -19,19 +20,15 @@ final List<ScannerRule> notifierSourceRules = [
     description: 'Flags notifier-local repository/service fields so Riverpod provider caching remains the dependency source of truth.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-
-      for (final classSpan in context.classes.where((span) => span.isNotifier)) {
-        final classMethods = context.methods
-            .where((method) => classSpan.contains(method.start))
-            .toList();
-        for (var i = classSpan.start + 1; i < classSpan.end; i++) {
-          if (_isInsideMethod(classMethods, i)) continue;
-          final line = context.source.masked[i];
-          final match = _notifierLocalDependencyField.firstMatch(line);
-          if (match == null) continue;
-          final fieldName = match.group(1);
-          final column = fieldName == null ? match.start : line.indexOf(fieldName, match.start);
-          reporter.report(context, i, column);
+      final notifierNames = {
+        for (final span in context.classes)
+          if (span.isNotifier) span.name,
+      };
+      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+        if (!notifierNames.contains(declaration.namePart.typeName.lexeme)) continue;
+        for (final field in notifierDependencyCacheFields(declaration)) {
+          final location = context.unit.lineInfo.getLocation(field.name.offset);
+          reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
         }
       }
     },
@@ -89,10 +86,3 @@ final List<ScannerRule> notifierSourceRules = [
     },
   ),
 ];
-
-final _notifierLocalDependencyField = RegExp(
-  r'^\s+(?:(?:late|final)\s+)*(?:I?[A-Z][A-Za-z0-9_]*(?:Repository|Service|Datasource|DataSource))\??\s+(_[A-Za-z0-9_]*(?:repo|repository|service|datasource|dataSource)[A-Za-z0-9_]*)\s*(?:[=;])',
-);
-
-bool _isInsideMethod(List<ScannerMethodSpan> methods, int lineIndex) =>
-    methods.any((method) => lineIndex >= method.start && lineIndex <= method.end);

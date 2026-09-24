@@ -150,17 +150,19 @@ final List<ScannerRule> servicesExtendedSourceRules = [
   /// Why: Service, repository, datasource, client, plugin, queue, and manager
   /// factories wire stable infrastructure dependencies. Watching those deps
   /// makes the factory reactive for no product reason and can recreate services
-  /// unexpectedly. Use ref.read for composition-root wiring; reserve ref.watch
-  /// for the provider that intentionally owns reactivity, such as rebuilding a
-  /// client from live config or credential state.
+  /// unexpectedly. Notifier members, including `build()`, read stable
+  /// infrastructure the same way and watch only reactive state. Use ref.read
+  /// for composition-root wiring; reserve ref.watch for the provider that
+  /// intentionally owns reactivity, such as rebuilding a client from live
+  /// config or credential state.
   scannerRule(
     code: const LintCode(
       'service_provider_watch_dependency',
       'Use ref.read for stable infrastructure dependencies.',
-      correctionMessage: 'In service/repository/datasource/client provider factories, use ref.read for stable dependency wiring.',
+      correctionMessage: 'In service/repository/datasource/client provider factories and notifier members, use ref.read for stable dependency wiring.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags ref.watch of stable infrastructure providers inside stable infrastructure provider factories. Watching resolved reactive state or config values is allowed.',
+    description: 'Flags ref.watch of stable infrastructure providers inside stable infrastructure provider factories, and ref.watch of resolved stable infrastructure values inside Riverpod notifier members. Watching resolved reactive state or config values is allowed.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
 
@@ -313,25 +315,60 @@ RegExpMatch? _implicitNullFallbackMatch(String line) {
 }
 
 /// Returns the `ref.watch` invocation at [column] when it sits inside a
-/// `@riverpod` factory whose resolved return type is stable infrastructure.
+/// `@riverpod` factory whose resolved return type is stable infrastructure,
+/// or when a Riverpod notifier member watches a resolved stable
+/// infrastructure value.
 MethodInvocation? _stableInfrastructureFactoryWatch(
   SourceScannerContext context,
   int lineIndex,
   int column,
 ) {
-  final start = lineIndex - 12 < 0 ? 0 : lineIndex - 12;
-  final window = context.source.masked.sublist(start, lineIndex + 1).join(' ');
-  if (!RegExp(r'@(?:R|r)iverpod\b').hasMatch(window)) return null;
-
   final offset = context.source.lineOffsets[lineIndex] + column;
   final covering = context.unit.nodeCovering(offset: offset);
   final watch = covering?.thisOrAncestorOfType<MethodInvocation>();
   if (watch == null || watch.methodName.name != 'watch') return null;
+  if (_isRiverpodNotifierMember(watch)) {
+    final value = watch.staticType;
+    return value != null && _isStableInfrastructureType(value) && !_isPersistStorage(watch)
+        ? watch
+        : null;
+  }
+
+  final start = lineIndex - 12 < 0 ? 0 : lineIndex - 12;
+  final window = context.source.masked.sublist(start, lineIndex + 1).join(' ');
+  if (!RegExp(r'@(?:R|r)iverpod\b').hasMatch(window)) return null;
   final declaration = watch.thisOrAncestorOfType<FunctionDeclaration>();
   final function = declaration?.declaredFragment?.element;
   if (function is! TopLevelFunctionElement) return null;
   return _isStableInfrastructureType(function.returnType) ? watch : null;
 }
+
+/// Whether [watch] sits in a class whose resolved supertypes include
+/// Riverpod's `AnyNotifier`, the base of `Notifier`, `AsyncNotifier`,
+/// `StreamNotifier` and the generated `_$X` classes.
+bool _isRiverpodNotifierMember(MethodInvocation watch) {
+  final element = watch.thisOrAncestorOfType<ClassDeclaration>()?.declaredFragment?.element;
+  if (element == null) return false;
+  return element.allSupertypes.any(
+    (supertype) => supertype.element.name == 'AnyNotifier' && _isRiverpodLibrary(supertype.element),
+  );
+}
+
+/// Whether [watch] is the storage argument of Riverpod's notifier
+/// `persist(...)`, which the skill watches inside `build()`.
+bool _isPersistStorage(MethodInvocation watch) {
+  final arguments = watch.parent;
+  final persist = arguments?.parent;
+  if (arguments is! ArgumentList || persist is! MethodInvocation) return false;
+  final element = persist.methodName.element;
+  return element is MethodElement &&
+      element.name == 'persist' &&
+      _isRiverpodLibrary(element) &&
+      arguments.arguments.first == watch;
+}
+
+bool _isRiverpodLibrary(Element element) =>
+    element.library?.uri.toString().startsWith('package:riverpod/') ?? false;
 
 /// A watched provider whose resolved value is not stable infrastructure is
 /// reactive state or config (Notifier/AsyncNotifier state or a plain value

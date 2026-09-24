@@ -387,7 +387,28 @@ class Account extends Service {
   Account(Object client);
 }
 ''');
-    newPackage('riverpod').addFile('lib/riverpod.dart', 'sealed class AsyncValue<T> {}');
+    newPackage('riverpod')
+      ..addFile('lib/riverpod.dart', 'sealed class AsyncValue<T> {}')
+      ..addFile('lib/src/framework.dart', r'''
+import 'dart:async';
+import 'package:riverpod/riverpod.dart';
+
+class Provider<T> {
+  Provider<Future<T>> get future => throw UnimplementedError();
+}
+class Ref {
+  T watch<T>(Provider<T> provider) => throw UnimplementedError();
+}
+class Storage<KeyT, EncodedT> {}
+abstract class AnyNotifier<StateT, ValueT> {
+  Ref get ref => throw UnimplementedError();
+}
+extension NotifierPersistX<StateT, ValueT> on AnyNotifier<StateT, ValueT> {
+  void persist<KeyT, EncodedT>(FutureOr<Storage<KeyT, EncodedT>> storage, {required KeyT key}) {}
+}
+abstract class Notifier<T> extends AnyNotifier<T, T> {}
+abstract class AsyncNotifier<T> extends AnyNotifier<AsyncValue<T>, T> {}
+''');
     super.setUp();
   }
 
@@ -776,6 +797,91 @@ IAuthRepository authRepository(Ref ref) =>
       compatLint(analyzedSource, 'ref.watch(storageProvider)', ruleName),
       compatLint(analyzedSource, 'ref.watch(accountProvider)', ruleName),
     ]);
+  }
+
+  Future<void> test_reportsNotifierMembersWatchingStableInfrastructure() async {
+    const source = r'''
+import 'package:riverpod/src/framework.dart';
+
+class Product {}
+abstract interface class IProductRepository {
+  Future<List<Product>> fetchAll();
+}
+final productRepositoryProvider = Provider<IProductRepository>();
+
+class ProductsNotifier extends AsyncNotifier<List<Product>> {
+  Future<List<Product>> build() async {
+    final repo = ref.watch(productRepositoryProvider);
+    return repo.fetchAll();
+  }
+
+  Future<IProductRepository> get _repository => ref.watch(productRepositoryProvider.future);
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(productRepositoryProvider);', ruleName),
+      compatLint(analyzedSource, 'ref.watch(productRepositoryProvider.future)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsNotifierBuildWatchingStateAndConfig() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+import 'package:riverpod/src/framework.dart';
+
+class Product {}
+class Cart {}
+class BackendConfig {
+  const BackendConfig(this.endpoint);
+  final String endpoint;
+}
+final productsProvider = Provider<AsyncValue<List<Product>>>();
+final cartProvider = Provider<Cart>();
+final backendConfigProvider = Provider<BackendConfig>();
+
+class CheckoutNotifier extends Notifier<int> {
+  int build() {
+    ref.watch(productsProvider);
+    ref.watch(cartProvider);
+    ref.watch(backendConfigProvider);
+    return 0;
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsNotifierPersistStorageWatch() async {
+    await assertAllows(r'''
+import 'package:riverpod/src/framework.dart';
+
+class Todo {}
+final storageProvider = Provider<Storage<String, String>>();
+
+class TodosNotifier extends AsyncNotifier<List<Todo>> {
+  Future<List<Todo>> build() async {
+    persist(ref.watch(storageProvider.future), key: 'todos');
+    return [];
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsLookalikeNotifierBase() async {
+    await assertAllows(r'''
+import 'package:riverpod/src/framework.dart';
+
+abstract interface class IProductRepository {}
+final productRepositoryProvider = Provider<IProductRepository>();
+
+abstract class AnyNotifier {
+  Ref get ref => throw UnimplementedError();
+}
+
+class ProductsNotifier extends AnyNotifier {
+  IProductRepository build() => ref.watch(productRepositoryProvider);
+}
+''');
   }
 }
 

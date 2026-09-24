@@ -561,6 +561,30 @@ void f(state, Map<String, Object?> hugeJsonMap) {
     ]);
   }
 
+  Future<void> test_reportsFreezedCallableCopyWith() async {
+    final analyzedSource = _analyzedSource(r'''
+class RawStateCopyWith {
+  RawState call({int? total, Map<String, Object?>? rawJson}) => RawState();
+}
+class RawState {
+  RawStateCopyWith get copyWith => RawStateCopyWith();
+}
+class RawNotifier {
+  RawState state = RawState();
+  void store(Map<String, Object?> hugeJsonMap) {
+    state = state.copyWith(
+      total: 1,
+      rawJson: hugeJsonMap,
+    );
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'state = state.copyWith', ruleName),
+    ]);
+  }
+
   Future<void> test_reportsDirectlyStoredResponseValue() async {
     final analyzedSource = _analyzedSource(r'''
 void f(state, Object response) {
@@ -583,6 +607,26 @@ void f(state, Map<String, Object?> json) {
     items: parseItems(json),
     total: json['total'] as int,
   );
+}
+''');
+  }
+
+  Future<void> test_allowsFreezedCallableCopyWithExtractedFields() async {
+    await assertAllows(r'''
+class RawStateCopyWith {
+  RawState call({int? total, String? status}) => RawState();
+}
+class RawState {
+  RawStateCopyWith get copyWith => RawStateCopyWith();
+}
+class RawNotifier {
+  RawState state = RawState();
+  void store(Map<String, Object?> json) {
+    state = state.copyWith(
+      total: json['total'] as int? ?? 0,
+      status: json['status'] as String? ?? '',
+    );
+  }
 }
 ''');
   }

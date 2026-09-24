@@ -264,22 +264,36 @@ final class _RawResponseStateVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitAssignmentExpression(AssignmentExpression node) {
-    if ((node.leftHandSide, node.rightHandSide)
-        case (
-          SimpleIdentifier(name: 'state'),
-          MethodInvocation(
-            methodName: SimpleIdentifier(name: 'copyWith'),
-            target: SimpleIdentifier(name: 'state'),
-            :final argumentList,
-          ),
-        )
-        when argumentList.arguments.whereType<NamedArgument>().any(_storesRawResponse)) {
+    final arguments = _stateCopyWithArguments(node.rightHandSide);
+    if (node.leftHandSide case SimpleIdentifier(name: 'state')
+        when arguments != null &&
+            arguments.arguments.whereType<NamedArgument>().any(_storesRawResponse)) {
       final location = context.unit.lineInfo.getLocation(node.offset);
       reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
     }
     super.visitAssignmentExpression(node);
   }
 }
+
+/// Arguments of `state.copyWith(...)`, whether `copyWith` is a method or a
+/// Freezed callable getter (resolved as a function expression invocation).
+ArgumentList? _stateCopyWithArguments(Expression expression) => switch (expression) {
+  MethodInvocation(
+    methodName: SimpleIdentifier(name: 'copyWith'),
+    target: SimpleIdentifier(name: 'state'),
+    :final argumentList,
+  ) =>
+    argumentList,
+  FunctionExpressionInvocation(
+    function: PropertyAccess(
+      target: SimpleIdentifier(name: 'state'),
+      propertyName: SimpleIdentifier(name: 'copyWith'),
+    ),
+    :final argumentList,
+  ) =>
+    argumentList,
+  _ => null,
+};
 
 bool _storesRawResponse(NamedArgument argument) {
   if (_rawResponseName.hasMatch(argument.name.lexeme)) return true;

@@ -929,6 +929,39 @@ class TodoRepository {
     ]);
   }
 
+  /// Flutter's debugPrint is a function-typed variable, so the call resolves
+  /// as a FunctionExpressionInvocation rather than a MethodInvocation.
+  Future<void> test_reportsFlutterDebugPrintBeforeRethrow() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/foundation.dart';
+
+class ProductRemoteDataSource {
+  Future<List<String>> fetchAll() async {
+    try {
+      return await Future.value(const <String>[]);
+    } on Exception catch (e) {
+      debugPrint('fetch failed $e');
+      rethrow;
+    }
+  }
+
+  Future<void> remove() async {
+    try {
+      await Future<void>.value();
+    } catch (_) {
+      debugPrint('remove failed');
+      rethrow;
+    }
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, r"debugPrint('fetch failed $e');", ruleName),
+      compatLint(analyzedSource, "debugPrint('remove failed');", ruleName),
+    ]);
+  }
+
   /// Translation, rollback and local-first swallow + log (state-management-lifecycle.md:69-72).
   Future<void> test_allowsSkillDataLayerCatches() async {
     await assertAllows(r'''

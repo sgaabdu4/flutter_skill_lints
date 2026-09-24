@@ -294,11 +294,17 @@ $source''';
   }
 
   void _addFlutterPackage() {
-    newPackage('flutter').addFile('lib/widgets.dart', r'''
+    newPackage('flutter')
+      ..addFile('lib/widgets.dart', r'''
 class BuildContext {}
 class Widget {}
 class StatefulWidget extends Widget {}
 abstract class State<T extends StatefulWidget> {}
+''')
+      // Flutter declares debugPrint as a function-typed top-level variable.
+      ..addFile('lib/foundation.dart', r'''
+typedef DebugPrintCallback = void Function(String? message, {int? wrapWidth});
+DebugPrintCallback debugPrint = (String? message, {int? wrapWidth}) {};
 ''');
   }
 }

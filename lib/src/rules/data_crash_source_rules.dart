@@ -79,8 +79,15 @@ bool _isReportingCall(Statement statement, CatchClause clause) {
   if (statement is! ExpressionStatement) return false;
   final expression = statement.expression;
   final call = expression is AwaitExpression ? expression.expression : expression;
-  if (call is! MethodInvocation) return false;
-  return _isLogFunction(call.methodName.element) || _receivesCaughtError(call, clause);
+  final callee = switch (call) {
+    MethodInvocation(:final methodName) => methodName.element,
+    // Function-typed variables such as Flutter's debugPrint resolve here.
+    FunctionExpressionInvocation(:final function) =>
+      function is Identifier ? function.element : null,
+    _ => null,
+  };
+  if (call is! InvocationExpression) return false;
+  return _isLogFunction(callee) || _receivesCaughtError(call, clause);
 }
 
 bool _isLogFunction(Element? element) {
@@ -95,7 +102,7 @@ bool _isLogFunction(Element? element) {
 }
 
 /// Passing the caught error or stack trace on makes the call a report.
-bool _receivesCaughtError(MethodInvocation call, CatchClause clause) {
+bool _receivesCaughtError(InvocationExpression call, CatchClause clause) {
   final caught = {
     clause.exceptionParameter?.declaredFragment?.element,
     clause.stackTraceParameter?.declaredFragment?.element,

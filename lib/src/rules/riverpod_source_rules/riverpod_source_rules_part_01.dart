@@ -391,7 +391,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       'riverpod_feature_notifier_keepalive',
       'Feature notifiers should use keepAlive.',
       correctionMessage: 'Change @riverpod to @Riverpod(keepAlive: true), or add an autoDispose rationale comment.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description:
         'Flags non-family feature presentation notifiers that auto-dispose without rationale.',

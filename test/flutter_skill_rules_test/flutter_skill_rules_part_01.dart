@@ -502,6 +502,10 @@ void reset(Ref ref) {
 }
 ''');
   }
+
+  Future<void> test_severityIsError() async {
+    expect(UseRefInvalidate.code.severity, DiagnosticSeverity.ERROR);
+  }
 }
 
 @reflectiveTest

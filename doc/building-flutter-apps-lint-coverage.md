@@ -16,8 +16,22 @@ Read [building-flutter-apps-lint-inventory.md](building-flutter-apps-lint-invent
 `avoid_throw` accepts a statically resolved subtype of `dart:core Exception`
 outside presentation code, including the documented parser `FormatException`
 case. A direct throw of the base `Exception`, an `Error` subtype, `dynamic`, or
-an untyped value remains a diagnostic. This boundary describes direct throw
-expressions; it makes no claim about method-based error propagation.
+an untyped value remains a diagnostic. A resolved `dart:core`
+`Error.throwWithStackTrace` call follows the same contract for its error
+argument, so `Error.throwWithStackTrace('invalid', StackTrace.current)` reports
+while a typed `Exception` with a stack does not. Propagating the error and
+stack trace caught by the same enclosing catch clause
+(`on Object catch (e, s) { Error.throwWithStackTrace(e, s); }`) stays allowed;
+an error paired with another stack, or a saved pair passed through helper
+parameters, is judged by the error's static type. Same-named APIs outside
+`dart:core` are ignored.
+
+A validated Value Object factory under `domain/values/` may throw
+`ArgumentError.value(<parameter>, ...)` from an `if` guard whose condition
+reads that parameter directly or through a `final` local initialized from it
+(`final trimmed = input.trim(); if (trimmed.isEmpty) ...`). Guards on `var`
+locals, reassigned locals, or locals unrelated to the parameter still report,
+as do other throws in the factory.
 
 Typed throws still report in resolved Flutter `Widget`/`State` members, in
 closures passed to resolved Flutter widget callbacks, and in methods on

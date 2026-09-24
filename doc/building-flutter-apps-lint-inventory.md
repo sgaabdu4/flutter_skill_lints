@@ -419,7 +419,6 @@ prefer_async_callback
 prefer_caret_version_syntax
 prefer_center_over_align
 prefer_class_destructuring
-prefer_compute_over_isolate_run
 prefer_const_border_radius
 prefer_constrained_box_over_container
 prefer_container

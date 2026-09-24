@@ -255,7 +255,7 @@ void main() {
     );
 
     expect(registry.warningRules.length, _enabledAdditionalRuleCount);
-    expect(registeredFixCount, 64);
+    expect(registeredFixCount, 63);
     expect(registry.assistKinds, hasLength(1));
     expect(registry.warningRules, containsPair('avoid_ref_read_inside_build', isNotNull));
     expect(registry.warningRules, containsPair('use_ref_and_state_synchronously', isNotNull));
@@ -313,6 +313,7 @@ void main() {
       'prefer_overriding_parent_equality',
       'list_all_equatable_fields',
       'prefer_equatable_mixin',
+      'prefer_compute_over_isolate_run',
     ]) {
       expect(paths, isNot(contains(forbidden)));
     }
@@ -338,7 +339,7 @@ void main() {
 
 const _enabledFlutterSkillRuleCount = 187;
 const _enabledFlutterSkillDiagnosticCount = 195;
-const _enabledAdditionalRuleCount = 280;
+const _enabledAdditionalRuleCount = 279;
 
 Iterable<String> _documentedLintCodes(String text) sync* {
   var depth = 0;

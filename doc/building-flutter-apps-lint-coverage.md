@@ -4,7 +4,7 @@ This audit covers both plugin surfaces:
 
 - `lib/src/rules/**`: 187 registered `building-flutter-apps` warning rules.
 - `lib/src/rules/**`: 195 `building-flutter-apps` diagnostic codes.
-- `lib/src/additional_lints/rules/**`: 280 additional diagnostics.
+- `lib/src/additional_lints/rules/**`: 279 additional diagnostics.
 - Total unique diagnostics: 471.
 
 ## Full Rule Inventory
@@ -104,8 +104,6 @@ Additional-lint coverage that also maps to the skill refs:
   methods.
 - `use_context_is_current_modal_route` covers route-current guards and keeps
   raw `ModalRoute` current-route checks inside the context extension owner.
-- `prefer_compute_over_isolate_run` covers the Flutter optimization guidance
-  around cross-platform isolate work.
 - `avoid_incorrect_image_opacity`, `avoid_shrink_wrap_in_lists`,
   `use_sliver_prefix`, `always_remove_listener`, `dispose_fields`,
   `dispose_provided_instances`, `avoid_ref_read_inside_build`,
@@ -129,7 +127,7 @@ hover description and correction text.
 | `dart-mcp-e2e-testing.md` | `cfg_e2e_entrypoint`, `avoid_flutter_host_driver_imports`, `test_inline_value_key`, `test_tap_at`, `test_first_match_finder`, runtime boundary for real device, logs, source-of-truth, cleanup, and multi-actor proof |
 | `dart-patterns-records.md` | `records_map_return`, `typed_id_raw_id`, `avoid_null_bang`, `prefer_wildcard_pattern`, `prefer_class_destructuring`, `use_existing_destructuring` |
 | `extensions-utilities.md` | `ui_snackbar_boundary`, `datetime_now_requires_timezone_intent`, `avoid_magic_literals`, `use_context_is_current_modal_route`, `dart_static_namespace`, `service_static_side_effect`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures` |
-| `flutter-optimizations.md` | `avoid_shrink_wrap`, `perf_listview_children`, `perf_build_work`, `a11y_text_scale_clamp`, `flutter_key_created_in_build`, `flutter_unique_or_global_key`, `flutter_opacity_widget`, `flutter_save_layer_filter`, `flutter_clip_save_layer`, `flutter_intrinsic_layout`, `flutter_animated_builder_child`, `flutter_widget_operator_equals`, `use_dedicated_media_query_methods`, `prefer_compute_over_isolate_run` |
+| `flutter-optimizations.md` | `avoid_shrink_wrap`, `perf_listview_children`, `perf_build_work`, `a11y_text_scale_clamp`, `flutter_key_created_in_build`, `flutter_unique_or_global_key`, `flutter_opacity_widget`, `flutter_save_layer_filter`, `flutter_clip_save_layer`, `flutter_intrinsic_layout`, `flutter_animated_builder_child`, `flutter_widget_operator_equals`, `use_dedicated_media_query_methods` |
 | `freezed-sealed.md` | `use_sealed_freezed_classes`, `use_freezed_instead_of_immutable`, `freezed_one_class_per_file`, `freezed_missing_private_constructor`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map`, `arch_domain_json_annotation`, `cfg_explicit_to_json` |
 | `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_test_close_missing`, `avoid_unvalidated_persisted_map_cast`, runtime boundary for historical TypeId permanence |
 | `localization.md` | `strings_hardcoded`, `l10n_context_direct_access` |

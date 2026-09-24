@@ -11,13 +11,66 @@ abstract class _PresentationWidgetRuleTest extends _SourceRuleTest {
 
   @override
   void setUp() {
-    newPackage('go_router').addFile('lib/go_router.dart', '');
+    newPackage('go_router').addFile('lib/go_router.dart', r'''
+import 'package:flutter/widgets.dart';
+
+abstract class RouteData {
+  const RouteData();
+}
+
+abstract class GoRouteData extends RouteData {
+  const GoRouteData();
+  void go(BuildContext context) {}
+  Future<T?> push<T>(BuildContext context) async => null;
+}
+
+extension GoRouterHelper on BuildContext {
+  void go(String location) {}
+  void pop<T extends Object?>([T? result]) {}
+}
+''');
     newPackage('http').addFile('lib/http.dart', 'class Client {}');
     newFile(
       '$testPackageLibPath/features/content/repositories/content_repository.dart',
       'class ContentRepository {}',
     );
     super.setUp();
+  }
+
+  @override
+  void _addFlutterPackage() {
+    newPackage('flutter').addFile('lib/widgets.dart', r'''
+class BuildContext {}
+
+abstract class Widget {
+  const Widget();
+}
+
+abstract class StatelessWidget extends Widget {
+  const StatelessWidget();
+}
+
+abstract class StatefulWidget extends Widget {
+  const StatefulWidget();
+}
+
+abstract class State<T extends StatefulWidget> {}
+
+class Route<T> {}
+
+class Navigator extends StatefulWidget {
+  static NavigatorState of(BuildContext context) => NavigatorState();
+  static Future<T?> push<T extends Object?>(BuildContext context, Route<T> route) async => null;
+  static void pop<T extends Object?>(BuildContext context, [T? result]) {}
+  static Future<bool> maybePop<T extends Object?>(BuildContext context, [T? result]) async => true;
+}
+
+class NavigatorState extends State<Navigator> {
+  Future<T?> push<T extends Object?>(Route<T> route) async => null;
+  void pop<T extends Object?>([T? result]) {}
+  Future<bool> maybePop<T extends Object?>([T? result]) async => true;
+}
+''');
   }
 }
 
@@ -26,11 +79,13 @@ final class PresentationWidgetNavigationForbiddenTest extends _PresentationWidge
   @override
   String get ruleName => 'presentation_widget_navigation_forbidden';
   @override
-  String get needle => 'context.pop()';
+  String get needle => 'Navigator.push<void>(context, route)';
   @override
   String get source => r'''
-void close(BuildContext context) {
-  context.pop();
+import 'package:flutter/widgets.dart';
+
+void open(BuildContext context, Route<void> route) {
+  Navigator.push<void>(context, route);
 }
 ''';
 
@@ -46,10 +101,70 @@ void close(BuildContext context) {
     ]);
   }
 
-  Future<void> test_reportsNavigatorCalls() async {
+  Future<void> test_reportsGenericNavigatorPushes() async {
     final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/widgets.dart';
+
+void open(BuildContext context, Route<void> route) {
+  Navigator.of(context).push<void>(route);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, 'Navigator.of(context).push<void>(route)', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsTypedRouteNavigation() async {
+    newFile('$testPackageLibPath/features/orders/orders_destination.dart', r'''
+import 'package:go_router/go_router.dart';
+
+class OrdersRoute extends GoRouteData {
+  const OrdersRoute();
+}
+''');
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/widgets.dart';
+import 'package:test/features/orders/orders_destination.dart';
+
+void open(BuildContext context) {
+  const OrdersRoute().push<void>(context);
+  const OrdersRoute().go(context);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, 'const OrdersRoute().push<void>(context)', ruleName),
+      compatLint(analyzedSource, 'const OrdersRoute().go(context)', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsGoRouterContextNavigation() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/widgets.dart';
+import 'package:go_router/go_router.dart';
+
 void close(BuildContext context) {
+  context.pop();
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, "import 'package:go_router/go_router.dart'", ruleName),
+      compatLint(analyzedSource, 'context.pop()', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsWorkAfterModalPop() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/widgets.dart';
+
+void close(BuildContext context, void Function() onClosed) {
   Navigator.of(context).pop();
+  onClosed();
 }
 ''', addIgnorePrefix: addIgnorePrefix);
     newFile(path, analyzedSource);
@@ -57,6 +172,33 @@ void close(BuildContext context) {
     await assertDiagnosticsInFile(path, [
       compatLint(analyzedSource, 'Navigator.of(context).pop()', ruleName),
     ]);
+  }
+
+  Future<void> test_allowsLocalModalDismissal() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+
+enum CreateChoice { exercise }
+
+final class ConfirmDialog extends StatelessWidget {
+  const ConfirmDialog();
+
+  void confirm(BuildContext context) => Navigator.of(context).pop(true);
+  void cancel(BuildContext context) => Navigator.pop(context, false);
+  void dismiss(BuildContext context) => Navigator.of(context).maybePop();
+
+  Future<void> _onCreateTapped(BuildContext context) async {
+    Navigator.of(context).pop(CreateChoice.exercise);
+  }
+
+  void close(BuildContext context, bool canClose) {
+    if (canClose) {
+      Navigator.pop(context);
+      return;
+    }
+  }
+}
+''', path: path);
   }
 
   Future<void> test_allowsTypedCallbacks() async {
@@ -72,8 +214,10 @@ final class ContentView extends StatelessWidget {
 
   Future<void> test_allowsNavigationInScreens() async {
     await assertAllows(r'''
-void close(BuildContext context) {
-  context.pop();
+import 'package:flutter/widgets.dart';
+
+void open(BuildContext context, Route<void> route) {
+  Navigator.push<void>(context, route);
 }
 ''', path: '$testPackageLibPath/features/content/presentation/screens/content_screen.dart');
   }

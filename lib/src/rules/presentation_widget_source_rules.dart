@@ -1,4 +1,7 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> presentationWidgetSourceRules = [
@@ -13,7 +16,20 @@ final List<ScannerRule> presentationWidgetSourceRules = [
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Keeps navigation orchestration out of reusable presentation widgets.',
-    scan: (reporter, context) => _scanPresentationWidgetLines(reporter, context, _navigationColumn),
+    scan: (reporter, context) {
+      _scanPresentationWidgetLines(reporter, context, _navigationImportColumn);
+      if (!context.isPresentationWidgetFile || context.isTestFile) return;
+
+      final visitor = _NavigationVisitor();
+      context.unit.accept(visitor);
+      final reportedLines = <int>{};
+      for (final offset in visitor.offsets) {
+        final location = context.unit.lineInfo.getLocation(offset);
+        if (reportedLines.add(location.lineNumber)) {
+          reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+        }
+      }
+    },
   ),
 
   /// Keep reusable presentation widget State free of domain and workflow state.
@@ -78,23 +94,73 @@ void _scanPresentationWidgetLines(
   }
 }
 
-int? _navigationColumn(String line) {
-  final patterns = [
-    RegExp(r'''^\s*import\s+['"][^'"]*(?:go_router|/routing/|/routes/|_route\.dart)[^'"]*['"]'''),
-    RegExp(
-      r'\bNavigator\s*\.\s*(?:of\s*\([^)]*\)\s*\.)?(?:push|pop|replace|restorablePush)\w*\s*\(',
-    ),
-    RegExp(r'\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*(?:go|push|replace|pop)\w*\s*\('),
-    RegExp(
-      r'\b(?:context|[A-Za-z_]\w*Context|this)\s*\.\s*(?:go|goNamed|push|pushNamed|pushReplacement|replace|replaceNamed|pop)\s*\(',
-    ),
-    RegExp(r'\b[A-Z]\w*Route\s*\([^;]*\)\s*\.\s*(?:go|push|replace)\s*\('),
-  ];
-  for (final pattern in patterns) {
-    final match = pattern.firstMatch(line);
-    if (match != null) return match.start;
+int? _navigationImportColumn(String line) =>
+    RegExp(r'''^\s*import\s+['"][^'"]*(?:go_router|/routing/|/routes/|_route\.dart)[^'"]*['"]''')
+        .firstMatch(line)
+        ?.start;
+
+const _navigatorChecker = TypeChecker.any([
+  TypeChecker.fromName('Navigator', packageName: 'flutter'),
+  TypeChecker.fromName('NavigatorState', packageName: 'flutter'),
+]);
+const _goRouterRouteDataChecker = TypeChecker.fromName('RouteData', packageName: 'go_router');
+
+/// Collects resolved Navigator, GoRouter, and typed-route navigation calls.
+final class _NavigationVisitor extends RecursiveAstVisitor<void> {
+  final offsets = <int>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (_isNavigation(node)) offsets.add(node.offset);
+    super.visitMethodInvocation(node);
   }
-  return null;
+
+  bool _isNavigation(MethodInvocation node) {
+    final method = node.methodName.element;
+    final owner = method?.enclosingElement;
+    if (owner != null && _navigatorChecker.isExactly(owner)) {
+      return switch (node.methodName.name) {
+        'of' || 'maybeOf' || 'canPop' => false,
+        'pop' || 'maybePop' => !_isLocalModalDismissal(node),
+        _ => true,
+      };
+    }
+    if (method?.library?.identifier.startsWith('package:go_router/') ?? false) return true;
+
+    final targetType = node.realTarget?.staticType;
+    return targetType != null && _goRouterRouteDataChecker.isAssignableFromType(targetType);
+  }
+}
+
+/// Whether a Navigator pop is the final work of its callback: an arrow body,
+/// the last statement of the function, or followed only by a bare `return;`.
+bool _isLocalModalDismissal(MethodInvocation pop) {
+  AstNode node = pop;
+  if (node.parent is ExpressionFunctionBody) return true;
+  if (node.parent is! ExpressionStatement) return false;
+  node = node.parent!;
+
+  while (true) {
+    final parent = node.parent;
+    switch (parent) {
+      case BlockFunctionBody():
+        return true;
+      case IfStatement():
+        node = parent;
+      case Block(:final statements):
+        final index = statements.indexOf(node as Statement);
+        final rest = statements.skip(index + 1).toList();
+        if (rest.isEmpty) {
+          node = parent;
+        } else {
+          return rest.length == 1 &&
+              rest.single is ReturnStatement &&
+              (rest.single as ReturnStatement).expression == null;
+        }
+      default:
+        return false;
+    }
+  }
 }
 
 bool _isWidgetStateClass(SourceScannerContext context, ScannerClassSpan classSpan) {

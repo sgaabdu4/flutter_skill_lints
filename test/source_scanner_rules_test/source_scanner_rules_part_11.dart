@@ -161,6 +161,7 @@ final class ServiceSingletonTest extends _ServicesMixinsRuleTest {
 
   Future<void> test_allowsPlainBoringSingleton() async {
     await assertAllows('''
+/// Talks to the push backend through its locator.
 final class UserService {
   UserService._();
 

@@ -510,7 +510,9 @@ int? _durationLiteralMs(String line) {
 /// Returns the first persist helper line in [classSpan] that a synchronous or
 /// repeated mutation path reaches. Awaited one-shot lifecycle writes (for
 /// example a resource handle saved after an awaited create) do not need a
-/// debounce.
+/// debounce. Uses resolve to the declared helper, a helper called from another
+/// helper inherits that helper's verdict, and a helper with no resolved use in
+/// the class stays reported.
 int? _mutationPathPersistHelperLine(SourceScannerContext context, ScannerClassSpan classSpan) {
   final helpers = <ExecutableElement, MethodDeclaration>{};
   final lines = <ExecutableElement, int>{};

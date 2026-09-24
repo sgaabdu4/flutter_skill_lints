@@ -358,7 +358,9 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ///
   /// Why: Raw current-time calls spread timezone and calendar-window policy through
   /// app code. Keep current-time helpers and semantic date windows in
-  /// `core/extensions/date_time_extensions.dart`.
+  /// `core/extensions/date_time_extensions.dart`. Static members of a resolved
+  /// `extension ... on DateTime` own the raw call (`static DateTime nowUtc() =>
+  /// DateTime.now().toUtc();`); any member of that extension may hold date windows.
   scannerRule(
     code: const LintCode(
       'datetime_now_requires_timezone_intent',
@@ -423,23 +425,20 @@ void _scanDateTimeNowIntent(ScannerRuleReporter reporter, SourceScannerContext c
   final maskedSource = context.source.masked.join('\n');
   final codeSource = context.source.code.join('\n');
   final reportedOffsets = <int>{};
-  final isExtensionFile = context.path.endsWith('/core/extensions/date_time_extensions.dart');
 
-  if (!isExtensionFile) {
-    _reportDateTimeMatches(
-      reporter,
-      context,
-      _currentTimeHelperDateMath.allMatches(maskedSource),
-      reportedOffsets,
-    );
-    _reportDateTimeMatches(
-      reporter,
-      context,
-      _currentTimeBoundary.allMatches(maskedSource),
-      reportedOffsets,
-    );
-    _reportPersistedLocalNowMatches(reporter, context, maskedSource, reportedOffsets);
-  }
+  _reportDateTimeMatches(
+    reporter,
+    context,
+    _currentTimeHelperDateMath.allMatches(maskedSource),
+    reportedOffsets,
+  );
+  _reportDateTimeMatches(
+    reporter,
+    context,
+    _currentTimeBoundary.allMatches(maskedSource),
+    reportedOffsets,
+  );
+  _reportPersistedLocalNowMatches(reporter, context, maskedSource, reportedOffsets);
 
   _reportCurrentDateTimeMatches(reporter, context, maskedSource, reportedOffsets);
   _reportInterpolatedCurrentDateTimeMatches(reporter, context, codeSource, reportedOffsets);
@@ -452,6 +451,7 @@ void _reportDateTimeMatches(
   Set<int> reportedOffsets,
 ) {
   for (final match in matches) {
+    if (_isInsideDateTimeExtension(context, match.start)) continue;
     _reportDateTimeOffset(reporter, context, match.start, reportedOffsets);
   }
 }
@@ -464,7 +464,7 @@ void _reportPersistedLocalNowMatches(
 ) {
   for (final match in _persistedLocalNowExpression.allMatches(source)) {
     final localNowMatch = _localNowExpression.firstMatch(match.group(0)!);
-    if (localNowMatch == null) continue;
+    if (localNowMatch == null || _isInsideDateTimeExtension(context, match.start)) continue;
     _reportDateTimeOffset(reporter, context, match.start + localNowMatch.start, reportedOffsets);
   }
 }

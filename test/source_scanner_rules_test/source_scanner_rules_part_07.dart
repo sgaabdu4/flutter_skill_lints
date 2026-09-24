@@ -206,7 +206,7 @@ final since = DateTimeX.nowLocal()
     newFile(
       filePath,
       _analyzedSource(r'''
-abstract final class DateTimeX {
+extension DateTimeX on DateTime {
   static DateTime nowUtc() => DateTime.timestamp();
   static DateTime nowLocal() => nowUtc().toLocal();
 }
@@ -214,6 +214,45 @@ abstract final class DateTimeX {
     );
 
     await assertNoDiagnosticsInFile(filePath);
+  }
+
+  // Row 27: the skill's canonical DateTimeX (primitive-formatting.md).
+  Future<void> test_allowsSkillDateTimeXStaticNowHelpers() async {
+    final filePath = '$testPackageLibPath/core/extensions/date_time_extensions.dart';
+    newFile(
+      filePath,
+      _analyzedSource(r'''
+extension DateTimeX on DateTime {
+  static DateTime nowUtc() => DateTime.now().toUtc();
+  static DateTime nowLocal() => DateTime.now();
+
+  DateTime get asLocal => toLocal();
+}
+''', addIgnorePrefix: addIgnorePrefix),
+    );
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsStaticNowOutsideDateTimeExtension() async {
+    final filePath = '$testPackageLibPath/core/extensions/date_time_extensions.dart';
+    final analyzedSource = _analyzedSource(r'''
+extension StringClockX on String {
+  static DateTime stringNow() => DateTime.now();
+}
+
+abstract final class Clock {
+  static DateTime classNow() {
+    return DateTime.now();
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(filePath, analyzedSource);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, 'DateTime.now();\n}\n\nabstract', ruleName),
+      compatLint(analyzedSource, 'DateTime.now();\n  }', ruleName),
+    ]);
   }
 
   Future<void> test_reportsRawNowInsideDateTimeExtensionHelper() async {

@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'ui_source_rules/ui_source_rules_part_01.dart';
@@ -68,20 +69,30 @@ bool _hasMeaningfulNumericLiteral(String line) {
   return (lineIndex: lineIndex, column: offset - source.lineOffsets[lineIndex]);
 }
 
+/// Whether [offset] sits in a static member of an extension on dart:core
+/// `DateTime`, the skill's `DateTimeX.nowUtc()`/`nowLocal()` owner
+/// (primitive-formatting.md).
 bool _isAllowedDateTimeExtensionCurrentBoundary(SourceScannerContext context, int offset) {
-  if (!context.path.endsWith('/core/extensions/date_time_extensions.dart')) {
-    return false;
-  }
+  return _dateTimeExtensions(context)
+      .expand((extension) => extension.body.members)
+      .whereType<MethodDeclaration>()
+      .any((member) => member.isStatic && offset >= member.offset && offset < member.end);
+}
 
-  final (:lineIndex, :column) = _lineColumnForOffset(context.source, offset);
-  final line = context.source.masked[lineIndex];
-  final call = _currentDateTimeCall.matchAsPrefix(line, column);
-  if (call == null || !call.group(0)!.contains('timestamp')) return false;
+/// Whether [offset] sits in an extension on dart:core `DateTime`, where the
+/// skill keeps current-date windows.
+bool _isInsideDateTimeExtension(SourceScannerContext context, int offset) {
+  return _dateTimeExtensions(context)
+      .any((extension) => offset >= extension.offset && offset < extension.end);
+}
 
-  final start = lineIndex < 3 ? 0 : lineIndex - 3;
-  final window = context.source.masked.sublist(start, lineIndex + 1).join('\n');
-  return RegExp(r'\bstatic\s+DateTime\s+nowUtc\s*\(\s*\)\s*=>\s*DateTime\s*\.\s*timestamp\s*\(')
-      .hasMatch(window);
+Iterable<ExtensionDeclaration> _dateTimeExtensions(SourceScannerContext context) {
+  return context.unit.declarations.whereType<ExtensionDeclaration>().where((extension) {
+    final type = extension.declaredFragment?.element.extendedType;
+    return type is InterfaceType &&
+        type.element.name == 'DateTime' &&
+        type.element.library.isDartCore;
+  });
 }
 
 bool _isRawStringLiteralText(SourceScannerContext context, int offset) {

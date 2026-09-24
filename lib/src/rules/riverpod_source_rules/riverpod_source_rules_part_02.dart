@@ -126,8 +126,8 @@ final class _RiverpodMutationCreations extends RecursiveAstVisitor<void> {
   }
 }
 
-void _reportAtNode(ScannerRuleReporter reporter, SourceScannerContext context, AstNode node) {
-  final location = context.unit.lineInfo.getLocation(node.offset);
+void _reportAtOffset(ScannerRuleReporter reporter, SourceScannerContext context, int offset) {
+  final location = context.unit.lineInfo.getLocation(offset);
   reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
 }
 

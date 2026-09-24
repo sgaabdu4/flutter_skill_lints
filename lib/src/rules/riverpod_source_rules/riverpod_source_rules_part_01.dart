@@ -34,12 +34,12 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     ),
     description: 'Flags service locator classes in Riverpod apps so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(r'\bclass\s+(?:ServiceFactory|ServiceLocator|BackendProvider)\b')
-            .hasMatch(line)) {
-          reporter.report(context, i, line.indexOf('class'));
-        }
+      // The skill bans these class kinds by name: "NEVER create ServiceFactory,
+      // ServiceLocator, or BackendProvider class", including prefixed variants.
+      final banned = RegExp(r'(?:ServiceFactory|ServiceLocator|BackendProvider)$');
+      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+        if (!banned.hasMatch(declaration.namePart.typeName.lexeme)) continue;
+        _reportAtOffset(reporter, context, declaration.classKeyword.offset);
       }
     },
   ),
@@ -327,7 +327,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
             list.parent is TopLevelVariableDeclaration) {
           continue;
         }
-        _reportAtNode(reporter, context, creation);
+        _reportAtOffset(reporter, context, creation.offset);
       }
     },
   ),
@@ -348,7 +348,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       final reads = _RiverpodReadsInMutationRun();
       context.unit.accept(reads);
       for (final read in reads.nodes) {
-        _reportAtNode(reporter, context, read);
+        _reportAtOffset(reporter, context, read.offset);
       }
     },
   ),
@@ -507,6 +507,6 @@ void _scanMutationExperimentalWarning(ScannerRuleReporter reporter, SourceScanne
         : owner.beginToken;
     final comments = _ownedComments(context, first, owner.endToken, trailing: true);
     if (comments.any(experimental.hasMatch)) continue;
-    _reportAtNode(reporter, context, creation);
+    _reportAtOffset(reporter, context, creation.offset);
   }
 }

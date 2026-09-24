@@ -45,7 +45,7 @@ N/A — analyzer rules only; no app surface.
 ## Verification
 
 Result: Passed
-Evidence: `dart format lib test` clean, `dart analyze` no issues, `dart test` 2,158 passed (1 skipped smoke test, expectations updated for the error severity). Consumer probe `probe-layout-optimization-contract` reports every violation probe at the new severity, the gap probes through the new rules, and none of the skill-shaped controls.
+Evidence: `dart format lib test` clean, `dart analyze` no issues, `dart test` 2,158 passed; the opt-in Flutter plugin smoke test (`RUN_FLUTTER_PLUGIN_SMOKE=1`) passed with its expectations updated for the error severity. `hard-eng.py check --base origin/main --plan-stage Draft` passed every gate. Consumer probe `probe-layout-optimization-contract` reports every violation probe at the new severity, the gap probes through the new rules, and none of the skill-shaped controls.
 E2E: Passed — real Flutter consumer probe analyzed with the plugin from this worktree via `dart analyze`.
 Delivery target: Merge
 Delivery: Pending — branch committed locally; not pushed.

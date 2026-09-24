@@ -141,9 +141,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     description: 'Flags `for (final item in items) { otherItems.indexWhere((x) => x.id == item.otherId) }` patterns, including loops over id lists such as `x.id == id`.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (final method in context.methods) {
-        _reportNestedIdLookups(reporter, context, method);
-      }
+      _reportNestedIdLookups(reporter, context);
     },
   ),
 

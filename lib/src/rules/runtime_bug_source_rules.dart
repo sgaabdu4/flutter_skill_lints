@@ -162,12 +162,6 @@ final _adHocIdIndexLookup = RegExp(
   r'\)\s*\[',
 );
 
-final _linearIdLookupCall = RegExp(r'\.\s*(?:firstWhere|indexWhere)\s*\(');
-
-final _forEachLoop = RegExp(
-  r'\bfor\s*\(\s*(?:final\s+)?(?:[A-Za-z_]\w*\s+)?([A-Za-z_]\w*)\s+in\s+[A-Za-z_]\w*',
-);
-
 final _heavyWidgetInit = RegExp(
   r'\b(?:InAppWebView|IOSInAppWebViewWidget|WebViewWidget|YoutubePlayer|VideoPlayer)\s*\(',
 );
@@ -369,13 +363,6 @@ bool _collectionGetterAllocates(String body) {
   }
   return _collectionExpressionAllocation.hasMatch(body);
 }
-
-RegExp _nestedIdLookup(String loopVar) => RegExp(
-  r'\.\s*(?:indexWhere|firstWhere)\s*\(\s*'
-  r'(?:\([A-Za-z_]\w*\)|[A-Za-z_]\w*)\s*=>\s*[A-Za-z_]\w*\s*\.\s*id\s*==\s*'
-  '${RegExp.escape(loopVar)}'
-  r'\b',
-);
 
 int? _findBlockEnd(SourceScannerContext context, int startLine, int maxLine) {
   final state = _BraceScanState();

@@ -576,6 +576,42 @@ class ItemNotifier {
 ''');
   }
 
+  Future<void> test_reportsNestedLookupInTopLevelFunction() async {
+    const source = r'''
+void applyChanges(List<Object> items, List<Object> changes) {
+  for (final change in changes) {
+    final index = items.indexWhere((item) => item.id == change.itemId);
+    if (index >= 0) apply(change);
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
+  }
+
+  Future<void> test_reportsNestedLookupInCollectionFor() async {
+    const source = r'''
+List<Object> resolve(List<Object> items, List<String> ids) => [
+  for (final id in ids) items.firstWhere((item) => item.id == id),
+];
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
+  }
+
+  Future<void> test_allowsLookupNotKeyedByLoopVariable() async {
+    await assertAllows(r'''
+void applyAll(List<Object> items, List<Object> changes, String selectedId) {
+  for (final change in changes) {
+    final selected = items.firstWhere((item) => item.id == selectedId);
+    print('$change $selected');
+  }
+}
+''');
+  }
+
   Future<void> test_allowsPreIndexedMap() async {
     await assertAllows(r'''
 class ItemRepository {

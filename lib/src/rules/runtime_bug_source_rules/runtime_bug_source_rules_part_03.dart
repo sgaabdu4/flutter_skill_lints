@@ -10,7 +10,17 @@ const _singleCallMapMethods = {'putIfAbsent', 'update'};
 void _reportRepeatedIdLookups(ScannerRuleReporter reporter, SourceScannerContext context) {
   final visitor = _RepeatedIdLookupVisitor();
   context.unit.accept(visitor);
-  for (final offset in visitor.offsets) {
+  _reportOffsets(reporter, context, visitor.offsets);
+}
+
+void _reportNestedIdLookups(ScannerRuleReporter reporter, SourceScannerContext context) {
+  final visitor = _NestedIdLookupVisitor();
+  context.unit.accept(visitor);
+  _reportOffsets(reporter, context, visitor.offsets);
+}
+
+void _reportOffsets(ScannerRuleReporter reporter, SourceScannerContext context, List<int> offsets) {
+  for (final offset in offsets) {
     final lineIndex = context.unit.lineInfo.getLocation(offset).lineNumber - 1;
     reporter.report(context, lineIndex, offset - context.source.lineOffsets[lineIndex]);
   }
@@ -33,6 +43,54 @@ final class _RepeatedIdLookupVisitor extends RecursiveAstVisitor<void> {
       offsets.add(node.forKeyword.offset);
     }
     super.visitForStatement(node);
+  }
+}
+
+/// Collects id lookups keyed by the variable of an enclosing for-in loop, e.g.
+/// `for (final change in changes) items.indexWhere((i) => i.id == change.itemId)`.
+final class _NestedIdLookupVisitor extends RecursiveAstVisitor<void> {
+  final offsets = <int>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (_isLinearIdLookup(node) && _isKeyedByEnclosingLoop(node)) {
+      offsets.add(node.operator!.offset);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+bool _isKeyedByEnclosingLoop(MethodInvocation lookup) {
+  final predicate = lookup.argumentList.arguments.first;
+  for (var node = lookup.parent; node != null; node = node.parent) {
+    final parts = switch (node) {
+      ForStatement(:final forLoopParts) || ForElement(:final forLoopParts) => forLoopParts,
+      _ => null,
+    };
+    final loopVariable = parts is ForEachPartsWithDeclaration
+        ? parts.loopVariable.declaredFragment?.element
+        : null;
+    if (loopVariable != null && _references(predicate, loopVariable)) return true;
+    if (node is ClassMember || node is CompilationUnitMember) return false;
+  }
+  return false;
+}
+
+bool _references(AstNode node, Element variable) {
+  final finder = _ReferenceFinder(variable);
+  node.accept(finder);
+  return finder.found;
+}
+
+final class _ReferenceFinder extends RecursiveAstVisitor<void> {
+  _ReferenceFinder(this.variable);
+
+  final Element variable;
+  bool found = false;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (node.element == variable) found = true;
   }
 }
 
@@ -147,52 +205,6 @@ bool _returnsWidget(DartType? type) =>
 
 bool _returnsWidgetElement(ExecutableElement? element) =>
     element != null && _widgetChecker.isAssignableFromType(element.returnType);
-
-void _reportNestedIdLookups(
-  ScannerRuleReporter reporter,
-  SourceScannerContext context,
-  ScannerMethodSpan method,
-) {
-  for (
-    var lineIndex = method.start;
-    lineIndex <= method.end && lineIndex < context.source.length;
-    lineIndex++
-  ) {
-    _reportNestedIdLookupAtLine(reporter, context, method, lineIndex);
-  }
-}
-
-void _reportNestedIdLookupAtLine(
-  ScannerRuleReporter reporter,
-  SourceScannerContext context,
-  ScannerMethodSpan method,
-  int lineIndex,
-) {
-  final loop = _forEachLoop.firstMatch(context.source.masked[lineIndex]);
-  final loopVar = loop?.group(1);
-  if (loopVar == null) return;
-  final bodyEnd = _findBlockEnd(context, lineIndex, method.end) ?? method.end;
-  final lookup = _nestedIdLookup(loopVar);
-  for (
-    var bodyLine = lineIndex + 1;
-    bodyLine <= bodyEnd && bodyLine < context.source.length;
-    bodyLine++
-  ) {
-    final match = _linearIdLookupCall.firstMatch(context.source.masked[bodyLine]);
-    if (match == null) continue;
-    if (_nestedLookupMatches(context, bodyLine, bodyEnd, lookup)) {
-      reporter.report(context, bodyLine, match.start);
-      return;
-    }
-  }
-}
-
-bool _nestedLookupMatches(
-  SourceScannerContext context,
-  int lineIndex,
-  int bodyEnd,
-  RegExp lookup,
-) => lookup.hasMatch(sourceLineWindow(context, lineIndex, bodyEnd, 6));
 
 void _reportStorageClearSentinels(ScannerRuleReporter reporter, SourceScannerContext context) {
   for (final classSpan in context.classes) {

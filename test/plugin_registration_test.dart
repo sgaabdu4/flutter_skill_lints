@@ -375,6 +375,7 @@ const _modelSkillErrorDiagnostics = [
   'datetime_now_requires_timezone_intent',
   'domain_entity_primitive_factory',
   'avoid_returning_widgets',
+  'prefer_class_destructuring',
 ];
 
 Iterable<String> _documentedLintCodes(String text) sync* {

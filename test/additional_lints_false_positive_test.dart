@@ -512,6 +512,45 @@ final class PreferClassDestructuringFalsePositiveTest extends _AdditionalLintRul
     super.setUp();
   }
 
+  // Row 19: the skill's DateTimeX.localDayStart (primitive-formatting.md).
+  Future<void> test_allowsPropertyReadsPassedToConstructor() async {
+    await assertNoDiagnostics(r'''
+class Day {
+  const Day(this.year, this.month, {required this.day});
+  final int year;
+  final int month;
+  final int day;
+}
+
+Day localDayStart(Day local) {
+  return Day(local.year, local.month, day: local.day);
+}
+''');
+  }
+
+  Future<void> test_reportsPropertyReadsIntoLocals() async {
+    const source = r'''
+class Span {
+  int get inHours => 1;
+  int get inMinutes => 2;
+  int get inSeconds => 3;
+}
+
+int classAccess(Span d) {
+  final a = d.inHours;
+  final b = d.inMinutes;
+  final c = d.inSeconds;
+  return a + b + c;
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('d.inHours'), 'd.inHours'.length)]);
+  }
+
+  void test_severity_error() {
+    expect(PreferClassDestructuring.code.severity, DiagnosticSeverity.ERROR);
+  }
+
   Future<void> test_allowsPropertyAssertionsInTests() async {
     final filePath = '$testPackageRootPath/test/workout_test.dart';
     newFile(filePath, r'''

@@ -448,6 +448,24 @@ void _reportContextNavigationExtensions(
     _reportNavigationExtensionLines(reporter, context, lineIndex + 1, end);
     lineIndex = end;
   }
+  for (final extension in context.unit.declarations.whereType<ExtensionDeclaration>()) {
+    final extendedType = extension.onClause?.extendedType.type;
+    if (extendedType == null || !_buildContextChecker.isExactlyType(extendedType)) continue;
+    for (final call in collectNodes<MethodInvocation>(extension)) {
+      if (_isStringRouteNavigation(call)) reporter.reportNode(context, call);
+    }
+  }
+}
+
+const _buildContextChecker = TypeChecker.fromName('BuildContext', packageName: 'flutter');
+
+/// Forward navigation that takes a raw location: go_router's `BuildContext`
+/// helpers or a `GoRouter` instance, as opposed to a typed `GoRouteData`.
+bool _isStringRouteNavigation(MethodInvocation node) {
+  if (!isResolvedForwardNavigation(node)) return false;
+  final targetType = node.realTarget?.staticType;
+  return isGoRouterHelperMember(node.methodName.element) ||
+      (targetType != null && goRouterChecker.isExactlyType(targetType));
 }
 
 int _navigationExtensionEnd(int start, int extensionEnd, int sourceLength) {

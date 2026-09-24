@@ -227,14 +227,6 @@ final class SourceScannerContext {
   bool isRedirectWatch(int lineIndex) =>
       source.masked[lineIndex].contains('ref.watch(') && near(lineIndex, 'redirect:', 12);
 
-  bool isRedirectLoadingBounce(int lineIndex, String code) {
-    if (!near(lineIndex, 'redirect:', 12)) return false;
-    if (!RegExp(r'''return\s+['"][^'"]*(?:splash|loading|home|/)''').hasMatch(code)) {
-      return false;
-    }
-    return near(lineIndex, 'isLoading', 8) || near(lineIndex, 'loading', 8);
-  }
-
   int? initStateReadColumn(int lineIndex) => _immediateInitStateReadColumn(this, lineIndex);
 
   bool hasStringNavigation(String code, String masked) {

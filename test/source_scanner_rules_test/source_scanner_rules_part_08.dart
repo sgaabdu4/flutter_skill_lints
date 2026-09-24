@@ -496,20 +496,231 @@ final router = GoRouter(
 @reflectiveTest
 final class RouterRedirectLoadingBounceTest extends _RouterRuleTest {
   @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'router_redirect_loading_bounce';
   @override
-  String get needle => "if (isLoading) return '/loading';";
-  @override
-  bool get lineStart => true;
+  String get needle => "return '/loading';";
   @override
   String get source => r'''
-final router = GoRouter(
-  redirect: () {
-    if (isLoading) return '/loading';
-    return null;
-  },
-);
+enum AuthStatus { loading, signedIn }
+
+String? redirectFor(AuthStatus status) {
+  if (status == AuthStatus.loading) return '/loading';
+  return null;
+}
 ''';
+
+  Future<void> test_reportsLoadingSwitchCaseReturningTypedLocation() async {
+    const source = '''
+import 'package:go_router/go_router.dart';
+
+enum SetupStatus { loading, unauthenticated, setupComplete }
+
+class SplashRoute extends GoRouteData {
+  const SplashRoute();
+}
+
+class LoginRoute extends GoRouteData {
+  const LoginRoute();
+}
+
+String? resolveBadRedirect({required String location, required SetupStatus setupStatus}) {
+  switch (setupStatus) {
+    case SetupStatus.loading:
+      return const SplashRoute().location;
+    case SetupStatus.unauthenticated:
+      return location == const LoginRoute().location ? null : const LoginRoute().location;
+    case SetupStatus.setupComplete:
+      return null;
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'return const SplashRoute().location;', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsFallThroughLoadingCase() async {
+    const source = '''
+import 'package:go_router/go_router.dart';
+
+enum SetupStatus { loading, unauthenticated, setupComplete }
+
+class SplashRoute extends GoRouteData {
+  const SplashRoute();
+}
+
+class LoginRoute extends GoRouteData {
+  const LoginRoute();
+}
+
+String? resolve(SetupStatus setupStatus) {
+  switch (setupStatus) {
+    case SetupStatus.loading:
+    case SetupStatus.unauthenticated:
+      return '/splash';
+    case SetupStatus.setupComplete:
+      return null;
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, "return '/splash';", ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsLoadingSwitchExpressionCase() async {
+    const source = '''
+import 'package:go_router/go_router.dart';
+
+enum SetupStatus { loading, unauthenticated, setupComplete }
+
+class SplashRoute extends GoRouteData {
+  const SplashRoute();
+}
+
+class LoginRoute extends GoRouteData {
+  const LoginRoute();
+}
+
+String? resolve(SetupStatus setupStatus) => switch (setupStatus) {
+  SetupStatus.loading => const SplashRoute().location,
+  SetupStatus.unauthenticated => const LoginRoute().location,
+  SetupStatus.setupComplete => null,
+};
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'const SplashRoute().location,', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsIsLoadingBranchInRedirectClosure() async {
+    const source = '''
+import 'package:go_router/go_router.dart';
+
+enum SetupStatus { loading, unauthenticated, setupComplete }
+
+class SplashRoute extends GoRouteData {
+  const SplashRoute();
+}
+
+class LoginRoute extends GoRouteData {
+  const LoginRoute();
+}
+
+final class AuthState {
+  bool get isLoading => false;
+}
+
+String? Function() redirectFor(AuthState auth) => () {
+  if (auth.isLoading) {
+    return '/splash';
+  }
+  return null;
+};
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, "return '/splash';", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillResolverThatStaysPutWhileLoading() async {
+    await assertAllows('''
+import 'package:go_router/go_router.dart';
+
+enum SetupStatus { loading, unauthenticated, setupComplete }
+
+class SplashRoute extends GoRouteData {
+  const SplashRoute();
+}
+
+class LoginRoute extends GoRouteData {
+  const LoginRoute();
+}
+
+String? resolveAppRedirect({required String location, required SetupStatus setupStatus}) {
+  switch (setupStatus) {
+    case SetupStatus.loading:
+      return null;
+    case SetupStatus.unauthenticated:
+      return location == const LoginRoute().location ? null : const LoginRoute().location;
+    case SetupStatus.setupComplete:
+      return location == const LoginRoute().location ? '/home' : null;
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsNegatedLoadingBranch() async {
+    await assertAllows('''
+import 'package:go_router/go_router.dart';
+
+enum SetupStatus { loading, unauthenticated, setupComplete }
+
+class SplashRoute extends GoRouteData {
+  const SplashRoute();
+}
+
+class LoginRoute extends GoRouteData {
+  const LoginRoute();
+}
+
+String? resolve(SetupStatus setupStatus, String location) {
+  if (setupStatus != SetupStatus.loading && location == '/splash') return '/home';
+  return null;
+}
+''');
+  }
+
+  Future<void> test_allowsNonEnumLoadingConstant() async {
+    await assertAllows('''
+import 'package:go_router/go_router.dart';
+
+enum SetupStatus { loading, unauthenticated, setupComplete }
+
+class SplashRoute extends GoRouteData {
+  const SplashRoute();
+}
+
+class LoginRoute extends GoRouteData {
+  const LoginRoute();
+}
+
+abstract final class Steps {
+  static const loading = 0;
+}
+
+String? resolve(int step) {
+  if (step == Steps.loading) return '/intro';
+  return null;
+}
+''');
+  }
+
+  Future<void> test_allowsLoadingComparisonInsideOtherCase() async {
+    await assertAllows(r'''
+enum SetupStatus { loading, unauthenticated }
+
+String? resolve(SetupStatus setupStatus, SetupStatus previous) {
+  switch (setupStatus) {
+    case SetupStatus.unauthenticated:
+      if (previous != SetupStatus.loading) return '/login';
+      return null;
+    case SetupStatus.loading:
+      return null;
+  }
+}
+''');
+  }
 }
 
 @reflectiveTest

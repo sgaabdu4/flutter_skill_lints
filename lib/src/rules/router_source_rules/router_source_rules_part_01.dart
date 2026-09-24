@@ -115,13 +115,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags redirects to loading routes while auth/router state is loading so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        if (context.isRedirectLoadingBounce(i, context.source.code[i])) {
-          reporter.report(context, i, 0);
-        }
-      }
-    },
+    scan: _reportRedirectLoadingBounces,
   ),
 
   /// Do not hold splash while initial sync runs.
@@ -436,6 +430,108 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     },
   ),
 ];
+
+/// Reports a route location returned from a branch taken while an enum
+/// status is `loading` (or an `isLoading` flag is true).
+void _reportRedirectLoadingBounces(ScannerRuleReporter reporter, SourceScannerContext context) {
+  for (final node in collectNodes<AstNode>(context.unit)) {
+    switch (node) {
+      case IfStatement(:final expression, :final thenStatement, caseClause: null)
+          when _isLoadingCondition(expression):
+        _reportLocationReturns(reporter, context, thenStatement);
+      case SwitchStatement(:final members):
+        for (final (index, member) in members.indexed) {
+          final matchesLoading = switch (member) {
+            SwitchPatternCase(:final guardedPattern) => _matchesLoadingConstant(
+              guardedPattern.pattern,
+            ),
+            SwitchCase(:final expression) => _isLoadingEnumReference(expression),
+            _ => false,
+          };
+          if (!matchesLoading) continue;
+          final body = members
+              .skip(index)
+              .map((m) => m.statements)
+              .where((s) => s.isNotEmpty)
+              .firstOrNull;
+          for (final statement in body ?? const <Statement>[]) {
+            _reportLocationReturns(reporter, context, statement);
+          }
+        }
+      case SwitchExpressionCase(:final guardedPattern, :final expression)
+          when _matchesLoadingConstant(guardedPattern.pattern) && _isRouteLocation(expression):
+        reporter.reportNode(context, expression);
+      default:
+    }
+  }
+}
+
+void _reportLocationReturns(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  Statement branch,
+) {
+  final body = branch.thisOrAncestorOfType<FunctionBody>();
+  for (final statement in collectNodes<ReturnStatement>(branch)) {
+    if (statement.thisOrAncestorOfType<FunctionBody>() == body &&
+        _isRouteLocation(statement.expression)) {
+      reporter.reportNode(context, statement);
+    }
+  }
+}
+
+bool _isLoadingCondition(Expression condition) => switch (condition.unParenthesized) {
+  BinaryExpression(:final operator, :final leftOperand, :final rightOperand)
+      when operator.lexeme == '&&' || operator.lexeme == '||' =>
+    _isLoadingCondition(leftOperand) || _isLoadingCondition(rightOperand),
+  BinaryExpression(:final operator, :final leftOperand, :final rightOperand)
+      when operator.lexeme == '==' =>
+    _isLoadingEnumReference(leftOperand) || _isLoadingEnumReference(rightOperand),
+  final Expression flag => _isLoadingFlag(flag),
+};
+
+bool _matchesLoadingConstant(DartPattern pattern) =>
+    collectNodes<ConstantPattern>(pattern)
+        .any((constant) => _isLoadingEnumReference(constant.expression));
+
+bool _isLoadingEnumReference(Expression expression) => switch (expression.unParenthesized) {
+  PrefixedIdentifier(:final identifier) => _isLoadingEnumConstant(identifier),
+  PropertyAccess(:final propertyName) => _isLoadingEnumConstant(propertyName),
+  DotShorthandPropertyAccess(:final propertyName) => _isLoadingEnumConstant(propertyName),
+  _ => false,
+};
+
+bool _isLoadingEnumConstant(SimpleIdentifier identifier) {
+  if (identifier.name != 'loading') return false;
+  final element = identifier.element;
+  final variable = element is PropertyAccessorElement ? element.variable : element;
+  return variable is FieldElement && variable.isEnumConstant;
+}
+
+bool _isLoadingFlag(Expression expression) {
+  final name = switch (expression) {
+    SimpleIdentifier(:final name) => name,
+    PrefixedIdentifier(:final identifier) => identifier.name,
+    PropertyAccess(:final propertyName) => propertyName.name,
+    _ => null,
+  };
+  return name == 'isLoading' && (expression.staticType?.isDartCoreBool ?? false);
+}
+
+bool _isRouteLocation(Expression? expression) {
+  final value = expression?.unParenthesized;
+  if (value is SimpleStringLiteral) return value.value.startsWith('/');
+  if (value is ConditionalExpression) {
+    return _isRouteLocation(value.thenExpression) || _isRouteLocation(value.elseExpression);
+  }
+  final (target, name) = switch (value) {
+    PropertyAccess(:final realTarget, :final propertyName) => (realTarget, propertyName.name),
+    PrefixedIdentifier(:final prefix, :final identifier) => (prefix, identifier.name),
+    _ => (null, null),
+  };
+  final type = target?.staticType;
+  return name == 'location' && type != null && goRouteDataChecker.isAssignableFromType(type);
+}
 
 void _reportContextNavigationExtensions(
   ScannerRuleReporter reporter,

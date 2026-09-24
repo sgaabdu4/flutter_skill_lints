@@ -308,6 +308,46 @@ class EntrySheet {
 ''');
   }
 
+  Future<void> test_allowsDocEarlyReturnGuard() async {
+    await assertAllows(r'''
+class EntrySheet {
+  void submit(Object ref, int amount, int count) {
+    if (amount <= 0 && count <= 0) return; // no empty rows
+    ref.read(provider.notifier).saveEntry(amount: amount, count: count);
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsValueObjectSave() async {
+    await assertAllows(r'''
+class Distance {
+  const Distance.fromMeters(this.meters);
+  final double meters;
+}
+
+class EntrySheet {
+  void submit(Object ref, double parsed) {
+    final distance = Distance.fromMeters(parsed);
+    ref.read(provider.notifier).save(distance: distance);
+  }
+}
+''');
+  }
+
+  Future<void> test_reportsZeroCheckThatDoesNotExit() async {
+    final analyzedSource = _analyzedSource(r'''
+class EntrySheet {
+  void submit(Object ref, int amount, int count, List<String> log) {
+    if (amount <= 0 && count <= 0) log.add('empty');
+    ref.read(provider.notifier).saveEntry(amount: amount, count: count);
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.saveEntry(', ruleName)]);
+  }
+
   Future<void> test_allowsNonSaveCall() async {
     await assertAllows(r'''
 class EntrySheet {

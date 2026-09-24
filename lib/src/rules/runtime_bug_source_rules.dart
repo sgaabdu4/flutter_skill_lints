@@ -228,8 +228,6 @@ final _saveMethodCall = RegExp(r'\.\s*save(?:[A-Z]\w*)?\s*\(');
 
 final _notifierAccess = RegExp(r'\.\s*notifier\s*\)');
 
-final _positiveGuard = RegExp(r'\bif\s*\([^)]*(?:>\s*0\b|>=\s*1\b|!=\s*0\b)');
-
 final _unitPrimitiveLocal = RegExp(
   r'\b(?:double|int|num)\s+([A-Za-z_]\w*(?:Meters|Seconds|Minutes|Hours|Kilometers|Miles|Cents|Percent|Kilograms|Grams|Pounds|Bytes|Pixels))\b\s*=',
 );
@@ -636,13 +634,6 @@ int _countSingleValueGetters(SourceScannerContext context, ScannerClassSpan clas
   return count;
 }
 
-bool _hasPositiveGuard(SourceScannerContext context, int methodStart, int saveLine) {
-  for (var i = methodStart; i < saveLine; i++) {
-    if (_positiveGuard.hasMatch(context.source.masked[i])) return true;
-  }
-  return false;
-}
-
 bool _methodHasNotifierAccess(SourceScannerContext context, ScannerMethodSpan method) {
   for (var i = method.start; i <= method.end && i < context.source.length; i++) {
     if (_notifierAccess.hasMatch(context.source.masked[i])) return true;
@@ -664,14 +655,6 @@ bool _isPureCollectionProjection(String window) {
   return _directCollectionProjection.hasMatch(window) ||
       _expressionCollectionProjection.hasMatch(window) ||
       _localCollectionProjection.hasMatch(window);
-}
-
-bool _lineHasNumericNamedArg(SourceScannerContext context, int saveLine, int methodEnd) {
-  final end = saveLine + 8 > methodEnd ? methodEnd : saveLine + 8;
-  for (var i = saveLine; i <= end && i < context.source.length; i++) {
-    if (_numericNamedArg.hasMatch(context.source.masked[i])) return true;
-  }
-  return false;
 }
 
 final _textInputConstructor = RegExp(

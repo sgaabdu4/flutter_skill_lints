@@ -287,8 +287,10 @@ Runtime-bug surface (0.7.0) — `runtime_bug_source_rules`:
   `loadAll` / `getAll` / `readAll` / `loadSettings` / `getSnapshot` forces
   N storage hits per screen.
 - `notifier_zero_value_save_no_guard` — `ref.read(...notifier).save*(amount: ..,
-  count: ..)` (and similar numeric named args) without an `> 0` / `isNotEmpty`
-  guard persists empty rows the user did not intend.
+  count: ..)` (and similar named args whose resolved type is `int`, `double` or
+  `num`) without an enclosing `> 0` / `isNotEmpty` guard or an earlier
+  `if (amount <= 0 && count <= 0) return;` persists empty rows the user did not
+  intend. Value Object arguments such as `Distance` need no guard.
 - `notifier_param_requires_value_object` — unit-bearing primitive locals
   (`*Meters` / `*Seconds` / `*Cents` / `*Bytes` / `*Pixels` etc.) passed into
   a notifier `save*` call should be wrapped at the widget→notifier boundary

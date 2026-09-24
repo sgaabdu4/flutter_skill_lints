@@ -79,6 +79,7 @@ void main() {
     defineReflectiveTests(ArchDatasourceTryCatchTest);
     defineReflectiveTests(ArchWidgetPathTest);
     defineReflectiveTests(AtomicProviderAccessTest);
+    defineReflectiveTests(AtomicPageConsumerWidgetTest);
     defineReflectiveTests(TypedIdRawIdTest);
     defineReflectiveTests(RecordsMapReturnTest);
     defineReflectiveTests(ObjectMapCastTest);

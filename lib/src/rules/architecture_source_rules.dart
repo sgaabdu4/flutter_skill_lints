@@ -1,6 +1,8 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/riverpod_consumer_checkers.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> architectureSourceRules = [
@@ -193,6 +195,37 @@ final List<ScannerRule> architectureSourceRules = [
     },
   ),
 
+  /// Pages must be Riverpod consumer widgets.
+  ///
+  /// Why: atomic-design pages connect state to layout, so every public screen
+  /// widget extends ConsumerWidget or ConsumerStatefulWidget.
+  scannerRule(
+    code: const LintCode(
+      'atomic_page_consumer_widget',
+      'Screens must extend ConsumerWidget or ConsumerStatefulWidget.',
+      correctionMessage: 'Extend ConsumerWidget or ConsumerStatefulWidget and connect state here.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags public screen widgets that are not Riverpod consumer widgets.',
+    scan: (reporter, context) {
+      if (context.isTestFile || !context.path.contains('/presentation/screens/')) return;
+
+      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+        final element = declaration.declaredFragment?.element;
+        if (element == null ||
+            element.isPrivate ||
+            element.isAbstract ||
+            !_flutterWidgetChecker.isSuperOf(element) ||
+            _consumerPageChecker.isSuperOf(element)) {
+          continue;
+        }
+        final name = declaration.namePart.typeName;
+        final location = context.unit.lineInfo.getLocation(name.offset);
+        reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+      }
+    },
+  ),
+
   /// Use typed IDs for entities with multiple String IDs.
   ///
   /// Why: Flags domain entities with multiple raw String ID fields. Use extension types or
@@ -300,3 +333,9 @@ bool _isAllowedDomainImport(String line) {
   return importedPath == 'freezed_annotation/freezed_annotation.dart' ||
       importedPath.contains('/domain/');
 }
+
+const _flutterWidgetChecker = TypeChecker.fromName('Widget', packageName: 'flutter');
+const _consumerPageChecker = TypeChecker.any([
+  consumerWidgetChecker,
+  consumerStatefulWidgetChecker,
+]);

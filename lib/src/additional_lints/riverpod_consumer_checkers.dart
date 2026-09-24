@@ -7,6 +7,11 @@ const consumerWidgetChecker = TypeChecker.any([
   TypeChecker.fromName('HookConsumerWidget', packageName: 'hooks_riverpod'),
 ]);
 
+const consumerStatefulWidgetChecker = TypeChecker.any([
+  TypeChecker.fromName('ConsumerStatefulWidget', packageName: 'flutter_riverpod'),
+  TypeChecker.fromName('StatefulHookConsumerWidget', packageName: 'hooks_riverpod'),
+]);
+
 const consumerStateChecker = TypeChecker.any([
   TypeChecker.fromName('ConsumerState', packageName: 'flutter_riverpod'),
   TypeChecker.fromName('HookConsumerState', packageName: 'hooks_riverpod'),

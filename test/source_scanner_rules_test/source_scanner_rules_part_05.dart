@@ -72,6 +72,84 @@ void build(ref, provider) {
 }
 
 @reflectiveTest
+final class AtomicPageConsumerWidgetTest extends _ArchitectureRuleTest {
+  @override
+  String get ruleName => 'atomic_page_consumer_widget';
+  @override
+  String get needle => 'OrdersScreen extends StatelessWidget';
+  @override
+  String get path => '$testPackageLibPath/features/orders/presentation/screens/orders_screen.dart';
+  @override
+  String get source => r'''
+import 'package:flutter/widgets.dart';
+
+class OrdersScreen extends StatelessWidget {}
+''';
+
+  @override
+  void setUp() {
+    newPackage('flutter_riverpod').addFile('lib/flutter_riverpod.dart', r'''
+import 'package:flutter/widgets.dart';
+
+abstract class ConsumerStatefulWidget extends StatefulWidget {}
+abstract class ConsumerWidget extends ConsumerStatefulWidget {}
+abstract class ConsumerState<T extends ConsumerStatefulWidget> extends State<T> {}
+''');
+    super.setUp();
+  }
+
+  @override
+  void _addFlutterPackage() {
+    newPackage('flutter').addFile('lib/widgets.dart', r'''
+abstract class Widget {}
+abstract class StatelessWidget extends Widget {}
+abstract class StatefulWidget extends Widget {}
+abstract class State<T extends StatefulWidget> {}
+''');
+  }
+
+  void test_reportsAsError() {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
+  Future<void> test_reportsStatefulScreen() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/widgets.dart';
+
+class OrdersScreen extends StatefulWidget {}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, 'OrdersScreen extends StatefulWidget', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsConsumerScreens() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class OrdersScreen extends ConsumerWidget {}
+
+class OrderEditorScreen extends ConsumerStatefulWidget {}
+
+class _OrderEditorScreenState extends ConsumerState<OrderEditorScreen> {}
+
+class _OrdersBody extends StatelessWidget {}
+''', path: path);
+  }
+
+  Future<void> test_allowsStatelessWidgetsOutsideScreens() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+
+class OrderTile extends StatelessWidget {}
+''', path: '$testPackageLibPath/features/orders/presentation/widgets/order_tile.dart');
+  }
+}
+
+@reflectiveTest
 final class TypedIdRawIdTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'typed_id_raw_id';

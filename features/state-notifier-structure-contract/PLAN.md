@@ -45,7 +45,16 @@ N/A — analyzer plugin rules; no app surface.
 ## Verification
 
 Result: Passed
-Evidence: `dart format`, `dart analyze` and the full `dart test` suite passed. Focused red/green tests and negative controls exist for every changed rule. The consumer probe (`probe-state-notifier-structure-contract`, pointed at this worktree, after `build_runner`) reports ERROR on the literal skill `class ProductEditor extends _$ProductEditor` (`use_notifier_suffix`), on explicit and inferred stored `Ref` fields, on the autoDispose feature notifier, on the ignored `ref.refresh`, and on the generated alias, `WidgetRef` field, legacy and manual providers. The keepAlive notifier that uses the inherited `ref` and the non-notifier `Ref` holder stay clean.
+Evidence: `dart format` and `dart analyze` passed, and all 2,183 tests in the full `dart test` suite passed. Every changed rule has focused red/green tests and negative controls. The full native Draft gate (`hard-eng.py check --base origin/main --plan-stage Draft`) passed on this branch after two repairs: an oversized test part was split, and complexity and duplication were reduced. The consumer probe (`probe-state-notifier-structure-contract`, pointed at this worktree, after `build_runner`) reports ERROR on:
+
+- the literal skill `class ProductEditor extends _$ProductEditor` (`use_notifier_suffix`)
+- explicit and inferred stored `Ref` fields
+- the autoDispose feature notifier
+- the ignored `ref.refresh`
+- an async-init write with no guard after the await
+- the generated alias, the `WidgetRef` field, and the legacy and manual providers
+
+These stay clean: the guarded skill-form async init, the keepAlive notifier that uses the inherited `ref`, and the `Ref` holder that is not a notifier.
 E2E: Passed — a real Flutter consumer app analyzed the generated code through the plugin.
 Delivery target: Merge
 Delivery: Pending — coordinator review and merge.

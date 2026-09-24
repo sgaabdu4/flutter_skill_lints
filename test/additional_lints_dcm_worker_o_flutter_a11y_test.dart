@@ -73,6 +73,20 @@ class Image extends Widget {
     String? semanticLabel,
     bool excludeFromSemantics = false,
   });
+
+  const Image.memory(
+    List<int> bytes, {
+    String? semanticLabel,
+    bool excludeFromSemantics = false,
+  });
+
+  const Image.network(
+    String url, {
+    String? semanticLabel,
+    bool excludeFromSemantics = false,
+  });
+
+  static Image cached() => const Image(semanticLabel: 'Cached image');
 }
 
 class Text extends Widget {
@@ -184,6 +198,91 @@ Widget build() => const Image.asset('avatar.png');
 ''';
 
     await assertDiagnostics(source, [lint(source.indexOf('Image.asset'), 'Image.asset'.length)]);
+  }
+
+  Future<void> test_memoryAndNetworkImagesMissingSemanticLabel_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+Widget memory() => const Image.memory([1]);
+Widget network() => const Image.network('https://example.invalid/image.png');
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('Image.memory'), 'Image.memory'.length),
+      lint(source.indexOf('Image.network'), 'Image.network'.length),
+    ]);
+  }
+
+  Future<void> test_dotShorthandImageConstructorMissingSemanticLabel_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+Image build() => .asset('avatar.png');
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('.asset'), 20)]);
+  }
+
+  Future<void> test_methodsReturningImage_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class Tester {
+  T widget<T extends Widget>() => throw 0;
+}
+
+class ImageHolder {
+  ImageHolder(this.image);
+  final Image image;
+  Image getImage() => image;
+}
+
+Image inspect(Tester tester) => tester.widget<Image>();
+Image retrieve(ImageHolder holder) => holder.getImage();
+''');
+  }
+
+  Future<void> test_dotShorthandStaticMethodReturningImage_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+Image build() => .cached();
+''');
+  }
+
+  Future<void> test_constructorTearOff_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+final imageFactory = Image.asset;
+''');
+  }
+
+  Future<void> test_unrelatedImageClass_noLint() async {
+    await assertNoDiagnostics(r'''
+class Image {
+  const Image();
+  const Image.named();
+}
+
+Image regular() => const Image();
+Image shorthand() => .named();
+''');
+  }
+
+  Future<void> test_nullLabelAndFalseSemanticsExclusion_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+Widget unlabeled() => const Image(semanticLabel: null);
+Widget included() => const Image.asset('avatar.png', excludeFromSemantics: false);
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('Image(semanticLabel'), 'Image'.length),
+      lint(source.indexOf('Image.asset'), 'Image.asset'.length),
+    ]);
   }
 
   Future<void> test_imageWithSemanticLabel_noLint() async {

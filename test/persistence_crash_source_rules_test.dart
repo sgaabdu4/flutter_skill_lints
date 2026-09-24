@@ -68,7 +68,6 @@ class FirebaseCrashlytics {
   static final instance = FirebaseCrashlytics();
   Future<void> recordError(Object error, StackTrace stack) async {}
 }
-
 Future<void> submit() async {
   await FirebaseCrashlytics.instance.recordError(Exception('x'), StackTrace.current);
 }
@@ -84,7 +83,6 @@ class FirebaseCrashlytics {
   static final instance = FirebaseCrashlytics();
   Future<void> recordError(Object error, StackTrace stack) async {}
 }
-
 abstract final class Crash {
   static Future<void> init() async {
     await FirebaseCrashlytics.instance.recordError(Exception('x'), StackTrace.current);
@@ -103,7 +101,6 @@ final class CrashInitBeforeRunAppTest extends _PersistenceCrashRuleTest {
     await assertRuleDiagnostic(
       r'''
 void runApp(Object app) {}
-
 Future<void> main() async {
   runApp(Object());
 }
@@ -118,9 +115,7 @@ Future<void> main() async {
 abstract final class Crash {
   static Future<void> init() async {}
 }
-
 void runApp(Object app) {}
-
 Future<void> main() async {
   await Crash.init();
   runApp(Object());
@@ -138,6 +133,197 @@ Future<void> main() async {
   await Crash.init(appRunner: () => runApp(Object()));
 }
 ''', path: '$testPackageLibPath/main.dart');
+  }
+
+  Future<void> test_awaitedTopLevelAppRunnerAfterMain_noDiagnostic() async {
+    newFile('$testPackageLibPath/crash.dart', r'''
+abstract final class Crash {
+  static Future<void> init({required void Function() appRunner}) async { appRunner(); }
+}
+''');
+    await assertRuleNoDiagnostics(r'''
+import 'crash.dart';
+void runApp(Object app) {}
+Future<void> main() async { await runAppRoot(); }
+Future<void> runAppRoot() async { await Crash.init(appRunner: () { runApp(Object()); }); }
+''', path: '$testPackageLibPath/main.dart');
+  }
+
+  Future<void> test_forwardedTopLevelAppRunnerBeforeMain_noDiagnostic() async {
+    await assertRuleNoDiagnostics(r'''
+abstract final class Crash {
+  static Future<void> init({required void Function() appRunner}) async { appRunner(); }
+}
+void runApp(Object app) {}
+void ensureInitialized() {}
+Future<void> runAppRoot() async {
+  ensureInitialized();
+  await Crash.init(appRunner: () { runApp(Object()); });
+}
+Future<void> forwardStartup() async { await runAppRoot(); }
+Future<void> main() => forwardStartup();
+''', path: '$testPackageLibPath/main.dart');
+  }
+
+  Future<void> test_unawaitedTopLevelAppRunner_stillReports() async {
+    await assertRuleDiagnostic(
+      r'''
+abstract final class Crash {
+  static Future<void> init({required void Function() appRunner}) async { appRunner(); }
+}
+void runApp(Object app) {}
+Future<void> main() async { runAppRoot(); }
+Future<void> runAppRoot() async {
+  await Crash.init(appRunner: () { runApp(Object()); });
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_conditionalTopLevelAppRunner_stillReports() async {
+    await assertRuleDiagnostic(
+      r'''
+abstract final class Crash {
+  static Future<void> init({required void Function() appRunner}) async { appRunner(); }
+}
+void runApp(Object app) {}
+Future<void> main() async { await runAppRoot(false); }
+Future<void> runAppRoot(bool enabled) async {
+  if (!enabled) return;
+  await Crash.init(appRunner: () { runApp(Object()); });
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_unreachableTopLevelAppRunner_stillReports() async {
+    await assertRuleDiagnostic(
+      r'''
+abstract final class Crash {
+  static Future<void> init({required void Function() appRunner}) async { appRunner(); }
+}
+void runApp(Object app) {}
+Future<void> main() async { await unrelated(); }
+Future<void> unrelated() async {}
+Future<void> runAppRoot() async {
+  await Crash.init(appRunner: () { runApp(Object()); });
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_conditionalCallToTopLevelAppRunner_stillReports() async {
+    await assertRuleDiagnostic(
+      r'''
+abstract final class Crash {
+  static Future<void> init({required void Function() appRunner}) async { appRunner(); }
+}
+void runApp(Object app) {}
+Future<void> main(List<String> arguments) async {
+  if (arguments.isNotEmpty) await runAppRoot();
+}
+Future<void> runAppRoot() async {
+  await Crash.init(appRunner: () { runApp(Object()); });
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_callCycleDoesNotReachTopLevelAppRunner_stillReports() async {
+    await assertRuleDiagnostic(
+      r'''
+abstract final class Crash {
+  static Future<void> init({required void Function() appRunner}) async { appRunner(); }
+}
+void runApp(Object app) {}
+Future<void> main() async { await first(); }
+Future<void> first() async { await second(); }
+Future<void> second() async { await first(); }
+Future<void> runAppRoot() async {
+  await Crash.init(appRunner: () { runApp(Object()); });
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_topLevelAppRunnerAfterDirectRunApp_stillReports() async {
+    await assertRuleDiagnostic(
+      r'''
+abstract final class Crash {
+  static Future<void> init({required void Function() appRunner}) async { appRunner(); }
+}
+void runApp(Object app) {}
+Future<void> runAppRoot() async {
+  await Crash.init(appRunner: () { runApp(Object()); });
+}
+Future<void> main() async {
+  runApp(Object());
+  await runAppRoot();
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_runAppBeforeCrashInitInHelper_stillReports() async {
+    await assertRuleDiagnostic(
+      r'''
+abstract final class Crash { static Future<void> init() async {} }
+void runApp(Object app) {}
+Future<void> main() async { await runAppRoot(); }
+Future<void> runAppRoot() async {
+  runApp(Object());
+  await Crash.init();
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_returnBeforeCrashAppRunner_stillReports() async {
+    await assertRuleDiagnostic(
+      r'''
+abstract final class Crash { static Future<void> init({required void Function() appRunner}) async { appRunner(); } }
+void runApp(Object app) {}
+Future<void> main() async { await runAppRoot(); }
+Future<void> runAppRoot() async {
+  return;
+  // ignore: dead_code
+  await Crash.init(appRunner: () { runApp(Object()); });
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_throwBeforeAwaitedRunner_stillReports() async {
+    await assertRuleDiagnostic(
+      r'''
+abstract final class Crash { static Future<void> init({required void Function() appRunner}) async { appRunner(); } }
+void runApp(Object app) {}
+Future<void> main() async {
+  throw 0;
+  // ignore: dead_code
+  await runAppRoot();
+}
+Future<void> runAppRoot() async { await Crash.init(appRunner: () { runApp(Object()); }); }
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
   }
 
   Future<void> test_awaitedResolvedInitializer_noDiagnostic() async {
@@ -312,11 +498,9 @@ final class FireAndForgetMissingCatchTest extends _PersistenceCrashRuleTest {
   Future<void> test_reportsInlineAsyncMissingCatch() async {
     await assertRuleDiagnostic(r'''
 import 'dart:async';
-
 class Client {
   Future<void> sync() async {}
 }
-
 void mirror(Client client) {
   unawaited(() async {
     await client.sync();
@@ -328,7 +512,6 @@ void mirror(Client client) {
   Future<void> test_inlineAsyncWithCatch_noDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
 import 'dart:async';
-
 class Client {
   Future<void> sync() async {}
 }

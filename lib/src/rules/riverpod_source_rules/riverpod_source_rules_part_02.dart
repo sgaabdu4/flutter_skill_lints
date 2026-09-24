@@ -23,10 +23,19 @@ final class _ScalarWatchVisitor extends RecursiveAstVisitor<void> {
 }
 
 bool _consumesWholeWatch(MethodInvocation watch) {
-  final parent = watch.parent;
+  AstNode value = watch;
+  while (_wholeValueWrapper(value.parent, value)) {
+    value = value.parent!;
+  }
+  final parent = value.parent;
   if (parent is VariableDeclaration && _isOnlyUsedWhole(parent)) return true;
   return _isWholeValueUse(watch);
 }
+
+bool _wholeValueWrapper(AstNode? parent, AstNode value) =>
+    parent is ParenthesizedExpression && parent.expression == value ||
+    parent is ConditionalExpression &&
+        (parent.thenExpression == value || parent.elseExpression == value);
 
 bool _isOnlyUsedWhole(VariableDeclaration declaration) {
   final element = declaration.declaredFragment?.element;

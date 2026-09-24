@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.12.9] - 2026-09-24
+
+- Fix a 0.12.8 regression for awaited top-level startup helpers that initialize
+  Crash before running the app. Resolve startup calls and callback ownership;
+  retain warnings for unawaited, conditional, unreachable, and late initialization.
+- Allow named local callbacks used for identity-guarded slot cleanup without
+  conflicting with Dart declaration syntax. Different slots, shadowed callbacks,
+  and no-op cleanup do not qualify.
+- Distinguish existing Image lookups from Flutter Image construction; unlabeled
+  constructors still report accessibility diagnostics.
+- Accept the documented DateTimeX helper at its canonical path without exempting
+  unrelated types or mismatched paths from filename checks.
+- Recognize optional nullable diagnostic payloads in resolved Exception/Error
+  Freezed unions while retaining primitive identity and conversion diagnostics.
+
+- Recognize whole-value provider results bound through conditional expressions;
+  partial state reads still require a selector.
+
 ## [0.12.8] - 2026-09-24
 
 - Resolve test APIs, repository interfaces, notifier dependencies, and Freezed

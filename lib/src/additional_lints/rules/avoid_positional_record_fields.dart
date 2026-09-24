@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
@@ -33,10 +34,22 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitRecordLiteral(RecordLiteral node) {
+    if (_isSdkFutureRecordWait(node)) return;
     for (final field in node.fields) {
       if (field is RecordLiteralNamedField) continue;
       rule.reportAtNode(field);
     }
+  }
+
+  bool _isSdkFutureRecordWait(RecordLiteral node) {
+    final parent = node.parent;
+    if (parent is! PropertyAccess || parent.target != node) return false;
+    final accessor = parent.propertyName.element;
+    if (accessor is! PropertyAccessorElement || accessor.name != 'wait') return false;
+    final owner = accessor.enclosingElement;
+    return owner is ExtensionElement &&
+        owner.library.uri.toString() == 'dart:async' &&
+        RegExp(r'^FutureRecord[2-9]$').hasMatch(owner.name ?? '');
   }
 
   @override

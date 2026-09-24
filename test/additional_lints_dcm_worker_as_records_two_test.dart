@@ -111,6 +111,41 @@ void f() {
 }
 ''');
   }
+
+  Future<void> test_sdkFutureRecordWait_noLint() async {
+    final asyncPath = '$dartSdkPath/lib/async/async.dart';
+    newFile(asyncPath, '''
+${getFile(asyncPath).readAsStringSync()}
+extension FutureRecord2<T1, T2> on (Future<T1>, Future<T2>) {
+  Future<(T1, T2)> get wait => throw UnimplementedError();
+}
+''');
+    await assertNoDiagnostics(r'''
+import 'dart:async';
+Future<void> load() async {
+  final (count, label) = await (Future.value(1), Future.value('ready')).wait;
+  print('$count $label');
+}
+''');
+  }
+
+  Future<void> test_unrelatedWaitGetter_stillReports() async {
+    const source = r'''
+extension FakeWait on (int, String) {
+  int get wait => $1;
+}
+void load() {
+  final count = (1, 'ready').wait;
+  print(count);
+}
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf('int, String'), 'int'.length),
+      lint(source.indexOf('String)'), 'String'.length),
+      lint(source.indexOf('1, '), 1),
+      lint(source.indexOf("'ready').wait"), "'ready'".length),
+    ]);
+  }
 }
 
 @reflectiveTest

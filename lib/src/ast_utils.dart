@@ -4,6 +4,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/mounted_guard_utils.dart';
 
 /// Recognizes a value annotated by the actual Freezed annotation library.
 bool isFreezedInterfaceType(InterfaceType type) =>
@@ -240,17 +241,41 @@ bool isTargetMethodInvocation(MethodInvocation node, String targetName, String m
       node.methodName.name == methodName;
 }
 
-bool statementIsMountedReturnGuard(Statement statement, String targetName) {
+bool statementIsMountedReturnGuard(
+  Statement statement,
+  String targetName, {
+  bool Function(Expression)? additionalCondition,
+}) {
   if (statement is! IfStatement) return false;
-  final condition = statement.expression;
-  if (condition is! PrefixExpression || condition.operator.lexeme != '!') {
-    return false;
-  }
-  if (!isTargetProperty(condition.operand, targetName, 'mounted')) {
-    return false;
-  }
-  return containsReturn(statement.thenStatement);
+  return _returnsWhenUnmounted(statement.expression, targetName, additionalCondition) &&
+      _alwaysExits(statement.thenStatement);
 }
+
+bool _returnsWhenUnmounted(
+  Expression expression,
+  String targetName,
+  bool Function(Expression)? additionalCondition,
+) {
+  final condition = expression.unParenthesized;
+  if (additionalCondition?.call(condition) ?? false) return true;
+  if (condition is PrefixExpression && condition.operator.lexeme == '!') {
+    return isTargetProperty(condition.operand.unParenthesized, targetName, 'mounted');
+  }
+  if (condition is BinaryExpression && condition.operator.lexeme == '||') {
+    return _returnsWhenUnmounted(condition.rightOperand, targetName, additionalCondition) ||
+        _returnsWhenUnmounted(condition.leftOperand, targetName, additionalCondition) &&
+            isPureMountedGuardSuffix(condition.rightOperand);
+  }
+  return false;
+}
+
+bool _alwaysExits(Statement statement) => switch (statement) {
+  ReturnStatement() => true,
+  Block(:final statements) when statements.isNotEmpty => _alwaysExits(statements.last),
+  IfStatement(:final thenStatement, :final elseStatement?) =>
+    _alwaysExits(thenStatement) && _alwaysExits(elseStatement),
+  _ => false,
+};
 
 bool containsReturn(AstNode node) {
   final visitor = _ReturnFinder();
@@ -264,8 +289,8 @@ bool containsAwait(AstNode node) {
   return visitor.found;
 }
 
-AstNode? firstTargetAccess(AstNode node, Set<String> targetNames) {
-  final visitor = _TargetAccessFinder(targetNames);
+AstNode? firstTargetAccess(AstNode node, Set<String> targetNames, {bool includeBlocks = false}) {
+  final visitor = _TargetAccessFinder(targetNames, includeBlocks: includeBlocks);
   node.accept(visitor);
   return visitor.node;
 }
@@ -441,18 +466,29 @@ final class AsyncStatementScanner {
     required this.guardTarget,
     required this.accessTargets,
     required this.onViolation,
+    this.additionalMountedCondition,
   });
 
   final String guardTarget;
   final Set<String> accessTargets;
   final void Function(AstNode node) onViolation;
+  final bool Function(Expression)? additionalMountedCondition;
 
   void scanBlock(Block block) {
     var afterAwait = false;
 
     for (final statement in block.statements) {
-      if (afterAwait && statementIsMountedReturnGuard(statement, guardTarget)) {
-        afterAwait = false;
+      if (afterAwait &&
+          statementIsMountedReturnGuard(
+            statement,
+            guardTarget,
+            additionalCondition: additionalMountedCondition,
+          )) {
+        final guard = statement as IfStatement;
+        final access = firstTargetAccess(guard.thenStatement, accessTargets, includeBlocks: true);
+        if (access != null) onViolation(access);
+        guard.elseStatement?.accept(_NestedBlockScanner(this));
+        afterAwait = guard.elseStatement != null && containsAwait(guard.elseStatement!);
         continue;
       }
 
@@ -532,9 +568,10 @@ final class _ThrowFinder extends RecursiveAstVisitor<void> {
 }
 
 final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
-  _TargetAccessFinder(this.targetNames);
+  _TargetAccessFinder(this.targetNames, {this.includeBlocks = false});
 
   final Set<String> targetNames;
+  final bool includeBlocks;
   AstNode? node;
 
   @override
@@ -595,7 +632,9 @@ final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
   }
 
   @override
-  void visitBlock(Block node) {}
+  void visitBlock(Block node) {
+    if (includeBlocks) super.visitBlock(node);
+  }
 
   @override
   void visitFunctionExpression(FunctionExpression node) {}

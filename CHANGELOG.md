@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.12.10] - 2026-09-24
+
+- Resolve test mock contracts by their declaration type, including aliases.
+  Abstract contracts remain allowed; concrete contracts report regardless of
+  naming, and SDK mock exceptions apply only to their actual package libraries.
+- Preserve fresh reads after awaits and effectful calls or getters while still
+  reporting repeated pure expressions.
+- Accept mounted guards that combine lifecycle and revision checks, including
+  proven private helpers. Incomplete returns, state access inside the rejected
+  branch, shadowed references, and overridable helpers remain diagnosed.
+- Allow the Dart SDK's positional future-record `.wait` receiver while retaining
+  diagnostics for ordinary positional records and unrelated `.wait` getters.
+
 ## [0.12.9] - 2026-09-24
 
 - Fix a 0.12.8 regression for awaited top-level startup helpers that initialize

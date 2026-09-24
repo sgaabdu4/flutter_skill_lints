@@ -5,19 +5,71 @@ part of '../source_scanner_rules_test.dart';
 @reflectiveTest
 final class TestMockConcreteTest extends _TestFileRuleTest {
   @override
+  void setUp() {
+    final appwrite = newPackage('appwrite');
+    appwrite.addFile('lib/appwrite.dart', r'''
+export 'services/account.dart';
+export 'services/tables_db.dart';
+export 'services/teams.dart';
+''');
+    appwrite.addFile('lib/services/account.dart', 'class Account {}');
+    appwrite.addFile('lib/services/tables_db.dart', 'class TablesDB {}');
+    appwrite.addFile('lib/services/teams.dart', 'class Teams {}');
+    final youtube = newPackage('youtube_player_iframe');
+    youtube.addFile('lib/youtube_player_iframe.dart', r'''
+export 'src/controller/youtube_player_controller.dart';
+export 'src/player_value.dart';
+''');
+    youtube.addFile(
+      'lib/src/controller/youtube_player_controller.dart',
+      'class YoutubePlayerController {}',
+    );
+    youtube.addFile('lib/src/player_value.dart', 'class YoutubePlayerValue {}');
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'test_mock_concrete';
   @override
   String get needle => 'class MockUserRepository';
   @override
-  String get source => 'class MockUserRepository extends Mock implements UserRepository {}';
+  String get source => '''
+class Mock {}
+class UserRepository {}
+class MockUserRepository extends Mock implements UserRepository {}
+''';
+
+  Future<void> test_allowsAbstractContractsWithoutNamingPrefix() async {
+    await assertAllows(r'''
+class Mock { dynamic noSuchMethod(Invocation invocation) => null; }
+abstract interface class TestBridge { void send(); }
+abstract class BackendPort { void send(); }
+class MockTestBridge extends Mock implements TestBridge {}
+class MockBackendPort extends Mock implements BackendPort {}
+typedef BridgeAlias = TestBridge;
+class MockAlias extends Mock implements BridgeAlias {}
+''', path: '$testPackageRootPath/test/abstract_contract_test.dart');
+  }
+
+  Future<void> test_reportsConcreteContractWithInterfacePrefix() async {
+    const source = r'''
+class Mock { dynamic noSuchMethod(Invocation invocation) => null; }
+interface class IConcreteBridge { void send() {} }
+class MockBridge extends Mock implements IConcreteBridge {}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    final filePath = '$testPackageRootPath/test/bridge_test.dart';
+    newFile(filePath, analyzedSource);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, 'class MockBridge', ruleName),
+    ]);
+  }
 
   Future<void> test_allowsExternalSdkBoundaryMocks() async {
     final filePath = '$testPackageRootPath/test/helpers/appwrite_test_utils.dart';
     newFile(filePath, r'''
+import 'package:appwrite/appwrite.dart';
 class Mock {}
-class TablesDB {}
-class Account {}
-class Teams {}
 class MockTablesDB extends Mock implements TablesDB {}
 class MockAccount extends Mock implements Account {}
 class MockTeams extends Mock implements Teams {}
@@ -29,14 +81,42 @@ class MockTeams extends Mock implements Teams {}
   Future<void> test_allowsExternalPluginControllerMocks() async {
     final filePath = '$testPackageRootPath/test/core/widgets/exercise_demo_sheet_test.dart';
     newFile(filePath, r'''
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 class Mock {}
-class YoutubePlayerController {}
-class YoutubePlayerValue {}
 class MockYoutubePlayerController extends Mock implements YoutubePlayerController {}
 class MockYoutubePlayerValue extends Mock implements YoutubePlayerValue {}
 ''');
 
     await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_localConcreteSdkNameStillReports() async {
+    const source = r'''
+class Mock {}
+class Account {}
+class MockAccount extends Mock implements Account {}
+''';
+    final filePath = '$testPackageRootPath/test/local_account_test.dart';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    newFile(filePath, analyzedSource);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, 'class MockAccount', ruleName),
+    ]);
+  }
+
+  Future<void> test_concreteAliasStillReports() async {
+    const source = r'''
+class Mock {}
+class ConcreteBridge {}
+typedef BridgeAlias = ConcreteBridge;
+class MockBridge extends Mock implements BridgeAlias {}
+''';
+    final filePath = '$testPackageRootPath/test/concrete_alias_test.dart';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    newFile(filePath, analyzedSource);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, 'class MockBridge', ruleName),
+    ]);
   }
 }
 

@@ -533,6 +533,83 @@ class SubmitButton extends ConsumerWidget {
 ''');
   }
 
+  Future<void> test_reportsGoNavigationChainedOffAwaitedMutation() async {
+    final analyzedSource = _analyzedSource(r'''
+class WidgetRef {
+  Object read(Object provider) => Object();
+}
+class ConsumerWidget extends Widget {}
+class BuildContext { bool get mounted => true; }
+extension on BuildContext { void go(String location) {} }
+class OrdersRoute { const OrdersRoute(); void go(BuildContext context) {} }
+
+class SubmitButton extends ConsumerWidget {
+  final ref = WidgetRef();
+
+  Future<void> onPressed(BuildContext context) async {
+    await ref.read(formProvider.notifier).save();
+    if (!context.mounted) return;
+    context.go('/orders');
+  }
+
+  Future<void> onSaved(BuildContext context) async {
+    await ref.read(formProvider.notifier).save();
+    if (!context.mounted) return;
+    const OrdersRoute().go(context);
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, ".go('/orders')", ruleName),
+      compatLint(analyzedSource, '.go(context);', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsNavigationNotChainedOffNotifierMutation() async {
+    await assertAllows(r'''
+class WidgetRef {
+  Object read(Object provider) => Object();
+}
+class ConsumerWidget extends Widget {}
+class BuildContext { bool get mounted => true; }
+extension on BuildContext {
+  void go(String location) {}
+  Future<void> push(String location) async {}
+}
+class Shell { void goBranch(int index) {} }
+Future<bool?> showDialog(BuildContext context) async => true;
+
+class SubmitButton extends ConsumerWidget {
+  final ref = WidgetRef();
+  final shell = Shell();
+
+  Future<void> onSaved(BuildContext context) async {
+    await ref.read(formProvider.notifier).save();
+    if (!context.mounted) return;
+    await context.push('/orders/new');
+  }
+
+  Future<void> onConfirmed(BuildContext context) async {
+    final confirmed = await showDialog(context);
+    if (confirmed != true || !context.mounted) return;
+    context.go('/orders');
+  }
+
+  Future<void> onTab(BuildContext context) async {
+    await showDialog(context);
+    shell.goBranch(1);
+  }
+
+  Widget build(BuildContext context) => Column(children: [
+    Button(onPressed: () async {
+      await ref.read(formProvider.notifier).save();
+    }),
+    Button(onPressed: () => context.go('/orders')),
+  ]);
+}
+''');
+  }
+
   Future<void> test_allowsResetInsideNotifier() async {
     await assertAllows(r'''
 class WidgetRef {

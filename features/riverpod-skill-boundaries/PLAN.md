@@ -38,7 +38,8 @@ Execution: One builder. Commit cc291d5 contains the #68 fix and tests; commit 89
 
 - #68 depends on resolved types. Before codegen runs, providers are unresolved, and the rule reports as it did before.
 - A config type whose name matches the stable-infrastructure classification, such as `ClientConfig`, is still treated as infrastructure. This follows the rule's existing classification.
-- #66: an async state-writing method that awaits another result before persisting counts as a lifecycle write. Revert the two commits to restore the previous behavior.
+- #66: an async state-writing method that awaits another result before persisting counts as a lifecycle write. Revert commits cc291d5, 89a9843 and 4ad8842 to restore the previous behavior.
+- A watched value whose static type is a record or function type, not an interface type, is still reported in a stable factory. This follows the existing classification.
 
 ## ux_reference
 
@@ -47,7 +48,7 @@ N/A — analyzer lint change; no app surface.
 ## Verification
 
 Result: Passed
-Evidence: Focused suites passed: 16 `ServiceProviderWatchDependencyTest` and 11 `NotifierPersistenceNoDebounceTest` cases. The full suite passed 2,153 tests. `dart analyze` found no issues and format made no changes. The full native Draft hard-eng gate passed, including dead-code-duplicates. Actual diff reviewed.
+Evidence: Focused suites passed: 16 `ServiceProviderWatchDependencyTest` and 10 `NotifierPersistenceNoDebounceTest` cases. The full suite passed 2,153 tests. `dart analyze` found no issues and format made no changes. The full native Draft hard-eng gate passed, including dead-code-duplicates. Actual diff reviewed.
 E2E: Passed — `probe-riverpod-skill-boundaries` (Riverpod 3.4.3 with riverpod_generator codegen) was analyzed against this worktree. It reported `service_provider_watch_dependency` only for the watch of the stable `httpApiClientProvider` (api_service_providers.dart:62). It reported `notifier_persistence_no_debounce`, at error severity, only for `ThemeNotifier._persistTheme` and `DraftNotifier._persistDraft`. The #68 credential watch, the live config watches, the #66 `ResourceNotifier` lifecycle writes and the lookalike local function were not reported.
 Delivery target: Merge
 Delivery: Pending — scoped PR, required CI, merge and main CI.

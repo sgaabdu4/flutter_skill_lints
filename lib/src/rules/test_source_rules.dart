@@ -178,27 +178,9 @@ bool _mockImplementsConcreteContract(ClassDeclaration declaration) {
   return (declaration.implementsClause?.interfaces ?? <NamedType>[]).any((interface) {
     final type = interface.type;
     final element = type is InterfaceType ? type.element : null;
-    return element is ClassElement &&
-        element.isConstructable &&
-        !_isAllowedExternalMockBoundary(element);
+    return element is ClassElement && element.isConstructable;
   });
 }
-
-bool _isAllowedExternalMockBoundary(ClassElement element) =>
-    switch ((element.firstFragment.libraryFragment.source.uri.toString(), element.name)) {
-      ('package:appwrite/services/account.dart', 'Account') => true,
-      ('package:appwrite/services/functions.dart', 'Functions') => true,
-      ('package:appwrite/services/storage.dart', 'Storage') => true,
-      ('package:appwrite/services/tables_db.dart', 'TablesDB') => true,
-      ('package:appwrite/services/teams.dart', 'Teams') => true,
-      (
-        'package:youtube_player_iframe/src/controller/youtube_player_controller.dart',
-        'YoutubePlayerController',
-      ) =>
-        true,
-      ('package:youtube_player_iframe/src/player_value.dart', 'YoutubePlayerValue') => true,
-      _ => false,
-    };
 
 const _testDoubleBaseChecker = TypeChecker.any([
   TypeChecker.fromName('Mock', packageName: 'mocktail'),

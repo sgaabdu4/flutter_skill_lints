@@ -13,7 +13,12 @@ part 'services/functions.dart';
 part 'services/storage.dart';
 part 'services/tables_db.dart';
 part 'services/teams.dart';
+part 'services/service.dart';
 ''');
+    appwrite.addFile(
+      'lib/services/service.dart',
+      "part of '../appwrite.dart'; abstract class Service { void call(); }",
+    );
     appwrite.addFile('lib/services/account.dart', "part of '../appwrite.dart'; class Account {}");
     appwrite.addFile(
       'lib/services/functions.dart',
@@ -76,9 +81,9 @@ class MockBridge extends Mock implements IConcreteBridge {}
     ]);
   }
 
-  Future<void> test_allowsExternalSdkPartDeclarations() async {
-    final filePath = '$testPackageRootPath/test/helpers/appwrite_test_utils.dart';
-    newFile(filePath, r'''
+  /// #77: concrete SDK classes are mocked concretes regardless of package.
+  Future<void> test_reportsExternalSdkPartDeclarations() async {
+    const source = r'''
 import 'package:appwrite/appwrite.dart';
 import 'package:mocktail/mocktail.dart';
 class MockFunctions extends Mock implements Functions {}
@@ -86,21 +91,43 @@ class MockStorage extends Mock implements Storage {}
 class MockTablesDB extends Mock implements TablesDB {}
 class MockAccount extends Mock implements Account {}
 class MockTeams extends Mock implements Teams {}
+''';
+    final filePath = '$testPackageRootPath/test/helpers/appwrite_test_utils.dart';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      for (final name in ['Functions', 'Storage', 'TablesDB', 'Account', 'Teams'])
+        compatLint(source, 'class Mock$name', ruleName),
+    ]);
+  }
+
+  /// #77: abstract contracts declared in a package part file stay allowed.
+  Future<void> test_allowsExternalAbstractPartDeclaration() async {
+    final filePath = '$testPackageRootPath/test/helpers/appwrite_service_test_utils.dart';
+    newFile(filePath, r'''
+import 'package:appwrite/appwrite.dart';
+import 'package:mocktail/mocktail.dart';
+class MockService extends Mock implements Service {}
 ''');
 
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsExternalPluginControllerMocks() async {
-    final filePath = '$testPackageRootPath/test/core/widgets/exercise_demo_sheet_test.dart';
-    newFile(filePath, r'''
+  /// #77: concrete plugin controllers are mocked concretes too.
+  Future<void> test_reportsExternalPluginControllerMocks() async {
+    const source = r'''
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:mocktail/mocktail.dart';
 class MockYoutubePlayerController extends Mock implements YoutubePlayerController {}
 class MockYoutubePlayerValue extends Mock implements YoutubePlayerValue {}
-''');
+''';
+    final filePath = '$testPackageRootPath/test/core/widgets/exercise_demo_sheet_test.dart';
+    newFile(filePath, source);
 
-    await assertNoDiagnosticsInFile(filePath);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'class MockYoutubePlayerController', ruleName),
+      compatLint(source, 'class MockYoutubePlayerValue', ruleName),
+    ]);
   }
 
   Future<void> test_localConcreteSdkNameStillReports() async {

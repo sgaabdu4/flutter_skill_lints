@@ -90,15 +90,9 @@ final List<ScannerRule> stateSourceRules = [
       correctionMessage: 'Extract the fields needed by the UI.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags raw JSON or response values stored in UI state so the Flutter skill violation is shown during analysis.',
+    description: 'Flags `state = state.copyWith(...)` arguments that store raw JSON or response values (named rawJson/response/json, or passed through untransformed) so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(r'\bstate\s*=\s*state\.copyWith\s*\([^)]*(?:rawJson|response|json)')
-            .hasMatch(line)) {
-          reporter.report(context, i, line.indexOf('state'));
-        }
-      }
+      context.unit.accept(_RawResponseStateVisitor(reporter, context));
     },
   ),
 
@@ -259,3 +253,37 @@ final _boolStringSentinel = RegExp(
 );
 
 final _bareStateMounted = RegExp(r'(^|[^A-Za-z0-9_\.])(?:this\.)?mounted\b');
+
+final _rawResponseName = RegExp('rawJson|response|json');
+
+final class _RawResponseStateVisitor extends RecursiveAstVisitor<void> {
+  _RawResponseStateVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    if ((node.leftHandSide, node.rightHandSide)
+        case (
+          SimpleIdentifier(name: 'state'),
+          MethodInvocation(
+            methodName: SimpleIdentifier(name: 'copyWith'),
+            target: SimpleIdentifier(name: 'state'),
+            :final argumentList,
+          ),
+        )
+        when argumentList.arguments.whereType<NamedArgument>().any(_storesRawResponse)) {
+      final location = context.unit.lineInfo.getLocation(node.offset);
+      reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+    }
+    super.visitAssignmentExpression(node);
+  }
+}
+
+bool _storesRawResponse(NamedArgument argument) {
+  if (_rawResponseName.hasMatch(argument.name.lexeme)) return true;
+  final value = argument.argumentExpression.unParenthesized;
+  return (value is Identifier || value is PropertyAccess) &&
+      _rawResponseName.hasMatch(value.toSource());
+}

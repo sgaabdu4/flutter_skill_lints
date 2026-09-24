@@ -545,6 +545,47 @@ void f(state) {
   state = state.copyWith(response: Object());
 }
 ''';
+
+  Future<void> test_reportsFormattedMultilineCopyWith() async {
+    final analyzedSource = _analyzedSource(r'''
+void f(state, Map<String, Object?> hugeJsonMap) {
+  state = state.copyWith(
+    total: 1,
+    rawJson: hugeJsonMap,
+  );
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'state = state.copyWith', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsDirectlyStoredResponseValue() async {
+    final analyzedSource = _analyzedSource(r'''
+void f(state, Object response) {
+  state = state.copyWith(
+    data: response,
+  );
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'state = state.copyWith', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsExtractedFields() async {
+    await assertAllows(r'''
+void f(state, Map<String, Object?> json) {
+  state = state.copyWith(items: parseItems(json), total: json['total'] as int);
+  state = state.copyWith(
+    items: parseItems(json),
+    total: json['total'] as int,
+  );
+}
+''');
+  }
 }
 
 @reflectiveTest

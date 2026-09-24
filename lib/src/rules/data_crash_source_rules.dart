@@ -308,6 +308,33 @@ final List<ScannerRule> dataCrashSourceRules = [
       }
     },
   ),
+
+  /// Widget code holds no auth tokens, auth headers or client base URLs.
+  ///
+  /// Why: networking.md keeps auth tokens, base URLs and secrets out of widget
+  /// code; infrastructure services own them.
+  scannerRule(
+    code: const LintCode(
+      'network_secret_in_widget',
+      'Widget code must not hold auth tokens, auth headers or client base URLs.',
+      correctionMessage:
+          'Move tokens, Authorization headers and base URLs into the HTTP service or app config.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags Bearer/Basic credential strings, Authorization map entries and dio baseUrl arguments inside Widget and State classes.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+        final element = declaration.declaredFragment?.element;
+        if (element == null || !_widgetChecker.isSuperOf(element)) continue;
+        final visitor = _WidgetSecretVisitor();
+        declaration.accept(visitor);
+        for (final offset in visitor.offsets) {
+          _reportOffset(reporter, context, offset);
+        }
+      }
+    },
+  ),
 ];
 
 void _reportOffset(ScannerRuleReporter reporter, SourceScannerContext context, int offset) {
@@ -357,9 +384,13 @@ const _httpClientChecker = TypeChecker.any([
   TypeChecker.fromUrl('dart:io#HttpClient'),
 ]);
 
-const _widgetOrNotifierChecker = TypeChecker.any([
+const _widgetChecker = TypeChecker.any([
   TypeChecker.fromName('Widget', packageName: 'flutter'),
   TypeChecker.fromName('State', packageName: 'flutter'),
+]);
+
+const _widgetOrNotifierChecker = TypeChecker.any([
+  _widgetChecker,
   TypeChecker.fromName('AnyNotifier', packageName: 'riverpod'),
   notifierChecker,
 ]);
@@ -756,5 +787,42 @@ final class _NetworkCallVisitor extends RecursiveAstVisitor<void> {
       return;
     }
     super.visitMethodInvocation(node);
+  }
+}
+
+final class _WidgetSecretVisitor extends RecursiveAstVisitor<void> {
+  final List<int> offsets = [];
+
+  static bool _isCredential(String value) =>
+      value.startsWith('Bearer ') || value.startsWith('Basic ');
+
+  @override
+  void visitSimpleStringLiteral(SimpleStringLiteral node) {
+    if (_isCredential(node.value)) offsets.add(node.offset);
+  }
+
+  @override
+  void visitStringInterpolation(StringInterpolation node) {
+    final first = node.elements.firstOrNull;
+    if (first is InterpolationString && _isCredential(first.value)) offsets.add(node.offset);
+    super.visitStringInterpolation(node);
+  }
+
+  @override
+  void visitMapLiteralEntry(MapLiteralEntry node) {
+    final key = node.key.unParenthesized;
+    if (key is SimpleStringLiteral && key.value.toLowerCase() == 'authorization') {
+      offsets.add(node.offset);
+    }
+    super.visitMapLiteralEntry(node);
+  }
+
+  @override
+  void visitNamedArgument(NamedArgument node) {
+    final parameter = node.correspondingParameter;
+    if (parameter != null && parameter.name == 'baseUrl' && _packageOf(parameter) == 'dio') {
+      offsets.add(node.offset);
+    }
+    super.visitNamedArgument(node);
   }
 }

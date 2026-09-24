@@ -1821,6 +1821,86 @@ class ProductLocalDatasource {
   }
 }
 
+@reflectiveTest
+final class NetworkSecretInWidgetTest extends _NetworkRuleTest {
+  @override
+  String get ruleName => 'network_secret_in_widget';
+  @override
+  String get needle => "'Bearer fixture'";
+  @override
+  String get path => '$testPackageLibPath/features/products/presentation/widgets/product_card.dart';
+  @override
+  String get source => r'''
+import 'package:flutter/widgets.dart';
+
+class ProductCard extends StatelessWidget {
+  const ProductCard();
+
+  static const _token = 'Bearer fixture';
+
+  @override
+  Widget build(BuildContext context) => const Text(_token);
+}
+''';
+
+  Future<void> test_reportsAuthorizationHeaderAndBaseUrlInState() async {
+    const source = r'''
+import 'package:dio/dio.dart';
+import 'package:flutter/widgets.dart';
+
+class ProductPanel extends StatefulWidget {
+  const ProductPanel();
+}
+
+class _ProductPanelState extends State<ProductPanel> {
+  final String credentials = 'fixture';
+
+  Dio client() => Dio(BaseOptions(
+    baseUrl: 'https://api.example.test',
+    headers: {'Authorization': 'Basic $credentials'},
+  ));
+
+  @override
+  Widget build(BuildContext context) => const Text('panel');
+}
+''';
+    final panelPath = '$testPackageLibPath/features/products/presentation/product_panel.dart';
+    newFile(panelPath, source);
+
+    await assertDiagnosticsInFile(panelPath, [
+      compatLint(source, "baseUrl: 'https://api.example.test'", ruleName),
+      compatLint(source, "'Authorization': 'Basic ", ruleName),
+      compatLint(source, "'Basic ", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsInfrastructureAuthAndPlainWidgetLinks() async {
+    await assertAllows(r'''
+import 'package:dio/dio.dart';
+
+class HttpService {
+  HttpService(String token)
+    : _dio = Dio(BaseOptions(
+        baseUrl: 'https://api.example.test',
+        headers: {'Authorization': 'Bearer $token'},
+      ));
+
+  final Dio _dio;
+}
+''', path: '$testPackageLibPath/core/network/http_service.dart');
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+
+class HelpLink extends StatelessWidget {
+  const HelpLink();
+
+  @override
+  Widget build(BuildContext context) => const Text('https://example.test/help');
+}
+''', path: '$testPackageLibPath/features/help/presentation/widgets/help_link.dart');
+  }
+}
+
 abstract class _TestRuleTest extends _SourceRuleTest {
   @override
   List<ScannerRule> get rules => testSourceRules;

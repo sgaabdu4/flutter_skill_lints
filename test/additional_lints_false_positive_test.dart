@@ -599,6 +599,23 @@ abstract final class CommentProbe {
 ''');
   }
 
+  Future<void> test_doesNotGroupTrailingDescriptionsWithLaterCode() async {
+    const source = r'''
+abstract final class CommentProbe {
+  static const fbs = '60-100'; // Glucose (GOD-POD Method)
+  static const ldl = '0-130'; // Cholesterol (total)
+}
+
+void commentControls() {
+  // foo(bar);
+  // final x = 1;
+}
+''';
+    final start = source.indexOf('// foo');
+    final end = source.indexOf('// final x = 1;') + '// final x = 1;'.length;
+    await assertDiagnostics(source, [lint(start, end - start)]);
+  }
+
   Future<void> test_reportsCommentedOutCallStatement() async {
     const source = r'''
 void run() {

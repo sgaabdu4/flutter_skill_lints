@@ -115,20 +115,30 @@ const _refChecker = TypeChecker.fromName('Ref', packageName: 'riverpod');
 
 void _scanUndisposedNotifierTimers(ScannerRuleReporter reporter, SourceScannerContext context) {
   for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
-    final element = declaration.declaredFragment?.element;
-    if (element == null || !anyNotifierChecker.isSuperOf(element)) continue;
-    if (collectNodes<MethodInvocation>(declaration).any(_isRefOnDispose)) continue;
-    for (final field in declaration.body.members.whereType<FieldDeclaration>()) {
-      if (field.isStatic) continue;
-      for (final variable in field.fields.variables) {
-        final type = variable.declaredFragment?.element.type;
-        if (type != null && _timerChecker.isExactlyType(type)) {
-          reporter.reportNode(context, variable);
-        }
-      }
+    if (!_isNotifierWithoutOnDispose(declaration)) continue;
+    for (final variable in _instanceTimerFields(declaration)) {
+      reporter.reportNode(context, variable);
     }
   }
 }
+
+bool _isNotifierWithoutOnDispose(ClassDeclaration declaration) {
+  final element = declaration.declaredFragment?.element;
+  return element != null &&
+      anyNotifierChecker.isSuperOf(element) &&
+      !collectNodes<MethodInvocation>(declaration).any(_isRefOnDispose);
+}
+
+Iterable<VariableDeclaration> _instanceTimerFields(ClassDeclaration declaration) => declaration
+    .body
+    .members
+    .whereType<FieldDeclaration>()
+    .where((field) => !field.isStatic)
+    .expand((field) => field.fields.variables)
+    .where((variable) {
+      final type = variable.declaredFragment?.element.type;
+      return type != null && _timerChecker.isExactlyType(type);
+    });
 
 bool _isRefOnDispose(MethodInvocation call) {
   final refType = call.realTarget?.staticType;

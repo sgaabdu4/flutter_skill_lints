@@ -440,23 +440,8 @@ void _reportRedirectLoadingBounces(ScannerRuleReporter reporter, SourceScannerCo
           when _isLoadingCondition(expression):
         _reportLocationReturns(reporter, context, thenStatement);
       case SwitchStatement(:final members):
-        for (final (index, member) in members.indexed) {
-          final matchesLoading = switch (member) {
-            SwitchPatternCase(:final guardedPattern) => _matchesLoadingConstant(
-              guardedPattern.pattern,
-            ),
-            SwitchCase(:final expression) => _isLoadingEnumReference(expression),
-            _ => false,
-          };
-          if (!matchesLoading) continue;
-          final body = members
-              .skip(index)
-              .map((m) => m.statements)
-              .where((s) => s.isNotEmpty)
-              .firstOrNull;
-          for (final statement in body ?? const <Statement>[]) {
-            _reportLocationReturns(reporter, context, statement);
-          }
+        for (final statement in _loadingSwitchStatements(members)) {
+          _reportLocationReturns(reporter, context, statement);
         }
       case SwitchExpressionCase(:final guardedPattern, :final expression)
           when _matchesLoadingConstant(guardedPattern.pattern) && _isRouteLocation(expression):
@@ -465,6 +450,22 @@ void _reportRedirectLoadingBounces(ScannerRuleReporter reporter, SourceScannerCo
     }
   }
 }
+
+/// Statements run by each loading case, following fallthrough to the next
+/// member with a body.
+Iterable<Statement> _loadingSwitchStatements(List<SwitchMember> members) sync* {
+  for (final (index, member) in members.indexed) {
+    if (!_isLoadingSwitchMember(member)) continue;
+    yield* members.skip(index).map((m) => m.statements).where((s) => s.isNotEmpty).firstOrNull ??
+        const <Statement>[];
+  }
+}
+
+bool _isLoadingSwitchMember(SwitchMember member) => switch (member) {
+  SwitchPatternCase(:final guardedPattern) => _matchesLoadingConstant(guardedPattern.pattern),
+  SwitchCase(:final expression) => _isLoadingEnumReference(expression),
+  _ => false,
+};
 
 void _reportLocationReturns(
   ScannerRuleReporter reporter,

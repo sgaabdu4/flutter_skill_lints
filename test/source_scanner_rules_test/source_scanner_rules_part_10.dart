@@ -602,3 +602,100 @@ class TodosNotifier extends Notifier<int> {
 }
 ''';
 }
+
+@reflectiveTest
+final class NotifierTimerWithoutOnDisposeTest extends _NotifierRuleTest {
+  @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'notifier_timer_without_on_dispose';
+  @override
+  String get needle => '_debounce;';
+  @override
+  String get source => '''
+import 'dart:async';
+import 'package:riverpod/riverpod.dart';
+
+class ProductSearch extends Notifier<List<String>> {
+  Timer? _debounce;
+
+  @override
+  List<String> build() => const <String>[];
+
+  void onQueryChanged(String query) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {});
+  }
+}
+''';
+
+  Future<void> test_reportsSkillDraftNotifierAsWritten() async {
+    const source = '''
+import 'dart:async';
+import 'package:riverpod/riverpod.dart';
+
+class DraftNotifier extends AsyncNotifier<String> {
+  Timer? _persistTimer;
+
+  @override
+  Future<String> build() async => '';
+
+  void schedulePersist() {
+    _persistTimer?.cancel();
+    _persistTimer = Timer(const Duration(milliseconds: 50), () {});
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '_persistTimer;', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsTimerCancelledInOnDispose() async {
+    await assertAllows('''
+import 'dart:async';
+import 'package:riverpod/riverpod.dart';
+
+class ProductSearchOk extends Notifier<List<String>> {
+  Timer? _debounce;
+
+  @override
+  List<String> build() {
+    ref.onDispose(() => _debounce?.cancel());
+    return const <String>[];
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsTimerOutsideNotifier() async {
+    await assertAllows('''
+import 'dart:async';
+
+class Ticker {
+  Timer? _timer;
+  void stop() => _timer?.cancel();
+}
+''');
+  }
+
+  Future<void> test_allowsLocalTimerLookalike() async {
+    await assertAllows('''
+import 'package:riverpod/riverpod.dart';
+
+class Timer {}
+
+class Stopwatch extends Notifier<int> {
+  Timer? _timer;
+
+  @override
+  int build() => 0;
+}
+''');
+  }
+}

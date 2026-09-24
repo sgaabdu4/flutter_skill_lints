@@ -535,7 +535,7 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
         final output = '${analyze.stdout}\n${analyze.stderr}';
 
         expect(output, contains('avoid_non_null_assertion'));
-        expect(output, isNot(contains('avoid_null_bang')));
+        expect(output, contains('avoid_null_bang'));
         expect(output, contains('avoid_ref_read_inside_build'));
         expect(output, contains('missing_provider_scope'));
         expect(output, contains('prefer_single_widget_per_file'));
@@ -695,12 +695,6 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
         expect(output, isNot(contains('deprecated_lint')));
         expect(output, isNot(contains('server.pluginError')));
 
-        await _writeFile(analysisOptionsPath, _analysisOptionsWithNullBang(packageRoot));
-        final nullBangAnalyze = await _run('dart', ['analyze'], app);
-        final nullBangOutput = '${nullBangAnalyze.stdout}\n${nullBangAnalyze.stderr}';
-        expect(nullBangOutput, contains('avoid_non_null_assertion'));
-        expect(nullBangOutput, contains('avoid_null_bang'));
-
         await _writeFile(analysisOptionsPath, _analysisOptionsWithDeprecatedLint(packageRoot));
         final deprecatedLintAnalyze = await _run('dart', ['analyze'], app);
         final deprecatedLintOutput =
@@ -738,14 +732,6 @@ ${_analysisOptions(packageRoot)}
 linter:
   rules:
     - avoid_private_typedef_functions
-''';
-
-String _analysisOptionsWithNullBang(String packageRoot) =>
-    '''
-${_analysisOptions(packageRoot)}
-linter:
-  rules:
-    - avoid_null_bang
 ''';
 
 Future<void> _writeFile(String path, String content) async {

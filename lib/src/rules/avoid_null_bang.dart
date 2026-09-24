@@ -11,6 +11,7 @@ final class AvoidNullBang extends GeneratedPostfixExpressionCheckRule {
     'avoid_null_bang',
     'Avoid null assertion operators.',
     correctionMessage: 'Use pattern matching, early returns, or explicit null handling instead.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidNullBang()

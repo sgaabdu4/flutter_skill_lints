@@ -79,21 +79,12 @@ final List<ScannerRule> notifierSourceRules = [
     ),
     description: 'Flags Ref-typed fields declared in Riverpod notifier classes.',
     scan: (reporter, context) {
-      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
-        final element = declaration.declaredFragment?.element;
-        final body = declaration.body;
-        if (element == null || body is! BlockClassBody) continue;
-        if (!_riverpodNotifier.isSuperOf(element) && !hasRiverpodCodegenAnnotation(declaration)) {
-          continue;
-        }
-        for (final field in body.members.whereType<FieldDeclaration>()) {
-          for (final variable in field.fields.variables) {
-            final type = variable.declaredFragment?.element.type;
-            if (type is! InterfaceType || !_riverpodRef.isAssignableFromType(type)) continue;
-            final location = context.unit.lineInfo.getLocation(variable.name.offset);
-            reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
-          }
-        }
+      final notifiers = context.unit.declarations.whereType<ClassDeclaration>().where(
+        _isRiverpodNotifierClass,
+      );
+      for (final variable in notifiers.expand(_storedRefFields)) {
+        final location = context.unit.lineInfo.getLocation(variable.name.offset);
+        reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
       }
     },
   ),
@@ -133,6 +124,23 @@ final _notifierLocalDependencyField = RegExp(
 
 bool _isInsideMethod(List<ScannerMethodSpan> methods, int lineIndex) =>
     methods.any((method) => lineIndex >= method.start && lineIndex <= method.end);
+
+bool _isRiverpodNotifierClass(ClassDeclaration declaration) {
+  final element = declaration.declaredFragment?.element;
+  if (element == null) return false;
+  return _riverpodNotifier.isSuperOf(element) || hasRiverpodCodegenAnnotation(declaration);
+}
+
+Iterable<VariableDeclaration> _storedRefFields(ClassDeclaration declaration) sync* {
+  final body = declaration.body;
+  if (body is! BlockClassBody) return;
+  for (final field in body.members.whereType<FieldDeclaration>()) {
+    for (final variable in field.fields.variables) {
+      final type = variable.declaredFragment?.element.type;
+      if (type is InterfaceType && _riverpodRef.isAssignableFromType(type)) yield variable;
+    }
+  }
+}
 
 const _riverpodRef = TypeChecker.fromName('Ref', packageName: 'riverpod');
 const _riverpodNotifier = TypeChecker.any([

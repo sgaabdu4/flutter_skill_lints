@@ -264,14 +264,14 @@ void _reportResolvedConsumerStateCaches(
     }
     final finder = _ProviderDerivedFieldFinder(element);
     declaration.accept(finder);
-    for (final member in body.members.whereType<FieldDeclaration>()) {
-      for (final variable in member.fields.variables) {
-        if (!finder.fields.contains(variable.declaredFragment?.element)) continue;
-        final location = context.unit.lineInfo.getLocation(variable.name.offset);
-        final line = location.lineNumber - 1;
-        if (!reportedLines.add(line)) continue;
-        reporter.report(context, line, location.columnNumber - 1);
-      }
+    final derivedFields = body.members
+        .whereType<FieldDeclaration>()
+        .expand((member) => member.fields.variables)
+        .where((variable) => finder.fields.contains(variable.declaredFragment?.element));
+    for (final variable in derivedFields) {
+      final location = context.unit.lineInfo.getLocation(variable.name.offset);
+      final line = location.lineNumber - 1;
+      if (reportedLines.add(line)) reporter.report(context, line, location.columnNumber - 1);
     }
   }
 }

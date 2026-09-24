@@ -1,7 +1,7 @@
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/class_suffix_validator.dart';
@@ -43,23 +43,10 @@ class UseNotifierSuffix extends ClassSuffixValidator {
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
     if (isGeneratedRuleContext(context)) return;
-    registry.addClassDeclaration(this, _Visitor(this));
+    super.registerNodeProcessors(registry, context);
   }
-}
-
-final class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule);
-
-  final UseNotifierSuffix rule;
 
   @override
-  void visitClassDeclaration(ClassDeclaration node) {
-    final name = node.namePart.typeName;
-    if (name.lexeme.endsWith(rule.requiredSuffix)) return;
-    final element = node.declaredFragment?.element;
-    if (element == null) return;
-    if (UseNotifierSuffix._notifier.isSuperOf(element) || hasRiverpodCodegenAnnotation(node)) {
-      rule.reportAtToken(name, arguments: [name.lexeme]);
-    }
-  }
+  bool requiresSuffix(ClassDeclaration node, ClassElement element) =>
+      _notifier.isSuperOf(element) || hasRiverpodCodegenAnnotation(node);
 }

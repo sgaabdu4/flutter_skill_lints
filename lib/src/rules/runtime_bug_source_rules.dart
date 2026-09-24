@@ -537,16 +537,18 @@ bool _hasRefMountedGuardBefore(SourceScannerContext context, int awaitLine, int 
   AstNode? node = context.unit.nodeCovering(offset: context.source.lineOffsets[writeLine] + column);
   while (node != null && node is! FunctionBody) {
     final parent = node.parent;
-    if (parent is Block) {
-      for (final statement in parent.statements) {
-        if (statement == node) break;
-        final line = context.unit.lineInfo.getLocation(statement.offset).lineNumber - 1;
-        if (line > awaitLine && statementIsMountedReturnGuard(statement, 'ref')) return true;
-      }
-    }
+    if (parent is Block && _blockGuardsBefore(context, parent, node, awaitLine)) return true;
     node = parent;
   }
   return false;
+}
+
+/// Whether [block] has `if (!ref.mounted) return;` after [awaitLine] and before [child].
+bool _blockGuardsBefore(SourceScannerContext context, Block block, AstNode child, int awaitLine) {
+  return block.statements.takeWhile((statement) => statement != child).any((statement) {
+    final line = context.unit.lineInfo.getLocation(statement.offset).lineNumber - 1;
+    return line > awaitLine && statementIsMountedReturnGuard(statement, 'ref');
+  });
 }
 
 bool _hasStaleGuardBetween(SourceScannerContext context, int startLine, int endLine) {

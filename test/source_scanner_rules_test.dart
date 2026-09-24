@@ -126,6 +126,7 @@ void main() {
     defineReflectiveTests(RouterModalLocalHelpersTest);
     defineReflectiveTests(RouterProviderScopeNavigationReadTest);
     defineReflectiveTests(NotifierLocalDependencyCacheTest);
+    defineReflectiveTests(NotifierStoredRefFieldTest);
     defineReflectiveTests(NotifierEnsureDepsTest);
     defineReflectiveTests(NotifierWatchMethodTest);
     defineReflectiveTests(ServiceSingletonTest);

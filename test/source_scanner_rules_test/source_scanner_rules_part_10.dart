@@ -531,3 +531,118 @@ class TodosNotifier extends Notifier<int> {
 }
 ''';
 }
+
+const _notifierRefRiverpodStub = r'''
+class Ref {}
+
+abstract class AnyNotifier<StateT, ValueT> {
+  Ref get ref => throw UnimplementedError();
+}
+
+abstract class Notifier<T> extends AnyNotifier<T, T> {}
+
+abstract class AsyncNotifier<T> extends AnyNotifier<Future<T>, T> {}
+''';
+
+@reflectiveTest
+final class NotifierStoredRefFieldTest extends _NotifierRuleTest {
+  @override
+  void setUp() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', _notifierRefRiverpodStub);
+    newPackage('riverpod_annotation').addFile('lib/riverpod_annotation.dart', r'''
+export 'package:riverpod/riverpod.dart' show Ref;
+
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+const riverpod = Riverpod();
+''');
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'notifier_stored_ref_field';
+  @override
+  String get needle => '_savedRef';
+  @override
+  String get source => r'''
+import 'package:riverpod/riverpod.dart';
+
+class CartNotifier extends Notifier<int> {
+  late final Ref _savedRef = ref;
+
+  int build() => 0;
+}
+''';
+
+  Future<void> test_reportsInferredRefField() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:riverpod/riverpod.dart';
+
+class OrdersNotifier extends AsyncNotifier<int> {
+  late final _r = ref;
+
+  Future<int> build() async => 0;
+}
+''', addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '_r = ref', ruleName)]);
+  }
+
+  Future<void> test_reportsAnnotatedNotifierBeforeCodegen() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+@riverpod
+class ProductEditorNotifier extends _$ProductEditorNotifier {
+  Ref? _ref;
+
+  int build() => 0;
+}
+''', addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '_ref;', ruleName)]);
+  }
+
+  Future<void> test_allowsRefFieldOutsideNotifier() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+class CartSession {
+  CartSession(this._ref);
+
+  final Ref _ref;
+}
+''');
+  }
+
+  Future<void> test_allowsInheritedRefAndNonRefFields() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+class CartNotifier extends Notifier<int> {
+  final _pending = <int>[];
+
+  int build() {
+    final current = ref;
+    return _pending.length + (identical(current, ref) ? 0 : 1);
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsUnrelatedRefTypeInNotifierLikeClass() async {
+    await assertAllows(r'''
+class Ref {}
+
+class Notifier<T> {}
+
+class CartNotifier extends Notifier<int> {
+  final Ref _ref = Ref();
+}
+''');
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(rule.diagnosticCodes.single.severity, DiagnosticSeverity.ERROR);
+  }
+}

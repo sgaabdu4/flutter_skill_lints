@@ -105,12 +105,13 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     },
   ),
 
-  /// Id lookups on hot paths must use an index instead of linear search.
+  /// Repeated id lookups on hot paths must use an index instead of linear search.
   ///
-  /// Why: `firstWhere`, `indexWhere`, or hand-written `for` helpers named
-  /// `*ById` scan the full collection on every call. In widgets, notifiers,
-  /// repositories, and providers those calls often sit behind taps, timers, or
-  /// rebuilds. Pre-index by id with a Map and reuse that lookup.
+  /// Why: `firstWhere`, `indexWhere`, or a hand-written `for` scan by `.id`
+  /// inside a loop, a collection-for, an iteration callback such as `map` or
+  /// `forEach`, or a widget build path repeats a full scan per element or per
+  /// frame. Pre-index by id with a Map and reuse that lookup. A single lookup in
+  /// a one-off method is not repeated and is not reported.
   scannerRule(
     code: const LintCode(
       'linear_id_lookup_in_hot_path',
@@ -118,11 +119,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       correctionMessage: 'Build/reuse a `Map<Id, Item>` index for id lookups instead of firstWhere/indexWhere/manual loops.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags firstWhere/indexWhere/manual *ById loops over `.id == ...` in likely-hot widget, notifier, repository, or provider code.',
+    description: 'Flags firstWhere/indexWhere/manual `.id ==` loops that repeat inside a loop, collection-for, iteration callback, or widget build path.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      _reportManualIdLookupFunctions(reporter, context);
-      _reportHotClassIdLookups(reporter, context);
+      _reportRepeatedIdLookups(reporter, context);
     },
   ),
 

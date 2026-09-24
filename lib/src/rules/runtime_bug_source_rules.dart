@@ -1,8 +1,11 @@
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/token.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'runtime_bug_source_rules/runtime_bug_source_rules_part_01.dart';
@@ -153,10 +156,6 @@ final _collectionExpressionAllocation = RegExp(
   r'\bfor\s*\(|\.\s*(?:map|where|toList|toSet)\s*\(|[\{\[]\s*for\s*\(',
 );
 
-final _byIdFunctionStart = RegExp(
-  r'^\s*(?:[A-Za-z_]\w*(?:\s*<[^;]+>)?\??)\s+_?[A-Za-z_]\w*ById\s*\([^)]*\)\s*\{',
-);
-
 final _adHocIdIndexLookup = RegExp(
   r'\.\s*indexBy\s*\(\s*'
   r'(?:\([A-Za-z_]\w*\)|[A-Za-z_]\w*)\s*=>\s*[A-Za-z_]\w*\s*\.\s*id\s*'
@@ -164,11 +163,6 @@ final _adHocIdIndexLookup = RegExp(
 );
 
 final _linearIdLookupCall = RegExp(r'\.\s*(?:firstWhere|indexWhere)\s*\(');
-
-final _linearIdLookup = RegExp(
-  r'\.\s*(?:firstWhere|indexWhere)\s*\(\s*'
-  r'(?:\([A-Za-z_]\w*\)|[A-Za-z_]\w*)\s*=>\s*[A-Za-z_]\w*\s*\.\s*id\s*==',
-);
 
 final _forEachLoop = RegExp(
   r'\bfor\s*\(\s*(?:final\s+)?(?:[A-Za-z_]\w*\s+)?([A-Za-z_]\w*)\s+in\s+[A-Za-z_]\w*',
@@ -374,23 +368,6 @@ bool _collectionGetterAllocates(String body) {
     return true;
   }
   return _collectionExpressionAllocation.hasMatch(body);
-}
-
-bool _isHotLookupClass(SourceScannerContext context, ScannerClassSpan classSpan) =>
-    classSpan.isNotifier ||
-    context.isUiFile ||
-    context.isRepositoryPath ||
-    classSpan.name.endsWith('Repository') ||
-    classSpan.name.endsWith('Service');
-
-bool _isIndexLookupInsideForBlock(SourceScannerContext context, int methodStart, int lookupLine) {
-  final line = context.source.masked[lookupLine];
-  if (!line.contains('.indexWhere')) return false;
-  final start = lookupLine - 6 < methodStart ? methodStart : lookupLine - 6;
-  for (var i = start; i < lookupLine; i++) {
-    if (context.source.masked[i].contains('for (')) return true;
-  }
-  return false;
 }
 
 RegExp _nestedIdLookup(String loopVar) => RegExp(

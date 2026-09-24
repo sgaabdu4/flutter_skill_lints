@@ -193,27 +193,171 @@ Map<String, Item> itemsById(List<Item> items) {
 
 @reflectiveTest
 final class LinearIdLookupInHotPathTest extends _RuntimeBugRuleTest {
+  static const _item = r'''
+import 'package:flutter/widgets.dart';
+
+class Item {
+  const Item(this.id);
+  final String id;
+}
+''';
+
   @override
   String get ruleName => 'linear_id_lookup_in_hot_path';
   @override
   String get needle => '.firstWhere(';
   @override
-  String get source => r'''
-class ItemNotifier {
-  Item? _itemById(List<Item> items, String itemId) {
-    return items.firstWhere((item) => item.id == itemId);
+  String get source =>
+      '''
+$_item
+void applyAll(List<Item> items, List<String> changes, String selectedId) {
+  for (final change in changes) {
+    final selected = items.firstWhere((item) => item.id == selectedId);
+    print('\$change \$selected');
   }
 }
 ''';
 
-  Future<void> test_reportsMultilineFirstWhereLookup() async {
-    const source = r'''
-class ItemNotifier {
-  Item? _itemById(List<Item> items, String itemId) {
-    return items.firstWhere(
-      (item) => item.id == itemId,
-    );
+  Future<void> test_reportsMultilineLookupInIterationCallback() async {
+    const source =
+        '''
+$_item
+List<Item> resolve(List<Item> items, List<String> ids) {
+  return ids
+      .map(
+        (id) => items.firstWhere(
+          (item) => item.id == id,
+        ),
+      )
+      .toList();
+}
+''';
+
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
   }
+
+  Future<void> test_reportsLookupInForEachCallback() async {
+    const source =
+        '''
+$_item
+void apply(List<Item> items, List<String> ids) {
+  ids.forEach((id) {
+    final index = items.indexWhere((item) => item.id == id);
+    print(index);
+  });
+}
+''';
+
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
+  }
+
+  Future<void> test_reportsLookupInCollectionFor() async {
+    const source =
+        '''
+$_item
+List<Item> resolve(List<Item> items, List<String> ids) => [
+  for (final id in ids) items.firstWhere((item) => item.id == id),
+];
+''';
+
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
+  }
+
+  Future<void> test_reportsNestedIndexWhereLookup() async {
+    const source =
+        '''
+$_item
+class Change {
+  const Change(this.itemId);
+  final String itemId;
+}
+
+class ItemRepository {
+  void applyChanges(List<Item> items, List<Change> changes) {
+    for (final change in changes) {
+      final index = items.indexWhere((item) => item.id == change.itemId);
+      if (index >= 0) print(change);
+    }
+  }
+}
+''';
+
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
+  }
+
+  Future<void> test_reportsManualLookupLoopInsideLoop() async {
+    const source =
+        '''
+$_item
+void apply(List<Item> items, List<String> ids) {
+  for (final id in ids) {
+    for (final item in items) {
+      if (item.id == id) print(item);
+    }
+  }
+}
+''';
+
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'for (final item', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsLookupInBuild() async {
+    const source =
+        '''
+$_item
+class ItemTile extends Widget {
+  ItemTile(this.items, this.itemId);
+  final List<Item> items;
+  final String itemId;
+
+  Widget build(BuildContext context) {
+    final item = items.firstWhere((item) => item.id == itemId);
+    print(item);
+    return this;
+  }
+}
+''';
+
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
+  }
+
+  Future<void> test_reportsIndexedManualLookupInsideCallback() async {
+    const source =
+        '''
+$_item
+void apply(List<Item> items, List<String> ids) {
+  ids.forEach((id) {
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].id == id) print(i);
+    }
+  });
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'for (var i', ruleName)]);
+  }
+
+  Future<void> test_reportsLookupInWidgetBuilderFunction() async {
+    const source =
+        '''
+$_item
+Widget buildTile(List<Item> items, String itemId, Widget Function(Item) tile) {
+  return tile(items.firstWhere((item) => item.id == itemId));
 }
 ''';
     final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
@@ -221,27 +365,106 @@ class ItemNotifier {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
   }
 
-  Future<void> test_reportsManualByIdLoop() async {
-    const source = r'''
+  Future<void> test_allowsLookupInSingleCallMapCallback() async {
+    await assertAllows('''
+$_item
+void cache(Map<String, Item> cache, List<Item> items, String itemId) {
+  cache.putIfAbsent(itemId, () => items.firstWhere((item) => item.id == itemId));
+}
+''');
+  }
+
+  Future<void> test_allowsOneOffRepositoryMutation() async {
+    await assertAllows('''
+final class StoredValue {
+  const StoredValue(this.id);
+  final String id;
+}
+
+abstract interface class IExampleRepository {
+  void replace(String id, StoredValue replacement);
+}
+
+final class ExampleRepository implements IExampleRepository {
+  ExampleRepository(this._values);
+  final List<StoredValue> _values;
+
+  @override
+  void replace(String id, StoredValue replacement) {
+    final index = _values.indexWhere((value) => value.id == id);
+    if (index != -1) _values[index] = replacement;
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsOneOffNotifierLookup() async {
+    await assertAllows('''
+$_item
+class ItemNotifier {
+  Item? itemById(List<Item> items, String itemId) {
+    return items.firstWhere(
+      (item) => item.id == itemId,
+    );
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsSingleManualLookupLoop() async {
+    await assertAllows('''
+$_item
 Item? itemById(List<Item> items, String itemId) {
   for (final item in items) {
     if (item.id == itemId) return item;
   }
   return null;
 }
-''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+''');
+  }
 
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'Item? itemById', ruleName),
-    ]);
+  Future<void> test_allowsLookupInTapCallbackInsideBuild() async {
+    await assertAllows('''
+$_item
+class Button extends Widget {
+  Button({required this.onPressed});
+  final void Function() onPressed;
+}
+
+class ItemTile extends Widget {
+  ItemTile(this.items, this.itemId);
+  final List<Item> items;
+  final String itemId;
+
+  Widget build(BuildContext context) {
+    return Button(
+      onPressed: () {
+        final item = items.firstWhere((item) => item.id == itemId);
+        print(item);
+      },
+    );
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsLookupInLoopIterable() async {
+    await assertAllows('''
+$_item
+void printFrom(List<Item> items, String itemId) {
+  for (final item in items.skip(items.indexWhere((item) => item.id == itemId))) {
+    print(item);
+  }
+}
+''');
   }
 
   Future<void> test_allowsMapIndex() async {
-    await assertAllows(r'''
-class ItemNotifier {
-  Item? _itemById(Map<String, Item> itemsById, String itemId) {
-    return itemsById[itemId];
+    await assertAllows('''
+$_item
+void apply(Map<String, Item> itemsById, List<String> ids) {
+  for (final id in ids) {
+    print(itemsById[id]);
   }
 }
 ''');

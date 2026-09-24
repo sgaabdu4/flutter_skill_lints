@@ -4,10 +4,12 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-/// Reports positional record fields.
+/// Reports positional record fields on records with three or more of them.
 ///
-/// Records in this profile must use named fields so call sites remain readable
-/// and can move to a typedef without changing field access semantics.
+/// The skill shows positional pairs such as `(String, int) userInfo()` and
+/// prefers named fields "when 3+ fields". A positional literal destructured in
+/// place (`final (_, price, _) = (id, 9.99, sku);`) never exposes its fields by
+/// position, so it is allowed too.
 final class AvoidPositionalRecordFields extends RecordRule {
   static const LintCode code = LintCode(
     'avoid_positional_record_fields',
@@ -34,7 +36,8 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitRecordLiteral(RecordLiteral node) {
-    if (_isSdkFutureRecordWait(node)) return;
+    if (_positionalCount(node.fields) < _namedFieldThreshold) return;
+    if (_isDestructuredInPlace(node) || _isSdkFutureRecordWait(node)) return;
     for (final field in node.fields) {
       if (field is RecordLiteralNamedField) continue;
       rule.reportAtNode(field);
@@ -54,8 +57,20 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitRecordTypeAnnotation(RecordTypeAnnotation node) {
+    if (node.positionalFields.length < _namedFieldThreshold) return;
     for (final field in node.positionalFields) {
       rule.reportAtNode(field);
     }
   }
+}
+
+const _namedFieldThreshold = 3;
+
+int _positionalCount(NodeList<RecordLiteralField> fields) =>
+    fields.where((field) => field is! RecordLiteralNamedField).length;
+
+bool _isDestructuredInPlace(RecordLiteral node) {
+  final parent = node.parent;
+  return (parent is PatternVariableDeclaration && parent.expression == node) ||
+      (parent is PatternAssignment && parent.expression == node);
 }

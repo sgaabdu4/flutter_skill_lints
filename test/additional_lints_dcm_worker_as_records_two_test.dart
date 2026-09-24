@@ -75,7 +75,7 @@ final class AvoidPositionalRecordFieldsTest extends AnalysisRuleTest {
   Future<void> test_positionalLiteral_lint() async {
     const source = r'''
 void f() {
-  final value = ('calendar', true);
+  final value = ('calendar', true, 3);
   print(value);
 }
 ''';
@@ -83,6 +83,33 @@ void f() {
     await assertDiagnostics(source, [
       lint(source.indexOf("'calendar'"), "'calendar'".length),
       lint(source.indexOf('true'), 'true'.length),
+      lint(source.indexOf('3)'), 1),
+    ]);
+  }
+
+  Future<void> test_skillPositionalPairAndWildcardDestructuring_noLint() async {
+    await assertNoDiagnostics(r'''
+(String, int) userInfo() => ('Alice', 30);
+
+int wildcards(String id, String sku) {
+  final (name, age) = userInfo();
+  final (_, price, _) = (id, 9.99, sku);
+  var total = 0.0;
+  (_, total, _) = (id, price + age + name.length, sku);
+  return total.round();
+}
+''');
+  }
+
+  Future<void> test_threePositionalFieldsBoundToVariable_lint() async {
+    const source = r'''
+(String, int, bool) profile() => throw 'todo';
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('String'), 'String'.length),
+      lint(source.indexOf('int'), 'int'.length),
+      lint(source.indexOf('bool'), 'bool'.length),
     ]);
   }
 
@@ -131,19 +158,21 @@ Future<void> load() async {
 
   Future<void> test_unrelatedWaitGetter_stillReports() async {
     const source = r'''
-extension FakeWait on (int, String) {
+extension FakeWait on (int, String, bool) {
   int get wait => $1;
 }
 void load() {
-  final count = (1, 'ready').wait;
+  final count = (1, 'ready', true).wait;
   print(count);
 }
 ''';
     await assertDiagnostics(source, [
       lint(source.indexOf('int, String'), 'int'.length),
-      lint(source.indexOf('String)'), 'String'.length),
+      lint(source.indexOf('String,'), 'String'.length),
+      lint(source.indexOf('bool)'), 'bool'.length),
       lint(source.indexOf('1, '), 1),
-      lint(source.indexOf("'ready').wait"), "'ready'".length),
+      lint(source.indexOf("'ready',"), "'ready'".length),
+      lint(source.indexOf('true).wait'), 'true'.length),
     ]);
   }
 }

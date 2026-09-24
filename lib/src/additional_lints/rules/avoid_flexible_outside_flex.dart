@@ -17,6 +17,7 @@ class AvoidFlexibleOutsideFlex extends AnalysisRule {
     'avoid_flexible_outside_flex',
     '{0} has a non-Flex render-object parent.',
     correctionMessage: 'Move {0} inside a Row, Column, or Flex, or remove the wrapper.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidFlexibleOutsideFlex()

@@ -588,6 +588,63 @@ final class RequiredText {
     await assertNoDiagnosticsInFile(path);
   }
 
+  Future<void> test_valueObjectExtractedGuardHelper_noLint() async {
+    final path = '$testPackageLibPath/core/domain/values/distance.dart';
+    newFile(path, r'''
+final class Distance {
+  const Distance._(this.value);
+  final double value;
+
+  factory Distance.meters(double v) => Distance._(_guard(v, 'meters'));
+
+  static double _guard(double v, String unit) {
+    if (v.isNaN || v < 0) {
+      throw ArgumentError.value(v, 'v', 'Distance.$unit must be finite and non-negative');
+    }
+    return v;
+  }
+}
+''');
+    await assertNoDiagnosticsInFile(path);
+  }
+
+  Future<void> test_guardHelperOutsideContract_lint() async {
+    final path = '$testPackageLibPath/core/domain/values/distance.dart';
+    const source = r'''
+final class Distance {
+  const Distance._(this.value);
+  final double value;
+
+  static double _state(double v) {
+    if (v < 0) throw 'negative';
+    return v;
+  }
+
+  static double guard(double v) {
+    if (v < 0) throw ArgumentError.value(v, 'v', 'negative');
+    return v;
+  }
+
+  double _instance(double v) {
+    if (v < 0) throw ArgumentError.value(v, 'v', 'negative');
+    return v;
+  }
+}
+''';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [
+      lint(source.indexOf("throw 'negative'"), "throw 'negative'".length),
+      lint(
+        source.indexOf('throw ArgumentError'),
+        "throw ArgumentError.value(v, 'v', 'negative')".length,
+      ),
+      lint(
+        source.lastIndexOf('throw ArgumentError'),
+        "throw ArgumentError.value(v, 'v', 'negative')".length,
+      ),
+    ]);
+  }
+
   Future<void> test_unrelatedThrowInValueObject_stillReports() async {
     final path = '$testPackageLibPath/features/items/domain/values/required_text.dart';
     const source = r'''

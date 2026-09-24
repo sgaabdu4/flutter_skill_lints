@@ -30,7 +30,10 @@ parameters, is judged by the error's static type. Same-named APIs outside
 A validated Value Object factory under `domain/values/` may throw
 `ArgumentError.value(<parameter>, ...)` from an `if` guard whose condition
 reads that parameter directly or through a `final` local initialized from it
-(`final trimmed = input.trim(); if (trimmed.isEmpty) ...`). Guards on `var`
+(`final trimmed = input.trim(); if (trimmed.isEmpty) ...`). The same guard is
+allowed in a private static helper of the Value Object class (the skill's
+extracted `static double _guard(double v, String unit)`); public or instance
+helpers and other thrown values still report. Guards on `var`
 locals, reassigned locals, or locals unrelated to the parameter still report,
 as do other throws in the factory.
 

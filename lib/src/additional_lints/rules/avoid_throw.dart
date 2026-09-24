@@ -279,9 +279,21 @@ bool _isValueObjectArgumentGuard(ThrowExpression node, String path) {
           guard != null &&
           _referencesParameter(guard.expression, parameter, parent.body, {});
     }
+    if (parent is MethodDeclaration) {
+      return _isPrivateStaticClassHelper(parent) &&
+          guard != null &&
+          _referencesParameter(guard.expression, parameter, parent.body, {});
+    }
   }
   return false;
 }
+
+/// value-objects.md "extracted guard helper": `static double _guard(...)` on the
+/// Value Object class, called from its public factory.
+bool _isPrivateStaticClassHelper(MethodDeclaration method) =>
+    method.isStatic &&
+    method.name.lexeme.startsWith('_') &&
+    method.parent?.parent is ClassDeclaration;
 
 /// The formal parameter passed as the value of a `dart:core`
 /// `ArgumentError.value(...)` creation, if [error] is one.

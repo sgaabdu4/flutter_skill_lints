@@ -457,14 +457,77 @@ final class PerfBuildWorkTest extends _UiRuleTest {
   bool get lineStart => true;
   @override
   String get source => r'''
-class Screen {
-  Object build() {
+import 'package:flutter/widgets.dart';
+
+class Screen extends Widget {
+  Widget build(BuildContext context) {
     final items = <int>[2, 1];
     items.sort();
-    return Object();
+    return Widget();
   }
 }
 ''';
+
+  // performance.md:289 WRONG "sorts on every rebuild", in a State build and
+  // in a `Widget build(BuildContext ...)` on a custom view base class.
+  Future<void> test_reportsSkillSortInWidgetAndStateBuild() async {
+    final source = _analyzedSource(r'''
+import 'package:flutter/widgets.dart';
+
+class Product {
+  const Product(this.name);
+  final String name;
+}
+
+class ProductsScreen extends StatefulWidget {}
+
+class ProductsScreenState extends State<ProductsScreen> {
+  List<Product> items = const [];
+
+  Widget build(BuildContext context) {
+    final sorted = items.toList()..sort((a, b) => a.name.compareTo(b.name));
+    return Widget();
+  }
+}
+
+abstract class AppView {}
+
+class ProductsView extends AppView {
+  Widget build(BuildContext context, List<Product> items) {
+    final ordered = items.toList()..sort((a, b) => a.name.compareTo(b.name));
+    return Widget();
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(source, [
+      compatLint(source, 'final sorted', ruleName, lineStart: true),
+      compatLint(source, 'final ordered', ruleName, lineStart: true),
+    ]);
+  }
+
+  // riverpod-codegen.md:335-346: a Riverpod Notifier build computes provider
+  // state, where performance.md:5 sends collection work.
+  Future<void> test_allowsNotifierBuild() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+class Todo {
+  Todo.fromJson(Map<String, Object?> json);
+}
+
+abstract class _$TodosNotifier {}
+
+@Riverpod(keepAlive: true)
+class TodosNotifier extends _$TodosNotifier {
+  List<Todo> build() {
+    final decoded = <Object?>[];
+    return decoded.map((item) => Todo.fromJson(item as Map<String, Object?>)).toList();
+  }
+}
+''', path: '$testPackageLibPath/features/todos/presentation/notifiers/todos_notifier.dart');
+  }
 }
 
 @reflectiveTest

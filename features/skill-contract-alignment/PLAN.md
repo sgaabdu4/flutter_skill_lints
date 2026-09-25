@@ -4,7 +4,7 @@ Status: Complete
 
 ## Outcome + scope
 
-Make flutter_skill_lints enforce the building-flutter-apps skill (v5.12.0 docs) exactly. Every skill MUST/NEVER rule reports at error severity. Every skill DO/RIGHT example produces no flutter_skill_lints diagnostic. Every WRONG/NEVER example that names a lint produces that lint as an error. Fifteen builder branches aligned one skill area each, and a final sweep on `fix/skill-contract-sweep` closed the cross-cutting gaps. Registered totals after the work: 229 skill rules, 237 skill codes, 236 additional rules, 274 additional codes, 509 unique codes, 63 fixes and 1 assist (the origin/main README listed 187, 195, 239, 280, 471, 64 and 1).
+Make flutter_skill_lints enforce the building-flutter-apps skill (v5.12.0 docs) exactly. Every skill MUST/NEVER rule reports at error severity. Every skill DO/RIGHT example produces no flutter_skill_lints diagnostic. Every WRONG/NEVER example that names a lint produces that lint as an error. Fifteen builder branches aligned one skill area each, and a final sweep on `fix/skill-contract-sweep` closed the cross-cutting gaps. Registered totals after the work: 229 skill rules, 237 skill codes, 235 additional rules, 273 additional codes, 508 unique codes, 63 fixes and 1 assist (the origin/main README listed 187, 195, 239, 280, 471, 64 and 1).
 
 Merged builder plans:
 
@@ -81,6 +81,9 @@ Integration: `fix/skill-contract-accept` merged after the sweep with no textual 
 - `avoid_unsafe_collection_methods` skips test files, where testing.md reads `.first`/`.single` in expectations; production behaviour is unchanged.
 - `prefer_private_extension_type_field` allows a public representation field named `value`, the typed-ID form in dart-patterns-records.md and collections-helpers.md; any other public name still reports.
 - `prefer_test_matchers` is removed. The skill gives no matcher guidance, testing.md and hive-persistence.md compare with bare literals and identifiers, and `expect()` already wraps a value in `equals()`, so a narrowed rule would only flag non-matcher calls on a false rationale. Counts: 235 additional warning-rule calls, 273 additional codes, 508 unique codes.
+- The source scanner ends a member at a `;` before any `{`, so a bodyless declaration such as `const AccountRepository(this.remote);` no longer hides the next method from scanned rules (networking.md repository shape).
+- `fire_and_forget_missing_catch` trusts `maybePop` route futures (routing-app-shell.md Bento sheet `_createWorkout`); `service_static_side_effect` skips test files (hive-persistence.md `test/shared/hive_test_helper.dart`); `freezed_required_value_class` skips `abstract final class` static namespaces such as the riverpod-codegen.md `TodoListCodec`.
+- `state_raw_error_to_string` points its correction at `AppErrorMapper.from(e)`, the data-layer mapper the skill now uses.
 
 ## Baseline + execution
 

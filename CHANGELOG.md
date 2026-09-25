@@ -57,6 +57,11 @@ clean and each WRONG example reports its named lint.
   the catch of async-started long-running work that never reconciles.
 - Replace name, path and line-text heuristics with resolved element checks
   across Riverpod, router, UI, persistence and crash rules.
+- Accept `maybePop` route futures in fire-and-forget callees, static test
+  helpers in `service_static_side_effect` and `abstract final` static
+  namespaces (keys, codecs, mappers) in `freezed_required_value_class`.
+- Stop a bodyless declaration such as `const Repo(this.remote);` from hiding
+  the next method from source-scanned rules.
 
 ## [0.12.15] - 2026-09-25
 

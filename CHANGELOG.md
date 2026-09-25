@@ -1,5 +1,63 @@
 # Changelog
 
+## [0.13.0] - 2026-09-25
+
+Aligns every rule with building-flutter-apps 5.12.0. Skill MUST/NEVER rules
+report as errors and are enabled by default; each skill DO example analyzes
+clean and each WRONG example reports its named lint.
+
+- Report every skill rule at error severity, enabled by default. A registration
+  test rejects any skill code below error.
+- Add skill rules for AsyncValue switches, page consumers, the Crash facade and
+  Sentry configuration, Hive adapter boundaries, localized notifier copy,
+  network failures, Riverpod mutations and generated providers, widget
+  previews, E2E waits and selectors, and layout constraints:
+  `ad_hoc_intl_format`, `arch_repository_inline_entity_mapping`,
+  `arch_storage_sdk_import`, `async_value_switch_over_when`,
+  `atomic_page_consumer_widget`, `avoid_clip_rrect_container`,
+  `avoid_list_in_single_child_scroll_view`, `avoid_orientation_layout`,
+  `avoid_positioned_outside_stack`, `avoid_unbounded_list_in_column`,
+  `avoid_unbounded_text_field_in_row`, `crash_custom_global_error_handler`,
+  `crash_direct_sentry_call`, `crash_error_recursion`,
+  `crash_facade_public_api`, `crash_sentry_auth_token_in_source`,
+  `crash_sentry_capture_opt_in`, `crash_sentry_send_default_pii`,
+  `datasource_concrete_http_client`, `hive_adapter_spec_domain_type`,
+  `hive_type_on_freezed_class`, `inline_num_clamp`,
+  `l10n_notifier_localized_copy`, `l10n_string_concatenation`,
+  `network_failure_null_fallback`, `network_http_call_in_widget_or_notifier`,
+  `network_raw_http_failure_in_widget_or_notifier`, `network_secret_in_widget`,
+  `notifier_hive_access`, `notifier_stored_ref_field`,
+  `notifier_timer_without_on_dispose`, `record_use_outside_ffi`,
+  `riverpod_config_destructuring`, `riverpod_generated_provider_alias`,
+  `riverpod_mutation_ref_read`, `riverpod_mutation_top_level`,
+  `riverpod_widget_ref_outside_widget`, `test_e2e_blind_sleep`,
+  `test_notifier_override`, `test_text_label_selector`,
+  `widget_preview_import_leak`, `widget_preview_platform_dependency` and
+  `widget_preview_screen`.
+- Remove rules the skill does not require or that contradict its examples:
+  `arch_datasource_try_catch`, `avoid_declaring_call_method`,
+  `avoid_missing_controller` (#44), `avoid_non_null_assertion` (#43; the skill's
+  `avoid_null_bang` now reports each `!` once), `move_records_to_typedefs`,
+  `prefer_compute_over_isolate_run`, `prefer_dedicated_media_query_methods` and
+  `prefer_test_matchers`.
+- Fix false positives against skill examples in `avoid_throw` (#42, #86, #95),
+  `riverpod_watch_no_select` (#36), `freezed_legacy_when_map` (#50),
+  `dart_static_namespace` (#51), `avoid_magic_literals` (#52),
+  `ROUTER_COMPLEX_EXTRA` (#60), `notifier_persistence_no_debounce` (#66),
+  `service_provider_watch_dependency` (#68), SDK mock detection for part
+  declarations (#77), `linear_id_lookup_in_hot_path` (#87) and
+  `avoid_commented_out_code` (#91).
+- Narrow general-purpose lints to the skill's examples: `else` after an exit
+  only, `late final` fields with an initializer, `while (true)` loops, resolved
+  hook calls, required and positional parameters in `avoid_long_parameter_list`,
+  JSON keys in models, `<String, dynamic>` map literals, collection reads in
+  tests and a public `value` field on extension types.
+- `riverpod_watch_no_select` reports a field read of a watched computed
+  provider; `destructive_failure_logged_before_reconcile` reports telemetry in
+  the catch of async-started long-running work that never reconciles.
+- Replace name, path and line-text heuristics with resolved element checks
+  across Riverpod, router, UI, persistence and crash rules.
+
 ## [0.12.15] - 2026-09-25
 
 - Enforce `avoid_null_bang` by default again, as an error. The 0.12.8 opt-in

@@ -227,6 +227,44 @@ hover description and correction text.
 | `testing.md` | `cfg_e2e_entrypoint`, `test_provider_container`, `test_uncontrolled_scope`, `test_create_container`, `test_mock_concrete`, `test_pump_and_settle`, `test_tap_at`, `test_inline_value_key`, `test_first_match_finder`, `test_notifier_override`, `test_text_label_selector`, runtime boundary for event-contract and cross-runtime drift proof |
 | `widget-previews.md` | `widget_preview_import_leak`, `widget_preview_platform_dependency` (dart:io, platform channels, Hive, Firebase, Dio, http; arbitrary native plugins are a runtime boundary), `widget_preview_screen` |
 
+## Per-Code Skill Mapping
+
+These registered skill codes were missing from this document before the final
+sweep. Each row cites the skill reference that backs the rule, or records that
+the skill has no backing sentence. Codes below error severity are listed in
+`_nonErrorSkillDiagnostics` in `test/plugin_registration_test.dart`.
+
+| Code | Skill reference | Backing text |
+| --- | --- | --- |
+| `ad_hoc_id_index_lookup` | `extensions/collections-helpers.md` | Named in the collection-helpers lint list |
+| `app_shell_bootstrap_side_effects` | `common-patterns.md` | Rule 13: MUST keep the app shell declarative |
+| `atom_widget_layer_dependency` | `atomic-design.md` | Hierarchy: atoms are the lowest widget layer |
+| `avoid_any_version` | `core-stack.md` | Package table pins caret versions; project-config drift check |
+| `avoid_dynamic_except_json_maps` | `analysis-options.md` | Type-safety profile; no MUST/NEVER, stays INFO |
+| `bare_state_mounted_forbidden` | `common-patterns.md`, `SKILL.md` | Rule 11: never swap to `mounted`; T0 checklist: no bare `mounted` |
+| `build_calls_mutating_instance_method` | `performance.md`, `common-patterns/modals-navigation.md` | Named in both lint lists |
+| `collection_getter_allocates_each_access` | `performance.md`, `common-patterns/debounce-gate-batch.md` | Rule 14: NEVER allocate collections in getters used from `build()` |
+| `domain_empty_string_sentinel` | `value-objects.md` | Do not use `''` as a missing-value sentinel in domain code |
+| `expando_derived_cache_forbidden` | `performance.md` | Rules 6 and 14: no top-level/global `Expando` side tables |
+| `freezed_required_value_class` | `freezed-sealed.md`, `hive-persistence.md` | Critical rule R7: immutable state/entities use sealed Freezed |
+| `full_collection_load_in_loop` | `common-patterns/debounce-gate-batch.md` | Expose a batch loader; no MUST/NEVER, stays WARNING |
+| `implicit_null_fallback` | `value-objects.md` | Nullability section; the skill never mandates this check, stays WARNING |
+| `linear_id_lookup_in_hot_path` | `performance.md`, `common-patterns/debounce-gate-batch.md` | Rule 15: NEVER repeat id lookups in hot paths |
+| `modal_high_frequency_watch_not_leaf` | `performance.md`, `common-patterns/modals-navigation.md` | Rule 13: NEVER watch ticking fields in a broad modal parent |
+| `nested_linear_lookup_by_id` | `performance.md`, `extensions/collections-helpers.md` | Rule 15: pre-index by id with `Map` |
+| `notifier_async_init_stale_state_write` | `SKILL.md` | T1 checklist: long-running sync/auth/import guards stale writes |
+| `nullable_collection_type` | `value-objects.md`, `SKILL.md` | No items: non-null collection default; critical rule R5 |
+| `prefer_publish_to_none` | none | Project-config drift check; the skill has no `publish_to` sentence |
+| `riverpod_select_identity_forbidden` | `performance.md` | Read-first 1: never use `.select((value) => value)` |
+| `riverpod_widget_provider_arg_wrapper` | `performance.md` | Rule 9: no provider-family arg wrappers in widget state |
+| `save_all_full_collection_after_subset_mutation` | `performance.md`, `common-patterns/debounce-gate-batch.md` | Rule 16: NEVER persist full collections after a subset change |
+| `unguarded_fire_and_forget_platform_command` | `services-and-singletons.md` | Fire-and-forget rule 3: catch internally; no MUST/NEVER, stays WARNING |
+| `widget_actions_namespace_boundary` | `common-patterns.md` | Rule 14: NEVER put controller logic in widgets |
+| `widget_derived_collection_logic` | `performance.md`, `common-patterns.md` | Performance rule 8 and common-patterns rule 14 |
+| `widget_infra_dependency_boundary` | `presentation-widgets.md`, `SKILL.md` | Critical rule R8: screens/routes/notifiers own infrastructure |
+| `widget_top_level_function_boundary` | `performance.md`, `common-patterns.md` | Performance rule 7: NEVER declare top-level widget helpers |
+| `widget_try_catch_boundary` | `common-patterns.md` | Rule 14: no widget `try/catch` |
+
 ## Added In This Pass
 
 Dart-source drift parity:

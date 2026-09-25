@@ -310,8 +310,9 @@ Modal snapshot / state teardown (0.7.0) — `dialog_source_rules`:
   `context.pop()` inside a dialog runs against a dying widget tree; move the
   side effect to the caller after `await showDialog<T>(...)`.
 - `select_returns_unstable_record_identity` — record selects that read
-  getters returning a fresh `Map`/`Set`/`List`/`Items`/`Entries` per call
-  cause a rebuild on every notify; watch primitives or memoize.
+  explicit getters returning a fresh `Map`/`Set`/`Iterable` per call (matched
+  by getter name when unresolved) cause a rebuild on every notify; watch
+  primitives or memoize. Stored fields keep their identity and are allowed.
 - `build_method_assigns_to_field` — `build()` must be pure; no `this.x = ...`
   or `_field = ...` inside build.
 - `widget_calls_notifier_teardown_after_await` — a widget that awaits a

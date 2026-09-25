@@ -27,6 +27,18 @@ class ConfirmDialog extends ConsumerWidget {
 }
 ''';
 
+  Future<void> test_reportsMultilineWatchFromSkillNeverExample() async {
+    final analyzedSource = _analyzedSource(_skillNeverConfirmDialog, addIgnorePrefix: true);
+    final filePath = '$testPackageLibPath/features/confirm/presentation/confirm_dialog.dart';
+    newFile(filePath, analyzedSource);
+
+    await assertDiagnosticsInFile(filePath, [compatLint(analyzedSource, 'ref.watch(\n', ruleName)]);
+  }
+
+  Future<void> test_severityIsError() async {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
   Future<void> test_allowsNonDialogClass() async {
     await assertAllows(r'''
 class WidgetRef {
@@ -307,6 +319,61 @@ class Reader {
   }
 }
 ''';
+
+  Future<void> test_reportsMultilineSelectFromSkillNeverExample() async {
+    final analyzedSource = _analyzedSource(_skillNeverConfirmDialog, addIgnorePrefix: true);
+    final filePath = '$testPackageLibPath/features/confirm/presentation/confirm_dialog.dart';
+    newFile(filePath, analyzedSource);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(
+        analyzedSource,
+        '.select((s) => (isSaving: s.isSaving, itemsByCategoryId: s.itemsByCategoryId)),',
+        ruleName,
+      ),
+    ]);
+  }
+
+  Future<void> test_resolvedGettersDecideRecordFieldIdentity() async {
+    const source = r'''
+class FormState {
+  FormState({required this.isSaving, required this.tagsMap, required this.items});
+  final bool isSaving;
+  final Map<String, int> tagsMap;
+  final List<String> items;
+  Set<String> get selected => items.toSet();
+}
+
+class Provider<T> {
+  Provider<R> select<R>(R Function(T state) selector) => Provider<R>();
+}
+
+class WidgetRef {
+  external T watch<T>(Provider<T> provider);
+}
+
+final formProvider = Provider<FormState>();
+
+class Reader {
+  Reader(this.ref);
+  final WidgetRef ref;
+
+  Object build() {
+    final stable = ref.watch(formProvider.select((s) => (saving: s.isSaving, tags: s.tagsMap)));
+    final fresh = ref.watch(formProvider.select((s) => (saving: s.isSaving, picked: s.selected)));
+    return (stable, fresh);
+  }
+}
+''';
+
+    await assertDiagnostics(source, [
+      compatLint(source, '.select((s) => (saving: s.isSaving, picked: s.selected)));', ruleName),
+    ]);
+  }
+
+  Future<void> test_severityIsError() async {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
 
   Future<void> test_allowsPrimitiveSelect() async {
     await assertAllows(r'''
@@ -815,3 +882,33 @@ Future<void> openMenu(BuildContext context) async {
 ''');
   }
 }
+
+const _skillNeverConfirmDialog = r'''
+class WidgetRef {
+  dynamic watch(Object? provider) => null;
+  dynamic read(Object? provider) => null;
+}
+class ConsumerWidget extends Widget {}
+
+// NEVER — dialog hosts mutation + watches mutable record
+class ConfirmDialog extends ConsumerWidget {
+  ConfirmDialog({required this.id});
+  final String id;
+
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entity = ref.watch(entityProvider(id));
+    final (:isSaving, :itemsByCategoryId) = ref.watch(
+      formProvider.select((s) => (isSaving: s.isSaving, itemsByCategoryId: s.itemsByCategoryId)),
+    );
+    return AppPrimaryButton(
+      onPressed: () async {
+        final ok = await ref.read(formProvider.notifier).save(entity);
+        if (!context.mounted) return;
+        Navigator.of(context, rootNavigator: true).pop();
+        if (ok) context.pop();
+      },
+      label: itemsByCategoryId.isEmpty ? 'Exit' : 'Confirm',
+    );
+  }
+}
+''';

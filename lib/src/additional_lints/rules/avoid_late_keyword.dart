@@ -6,6 +6,9 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 /// Warns when a declaration uses the `late` keyword.
+///
+/// `State` fields and instance `late final` fields with an initializer (lazy
+/// derived values, as performance.md prescribes) are allowed.
 class AvoidLateKeyword extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_late_keyword',
@@ -40,6 +43,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (lateKeyword == null) return;
     if (isTestFile) return;
     if (_isStateField(node)) return;
+    if (_isLazyDerivedInstanceField(node)) return;
 
     rule.reportAtToken(lateKeyword);
   }
@@ -48,6 +52,13 @@ final class _Visitor extends SimpleAstVisitor<void> {
 bool _isTestFile(RuleContext context) {
   final path = context.definingUnit.file.path.replaceAll('\\', '/');
   return path.contains('/test/') && !path.contains('/lib/');
+}
+
+bool _isLazyDerivedInstanceField(VariableDeclarationList node) {
+  final parent = node.parent;
+  if (parent is! FieldDeclaration || parent.isStatic) return false;
+  if (!node.isFinal) return false;
+  return node.variables.every((variable) => variable.initializer != null);
 }
 
 bool _isStateField(VariableDeclarationList node) {

@@ -297,6 +297,88 @@ class Cache {
 
     await assertDiagnosticsInFile(path, [lint(source.indexOf('late'), 'late'.length)]);
   }
+
+  Future<void> test_lateFinalDerivedInstanceField_noLint() async {
+    const source = r'''
+class Item {
+  const Item(this.groupId);
+  final String groupId;
+}
+
+class Catalog {
+  Catalog(this.items);
+
+  final List<Item> items;
+
+  late final Map<String, List<Item>> itemsByGroup = _indexItemsByGroup(items);
+}
+
+Map<String, List<Item>> _indexItemsByGroup(List<Item> items) {
+  final map = <String, List<Item>>{};
+  for (final item in items) {
+    (map[item.groupId] ??= <Item>[]).add(item);
+  }
+  return map;
+}
+''';
+    final path = '$testPackageLibPath/derived_field.dart';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, []);
+  }
+
+  Future<void> test_lateFinalFieldWithoutInitializer_lint() async {
+    const source = r'''
+class Cache {
+  late final int value;
+}
+''';
+    final path = '$testPackageLibPath/late_final_no_initializer.dart';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [lint(source.indexOf('late'), 'late'.length)]);
+  }
+
+  Future<void> test_lateMutableFieldWithInitializer_lint() async {
+    const source = r'''
+class Cache {
+  late int value = _compute();
+}
+
+int _compute() => 1;
+''';
+    final path = '$testPackageLibPath/late_mutable_initializer.dart';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [lint(source.indexOf('late'), 'late'.length)]);
+  }
+
+  Future<void> test_lateFinalStaticFieldWithInitializer_lint() async {
+    const source = r'''
+class Cache {
+  static late final int value = _compute();
+}
+
+int _compute() => 1;
+''';
+    final path = '$testPackageLibPath/late_static_initializer.dart';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [lint(source.indexOf('late'), 'late'.length)]);
+  }
+
+  Future<void> test_lateFinalLocalWithInitializer_lint() async {
+    const source = r'''
+void f(int Function() compute) {
+  late final value = compute();
+  print(value);
+}
+''';
+    final path = '$testPackageLibPath/late_local_initializer.dart';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [lint(source.indexOf('late'), 'late'.length)]);
+  }
 }
 
 @reflectiveTest

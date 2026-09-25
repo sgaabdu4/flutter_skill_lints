@@ -786,6 +786,59 @@ void run() {
     await assertDiagnostics(source, [lint(start, end - start)]);
   }
 
+  Future<void> test_allowsProseStartingWithTypeKeyword() async {
+    await assertNoDiagnostics(r'''
+void run() {
+  // Widget — use .select() on the computed getter
+  print(1);
+}
+''');
+  }
+
+  Future<void> test_allowsProseWithAssignmentLikeEquals() async {
+    await assertNoDiagnostics(r'''
+void run() {
+  // ✅ DO — fixed sequence: persist → targeted sync → navigate.
+  //    Reorder = UI flicker (stale parent) OR lost writes on dispose.
+  print(1);
+}
+''');
+  }
+
+  Future<void> test_reportsCommentedOutAssignmentWithoutSemicolon() async {
+    const source = r'''
+void run() {
+  // count = 1
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('// count'), '// count = 1'.length)]);
+  }
+
+  Future<void> test_reportsCommentedOutMultilineDeclaration() async {
+    const source = r'''
+void run() {
+  // final items = watch(
+  //   provider,
+  // );
+}
+''';
+    final start = source.indexOf('// final');
+    final end = source.indexOf('// );') + '// );'.length;
+    await assertDiagnostics(source, [lint(start, end - start)]);
+  }
+
+  Future<void> test_reportsCommentedOutConstructorCallAfterProse() async {
+    const source = r'''
+void run() {
+  // inside UserModel.toEntity() or UserImportService — outside /domain/:
+  //   User(email: Email(json['email'] as String))
+}
+''';
+    final start = source.indexOf('// inside');
+    final end = source.indexOf('String))') + 'String))'.length;
+    await assertDiagnostics(source, [lint(start, end - start)]);
+  }
+
   Future<void> test_reportsCommentedOutBlock() async {
     const source = r'''
 void run() {

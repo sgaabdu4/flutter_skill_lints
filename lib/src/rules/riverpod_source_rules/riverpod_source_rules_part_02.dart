@@ -40,8 +40,8 @@ bool _isRiverpodRefWatch(MethodInvocation node) {
 }
 
 /// Watches that already rebuild on a narrow value: `select`, `.notifier`,
-/// computed projection providers, scalar results, values consumed whole, and
-/// MutationState flags.
+/// computed projection providers consumed as the projection, scalar results,
+/// values consumed whole, and MutationState flags.
 bool _isNarrowWatch(MethodInvocation watch) {
   final argument = watch.argumentList.arguments.firstOrNull;
   if (argument is! Expression) return false;
@@ -50,7 +50,7 @@ bool _isNarrowWatch(MethodInvocation watch) {
       argument is PropertyAccess && argument.propertyName.name == 'notifier') {
     return true;
   }
-  if (_isProjectionProviderWatch(argument)) return true;
+  if (_isProjectionProviderWatch(argument) && _consumesProjection(watch)) return true;
   final type = watch.staticType;
   // Scalar values already form an atomic rebuild boundary.
   if (type != null &&
@@ -67,14 +67,32 @@ bool _isNarrowWatch(MethodInvocation watch) {
   return _isRiverpodMutationElement(type?.element, 'MutationState');
 }
 
-bool _consumesWholeWatch(MethodInvocation watch) {
+/// performance.md:6: a computed (functional) provider's value is already the
+/// render projection when it is a projected collection, destructured as a
+/// record, or consumed whole; a whole projection is minimal view data even for
+/// an app widget. A projection read only by field (performance.md:76 WRONG
+/// `userState.user`) still needs `select`.
+bool _consumesProjection(MethodInvocation watch) {
+  final type = watch.staticType;
+  if (type is InterfaceType &&
+      [type, ...type.allSupertypes].any((type) => type.isDartCoreIterable || type.isDartCoreMap)) {
+    return true;
+  }
+  final parent = watch.parent;
+  if (parent is PatternVariableDeclaration && parent.pattern is RecordPattern) return true;
+  return _consumesWholeWatch(watch, projection: true);
+}
+
+bool _consumesWholeWatch(MethodInvocation watch, {bool projection = false}) {
   AstNode value = watch;
   while (_wholeValueWrapper(value.parent, value)) {
     value = value.parent!;
   }
   final parent = value.parent;
-  if (parent is VariableDeclaration && _isOnlyUsedWhole(parent)) return true;
-  return _isWholeValueUse(watch);
+  if (parent is VariableDeclaration && _isOnlyUsedWhole(parent, projection: projection)) {
+    return true;
+  }
+  return _isWholeValueUse(watch, projection: projection);
 }
 
 bool _wholeValueWrapper(AstNode? parent, AstNode value) =>
@@ -82,7 +100,7 @@ bool _wholeValueWrapper(AstNode? parent, AstNode value) =>
     parent is ConditionalExpression &&
         (parent.thenExpression == value || parent.elseExpression == value);
 
-bool _isOnlyUsedWhole(VariableDeclaration declaration) {
+bool _isOnlyUsedWhole(VariableDeclaration declaration, {required bool projection}) {
   final element = declaration.declaredFragment?.element;
   if (element == null) return false;
   AstNode? scope = declaration.parent;
@@ -90,15 +108,16 @@ bool _isOnlyUsedWhole(VariableDeclaration declaration) {
     scope = scope.parent;
   }
   if (scope == null) return false;
-  final uses = _VariableUses(element);
+  final uses = _VariableUses(element, projection: projection);
   scope.accept(uses);
   return uses.found && uses.allWhole;
 }
 
 final class _VariableUses extends RecursiveAstVisitor<void> {
-  _VariableUses(this.element);
+  _VariableUses(this.element, {required this.projection});
 
   final Element element;
+  final bool projection;
   bool found = false;
   bool allWhole = true;
 
@@ -106,18 +125,18 @@ final class _VariableUses extends RecursiveAstVisitor<void> {
   void visitSimpleIdentifier(SimpleIdentifier node) {
     if (node.element != element) return;
     found = true;
-    if (!_isWholeValueUse(node)) allWhole = false;
+    if (!_isWholeValueUse(node, projection: projection)) allWhole = false;
   }
 }
 
-bool _isWholeValueUse(Expression value) {
+bool _isWholeValueUse(Expression value, {bool projection = false}) {
   final parent = value.parent;
   if (parent is ForEachParts && parent.iterable == value) return true;
   if (parent is NamedArgument || parent is ArgumentList) {
     final arguments = parent is NamedArgument ? parent.parent : parent;
     final creation = arguments?.parent;
     if (arguments is ArgumentList && creation is InstanceCreationExpression) {
-      return !_isWholeStateIntoAppWidget(value, creation);
+      return projection || !_isWholeStateIntoAppWidget(value, creation);
     }
   }
   if (parent is SwitchExpression && parent.expression == value) {

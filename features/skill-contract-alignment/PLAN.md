@@ -73,6 +73,7 @@ Integration: `fix/skill-contract-accept` merged after the sweep with no textual 
 - `avoid_commented_out_code` requires keyword and assignment candidate lines to parse as a Dart statement (or open a multi-line one), as call lines already did, so prose such as `// Widget — use .select()` and `// Reorder = UI flicker (...)` is clean.
 - `avoid_magic_literals` exempts map-literal and index keys inside `*Model` classes and `data/models/` files (architecture.md `ProductModel.toNameOnlyRequestBody`). Tests prove `core/constants/storage_keys.dart` (`StorageKeys`) and `core/constants/api_paths.dart` (`ApiPaths`) are accepted owners for `avoid_magic_literals` and `avoid_local_contract_key_constants`.
 - `avoid_unsafe_collection_methods` skips test files, where testing.md reads `.first`/`.single` in expectations; production behaviour is unchanged.
+- `prefer_private_extension_type_field` allows a public representation field named `value`, the typed-ID form in dart-patterns-records.md and collections-helpers.md; any other public name still reports.
 
 ## Baseline + execution
 

@@ -121,9 +121,8 @@ class TodoRepository {
   Future<void> rollback(String id) async {
     try {
       await Future<void>.value();
-    } catch (e, s) {
+    } catch (_) {
       await restore(id);
-      Crash.error(e, s, reason: 'rollback');
       rethrow;
     }
   }
@@ -139,6 +138,35 @@ class TodoRepository {
   Future<void> restore(String id) async {}
 }
 ''', path: path);
+  }
+
+  /// A rollback may rethrow, but reporting too gives the notifier a second
+  /// incident for the same failure (error-reporting.md: one incident owner).
+  Future<void> test_reportsRollbackThatReportsBeforeRethrow() async {
+    const source = r'''
+abstract final class Crash {
+  static void error(Object error, StackTrace stackTrace, {String? reason}) {}
+}
+
+class TodoRepository {
+  Future<void> rollback(String id) async {
+    try {
+      await Future<void>.value();
+    } catch (e, s) {
+      await restore(id);
+      Crash.error(e, s, reason: 'rollback');
+      rethrow;
+    }
+  }
+
+  Future<void> restore(String id) async {}
+}
+''';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(source, "Crash.error(e, s, reason: 'rollback');", ruleName),
+    ]);
   }
 
   Future<void> test_reportsCrashReportThenRethrow() async {
@@ -162,7 +190,7 @@ class TodoRepository {
     newFile(filePath, source);
 
     await assertDiagnosticsInFile(filePath, [
-      compatLint(source, 'Crash.error(error, stackTrace);', ruleName, lineStart: true),
+      compatLint(source, 'Crash.error(error, stackTrace);', ruleName),
     ]);
   }
 
@@ -185,7 +213,7 @@ Future<int> load(Future<int> Function() source) async {
     newFile(filePath, source);
 
     await assertDiagnosticsInFile(filePath, [
-      compatLint(source, 'Crash.error(error, stackTrace);', ruleName, lineStart: true),
+      compatLint(source, 'Crash.error(error, stackTrace);', ruleName),
     ]);
   }
 

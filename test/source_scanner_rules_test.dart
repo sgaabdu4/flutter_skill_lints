@@ -324,6 +324,9 @@ $source''';
   }
 
   void _addFlutterPackage() {
+    // Keep foundation stubs a test registered before super.setUp().
+    final foundation = getFile(convertPath('/package/flutter/lib/foundation.dart'));
+    final existingFoundation = foundation.exists ? foundation.readAsStringSync() : '';
     newPackage('flutter')
       ..addFile('lib/widgets.dart', r'''
 class BuildContext {}
@@ -341,10 +344,14 @@ abstract base class MultiPreview {
 }
 ''')
       // Flutter declares debugPrint as a function-typed top-level variable.
-      ..addFile('lib/foundation.dart', r'''
+      ..addFile(
+        'lib/foundation.dart',
+        '$existingFoundation'
+            r'''
 typedef DebugPrintCallback = void Function(String? message, {int? wrapWidth});
 DebugPrintCallback debugPrint = (String? message, {int? wrapWidth}) {};
-''');
+''',
+      );
   }
 
   /// Opt-in stubs for rules that resolve Flutter, flutter_test, mocktail,

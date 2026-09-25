@@ -84,6 +84,7 @@ Integration: `fix/skill-contract-accept` merged after the sweep with no textual 
 - The source scanner ends a member at a `;` before any `{`, so a bodyless declaration such as `const AccountRepository(this.remote);` no longer hides the next method from scanned rules (networking.md repository shape).
 - `fire_and_forget_missing_catch` trusts `maybePop` route futures (routing-app-shell.md Bento sheet `_createWorkout`); `service_static_side_effect` skips test files (hive-persistence.md `test/shared/hive_test_helper.dart`); `freezed_required_value_class` skips `abstract final class` static namespaces such as the riverpod-codegen.md `TodoListCodec`.
 - `state_raw_error_to_string` points its correction at `AppErrorMapper.from(e)`, the data-layer mapper the skill now uses.
+- The Flutter plugin smoke (`RUN_FLUTTER_PLUGIN_SMOKE=1`) follows the skill: its broad-watch case reads a field of a watched provider (performance.md:76), while a computed collection and a scalar watched whole stay clean. Its no-error checks exclude each fixture's own error-severity lint findings, so they still catch compile errors.
 
 ## Baseline + execution
 

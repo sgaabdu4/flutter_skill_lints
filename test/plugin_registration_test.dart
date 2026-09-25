@@ -342,6 +342,8 @@ void main() {
       // signatures (dart-patterns-records.md:61-80) contradict them.
       'avoid_declaring_call_method',
       'move_records_to_typedefs',
+      // Duplicates use_dedicated_media_query_methods: one read reported twice.
+      'prefer_dedicated_media_query_methods',
     ]) {
       expect(paths, isNot(contains(forbidden)));
     }
@@ -382,7 +384,7 @@ void main() {
 
 const _enabledFlutterSkillRuleCount = 230;
 const _enabledFlutterSkillDiagnosticCount = 238;
-const _enabledAdditionalRuleCount = 276;
+const _enabledAdditionalRuleCount = 275;
 
 const _modelSkillErrorDiagnostics = [
   'use_sealed_freezed_classes',

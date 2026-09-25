@@ -2,13 +2,13 @@
 
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/consistent_update_render_object.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_dedicated_media_query_methods.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_sliver_prefix.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/use_dedicated_media_query_methods.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
   defineReflectiveSuite(() {
-    defineReflectiveTests(PreferDedicatedMediaQueryMethodsTest);
+    defineReflectiveTests(UseDedicatedMediaQueryMethodsTest);
     defineReflectiveTests(PreferSliverPrefixTest);
     defineReflectiveTests(ConsistentUpdateRenderObjectTest);
   });
@@ -93,10 +93,10 @@ abstract class LeafRenderObjectWidget extends RenderObjectWidget {
 }
 
 @reflectiveTest
-final class PreferDedicatedMediaQueryMethodsTest extends _FlutterRuleTest {
+final class UseDedicatedMediaQueryMethodsTest extends _FlutterRuleTest {
   @override
   void setUp() {
-    rule = PreferDedicatedMediaQueryMethods();
+    rule = UseDedicatedMediaQueryMethods();
     super.setUp();
   }
 
@@ -112,9 +112,12 @@ void build(BuildContext context) {
 ''';
 
     await assertDiagnostics(source, [
-      lint(source.indexOf('size'), 'size'.length),
-      lint(source.indexOf('padding'), 'padding'.length),
-      lint(source.indexOf('viewInsets'), 'viewInsets'.length),
+      for (final read in [
+        'MediaQuery.of(context).size',
+        'MediaQuery.of(context).padding',
+        'MediaQuery.of(context).viewInsets',
+      ])
+        lint(source.indexOf(read), read.length),
     ]);
   }
 

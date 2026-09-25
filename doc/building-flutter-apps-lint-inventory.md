@@ -470,7 +470,6 @@ prefer_correct_json_casts
 prefer_correct_static_icon_provider
 prefer_correct_test_file_name
 prefer_date_format
-prefer_dedicated_media_query_methods
 prefer_define_hero_tag
 prefer_dot_shorthands
 prefer_enums_by_name

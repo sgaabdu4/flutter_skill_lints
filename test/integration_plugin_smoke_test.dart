@@ -534,7 +534,8 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
         final analyze = await _run('dart', ['analyze'], app);
         final output = '${analyze.stdout}\n${analyze.stderr}';
 
-        expect(output, contains('avoid_non_null_assertion'));
+        // core-stack.md:60 names avoid_null_bang; a bang reports once.
+        expect(output, isNot(contains('avoid_non_null_assertion')));
         expect(output, contains('avoid_null_bang'));
         expect(output, contains('avoid_ref_read_inside_build'));
         expect(output, contains('missing_provider_scope'));

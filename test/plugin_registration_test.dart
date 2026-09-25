@@ -344,6 +344,8 @@ void main() {
       'move_records_to_typedefs',
       // Duplicates use_dedicated_media_query_methods: one read reported twice.
       'prefer_dedicated_media_query_methods',
+      // Duplicates avoid_null_bang, which core-stack.md:60 names.
+      'avoid_non_null_assertion',
     ]) {
       expect(paths, isNot(contains(forbidden)));
     }
@@ -384,7 +386,7 @@ void main() {
 
 const _enabledFlutterSkillRuleCount = 230;
 const _enabledFlutterSkillDiagnosticCount = 238;
-const _enabledAdditionalRuleCount = 275;
+const _enabledAdditionalRuleCount = 274;
 
 const _modelSkillErrorDiagnostics = [
   'use_sealed_freezed_classes',

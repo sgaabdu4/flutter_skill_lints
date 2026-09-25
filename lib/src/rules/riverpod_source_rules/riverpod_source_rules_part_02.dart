@@ -506,8 +506,7 @@ void _reportWidgetRefOutsideWidgets(ScannerRuleReporter reporter, SourceScannerC
   final finder = _WidgetRefTypeFinder();
   context.unit.accept(finder);
   for (final node in finder.nodes) {
-    final location = context.unit.lineInfo.getLocation(node.offset);
-    reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+    reporter.reportNode(context, node);
   }
 }
 

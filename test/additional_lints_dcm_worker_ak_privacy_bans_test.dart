@@ -183,6 +183,24 @@ Map<String, dynamic> toJson() => {};
 ''');
   }
 
+  // hive-persistence.md:56: `<String, dynamic>{}` is a JSON map literal.
+  Future<void> test_jsonMapLiteralDynamicValue_noLint() async {
+    await assertNoDiagnostics(r'''
+Map<String, dynamic> normalize() {
+  final normalized = <String, dynamic>{};
+  return normalized;
+}
+''');
+  }
+
+  Future<void> test_nonJsonMapLiteralDynamic_lint() async {
+    const source = r'''
+final byId = <int, dynamic>{};
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('dynamic'), 'dynamic'.length)]);
+  }
+
   Future<void> test_generatedLocalizationDynamic_noLint() async {
     final filePath = '$testPackageLibPath/l10n/app_localizations.dart';
     newFile(filePath, 'List<dynamic> delegates = <dynamic>[];');

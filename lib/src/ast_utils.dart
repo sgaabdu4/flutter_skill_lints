@@ -836,3 +836,17 @@ final class AsyncStatementScanner {
     if (_silent == 0 && _reported.add(node)) onViolation(node);
   }
 }
+
+/// Whether [node] is the `dynamic` value type of the JSON map shape
+/// `Map<String, dynamic>`: a `Map` type annotation or a map literal's type
+/// arguments (`<String, dynamic>{}`, hive-persistence.md).
+bool isJsonMapDynamicValueType(NamedType node) {
+  final typeArguments = node.parent;
+  if (typeArguments is! TypeArgumentList) return false;
+  final arguments = typeArguments.arguments;
+  if (arguments.length != 2 || arguments.last != node) return false;
+  final keyType = arguments.first;
+  if (keyType is! NamedType || keyType.name.lexeme != 'String') return false;
+  final owner = typeArguments.parent;
+  return owner is NamedType && owner.name.lexeme == 'Map' || owner is SetOrMapLiteral;
+}

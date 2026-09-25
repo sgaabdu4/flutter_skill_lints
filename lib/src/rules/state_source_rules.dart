@@ -278,24 +278,25 @@ bool _isWidgetState(ClassElement element) => element.allSupertypes.any(
 
 Iterable<AstNode> _stringErrorDeclarations(NodeList<ClassMember> members) sync* {
   for (final member in members) {
-    if (member is FieldDeclaration && !member.isStatic) {
-      for (final variable in member.fields.variables) {
-        final field = variable.declaredFragment?.element;
-        if (_errorName.hasMatch(variable.name.lexeme) && _isStringType(field?.type)) {
-          yield member.fields.type ?? variable;
-        }
-      }
-    }
+    if (member is FieldDeclaration && !member.isStatic) yield* _stringErrorFields(member);
     if (member is ConstructorDeclaration && member.redirectedConstructor != null) {
       // Freezed turns redirecting factory parameters into state fields.
-      for (final parameter in member.parameters.parameters) {
-        final element = parameter.declaredFragment?.element;
-        final name = parameter.name?.lexeme ?? '';
-        if (_errorName.hasMatch(name) && _isStringType(element?.type)) yield parameter;
-      }
+      yield* member.parameters.parameters.where(
+        (parameter) =>
+            _isStringError(parameter.name?.lexeme ?? '', parameter.declaredFragment?.element.type),
+      );
     }
   }
 }
+
+Iterable<AstNode> _stringErrorFields(FieldDeclaration member) => member.fields.variables
+    .where(
+      (variable) => _isStringError(variable.name.lexeme, variable.declaredFragment?.element.type),
+    )
+    .map((variable) => member.fields.type ?? variable);
+
+bool _isStringError(String name, DartType? type) =>
+    _errorName.hasMatch(name) && _isStringType(type);
 
 final class _RawErrorStringFinder extends RecursiveAstVisitor<void> {
   final nodes = <NamedArgument>[];

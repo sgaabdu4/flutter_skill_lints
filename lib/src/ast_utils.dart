@@ -548,36 +548,53 @@ final class AsyncStatementScanner {
   };
 
   bool _scanIf(IfStatement statement, bool afterAwait) {
-    final elseStatement = statement.elseStatement;
     if (statementIsMountedReturnGuard(
       statement,
       guardTarget,
       additionalCondition: additionalMountedCondition,
     )) {
-      if (afterAwait) {
-        final access = firstTargetAccess(
-          statement.thenStatement,
-          accessTargets,
-          includeBlocks: true,
-        );
-        if (access != null) _report(access);
-      }
-      return elseStatement == null ? false : _scanStatement(elseStatement, afterAwait);
+      return _scanMountedReturnGuard(statement, afterAwait);
     }
     final condition = statement.expression;
     if (mountedWhenTrue?.call(condition) ?? false) {
-      final thenExit = _scanStatement(statement.thenStatement, containsAwait(condition));
-      final elseExit = elseStatement == null
-          ? afterAwait
-          : _scanStatement(elseStatement, afterAwait || containsAwait(condition));
-      return _mayContinue(statement.thenStatement, thenExit) ||
-          _mayContinue(elseStatement, elseExit);
+      final conditionAwaits = containsAwait(condition);
+      return _scanBranches(
+        statement,
+        thenEntry: conditionAwaits,
+        elseEntry: afterAwait || conditionAwaits,
+        exitWithoutElse: afterAwait,
+      );
     }
     final branchEntry = _scanInline(condition, afterAwait);
-    final thenExit = _scanStatement(statement.thenStatement, branchEntry);
+    return _scanBranches(
+      statement,
+      thenEntry: branchEntry,
+      elseEntry: branchEntry,
+      exitWithoutElse: branchEntry,
+    );
+  }
+
+  /// The then branch of `if (!mounted) return;` runs only while unmounted.
+  bool _scanMountedReturnGuard(IfStatement statement, bool afterAwait) {
+    if (afterAwait) {
+      final access = firstTargetAccess(statement.thenStatement, accessTargets, includeBlocks: true);
+      if (access != null) _report(access);
+    }
+    final elseStatement = statement.elseStatement;
+    return elseStatement == null ? false : _scanStatement(elseStatement, afterAwait);
+  }
+
+  bool _scanBranches(
+    IfStatement statement, {
+    required bool thenEntry,
+    required bool elseEntry,
+    required bool exitWithoutElse,
+  }) {
+    final elseStatement = statement.elseStatement;
+    final thenExit = _scanStatement(statement.thenStatement, thenEntry);
     final elseExit = elseStatement == null
-        ? branchEntry
-        : _scanStatement(elseStatement, branchEntry);
+        ? exitWithoutElse
+        : _scanStatement(elseStatement, elseEntry);
     return _mayContinue(statement.thenStatement, thenExit) || _mayContinue(elseStatement, elseExit);
   }
 

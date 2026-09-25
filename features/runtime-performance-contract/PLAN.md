@@ -48,7 +48,7 @@ N/A — analyzer lint behavior only; no app surface.
 ## Verification
 
 Result: Passed
-Evidence: `dart format lib test` clean, `dart analyze` no issues, `dart test` 2,167 passed and 1 skipped, and `RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart` passed (audit_boundaries lines 11 and 12 report). Hard Eng: see below.
+Evidence: `dart format lib test` clean, `dart analyze` no issues, `dart test` 2,167 passed and 1 skipped, and `RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart` passed (audit_boundaries lines 11 and 12 report). Hard Eng Draft check at cbe7c68 passes all 14 gates, including dead-code-duplicates.
 E2E: Passed — probe `dart analyze` (probe-runtime-performance-contract, build_runner run): `text_field_on_changed_no_debounce` reports p37_form.dart:55-57, p37b_form.dart:53 and p37b_cross_file_fields.dart:15-16, and is clean on the skill `setName`/`setPrice` over a real `@freezed` state, the skill `SearchNotifier` with `Debouncer`, and the issue repro; `riverpod_auto_dispose_keepalive_dependencies` reports at ERROR on cart_total_providers.dart:7 and :10, search_notifier.dart:15 and perf_notifiers.dart:239 (the audit's cross-file gap), with the mixed and keepAlive controls clean; `keepalive_watches_unbounded_collection` reports runtime_contract_notifiers.dart:17 and :50 with the :54 and :57 DO controls clean.
 Delivery target: Merge
 Delivery: Pending — combined PR by the coordinator.

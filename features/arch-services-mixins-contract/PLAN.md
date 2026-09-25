@@ -35,7 +35,7 @@ Authority: Coordinator brief for the lint audit fix; skill text wins over the pr
 ## Baseline + execution
 
 Result: Passed
-Evidence: The audit probe (`scratchpad/probe-arch`) against the published package reproduced each row: false negatives for both-constructor and token-getter singletons, uncaught `unawaited` callees, uninitialized mixin fields, top-level `Random()` and `onPressed` drops; false positives for catching callees, `=>` mixin members and the skill's retry example.
+Evidence: A local consumer probe against the published package reproduced each row: false negatives for both-constructor and token-getter singletons, uncaught `unawaited` callees, uninitialized mixin fields, top-level `Random()` and `onPressed` drops; false positives for catching callees, `=>` mixin members and the skill's retry example.
 Current baseline: 2,175 tests pass (1 skipped); analyzer reports no issues.
 Execution: One builder fixed each rule in its existing file, red test first, and committed after each green step.
 
@@ -50,7 +50,7 @@ N/A — analyzer plugin rules; no app surface.
 ## Verification
 
 Result: Passed
-Evidence: `dart format` clean, `dart analyze` no issues, `dart test` 2,175 passed (1 skipped). Probe copy `scratchpad/probe-arch-services-mixins-contract` pointed at this worktree reports every VIOLATION file for the rows (mixin nullable/late fields, both-constructor, getter and #51 cache singletons, uncaught same-file and cross-file `unawaited` callees, `onPressed` drop, top-level and closure `Random`) and leaves every CONTROL clean (catching callees, canonical singletons, stateless mixins, `ap_retry.dart`, `i_probe_b_items_repository.dart`). `python3 .hooks/hard-eng.py check --base origin/main --plan-stage Draft` passed every gate (format, types-lint, security, import boundaries, 2,175 tests with 75.69% line coverage, dead-code-duplicates after splitting two complex functions, performance, secrets, actionlint, zizmor).
+Evidence: `dart format` clean, `dart analyze` no issues, `dart test` 2,175 passed (1 skipped). A local consumer probe pointed at this worktree reports every VIOLATION file for the rows (mixin nullable/late fields, both-constructor, getter and #51 cache singletons, uncaught same-file and cross-file `unawaited` callees, `onPressed` drop, top-level and closure `Random`) and leaves every CONTROL clean (catching callees, canonical singletons, stateless mixins, `ap_retry.dart`, `i_probe_b_items_repository.dart`). `python3 .hooks/hard-eng.py check --base origin/main --plan-stage Draft` passed every gate (format, types-lint, security, import boundaries, 2,175 tests with 75.69% line coverage, dead-code-duplicates after splitting two complex functions, performance, secrets, actionlint, zizmor).
 E2E: Passed — real consumer probe app analyzed with `dart analyze` through the plugin path.
 Delivery target: Merge
 Delivery: Pending — coordinator integrates the branch.

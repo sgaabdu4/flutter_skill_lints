@@ -4,8 +4,8 @@ This audit covers both plugin surfaces:
 
 - `lib/src/rules/**`: 227 registered `building-flutter-apps` warning rules.
 - `lib/src/rules/**`: 235 `building-flutter-apps` diagnostic codes.
-- `lib/src/additional_lints/rules/**`: 279 additional diagnostics.
-- Total unique diagnostics: 512.
+- `lib/src/additional_lints/rules/**`: 278 additional diagnostics.
+- Total unique diagnostics: 511.
 
 ## Full Rule Inventory
 

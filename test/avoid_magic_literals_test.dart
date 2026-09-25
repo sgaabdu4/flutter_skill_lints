@@ -1,7 +1,9 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_magic_literals.dart';
+import 'package:test/test.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
@@ -14,8 +16,138 @@ void main() {
 final class AvoidMagicLiteralsTest extends AnalysisRuleTest {
   @override
   void setUp() {
+    _addFlutterPreviewPackage();
     rule = AvoidMagicLiterals();
     super.setUp();
+  }
+
+  void _addFlutterPreviewPackage() {
+    newPackage('flutter').addFile('lib/widget_previews.dart', r'''
+base class Preview {
+  const Preview({String? name, double? textScaleFactor});
+}
+
+abstract base class MultiPreview {
+  const MultiPreview();
+  List<Preview> get previews;
+}
+''');
+  }
+
+  static const _productPreviewBody = r'''
+class Product {
+  const Product({required this.id, required this.price});
+  final String id;
+  final int price;
+}
+
+class ProductCard {
+  const ProductCard({required this.productId, required this.products});
+  final String productId;
+  final List<Product> products;
+}
+''';
+
+  Future<void> test_severityIsError() async {
+    expect(AvoidMagicLiterals.code.severity, DiagnosticSeverity.ERROR);
+  }
+
+  Future<void> test_allowsSampleDataInsideResolvedPreviewFunction() async {
+    await assertNoDiagnostics('''
+import 'package:flutter/widget_previews.dart';
+
+$_productPreviewBody
+@Preview(name: 'Product card - in stock')
+ProductCard productCardInStockPreview() {
+  return ProductCard(
+    productId: 'preview-1',
+    products: [Product(id: 'preview-1', price: 24)],
+  );
+}
+''');
+  }
+
+  Future<void> test_allowsSampleDataInsideResolvedPreviewMethodAndConstructor() async {
+    await assertNoDiagnostics('''
+import 'package:flutter/widget_previews.dart';
+
+$_productPreviewBody
+class ProductCardPreviews {
+  @Preview(name: 'Static')
+  static ProductCard staticPreview() => ProductCard(
+    productId: 'preview-1',
+    products: [Product(id: 'preview-1', price: 24)],
+  );
+}
+
+class ProductCardSample extends ProductCard {
+  @Preview(name: 'Constructor')
+  ProductCardSample() : super(productId: 'preview-2', products: [Product(id: 'preview-2', price: 36)]);
+}
+''');
+  }
+
+  Future<void> test_reportsBoundaryLiteralInsideMultiPreviewClass() async {
+    const source = r'''
+import 'package:flutter/widget_previews.dart';
+
+final class TextScalePreviews extends MultiPreview {
+  const TextScalePreviews();
+
+  static const _scales = {'large': 2.0, 'huge': 3.0};
+
+  @override
+  List<Preview> get previews => [
+    Preview(name: 'Large', textScaleFactor: 2.5),
+    Preview(name: 'Huge', textScaleFactor: _scales['huge']),
+  ];
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf("_scales['huge']") + '_scales['.length, "'huge'".length),
+    ]);
+  }
+
+  Future<void> test_reportsSampleDataUnderLookalikePreviewAnnotation() async {
+    const source =
+        '''
+class Preview {
+  const Preview({String? name});
+}
+
+$_productPreviewBody
+@Preview(name: 'Product card - in stock')
+ProductCard productCardInStockPreview() {
+  return ProductCard(
+    productId: 'preview-1',
+    products: [Product(id: 'preview-3', price: 24)],
+  );
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf("'preview-1'"), "'preview-1'".length),
+      lint(source.indexOf("'preview-3'"), "'preview-3'".length),
+    ]);
+  }
+
+  Future<void> test_reportsSampleDataOutsidePreview() async {
+    const source =
+        '''
+$_productPreviewBody
+ProductCard productCard() {
+  return ProductCard(
+    productId: 'preview-1',
+    products: [Product(id: 'preview-3', price: 24)],
+  );
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf("'preview-1'"), "'preview-1'".length),
+      lint(source.indexOf("'preview-3'"), "'preview-3'".length),
+    ]);
   }
 
   Future<void> test_reportsRawNumberLiteral() async {

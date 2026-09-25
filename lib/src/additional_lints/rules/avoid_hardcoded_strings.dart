@@ -4,6 +4,7 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
@@ -13,9 +14,14 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 /// Flags string literals, and resolved `const` String variables or static
 /// fields (for example a `*Strings` constants class), passed as the data of a
 /// [Text] widget or to a curated set of user-facing named parameters (for
-/// example `label`, `hintText`, `title`, `tooltip`, `semanticLabel`). Sample
-/// data inside resolved `@Preview` declarations, `/l10n/` and `/generated/`
-/// sources, and tests are exempt.
+/// example `label`, `hintText`, `title`, `tooltip`, `semanticLabel`). Inside
+/// Flutter widget and `State` classes it also flags prose (text with
+/// whitespace or ending in sentence punctuation) passed to a function-typed
+/// value such as `widget.onError('Please choose a time')`; identifiers, keys,
+/// URLs, declared methods or functions, and top-level or static function
+/// variables such as `debugPrint` stay clean. Sample data inside
+/// resolved `@Preview` declarations, `/l10n/` and `/generated/` sources, and
+/// tests are exempt.
 class AvoidHardcodedStrings extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_hardcoded_strings',
@@ -40,7 +46,10 @@ class AvoidHardcodedStrings extends AnalysisRule {
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
     if (_isExcludedContext(context)) return;
-    registry.addInstanceCreationExpression(this, _Visitor(this));
+    final visitor = _Visitor(this);
+    registry.addInstanceCreationExpression(this, visitor);
+    registry.addFunctionExpressionInvocation(this, visitor);
+    registry.addMethodInvocation(this, visitor);
   }
 }
 
@@ -50,6 +59,10 @@ final class _Visitor extends SimpleAstVisitor<void> {
   final AvoidHardcodedStrings rule;
 
   static const _textChecker = TypeChecker.fromName('Text', packageName: 'flutter');
+  static const _widgetOrStateChecker = TypeChecker.any([
+    TypeChecker.fromName('Widget', packageName: 'flutter'),
+    flutterStateChecker,
+  ]);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
@@ -72,7 +85,56 @@ final class _Visitor extends SimpleAstVisitor<void> {
       }
     }
   }
+
+  /// Callback fields, parameters, and locals resolve as function-expression
+  /// invocations; declared methods and functions do not. Top-level and static
+  /// function variables such as `debugPrint` are global hooks and are skipped.
+  @override
+  void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
+    if (node.function.staticType is FunctionType) {
+      _reportCallbackProse(node, node.function, node.argumentList);
+    }
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final target = node.realTarget;
+    if (node.methodName.name == 'call' && target?.staticType is FunctionType) {
+      _reportCallbackProse(node, target, node.argumentList);
+    }
+  }
+
+  void _reportCallbackProse(AstNode node, Expression? callee, ArgumentList arguments) {
+    if (_isGlobalFunctionVariable(callee) ||
+        enclosingWidgetPreview(node) != null ||
+        !isEnclosedClassAssignableTo(node, _widgetOrStateChecker)) {
+      return;
+    }
+    for (final argument in arguments.arguments) {
+      final expression = argument.argumentExpression;
+      final text = _callbackArgumentText(expression);
+      if (text != null && _isProse(text)) rule.reportAtNode(expression);
+    }
+  }
 }
+
+/// The literal text of a callback argument; interpolated values become `$`.
+String? _callbackArgumentText(Expression expression) => switch (expression) {
+  StringInterpolation(:final elements) => [
+    for (final element in elements) element is InterpolationString ? element.value : r'$',
+  ].join(),
+  _ => stringLiteralText(expression) ?? _constantStringText(expression),
+};
+
+/// Prose contains whitespace or ends in sentence punctuation; identifiers,
+/// keys, paths, and URLs do not.
+bool _isProse(String text) {
+  final trimmed = text.trim();
+  return hasLetter(trimmed) && (_whitespace.hasMatch(trimmed) || _sentenceEnd.hasMatch(trimmed));
+}
+
+final RegExp _whitespace = RegExp(r'\s');
+final RegExp _sentenceEnd = RegExp(r'[A-Za-z][.!?…]+$');
 
 Expression? _firstPositional(NodeList<Argument> arguments) {
   return arguments.isEmpty ? null : arguments.first.argumentExpression;
@@ -91,13 +153,26 @@ bool _isUserFacingLiteral(Expression expression) {
 
 /// The value of a resolved `const` String variable or static field.
 String? _constantStringText(Expression expression) {
+  final variable = _referencedElement(expression);
+  if (variable is! VariableElement || !variable.isConst) return null;
+  return variable.computeConstantValue()?.toStringValue();
+}
+
+/// Whether [callee] reads a top-level variable or static field, such as
+/// `debugPrint`; these are global hooks, not the widget's callbacks.
+bool _isGlobalFunctionVariable(Expression? callee) {
+  final variable = callee == null ? null : _referencedElement(callee);
+  return variable is TopLevelVariableElement || (variable is FieldElement && variable.isStatic);
+}
+
+/// The resolved element an identifier or property access reads, with getters
+/// unwrapped to their variable.
+Element? _referencedElement(Expression expression) {
   final element = switch (expression) {
     SimpleIdentifier(:final element) => element,
     PrefixedIdentifier(:final element) => element,
     PropertyAccess(:final propertyName) => propertyName.element,
     _ => null,
   };
-  final variable = element is PropertyAccessorElement ? element.variable : element;
-  if (variable is! VariableElement || !variable.isConst) return null;
-  return variable.computeConstantValue()?.toStringValue();
+  return element is PropertyAccessorElement ? element.variable : element;
 }

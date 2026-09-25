@@ -337,6 +337,7 @@ void main() {
       'list_all_equatable_fields',
       'prefer_equatable_mixin',
       'prefer_compute_over_isolate_run',
+      'avoid_missing_controller',
     ]) {
       expect(paths, isNot(contains(forbidden)));
     }
@@ -362,7 +363,7 @@ void main() {
 
 const _enabledFlutterSkillRuleCount = 227;
 const _enabledFlutterSkillDiagnosticCount = 235;
-const _enabledAdditionalRuleCount = 279;
+const _enabledAdditionalRuleCount = 278;
 
 Iterable<String> _documentedLintCodes(String text) sync* {
   var depth = 0;

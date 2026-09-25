@@ -8,6 +8,9 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when executable code uses raw string or numeric literals instead of
 /// named constants, value objects, or semantic helpers.
+///
+/// Deterministic sample data inside resolved Flutter `@Preview` functions,
+/// methods, and constructors is exempt; look-alike annotations still report.
 class AvoidMagicLiterals extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_magic_literals',
@@ -17,6 +20,7 @@ class AvoidMagicLiterals extends CompilationUnitRule {
         'and move numeric thresholds, grid sizes, or windows into named constants, '
         'value objects, or semantic helpers. Do not appease this rule with names '
         'that only encode the literal type or value.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidMagicLiterals()
@@ -135,7 +139,8 @@ bool _isAllowedLiteralContext(AstNode node) {
       _isInConstVariableInitializer(node) ||
       _isDirectVariableInitializer(node) ||
       _isInDefaultFormalParameter(node) ||
-      _isInEnumConstant(node);
+      _isInEnumConstant(node) ||
+      enclosingWidgetPreview(node) != null;
 }
 
 bool _isInDirective(AstNode node) => node.thisOrAncestorOfType<Directive>() != null;

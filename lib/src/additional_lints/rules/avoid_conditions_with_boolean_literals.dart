@@ -5,6 +5,9 @@ import 'package:flutter_skill_lints/src/additional_lints/condition_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/constant_expression.dart';
 
 /// Warns when a control-flow condition directly contains boolean literals.
+///
+/// A bare `true` as the whole condition of a `while` or `do`-`while` loop is
+/// the infinite-loop idiom (for example a retry loop) and is allowed.
 final class AvoidConditionsWithBooleanLiterals extends ConditionRule {
   static const LintCode code = LintCode(
     'avoid_conditions_with_boolean_literals',
@@ -31,6 +34,7 @@ final class _Visitor extends ConditionVisitor {
 
   @override
   void checkCondition(Expression condition) {
+    if (_isInfiniteLoopCondition(condition)) return;
     final literal = _directBooleanLiteralInCondition(condition);
     if (literal == null) return;
 
@@ -53,4 +57,10 @@ BooleanLiteral? _directBooleanLiteralInCondition(Expression expression) {
   }
 
   return null;
+}
+
+bool _isInfiniteLoopCondition(Expression condition) {
+  final parent = condition.parent;
+  if (parent is! WhileStatement && parent is! DoStatement) return false;
+  return condition is BooleanLiteral && condition.value;
 }

@@ -67,6 +67,7 @@ Integration: `fix/skill-contract-accept` merged after the sweep with no textual 
 
 - `avoid_unnecessary_else_after_control_flow` reports an `else` only when the then-branch ends in `return`, `throw`, `rethrow`, `break` or `continue` (SKILL.md R17); collection `if`/`else` is no longer reported.
 - `avoid_late_keyword` allows instance `late final` fields with an initializer, the lazy derived value performance.md prescribes; static, local, mutable and uninitialized `late` still report.
+- `avoid_conditions_with_boolean_literals` allows a bare `true` as a `while`/`do` loop condition (the mixins.md `retryWithBackoff` loop); `x && true`, `if (true)` and `while (false)` still report.
 
 ## Baseline + execution
 

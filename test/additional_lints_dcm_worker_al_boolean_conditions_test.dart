@@ -81,11 +81,61 @@ final class AvoidConditionsWithBooleanLiteralsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_whileConditionLiteral_lint() async {
+  Future<void> test_whileTrueLoop_noLint() async {
+    await assertNoDiagnostics(r'''
+Future<int> retry(Future<int> Function() fn, int maxAttempts) async {
+  var attempt = 0;
+  while (true) {
+    try {
+      return await fn();
+    } on Object {
+      attempt++;
+      if (attempt >= maxAttempts) rethrow;
+    }
+  }
+}
+''');
+  }
+
+  Future<void> test_doWhileTrueLoop_noLint() async {
+    await assertNoDiagnostics(r'''
+void f(bool Function() done) {
+  do {
+    if (done()) break;
+  } while (true);
+}
+''');
+  }
+
+  Future<void> test_doWhileFalseLoop_lint() async {
     const source = r'''
 void f() {
-  while (true) {
+  do {
+    print(1);
+  } while (false);
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('false'), 'false'.length)]);
+  }
+
+  Future<void> test_whileTrueCombinedCondition_lint() async {
+    const source = r'''
+void f(bool ready) {
+  while (true && ready) {
     break;
+  }
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('true'), 'true'.length)]);
+  }
+
+  Future<void> test_ifTrueCondition_lint() async {
+    const source = r'''
+void f(List<int> values) {
+  if (true) {
+    values.add(1);
   }
 }
 ''';

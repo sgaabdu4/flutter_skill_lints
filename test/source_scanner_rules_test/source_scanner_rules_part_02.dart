@@ -268,6 +268,8 @@ extension AsyncValueExtensions<T> on AsyncValue<T> {
 class Ref {
   T watch<T>(ProviderListenable<T> provider) => throw StateError('synthetic');
 }
+abstract class $FunctionalProvider<StateT> implements ProviderListenable<StateT> {}
+abstract class $NotifierProvider<NotifierT, StateT> implements ProviderListenable<StateT> {}
 ''');
     newPackage('flutter_riverpod').addFile('lib/flutter_riverpod.dart', r'''
 import 'package:riverpod/riverpod.dart';
@@ -402,35 +404,49 @@ class TodoList {
 ''');
   }
 
+  // performance.md:6: watch a generated computed projection provider directly
+  // when the entire provider value is already the render projection.
   Future<void> test_allowsDirectWatchOfComputedProjectionProvider() async {
     await assertAllows(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-final trainerCardSummaryProvider = Source<Object>();
-final workoutLogGroupedSetEntriesProvider = Source<Object>();
-final activeWorkoutSetsForExerciseProvider = FamilyProvider();
-final activeWorkoutCompletedSetCountForExerciseProvider = FamilyProvider();
-final goRouterProvider = Source<Object>();
-final weightUnitProvider = Source<Object>();
-
-class Source<T> implements ProviderListenable<T> {}
-
-class FamilyProvider {
-  Source<Object> call(String id) => Source<Object>();
+class TrainerSummary { String get title => ''; int get sets => 0; }
+final class TrainerCardProvider extends $FunctionalProvider<TrainerSummary> {}
+final trainerCardProvider = TrainerCardProvider();
+final class ExerciseSetsProvider extends $FunctionalProvider<List<String>> {}
+final class ExerciseSetsFamily {
+  ExerciseSetsProvider call(String exerciseId) => ExerciseSetsProvider();
 }
+final exerciseSetsProvider = ExerciseSetsFamily();
 
 class TrainerCard {
-  Object build() {
-    final ref = WidgetRef();
-    final summary = ref.watch(trainerCardSummaryProvider);
-    final entries = ref.watch(workoutLogGroupedSetEntriesProvider);
-    final sets = ref.watch(activeWorkoutSetsForExerciseProvider('exercise-1'));
-    final count = ref.watch(activeWorkoutCompletedSetCountForExerciseProvider('exercise-1'));
-    final router = ref.watch(goRouterProvider);
-    final unit = ref.watch(weightUnitProvider);
-    return (summary, entries, sets, count, router, unit);
+  Object build(WidgetRef ref) {
+    final summary = ref.watch(trainerCardProvider);
+    final entries = ref.watch(exerciseSetsProvider('exercise-1'));
+    return (summary.title, summary.sets, entries.first);
   }
 }
 ''');
+  }
+
+  // A notifier provider holds mutable state, whatever its name says.
+  Future<void> test_reportsProjectionNamedNotifierProvider() async {
+    const source = r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class TrainerSummary { String get title => ''; int get sets => 0; }
+final class TrainerSummaryNotifierProvider
+    extends $NotifierProvider<Object, TrainerSummary> {}
+final trainerSummaryProvider = TrainerSummaryNotifierProvider();
+
+class TrainerCard {
+  Object build(WidgetRef ref) {
+    final summary = ref.watch(trainerSummaryProvider);
+    return (summary.title, summary.sets);
+  }
+}
+''';
+    await assertDiagnostics(source, [
+      compatLint(source, 'ref.watch(trainerSummaryProvider)', ruleName),
+    ]);
   }
 
   Future<void> test_allowsWholeListAndDtoPassedToWidgets() async {

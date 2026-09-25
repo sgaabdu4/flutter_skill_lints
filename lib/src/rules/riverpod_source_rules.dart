@@ -579,63 +579,17 @@ bool _isRiverpodAnnotation(Annotation annotation) {
   return type?.element?.name == 'Riverpod';
 }
 
+const _functionalProviderType = TypeChecker.fromName(
+  r'$FunctionalProvider',
+  packageName: 'riverpod',
+);
+
+/// A watch of a computed (functional) provider, whose whole value is already
+/// the render projection (performance.md:6). Notifier providers hold mutable
+/// state and need `select`.
 bool _isProjectionProviderWatch(Expression argument) {
-  final providerName = switch (argument) {
-    SimpleIdentifier(:final name) => name,
-    MethodInvocation(target: null, :final methodName) => methodName.name,
-    FunctionExpressionInvocation(function: SimpleIdentifier(:final name)) => name,
-    _ => null,
-  };
-  return providerName != null &&
-      providerName.endsWith('Provider') &&
-      _isProjectionProviderName(providerName);
-}
-
-bool _isProjectionProviderName(String providerName) {
-  final base = providerName.endsWith('Provider')
-      ? providerName.substring(0, providerName.length - 'Provider'.length)
-      : providerName;
-  final normalized = base.toLowerCase();
-
-  if (normalized.endsWith('byid') ||
-      normalized.endsWith('category') ||
-      normalized.endsWith('categories') ||
-      normalized.endsWith('count') ||
-      normalized.endsWith('data') ||
-      normalized.endsWith('date') ||
-      normalized.endsWith('dates') ||
-      normalized.endsWith('days') ||
-      normalized.endsWith('direction') ||
-      normalized.endsWith('enabled') ||
-      normalized.endsWith('entries') ||
-      normalized.endsWith('entry') ||
-      normalized.endsWith('ids') ||
-      normalized.endsWith('indices') ||
-      normalized.endsWith('map') ||
-      normalized.endsWith('mode') ||
-      normalized.endsWith('name') ||
-      normalized.endsWith('reminder') ||
-      normalized.endsWith('router') ||
-      normalized.endsWith('session') ||
-      normalized.endsWith('sessions') ||
-      normalized.endsWith('share') ||
-      normalized.endsWith('sound') ||
-      normalized.endsWith('summary') ||
-      normalized.endsWith('timer') ||
-      normalized.endsWith('unit') ||
-      normalized.endsWith('value') ||
-      normalized.endsWith('vibration') ||
-      normalized.endsWith('version')) {
-    return true;
-  }
-
-  if (RegExp(
-    r'(?:count|data|dates|days|entries|entry|ids|indices|list|map|sets|summary|value)for[a-z0-9]+$',
-  ).hasMatch(normalized)) {
-    return true;
-  }
-
-  return false;
+  final type = argument.staticType;
+  return type is InterfaceType && _functionalProviderType.isAssignableFromType(type);
 }
 
 List<String> _refWatchInvocations(SourceScannerContext context, int lineIndex, int methodEnd) {

@@ -132,6 +132,38 @@ void configure(int a, int b, int c, int d, int e) {}
     await assertDiagnostics(source, [lint(source.indexOf(parameterList), parameterList.length)]);
   }
 
+  Future<void> test_optionalNamedParametersNotCounted_noLint() async {
+    await assertNoDiagnostics(r'''
+abstract final class Crash {
+  static void error(
+    Object error,
+    StackTrace stackTrace, {
+    String? reason,
+    bool fatal = false,
+    Map<String, Object?> extras = const {},
+  }) {}
+}
+''');
+  }
+
+  Future<void> test_fiveRequiredNamedAndPositionalParameters_lint() async {
+    const source = r'''
+void configure(int a, int b, int c, {required int d, required int e}) {}
+''';
+
+    const parameterList = '(int a, int b, int c, {required int d, required int e})';
+    await assertDiagnostics(source, [lint(source.indexOf(parameterList), parameterList.length)]);
+  }
+
+  Future<void> test_fivePositionalWithOptionalPositionalParameters_lint() async {
+    const source = r'''
+void configure(int a, int b, int c, int d, [int e = 0]) {}
+''';
+
+    const parameterList = '(int a, int b, int c, int d, [int e = 0])';
+    await assertDiagnostics(source, [lint(source.indexOf(parameterList), parameterList.length)]);
+  }
+
   Future<void> test_fourFunctionParameters_noLint_maxFourParameters() async {
     await assertNoDiagnostics(r'''
 void configure(int a, int b, int c, int d) {}

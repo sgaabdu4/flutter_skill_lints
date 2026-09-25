@@ -256,6 +256,27 @@ bool _methodLooksDestructive(String methodName) => RegExp(
   caseSensitive: false,
 ).hasMatch(methodName);
 
+int _lineOf(SourceScannerContext context, int offset) =>
+    context.unit.lineInfo.getLocation(offset).lineNumber - 1;
+
+/// An async start of long-running destructive or batch work (networking.md
+/// "Long-Running Remote Work"): `startDeleteAccount(...)` or
+/// `createExecution(..., xasync: true)`.
+bool _startsLongRunningWork(Block block) => collectNodes<MethodInvocation>(block).any((call) {
+  final name = call.methodName.name;
+  return name.startsWith('start') && _longRunningOperationName.hasMatch(name) ||
+      call.argumentList.arguments.any(
+        (argument) => switch (argument) {
+          NamedArgument(
+            name: Token(lexeme: 'xasync'),
+            argumentExpression: BooleanLiteral(value: true),
+          ) =>
+            true,
+          _ => false,
+        },
+      );
+});
+
 bool _hasLaterReconcileCall(SourceScannerContext context, int startLine, int endLine) {
   for (var i = startLine; i <= endLine && i < context.source.length; i++) {
     if (_reconcileCall.hasMatch(context.source.masked[i])) return true;

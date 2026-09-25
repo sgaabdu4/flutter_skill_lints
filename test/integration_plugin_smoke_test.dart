@@ -160,6 +160,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final flagProvider = Provider<bool?>((ref) => null);
 final structuredProvider = Provider<List<String>>((ref) => []);
 final asyncProvider = Provider<AsyncValue<int>>((ref) => const AsyncData<int>(1));
+final profileProvider = Provider<ProfileState>((ref) => const ProfileState('Ada'));
+
+class ProfileState {
+  const ProfileState(this.name);
+  final String name;
+}
 
 class WatchBoundaries extends ConsumerWidget {
   const WatchBoundaries({super.key});
@@ -167,9 +173,10 @@ class WatchBoundaries extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final flag = ref.watch(flagProvider);
+    final profile = ref.watch(profileProvider);
     final entries = ref.watch(structuredProvider);
     final identity = ref.watch(flagProvider.select((value) => value));
-    return Text('$flag $entries $identity', textDirection: TextDirection.ltr);
+    return Text('$flag ${profile.name} $entries $identity', textDirection: TextDirection.ltr);
   }
 }
 
@@ -557,7 +564,9 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
             .split('\n')
             .where((line) => line.contains('riverpod_watch_no_select'));
         expect(broadWatches, hasLength(1));
-        expect(broadWatches.single, contains('watch_boundaries.dart:14:'));
+        // performance.md:76: a field read of a whole watch reports; a computed
+        // collection watched whole (routing-app-shell.md) and a scalar stay clean.
+        expect(broadWatches.single, contains('watch_boundaries.dart:20:'));
         final atomicUpdates = output
             .split('\n')
             .where(
@@ -609,7 +618,23 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
         final callbacks = contexts.where((line) => line.contains('avoid_ref_watch_outside_build'));
         expect(callbacks, hasLength(1));
         expect(callbacks.single, contains('resolved_contexts.dart:8:'));
-        expect(contexts.where((line) => line.trimLeft().startsWith('error -')), isEmpty);
+        // Rules report at error severity; the fixture's own lint findings are
+        // expected, so only other errors (the fixture must compile) fail here.
+        const contextLints = {
+          'avoid_magic_literals',
+          'avoid_returning_widgets',
+          'avoid_throw',
+          'prefer_dot_shorthands',
+          'strings_hardcoded',
+        };
+        expect(
+          contexts.where(
+            (line) =>
+                line.trimLeft().startsWith('error -') &&
+                !contextLints.any((code) => line.trimRight().endsWith(' - $code')),
+          ),
+          isEmpty,
+        );
 
         final mutations = output
             .split('\n')
@@ -700,7 +725,9 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
           nullableContainers.where(
             (line) =>
                 line.trimLeft().startsWith('error -') &&
-                !line.contains('avoid_flexible_outside_flex'),
+                !line.contains('avoid_flexible_outside_flex') &&
+                // The fixture's top-level widget functions are its own shape.
+                !line.contains('avoid_returning_widgets'),
           ),
           isEmpty,
         );

@@ -1,6 +1,6 @@
 # Skill contract acceptance lint fixes
 
-Status: Complete
+Status: Ready
 
 ## Outcome + scope
 
@@ -70,8 +70,10 @@ N/A — analyzer diagnostics have no rendered application UI.
 
 ## Verification
 
-Result: Passed
-Evidence: `dart format --set-exit-if-changed .` checked 560 files and changed none. `dart analyze --fatal-infos` found no issues. `dart test` passed 2,618 tests with one intentional skip.
+Result: Failed
+Evidence: The hard-eng check fails on two inherited findings (below). The format, analyze and test checks for this branch's scope pass.
+
+`dart format --set-exit-if-changed .` checked 560 files and changed none. `dart analyze --fatal-infos` found no issues. `dart test` passed 2,618 tests with one intentional skip.
 
 `python3 .hooks/hard-eng.py check --base origin/main --plan-stage Draft` fails on two findings that this branch inherits from `fix/skill-contract-alignment` and does not touch:
 - `test/source_scanner_rules_test/source_scanner_rules_part_07.dart` has 1,051 lines. `fix/skill-contract-sweep` commit 9088ddf splits it.

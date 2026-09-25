@@ -265,6 +265,16 @@ extension AsyncValueExtensions<T> on AsyncValue<T> {
     required R Function(Object error) error,
   }) => throw StateError('synthetic');
 }
+class Ref {
+  T watch<T>(ProviderListenable<T> provider) => throw StateError('synthetic');
+}
+''');
+    newPackage('flutter_riverpod').addFile('lib/flutter_riverpod.dart', r'''
+import 'package:riverpod/riverpod.dart';
+export 'package:riverpod/riverpod.dart';
+class WidgetRef {
+  T watch<T>(ProviderListenable<T> provider) => throw StateError('synthetic');
+}
 ''');
     super.setUp();
   }
@@ -275,15 +285,12 @@ extension AsyncValueExtensions<T> on AsyncValue<T> {
   String get needle => 'ref.watch(provider)';
   @override
   String get source => r'''
-final provider = Object();
-
-class WidgetRef {
-  Object watch(Object provider) => Object();
-}
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
+final provider = Source<Object>();
 
 class TodoList {
-  Object build() {
-    final ref = WidgetRef();
+  Object build(WidgetRef ref) {
     return ref.watch(provider);
   }
 }
@@ -291,11 +298,13 @@ class TodoList {
 
   Future<void> test_allowsGeneratedNotifierBuildDependencies() async {
     await assertAllows(r'''
-const riverpod = Object();
-final provider = Object();
-class Ref {
-  Object watch(Object provider) => provider;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Riverpod {
+  const Riverpod();
 }
+const riverpod = Riverpod();
+class Source<T> implements ProviderListenable<T> {}
+final provider = Source<Object>();
 @riverpod
 class DerivedNotifier {
   final ref = Ref();
@@ -306,10 +315,8 @@ class DerivedNotifier {
 
   Future<void> test_allowsResolvedScalarResults() async {
     await assertAllows(r"""
-class Source<T> {}
-class WidgetRef {
-  T watch<T>(Source<T> source) => throw StateError('synthetic');
-}
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 enum Selection { first, second }
 final flagProvider = Source<bool>();
 final optionalFlagProvider = Source<bool?>();
@@ -337,10 +344,8 @@ class ScalarView {
 
   Future<void> test_reportsStructuredWatchBesideScalarOnSameLine() async {
     final analyzedSource = _analyzedSource(r"""
-class Source<T> {}
-class WidgetRef {
-  T watch<T>(Source<T> source) => throw StateError('synthetic');
-}
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 class StateValue {
   const StateValue(this.title, this.subtitle);
   final String title;
@@ -362,10 +367,11 @@ class MixedView {
 
   Future<void> test_allowsMultilineFamilyProviderSelect() async {
     await assertNoDiagnostics(r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 final itemByIdProvider = ItemFamily();
 
 class ProviderArg<T> {
-  Object select(Object Function(T? value) selector) => Object();
+  ProviderListenable<Object> select(Object Function(T? value) selector) => throw 0;
 }
 
 class Item {
@@ -384,10 +390,6 @@ class ItemConfig {
   final String itemId;
 }
 
-class WidgetRef {
-  Object watch(Object provider) => Object();
-}
-
 class TodoList {
   Object build(ItemConfig config) {
     final ref = WidgetRef();
@@ -402,19 +404,18 @@ class TodoList {
 
   Future<void> test_allowsDirectWatchOfComputedProjectionProvider() async {
     await assertAllows(r'''
-final trainerCardSummaryProvider = Object();
-final workoutLogGroupedSetEntriesProvider = Object();
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+final trainerCardSummaryProvider = Source<Object>();
+final workoutLogGroupedSetEntriesProvider = Source<Object>();
 final activeWorkoutSetsForExerciseProvider = FamilyProvider();
 final activeWorkoutCompletedSetCountForExerciseProvider = FamilyProvider();
-final goRouterProvider = Object();
-final weightUnitProvider = Object();
+final goRouterProvider = Source<Object>();
+final weightUnitProvider = Source<Object>();
+
+class Source<T> implements ProviderListenable<T> {}
 
 class FamilyProvider {
-  Object call(String id) => Object();
-}
-
-class WidgetRef {
-  Object watch(Object provider) => Object();
+  Source<Object> call(String id) => Source<Object>();
 }
 
 class TrainerCard {
@@ -434,10 +435,8 @@ class TrainerCard {
 
   Future<void> test_allowsWholeListAndDtoPassedToWidgets() async {
     await assertAllows(r'''
-class Source<T> {}
-class WidgetRef {
-  T watch<T>(Source<T> source) => throw StateError('synthetic');
-}
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 class Item {}
 class Details {}
 class ItemsView {
@@ -459,8 +458,8 @@ class View {
 
   Future<void> test_allowsWholeValuesThroughLocalBindings() async {
     await assertAllows(r'''
-class Source<T> {}
-class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 class Item {}
 class Details {}
 class ItemsView { ItemsView({required List<Item> items}); }
@@ -480,9 +479,9 @@ class View {
   // performance.md:26-27: reusable widgets get minimal view data, so a whole
   // multi-field state passed into an app widget reports (#36).
   static const _productStateWidget = r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
-class Source<T> {}
-class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+class Source<T> implements ProviderListenable<T> {}
 class ProductState {
   const ProductState(this.title, this.items, this.isLoading);
   final String title;
@@ -523,9 +522,9 @@ class ProductScreen {
 
   Future<void> test_reportsFreezedStateIntoAppWidget() async {
     final analyzedSource = _analyzedSource(r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
-class Source<T> {}
-class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+class Source<T> implements ProviderListenable<T> {}
 mixin _$ProductState {
   String get title;
   bool get isLoading;
@@ -549,9 +548,9 @@ class ProductScreen {
   // riverpod-codegen.md:181 HistoryScreen and other whole view values stay clean.
   Future<void> test_allowsWholeViewValuesIntoAppWidget() async {
     await assertAllows(r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
-class Source<T> {}
-class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+class Source<T> implements ProviderListenable<T> {}
 class Workout { const Workout(this.id, this.name); final String id; final String name; }
 abstract class WorkoutPage implements Iterable<Workout> {
   List<Workout> get items;
@@ -596,10 +595,10 @@ class MaterialApp extends Widget {
 }
 ''');
     await assertAllows(r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-class Source<T> {}
-class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+class Source<T> implements ProviderListenable<T> {}
 class ShellConfig {
   const ShellConfig(this.initialLocation, this.debugLogDiagnostics);
   final String initialLocation;
@@ -617,10 +616,8 @@ class MyApp {
 
   Future<void> test_allowsWholeListIteration() async {
     await assertAllows(r'''
-class Source<T> {}
-class WidgetRef {
-  T watch<T>(Source<T> source) => throw StateError('synthetic');
-}
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 final itemCollectionProvider = Source<List<int>>();
 
 class ListView {
@@ -635,10 +632,8 @@ class ListView {
 
   Future<void> test_reportsSelectingOneIndexedListItem() async {
     const source = r'''
-class Source<T> {}
-class WidgetRef {
-  T watch<T>(Source<T> source) => throw StateError('synthetic');
-}
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 final itemCollectionProvider = Source<List<int>>();
 
 class ItemView {
@@ -657,11 +652,8 @@ class ItemView {
   // freezed-sealed.md:9 bans .when(); only the sealed switch is a whole-value use.
   Future<void> test_reportsWholeAsyncValueWhenDispatch() async {
     const source = r'''
-import 'package:riverpod/riverpod.dart';
-class Source<T> {}
-class WidgetRef {
-  T watch<T>(Source<T> source) => throw StateError('synthetic');
-}
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 final imageProvider = Source<AsyncValue<int>>();
 
 class AsyncView {
@@ -683,10 +675,8 @@ class AsyncView {
 
   Future<void> test_reportsWholeDispatchOnSameNamedLocalAsyncValue() async {
     const source = r'''
-class Source<T> {}
-class WidgetRef {
-  T watch<T>(Source<T> source) => throw StateError('synthetic');
-}
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 class AsyncValue<T> {
   Object when({
     required Object Function(T value) data,
@@ -715,10 +705,8 @@ class AsyncView {
 
   Future<void> test_allowsWholeAsyncStatusSwitch() async {
     await assertAllows(r'''
-class Source<T> {}
-class WidgetRef {
-  T watch<T>(Source<T> source) => throw StateError('synthetic');
-}
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 sealed class AsyncValue<T> {}
 class AsyncLoading<T> extends AsyncValue<T> {}
 class AsyncError<T> extends AsyncValue<T> {}
@@ -736,8 +724,8 @@ class View {
 
   Future<void> test_allowsSealedUnionVariantSwitch() async {
     await assertAllows(r'''
-class Source<T> {}
-class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 class User {}
 sealed class AuthState {}
 class Authenticated extends AuthState { Authenticated(this.user); final User user; }
@@ -762,8 +750,8 @@ class View {
 
   Future<void> test_allowsAsyncValueVariantDestructuring() async {
     await assertAllows(r'''
-class Source<T> {}
-class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 sealed class AsyncValue<T> {}
 class AsyncData<T> extends AsyncValue<T> { AsyncData(this.value); final T value; }
 class AsyncError<T> extends AsyncValue<T> { AsyncError(this.error); final Object error; }
@@ -784,8 +772,8 @@ class View {
 
   Future<void> test_reportsSealedBaseTypeFieldPattern() async {
     const source = r'''
-class Source<T> {}
-class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 sealed class Session { const Session(this.token); final String token; }
 class ActiveSession extends Session { const ActiveSession(super.token); }
 final signInProvider = Source<Session>();
@@ -800,8 +788,8 @@ class View {
 
   Future<void> test_reportsPartialObjectPatternSwitch() async {
     const source = r'''
-class Source<T> {}
-class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 class Profile { const Profile(this.name, this.age); final String name; final int age; }
 final profileProvider = Source<Profile>();
 class View {
@@ -815,10 +803,8 @@ class View {
 
   Future<void> test_reportsPartialStateReads() async {
     const source = r'''
-class Source<T> {}
-class WidgetRef {
-  T watch<T>(Source<T> source) => throw 'synthetic';
-}
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 class Profile { String get name => 'name'; }
 class AccountState { String get name => 'name'; }
 final profileProvider = Source<Profile>();
@@ -838,10 +824,7 @@ class View {
 
   Future<void> test_allowsMutationStateFlags() async {
     await assertAllows(r'''
-import 'package:riverpod/riverpod.dart';
-class WidgetRef {
-  T watch<T>(ProviderListenable<T> source) => throw 'synthetic';
-}
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 final removeTodoMutation = Mutation<void>();
 class View {
   Object build(WidgetRef ref) => ref.watch(removeTodoMutation).isPending;
@@ -851,8 +834,8 @@ class View {
 
   Future<void> test_reportsLocalMutationStateLookalike() async {
     const source = r'''
-class Source<T> {}
-class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 class MutationState { bool get isPending => false; }
 final removeTodoMutation = Source<MutationState>();
 class View {
@@ -866,8 +849,8 @@ class View {
 
   Future<void> test_conditionalWholeListClearButPartialStateWarns() async {
     const source = r'''
-class Source<T> {}
-class WidgetRef { T watch<T>(Source<T> source) => throw 0; }
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
 class State { const State(this.count); final int count; }
 class ListPanel { ListPanel({required List<String> items, required int count}); }
 final itemsProvider = Source<List<String>>();
@@ -881,5 +864,32 @@ class View {
 }
 ''';
     await assertDiagnostics(source, [compatLint(source, 'ref.watch(stateProvider)', ruleName)]);
+  }
+
+  Future<void> test_reportsWatchSplitAcrossLines() async {
+    const source = r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class Source<T> implements ProviderListenable<T> {}
+class Profile { String get name => 'name'; }
+final profileProvider = Source<Profile>();
+class ProfileView {
+  Object build(WidgetRef ref) {
+    final profile = ref
+        .watch(profileProvider);
+    return profile.name;
+  }
+}
+''';
+    await assertDiagnostics(source, [compatLint(source, 'ref\n', ruleName)]);
+  }
+
+  Future<void> test_allowsWatchOnNonRiverpodReceiver() async {
+    await assertAllows(r'''
+class Profile { String get name => 'name'; }
+class Watcher { Profile watch(Object source) => Profile(); }
+class ProfileView {
+  Object build(Watcher ref) => ref.watch(Object()).name;
+}
+''');
   }
 }

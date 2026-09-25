@@ -1,27 +1,70 @@
 part of '../riverpod_source_rules.dart';
 
-final class _ScalarWatchVisitor extends RecursiveAstVisitor<void> {
-  final offsets = <int>{};
+/// Broad `watch` calls on Riverpod's `Ref` or `WidgetRef` inside a `build`
+/// method.
+final class _BroadBuildWatchVisitor extends RecursiveAstVisitor<void> {
+  final offsets = <int>[];
+  var _inBuild = false;
+
+  @override
+  void visitClassDeclaration(ClassDeclaration node) {
+    // Generated providers legitimately watch dependencies in build().
+    if (node.metadata.any(_isRiverpodAnnotation)) return;
+    super.visitClassDeclaration(node);
+  }
+
+  @override
+  void visitMethodDeclaration(MethodDeclaration node) {
+    final wasInBuild = _inBuild;
+    _inBuild = node.name.lexeme == 'build';
+    super.visitMethodDeclaration(node);
+    _inBuild = wasInBuild;
+  }
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (node.methodName.name == 'watch' && node.target?.toSource() == 'ref') {
-      final type = node.staticType;
-      if (type != null &&
-          (type.isDartCoreBool ||
-              type.isDartCoreString ||
-              type.isDartCoreInt ||
-              type.isDartCoreDouble ||
-              type.isDartCoreNum ||
-              type.element is EnumElement)) {
-        offsets.add(node.offset);
-      }
-      if (_consumesWholeWatch(node)) offsets.add(node.offset);
-      // The skill allows MutationState flags (isPending, hasError, ...) for simple checks.
-      if (_isRiverpodMutationElement(type?.element, 'MutationState')) offsets.add(node.offset);
+    if (_inBuild && _isRiverpodRefWatch(node) && !_isNarrowWatch(node)) {
+      offsets.add(node.offset);
     }
     super.visitMethodInvocation(node);
   }
+}
+
+const _riverpodRefType = TypeChecker.fromName('Ref', packageName: 'riverpod');
+
+bool _isRiverpodRefWatch(MethodInvocation node) {
+  final type = node.realTarget?.staticType;
+  return node.methodName.name == 'watch' &&
+      type is InterfaceType &&
+      (_riverpodRefType.isAssignableFromType(type) || _widgetRef.isAssignableFromType(type));
+}
+
+/// Watches that already rebuild on a narrow value: `select`, `.notifier`,
+/// computed projection providers, scalar results, values consumed whole, and
+/// MutationState flags.
+bool _isNarrowWatch(MethodInvocation watch) {
+  final argument = watch.argumentList.arguments.firstOrNull;
+  if (argument is! Expression) return false;
+  if (argument is MethodInvocation && argument.methodName.name == 'select') return true;
+  if (argument is PrefixedIdentifier && argument.identifier.name == 'notifier' ||
+      argument is PropertyAccess && argument.propertyName.name == 'notifier') {
+    return true;
+  }
+  if (_isProjectionProviderWatch(argument)) return true;
+  final type = watch.staticType;
+  // Scalar values already form an atomic rebuild boundary.
+  if (type != null &&
+      (type.isDartCoreBool ||
+          type.isDartCoreString ||
+          type.isDartCoreInt ||
+          type.isDartCoreDouble ||
+          type.isDartCoreNum ||
+          type.element is EnumElement)) {
+    return true;
+  }
+  if (_consumesWholeWatch(watch)) return true;
+  // The skill allows MutationState flags (isPending, hasError, ...) for simple checks.
+  return _isRiverpodMutationElement(type?.element, 'MutationState');
 }
 
 bool _consumesWholeWatch(MethodInvocation watch) {

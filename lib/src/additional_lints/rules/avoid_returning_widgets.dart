@@ -18,7 +18,10 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 /// separate widget classes.
 ///
 /// The `build()` override method is exempted since it is the standard
-/// way to build widgets.
+/// way to build widgets. Members of an extension on a resolved Widget
+/// collection (`extension WidgetListX on List<Widget>`) that return a Widget
+/// collection are collection utilities such as the skill's `separatedBy`
+/// (collections-helpers.md), not `_buildXxx()` helpers (performance.md:27).
 class AvoidReturningWidgets extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_returning_widgets',
@@ -61,6 +64,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
     if (_isAllowedFrameworkWidgetMethod(node) || hasWidgetPreviewAnnotation(node)) return;
+    if (_isWidgetCollectionExtensionUtility(node)) return;
 
     _checkReturnType(node.returnType, node.name);
   }
@@ -95,6 +99,17 @@ class _Visitor extends SimpleAstVisitor<void> {
     final itemType = type.typeArguments.single;
     if (itemType is! InterfaceType) return false;
     return _returnsWidget(itemType);
+  }
+
+  bool _isWidgetCollectionExtensionUtility(MethodDeclaration node) {
+    final extension = node.parent?.parent;
+    if (extension is! ExtensionDeclaration) return false;
+    final extendedType = extension.declaredFragment?.element.extendedType;
+    final returnType = node.returnType?.type;
+    return extendedType is InterfaceType &&
+        returnType is InterfaceType &&
+        _returnsWidgetCollection(extendedType) &&
+        _returnsWidgetCollection(returnType);
   }
 
   bool _isCollectionType(InterfaceType type) {

@@ -19,6 +19,7 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 /// Typed [Exception] subtypes, including `FormatException`, may be thrown by
 /// parsers and infrastructure code. Throws in resolved Flutter `Widget` or
 /// `State` members, Flutter widget callbacks, and Riverpod notifier methods
+/// (hand-written or `@riverpod` codegen, resolved through `AnyNotifier`)
 /// remain warnings. Direct same-unit function and method references passed to
 /// Flutter callbacks are recognized. The rule cannot prove that a caller
 /// catches a failure or discover every callback connection across files.
@@ -144,7 +145,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   bool _isRiverpodNotifierMethod(MethodDeclaration method) {
     final classElement = enclosingClass(method)?.declaredFragment?.element;
-    return classElement != null && _riverpodNotifierChecker.isSuperOf(classElement);
+    return classElement != null && riverpodNotifierChecker.isSuperOf(classElement);
   }
 }
 
@@ -200,13 +201,6 @@ const _riverpodAnnotationChecker = TypeChecker.fromName(
   'Riverpod',
   packageName: 'riverpod_annotation',
 );
-const _riverpodNotifierChecker = TypeChecker.any([
-  TypeChecker.fromName('Notifier', packageName: 'riverpod'),
-  TypeChecker.fromName('AsyncNotifier', packageName: 'riverpod'),
-  TypeChecker.fromName('StreamNotifier', packageName: 'riverpod'),
-  TypeChecker.fromName('StateNotifier', packageName: 'state_notifier'),
-]);
-
 bool _isRecoverableException(DartType? type) {
   if (type is! InterfaceType || !_exceptionChecker.isAssignableFromType(type)) {
     return false;
@@ -279,9 +273,21 @@ bool _isValueObjectArgumentGuard(ThrowExpression node, String path) {
           guard != null &&
           _referencesParameter(guard.expression, parameter, parent.body, {});
     }
+    if (parent is MethodDeclaration) {
+      return _isPrivateStaticClassHelper(parent) &&
+          guard != null &&
+          _referencesParameter(guard.expression, parameter, parent.body, {});
+    }
   }
   return false;
 }
+
+/// value-objects.md "extracted guard helper": `static double _guard(...)` on the
+/// Value Object class, called from its public factory.
+bool _isPrivateStaticClassHelper(MethodDeclaration method) =>
+    method.isStatic &&
+    method.name.lexeme.startsWith('_') &&
+    method.parent?.parent is ClassDeclaration;
 
 /// The formal parameter passed as the value of a `dart:core`
 /// `ArgumentError.value(...)` creation, if [error] is one.

@@ -269,8 +269,9 @@ final List<ScannerRule> architectureSourceRules = [
 
   /// Use typed IDs for entities with multiple String IDs.
   ///
-  /// Why: Flags domain entities with multiple raw String ID fields. Use extension types or
-  /// value objects for IDs.
+  /// Why: The skill forbids raw `String`/`int` IDs once a feature has several ID types.
+  /// Flags domain files with two or more resolved `String`/`int` `...Id` fields or Freezed
+  /// redirect parameters. Use extension types or value objects for IDs.
   scannerRule(
     code: const LintCode(
       'typed_id_raw_id',
@@ -278,17 +279,16 @@ final List<ScannerRule> architectureSourceRules = [
       correctionMessage: 'Use extension types or value objects for IDs.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags domain entities with multiple raw String ID fields so the Flutter skill violation is shown during analysis.',
+    description: 'Flags domain files with multiple raw String/int ID fields or Freezed redirect parameters so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isDomainPath) return;
-      final idFields = <int>[];
-      for (var i = 0; i < context.source.length; i++) {
-        if (RegExp(r'\bfinal\s+String\s+\w*Id\s*;').hasMatch(context.source.masked[i])) {
-          idFields.add(i);
-        }
-      }
-      if (idFields.length > 1) {
-        reporter.report(context, idFields.first, 0);
+      final idOffsets = _rawIdOffsets(context.unit);
+      if (idOffsets.length > 1) {
+        reporter.report(
+          context,
+          context.unit.lineInfo.getLocation(idOffsets.first).lineNumber - 1,
+          0,
+        );
       }
     },
   ),
@@ -450,3 +450,33 @@ final class _RethrowOnlyCatchFinder extends RecursiveAstVisitor<void> {
     super.visitTryStatement(node);
   }
 }
+
+/// Offsets of `final String/int xId` fields and redirecting-factory parameters.
+List<int> _rawIdOffsets(CompilationUnit unit) => unit.declarations
+    .whereType<ClassDeclaration>()
+    .expand((declaration) => declaration.body.members)
+    .expand(
+      (member) =>
+          _idCandidates(member)
+              .where((candidate) => _isRawId(candidate.name, candidate.type))
+              .map((_) => member.firstTokenAfterCommentAndMetadata.offset),
+    )
+    .toList();
+
+/// Each `final` field variable or redirecting-factory parameter of [member].
+Iterable<({String name, DartType? type})> _idCandidates(ClassMember member) => switch (member) {
+  FieldDeclaration(fields: VariableDeclarationList(isFinal: true, :final variables)) =>
+    variables.map(
+      (variable) => (name: variable.name.lexeme, type: variable.declaredFragment?.element.type),
+    ),
+  ConstructorDeclaration(redirectedConstructor: _?) => member.parameters.parameters.expand(
+    (parameter) => [
+      if (parameter.name case final name?)
+        (name: name.lexeme, type: parameter.declaredFragment?.element.type),
+    ],
+  ),
+  _ => const [],
+};
+
+bool _isRawId(String name, DartType? type) =>
+    name.endsWith('Id') && type != null && (type.isDartCoreString || type.isDartCoreInt);

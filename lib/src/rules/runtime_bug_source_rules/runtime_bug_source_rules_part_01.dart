@@ -81,18 +81,20 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
 
   /// Single id lookups must use the shared Iterable lookup extension.
   ///
-  /// Why: `items.indexBy((item) => item.id)[id]` spreads lookup mechanics
-  /// across call sites and allocates a map for a one-off read. Keep the
-  /// primitive in the shared Iterable extension; reserve `indexBy` for
-  /// providers/services that intentionally return or reuse the full index.
+  /// Why: `items.indexBy((item) => item.id)[id]` or the skill's
+  /// `items.indexOfByKey((item) => item.id)[id]` spreads lookup mechanics
+  /// across call sites and allocates a map for a one-off read. Use
+  /// `lookupByKey` for one read; keep `indexOfByKey` for a cached index that is
+  /// reused (`final productsById = products.indexOfByKey(...)`,
+  /// collections-helpers.md).
   scannerRule(
     code: const LintCode(
       'ad_hoc_id_index_lookup',
       'Ad-hoc id lookup belongs in an extension.',
-      correctionMessage: 'Use `lookupByKey` / `indexOfByKey`, or expose a computed provider/service-owned index when the full map is reused.',
+      correctionMessage: 'Use `lookupByKey` for a one-off read, or cache the `indexOfByKey` map (or a computed provider/service-owned index) when it is reused.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags `items.indexBy((item) => item.id)[id]` one-off lookups outside the shared Iterable extension.',
+    description: 'Flags `items.indexBy((item) => item.id)[id]` and `items.indexOfByKey((item) => item.id)[id]` one-off lookups outside the shared Iterable extension.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       if (context.path.endsWith('iterable_extensions.dart')) return;

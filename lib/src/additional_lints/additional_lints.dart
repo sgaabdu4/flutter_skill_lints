@@ -242,7 +242,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/incorrect_firebas
 import 'package:flutter_skill_lints/src/additional_lints/rules/keep_state_below_its_widget.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/match_lib_folder_structure.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/missing_test_assertion.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/move_records_to_typedefs.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/no_boolean_literal_compare.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/no_empty_block.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/no_equal_then_else.dart';
@@ -500,7 +499,6 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(IncorrectFirebaseEventName());
     registry.registerWarningRule(IncorrectFirebaseParameterName());
     registry.registerWarningRule(MissingTestAssertion());
-    registry.registerWarningRule(MoveRecordsToTypedefs());
     registry.registerWarningRule(PassExistingFutureToFutureBuilder());
     registry.registerWarningRule(PassExistingStreamToStreamBuilder());
     registry.registerWarningRule(PassMockObject());

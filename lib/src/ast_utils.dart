@@ -19,13 +19,21 @@ bool isPackageAnnotation(ElementAnnotation? annotation, String package, String c
       uri.pathSegments.first == package;
 }
 
-/// Recognizes a value annotated by the actual Freezed annotation library.
+/// Recognizes a value annotated by the actual Freezed annotation library,
+/// either `@freezed` or a configured `@Freezed(...)` constructor call.
 bool isFreezedInterfaceType(InterfaceType type) =>
-    type.element.metadata.annotations.any((annotation) {
-      final owner = annotation.element;
-      return (owner?.name == 'freezed' || owner?.name == 'Freezed') &&
-          owner?.library?.uri.toString() == 'package:freezed_annotation/freezed_annotation.dart';
-    });
+    type.element.metadata.annotations.any(isFreezedAnnotation);
+
+/// Whether [annotation] resolves to `@freezed` or `@Freezed(...)` from
+/// `package:freezed_annotation`.
+bool isFreezedAnnotation(ElementAnnotation annotation) {
+  final owner = annotation.element;
+  if (owner?.library?.uri.toString() != 'package:freezed_annotation/freezed_annotation.dart') {
+    return false;
+  }
+  final name = owner is ConstructorElement ? owner.enclosingElement.name : owner?.name;
+  return name == 'freezed' || name == 'Freezed';
+}
 
 bool isGeneratedRuleContext(RuleContext context) =>
     isGeneratedSourcePath(context.definingUnit.file.path);
@@ -267,6 +275,17 @@ bool isInFreezedClass(AstNode node) {
       }) ??
       false;
 }
+
+/// Riverpod and state_notifier notifier bases. Riverpod 3 codegen notifiers
+/// (`extends _$X`) reach AnyNotifier through `$Notifier`/`$AsyncNotifier`,
+/// never through the hand-written Notifier.
+const riverpodNotifierChecker = TypeChecker.any([
+  TypeChecker.fromName('AnyNotifier', packageName: 'riverpod'),
+  TypeChecker.fromName('Notifier', packageName: 'riverpod'),
+  TypeChecker.fromName('AsyncNotifier', packageName: 'riverpod'),
+  TypeChecker.fromName('StreamNotifier', packageName: 'riverpod'),
+  TypeChecker.fromName('StateNotifier', packageName: 'state_notifier'),
+]);
 
 bool isNotifierClass(ClassDeclaration node) {
   final className = node.namePart.typeName.lexeme;

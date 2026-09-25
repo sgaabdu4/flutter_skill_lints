@@ -179,6 +179,51 @@ List<Widget> headerChildren() => const <Widget>[];
     ]);
   }
 
+  // collections-helpers.md: the skill's WidgetListX.separatedBy utility.
+  Future<void> test_allowsWidgetListExtensionReturningWidgetList() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+extension WidgetListX on List<Widget> {
+  List<Widget> separatedBy(Widget separator) {
+    return [
+      for (final child in this) ...[
+        if (!identical(child, first)) separator,
+        child,
+      ],
+    ];
+  }
+}
+
+extension WidgetIterableX on Iterable<Widget> {
+  Iterable<Widget> spaced(Widget gap) => expand((child) => [child, gap]);
+}
+''');
+  }
+
+  Future<void> test_reportsWidgetExtensionsOutsideCollectionUtilities() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+extension WidgetListX on List<Widget> {
+  Widget first2() => first;
+}
+
+extension ContextX on BuildContext {
+  List<Widget> headerChildren() => const <Widget>[];
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('first2'), 'first2'.length),
+      lint(source.indexOf('headerChildren'), 'headerChildren'.length),
+    ]);
+  }
+
+  void test_severity_error() {
+    expect(AvoidReturningWidgets.code.severity, DiagnosticSeverity.ERROR);
+  }
+
   Future<void> test_reportsPrivateMethodReturningWidgetList() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
@@ -511,6 +556,45 @@ final class PreferClassDestructuringFalsePositiveTest extends _AdditionalLintRul
   void setUp() {
     rule = PreferClassDestructuring();
     super.setUp();
+  }
+
+  // Row 19: the skill's DateTimeX.localDayStart (primitive-formatting.md).
+  Future<void> test_allowsPropertyReadsPassedToConstructor() async {
+    await assertNoDiagnostics(r'''
+class Day {
+  const Day(this.year, this.month, {required this.day});
+  final int year;
+  final int month;
+  final int day;
+}
+
+Day localDayStart(Day local) {
+  return Day(local.year, local.month, day: local.day);
+}
+''');
+  }
+
+  Future<void> test_reportsPropertyReadsIntoLocals() async {
+    const source = r'''
+class Span {
+  int get inHours => 1;
+  int get inMinutes => 2;
+  int get inSeconds => 3;
+}
+
+int classAccess(Span d) {
+  final a = d.inHours;
+  final b = d.inMinutes;
+  final c = d.inSeconds;
+  return a + b + c;
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('d.inHours'), 'd.inHours'.length)]);
+  }
+
+  void test_severity_error() {
+    expect(PreferClassDestructuring.code.severity, DiagnosticSeverity.ERROR);
   }
 
   Future<void> test_allowsPropertyAssertionsInTests() async {

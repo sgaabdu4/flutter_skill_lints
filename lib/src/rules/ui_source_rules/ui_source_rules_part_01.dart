@@ -94,22 +94,31 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     },
   ),
 
-  /// UI widgets should not directly show snackbars.
+  /// Snackbars are shown only by UI helpers.
   ///
-  /// Why: Flags direct snackbar dispatches from UI widgets. Dispatch a notifier action and
-  /// let the shell own snackbar presentation.
+  /// Why: Flags direct snackbar dispatches from UI widgets, and
+  /// `SnackBarUtils.show...` calls from notifiers (resolved Riverpod or
+  /// state_notifier supertypes), repositories, and datasources
+  /// (context-ui.md). The notifier owns a durable status field; the widget
+  /// listens and calls a UI helper, which may wrap SnackBarUtils.
   scannerRule(
     code: const LintCode(
       'ui_snackbar_boundary',
-      'UI widgets should not directly show snackbars.',
-      correctionMessage: 'Dispatch a notifier action and let the shell own snackbar presentation.',
+      'Do not show snackbars from widgets, notifiers, repositories, or datasources.',
+      correctionMessage: 'Keep a durable status field in the notifier; the widget listens and calls a UI helper that wraps SnackBarUtils.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags direct snackbar dispatches from UI widgets so the Flutter skill violation is shown during analysis.',
+    description: 'Flags direct snackbar dispatches from UI widgets and SnackBarUtils.show calls from notifiers, repositories, and datasources.',
     scan: (reporter, context) {
+      if (!context.isUiFile) {
+        if (!context.isTestFile) {
+          context.unit.accept(_SnackBarUtilsDispatchVisitor(reporter, context));
+        }
+        return;
+      }
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (context.isUiFile && context.dispatchesSnackbarFromUi(line)) {
+        if (context.dispatchesSnackbarFromUi(line)) {
           reporter.report(context, i, 0);
         }
       }
@@ -359,16 +368,59 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ///
   /// Why: Raw current-time calls spread timezone and calendar-window policy through
   /// app code. Keep current-time helpers and semantic date windows in
-  /// `core/extensions/date_time_extensions.dart`.
+  /// `core/extensions/date_time_extensions.dart`. Static members of a resolved
+  /// `extension ... on DateTime` own the raw call (`static DateTime nowUtc() =>
+  /// DateTime.now().toUtc();`); any member of that extension may hold date windows.
   scannerRule(
     code: const LintCode(
       'datetime_now_requires_timezone_intent',
       'Make current DateTime timezone intent explicit.',
       correctionMessage: 'Use DateTimeX.nowUtc()/nowLocal(), and move repeated current-date windows into a DateTimeX helper.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags raw current DateTime calls and inline current-date math so timestamp persistence and local calendar bucketing stay behind DateTimeX helpers.',
     scan: _scanDateTimeNowIntent,
+  ),
+
+  /// Keep intl formatting in primitive extensions.
+  ///
+  /// Why: Primitive formatting lives in `core/extensions/`; call sites use
+  /// semantic getters such as `date.formatShortDate(l10n)` and
+  /// `price.asCurrency(l10n)`. Resolved intl `DateFormat` construction is
+  /// allowed only in an extension on dart:core `DateTime`, and `NumberFormat`
+  /// only in one on `num`/`int`/`double` (primitive-formatting.md).
+  scannerRule(
+    code: const LintCode(
+      'ad_hoc_intl_format',
+      'Do not build DateFormat or NumberFormat at call sites.',
+      correctionMessage:
+          'Move the formatting into a DateTimeX or NumX extension method and call it here.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags intl DateFormat/NumberFormat construction outside the DateTime and num extensions that own primitive formatting.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+      context.unit.accept(_AdHocIntlFormatVisitor(reporter, context));
+    },
+  ),
+
+  /// Keep numeric clamping in the num extension.
+  ///
+  /// Why: Inline `.clamp(...)` is forbidden at call sites; `NumX.clamped`
+  /// owns it (primitive-formatting.md). Resolved dart:core `num.clamp` calls
+  /// are allowed only inside an extension on `num`/`int`/`double`.
+  scannerRule(
+    code: const LintCode(
+      'inline_num_clamp',
+      'Do not call num.clamp inline at call sites.',
+      correctionMessage: 'Call a NumX extension helper such as clamped(min, max).',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags dart:core num.clamp calls outside an extension on num so clamping stays behind NumX helpers.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+      context.unit.accept(_InlineNumClampVisitor(reporter, context));
+    },
   ),
 
   /// Avoid expensive work in build().
@@ -424,23 +476,20 @@ void _scanDateTimeNowIntent(ScannerRuleReporter reporter, SourceScannerContext c
   final maskedSource = context.source.masked.join('\n');
   final codeSource = context.source.code.join('\n');
   final reportedOffsets = <int>{};
-  final isExtensionFile = context.path.endsWith('/core/extensions/date_time_extensions.dart');
 
-  if (!isExtensionFile) {
-    _reportDateTimeMatches(
-      reporter,
-      context,
-      _currentTimeHelperDateMath.allMatches(maskedSource),
-      reportedOffsets,
-    );
-    _reportDateTimeMatches(
-      reporter,
-      context,
-      _currentTimeBoundary.allMatches(maskedSource),
-      reportedOffsets,
-    );
-    _reportPersistedLocalNowMatches(reporter, context, maskedSource, reportedOffsets);
-  }
+  _reportDateTimeMatches(
+    reporter,
+    context,
+    _currentTimeHelperDateMath.allMatches(maskedSource),
+    reportedOffsets,
+  );
+  _reportDateTimeMatches(
+    reporter,
+    context,
+    _currentTimeBoundary.allMatches(maskedSource),
+    reportedOffsets,
+  );
+  _reportPersistedLocalNowMatches(reporter, context, maskedSource, reportedOffsets);
 
   _reportCurrentDateTimeMatches(reporter, context, maskedSource, reportedOffsets);
   _reportInterpolatedCurrentDateTimeMatches(reporter, context, codeSource, reportedOffsets);
@@ -453,6 +502,7 @@ void _reportDateTimeMatches(
   Set<int> reportedOffsets,
 ) {
   for (final match in matches) {
+    if (_isInsideDateTimeExtension(context, match.start)) continue;
     _reportDateTimeOffset(reporter, context, match.start, reportedOffsets);
   }
 }
@@ -465,7 +515,7 @@ void _reportPersistedLocalNowMatches(
 ) {
   for (final match in _persistedLocalNowExpression.allMatches(source)) {
     final localNowMatch = _localNowExpression.firstMatch(match.group(0)!);
-    if (localNowMatch == null) continue;
+    if (localNowMatch == null || _isInsideDateTimeExtension(context, match.start)) continue;
     _reportDateTimeOffset(reporter, context, match.start + localNowMatch.start, reportedOffsets);
   }
 }

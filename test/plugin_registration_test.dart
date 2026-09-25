@@ -338,8 +338,27 @@ void main() {
       'prefer_equatable_mixin',
       'prefer_compute_over_isolate_run',
       'avoid_missing_controller',
+      // No skill basis; the skill's own Debouncer.call and inline record
+      // signatures (dart-patterns-records.md:61-80) contradict them.
+      'avoid_declaring_call_method',
+      'move_records_to_typedefs',
     ]) {
       expect(paths, isNot(contains(forbidden)));
+    }
+  });
+
+  test('model skill MUST and NEVER diagnostics report at error severity', () {
+    final registry = _RecordingPluginRegistry('flutter_skill_lints');
+    FlutterSkillLintsPlugin().register(registry);
+
+    for (final name in _modelSkillErrorDiagnostics) {
+      final rule = registry.warningRules[name];
+      expect(rule, isNotNull, reason: name);
+      expect(
+        rule!.diagnosticCodes.map((code) => code.severity),
+        everyElement(DiagnosticSeverity.ERROR),
+        reason: name,
+      );
     }
   });
 
@@ -361,9 +380,33 @@ void main() {
   });
 }
 
-const _enabledFlutterSkillRuleCount = 227;
-const _enabledFlutterSkillDiagnosticCount = 235;
-const _enabledAdditionalRuleCount = 278;
+const _enabledFlutterSkillRuleCount = 230;
+const _enabledFlutterSkillDiagnosticCount = 238;
+const _enabledAdditionalRuleCount = 276;
+
+const _modelSkillErrorDiagnostics = [
+  'use_sealed_freezed_classes',
+  'freezed_legacy_when_map',
+  'use_freezed_instead_of_immutable',
+  'vo_public_raw_constructor',
+  'domain_raw_required_string',
+  'domain_unit_primitive',
+  'avoid_throw',
+  'typed_id_raw_id',
+  'avoid_positional_record_fields',
+  'prefer_dot_shorthands',
+  'prefer_wildcard_pattern',
+  'use_existing_destructuring',
+  'datetime_now_requires_timezone_intent',
+  'domain_entity_primitive_factory',
+  'avoid_returning_widgets',
+  'prefer_class_destructuring',
+  'ad_hoc_id_index_lookup',
+  'ui_snackbar_boundary',
+  'ad_hoc_intl_format',
+  'inline_num_clamp',
+  'record_use_outside_ffi',
+];
 
 Iterable<String> _documentedLintCodes(String text) sync* {
   var depth = 0;

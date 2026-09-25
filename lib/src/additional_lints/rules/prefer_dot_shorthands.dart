@@ -16,6 +16,7 @@ final class PreferDotShorthands extends AnalysisRule {
     'prefer_dot_shorthands',
     'Use dot shorthand when the surrounding context already supplies the type.',
     correctionMessage: 'Remove the repeated type name.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   PreferDotShorthands()

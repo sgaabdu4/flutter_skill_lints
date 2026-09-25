@@ -691,6 +691,31 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 sealed class User {}
 ''');
   }
+
+  Future<void> test_reportsPlainFreezedClass() async {
+    const source = r'''
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@Freezed()
+class WorkoutSet {
+  const WorkoutSet();
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, 'class')]);
+  }
+
+  Future<void> test_ignoresSameNamedNonFreezedAnnotation() async {
+    await assertNoDiagnostics(r'''
+class Freezed {
+  const Freezed();
+}
+
+const freezed = Freezed();
+
+@freezed
+class User {}
+''');
+  }
 }
 
 @reflectiveTest

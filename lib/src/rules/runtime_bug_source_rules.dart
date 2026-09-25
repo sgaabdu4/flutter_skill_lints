@@ -157,7 +157,7 @@ final _collectionExpressionAllocation = RegExp(
 );
 
 final _adHocIdIndexLookup = RegExp(
-  r'\.\s*indexBy\s*\(\s*'
+  r'\.\s*(?:indexBy|indexOfByKey)\s*\(\s*'
   r'(?:\([A-Za-z_]\w*\)|[A-Za-z_]\w*)\s*=>\s*[A-Za-z_]\w*\s*\.\s*id\s*'
   r'\)\s*\[',
 );

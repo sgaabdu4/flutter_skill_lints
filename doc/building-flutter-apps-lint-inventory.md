@@ -7,6 +7,7 @@
 ```text
 a11y_text_scale_clamp
 ad_hoc_id_index_lookup
+ad_hoc_intl_format
 app_shell_bootstrap_side_effects
 appwrite_blocking_function_execution_in_client
 arch_concrete_dependency
@@ -110,6 +111,7 @@ hive_reserved_type_ids_missing
 hive_test_close_missing
 hive_type_on_freezed_class
 implicit_null_fallback
+inline_num_clamp
 keepalive_watches_unbounded_collection
 l10n_context_direct_access
 l10n_notifier_localized_copy
@@ -144,6 +146,7 @@ prefer_publish_to_none
 presentation_widget_controller_state
 presentation_widget_infrastructure_dependency
 presentation_widget_navigation_forbidden
+record_use_outside_ffi
 records_map_return
 riverpod_auto_dispose_keepalive_dependencies
 riverpod_config_destructuring
@@ -281,7 +284,6 @@ avoid_constant_conditions
 avoid_constant_switches
 avoid_continue
 avoid_contradictory_expressions
-avoid_declaring_call_method
 avoid_default_tostring
 avoid_dependency_overrides
 avoid_disposing_late_fields
@@ -445,7 +447,6 @@ incorrect_firebase_parameter_name
 keep_state_below_its_widget
 match_lib_folder_structure
 missing_test_assertion
-move_records_to_typedefs
 no_boolean_literal_compare
 no_empty_block
 no_equal_then_else

@@ -6,6 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when multiple properties of the same object are accessed separately
 /// and could be consolidated using Dart 3 class destructuring.
@@ -25,12 +26,18 @@ import 'package:analyzer/error/error.dart';
 /// final b = y;
 /// print(z);
 /// ```
+///
+/// Property reads passed straight as constructor arguments
+/// (`DateTime(local.year, local.month, local.day)`, the skill's
+/// `DateTimeX.localDayStart`) are a projection into the new object, not
+/// repeated reads, so they do not count.
 class PreferClassDestructuring extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_class_destructuring',
     'Consider using class destructuring for {0} property accesses on '
         "'{1}'.",
     correctionMessage: 'Use a destructuring declaration to extract all properties at once.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   /// Minimum number of distinct property accesses to trigger the lint.
@@ -49,15 +56,10 @@ class PreferClassDestructuring extends AnalysisRule {
 
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (_isTestFile(context)) return;
+    if (isTestSourceContext(context)) return;
 
     final visitor = _Visitor(this);
     registry.addBlock(this, visitor);
-  }
-
-  bool _isTestFile(RuleContext context) {
-    final path = context.definingUnit.file.path.replaceAll('\\', '/');
-    return path.contains('/test/') || path.endsWith('_test.dart');
   }
 }
 
@@ -182,7 +184,15 @@ class _PropertyAccessCollector extends RecursiveAstVisitor<void> {
     // Skip method calls — only track field/getter accesses
     if (parent is MethodInvocation && parent.target == accessNode) return;
 
+    if (_isDirectConstructorArgument(accessNode)) return;
+
     final info = accessesByVariable.putIfAbsent(targetName, () => _VariableAccessInfo(targetType));
     info.addAccess(propertyName, accessNode);
   }
+}
+
+bool _isDirectConstructorArgument(AstNode accessNode) {
+  final parent = accessNode.parent;
+  final argumentList = parent is NamedArgument ? parent.parent : parent;
+  return argumentList is ArgumentList && argumentList.parent is InstanceCreationExpression;
 }

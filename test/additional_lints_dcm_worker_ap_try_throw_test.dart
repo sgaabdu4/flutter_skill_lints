@@ -259,9 +259,11 @@ class TextButton extends Widget {
 
   void _addRiverpodPackage() {
     newPackage('riverpod').addFile('lib/riverpod.dart', r'''
-abstract class Notifier<T> {
-  late T state;
+abstract class AnyNotifier<StateT, ValueT> {
+  late StateT state;
 }
+abstract class $Notifier<StateT> extends AnyNotifier<StateT, StateT> {}
+abstract class Notifier<T> extends $Notifier<T> {}
 ''');
   }
 
@@ -570,6 +572,52 @@ final class CounterNotifier extends Notifier<int> {
     ]);
   }
 
+  // Issue #86: a typed throw inside a @riverpod codegen notifier reports like
+  // a hand-written Notifier (state-management-lifecycle.md:92).
+  Future<void> test_codegenRiverpodNotifierTypedThrow_lint() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+abstract class _$P86Form extends $Notifier<String> {}
+
+class P86Form extends _$P86Form {
+  void submit(String value) {
+    if (value.isEmpty) throw const FormatException('empty');
+    state = value;
+  }
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(
+        source.indexOf('throw const FormatException'),
+        'throw const FormatException(\'empty\')'.length,
+      ),
+    ]);
+  }
+
+  // Issue #86: typed infrastructure failures stay allowed in datasources
+  // (networking.md:25).
+  Future<void> test_datasourceTypedThrowNextToCodegenNotifier_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+final class P86Parser {
+  int parse(String raw) {
+    final value = int.tryParse(raw);
+    if (value == null) throw FormatException('not a number');
+    return value;
+  }
+}
+
+abstract class _$P86Form extends $Notifier<String> {}
+
+class P86Form extends _$P86Form {
+  void submit(String value) => state = value;
+}
+''');
+  }
+
   Future<void> test_validatedValueObjectArgumentGuard_noLint() async {
     final path = '$testPackageLibPath/features/items/domain/values/required_text.dart';
     newFile(path, r'''
@@ -586,6 +634,63 @@ final class RequiredText {
 }
 ''');
     await assertNoDiagnosticsInFile(path);
+  }
+
+  Future<void> test_valueObjectExtractedGuardHelper_noLint() async {
+    final path = '$testPackageLibPath/core/domain/values/distance.dart';
+    newFile(path, r'''
+final class Distance {
+  const Distance._(this.value);
+  final double value;
+
+  factory Distance.meters(double v) => Distance._(_guard(v, 'meters'));
+
+  static double _guard(double v, String unit) {
+    if (v.isNaN || v < 0) {
+      throw ArgumentError.value(v, 'v', 'Distance.$unit must be finite and non-negative');
+    }
+    return v;
+  }
+}
+''');
+    await assertNoDiagnosticsInFile(path);
+  }
+
+  Future<void> test_guardHelperOutsideContract_lint() async {
+    final path = '$testPackageLibPath/core/domain/values/distance.dart';
+    const source = r'''
+final class Distance {
+  const Distance._(this.value);
+  final double value;
+
+  static double _state(double v) {
+    if (v < 0) throw 'negative';
+    return v;
+  }
+
+  static double guard(double v) {
+    if (v < 0) throw ArgumentError.value(v, 'v', 'negative');
+    return v;
+  }
+
+  double _instance(double v) {
+    if (v < 0) throw ArgumentError.value(v, 'v', 'negative');
+    return v;
+  }
+}
+''';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [
+      lint(source.indexOf("throw 'negative'"), "throw 'negative'".length),
+      lint(
+        source.indexOf('throw ArgumentError'),
+        "throw ArgumentError.value(v, 'v', 'negative')".length,
+      ),
+      lint(
+        source.lastIndexOf('throw ArgumentError'),
+        "throw ArgumentError.value(v, 'v', 'negative')".length,
+      ),
+    ]);
   }
 
   Future<void> test_unrelatedThrowInValueObject_stillReports() async {

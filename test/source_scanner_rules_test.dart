@@ -73,6 +73,7 @@ void main() {
     defineReflectiveTests(RiverpodFeatureNotifierKeepaliveTest);
     defineReflectiveTests(RiverpodKeepaliveFamilyTest);
     defineReflectiveTests(DartStaticNamespaceTest);
+    defineReflectiveTests(RecordUseOutsideFfiTest);
     defineReflectiveTests(FreezedPerClassExplicitToJsonTest);
     defineReflectiveTests(FreezedToJsonWithFromJsonTest);
     defineReflectiveTests(FreezedLegacyWhenMapTest);
@@ -107,6 +108,8 @@ void main() {
     defineReflectiveTests(A11yTextScaleClampTest);
     defineReflectiveTests(AppShellBootstrapSideEffectsTest);
     defineReflectiveTests(DateTimeNowRequiresTimezoneIntentTest);
+    defineReflectiveTests(AdHocIntlFormatTest);
+    defineReflectiveTests(InlineNumClampTest);
     defineReflectiveTests(PerfBuildWorkTest);
     defineReflectiveTests(PerfListviewChildrenTest);
     defineReflectiveTests(NullableCollectionTypeTest);

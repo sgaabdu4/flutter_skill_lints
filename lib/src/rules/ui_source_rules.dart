@@ -1,5 +1,7 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
@@ -146,21 +148,46 @@ bool _hasMeaningfulNumericLiteral(String line) {
   return (lineIndex: lineIndex, column: offset - source.lineOffsets[lineIndex]);
 }
 
+/// Whether [offset] sits in a static member of an extension on dart:core
+/// `DateTime`, the skill's `DateTimeX.nowUtc()`/`nowLocal()` owner
+/// (primitive-formatting.md).
 bool _isAllowedDateTimeExtensionCurrentBoundary(SourceScannerContext context, int offset) {
-  if (!context.path.endsWith('/core/extensions/date_time_extensions.dart')) {
-    return false;
-  }
-
-  final (:lineIndex, :column) = _lineColumnForOffset(context.source, offset);
-  final line = context.source.masked[lineIndex];
-  final call = _currentDateTimeCall.matchAsPrefix(line, column);
-  if (call == null || !call.group(0)!.contains('timestamp')) return false;
-
-  final start = lineIndex < 3 ? 0 : lineIndex - 3;
-  final window = context.source.masked.sublist(start, lineIndex + 1).join('\n');
-  return RegExp(r'\bstatic\s+DateTime\s+nowUtc\s*\(\s*\)\s*=>\s*DateTime\s*\.\s*timestamp\s*\(')
-      .hasMatch(window);
+  return _dateTimeExtensions(context)
+      .expand((extension) => extension.body.members)
+      .whereType<MethodDeclaration>()
+      .any((member) => member.isStatic && offset >= member.offset && offset < member.end);
 }
+
+/// Whether [offset] sits in an extension on dart:core `DateTime`, where the
+/// skill keeps current-date windows.
+bool _isInsideDateTimeExtension(SourceScannerContext context, int offset) {
+  return _dateTimeExtensions(context)
+      .any((extension) => offset >= extension.offset && offset < extension.end);
+}
+
+Iterable<ExtensionDeclaration> _dateTimeExtensions(SourceScannerContext context) {
+  return context.unit.declarations.whereType<ExtensionDeclaration>().where(
+    (extension) => _extendsCoreType(extension, const {'DateTime'}),
+  );
+}
+
+/// Whether [extension] is on one of the dart:core [typeNames], the skill's
+/// primitive owners in `core/extensions/` (primitive-formatting.md).
+bool _extendsCoreType(ExtensionDeclaration? extension, Set<String> typeNames) {
+  final type = extension?.declaredFragment?.element.extendedType;
+  return type is InterfaceType &&
+      type.element.library.isDartCore &&
+      typeNames.contains(type.element.name);
+}
+
+const _coreNumTypes = {'num', 'int', 'double'};
+
+/// intl formatters and the dart:core types whose extensions own them:
+/// `DateTimeX.formatShortDate` and `NumX.asCurrency` (primitive-formatting.md).
+const _intlFormatterOwners = {
+  'DateFormat': {'DateTime'},
+  'NumberFormat': _coreNumTypes,
+};
 
 bool _isRawStringLiteralText(SourceScannerContext context, int offset) {
   final (:lineIndex, :column) = _lineColumnForOffset(context.source, offset);
@@ -388,9 +415,78 @@ final class _WidgetCatchVisitor extends RecursiveAstVisitor<void> {
   @override
   void visitTryStatement(TryStatement node) {
     if (node.catchClauses.isNotEmpty) {
-      final location = context.unit.lineInfo.getLocation(node.tryKeyword.offset);
-      reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+      _reportAtOffset(reporter, context, node.tryKeyword.offset);
     }
     super.visitTryStatement(node);
+  }
+}
+
+/// Reports `SnackBarUtils.show...` calls from notifiers, repositories, and
+/// datasources (context-ui.md: only the UI helper may wrap SnackBarUtils).
+final class _SnackBarUtilsDispatchVisitor extends RecursiveAstVisitor<void> {
+  _SnackBarUtilsDispatchVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final target = node.target;
+    if (target is Identifier &&
+        target.element is ClassElement &&
+        target.name == 'SnackBarUtils' &&
+        node.methodName.name.startsWith('show') &&
+        (context.isDataPath || isEnclosedClassAssignableTo(node, riverpodNotifierChecker))) {
+      _reportAtOffset(reporter, context, node.offset);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+void _reportAtOffset(ScannerRuleReporter reporter, SourceScannerContext context, int offset) {
+  final location = context.unit.lineInfo.getLocation(offset);
+  reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+}
+
+/// Reports intl `DateFormat`/`NumberFormat` construction outside the
+/// dart:core primitive extension that owns it.
+final class _AdHocIntlFormatVisitor extends RecursiveAstVisitor<void> {
+  _AdHocIntlFormatVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final formatter = node.constructorName.element?.enclosingElement;
+    final owners = _intlFormatterOwners[formatter?.name];
+    if (formatter != null &&
+        owners != null &&
+        formatter.library.uri.toString().startsWith('package:intl/') &&
+        !_extendsCoreType(node.thisOrAncestorOfType<ExtensionDeclaration>(), owners)) {
+      _reportAtOffset(reporter, context, node.offset);
+    }
+    super.visitInstanceCreationExpression(node);
+  }
+}
+
+/// Reports dart:core `num.clamp` calls outside an extension on num.
+final class _InlineNumClampVisitor extends RecursiveAstVisitor<void> {
+  _InlineNumClampVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final owner = node.methodName.element?.enclosingElement;
+    if (node.methodName.name == 'clamp' &&
+        owner is InterfaceElement &&
+        owner.library.isDartCore &&
+        _coreNumTypes.contains(owner.name) &&
+        !_extendsCoreType(node.thisOrAncestorOfType<ExtensionDeclaration>(), _coreNumTypes)) {
+      _reportAtOffset(reporter, context, node.methodName.offset);
+    }
+    super.visitMethodInvocation(node);
   }
 }

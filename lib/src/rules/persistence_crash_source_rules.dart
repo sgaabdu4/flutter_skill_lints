@@ -674,7 +674,8 @@ bool _catchesInternally(FunctionBody body) {
 /// - it throws nothing and every future it awaits or returns is captured: a Riverpod
 ///   `Mutation.run` (failures land in the mutation's `MutationError` state), a route or
 ///   modal future (it completes with the popped result, not an error), or a resolved
-///   callee that is itself captured, or
+///   callee that is itself captured (including same-class calls such as
+///   lists-forms-workflows.md `loadMore` awaiting `_loadPage`), or
 /// - it has no future and makes no call at all (for example `async => null`).
 final class _FailureCapture {
   _FailureCapture(this.context);
@@ -692,26 +693,35 @@ final class _FailureCapture {
     final body = _declaredBody(context, declared);
     if (body == null) return null;
     if (!_visiting.add(declared)) return false;
+    final owner = declared.enclosingElement;
     try {
-      return handlesBody(body, depth, declared.firstFragment.libraryFragment.scope);
+      return handlesBody(
+        body,
+        depth,
+        declared.firstFragment.libraryFragment.scope,
+        owner: owner is InterfaceElement ? owner : null,
+      );
     } finally {
       _visiting.remove(declared);
     }
   }
 
-  /// [scope] resolves top-level calls when [body] comes from another library, whose
-  /// declaration is only available as a parsed (unresolved) AST.
-  bool handlesBody(FunctionBody body, int depth, Scope? scope) {
+  /// [scope] and [owner] resolve top-level and same-class calls when [body] comes from
+  /// another library, whose declaration is only available as a parsed (unresolved) AST.
+  bool handlesBody(FunctionBody body, int depth, Scope? scope, {InterfaceElement? owner}) {
     if (_catchesInternally(body)) return true;
     final sources = _FutureSourceCollector();
     body.accept(sources);
     if (sources.throws) return false;
     if (sources.futures.isEmpty) return !sources.calls;
-    return sources.futures.every((future) => _handlesFuture(future, depth, scope));
+    return sources.futures.every((future) => _handlesFuture(future, depth, scope, owner));
   }
 
-  bool _handlesFuture(Expression future, int depth, Scope? scope) {
-    final element = _invokedElement(future) ?? _unresolvedTopLevelCall(future, scope);
+  bool _handlesFuture(Expression future, int depth, Scope? scope, InterfaceElement? owner) {
+    final element =
+        _invokedElement(future) ??
+        _unresolvedTopLevelCall(future, scope) ??
+        _unresolvedSameClassCall(future, owner);
     if (_isFailureRecordingCall(element)) return true;
     if (depth >= _maxDepth) return false;
     return handlesCallee(element, depth + 1) ?? false;
@@ -729,6 +739,13 @@ Element? _unresolvedTopLevelCall(Expression expression, Scope? scope) => switch 
     scope.lookup(methodName.name).getter,
   _ => null,
 };
+
+Element? _unresolvedSameClassCall(Expression expression, InterfaceElement? owner) =>
+    switch (expression.unParenthesized) {
+      MethodInvocation(target: null || ThisExpression(), :final methodName) when owner != null =>
+        owner.getMethod(methodName.name),
+      _ => null,
+    };
 
 /// A Riverpod `Mutation.run`, or a Flutter / go_router navigation call (including a
 /// go_router_builder route's generated `push`) whose future completes with the route result.

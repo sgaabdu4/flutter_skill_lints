@@ -303,29 +303,31 @@ bool _isAllowedDomainImport(String line) {
 }
 
 /// Offsets of `final String/int xId` fields and redirecting-factory parameters.
-List<int> _rawIdOffsets(CompilationUnit unit) {
-  final offsets = <int>[];
-  for (final declaration in unit.declarations.whereType<ClassDeclaration>()) {
-    for (final member in declaration.body.members) {
-      if (member is FieldDeclaration && member.fields.isFinal) {
-        for (final variable in member.fields.variables) {
-          if (_isRawId(variable.name.lexeme, variable.declaredFragment?.element.type)) {
-            offsets.add(member.firstTokenAfterCommentAndMetadata.offset);
-          }
-        }
-      }
-      if (member is ConstructorDeclaration && member.redirectedConstructor != null) {
-        for (final parameter in member.parameters.parameters) {
-          final name = parameter.name?.lexeme;
-          if (name != null && _isRawId(name, parameter.declaredFragment?.element.type)) {
-            offsets.add(member.firstTokenAfterCommentAndMetadata.offset);
-          }
-        }
-      }
-    }
-  }
-  return offsets;
-}
+List<int> _rawIdOffsets(CompilationUnit unit) => unit.declarations
+    .whereType<ClassDeclaration>()
+    .expand((declaration) => declaration.body.members)
+    .expand(
+      (member) =>
+          _idCandidates(member)
+              .where((candidate) => _isRawId(candidate.name, candidate.type))
+              .map((_) => member.firstTokenAfterCommentAndMetadata.offset),
+    )
+    .toList();
+
+/// Each `final` field variable or redirecting-factory parameter of [member].
+Iterable<({String name, DartType? type})> _idCandidates(ClassMember member) => switch (member) {
+  FieldDeclaration(fields: VariableDeclarationList(isFinal: true, :final variables)) =>
+    variables.map(
+      (variable) => (name: variable.name.lexeme, type: variable.declaredFragment?.element.type),
+    ),
+  ConstructorDeclaration(redirectedConstructor: _?) => member.parameters.parameters.expand(
+    (parameter) => [
+      if (parameter.name case final name?)
+        (name: name.lexeme, type: parameter.declaredFragment?.element.type),
+    ],
+  ),
+  _ => const [],
+};
 
 bool _isRawId(String name, DartType? type) =>
     name.endsWith('Id') && type != null && (type.isDartCoreString || type.isDartCoreInt);

@@ -145,7 +145,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   bool _isRiverpodNotifierMethod(MethodDeclaration method) {
     final classElement = enclosingClass(method)?.declaredFragment?.element;
-    return classElement != null && _riverpodNotifierChecker.isSuperOf(classElement);
+    return classElement != null && riverpodNotifierChecker.isSuperOf(classElement);
   }
 }
 
@@ -201,16 +201,6 @@ const _riverpodAnnotationChecker = TypeChecker.fromName(
   'Riverpod',
   packageName: 'riverpod_annotation',
 );
-const _riverpodNotifierChecker = TypeChecker.any([
-  // Riverpod 3 codegen notifiers (`extends _$X`) reach AnyNotifier through
-  // `$Notifier`/`$AsyncNotifier`, never through the hand-written Notifier.
-  TypeChecker.fromName('AnyNotifier', packageName: 'riverpod'),
-  TypeChecker.fromName('Notifier', packageName: 'riverpod'),
-  TypeChecker.fromName('AsyncNotifier', packageName: 'riverpod'),
-  TypeChecker.fromName('StreamNotifier', packageName: 'riverpod'),
-  TypeChecker.fromName('StateNotifier', packageName: 'state_notifier'),
-]);
-
 bool _isRecoverableException(DartType? type) {
   if (type is! InterfaceType || !_exceptionChecker.isAssignableFromType(type)) {
     return false;

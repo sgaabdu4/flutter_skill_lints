@@ -213,6 +213,17 @@ bool isInFreezedClass(AstNode node) {
       false;
 }
 
+/// Riverpod and state_notifier notifier bases. Riverpod 3 codegen notifiers
+/// (`extends _$X`) reach AnyNotifier through `$Notifier`/`$AsyncNotifier`,
+/// never through the hand-written Notifier.
+const riverpodNotifierChecker = TypeChecker.any([
+  TypeChecker.fromName('AnyNotifier', packageName: 'riverpod'),
+  TypeChecker.fromName('Notifier', packageName: 'riverpod'),
+  TypeChecker.fromName('AsyncNotifier', packageName: 'riverpod'),
+  TypeChecker.fromName('StreamNotifier', packageName: 'riverpod'),
+  TypeChecker.fromName('StateNotifier', packageName: 'state_notifier'),
+]);
+
 bool isNotifierClass(ClassDeclaration node) {
   final className = node.namePart.typeName.lexeme;
   final superName = node.extendsClause?.superclass.name.lexeme ?? '';

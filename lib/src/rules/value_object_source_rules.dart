@@ -359,7 +359,7 @@ const _unitWords =
 
 final _unitName = RegExp('^(?:${_unitWords.toLowerCase()})\$|[a-z0-9](?:$_unitWords)\$');
 
-typedef _EntityParameter = ({DartType type, String name, bool hasDefault});
+typedef _EntityParameter = ({DartType type, String name, bool hasDefault, int typeOffset});
 
 void _scanDomainEntityParameters(
   ScannerRuleReporter reporter,
@@ -367,31 +367,39 @@ void _scanDomainEntityParameters(
   bool Function(_EntityParameter parameter) matches,
 ) {
   if (!context.isDomainPath || context.path.contains('/domain/values/')) return;
-  for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
-    if (declaration.namePart.typeName.lexeme.startsWith('_') ||
-        !_isFreezedDeclaration(declaration)) {
-      continue;
-    }
-    final constructor = _canonicalRedirect(declaration);
-    if (constructor == null) continue;
-    for (final parameter in constructor.parameters.parameters) {
-      // Shipped Hive entities keep their locked primitive slots (value-objects.md Option A).
-      if (_hasHiveFieldMarker(parameter)) continue;
-      final type = parameter.declaredFragment?.element.type;
-      final typeNode = parameter.type;
-      final name = parameter.name?.lexeme;
-      if (type == null || typeNode == null || name == null) continue;
-      final hasDefault =
-          parameter.defaultClause != null || parameter.metadata.any(_isFreezedDefault);
-      if (!matches((type: type, name: name, hasDefault: hasDefault))) continue;
-      final line = _lineIndexForOffset(
-        typeNode.offset,
-        context.source.lineOffsets,
-        context.source.length,
-      );
-      reporter.report(context, line, typeNode.offset - context.source.lineOffsets[line]);
-    }
+  for (final parameter in _domainEntityParameters(context.unit).where(matches)) {
+    final line = _lineIndexForOffset(
+      parameter.typeOffset,
+      context.source.lineOffsets,
+      context.source.length,
+    );
+    reporter.report(context, line, parameter.typeOffset - context.source.lineOffsets[line]);
   }
+}
+
+/// Parameters of each public Freezed class's canonical redirect.
+Iterable<_EntityParameter> _domainEntityParameters(CompilationUnit unit) => unit.declarations
+    .whereType<ClassDeclaration>()
+    .where(
+      (declaration) =>
+          !declaration.namePart.typeName.lexeme.startsWith('_') &&
+          _isFreezedDeclaration(declaration),
+    )
+    .map(_canonicalRedirect)
+    .nonNulls
+    .expand((constructor) => constructor.parameters.parameters)
+    // Shipped Hive entities keep their locked primitive slots (value-objects.md Option A).
+    .where((parameter) => !_hasHiveFieldMarker(parameter))
+    .map(_entityParameter)
+    .nonNulls;
+
+_EntityParameter? _entityParameter(FormalParameter parameter) {
+  final type = parameter.declaredFragment?.element.type;
+  final typeNode = parameter.type;
+  final name = parameter.name?.lexeme;
+  if (type == null || typeNode == null || name == null) return null;
+  final hasDefault = parameter.defaultClause != null || parameter.metadata.any(_isFreezedDefault);
+  return (type: type, name: name, hasDefault: hasDefault, typeOffset: typeNode.offset);
 }
 
 bool _isFreezedDeclaration(ClassDeclaration declaration) => declaration.metadata.any((annotation) {

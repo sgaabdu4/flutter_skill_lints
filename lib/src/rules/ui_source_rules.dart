@@ -3,7 +3,6 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
-import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'ui_source_rules/ui_source_rules_part_01.dart';
@@ -345,16 +344,6 @@ final class _WidgetCatchVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
-/// Riverpod and state_notifier notifier bases. Riverpod 3 codegen notifiers
-/// (`extends _$X`) reach AnyNotifier through `$Notifier`/`$AsyncNotifier`.
-const _notifierChecker = TypeChecker.any([
-  TypeChecker.fromName('AnyNotifier', packageName: 'riverpod'),
-  TypeChecker.fromName('Notifier', packageName: 'riverpod'),
-  TypeChecker.fromName('AsyncNotifier', packageName: 'riverpod'),
-  TypeChecker.fromName('StreamNotifier', packageName: 'riverpod'),
-  TypeChecker.fromName('StateNotifier', packageName: 'state_notifier'),
-]);
-
 /// Reports `SnackBarUtils.show...` calls from notifiers, repositories, and
 /// datasources (context-ui.md: only the UI helper may wrap SnackBarUtils).
 final class _SnackBarUtilsDispatchVisitor extends RecursiveAstVisitor<void> {
@@ -370,7 +359,7 @@ final class _SnackBarUtilsDispatchVisitor extends RecursiveAstVisitor<void> {
         target.element is ClassElement &&
         target.name == 'SnackBarUtils' &&
         node.methodName.name.startsWith('show') &&
-        (context.isDataPath || isEnclosedClassAssignableTo(node, _notifierChecker))) {
+        (context.isDataPath || isEnclosedClassAssignableTo(node, riverpodNotifierChecker))) {
       _reportAtOffset(reporter, context, node.offset);
     }
     super.visitMethodInvocation(node);

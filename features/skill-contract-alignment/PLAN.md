@@ -63,6 +63,15 @@ After the sweep, an acceptance probe ran the skill's examples against the merged
 
 Integration: `fix/skill-contract-accept` merged after the sweep with no textual conflicts. The sweep left `select_returns_unstable_record_identity` on the non-error allowlist, with the reason "Severity owned by the acceptance branch". That entry is removed. Both dialog codes are now pinned in the error-severity assertion list. Every skill code the accept branch touches is an error. The branch adds no rules, so the counts stay at 229 skill rules, 237 skill codes, 274 additional codes, 509 unique codes and 63 fixes. On the integrated head, `dart format`, `dart analyze` and `dart test` pass, with 2,628 tests and 1 skip. `python3 .hooks/hard-eng.py check --base origin/main --plan-stage Draft` passes every gate, with 79.16% line coverage.
 
+## Final round
+
+- `riverpod_watch_no_select` exempts a computed (functional) provider watch only when its value is a collection, record-destructured or used whole; a field read such as performance.md:76 `userState.user` reports for functional and Notifier providers.
+- `router_pop_then_push` drops the text heuristic and keeps the AST check, so routing-app-shell.md "Safe pop with typed fallback" stays clean.
+- `fire_and_forget_missing_catch` resolves same-class calls in a callee from another library, so lists-forms-workflows.md `unawaited(notifier.loadMore())` (awaits a catching `_loadPage`) stays clean.
+- `perf_build_work` scans only Widget/State `build` (widget/State class, `Widget build(` or `BuildContext` signature, or UI file) and skips Riverpod Notifier `build`.
+- `avoid_dynamic_except_json_maps` and `avoid_banned_types` share `isJsonMapDynamicValueType`, which also accepts `<String, dynamic>{}` map literals (hive-persistence.md:56).
+- `destructive_failure_logged_before_reconcile` also reports telemetry in the catch of async-started long-running work (`start*` long-running call or `xasync: true`) in a destructive method with no reconcile call.
+
 ## Baseline + execution
 
 Result: Passed

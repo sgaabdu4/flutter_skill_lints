@@ -584,9 +584,9 @@ const _functionalProviderType = TypeChecker.fromName(
   packageName: 'riverpod',
 );
 
-/// A watch of a computed (functional) provider, whose whole value is already
-/// the render projection (performance.md:6). Notifier providers hold mutable
-/// state and need `select`.
+/// A watch of a computed (functional) provider, whose whole value can already
+/// be the render projection (performance.md:6; see [_consumesProjection]).
+/// Notifier providers hold mutable state and need `select`.
 bool _isProjectionProviderWatch(Expression argument) {
   final type = argument.staticType;
   return type is InterfaceType && _functionalProviderType.isAssignableFromType(type);

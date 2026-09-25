@@ -425,8 +425,9 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
 
   /// Avoid expensive work in build().
   ///
-  /// Why: Flags expensive collection or formatting work inside build methods. Move sorting,
-  /// filtering, formatting, and regex creation out of build.
+  /// Why: Flags expensive collection or formatting work inside Widget/State build methods.
+  /// Move sorting, filtering, formatting, and regex creation out of build. Riverpod
+  /// Notifier `build()` computes provider state, where performance.md sends that work.
   scannerRule(
     code: const LintCode(
       'perf_build_work',
@@ -434,9 +435,10 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
       correctionMessage: 'Move sorting, filtering, formatting, and regex creation out of build.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags expensive collection or formatting work inside build methods so the Flutter skill violation is shown during analysis.',
+    description: 'Flags expensive collection or formatting work inside Widget/State build methods (not Riverpod Notifier build) so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       for (final method in context.methods.where((method) => method.name == 'build')) {
+        if (!_isWidgetBuild(context, method)) continue;
         for (var i = method.start; i <= method.end; i++) {
           final line = context.source.masked[i];
           if (RegExp(r'\.(?:sort|where|map|toList)\s*\(').hasMatch(line) ||
@@ -465,6 +467,23 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     },
   ),
 ];
+
+/// A Widget/State `build`: its class extends a widget or State, its signature is
+/// `Widget build(` or takes a `BuildContext`, or it sits in a UI file. Riverpod
+/// Notifier classes (`@riverpod`, `extends _$`, `*Notifier`) never qualify.
+bool _isWidgetBuild(SourceScannerContext context, ScannerMethodSpan method) {
+  final classSpan = context.classes.where((span) => span.contains(method.start)).lastOrNull;
+  if (classSpan == null) return false;
+  final annotation = classSpan.start > 0 ? context.source.masked[classSpan.start - 1] : '';
+  if (classSpan.isNotifier || _riverpodAnnotation.hasMatch(annotation)) return false;
+  if (_isWidgetSurfaceClass(context, classSpan)) return true;
+  final signature = sourceLineWindow(context, method.start, method.end, 2);
+  return _widgetBuildSignature.hasMatch(signature) || context.isUiFile;
+}
+
+final _riverpodAnnotation = RegExp(r'@[Rr]iverpod\b');
+
+final _widgetBuildSignature = RegExp(r'\bWidget\s+build\s*\(|\bbuild\s*\(\s*BuildContext\b');
 
 void _scanDateTimeNowIntent(ScannerRuleReporter reporter, SourceScannerContext context) {
   if (context.isTestFile) return;

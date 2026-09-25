@@ -462,6 +462,30 @@ Map<String, dynamic> emptyPrefs() {
 ''');
   }
 
+  // hive-persistence.md:56: `<String, dynamic>{}` is a JSON map literal.
+  Future<void> test_allowsJsonMapLiteralDynamic() async {
+    await assertNoDiagnostics(r'''
+Map<String, dynamic> normalizePersistedMap(Map<Object?, Object?> raw) {
+  final normalized = <String, dynamic>{};
+  for (final entry in raw.entries) {
+    normalized['${entry.key}'] = entry.value;
+  }
+  return normalized;
+}
+''');
+  }
+
+  Future<void> test_reportsNonJsonLiteralDynamic() async {
+    const source = r'''
+final byId = <int, dynamic>{};
+final items = <dynamic>[];
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf('dynamic>{'), 'dynamic'.length),
+      lint(source.indexOf('dynamic>['), 'dynamic'.length),
+    ]);
+  }
+
   Future<void> test_reportsUntypedRuntimeBoundaryDynamic() async {
     final filePath = '$testPackageRootPath/functions/shared/lib/http.dart';
     const source = r'''

@@ -176,7 +176,9 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   /// exception before checking whether the entity/account is gone creates false
   /// Crashlytics/Sentry noise and may show a user-facing error for a successful
   /// operation. Reconcile first; report only when the source of truth still
-  /// shows failure.
+  /// shows failure. A catch around async-started long-running work
+  /// (networking.md "Long-Running Remote Work") that reports and never
+  /// reconciles is flagged too.
   scannerRule(
     code: const LintCode(
       'destructive_failure_logged_before_reconcile',
@@ -184,18 +186,15 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       correctionMessage: 'Call a reconcile/verify/waitFor source-of-truth check first, then log/report the exception only when reconciliation fails.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags Crash/Sentry/Firebase error reporting before a later reconcile/verify call inside delete/remove/deactivate methods.',
+    description: 'Flags Crash/Sentry/Firebase error reporting before a later reconcile/verify call inside delete/remove/deactivate methods, or in the catch of async-started long-running work that never reconciles.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
+      final tries = collectNodes<TryStatement>(context.unit);
       for (final method in context.methods) {
         if (!_methodLooksDestructive(method.name)) continue;
-        for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-          final line = context.source.masked[i];
-          final match = _failureTelemetryCall.firstMatch(line);
-          if (match == null) continue;
-          if (!_hasLaterReconcileCall(context, i + 1, method.end)) continue;
-          reporter.report(context, i, match.start);
-        }
+        _reportTelemetryBeforeReconcile(reporter, context, method);
+        if (_hasLaterReconcileCall(context, method.start, method.end)) continue;
+        _reportUnreconciledLongRunningCatches(reporter, context, method, tries);
       }
     },
   ),

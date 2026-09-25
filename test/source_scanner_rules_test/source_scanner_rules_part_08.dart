@@ -237,11 +237,42 @@ final class RouterPopThenPushTest extends _RouterRuleTest {
   String get needle => 'context.pop()';
   @override
   String get source => r'''
-void navigate(context) {
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+void navigate(BuildContext context) {
   context.pop();
   context.push('/next');
 }
 ''';
+
+  // routing-app-shell.md:285-290 "Safe pop with typed fallback": the
+  // pushReplacement before the pop is a separate flow, not pop-then-push.
+  Future<void> test_allowsSkillSafePopAfterEarlierPushReplacement() async {
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class LoginRoute extends GoRouteData {
+  const LoginRoute();
+  void pushReplacement(BuildContext context) {}
+}
+
+class ProductListRoute extends GoRouteData {
+  const ProductListRoute();
+}
+
+void navigate(BuildContext context, bool result) {
+  const LoginRoute().pushReplacement(context);
+
+  if (context.canPop()) {
+    context.pop(result);
+  } else {
+    const ProductListRoute().go(context);
+  }
+}
+''');
+  }
 
   Future<void> test_reportsNavigatorPopThenTypedRoutePush() async {
     const source = r'''

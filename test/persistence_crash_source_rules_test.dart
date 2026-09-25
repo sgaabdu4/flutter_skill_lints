@@ -802,6 +802,72 @@ void onScroll(PaginatedNotifier notifier) {
 ''');
   }
 
+  // lists-forms-workflows.md:40-84: the screen calls
+  // `unawaited(notifier.loadMore())` on a notifier in another library, whose
+  // loadMore/refresh await or return `_loadPage`, which catches.
+  Future<void> test_importedNotifierDelegatingToCatchingMethod_noDiagnostic() async {
+    newFile('$testPackageLibPath/paginated_notifier.dart', _paginatedNotifier);
+    await assertRuleNoDiagnostics(r'''
+import 'dart:async';
+
+import 'paginated_notifier.dart';
+
+void onScroll(PaginatedNotifier notifier) {
+  unawaited(notifier.loadMore());
+  unawaited(notifier.refresh());
+}
+''');
+  }
+
+  Future<void> test_reportsImportedNotifierDelegatingToUncaughtMethod() async {
+    newFile('$testPackageLibPath/paginated_notifier.dart', _paginatedNotifier);
+    await assertRuleDiagnostic(r'''
+import 'dart:async';
+
+import 'paginated_notifier.dart';
+
+void onScroll(PaginatedNotifier notifier) {
+  unawaited(notifier.loadNext());
+}
+''', 'unawaited(notifier.loadNext');
+  }
+
+  static const _paginatedNotifier = r'''
+abstract interface class Repository {
+  Future<List<int>> fetchPage(int page);
+}
+
+class PaginatedNotifier {
+  PaginatedNotifier(this.repository);
+  final Repository repository;
+  bool isLoading = false;
+
+  Future<void> _loadPage(int page) async {
+    isLoading = true;
+    try {
+      await repository.fetchPage(page);
+    } catch (e) {
+      isLoading = false;
+    }
+  }
+
+  Future<void> _fetchUncaught(int page) async {
+    await repository.fetchPage(page);
+  }
+
+  Future<void> loadMore() async {
+    if (isLoading) return;
+    await _loadPage(1);
+  }
+
+  Future<void> refresh() async => _loadPage(0);
+
+  Future<void> loadNext() async {
+    await this._fetchUncaught(2);
+  }
+}
+''';
+
   Future<void> test_reportsCalleeThrowingBeforeCaughtWork() async {
     await assertRuleDiagnostic(r'''
 import 'dart:async';

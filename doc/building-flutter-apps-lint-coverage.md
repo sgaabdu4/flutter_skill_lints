@@ -379,7 +379,9 @@ Runtime-bug surface (0.7.0) — `runtime_bug_source_rules`:
   reports the same way (networking.md "Long-Running Remote Work").
 - `destructive_failure_logged_before_reconcile` — delete/remove/deactivate
   catch blocks should call a reconcile/verify/wait-for source-of-truth check
-  before Crash/Sentry/Firebase error reporting.
+  before Crash/Sentry/Firebase error reporting. A catch around async-started
+  long-running work (`startDeleteAccount(...)`, `xasync: true`) that reports and never
+  reconciles reports the same way (networking.md "Long-Running Remote Work").
 - `storage_clear_preserves_migration_state` — datasource/repository
   reset/clear methods must not read and restore migration/version/install markers
   before `.clear()` and restore them after, unless the wipe is intentionally

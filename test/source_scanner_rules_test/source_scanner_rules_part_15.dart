@@ -856,42 +856,115 @@ class AuthNotifier {
 }
 ''');
   }
+
+  // networking.md "Long-Running Remote Work" WRONG: reports before reconcile.
+  Future<void> test_reportsSkillTelemetryBeforeWaitForReconcile() async {
+    final source = _analyzedSource(r'''
+class DeleteResult {
+  const DeleteResult.ok();
+  const DeleteResult.timedOut();
 }
 
-@reflectiveTest
-final class StorageClearPreservesMigrationStateTest extends _RuntimeBugRuleTest {
-  @override
-  String get ruleName => 'storage_clear_preserves_migration_state';
-  @override
-  String get needle => '.clear()';
-  @override
-  String get source => r'''
-class SettingsLocalDatasource {
-  Future<void> resetAll() async {
-    final lastOpenedAppVersion = await _storage.read<String>(localDataLastOpenedAppVersionKey);
-    await _storage.clear();
-    if (lastOpenedAppVersion != null) {
-      await _storage.save(localDataLastOpenedAppVersionKey, lastOpenedAppVersion);
+class AccountRepository {
+  Future<DeleteResult> deleteAccount(String userId) async {
+    try {
+      return await remote.startDeleteAccount(userId);
+    } on Exception catch (e, s) {
+      Crash.error(e, s, reason: 'deleteAccount');
+      final deleted = await remote.waitForAccountDeleted(userId, maxAttempts: 60);
+      return deleted ? .ok() : .timedOut();
     }
   }
 }
-''';
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(source, [compatLint(source, 'Crash.error', ruleName)]);
+  }
 
-  Future<void> test_allowsHardClear() async {
+  // networking.md: log/report destructive failures only after reconcile, so a
+  // catch around async-started destructive work that reports and never
+  // reconciles is also wrong.
+  Future<void> test_reportsTelemetryWithoutReconcileAfterAsyncStart() async {
+    final source = _analyzedSource(r'''
+class AccountRepository {
+  Future<bool> deleteAccount(String userId) async {
+    try {
+      await remote.startDeleteAccount(userId);
+      return true;
+    } on Exception catch (e, s) {
+      Crash.error(e, s, reason: 'startDelete');
+      return false;
+    }
+  }
+
+  Future<bool> removeWorkspace(String workspaceId) async {
+    try {
+      await functions.createExecution(functionId: workspaceFunctionId, xasync: true);
+      return true;
+    } catch (e, s) {
+      Sentry.captureException(e, stackTrace: s);
+      return false;
+    }
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(source, [
+      compatLint(source, 'Crash.error', ruleName),
+      compatLint(source, 'Sentry.captureException', ruleName),
+    ]);
+  }
+
+  // networking.md RIGHT and debounce-gate-batch.md DO: async-start, then
+  // reconcile before any telemetry.
+  Future<void> test_allowsSkillAsyncStartThenReconcile() async {
     await assertAllows(r'''
-class SettingsLocalDatasource {
-  Future<void> resetAll() async {
-    await _storage.clear();
+class DeleteResult {
+  const DeleteResult.ok();
+  const DeleteResult.timedOut();
+}
+
+class AccountRepository {
+  Future<DeleteResult> deleteAccount(String userId) async {
+    final started = await remote.startDeleteAccount(userId);
+    if (!started.ok) return started;
+    final deleted = await remote.waitForAccountDeleted(userId, maxAttempts: 60);
+    return deleted ? .ok() : .timedOut();
+  }
+
+  Future<bool> deleteUser(String userId) async {
+    try {
+      await functions.createExecution(functionId: deleteAccountFunctionId, xasync: true);
+      return await waitForDeleted(userId, maxAttempts: 60);
+    } catch (e, s) {
+      final deleted = await _reconcileDeletedState();
+      if (!deleted) Crash.error(e, s);
+      return deleted;
+    }
   }
 }
 ''');
   }
 
-  Future<void> test_allowsNonStorageBoundaryClass() async {
+  // state-management-lifecycle.md: ordinary notifier delete methods catch and
+  // report; no async-started long-running work, so nothing to reconcile.
+  Future<void> test_allowsOrdinaryDestructiveTelemetry() async {
     await assertAllows(r'''
-class MemoryCache {
-  Future<void> resetAll() async {
-    await _storage.clear();
+class ProductNotifier {
+  Future<void> deleteProduct(String id) async {
+    try {
+      await ref.read(productRepositoryProvider).delete(id);
+    } on Exception catch (e, s) {
+      state = state.copyWith(error: AppErrorMapper.from(e));
+      Crash.error(e, s, reason: 'ProductNotifier.deleteProduct');
+    }
+  }
+
+  Future<void> cancelSession() async {
+    try {
+      startTimer();
+      await session.close();
+    } on Exception catch (e, s) {
+      Crash.error(e, s, reason: 'cancelSession');
+    }
   }
 }
 ''');

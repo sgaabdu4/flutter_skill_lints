@@ -405,27 +405,90 @@ class TodoList {
   }
 
   // performance.md:6: watch a generated computed projection provider directly
-  // when the entire provider value is already the render projection.
+  // when the entire provider value is already the render projection: passed
+  // whole, destructured as a record, or a projected collection read by length
+  // and index (routing-app-shell.md:179 ProductListScreen).
   Future<void> test_allowsDirectWatchOfComputedProjectionProvider() async {
     await assertAllows(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-class TrainerSummary { String get title => ''; int get sets => 0; }
+import 'package:flutter/widgets.dart';
+class TrainerSummary {
+  const TrainerSummary(this.title, this.sets);
+  final String title;
+  final int sets;
+}
+class TrainerCard extends Widget {
+  TrainerCard({required TrainerSummary summary});
+}
 final class TrainerCardProvider extends $FunctionalProvider<TrainerSummary> {}
 final trainerCardProvider = TrainerCardProvider();
+final class TrainerTotalsProvider extends $FunctionalProvider<({String title, int sets})> {}
+final trainerTotalsProvider = TrainerTotalsProvider();
 final class ExerciseSetsProvider extends $FunctionalProvider<List<String>> {}
 final class ExerciseSetsFamily {
   ExerciseSetsProvider call(String exerciseId) => ExerciseSetsProvider();
 }
 final exerciseSetsProvider = ExerciseSetsFamily();
+final class ProductIdsProvider extends $FunctionalProvider<List<String>> {}
+final productIdsProvider = ProductIdsProvider();
 
-class TrainerCard {
+class TrainerScreen {
   Object build(WidgetRef ref) {
     final summary = ref.watch(trainerCardProvider);
+    final (:title, :sets) = ref.watch(trainerTotalsProvider);
     final entries = ref.watch(exerciseSetsProvider('exercise-1'));
-    return (summary.title, summary.sets, entries.first);
+    return (TrainerCard(summary: summary), title, sets, entries.first);
+  }
+}
+
+class ProductListScreen {
+  Object build(WidgetRef ref) {
+    final ids = ref.watch(productIdsProvider);
+    return (ids.length, ids[0]);
   }
 }
 ''');
+  }
+
+  // performance.md:76 WRONG: a broad watch read only by field reports, also
+  // when the provider is a computed (functional) provider.
+  static const _userSummarySource = r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/widgets.dart';
+class User {}
+class UserState {
+  const UserState(this.user, this.isLoading);
+  final User user;
+  final bool isLoading;
+}
+class UserSummary extends Widget {
+  UserSummary({required User user});
+}
+PROVIDER
+final userProvider = UserProvider();
+
+class UserScreen {
+  Widget build(WidgetRef ref) {
+    final userState = ref.watch(userProvider);
+    return UserSummary(user: userState.user);
+  }
+}
+''';
+
+  Future<void> test_reportsFieldReadOfComputedProvider() async {
+    final source = _userSummarySource.replaceFirst(
+      'PROVIDER',
+      r'final class UserProvider extends $FunctionalProvider<UserState> {}',
+    );
+    await assertDiagnostics(source, [compatLint(source, 'ref.watch(userProvider)', ruleName)]);
+  }
+
+  Future<void> test_reportsFieldReadOfNotifierProvider() async {
+    final source = _userSummarySource.replaceFirst(
+      'PROVIDER',
+      r'final class UserProvider extends $NotifierProvider<Object, UserState> {}',
+    );
+    await assertDiagnostics(source, [compatLint(source, 'ref.watch(userProvider)', ruleName)]);
   }
 
   // A notifier provider holds mutable state, whatever its name says.

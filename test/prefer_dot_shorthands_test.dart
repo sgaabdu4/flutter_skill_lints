@@ -55,7 +55,6 @@ void example() {
 ''';
 
     await assertDiagnostics(source, [
-      lint(154, 14),
       lint(274, 11),
       lint(307, 19),
       lint(363, 10),
@@ -92,18 +91,19 @@ void example() => consume(types.Axis.center);
   Future<void> test_extensionTypeStaticAndConstructor_lint() async {
     const source = r'''
 extension type UserId(int value) {
+  UserId.parse(String raw) : value = int.parse(raw);
   static UserId get zero => UserId(0);
 }
 void consume(UserId id) {}
 void example() {
   consume(UserId.zero);
   consume(UserId(1));
+  consume(UserId.parse('2'));
 }
 ''';
     await assertDiagnostics(source, [
-      lint(source.indexOf('UserId(0)'), 'UserId(0)'.length),
       lint(source.indexOf('UserId.zero'), 'UserId.zero'.length),
-      lint(source.lastIndexOf('UserId(1)'), 'UserId(1)'.length),
+      lint(source.indexOf("UserId.parse('2')"), "UserId.parse('2')".length),
     ]);
   }
 
@@ -272,25 +272,18 @@ Box<int> d = const Box<int>.named();
 Box<int> e = Box<int>();
 Box<int> f = Box<int>.named();
 ''';
-    const targets = [
-      'new Box<int>()',
-      'new Box<int>.named()',
-      'const Box<int>()',
-      'const Box<int>.named()',
-      'Box<int>()',
-      'Box<int>.named()',
-    ];
+    const targets = ['new Box<int>.named()', 'const Box<int>.named()', 'Box<int>.named()'];
     const expected = r'''
 class Box<T> {
   const Box();
   const Box.named();
 }
 
-Box<int> a = .new();
+Box<int> a = new Box<int>();
 Box<int> b = .named();
-Box<int> c = const .new();
+Box<int> c = const Box<int>();
 Box<int> d = const .named();
-Box<int> e = .new();
+Box<int> e = Box<int>();
 Box<int> f = .named();
 ''';
 
@@ -352,9 +345,9 @@ extension type UserId(int value) {
 }
 UserId zero = .zero;
 UserId parsed = .parse('1');
-UserId created = .new(1);
+UserId created = UserId(1);
 ''';
-    await _assertFixes(source, const ['UserId.zero', "UserId.parse('1')", 'UserId(1)'], expected);
+    await _assertFixes(source, const ['UserId.zero', "UserId.parse('1')"], expected);
   }
 
   Future<void> test_fix_selectorChain_isValid() async {
@@ -385,6 +378,48 @@ enum Axis { center }
 void consume(Axis axis) {}
 void example() => consume(.center);
 ''');
+  }
+
+  Future<void> test_unnamedConstructorCalls_noLint() async {
+    // The skill prescribes shorthand for enum values, static members and named
+    // constructors; it never shows `.new(...)` for unnamed constructor calls.
+    await assertNoDiagnostics(r'''
+class Span {
+  const Span(int value);
+}
+class State {
+  const State({bool isLoading = false});
+}
+void consume(Span span, {required State state}) {}
+
+State build() => const State();
+State loading() {
+  return const State(isLoading: true);
+}
+
+void example() {
+  Span current = Span(1);
+  current = const Span(2);
+  consume(Span(3), state: State());
+  final spans = <Span>[Span(4), Span.new(5)];
+  print('$current $spans');
+}
+''');
+  }
+
+  Future<void> test_namedConstructorControl_lint() async {
+    const source = r'''
+class Span {
+  const Span(int value);
+  const Span.all(int value);
+}
+void consume(Span span) {}
+
+Span build() => const Span.all(1);
+void example() => consume(Span.all(2));
+''';
+    final targets = _targetRanges(source, const ['const Span.all(1)', 'Span.all(2)']);
+    await assertDiagnostics(source, targets.map((target) => lint(target.$1, target.$2)).toList());
   }
 
   Future<void> test_untypedClosureReturn_noLint() async {

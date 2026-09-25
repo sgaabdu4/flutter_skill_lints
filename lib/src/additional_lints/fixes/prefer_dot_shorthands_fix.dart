@@ -38,28 +38,24 @@ final class PreferDotShorthandsFix extends ResolvedCorrectionProducer {
       return;
     }
     final target = node;
-    final (prefix, replacement, explicitNew) = switch (target) {
-      PrefixedIdentifier(:final prefix) => (prefix as AstNode, '', null),
-      PropertyAccess(target: final prefix?) => (prefix, '', null),
-      MethodInvocation(target: final prefix?) => (prefix, '', null),
-      InstanceCreationExpression(constructorName: ConstructorName(:final type, name: null)) => (
+    // The rule reports named constructors only, so the type name is always
+    // followed by `.name` and removing it leaves the shorthand.
+    final (prefix, explicitNew) = switch (target) {
+      PrefixedIdentifier(:final prefix) => (prefix as AstNode, null),
+      PropertyAccess(target: final prefix?) => (prefix, null),
+      MethodInvocation(target: final prefix?) => (prefix, null),
+      InstanceCreationExpression(constructorName: ConstructorName(:final type, name: _?)) => (
         type as AstNode,
-        '.new',
         target.keyword?.lexeme == 'new' ? target.keyword : null,
       ),
-      InstanceCreationExpression(constructorName: ConstructorName(:final type)) => (
-        type as AstNode,
-        '',
-        target.keyword?.lexeme == 'new' ? target.keyword : null,
-      ),
-      _ => (null, '', null),
+      _ => (null, null),
     };
     if (prefix == null) return;
 
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(
         explicitNew == null ? range.node(prefix) : range.startEnd(explicitNew, prefix),
-        replacement,
+        '',
       );
     });
   }

@@ -93,22 +93,31 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     },
   ),
 
-  /// UI widgets should not directly show snackbars.
+  /// Snackbars are shown only by UI helpers.
   ///
-  /// Why: Flags direct snackbar dispatches from UI widgets. Dispatch a notifier action and
-  /// let the shell own snackbar presentation.
+  /// Why: Flags direct snackbar dispatches from UI widgets, and
+  /// `SnackBarUtils.show...` calls from notifiers (resolved Riverpod or
+  /// state_notifier supertypes), repositories, and datasources
+  /// (context-ui.md). The notifier owns a durable status field; the widget
+  /// listens and calls a UI helper, which may wrap SnackBarUtils.
   scannerRule(
     code: const LintCode(
       'ui_snackbar_boundary',
-      'UI widgets should not directly show snackbars.',
-      correctionMessage: 'Dispatch a notifier action and let the shell own snackbar presentation.',
+      'Do not show snackbars from widgets, notifiers, repositories, or datasources.',
+      correctionMessage: 'Keep a durable status field in the notifier; the widget listens and calls a UI helper that wraps SnackBarUtils.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags direct snackbar dispatches from UI widgets so the Flutter skill violation is shown during analysis.',
+    description: 'Flags direct snackbar dispatches from UI widgets and SnackBarUtils.show calls from notifiers, repositories, and datasources.',
     scan: (reporter, context) {
+      if (!context.isUiFile) {
+        if (!context.isTestFile) {
+          context.unit.accept(_SnackBarUtilsDispatchVisitor(reporter, context));
+        }
+        return;
+      }
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (context.isUiFile && context.dispatchesSnackbarFromUi(line)) {
+        if (context.dispatchesSnackbarFromUi(line)) {
           reporter.report(context, i, 0);
         }
       }

@@ -432,6 +432,96 @@ final class UiSnackbarBoundaryTest extends _UiRuleTest {
   @override
   String get source =>
       'void build(context) { ScaffoldMessenger.of(context).showSnackBar(Object()); }';
+
+  @override
+  void setUp() {
+    // Mirrors riverpod 3: codegen `_$X extends $Notifier` reaches AnyNotifier
+    // without passing through the hand-written Notifier.
+    newPackage('riverpod').addFile('lib/riverpod.dart', r'''
+abstract class AnyNotifier<StateT, ValueT> {
+  late StateT state;
+}
+abstract class $Notifier<StateT> extends AnyNotifier<StateT, StateT> {}
+abstract class Notifier<T> extends $Notifier<T> {}
+''');
+    super.setUp();
+  }
+
+  static const _snackBarUtils = '''
+abstract final class SnackBarUtils {
+  static void showError(String message) {}
+}
+''';
+
+  // context-ui.md:69: do not call SnackBarUtils.show... from notifiers.
+  Future<void> test_reportsCodegenNotifierSnackBarUtilsCall() async {
+    final source = _analyzedSource('''
+import 'package:riverpod/riverpod.dart';
+
+$_snackBarUtils
+abstract class _\$ProfileNotifier extends \$Notifier<int> {}
+
+class ProfileNotifier extends _\$ProfileNotifier {
+  void save() {
+    SnackBarUtils.showError('Save failed');
+  }
+}
+''', addIgnorePrefix: true);
+    final filePath =
+        '$testPackageLibPath/features/profile/presentation/providers/profile_notifier.dart';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, "SnackBarUtils.showError('Save failed')", ruleName),
+    ]);
+  }
+
+  // context-ui.md:69: do not call SnackBarUtils.show... from repositories.
+  Future<void> test_reportsRepositorySnackBarUtilsCall() async {
+    final source = _analyzedSource('''
+$_snackBarUtils
+final class ProfileRepositoryImpl {
+  Future<void> save() async {
+    SnackBarUtils.showError('Save failed');
+  }
+}
+''', addIgnorePrefix: true);
+    final filePath =
+        '$testPackageLibPath/features/profile/data/repositories/profile_repository_impl.dart';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, "SnackBarUtils.showError('Save failed')", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsNonSnackBarUtilsShowInNotifier() async {
+    await assertAllows('''
+import 'package:riverpod/riverpod.dart';
+
+abstract final class Toast {
+  static void showError(String message) {}
+}
+
+abstract class _\$ProfileNotifier extends \$Notifier<int> {}
+
+class ProfileNotifier extends _\$ProfileNotifier {
+  void save() {
+    Toast.showError('Save failed');
+  }
+}
+''', path: '$testPackageLibPath/features/profile/presentation/providers/profile_notifier.dart');
+  }
+
+  // context-ui.md:69: the UI helper may wrap SnackBarUtils.
+  Future<void> test_allowsUiHelperWrappingSnackBarUtils() async {
+    await assertAllows('''
+$_snackBarUtils
+void showProfileSaveFailedSnackBar(String message) {
+  SnackBarUtils.showError(message);
+}
+''', path: '$testPackageLibPath/core/utils/profile_snack_bars.dart');
+  }
 }
 
 @reflectiveTest

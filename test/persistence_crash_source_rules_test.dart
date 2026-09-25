@@ -739,6 +739,25 @@ class CreateScreen {
 ''');
   }
 
+  // routing-app-shell.md Bento sheet: `maybePop` completes with whether a route
+  // was popped, so a callee that only awaits it has nothing to catch.
+  Future<void> test_maybePopCallee_noDiagnostic() async {
+    await assertRuleNoDiagnostics(r'''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+
+class ShellScreen {
+  Future<void> _createWorkout(BuildContext sheetContext) async {
+    await Navigator.of(sheetContext).maybePop();
+    if (!sheetContext.mounted) return;
+  }
+
+  void onCreateWorkout(BuildContext sheetContext) => unawaited(_createWorkout(sheetContext));
+}
+''');
+  }
+
   Future<void> test_reportsNavigationThenUncaughtRemoteWork() async {
     await assertRuleDiagnostic(r'''
 import 'dart:async';
@@ -953,6 +972,13 @@ Future<T?> showModalBottomSheet<T>({
   required WidgetBuilder builder,
   RouteSettings? routeSettings,
 }) async => null;
+class NavigatorState {
+  Future<bool> maybePop<T>([T? result]) async => _popDisposition();
+  Future<bool> _popDisposition() async => throw StateError('no route');
+}
+class Navigator {
+  static NavigatorState of(BuildContext context) => NavigatorState();
+}
 ''');
     newPackage('go_router').addFile('lib/go_router.dart', r'''
 import 'package:flutter/material.dart';

@@ -36,6 +36,18 @@ abstract final class AnalyticsLog {
 ''');
   }
 
+  // hive-persistence.md "Testing with TypeAdapters": test helpers are not
+  // production service facades.
+  Future<void> test_allowsStaticTestHelperInTests() async {
+    await assertAllows('''
+import 'dart:io';
+
+abstract final class HiveTestHelper {
+  static Future<Directory> initialize(String testName) async => Directory(testName);
+}
+''', path: '$testPackageRootPath/test/shared/hive_test_helper.dart');
+  }
+
   Future<void> test_reportsDataReturningStaticFacade() async {
     const source = '''
 abstract final class AnalyticsLog {

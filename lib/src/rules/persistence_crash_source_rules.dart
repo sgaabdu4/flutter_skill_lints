@@ -748,7 +748,8 @@ Element? _unresolvedSameClassCall(Expression expression, InterfaceElement? owner
     };
 
 /// A Riverpod `Mutation.run`, or a Flutter / go_router navigation call (including a
-/// go_router_builder route's generated `push`) whose future completes with the route result.
+/// go_router_builder route's generated `push`, and `maybePop`) whose future completes with
+/// the route result.
 bool _isFailureRecordingCall(Element? element) {
   if (element is! ExecutableElement) return false;
   final declared = element.baseElement;
@@ -786,6 +787,7 @@ const _flutterModalFunctions = {
 };
 
 const _routePushMethods = {
+  'maybePop',
   'push',
   'pushAndRemoveUntil',
   'pushNamed',

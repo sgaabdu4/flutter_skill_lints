@@ -20,6 +20,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
     ),
     description: 'Flags static helper/facade classes that hide clock/random work or grow wider than the plain boring service-facade pattern.',
     scan: (reporter, context) {
+      if (context.isTestFile) return;
       for (final classSpan in context.classes) {
         final body = context.source.masked.sublist(classSpan.start, classSpan.end + 1).join('\n');
         if (!RegExp(r'^\s*abstract\s+final\s+class\b', multiLine: true).hasMatch(body)) {

@@ -410,13 +410,16 @@ class SearchNotifier {
     ]);
   }
 
-  /// The skill's AppError.from wraps the caught error without storing its text.
+  /// The skill's AppErrorMapper.from wraps the caught error without storing
+  /// its text (state-management-lifecycle.md "Domain Error Types").
   Future<void> test_allowsTypedAppError() async {
     await assertAllows(r'''
 class AppError {
   const AppError(this.message);
   final String message;
+}
 
+abstract final class AppErrorMapper {
   static AppError from(Object e) => AppError(e.toString());
 }
 
@@ -431,7 +434,7 @@ class SearchNotifier {
     try {
       await Future<void>.value();
     } on Exception catch (e) {
-      state = state.copyWith(error: AppError.from(e));
+      state = state.copyWith(error: AppErrorMapper.from(e));
     }
   }
 }

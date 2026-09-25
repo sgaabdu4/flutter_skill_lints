@@ -108,8 +108,7 @@ final List<ScannerRule> stateSourceRules = [
     code: const LintCode(
       'state_raw_error_to_string',
       'Do not surface raw exception strings in state.',
-      correctionMessage:
-          'Store a typed AppError, for example AppError.from(e), instead of the exception text.',
+      correctionMessage: 'Store a typed AppError, for example AppErrorMapper.from(e), instead of the exception text.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags String error arguments built from a caught exception or its toString so failures stay typed.',

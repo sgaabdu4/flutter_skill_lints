@@ -204,6 +204,7 @@ void main() {
     defineReflectiveTests(NestedLinearLookupByIdTest);
     defineReflectiveTests(AppwriteBlockingFunctionExecutionInClientTest);
     defineReflectiveTests(DestructiveFailureLoggedBeforeReconcileTest);
+    defineReflectiveTests(DestructiveFailureAfterConstConstructorTest);
     defineReflectiveTests(StorageClearPreservesMigrationStateTest);
     defineReflectiveTests(NotifierPersistenceNoDebounceTest);
     defineReflectiveTests(NotifierAsyncInitStaleStateWriteTest);

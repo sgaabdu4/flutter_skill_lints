@@ -240,3 +240,30 @@ class MemoryCache {
 ''');
   }
 }
+
+/// A `;`-terminated constructor has no body; the scanner must not extend its
+/// span over the following method (networking.md repository shape).
+@reflectiveTest
+final class DestructiveFailureAfterConstConstructorTest extends _RuntimeBugRuleTest {
+  @override
+  String get ruleName => 'destructive_failure_logged_before_reconcile';
+  @override
+  String get needle => 'Crash.error(e, s)';
+  @override
+  String get source => r'''
+class AccountRepository {
+  const AccountRepository(this.remote);
+
+  final Object remote;
+
+  Future<void> deleteAccount(String userId) async {
+    try {
+      await remote.startDeleteAccount(userId);
+    } on Exception catch (e, s) {
+      Crash.error(e, s);
+      await remote.waitForAccountDeleted(userId);
+    }
+  }
+}
+''';
+}

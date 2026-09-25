@@ -441,6 +441,32 @@ void apply(List<Item> items, List<String> ids, bool active) {
     ]);
   }
 
+  Future<void> test_reportsLookupInGetters() async {
+    const source =
+        '''
+$_item
+class ItemsState {
+  const ItemsState(this.items, this.itemId);
+  final List<Item> items;
+  final String itemId;
+
+  Item get item => items.firstWhere((item) => item.id == itemId);
+}
+
+List<Item> currentItems = const [];
+
+int get selectedIndex {
+  return currentItems.indexWhere((item) => item.id == 'selected');
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '.firstWhere(', ruleName),
+      compatLint(analyzedSource, '.indexWhere(', ruleName),
+    ]);
+  }
+
   Future<void> test_allowsOneOffRepositoryMutation() async {
     await assertAllows('''
 final class StoredValue {
@@ -689,6 +715,55 @@ class ImportRemoteDatasource {
     await assertDiagnostics(analyzedSource, [
       compatLint(analyzedSource, 'createExecution(', ruleName),
     ]);
+  }
+
+  Future<void> test_reportsClientWaitingForBackendCompletion() async {
+    const source = r'''
+class DeleteResult {}
+
+abstract interface class AccountRemote {
+  Future<DeleteResult> deleteAccount(String userId, {bool waitForCompletion = false});
+  Future<bool> startDeleteAccount(String userId);
+  Future<bool> waitForAccountDeleted(String userId, {int maxAttempts = 30});
+  Future<DeleteResult> refreshProfile(String userId, {bool waitForCompletion = false});
+}
+
+class AccountRepository {
+  AccountRepository(this.remote);
+  final AccountRemote remote;
+
+  Future<DeleteResult> deleteAccount(String userId) async {
+    final result = await remote.deleteAccount(userId, waitForCompletion: true);
+    return result;
+  }
+
+  Future<bool> deleteAccountInBackground(String userId) async {
+    final started = await remote.startDeleteAccount(userId);
+    if (!started) return false;
+    await remote.deleteAccount(userId, waitForCompletion: false);
+    return remote.waitForAccountDeleted(userId, maxAttempts: 60);
+  }
+
+  Future<DeleteResult> refresh(String userId) {
+    return remote.refreshProfile(userId, waitForCompletion: true);
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'deleteAccount(userId, waitForCompletion: true);', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsUnresolvedWaitForCompletionLookalike() async {
+    await assertAllows(r'''
+class AccountRepository {
+  Future<void> deleteAccount(String userId) async {
+    await remote.deleteAccount(userId, waitForCompletion: true);
+  }
+}
+''');
   }
 
   Future<void> test_allowsAsyncExecution() async {

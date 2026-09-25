@@ -1,6 +1,9 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -84,25 +87,15 @@ final List<ScannerRule> dialogSourceRules = [
       'select_returns_unstable_record_identity',
       'Record select includes a getter that returns a fresh Map/Set/List each call.',
       correctionMessage: 'Records compare by field identity; getters that build a fresh Map/Set/List each call cause a rebuild on every notify. Watch primitive fields or memoize the derived value in a provider.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags ref.watch(...select((s) => (...record literal...))) where any field reads a getter whose name implies a fresh Map/Set/List per call.',
+    description: 'Flags ref.watch(...select((s) => (...record literal...))) where a field reads an explicit getter returning a Map/Set/Iterable (or, unresolved, a getter whose name implies one).',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        final selectMatch = _selectRecordStart.firstMatch(line);
-        if (selectMatch == null) continue;
-
-        final window = StringBuffer(line);
-        final end = (i + 6 > context.source.length) ? context.source.length : i + 6;
-        for (var j = i + 1; j < end; j++) {
-          window.write('\n');
-          window.write(context.source.masked[j]);
-        }
-        final body = window.toString();
-        if (!_unstableGetterField.hasMatch(body)) continue;
-        reporter.report(context, i, line.indexOf('.select'));
+      final visitor = _UnstableRecordSelectVisitor();
+      context.unit.accept(visitor);
+      for (final select in visitor.selects) {
+        reporter.reportOffset(context, select.operator!.offset);
       }
     },
   ),
@@ -261,41 +254,146 @@ void _reportMutableProviderClass(
   SourceScannerContext context,
   ScannerClassSpan classSpan,
 ) {
-  final mutated = _mutatedProviders(context, classSpan);
-  if (mutated.isEmpty) return;
-  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-    _reportWatchedMutation(reporter, context, i, mutated);
+  for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+    if (declaration.namePart.typeName.lexeme != classSpan.name) continue;
+    final accesses = _ProviderAccessVisitor();
+    declaration.accept(accesses);
+    for (final (:watch, :provider) in accesses.watches) {
+      if (!accesses.mutated.contains(provider)) continue;
+      final ref = watch.target!;
+      final lineIndex = context.unit.lineInfo.getLocation(ref.offset).lineNumber - 1;
+      if (_lineIgnoresRule(context, lineIndex, 'dialog_widget_subscribes_to_mutable_provider')) {
+        continue;
+      }
+      reporter.reportOffset(context, ref.offset);
+    }
   }
 }
 
-Set<String> _mutatedProviders(SourceScannerContext context, ScannerClassSpan classSpan) {
-  final providers = <String>{};
-  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-    for (final match in _refReadNotifierMethod.allMatches(context.source.masked[i])) {
-      final provider = match.group(1);
-      if (provider != null && provider.isNotEmpty) providers.add(provider);
+/// Collects `ref.watch(<provider>)` calls and the providers mutated through
+/// `ref.read(<provider>.notifier)`, keyed by their [_providerKey].
+final class _ProviderAccessVisitor extends RecursiveAstVisitor<void> {
+  final watches = <({MethodInvocation watch, Object provider})>[];
+  final mutated = <Object>{};
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final argument = _refCallArgument(node);
+    if (argument != null) {
+      final provider = _providerKey(argument);
+      if (provider != null && node.methodName.name == 'watch') {
+        watches.add((watch: node, provider: provider));
+      } else if (provider != null && _readsNotifier(argument)) {
+        mutated.add(provider);
+      }
     }
+    super.visitMethodInvocation(node);
   }
-  return providers;
 }
 
-void _reportWatchedMutation(
-  ScannerRuleReporter reporter,
-  SourceScannerContext context,
-  int lineIndex,
-  Set<String> mutated,
-) {
-  final line = context.source.masked[lineIndex];
-  for (final match in _refWatchProvider.allMatches(line)) {
-    final provider = match.group(1) ?? '';
-    if (!mutated.contains(provider)) continue;
-    if (_lineIgnoresRule(context, lineIndex, 'dialog_widget_subscribes_to_mutable_provider')) {
-      return;
+/// The single argument of `ref.watch(...)` / `ref.read(...)` on a Riverpod `WidgetRef`/`Ref`.
+Expression? _refCallArgument(MethodInvocation node) {
+  if (!const {'watch', 'read'}.contains(node.methodName.name)) return null;
+  if (!_isRiverpodRef(node.realTarget)) return null;
+  final arguments = node.argumentList.arguments;
+  return arguments.length == 1 ? arguments.single.argumentExpression : null;
+}
+
+bool _isRiverpodRef(Expression? target) {
+  if (target == null) return false;
+  final type = target.staticType;
+  if (type is InterfaceType) return const {'WidgetRef', 'Ref'}.contains(type.element.name);
+  return target is SimpleIdentifier && target.name == 'ref';
+}
+
+bool _readsNotifier(Expression argument) => switch (argument.unParenthesized) {
+  PrefixedIdentifier(:final identifier) => identifier.name == 'notifier',
+  PropertyAccess(:final propertyName) => propertyName.name == 'notifier',
+  _ => false,
+};
+
+/// The provider a `watch`/`read` argument listens to, with `.select(...)`, `.notifier`,
+/// `.future`, family calls and casts stripped: its element when resolved, otherwise its name.
+Object? _providerKey(Expression argument) {
+  final root = _providerRoot(argument);
+  return root == null ? null : root.element ?? root.name;
+}
+
+SimpleIdentifier? _providerRoot(Expression expression) => switch (expression.unParenthesized) {
+  SimpleIdentifier() && final identifier => identifier,
+  AsExpression(:final expression) => _providerRoot(expression),
+  PrefixedIdentifier(:final prefix, :final identifier)
+      when _providerAccessors.contains(identifier.name) =>
+    prefix,
+  PropertyAccess(:final target?, :final propertyName)
+      when _providerAccessors.contains(propertyName.name) =>
+    _providerRoot(target),
+  MethodInvocation(:final target?, :final methodName)
+      when const {'select', 'selectAsync'}.contains(methodName.name) =>
+    _providerRoot(target),
+  MethodInvocation(target: null, :final methodName) => methodName,
+  FunctionExpressionInvocation(:final function) => _providerRoot(function),
+  _ => null,
+};
+
+const _providerAccessors = {'notifier', 'future', 'stream'};
+
+/// Finds `ref.watch(<provider>.select((s) => (...record...)))` selects whose record reads a
+/// getter that builds a fresh collection per call.
+final class _UnstableRecordSelectVisitor extends RecursiveAstVisitor<void> {
+  final selects = <MethodInvocation>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.methodName.name == 'select' && _isWatchedSelect(node)) {
+      final record = _selectedRecord(node);
+      if (record != null && record.fields.any(_readsUnstableGetter)) selects.add(node);
     }
-    reporter.report(context, lineIndex, match.start);
-    return;
+    super.visitMethodInvocation(node);
   }
 }
+
+bool _isWatchedSelect(MethodInvocation select) {
+  final arguments = select.parent;
+  final watch = arguments?.parent;
+  return arguments is ArgumentList &&
+      watch is MethodInvocation &&
+      watch.methodName.name == 'watch' &&
+      _isRiverpodRef(watch.realTarget);
+}
+
+RecordLiteral? _selectedRecord(MethodInvocation select) {
+  final arguments = select.argumentList.arguments;
+  if (arguments.length != 1) return null;
+  final selector = arguments.single.argumentExpression.unParenthesized;
+  if (selector is! FunctionExpression) return null;
+  final body = selector.body;
+  final returned = body is ExpressionFunctionBody ? body.expression.unParenthesized : null;
+  return returned is RecordLiteral ? returned : null;
+}
+
+/// A record field reading an explicit (non-synthetic) getter that returns a Map, Set or
+/// Iterable. Stored fields keep their identity between notifications. Unresolved reads
+/// fall back to getter names such as `tagsMap` or `itemsByCategoryId`.
+bool _readsUnstableGetter(RecordLiteralField field) {
+  final property = switch (field.fieldExpression.unParenthesized) {
+    PrefixedIdentifier(:final identifier) => identifier,
+    PropertyAccess(:final propertyName) => propertyName,
+    _ => null,
+  };
+  if (property == null) return false;
+  final element = property.element;
+  if (element is GetterElement) {
+    return element.isOriginDeclaration &&
+        _collectionChecker.isAssignableFromType(element.returnType);
+  }
+  return element == null && _unstableGetterName.hasMatch(property.name);
+}
+
+const _collectionChecker = TypeChecker.any([
+  TypeChecker.fromUrl('dart:core#Map'),
+  TypeChecker.fromUrl('dart:core#Iterable'),
+]);
 
 void _reportHighFrequencyModalWatches(ScannerRuleReporter reporter, SourceScannerContext context) {
   for (final classSpan in context.classes) {
@@ -504,12 +602,6 @@ final class _DialogPopState {
 // Shared regex patterns and helpers
 // ---------------------------------------------------------------------------
 
-final _refReadNotifierMethod = RegExp(
-  r'\bref\s*\.\s*read\s*\(\s*([A-Za-z_]\w*)\b[^)]*\.\s*notifier\s*\)',
-);
-
-final _refWatchProvider = RegExp(r'\bref\s*\.\s*watch\s*\(\s*([A-Za-z_]\w*)\b');
-
 final _highFrequencyWatch = RegExp(
   r'\bref\s*\.\s*watch\s*\([\s\S]*?\.\s*select\s*\(\s*'
   r'(?:\([A-Za-z_]\w*\)|[A-Za-z_]\w*)\s*=>\s*[A-Za-z_]\w*\s*\.\s*'
@@ -527,15 +619,9 @@ final _postPopOffender = RegExp(
   r'\b[A-Z]\w*Route\s*\([^)]*\)\s*\.\s*go\s*\()',
 );
 
-final _selectRecordStart = RegExp(
-  r'\bref\s*\.\s*watch\s*\([^)]*\.\s*select\s*\(\s*\([A-Za-z_]\w*\)\s*=>\s*\(',
+final _unstableGetterName = RegExp(
+  r'^[A-Za-z_]\w*(?:Map|Set|Sets|Ids|Items|Entries|sBy[A-Z]\w*|By[A-Z]\w*)$',
 );
-
-final _unstableGetterField = RegExp(
-  r'[A-Za-z_]\w*\s*:\s*[A-Za-z_]\w*\s*\.\s*'
-  r'([A-Za-z_]\w*(?:Map|Set|Sets|Ids|Items|Entries|sBy[A-Z]\w*|By[A-Z]\w*))\b',
-);
-
 final _buildFieldAssignment = RegExp(
   r'^\s*(?:this\s*\.\s*[A-Za-z_]\w*|_[A-Za-z]\w*)\s*(?:\?\?=|=(?![=>]))',
 );

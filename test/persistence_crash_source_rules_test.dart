@@ -516,11 +516,18 @@ final class FireAndForgetMissingCatchTest extends _PersistenceCrashRuleTest {
   @override
   String get ruleName => 'fire_and_forget_missing_catch';
 
+  @override
+  void setUp() {
+    _riverpodPackage();
+    _navigationPackages();
+    super.setUp();
+  }
+
   Future<void> test_reportsInlineAsyncMissingCatch() async {
     await assertRuleDiagnostic(r'''
 import 'dart:async';
-class Client {
-  Future<void> sync() async {}
+abstract interface class Client {
+  Future<void> sync();
 }
 void mirror(Client client) {
   unawaited(() async {
@@ -627,6 +634,197 @@ void onResume() {
 ''');
   }
 
+  // riverpod-codegen.md Mutations: `run` records failures in the mutation state.
+  Future<void> test_mutationRunCallee_noDiagnostic() async {
+    await assertRuleNoDiagnostics(r'''
+import 'dart:async';
+
+import 'package:riverpod/riverpod.dart';
+
+final addTodoMutation = Mutation<void>();
+
+class AddTodoScreen {
+  Future<void> _addTodo(Object ref) => addTodoMutation.run(ref, (tsx) async {
+    await Future<void>.value();
+  });
+
+  void onPressed(Object ref) => unawaited(_addTodo(ref));
+  void retry(Object ref) => unawaited(addTodoMutation.run(ref, (tsx) async {}));
+}
+''');
+  }
+
+  Future<void> test_reportsLocalMutationLookalike() async {
+    await assertRuleDiagnostic(r'''
+import 'dart:async';
+
+class Mutation<T> {
+  Future<T> run(Object target, Future<T> Function(Object tsx) cb) => cb(target);
+}
+
+final addTodoMutation = Mutation<void>();
+
+Future<void> _addTodo(Object ref) => addTodoMutation.run(ref, (tsx) async {});
+
+void onPressed(Object ref) {
+  unawaited(_addTodo(ref));
+}
+''', 'unawaited(_addTodo');
+  }
+
+  // modals-navigation.md Dismiss Modal -> Push Route: route futures complete with
+  // the popped result, so a callee that only awaits navigation has nothing to catch.
+  Future<void> test_navigationCallee_noDiagnostic() async {
+    newFile('$testPackageLibPath/core/extensions/context_extensions.dart', r'''
+import 'package:flutter/material.dart';
+
+extension ModalContextX on BuildContext {
+  Future<T?> showAppSheet<T>({required String routeName, required WidgetBuilder builder}) {
+    return showModalBottomSheet<T>(
+      context: this,
+      routeSettings: RouteSettings(name: routeName),
+      builder: builder,
+    );
+  }
+}
+''');
+    newFile('$testPackageLibPath/routes.dart', r'''
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+mixin $CreateExerciseRoute on GoRouteData {
+  String get location => '/create';
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+}
+
+class CreateExerciseRoute extends GoRouteData with $CreateExerciseRoute {
+  const CreateExerciseRoute();
+}
+
+class StubRoute {
+  const StubRoute();
+  Future<T?> push<T>(BuildContext context) async => null;
+}
+''');
+    await assertRuleNoDiagnostics(r'''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+
+import 'core/extensions/context_extensions.dart';
+import 'routes.dart';
+
+enum CreateChoice { exercise }
+
+class CreateScreen {
+  Future<void> _openCreateSheet(BuildContext context) async {
+    final choice = await context.showAppSheet<CreateChoice>(
+      routeName: 'create-sheet',
+      builder: (_) => const SizedBox(),
+    );
+    if (!context.mounted) return;
+    if (choice != CreateChoice.exercise) return;
+    await const CreateExerciseRoute().push<String>(context);
+  }
+
+  Future<void> _openStub(BuildContext context) async {
+    await const StubRoute().push<String>(context);
+  }
+
+  void onPressed(BuildContext context) {
+    unawaited(_openCreateSheet(context));
+    unawaited(_openStub(context));
+  }
+}
+''');
+  }
+
+  Future<void> test_reportsNavigationThenUncaughtRemoteWork() async {
+    await assertRuleDiagnostic(r'''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+
+abstract interface class Remote {
+  Future<void> sync();
+}
+
+class SyncScreen {
+  SyncScreen(this.remote);
+  final Remote remote;
+
+  Future<void> _confirmAndSync(BuildContext context) async {
+    final ok = await showModalBottomSheet<bool>(context: context, builder: (_) => const SizedBox());
+    if (ok != true) return;
+    await remote.sync();
+  }
+
+  void onPressed(BuildContext context) {
+    unawaited(_confirmAndSync(context));
+  }
+}
+''', 'unawaited(_confirmAndSync');
+  }
+
+  // lists-forms-workflows.md pagination: `loadMore` delegates to `_loadPage`,
+  // which catches and writes error state.
+  Future<void> test_calleeDelegatingToCatchingMethod_noDiagnostic() async {
+    await assertRuleNoDiagnostics(r'''
+import 'dart:async';
+
+abstract interface class Repository {
+  Future<List<int>> fetchPage(int page);
+}
+
+class PaginatedNotifier {
+  PaginatedNotifier(this.repository);
+  final Repository repository;
+  bool isLoading = false;
+
+  Future<void> _loadPage(int page) async {
+    isLoading = true;
+    try {
+      await repository.fetchPage(page);
+    } catch (e) {
+      isLoading = false;
+    }
+  }
+
+  Future<void> loadMore() async {
+    if (isLoading) return;
+    await _loadPage(1);
+  }
+}
+
+void onScroll(PaginatedNotifier notifier) {
+  unawaited(notifier.loadMore());
+}
+''');
+  }
+
+  Future<void> test_reportsCalleeThrowingBeforeCaughtWork() async {
+    await assertRuleDiagnostic(r'''
+import 'dart:async';
+
+Future<void> _safe() async {
+  try {
+    await Future<void>.value();
+  } on Exception {
+    // handled
+  }
+}
+
+Future<void> checked(bool ready) async {
+  if (!ready) throw Exception('not ready');
+  await _safe();
+}
+
+void start() {
+  unawaited(checked(false));
+}
+''', 'unawaited(checked');
+  }
+
   Future<void> test_guardedHelper_noDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
 import 'dart:async';
@@ -645,6 +843,59 @@ Future<void> _send(Future<void> Function() operation, String operationName) asyn
   } on Exception {
     // handled
   }
+}
+''');
+  }
+
+  void _riverpodPackage() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', r'''
+abstract class Mutation<ResultT> {
+  factory Mutation() = _Mutation<ResultT>;
+  Future<ResultT> run(Object target, Future<ResultT> Function(Object tsx) cb);
+}
+
+final class _Mutation<ResultT> implements Mutation<ResultT> {
+  @override
+  Future<ResultT> run(Object target, Future<ResultT> Function(Object tsx) cb) async {
+    try {
+      return await cb(target);
+    } catch (error) {
+      rethrow;
+    }
+  }
+}
+''');
+  }
+
+  void _navigationPackages() {
+    newPackage('flutter').addFile('lib/material.dart', r'''
+class BuildContext {
+  bool get mounted => true;
+}
+abstract class Widget {
+  const Widget();
+}
+class SizedBox extends Widget {
+  const SizedBox();
+}
+typedef WidgetBuilder = Widget Function(BuildContext context);
+class RouteSettings {
+  const RouteSettings({String? name});
+}
+Future<T?> showModalBottomSheet<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  RouteSettings? routeSettings,
+}) async => null;
+''');
+    newPackage('go_router').addFile('lib/go_router.dart', r'''
+import 'package:flutter/material.dart';
+abstract class GoRouteData {
+  const GoRouteData();
+  Future<T?> push<T>(BuildContext context) => throw UnimplementedError();
+}
+extension GoRouterHelper on BuildContext {
+  Future<T?> push<T>(String location) async => null;
 }
 ''');
   }

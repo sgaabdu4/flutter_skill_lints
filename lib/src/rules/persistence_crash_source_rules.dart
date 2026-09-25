@@ -5,6 +5,7 @@ import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/scope.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
@@ -226,7 +227,9 @@ final List<ScannerRule> persistenceCrashSourceRules = [
   /// Fire-and-forget futures need local error handling.
   ///
   /// Why: Flags feasible unawaited fire-and-forget calls without catch handling. Catch inside
-  /// the fire-and-forget future or attach catchError.
+  /// the fire-and-forget future or attach catchError. A resolved callee whose futures are
+  /// all Riverpod `Mutation.run` calls, Flutter/go_router route or modal futures, or
+  /// callees that catch internally already captures its failures and is not reported.
   scannerRule(
     code: const LintCode(
       'fire_and_forget_missing_catch',
@@ -598,9 +601,9 @@ final class _UnawaitedVisitor extends RecursiveAstVisitor<void> {
 }
 
 /// Whether the future passed to `unawaited` handles its own errors: a `catchError`/`onError`
-/// chain, an inline closure that catches, or a resolved callee whose body catches (or is
-/// empty). Callees without an available body (SDK, abstract, external) keep the keyword
-/// heuristic.
+/// chain, an inline closure or resolved callee whose failures are captured (see
+/// [_FailureCapture]). Callees without an available body (SDK, abstract, external) keep the
+/// keyword heuristic.
 bool _isFireAndForgetGuarded(SourceScannerContext context, MethodInvocation invocation) {
   final arguments = invocation.argumentList.arguments;
   if (arguments.isEmpty) return true;
@@ -610,15 +613,14 @@ bool _isFireAndForgetGuarded(SourceScannerContext context, MethodInvocation invo
     return true;
   }
 
-  final body = switch (future) {
-    FunctionExpressionInvocation(:final function)
-        when function.unParenthesized is FunctionExpression =>
-      (function.unParenthesized as FunctionExpression).body,
-    MethodInvocation(:final methodName) => _declaredBody(context, methodName.element),
-    FunctionExpressionInvocation(:final element) => _declaredBody(context, element),
-    _ => null,
-  };
-  if (body != null) return _catchesInternally(body);
+  final element = _invokedElement(future);
+  if (_isFailureRecordingCall(element)) return true;
+  final capture = _FailureCapture(context);
+  final closure = future is FunctionExpressionInvocation ? future.function.unParenthesized : null;
+  final handled = closure is FunctionExpression
+      ? capture.handlesBody(closure.body, 0, null)
+      : capture.handlesCallee(element, 0);
+  if (handled != null) return handled;
 
   final lineIndex = context.source.lineOffsets.lastIndexWhere(
     (start) => start <= invocation.offset,
@@ -663,6 +665,176 @@ bool _catchesInternally(FunctionBody body) {
   final visitor = _CatchVisitor();
   body.accept(visitor);
   return visitor.catches;
+}
+
+/// Decides whether a fire-and-forget callee's failures are captured by a mechanism the
+/// building-flutter-apps skill prescribes, following resolved callees a few levels deep:
+///
+/// - the body catches internally (services-and-singletons.md "Catch internally"), or
+/// - it throws nothing and every future it awaits or returns is captured: a Riverpod
+///   `Mutation.run` (failures land in the mutation's `MutationError` state), a route or
+///   modal future (it completes with the popped result, not an error), or a resolved
+///   callee that is itself captured, or
+/// - it has no future and makes no call at all (for example `async => null`).
+final class _FailureCapture {
+  _FailureCapture(this.context);
+
+  static const _maxDepth = 3;
+
+  final SourceScannerContext context;
+  final Set<ExecutableElement> _visiting = {};
+
+  /// Whether [element]'s declared body captures its failures; null when no body is
+  /// available (SDK, abstract or external callee).
+  bool? handlesCallee(Element? element, int depth) {
+    if (element is! ExecutableElement) return null;
+    final declared = element.baseElement;
+    final body = _declaredBody(context, declared);
+    if (body == null) return null;
+    if (!_visiting.add(declared)) return false;
+    try {
+      return handlesBody(body, depth, declared.firstFragment.libraryFragment.scope);
+    } finally {
+      _visiting.remove(declared);
+    }
+  }
+
+  /// [scope] resolves top-level calls when [body] comes from another library, whose
+  /// declaration is only available as a parsed (unresolved) AST.
+  bool handlesBody(FunctionBody body, int depth, Scope? scope) {
+    if (_catchesInternally(body)) return true;
+    final sources = _FutureSourceCollector();
+    body.accept(sources);
+    if (sources.throws) return false;
+    if (sources.futures.isEmpty) return !sources.calls;
+    return sources.futures.every((future) => _handlesFuture(future, depth, scope));
+  }
+
+  bool _handlesFuture(Expression future, int depth, Scope? scope) {
+    final element = _invokedElement(future) ?? _unresolvedTopLevelCall(future, scope);
+    if (_isFailureRecordingCall(element)) return true;
+    if (depth >= _maxDepth) return false;
+    return handlesCallee(element, depth + 1) ?? false;
+  }
+}
+
+Element? _invokedElement(Expression expression) => switch (expression.unParenthesized) {
+  MethodInvocation(:final methodName) => methodName.element,
+  FunctionExpressionInvocation(:final element) => element,
+  _ => null,
+};
+
+Element? _unresolvedTopLevelCall(Expression expression, Scope? scope) => switch (expression) {
+  MethodInvocation(target: null, :final methodName) when scope != null =>
+    scope.lookup(methodName.name).getter,
+  _ => null,
+};
+
+/// A Riverpod `Mutation.run`, or a Flutter / go_router navigation call (including a
+/// go_router_builder route's generated `push`) whose future completes with the route result.
+bool _isFailureRecordingCall(Element? element) {
+  if (element is! ExecutableElement) return false;
+  final declared = element.baseElement;
+  final uri = declared.library.uri.toString();
+  final owner = declared.enclosingElement;
+  final ownerName = owner is InterfaceElement ? owner.name : null;
+  if (uri.startsWith('package:riverpod/')) {
+    return declared.name == 'run' && ownerName == 'Mutation';
+  }
+  if (!_routePushMethods.contains(declared.name)) {
+    return uri.startsWith('package:flutter/') &&
+        declared is TopLevelFunctionElement &&
+        _flutterModalFunctions.contains(declared.name);
+  }
+  if (uri.startsWith('package:go_router/')) return true;
+  if (uri.startsWith('package:flutter/')) {
+    return const {'Navigator', 'NavigatorState'}.contains(ownerName);
+  }
+  return owner is InterfaceElement &&
+      owner.allSupertypes.any(
+        (type) =>
+            type.element.library.uri.toString().startsWith('package:go_router/') &&
+            type.element.getMethod(declared.name!) != null,
+      );
+}
+
+const _flutterModalFunctions = {
+  'showAdaptiveDialog',
+  'showCupertinoDialog',
+  'showCupertinoModalPopup',
+  'showCupertinoSheet',
+  'showDialog',
+  'showGeneralDialog',
+  'showModalBottomSheet',
+};
+
+const _routePushMethods = {
+  'push',
+  'pushAndRemoveUntil',
+  'pushNamed',
+  'pushNamedAndRemoveUntil',
+  'pushReplacement',
+  'pushReplacementNamed',
+  'replace',
+  'replaceNamed',
+};
+
+/// Collects the futures a body awaits or returns, whether it throws, and whether it calls
+/// anything. Nested closures run on their own schedule and are skipped.
+final class _FutureSourceCollector extends RecursiveAstVisitor<void> {
+  final futures = <Expression>[];
+  bool throws = false;
+  bool calls = false;
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {}
+
+  @override
+  void visitThrowExpression(ThrowExpression node) {
+    throws = true;
+    super.visitThrowExpression(node);
+  }
+
+  @override
+  void visitAwaitExpression(AwaitExpression node) {
+    futures.add(node.expression.unParenthesized);
+    super.visitAwaitExpression(node);
+  }
+
+  @override
+  void visitReturnStatement(ReturnStatement node) {
+    _addReturned(node.expression);
+    super.visitReturnStatement(node);
+  }
+
+  @override
+  void visitExpressionFunctionBody(ExpressionFunctionBody node) {
+    _addReturned(node.expression);
+    super.visitExpressionFunctionBody(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    calls = true;
+    super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
+    calls = true;
+    super.visitFunctionExpressionInvocation(node);
+  }
+
+  void _addReturned(Expression? expression) {
+    final returned = expression?.unParenthesized;
+    if (returned == null || returned is AwaitExpression) return;
+    final type = returned.staticType;
+    // A parsed body from another library has no types: any returned call may be a future.
+    final isFuture = type == null
+        ? returned is MethodInvocation || returned is FunctionExpressionInvocation
+        : type is InterfaceType && (type.isDartAsyncFuture || type.isDartAsyncFutureOr);
+    if (isFuture) futures.add(returned);
+  }
 }
 
 final class _DeclarationFinder extends RecursiveAstVisitor<void> {

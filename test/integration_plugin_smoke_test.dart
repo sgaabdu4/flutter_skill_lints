@@ -391,6 +391,7 @@ Widget invalidLayout() => Padding(
   padding: EdgeInsets.zero,
   child: Expanded(child: const SizedBox()),
 );
+Axis defaultAxis() => Axis.horizontal;
 ''');
 
         await _writeFile('${app.path}/lib/expression_boundaries.dart', r'''

@@ -10,7 +10,8 @@ import 'package:analyzer/dart/element/type_system.dart';
 import 'package:analyzer/dart/element/type_visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-/// Prefers Dart's dot shorthand whenever an existing context supplies the type.
+/// Prefers Dart's dot shorthand for enum values, static members and named constructors
+/// whenever an existing context supplies the type. Unnamed constructor calls keep the type.
 final class PreferDotShorthands extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_dot_shorthands',
@@ -22,7 +23,7 @@ final class PreferDotShorthands extends AnalysisRule {
   PreferDotShorthands()
     : super(
         name: 'prefer_dot_shorthands',
-        description: 'Prefers concise dot shorthand for contextually typed static access.',
+        description: 'Prefers concise dot shorthand for contextually typed enum values, static members and named constructors.',
       );
 
   @override
@@ -108,8 +109,9 @@ final class _Visitor extends SimpleAstVisitor<void> {
         return namespace;
       }
     }
+    // Only named constructors: the skill shows `.all(16)` but never `.new(...)`.
     if (expression case InstanceCreationExpression(constructorName: ConstructorName(:final element))
-        when element != null) {
+        when element != null && element.name != 'new') {
       return element.enclosingElement;
     }
     return null;

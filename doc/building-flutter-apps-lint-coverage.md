@@ -350,8 +350,9 @@ Modal snapshot / state teardown (0.7.0) — `dialog_source_rules`:
   `context.pop()` inside a dialog runs against a dying widget tree; move the
   side effect to the caller after `await showDialog<T>(...)`.
 - `select_returns_unstable_record_identity` — record selects that read
-  getters returning a fresh `Map`/`Set`/`List`/`Items`/`Entries` per call
-  cause a rebuild on every notify; watch primitives or memoize.
+  explicit getters returning a fresh `Map`/`Set`/`Iterable` per call (matched
+  by getter name when unresolved) cause a rebuild on every notify; watch
+  primitives or memoize. Stored fields keep their identity and are allowed.
 - `build_method_assigns_to_field` — `build()` must be pure; no `this.x = ...`
   or `_field = ...` inside build.
 - `widget_calls_notifier_teardown_after_await` — a widget that awaits a
@@ -373,7 +374,9 @@ Runtime-bug surface (0.7.0) — `runtime_bug_source_rules`:
 - `appwrite_blocking_function_execution_in_client` — Appwrite
   `createExecution(...)` calls inside destructive/sync/import/export/migration
   client methods must pass `xasync: true` and reconcile source-of-truth state
-  instead of waiting synchronously for a potentially long-running Function.
+  instead of waiting synchronously for a potentially long-running Function. A
+  destructive/batch remote call passed a resolved `waitForCompletion: true`
+  reports the same way (networking.md "Long-Running Remote Work").
 - `destructive_failure_logged_before_reconcile` — delete/remove/deactivate
   catch blocks should call a reconcile/verify/wait-for source-of-truth check
   before Crash/Sentry/Firebase error reporting.

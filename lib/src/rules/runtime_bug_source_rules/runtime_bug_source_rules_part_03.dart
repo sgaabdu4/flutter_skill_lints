@@ -162,7 +162,8 @@ bool _isIdOf(Expression expression, Element? variable) {
 }
 
 /// Walks from [node] to its enclosing declaration and reports whether it runs
-/// once per element of another collection or on every widget build.
+/// once per element of another collection, on every widget build, or on every
+/// getter access (debounce-gate-batch.md "Collection getters and id lookup").
 bool _runsRepeatedly(AstNode node) {
   AstNode child = node;
   for (var parent = node.parent; parent != null; child = parent, parent = parent.parent) {
@@ -176,10 +177,12 @@ bool _runsRepeatedly(AstNode node) {
         return true;
       case WhileStatement() || DoStatement():
         return true;
+      case FunctionExpression(parent: FunctionDeclaration(isGetter: true)):
+        return true;
       case FunctionExpression():
         return _returnsWidget(parent.staticType) || _isIterationCallback(parent);
       case MethodDeclaration():
-        return _returnsWidgetElement(parent.declaredFragment?.element);
+        return parent.isGetter || _returnsWidgetElement(parent.declaredFragment?.element);
       case ConstructorDeclaration() || FieldDeclaration() || TopLevelVariableDeclaration():
         return false;
     }

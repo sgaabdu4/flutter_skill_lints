@@ -2,9 +2,57 @@ import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/mounted_guard_utils.dart';
+
+/// Whether [provider], a `ref.watch` argument, resolves through its generated
+/// `@ProviderFor` variable to a `@Riverpod(keepAlive: true)` source, in any
+/// file. `.select(...)`, `.notifier`/`.future` and family calls are stripped
+/// down to the provider variable.
+bool isKeepAliveProviderExpression(Expression provider) {
+  Expression? current = provider.unParenthesized;
+  while (current != null) {
+    final element = switch (current) {
+      SimpleIdentifier(:final element) => element,
+      PrefixedIdentifier(:final identifier) => identifier.element,
+      PropertyAccess(:final propertyName) => propertyName.element,
+      _ => null,
+    };
+    final variable = element is PropertyAccessorElement ? element.variable : element;
+    if (variable is TopLevelVariableElement) return _isKeepAliveProviderVariable(variable);
+    current = switch (current) {
+      MethodInvocation(:final target, methodName: SimpleIdentifier(name: 'select')) => target,
+      PrefixedIdentifier(:final prefix) => prefix,
+      PropertyAccess(:final target) => target,
+      FunctionExpressionInvocation(:final function) => function,
+      _ => null,
+    };
+  }
+  return false;
+}
+
+bool _isKeepAliveProviderVariable(TopLevelVariableElement variable) {
+  final source = variable.metadata.annotations
+      .map((annotation) => annotation.computeConstantValue())
+      .where((value) => _isRiverpodAnnotationType(value?.type, 'ProviderFor'))
+      .map((value) => value?.getField('value'))
+      .firstOrNull;
+  final declaration = source?.toTypeValue()?.element ?? source?.toFunctionValue();
+  if (declaration == null) return false;
+  return declaration.metadata.annotations.any((annotation) {
+    final value = annotation.computeConstantValue();
+    return _isRiverpodAnnotationType(value?.type, 'Riverpod') &&
+        value?.getField('keepAlive')?.toBoolValue() == true;
+  });
+}
+
+bool _isRiverpodAnnotationType(DartType? type, String name) {
+  final element = type?.element;
+  return element?.name == name &&
+      (element?.library?.uri.toString().startsWith('package:riverpod_annotation/') ?? false);
+}
 
 /// Recognizes a value annotated by the actual Freezed annotation library.
 bool isFreezedInterfaceType(InterfaceType type) =>

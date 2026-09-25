@@ -508,7 +508,7 @@ final class _ParsedWorkFinder extends RecursiveAstVisitor<void> {
     final target = node.realTarget;
     final name = node.methodName.name;
     if (target != null || !localFunctions.contains(name)) {
-      _check(target == null ? _resolveName(name) : _resolveMember(target, name));
+      _check(_resolveCallee(target, name));
     }
     node.target?.accept(this);
     node.argumentList.accept(this);
@@ -748,8 +748,6 @@ final class _ParsedWorkFinder extends RecursiveAstVisitor<void> {
 
   DartType? _typeOf(Expression? expression) {
     final type = switch (expression) {
-      ParenthesizedExpression(:final expression) => _typeOf(expression),
-      ThisExpression() => thisType,
       SimpleIdentifier(:final name) => _valueType(_resolveName(name)),
       PrefixedIdentifier(:final prefix, :final identifier) => _valueType(
         _resolveMember(prefix, identifier.name),
@@ -758,22 +756,33 @@ final class _ParsedWorkFinder extends RecursiveAstVisitor<void> {
         _resolveMember(realTarget, propertyName.name),
       ),
       MethodInvocation(:final realTarget, :final methodName) => _returnType(
-        realTarget == null
-            ? _resolveName(methodName.name)
-            : _resolveMember(realTarget, methodName.name),
+        _resolveCallee(realTarget, methodName.name),
       ),
       InstanceCreationExpression(:final constructorName) => _typeOfAnnotation(constructorName.type),
       AsExpression(:final type) => _typeOfAnnotation(type),
-      PostfixExpression(:final operand) => _typeOf(operand),
-      CascadeExpression(:final target) => _typeOf(target),
-      StringLiteral() => library.typeProvider.stringType,
-      IntegerLiteral() => library.typeProvider.intType,
-      DoubleLiteral() => library.typeProvider.doubleType,
-      BooleanLiteral() => library.typeProvider.boolType,
-      _ => null,
+      ThisExpression() => thisType,
+      final Expression other => _wrappedOrLiteralType(other),
+      null => null,
     };
     return type is TypeParameterType ? null : type;
   }
+
+  DartType? _wrappedOrLiteralType(Expression expression) {
+    final types = library.typeProvider;
+    return switch (expression) {
+      ParenthesizedExpression(:final expression) => _typeOf(expression),
+      PostfixExpression(:final operand) => _typeOf(operand),
+      CascadeExpression(:final target) => _typeOf(target),
+      StringLiteral() => types.stringType,
+      IntegerLiteral() => types.intType,
+      DoubleLiteral() => types.doubleType,
+      BooleanLiteral() => types.boolType,
+      _ => null,
+    };
+  }
+
+  Object? _resolveCallee(Expression? target, String name) =>
+      target == null ? _resolveName(name) : _resolveMember(target, name);
 
   DartType? _valueType(Object? element) => switch (element) {
     final DartType type => type,

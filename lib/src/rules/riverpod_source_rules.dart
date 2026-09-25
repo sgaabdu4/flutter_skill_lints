@@ -1,8 +1,8 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
-import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'riverpod_source_rules/riverpod_source_rules_part_01.dart';
 part 'riverpod_source_rules/riverpod_source_rules_part_02.dart';
@@ -394,7 +394,11 @@ bool _watchesOnlyKeepAliveProviders(
   if (declaration == null) return false;
   final watches = _ProviderWatches();
   declaration.accept(watches);
-  return watches.invocations.isNotEmpty && watches.invocations.every(_watchesKeepAliveProvider);
+  return watches.invocations.isNotEmpty &&
+      watches.invocations.every(
+        (watch) =>
+            isKeepAliveProviderExpression(watch.argumentList.arguments.first.argumentExpression),
+      );
 }
 
 final class _ProviderWatches extends RecursiveAstVisitor<void> {
@@ -407,49 +411,6 @@ final class _ProviderWatches extends RecursiveAstVisitor<void> {
     }
     super.visitMethodInvocation(node);
   }
-}
-
-bool _watchesKeepAliveProvider(MethodInvocation watch) {
-  Expression? provider = watch.argumentList.arguments.first.argumentExpression.unParenthesized;
-  while (provider != null) {
-    final element = switch (provider) {
-      SimpleIdentifier(:final element) => element,
-      PrefixedIdentifier(:final identifier) => identifier.element,
-      PropertyAccess(:final propertyName) => propertyName.element,
-      _ => null,
-    };
-    final variable = element is PropertyAccessorElement ? element.variable : element;
-    if (variable is TopLevelVariableElement) return _isKeepAliveProviderVariable(variable);
-    provider = switch (provider) {
-      MethodInvocation(:final target, methodName: SimpleIdentifier(name: 'select')) => target,
-      PrefixedIdentifier(:final prefix) => prefix,
-      PropertyAccess(:final target) => target,
-      FunctionExpressionInvocation(:final function) => function,
-      _ => null,
-    };
-  }
-  return false;
-}
-
-bool _isKeepAliveProviderVariable(TopLevelVariableElement variable) {
-  final source = variable.metadata.annotations
-      .map((annotation) => annotation.computeConstantValue())
-      .where((value) => _isRiverpodAnnotationType(value?.type, 'ProviderFor'))
-      .map((value) => value?.getField('value'))
-      .firstOrNull;
-  final declaration = source?.toTypeValue()?.element ?? source?.toFunctionValue();
-  if (declaration == null) return false;
-  return declaration.metadata.annotations.any((annotation) {
-    final value = annotation.computeConstantValue();
-    return _isRiverpodAnnotationType(value?.type, 'Riverpod') &&
-        value?.getField('keepAlive')?.toBoolValue() == true;
-  });
-}
-
-bool _isRiverpodAnnotationType(DartType? type, String name) {
-  final element = type?.element;
-  return element?.name == name &&
-      (element?.library?.uri.toString().startsWith('package:riverpod_annotation/') ?? false);
 }
 
 bool _hasBlockSelectCallback(String invocation) =>

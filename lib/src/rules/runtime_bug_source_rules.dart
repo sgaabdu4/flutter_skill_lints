@@ -5,6 +5,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'runtime_bug_source_rules/runtime_bug_source_rules_part_01.dart';
 part 'runtime_bug_source_rules/runtime_bug_source_rules_part_02.dart';
@@ -657,36 +658,7 @@ bool _watchesKeepAliveProvider(SourceScannerContext context, int lineIndex, int 
   }
   if (node is! MethodInvocation) return false;
   final arguments = node.argumentList.arguments;
-  if (arguments.isEmpty) return false;
-  var provider = arguments.first.argumentExpression.unParenthesized;
-  if (provider is MethodInvocation && provider.methodName.name == 'select') {
-    provider = provider.target ?? provider;
-  }
-  final element = switch (provider) {
-    SimpleIdentifier(:final element) => element,
-    PrefixedIdentifier(:final identifier) => identifier.element,
-    _ => null,
-  };
-  final variable = element is PropertyAccessorElement ? element.variable : element;
-  if (variable is! TopLevelVariableElement) return false;
-  final source = variable.metadata.annotations
-      .map((annotation) => annotation.computeConstantValue())
-      .where((value) => _isRiverpodAnnotationType(value?.type, 'ProviderFor'))
-      .map((value) => value?.getField('value'))
-      .firstOrNull;
-  final declaration = source?.toTypeValue()?.element ?? source?.toFunctionValue();
-  if (declaration == null) return false;
-  return declaration.metadata.annotations.any((annotation) {
-    final value = annotation.computeConstantValue();
-    return _isRiverpodAnnotationType(value?.type, 'Riverpod') &&
-        value?.getField('keepAlive')?.toBoolValue() == true;
-  });
-}
-
-bool _isRiverpodAnnotationType(DartType? type, String name) {
-  final element = type?.element;
-  return element?.name == name &&
-      (element?.library?.uri.toString().startsWith('package:riverpod_annotation/') ?? false);
+  return arguments.isNotEmpty && isKeepAliveProviderExpression(arguments.first.argumentExpression);
 }
 
 bool _lineHasNumericNamedArg(SourceScannerContext context, int saveLine, int methodEnd) {

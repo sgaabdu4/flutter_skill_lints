@@ -23,9 +23,9 @@ Designed for Riverpod + codegen Flutter apps.
 | --- | ---: |
 | Flutter skill warning rules | 229 |
 | Flutter skill diagnostic codes | 237 |
-| Additional Dart/Flutter warning rules | 236 |
-| Additional Dart/Flutter diagnostic codes | 274 |
-| Total unique diagnostic codes | 509 |
+| Additional Dart/Flutter warning rules | 235 |
+| Additional Dart/Flutter diagnostic codes | 273 |
+| Total unique diagnostic codes | 508 |
 | Quick fixes | 63 |
 | Assists | 1 |
 

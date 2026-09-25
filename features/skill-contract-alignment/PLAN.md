@@ -74,6 +74,7 @@ Integration: `fix/skill-contract-accept` merged after the sweep with no textual 
 - `avoid_magic_literals` exempts map-literal and index keys inside `*Model` classes and `data/models/` files (architecture.md `ProductModel.toNameOnlyRequestBody`). Tests prove `core/constants/storage_keys.dart` (`StorageKeys`) and `core/constants/api_paths.dart` (`ApiPaths`) are accepted owners for `avoid_magic_literals` and `avoid_local_contract_key_constants`.
 - `avoid_unsafe_collection_methods` skips test files, where testing.md reads `.first`/`.single` in expectations; production behaviour is unchanged.
 - `prefer_private_extension_type_field` allows a public representation field named `value`, the typed-ID form in dart-patterns-records.md and collections-helpers.md; any other public name still reports.
+- `prefer_test_matchers` is removed. The skill gives no matcher guidance, testing.md and hive-persistence.md compare with bare literals and identifiers, and `expect()` already wraps a value in `equals()`, so a narrowed rule would only flag non-matcher calls on a false rationale. Counts: 235 additional warning-rule calls, 273 additional codes, 508 unique codes.
 
 ## Baseline + execution
 

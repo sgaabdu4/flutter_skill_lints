@@ -139,6 +139,37 @@ abstract final class WorkoutHelpers {
     await assertDiagnosticsInFile(filePath, [lint(source.indexOf('draftKey'), 'draftKey'.length)]);
   }
 
+  Future<void> test_allowsStorageKeysAndApiPathsOwners() async {
+    final storageKeysPath = '$testPackageLibPath/core/constants/storage_keys.dart';
+    newFile(storageKeysPath, r'''
+abstract final class StorageKeys {
+  static const todos = 'todos';
+  static const syncDateKey = 'sync_date';
+}
+''');
+    final apiPathsPath = '$testPackageLibPath/core/constants/api_paths.dart';
+    newFile(apiPathsPath, r'''
+abstract final class ApiPaths {
+  static const products = '/products';
+  static const productsPath = '/products';
+}
+''');
+    await assertNoDiagnosticsInFile(storageKeysPath);
+    await assertNoDiagnosticsInFile(apiPathsPath);
+  }
+
+  Future<void> test_reportsRepositoryLocalStorageKey() async {
+    const source = r'''
+class SettingsRepository {
+  static const exerciseSyncDateKey = 'sync_date_exercises';
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('exerciseSyncDateKey'), 'exerciseSyncDateKey'.length),
+    ]);
+  }
+
   Future<void> test_allowsNonContractLocalConstants() async {
     await assertNoDiagnostics(r'''
 class ActiveWorkoutNotifier {

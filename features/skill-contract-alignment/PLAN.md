@@ -71,6 +71,7 @@ Integration: `fix/skill-contract-accept` merged after the sweep with no textual 
 - `avoid_hooks_outside_build` reports only calls that resolve to `flutter_hooks`/`hooks_riverpod` or to a `use` function that itself calls hooks, so deep-linking.md's `usePathUrlStrategy()` in `main` is clean.
 - `avoid_long_parameter_list` counts positional and `required` parameters only, so error-reporting.md's `Crash.error(error, stackTrace, {reason, fatal, extras})` is clean. The skill sets no parameter limit; the rule keeps its limit of four.
 - `avoid_commented_out_code` requires keyword and assignment candidate lines to parse as a Dart statement (or open a multi-line one), as call lines already did, so prose such as `// Widget — use .select()` and `// Reorder = UI flicker (...)` is clean.
+- `avoid_magic_literals` exempts map-literal and index keys inside `*Model` classes and `data/models/` files (architecture.md `ProductModel.toNameOnlyRequestBody`). Tests prove `core/constants/storage_keys.dart` (`StorageKeys`) and `core/constants/api_paths.dart` (`ApiPaths`) are accepted owners for `avoid_magic_literals` and `avoid_local_contract_key_constants`.
 
 ## Baseline + execution
 

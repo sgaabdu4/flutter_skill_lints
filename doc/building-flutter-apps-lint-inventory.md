@@ -253,7 +253,6 @@ always_remove_listener
 avoid_accessing_collections_by_constant_index
 avoid_accessing_other_classes_private_members
 avoid_adjacent_strings
-avoid_any_version
 avoid_assigning_notifiers
 avoid_assigning_to_static_field
 avoid_assignments_as_conditions
@@ -488,7 +487,6 @@ prefer_padding_over_container
 prefer_private_extension_type_field
 prefer_providing_intl_description
 prefer_providing_intl_examples
-prefer_publish_to_none
 prefer_return_await
 prefer_simpler_patterns_null_check
 prefer_single_setstate

@@ -207,28 +207,30 @@ final List<ScannerRule> servicesExtendedSourceRules = [
     },
   ),
 
-  /// Do not hide nullable values behind primitive/string fallback defaults.
+  /// Do not hide nullable values behind empty string/collection fallbacks.
   ///
-  /// Why: `value ?? false`, `value ?? 0`, `value ?? ''`, chained fallbacks, and
+  /// Why: `value ?? ''`, `value ?? const []`, chained fallbacks, and
   /// `labelBuilder?.call(item) ?? item.toString()` erase the domain meaning of
   /// null. Use required inputs, explicit nullable branches, pattern matching, or
-  /// typed value objects instead.
+  /// typed value objects instead. Plain bool/num fallbacks such as
+  /// `ModalRoute.of(this)?.isCurrent ?? false` (context-ui.md) stay allowed.
   scannerRule(
     code: const LintCode(
       'implicit_null_fallback',
       'Do not hide null handling behind sentinel fallbacks.',
-      correctionMessage: 'Use a required value, explicit nullable branch, pattern match, or typed domain value instead of primitive/string/toString/chained ?? fallbacks.',
+      correctionMessage: 'Use a required value, explicit nullable branch, pattern match, or typed domain value instead of empty string/collection, toString, callback, or chained ?? fallbacks.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description: 'Flags primitive, empty collection/string, callback, toString, and chained null-coalescing fallbacks in production code.',
+    description: 'Flags empty collection/string, callback, toString, and chained null-coalescing fallbacks in production code.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
 
       for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        final match = _implicitNullFallbackMatch(line);
-        if (match == null) continue;
-        reporter.report(context, i, match.start);
+        final column = _implicitNullFallbackColumn(
+          context.source.masked[i],
+          context.source.code[i],
+        );
+        if (column != null) reporter.report(context, i, column);
       }
     },
   ),
@@ -283,11 +285,13 @@ final _stableInfrastructureName = RegExp(
   r'(?:Service|Repository|Datasource|DataSource|Client|Plugin|Queue|Manager|Storage|'
   r'Activities|EventBus)\b',
 );
-final _primitiveNullFallback = RegExp(
-  r'''\?\?\s*(?:false\b|true\b|0(?:\.0)?\b|''|""|'''
-  r'''const\s+(?:<[^>]+>\s*)?\[\]|(?:<[^>]+>\s*)?\[\]|'''
+final _emptyCollectionNullFallback = RegExp(
+  r'''\?\?\s*(?:const\s+(?:<[^>]+>\s*)?\[\]|(?:<[^>]+>\s*)?\[\]|'''
   r'''const\s+(?:<[^>]+>\s*)?\{\}|(?:<[^>]+>\s*)?\{\})''',
 );
+// Matched against unmasked code: the masked line blanks string literals.
+final _emptyStringNullFallback = RegExp(r'''^\?\?\s*r?(?:''|"")(?!['"])''');
+final _nullFallbackOperator = RegExp(r'\?\?(?!=)');
 final _callbackNullFallback = RegExp(r'\?\.\s*call\s*\([^)]*\)\s*\?\?');
 final _toStringNullFallback = RegExp(r'\?\?\s*[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\.toString\s*\(');
 final _chainedNullFallback = RegExp(r'\?\?(?![=])(?:[^?\n]|\?(?!\?))*\?\?(?![=])');
@@ -333,12 +337,18 @@ bool _hasPublicStaticDataApi(String body) {
   return false;
 }
 
-RegExpMatch? _implicitNullFallbackMatch(String line) {
-  if (!line.contains('??') || line.contains('??=')) return null;
-  return _callbackNullFallback.firstMatch(line) ??
-      _toStringNullFallback.firstMatch(line) ??
-      _chainedNullFallback.firstMatch(line) ??
-      _primitiveNullFallback.firstMatch(line);
+int? _implicitNullFallbackColumn(String masked, String code) {
+  if (!masked.contains('??') || masked.contains('??=')) return null;
+  final match =
+      _callbackNullFallback.firstMatch(masked) ??
+      _toStringNullFallback.firstMatch(masked) ??
+      _chainedNullFallback.firstMatch(masked) ??
+      _emptyCollectionNullFallback.firstMatch(masked);
+  if (match != null) return match.start;
+  for (final fallback in _nullFallbackOperator.allMatches(masked)) {
+    if (_emptyStringNullFallback.hasMatch(code.substring(fallback.start))) return fallback.start;
+  }
+  return null;
 }
 
 /// Returns the `ref.watch` invocation at [column] when it sits inside a

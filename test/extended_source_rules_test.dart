@@ -905,12 +905,56 @@ final class ImplicitNullFallbackTest extends _ServicesExtendedRuleTest {
   String get ruleName => 'implicit_null_fallback';
   @override
   String get source => '''
-class PermissionState {
-  bool resolve(bool? granted) => granted ?? false;
+class ProfileState {
+  String label(String? name) => name ?? '';
 }
 ''';
   @override
-  String get needle => '?? false';
+  String get needle => "?? ''";
+
+  // context-ui.md:22, routing-app-shell.md:198 and lists-forms-workflows.md:218
+  // use primitive bool/num fallbacks in canonical code.
+  Future<void> test_allowsSkillPrimitiveBoolAndNumFallbacks() async {
+    await assertAllows('''
+extension BuildContextX on BuildContext {
+  bool get isCurrentModalRoute => ModalRoute.of(this)?.isCurrent ?? false;
+}
+
+void onAuthChanged(AuthState? prev, AuthState next) {
+  if (next.isAuthenticated && !(prev?.isAuthenticated ?? false)) {
+    const HomeRoute().go(context);
+  }
+}
+
+class ProductFormNotifier {
+  void setPrice(String value) {
+    final parsed = double.tryParse(value);
+    state = state.copyWith(
+      draftPrice: parsed ?? 0,
+      priceError: null,
+    );
+  }
+
+  bool isVisible(bool? hidden) => !(hidden ?? true);
+}
+''');
+  }
+
+  Future<void> test_reportsEmptyStringAndCollectionFallbacks() async {
+    const source = '''
+class ProfileView {
+  String name(String? value) => value ?? "";
+  List<int> ids(List<int>? value) => value ?? const [];
+  Map<String, int> counts(Map<String, int>? value) => value ?? {};
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '?? ""', ruleName),
+      compatLint(analyzedSource, '?? const []', ruleName),
+      compatLint(analyzedSource, '?? {}', ruleName),
+    ]);
+  }
 
   Future<void> test_reportsChainedPrimitiveFallback() async {
     const source = '''

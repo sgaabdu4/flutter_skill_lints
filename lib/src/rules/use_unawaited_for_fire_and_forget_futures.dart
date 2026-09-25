@@ -19,6 +19,7 @@ final class UseUnawaitedForFireAndForgetFutures extends GeneratedExpressionState
         "and import 'dart:async'. For reusable utilities, return Future<void> "
         'and await Future.wait(...) so each caller can choose await or '
         'unawaited.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   UseUnawaitedForFireAndForgetFutures()
@@ -44,7 +45,12 @@ final class UseUnawaitedForFireAndForgetFutures extends GeneratedExpressionState
   }
 
   static bool _isVoidCallbackContext(FunctionExpression node) {
-    final parameterType = node.correspondingParameter?.type;
+    final parent = node.parent;
+    // A named argument's expression has no parameter of its own; the argument node does.
+    final parameter = parent is NamedArgument
+        ? parent.correspondingParameter
+        : node.correspondingParameter;
+    final parameterType = parameter?.type;
     if (parameterType is FunctionType) {
       return parameterType.returnType is VoidType;
     }

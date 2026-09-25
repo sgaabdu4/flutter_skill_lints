@@ -11,6 +11,7 @@ final class AvoidWidgetBuildHelpers extends GeneratedMethodDeclarationCheckRule 
     'avoid_widget_build_helpers',
     'Avoid private _buildXxx() widget helper methods.',
     correctionMessage: 'Extract a named widget class instead of a build helper method.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidWidgetBuildHelpers()

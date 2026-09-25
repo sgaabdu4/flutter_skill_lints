@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
@@ -15,10 +16,11 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       'service_static_side_effect',
       'Static service facade is not tiny and direct.',
       correctionMessage: 'Keep the facade tiny, direct, and fire-and-forget. Public methods must return only void/Future<void>; move returned data/state to a provider/repository boundary.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags static helper/facade classes that hide clock/random work or grow wider than the plain boring service-facade pattern.',
     scan: (reporter, context) {
+      if (context.isTestFile) return;
       for (final classSpan in context.classes) {
         final body = context.source.masked.sublist(classSpan.start, classSpan.end + 1).join('\n');
         if (!RegExp(r'^\s*abstract\s+final\s+class\b', multiLine: true).hasMatch(body)) {
@@ -44,24 +46,21 @@ final List<ScannerRule> servicesExtendedSourceRules = [
 
   /// Do not allocate Random per call.
   ///
-  /// Why: Flags Random construction inside methods. Hoist Random to a module-level final and
-  /// reuse it.
+  /// Why: Flags dart:math Random construction inside any function, method or closure body.
+  /// Hoist Random to a module-level final and reuse it.
   scannerRule(
     code: const LintCode(
       'service_random_per_call',
       'Do not allocate Random per call.',
       correctionMessage: 'Hoist Random to a module-level final and reuse it.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags Random construction inside methods so the Flutter skill violation is shown during analysis.',
+    description: 'Flags dart:math Random construction inside function, method and closure bodies so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      for (final method in context.methods) {
-        for (var i = method.start; i <= method.end; i++) {
-          final line = context.source.masked[i];
-          if (RegExp(r'\b(?:math\.)?Random\s*\(').hasMatch(line)) {
-            reporter.report(context, i, line.indexOf('Random'));
-          }
-        }
+      final visitor = _PerCallRandomVisitor();
+      context.unit.accept(visitor);
+      for (final offset in visitor.offsets) {
+        reporter.reportOffset(context, offset);
       }
     },
   ),
@@ -76,7 +75,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       'hidden_dependency_fallback',
       'Do not instantiate dependency fallbacks behind ??.',
       correctionMessage: 'Require the dependency in the constructor/provider/function and wire the concrete implementation at the composition root.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description:
         'Flags dependency fallback constructors such as `client ?? Client()` in production code.',
@@ -150,51 +149,89 @@ final List<ScannerRule> servicesExtendedSourceRules = [
   /// Why: Service, repository, datasource, client, plugin, queue, and manager
   /// factories wire stable infrastructure dependencies. Watching those deps
   /// makes the factory reactive for no product reason and can recreate services
-  /// unexpectedly. Use ref.read for composition-root wiring; reserve ref.watch
-  /// for computed state that must update when inputs update.
+  /// unexpectedly. Notifier members, including `build()`, read stable
+  /// infrastructure the same way and watch only reactive state. Use ref.read
+  /// for composition-root wiring; reserve ref.watch for the provider that
+  /// intentionally owns reactivity, such as rebuilding a client from live
+  /// config or credential state.
   scannerRule(
     code: const LintCode(
       'service_provider_watch_dependency',
       'Use ref.read for stable infrastructure dependencies.',
-      correctionMessage: 'In service/repository/datasource/client provider factories, use ref.read for stable dependency wiring.',
+      correctionMessage: 'In service/repository/datasource/client provider factories and notifier members, use ref.read for stable dependency wiring.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags ref.watch inside stable infrastructure provider factories so services are not recreated reactively for wiring-only dependencies.',
+    description: 'Flags ref.watch of stable infrastructure providers inside stable infrastructure provider factories, and ref.watch of resolved stable infrastructure values inside Riverpod notifier members. Watching resolved reactive state or config values is allowed.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
 
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        final column = line.indexOf('ref.watch(');
-        if (column < 0) continue;
-        if (!_insideStableInfrastructureProviderFactory(context, i)) continue;
-        reporter.report(context, i, column);
+        for (
+          var column = line.indexOf('ref.watch(');
+          column >= 0;
+          column = line.indexOf('ref.watch(', column + 1)
+        ) {
+          final watch = _stableInfrastructureFactoryWatch(context, i, column);
+          if (watch == null || _watchesReactiveValue(watch)) continue;
+          reporter.report(context, i, column);
+        }
       }
     },
   ),
 
-  /// Do not hide nullable values behind primitive/string fallback defaults.
+  /// Destructure config values read from providers.
   ///
-  /// Why: `value ?? false`, `value ?? 0`, `value ?? ''`, chained fallbacks, and
-  /// `labelBuilder?.call(item) ?? item.toString()` erase the domain meaning of
-  /// null. Use required inputs, explicit nullable branches, pattern matching, or
-  /// typed value objects instead.
+  /// Why: The config -> client -> services chain reads config through an
+  /// object pattern, `final BackendConfig(:endpoint, :apiKey) =
+  /// ref.watch(backendConfigProvider);`, so the fields a client needs are
+  /// named where the provider is read. A config local that is only read
+  /// through its properties should be destructured instead.
   scannerRule(
     code: const LintCode(
-      'implicit_null_fallback',
-      'Do not hide null handling behind sentinel fallbacks.',
-      correctionMessage: 'Use a required value, explicit nullable branch, pattern match, or typed domain value instead of primitive/string/toString/chained ?? fallbacks.',
-      severity: DiagnosticSeverity.WARNING,
+      'riverpod_config_destructuring',
+      'Destructure config values read from providers.',
+      correctionMessage: 'Use an object pattern such as `final BackendConfig(:endpoint, :apiKey) = ref.watch(backendConfigProvider);` instead of reading properties from a config local. For one field, read it inline: `ref.watch(backendConfigProvider).endpoint`.',
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags primitive, empty collection/string, callback, toString, and chained null-coalescing fallbacks in production code.',
+    description: 'Flags a local initialized from ref.watch/ref.read of a provider whose resolved value is a `*Config` class when the local is only used through property reads.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
 
       for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        final match = _implicitNullFallbackMatch(line);
-        if (match == null) continue;
-        reporter.report(context, i, match.start);
+        for (final match in _refWatchOrRead.allMatches(context.source.masked[i])) {
+          if (_isPropertyOnlyConfigLocal(context, i, match.start)) {
+            reporter.report(context, i, match.start);
+          }
+        }
+      }
+    },
+  ),
+
+  /// Do not hide nullable values behind empty string/collection fallbacks.
+  ///
+  /// Why: `value ?? ''`, `value ?? const []`, chained fallbacks, and
+  /// `labelBuilder?.call(item) ?? item.toString()` erase the domain meaning of
+  /// null. Use required inputs, explicit nullable branches, pattern matching, or
+  /// typed value objects instead. Plain bool/num fallbacks such as
+  /// `ModalRoute.of(this)?.isCurrent ?? false` (context-ui.md) stay allowed.
+  scannerRule(
+    code: const LintCode(
+      'implicit_null_fallback',
+      'Do not hide null handling behind sentinel fallbacks.',
+      correctionMessage: 'Use a required value, explicit nullable branch, pattern match, or typed domain value instead of empty string/collection, toString, callback, or chained ?? fallbacks.',
+      severity: DiagnosticSeverity.WARNING,
+    ),
+    description: 'Flags empty collection/string, callback, toString, and chained null-coalescing fallbacks in production code.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+
+      for (var i = 0; i < context.source.length; i++) {
+        final column = _implicitNullFallbackColumn(
+          context.source.masked[i],
+          context.source.code[i],
+        );
+        if (column != null) reporter.report(context, i, column);
       }
     },
   ),
@@ -208,7 +245,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       'fire_forget_in_tests',
       'Avoid fire-and-forget calls in tests.',
       correctionMessage: 'Await the Future directly in tests and assert on the fake service.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags unawaited calls from test files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
@@ -244,15 +281,18 @@ final _inlineConcreteDependency = RegExp(
   r'Client|Plugin|Queue|Manager|Storage|Activities|EventBus)|FlutterLocalNotificationsPlugin|'
   r'DefaultCacheManager|RemoteMutationQueue|LiveActivities)\s*\(',
 );
+final _refWatchOrRead = RegExp(r'\bref\.(?:watch|read)\(');
 final _stableInfrastructureName = RegExp(
   r'(?:Service|Repository|Datasource|DataSource|Client|Plugin|Queue|Manager|Storage|'
   r'Activities|EventBus)\b',
 );
-final _primitiveNullFallback = RegExp(
-  r'''\?\?\s*(?:false\b|true\b|0(?:\.0)?\b|''|""|'''
-  r'''const\s+(?:<[^>]+>\s*)?\[\]|(?:<[^>]+>\s*)?\[\]|'''
+final _emptyCollectionNullFallback = RegExp(
+  r'''\?\?\s*(?:const\s+(?:<[^>]+>\s*)?\[\]|(?:<[^>]+>\s*)?\[\]|'''
   r'''const\s+(?:<[^>]+>\s*)?\{\}|(?:<[^>]+>\s*)?\{\})''',
 );
+// Matched against unmasked code: the masked line blanks string literals.
+final _emptyStringNullFallback = RegExp(r'''^\?\?\s*r?(?:''|"")(?!['"])''');
+final _nullFallbackOperator = RegExp(r'\?\?(?!=)');
 final _callbackNullFallback = RegExp(r'\?\.\s*call\s*\([^)]*\)\s*\?\?');
 final _toStringNullFallback = RegExp(r'\?\?\s*[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\.toString\s*\(');
 final _chainedNullFallback = RegExp(r'\?\?(?![=])(?:[^?\n]|\?(?!\?))*\?\?(?![=])');
@@ -298,42 +338,163 @@ bool _hasPublicStaticDataApi(String body) {
   return false;
 }
 
-RegExpMatch? _implicitNullFallbackMatch(String line) {
-  if (!line.contains('??') || line.contains('??=')) return null;
-  return _callbackNullFallback.firstMatch(line) ??
-      _toStringNullFallback.firstMatch(line) ??
-      _chainedNullFallback.firstMatch(line) ??
-      _primitiveNullFallback.firstMatch(line);
+int? _implicitNullFallbackColumn(String masked, String code) {
+  if (!masked.contains('??') || masked.contains('??=')) return null;
+  final match =
+      _callbackNullFallback.firstMatch(masked) ??
+      _toStringNullFallback.firstMatch(masked) ??
+      _chainedNullFallback.firstMatch(masked) ??
+      _emptyCollectionNullFallback.firstMatch(masked);
+  if (match != null) return match.start;
+  for (final fallback in _nullFallbackOperator.allMatches(masked)) {
+    if (_emptyStringNullFallback.hasMatch(code.substring(fallback.start))) return fallback.start;
+  }
+  return null;
 }
 
-bool _insideStableInfrastructureProviderFactory(SourceScannerContext context, int lineIndex) {
+/// Returns the `ref.watch` invocation at [column] when it sits inside a
+/// `@riverpod` factory whose resolved return type is stable infrastructure,
+/// or when a Riverpod notifier member watches a resolved stable
+/// infrastructure value.
+MethodInvocation? _stableInfrastructureFactoryWatch(
+  SourceScannerContext context,
+  int lineIndex,
+  int column,
+) {
+  final offset = context.source.lineOffsets[lineIndex] + column;
+  final covering = context.unit.nodeCovering(offset: offset);
+  final watch = covering?.thisOrAncestorOfType<MethodInvocation>();
+  if (watch == null || watch.methodName.name != 'watch') return null;
+  if (_isRiverpodNotifierMember(watch)) {
+    final value = watch.staticType;
+    return value != null && _isStableInfrastructureType(value) && !_isPersistStorage(watch)
+        ? watch
+        : null;
+  }
+
   final start = lineIndex - 12 < 0 ? 0 : lineIndex - 12;
   final window = context.source.masked.sublist(start, lineIndex + 1).join(' ');
-  if (!RegExp(r'@(?:R|r)iverpod\b').hasMatch(window)) return false;
+  if (!RegExp(r'@(?:R|r)iverpod\b').hasMatch(window)) return null;
+  final declaration = watch.thisOrAncestorOfType<FunctionDeclaration>();
+  final function = declaration?.declaredFragment?.element;
+  if (function is! TopLevelFunctionElement) return null;
+  return _isStableInfrastructureType(function.returnType) ? watch : null;
+}
 
-  final line = context.source.masked[lineIndex];
-  final watchColumn = line.indexOf('ref.watch(');
-  if (watchColumn < 0) return false;
-  final offset = context.source.lineOffsets[lineIndex] + watchColumn;
-  AstNode? node = context.unit.nodeCovering(offset: offset);
-  while (node != null && node is! FunctionDeclaration) {
-    node = node.parent;
-  }
-  final function = node is FunctionDeclaration ? node.declaredFragment?.element : null;
-  if (function is! TopLevelFunctionElement) return false;
+/// Whether [watch] sits in a class whose resolved supertypes include
+/// Riverpod's `AnyNotifier`, the base of `Notifier`, `AsyncNotifier`,
+/// `StreamNotifier` and the generated `_$X` classes.
+bool _isRiverpodNotifierMember(MethodInvocation watch) {
+  final element = watch.thisOrAncestorOfType<ClassDeclaration>()?.declaredFragment?.element;
+  if (element == null) return false;
+  return element.allSupertypes.any(
+    (supertype) => supertype.element.name == 'AnyNotifier' && _isRiverpodLibrary(supertype.element),
+  );
+}
 
-  var returnType = function.returnType;
-  if (returnType is InterfaceType &&
-      returnType.element.library.uri.toString() == 'dart:async' &&
-      (returnType.element.name == 'Future' || returnType.element.name == 'Stream') &&
-      returnType.typeArguments.length == 1) {
-    returnType = returnType.typeArguments.single;
+/// Whether [watch] is the storage argument of Riverpod's notifier
+/// `persist(...)`, which the skill watches inside `build()`.
+bool _isPersistStorage(MethodInvocation watch) {
+  final arguments = watch.parent;
+  final persist = arguments?.parent;
+  if (arguments is! ArgumentList || persist is! MethodInvocation) return false;
+  final element = persist.methodName.element;
+  return element is MethodElement &&
+      element.name == 'persist' &&
+      _isRiverpodLibrary(element) &&
+      arguments.arguments.first == watch;
+}
+
+bool _isRiverpodLibrary(Element element) =>
+    element.library?.uri.toString().startsWith('package:riverpod/') ?? false;
+
+/// A watched provider whose resolved value is not stable infrastructure is
+/// reactive state or config (Notifier/AsyncNotifier state or a plain value
+/// provider), so the factory intentionally rebuilds when it changes.
+/// Unresolved or `Object`/`dynamic` values stay reported.
+bool _watchesReactiveValue(MethodInvocation watch) {
+  final value = watch.staticType;
+  if (value is! InterfaceType || value.isDartCoreObject) return false;
+  return !_isStableInfrastructureType(value);
+}
+
+bool _isStableInfrastructureType(DartType type) {
+  var valueType = type;
+  while (valueType is InterfaceType && _isAsyncWrapper(valueType)) {
+    valueType = valueType.typeArguments.single;
   }
-  if (returnType is! InterfaceType) return false;
-  if (_stableInfrastructureName.hasMatch(returnType.element.name ?? '')) return true;
-  return returnType.allSupertypes.any((supertype) {
+  if (valueType is! InterfaceType) return false;
+  if (_stableInfrastructureName.hasMatch(valueType.element.name ?? '')) return true;
+  return valueType.allSupertypes.any((supertype) {
     final element = supertype.element;
     return element.name == 'Service' &&
         element.library.identifier == 'package:appwrite/src/service.dart';
   });
+}
+
+/// Whether the `ref.watch`/`ref.read` at [column] initializes a local whose
+/// resolved type is a `*Config` class and whose every use is a property read.
+bool _isPropertyOnlyConfigLocal(SourceScannerContext context, int lineIndex, int column) {
+  final offset = context.source.lineOffsets[lineIndex] + column;
+  final read = context.unit.nodeCovering(offset: offset)?.thisOrAncestorOfType<MethodInvocation>();
+  if (read == null) return false;
+  final value = read.parent is AwaitExpression ? read.parent : read;
+  final declaration = value?.parent;
+  if (declaration is! VariableDeclaration || declaration.initializer != value) return false;
+  final local = declaration.declaredFragment?.element;
+  if (local is! LocalVariableElement) return false;
+  final type = local.type;
+  if (type is! InterfaceType || !(type.element.name ?? '').endsWith('Config')) return false;
+
+  final uses = _LocalUses(local);
+  declaration.thisOrAncestorOfType<FunctionBody>()?.accept(uses);
+  return uses.propertyReads > 0 && uses.otherUses == 0;
+}
+
+/// Counts property reads of [local] (`config.endpoint`) and every other use.
+final class _LocalUses extends RecursiveAstVisitor<void> {
+  _LocalUses(this.local);
+
+  final LocalVariableElement local;
+  int propertyReads = 0;
+  int otherUses = 0;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (node.element != local) return;
+    final property = switch (node.parent) {
+      PrefixedIdentifier(:final prefix, :final identifier) when prefix == node => identifier,
+      PropertyAccess(:final target, :final propertyName) when target == node => propertyName,
+      _ => null,
+    };
+    if (property?.element is GetterElement) {
+      propertyReads++;
+    } else {
+      otherUses++;
+    }
+  }
+}
+
+bool _isAsyncWrapper(InterfaceType type) {
+  if (type.typeArguments.length != 1) return false;
+  final name = type.element.name;
+  final library = type.element.library.uri.toString();
+  return (library == 'dart:async' && (name == 'Future' || name == 'Stream')) ||
+      (library.startsWith('package:riverpod/') && name == 'AsyncValue');
+}
+
+final class _PerCallRandomVisitor extends RecursiveAstVisitor<void> {
+  final offsets = <int>[];
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final type = node.staticType;
+    if (type is InterfaceType &&
+        type.element.name == 'Random' &&
+        type.element.library.uri.toString() == 'dart:math' &&
+        node.thisOrAncestorOfType<FunctionBody>() != null) {
+      offsets.add(node.constructorName.type.name.offset);
+    }
+    super.visitInstanceCreationExpression(node);
+  }
 }

@@ -62,6 +62,17 @@ final class ScannerRuleReporter {
     final length = lineLength == 0 ? 1 : (lineLength - safeColumn).clamp(1, lineLength);
     _rule.reportAtOffset(offset, length);
   }
+
+  /// Reports from [offset] to the end of its source line.
+  void reportOffset(SourceScannerContext context, int offset) {
+    final lineIndex = context.source.lineOffsets.lastIndexWhere((start) => start <= offset);
+    report(context, lineIndex, offset - context.source.lineOffsets[lineIndex]);
+  }
+
+  void reportNode(SourceScannerContext context, AstNode node) {
+    final location = context.unit.lineInfo.getLocation(node.offset);
+    report(context, location.lineNumber - 1, location.columnNumber - 1);
+  }
 }
 
 String sourceClassSignature(SourceScannerContext context, ScannerClassSpan classSpan) {
@@ -219,16 +230,20 @@ final class SourceScannerContext {
   final List<ScannerClassSpan> classes;
   final List<ScannerMethodSpan> methods;
 
+  late final List<(int, int)> _widgetPreviewLines = [
+    for (final declaration in widgetPreviewDeclarations(unit))
+      (
+        unit.lineInfo.getLocation(declaration.offset).lineNumber - 1,
+        unit.lineInfo.getLocation(declaration.end).lineNumber - 1,
+      ),
+  ];
+
+  /// Whether [lineIndex] lies inside a resolved `@Preview` declaration.
+  bool isWidgetPreviewLine(int lineIndex) =>
+      _widgetPreviewLines.any((range) => lineIndex >= range.$1 && lineIndex <= range.$2);
+
   bool isRedirectWatch(int lineIndex) =>
       source.masked[lineIndex].contains('ref.watch(') && near(lineIndex, 'redirect:', 12);
-
-  bool isRedirectLoadingBounce(int lineIndex, String code) {
-    if (!near(lineIndex, 'redirect:', 12)) return false;
-    if (!RegExp(r'''return\s+['"][^'"]*(?:splash|loading|home|/)''').hasMatch(code)) {
-      return false;
-    }
-    return near(lineIndex, 'isLoading', 8) || near(lineIndex, 'loading', 8);
-  }
 
   int? initStateReadColumn(int lineIndex) => _immediateInitStateReadColumn(this, lineIndex);
 
@@ -269,7 +284,7 @@ final class SourceScannerContext {
   }
 
   bool hasHardcodedUiString(String code) {
-    if (path.endsWith('_strings.dart') || path.contains('/l10n/')) return false;
+    if (path.contains('/l10n/')) return false;
     if (isTestFile) return false;
     return RegExp(r'''\b(?:Text|Tooltip|Semantics)\s*\(\s*['"][^'"]+['"]''').hasMatch(code) ||
         RegExp(r'''\b(?:title|label|tooltip|hintText|helperText|errorText)\s*:\s*['"][^'"]+['"]''')
@@ -301,30 +316,6 @@ final class SourceScannerContext {
     }
 
     return null;
-  }
-
-  bool isMutableMixinField(int lineIndex) {
-    final line = source.masked[lineIndex];
-    final fieldMatch = RegExp(
-      r'^\s*(?!final\b)(?!const\b)(?:late\s+)?(?:var|int|double|num|bool|String|Object|List|Map|Set|[A-Z]\w*(?:<[^;=]+>)?\??)\s+([A-Za-z_]\w*)\b[^;=]*=',
-    ).firstMatch(line);
-    if (fieldMatch == null) {
-      return false;
-    }
-    if (!near(lineIndex, 'mixin ', 16)) {
-      return false;
-    }
-    final mixin = _enclosingMixin(lineIndex);
-    if (mixin == null || !_isDirectMixinMember(mixin, lineIndex)) {
-      return false;
-    }
-
-    final fieldName = fieldMatch.group(1) ?? '';
-    if (fieldName.startsWith('_') && _isStateLifecycleMixin(mixin.signature)) {
-      return false;
-    }
-
-    return true;
   }
 
   bool isMapDynamicReturn(String line) {
@@ -385,7 +376,7 @@ final class SourceScannerContext {
   bool requiresFreezedValueClass(ScannerClassSpan classSpan) {
     if (isTestFile) return false;
     if (classSpan.name.startsWith('_') || classSpan.isNotifier) return false;
-    if (_isAbstractInterfaceClass(classSpan)) return false;
+    if (_isNeverInstantiatedClass(classSpan)) return false;
     if (_isGeneratedOrPartOfFile) return false;
     if (isDomainPath) return true;
     return isDataModelPath || (isDataPath && classSpan.name.endsWith('Model'));
@@ -479,6 +470,7 @@ final class SourceScannerContext {
   bool get isAtomicNoProviderPath =>
       path.contains('/core/widgets/atoms/') ||
       path.contains('/core/widgets/molecules/') ||
+      path.contains('/core/widgets/organisms/') ||
       path.contains('/core/widgets/templates/');
 
   bool get isPresentationWidgetFile {
@@ -529,57 +521,12 @@ final class SourceScannerContext {
     return source.masked.any((line) => RegExp(r'^\s*part\s+of\b').hasMatch(line));
   }
 
-  bool _isAbstractInterfaceClass(ScannerClassSpan classSpan) {
+  /// An `abstract interface class` contract or an `abstract final class` static
+  /// namespace (keys, codecs, mappers): neither is ever instantiated as a value.
+  bool _isNeverInstantiatedClass(ScannerClassSpan classSpan) {
     final line = source.masked[classSpan.start];
-    return RegExp(r'\babstract\s+interface\s+class\b').hasMatch(line);
+    return RegExp(r'\babstract\s+(?:interface|final)\s+class\b').hasMatch(line);
   }
-
-  _ScannerMixinSpan? _enclosingMixin(int lineIndex) {
-    for (var start = lineIndex; start >= 0; start--) {
-      final header = _mixinHeader(start);
-      if (header == null || lineIndex < header.openBraceLine) continue;
-      final end = _mixinEnd(start, header.openBraceLine);
-      if (lineIndex <= end) {
-        return _ScannerMixinSpan(start: start, end: end, signature: header.signature);
-      }
-    }
-    return null;
-  }
-
-  ({String signature, int openBraceLine})? _mixinHeader(int start) {
-    final firstLine = source.masked[start];
-    if (!RegExp(r'^\s*mixin(?:\s+class)?\s+\w+\b').hasMatch(firstLine)) {
-      return null;
-    }
-    final signature = StringBuffer(firstLine);
-    var openBraceLine = start;
-    while (!source.masked[openBraceLine].contains('{') && openBraceLine + 1 < source.length) {
-      openBraceLine++;
-      signature.write(' ${source.masked[openBraceLine]}');
-    }
-    if (!source.masked[openBraceLine].contains('{')) return null;
-    return (signature: signature.toString(), openBraceLine: openBraceLine);
-  }
-
-  int _mixinEnd(int start, int openBraceLine) {
-    var depth = 0;
-    for (var lineIndex = start; lineIndex < source.length; lineIndex++) {
-      depth += _braceDelta(source.masked[lineIndex]);
-      if (lineIndex >= openBraceLine && depth <= 0) return lineIndex;
-    }
-    return source.length - 1;
-  }
-
-  bool _isDirectMixinMember(_ScannerMixinSpan mixin, int lineIndex) {
-    var depth = 0;
-    for (var i = mixin.start; i < lineIndex; i++) {
-      depth += _braceDelta(source.masked[i]);
-    }
-    return depth == 1;
-  }
-
-  bool _isStateLifecycleMixin(String signature) =>
-      RegExp(r'\bon\s+(?:\w+\.)?(?:State|ConsumerState|HookConsumerState)\b').hasMatch(signature);
 
   static List<ScannerClassSpan> _classes(SourceScannerSource source) {
     final classes = <ScannerClassSpan>[];
@@ -661,6 +608,9 @@ final class SourceScannerContext {
     var signatureEnd = lineIndex;
     var braceDepth = _braceDelta(line);
     while (!source.masked[signatureEnd].contains('{') && signatureEnd + 1 < classEnd) {
+      // A `;` before any `{` ends a bodyless declaration such as
+      // `const Repo(this.remote);`; never extend it over the next member.
+      if (source.masked[signatureEnd].trimRight().endsWith(';')) return null;
       signatureEnd++;
       braceDepth += _braceDelta(source.masked[signatureEnd]);
     }

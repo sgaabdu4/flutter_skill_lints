@@ -1,9 +1,12 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_identical_exception_handling_blocks.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_try_statements.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_only_rethrow.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_throw.dart';
+import 'package:test/test.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
@@ -11,6 +14,7 @@ void main() {
     defineReflectiveTests(AvoidNestedTryStatementsTest);
     defineReflectiveTests(AvoidIdenticalExceptionHandlingBlocksTest);
     defineReflectiveTests(AvoidThrowTest);
+    defineReflectiveTests(AvoidOnlyRethrowTest);
   });
 }
 
@@ -199,16 +203,40 @@ final class AvoidThrowTest extends AnalysisRuleTest {
     rule = AvoidThrow();
     _addFlutterPackage();
     _addRiverpodPackage();
+    _addRiverpodAnnotationPackage();
     super.setUp();
-    _patchCoreFormatExceptionConstructor();
+    _patchCoreSdk();
   }
 
-  void _patchCoreFormatExceptionConstructor() {
+  void _patchCoreSdk() {
     final core = getFile('$dartSdkPath/lib/core/core.dart');
-    final source = core.readAsStringSync().replaceFirst(
-      'class FormatException implements Exception {}',
-      'class FormatException implements Exception { const FormatException([String? message]); }',
-    );
+    final source = core
+        .readAsStringSync()
+        .replaceFirst(
+          'class FormatException implements Exception {}',
+          'class FormatException implements Exception { const FormatException([String? message]); }',
+        )
+        .replaceFirst(
+          'ArgumentError([dynamic message, @Since("2.14") String? name]);',
+          '''ArgumentError([dynamic message, @Since("2.14") String? name]);
+  ArgumentError.value(Object? value, [String? name, String? message]);''',
+        )
+        .replaceFirst('class Error {\n  Error();', '''class Error {
+  Error();
+  external static Never throwWithStackTrace(Object error, StackTrace stackTrace);''')
+        .replaceFirst(
+          'class UnsupportedError extends Error {',
+          '''class UnimplementedError extends Error {
+  UnimplementedError([String? message]);
+}
+
+class UnsupportedError extends Error {''',
+        )
+        .replaceFirst('int codeUnitAt(int index);', 'int codeUnitAt(int index);\n  String trim();')
+        .replaceFirst(
+          'abstract interface class StackTrace {}',
+          'abstract interface class StackTrace { external static StackTrace get current; }',
+        );
     core.writeAsStringSync(source);
   }
 
@@ -233,10 +261,82 @@ class TextButton extends Widget {
 
   void _addRiverpodPackage() {
     newPackage('riverpod').addFile('lib/riverpod.dart', r'''
-abstract class Notifier<T> {
-  late T state;
+abstract class AnyNotifier<StateT, ValueT> {
+  late StateT state;
+}
+abstract class $Notifier<StateT> extends AnyNotifier<StateT, StateT> {}
+abstract class Notifier<T> extends $Notifier<T> {}
+''');
+  }
+
+  void _addRiverpodAnnotationPackage() {
+    newPackage('riverpod_annotation').addFile('lib/riverpod_annotation.dart', r'''
+class Ref {}
+final class Riverpod {
+  const Riverpod({bool keepAlive = false, List<Object>? dependencies});
+}
+const riverpod = Riverpod();
+''');
+  }
+
+  void test_severity_error() {
+    expect(AvoidThrow.code.severity, DiagnosticSeverity.ERROR);
+  }
+
+  Future<void> test_scopedProviderOverrideStub_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+@Riverpod(dependencies: [])
+Future<int> scopedValue(Ref ref) => throw UnimplementedError();
+''');
+  }
+
+  Future<void> test_nonScopedOrNonStubProviderThrow_lint() async {
+    newFile('$testPackageLibPath/local_riverpod.dart', r'''
+final class Riverpod {
+  const Riverpod({List<Object>? dependencies});
 }
 ''');
+    const source = r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'local_riverpod.dart' as local;
+
+@riverpod
+Future<int> unscoped(Ref ref) => throw UnimplementedError('unscoped');
+
+@Riverpod(dependencies: [])
+Future<int> scopedString(Ref ref) => throw 'scoped';
+
+@Riverpod(dependencies: [])
+Future<int> scopedMessage(Ref ref) => throw UnimplementedError('message');
+
+@Riverpod(dependencies: [])
+Future<int> scopedOtherError(Ref ref) => throw UnsupportedError('scoped');
+
+@Riverpod(dependencies: [])
+Future<int> scopedBlock(Ref ref) {
+  throw UnimplementedError('block');
+}
+
+Future<int> plain(Ref ref) => throw UnimplementedError('plain');
+
+@local.Riverpod(dependencies: [])
+Future<int> localAnnotation(Ref ref) => throw UnimplementedError('local');
+''';
+
+    await assertDiagnostics(source, [
+      for (final thrown in [
+        "throw UnimplementedError('unscoped')",
+        "throw 'scoped'",
+        "throw UnimplementedError('message')",
+        "throw UnsupportedError('scoped')",
+        "throw UnimplementedError('block')",
+        "throw UnimplementedError('plain')",
+        "throw UnimplementedError('local')",
+      ])
+        lint(source.indexOf(thrown), thrown.length),
+    ]);
   }
 
   Future<void> test_throwStatement_lint() async {
@@ -474,15 +574,53 @@ final class CounterNotifier extends Notifier<int> {
     ]);
   }
 
-  Future<void> test_validatedValueObjectArgumentGuard_noLint() async {
-    final core = getFile('$dartSdkPath/lib/core/core.dart');
-    core.writeAsStringSync(
-      core.readAsStringSync().replaceFirst(
-        'ArgumentError([dynamic message, @Since("2.14") String? name]);',
-        '''ArgumentError([dynamic message, @Since("2.14") String? name]);
-  ArgumentError.value(Object? value, [String? name, String? message]);''',
+  // Issue #86: a typed throw inside a @riverpod codegen notifier reports like
+  // a hand-written Notifier (state-management-lifecycle.md:92).
+  Future<void> test_codegenRiverpodNotifierTypedThrow_lint() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+abstract class _$P86Form extends $Notifier<String> {}
+
+class P86Form extends _$P86Form {
+  void submit(String value) {
+    if (value.isEmpty) throw const FormatException('empty');
+    state = value;
+  }
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(
+        source.indexOf('throw const FormatException'),
+        'throw const FormatException(\'empty\')'.length,
       ),
-    );
+    ]);
+  }
+
+  // Issue #86: typed infrastructure failures stay allowed in datasources
+  // (networking.md:25).
+  Future<void> test_datasourceTypedThrowNextToCodegenNotifier_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+final class P86Parser {
+  int parse(String raw) {
+    final value = int.tryParse(raw);
+    if (value == null) throw FormatException('not a number');
+    return value;
+  }
+}
+
+abstract class _$P86Form extends $Notifier<String> {}
+
+class P86Form extends _$P86Form {
+  void submit(String value) => state = value;
+}
+''');
+  }
+
+  Future<void> test_validatedValueObjectArgumentGuard_noLint() async {
     final path = '$testPackageLibPath/features/items/domain/values/required_text.dart';
     newFile(path, r'''
 final class RequiredText {
@@ -498,6 +636,63 @@ final class RequiredText {
 }
 ''');
     await assertNoDiagnosticsInFile(path);
+  }
+
+  Future<void> test_valueObjectExtractedGuardHelper_noLint() async {
+    final path = '$testPackageLibPath/core/domain/values/distance.dart';
+    newFile(path, r'''
+final class Distance {
+  const Distance._(this.value);
+  final double value;
+
+  factory Distance.meters(double v) => Distance._(_guard(v, 'meters'));
+
+  static double _guard(double v, String unit) {
+    if (v.isNaN || v < 0) {
+      throw ArgumentError.value(v, 'v', 'Distance.$unit must be finite and non-negative');
+    }
+    return v;
+  }
+}
+''');
+    await assertNoDiagnosticsInFile(path);
+  }
+
+  Future<void> test_guardHelperOutsideContract_lint() async {
+    final path = '$testPackageLibPath/core/domain/values/distance.dart';
+    const source = r'''
+final class Distance {
+  const Distance._(this.value);
+  final double value;
+
+  static double _state(double v) {
+    if (v < 0) throw 'negative';
+    return v;
+  }
+
+  static double guard(double v) {
+    if (v < 0) throw ArgumentError.value(v, 'v', 'negative');
+    return v;
+  }
+
+  double _instance(double v) {
+    if (v < 0) throw ArgumentError.value(v, 'v', 'negative');
+    return v;
+  }
+}
+''';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [
+      lint(source.indexOf("throw 'negative'"), "throw 'negative'".length),
+      lint(
+        source.indexOf('throw ArgumentError'),
+        "throw ArgumentError.value(v, 'v', 'negative')".length,
+      ),
+      lint(
+        source.lastIndexOf('throw ArgumentError'),
+        "throw ArgumentError.value(v, 'v', 'negative')".length,
+      ),
+    ]);
   }
 
   Future<void> test_unrelatedThrowInValueObject_stillReports() async {
@@ -517,6 +712,177 @@ final class RequiredText {
     ]);
   }
 
+  Future<void> test_valueObjectGuardThroughFinalParameterLocal_noLint() async {
+    final path = '$testPackageLibPath/features/profile/domain/values/display_name.dart';
+    newFile(path, r'''
+final class DisplayName {
+  const DisplayName._(this.value);
+  final String value;
+
+  factory DisplayName(String input) {
+    final trimmed = input.trim();
+    if (trimmed.isEmpty) {
+      throw ArgumentError.value(input, 'input', 'DisplayName cannot be blank');
+    }
+    return DisplayName._(trimmed);
+  }
+}
+''');
+    await assertNoDiagnosticsInFile(path);
+  }
+
+  Future<void> test_valueObjectGuardThroughNonFinalOrUnrelatedLocal_lint() async {
+    final path = '$testPackageLibPath/features/profile/domain/values/display_name.dart';
+    const source = r'''
+final class DisplayName {
+  const DisplayName._(this.value);
+  final String value;
+
+  factory DisplayName.mutable(String input) {
+    var trimmed = input.trim();
+    if (trimmed.isEmpty) {
+      throw ArgumentError.value(input, 'input', 'mutable');
+    }
+    return DisplayName._(trimmed);
+  }
+
+  factory DisplayName.reassigned(String input) {
+    var trimmed = input.trim();
+    trimmed = 'fallback';
+    if (trimmed.isEmpty) {
+      throw ArgumentError.value(input, 'input', 'reassigned');
+    }
+    return DisplayName._(trimmed);
+  }
+
+  factory DisplayName.unrelated(String input) {
+    final other = 'fixed'.trim();
+    if (other.isEmpty) {
+      throw ArgumentError.value(input, 'input', 'unrelated');
+    }
+    return DisplayName._(input);
+  }
+
+  factory DisplayName.state(String input) {
+    final trimmed = input.trim();
+    if (trimmed.isEmpty) {
+      throw UnsupportedError('unrelated throw');
+    }
+    return DisplayName._(trimmed);
+  }
+}
+''';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [
+      for (final message in ['mutable', 'reassigned', 'unrelated'])
+        lint(
+          source.indexOf("throw ArgumentError.value(input, 'input', '$message')"),
+          "throw ArgumentError.value(input, 'input', '$message')".length,
+        ),
+      lint(
+        source.indexOf('throw UnsupportedError'),
+        "throw UnsupportedError('unrelated throw')".length,
+      ),
+    ]);
+  }
+
+  Future<void> test_coreThrowWithStackTraceUntypedValue_lint() async {
+    const source = r'''
+void throughApi() => Error.throwWithStackTrace('invalid', StackTrace.current);
+
+void mismatchedStack(void Function() operation) {
+  try {
+    operation();
+  } on Object catch (error) {
+    Error.throwWithStackTrace(error, StackTrace.current);
+  }
+}
+
+void freshError(void Function() operation) {
+  try {
+    operation();
+  } on Object catch (error, stack) {
+    Error.throwWithStackTrace(UnsupportedError('wrapped'), stack);
+  }
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(
+        source.indexOf("Error.throwWithStackTrace('invalid'"),
+        "Error.throwWithStackTrace('invalid', StackTrace.current)".length,
+      ),
+      lint(
+        source.indexOf('Error.throwWithStackTrace(error'),
+        'Error.throwWithStackTrace(error, StackTrace.current)'.length,
+      ),
+      lint(
+        source.indexOf('Error.throwWithStackTrace(UnsupportedError'),
+        "Error.throwWithStackTrace(UnsupportedError('wrapped'), stack)".length,
+      ),
+    ]);
+  }
+
+  Future<void> test_coreThrowWithStackTracePropagationAndTypedFailure_noLint() async {
+    await assertNoDiagnostics(r'''
+final class RepositoryException implements Exception {
+  const RepositoryException();
+}
+
+void preserveOriginal(void Function() operation) {
+  try {
+    operation();
+  } on Object catch (error, stack) {
+    Error.throwWithStackTrace(error, stack);
+  }
+}
+
+void translate(void Function() operation) {
+  try {
+    operation();
+  } on Object catch (_, stack) {
+    Error.throwWithStackTrace(const RepositoryException(), stack);
+  }
+}
+''');
+  }
+
+  Future<void> test_coreThrowWithStackTraceInPresentation_lint() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+final class RepositoryException implements Exception {
+  const RepositoryException();
+}
+
+final class CounterNotifier extends Notifier<int> {
+  void increment() {
+    Error.throwWithStackTrace(const RepositoryException(), StackTrace.current);
+  }
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(
+        source.indexOf('Error.throwWithStackTrace'),
+        'Error.throwWithStackTrace(const RepositoryException(), StackTrace.current)'.length,
+      ),
+    ]);
+  }
+
+  Future<void> test_nonCoreThrowWithStackTrace_noLint() async {
+    newFile('$testPackageLibPath/other_errors.dart', r'''
+class Error {
+  external static void throwWithStackTrace(Object error, StackTrace stackTrace);
+}
+''');
+    await assertNoDiagnostics(r'''
+import 'other_errors.dart' as other;
+
+void report() => other.Error.throwWithStackTrace('invalid', StackTrace.current);
+''');
+  }
+
   Future<void> test_rethrow_noLint() async {
     await assertNoDiagnostics(r'''
 void f() {
@@ -534,5 +900,87 @@ void f() {
     newFile(filePath, "Never lookup() => throw 'missing';");
 
     await assertNoDiagnosticsInFile(filePath);
+  }
+}
+
+@reflectiveTest
+final class AvoidOnlyRethrowTest extends AnalysisRuleTest {
+  @override
+  void setUp() {
+    rule = AvoidOnlyRethrow();
+    super.setUp();
+  }
+
+  Future<void> test_trailingRethrowOnlyCatch_lint() async {
+    const source = r'''
+Future<void> load() async {
+  try {
+    await Future<void>.value();
+  } catch (_) {
+    rethrow;
+  }
+}
+''';
+    const clause = 'catch (_) {\n    rethrow;\n  }';
+    await assertDiagnostics(source, [lint(source.indexOf(clause), clause.length)]);
+  }
+
+  Future<void> test_rethrowOnlyCatchBeforeFinally_lint() async {
+    const source = r'''
+Future<void> load() async {
+  try {
+    await Future<void>.value();
+  } on Exception {
+    rethrow;
+  } finally {
+    await Future<void>.value();
+  }
+}
+''';
+    const clause = 'on Exception {\n    rethrow;\n  }';
+    await assertDiagnostics(source, [lint(source.indexOf(clause), clause.length)]);
+  }
+
+  /// Datasource catches the skill allows (networking.md:30-43,
+  /// hive-persistence.md:72, state-management-lifecycle.md:69-72). An earlier
+  /// rethrow-only clause keeps its error type out of a later catch.
+  Future<void> test_skillDataLayerCatches_noLint() async {
+    await assertNoDiagnostics(r'''
+class AppException implements Exception {
+  const AppException(this.code);
+  final String code;
+}
+
+class UserDatasource {
+  Future<Object?> fetch() async {
+    try {
+      return await Future<Object?>.value();
+    } on Exception {
+      throw const AppException('network');
+    }
+  }
+
+  Future<void> remove(String id) async {
+    try {
+      await Future<void>.value();
+    } catch (_) {
+      await restore(id);
+      rethrow;
+    }
+  }
+
+  Future<Object?> readOrNull() async {
+    try {
+      return await Future<Object?>.value();
+    } on FormatException {
+      rethrow;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> restore(String id) async {}
+}
+''');
   }
 }

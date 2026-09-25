@@ -40,11 +40,14 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     ),
     description: 'Flags synchronous context.pop followed by push navigation so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(r'\bcontext\s*\.\s*pop\s*\(').hasMatch(line) && context.near(i, '.push', 4)) {
-          reporter.report(context, i, line.indexOf('context'));
-        }
+      for (final pop in collectNodes<MethodInvocation>(context.unit)) {
+        if (!isResolvedNavigationPop(pop)) continue;
+        final pushesAfterPop = followingBlockStatements(pop).any(
+          (statement) => collectNodes<MethodInvocation>(statement).any(
+            (call) => call.methodName.name.startsWith('push') && isResolvedForwardNavigation(call),
+          ),
+        );
+        if (pushesAfterPop) reporter.reportNode(context, pop);
       }
     },
   ),
@@ -62,7 +65,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
       'pop_fallback_helper_must_check_navigator_stack',
       'BuildContext pop fallback helper does not check Navigator stacks.',
       correctionMessage: 'Check `mounted`, root `Navigator.maybeOf(...).canPop()`, and local `Navigator.maybeOf(...).canPop()` before fallback navigation.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags BuildContext pop fallback helpers that call canPop/pop without checking mounted plus root/local Navigator stacks first.',
     scan: _scanPopFallbackHelpers,
@@ -102,13 +105,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags redirects to loading routes while auth/router state is loading so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        if (context.isRedirectLoadingBounce(i, context.source.code[i])) {
-          reporter.report(context, i, 0);
-        }
-      }
-    },
+    scan: _reportRedirectLoadingBounces,
   ),
 
   /// Do not hold splash while initial sync runs.
@@ -274,11 +271,22 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     description:
         'Flags raw page navigation so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
+      final reportedLines = <int>{};
       for (var i = 0; i < context.source.length; i++) {
         final column = _directRouteNavigationColumn(context, i);
         if (column != null) {
           reporter.report(context, i, column);
+          reportedLines.add(i);
         }
+      }
+      for (final call in collectNodes<MethodInvocation>(context.unit)) {
+        final targetType = call.realTarget?.staticType;
+        if (targetType == null || !goRouterChecker.isAssignableFromType(targetType)) continue;
+        if (!isResolvedForwardNavigation(call)) continue;
+        if (!reportedLines.add(context.unit.lineInfo.getLocation(call.offset).lineNumber - 1)) {
+          continue;
+        }
+        reporter.reportNode(context, call);
       }
     },
   ),
@@ -351,6 +359,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     ),
     description: 'Flags container and navigatorKey context navigation escape hatches.',
     scan: (reporter, context) {
+      final reportedLines = <int>{};
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
         final navigatorContext = RegExp(
@@ -359,6 +368,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
         ).firstMatch(line);
         if (navigatorContext != null) {
           reporter.report(context, i, navigatorContext.start);
+          reportedLines.add(i);
           continue;
         }
 
@@ -372,6 +382,15 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
         }
         reporter.report(context, i, match.start);
       }
+      for (final identifier in collectNodes<SimpleIdentifier>(context.unit)) {
+        if (identifier.name != 'currentContext') continue;
+        final target = _propertyTarget(identifier);
+        if (target == null || !_isNavigatorGlobalKey(target.staticType)) continue;
+        if (!reportedLines.add(context.unit.lineInfo.getLocation(target.offset).lineNumber - 1)) {
+          continue;
+        }
+        reporter.reportNode(context, target);
+      }
     },
   ),
 
@@ -379,12 +398,13 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ///
   /// Why: Flags typed route `$extra`, GoRouterState.extra reads, and direct navigation
   /// `extra:` payloads. Route state must survive serialization, redirects, reloads, and
-  /// modal pops; pass stable IDs or configure an explicit codec instead.
+  /// modal pops; pass stable IDs or path/query params through typed routes instead.
+  /// An extraCodec does not make `extra` acceptable: the skill never uses it.
   scannerRule(
     code: const LintCode(
       'router_complex_extra',
       'Avoid GoRouter extra for route state.',
-      correctionMessage: 'Pass stable route IDs/path params, or configure and test an explicit GoRouter extraCodec.',
+      correctionMessage: 'Pass stable IDs or path/query params through typed routes; do not use GoRouter extra, even with a codec.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description:
@@ -402,6 +422,109 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 ];
 
+/// Reports a route location returned from a branch taken while an enum
+/// status is `loading` (or an `isLoading` flag is true).
+void _reportRedirectLoadingBounces(ScannerRuleReporter reporter, SourceScannerContext context) {
+  for (final node in collectNodes<AstNode>(context.unit)) {
+    switch (node) {
+      case IfStatement(:final expression, :final thenStatement, caseClause: null)
+          when _isLoadingCondition(expression):
+        _reportLocationReturns(reporter, context, thenStatement);
+      case SwitchStatement(:final members):
+        for (final statement in _loadingSwitchStatements(members)) {
+          _reportLocationReturns(reporter, context, statement);
+        }
+      case SwitchExpressionCase(:final guardedPattern, :final expression)
+          when _matchesLoadingConstant(guardedPattern.pattern) && _isRouteLocation(expression):
+        reporter.reportNode(context, expression);
+      default:
+    }
+  }
+}
+
+/// Statements run by each loading case, following fallthrough to the next
+/// member with a body.
+Iterable<Statement> _loadingSwitchStatements(List<SwitchMember> members) sync* {
+  for (final (index, member) in members.indexed) {
+    if (!_isLoadingSwitchMember(member)) continue;
+    yield* members.skip(index).map((m) => m.statements).where((s) => s.isNotEmpty).firstOrNull ??
+        const <Statement>[];
+  }
+}
+
+bool _isLoadingSwitchMember(SwitchMember member) => switch (member) {
+  SwitchPatternCase(:final guardedPattern) => _matchesLoadingConstant(guardedPattern.pattern),
+  SwitchCase(:final expression) => _isLoadingEnumReference(expression),
+  _ => false,
+};
+
+void _reportLocationReturns(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  Statement branch,
+) {
+  final body = branch.thisOrAncestorOfType<FunctionBody>();
+  for (final statement in collectNodes<ReturnStatement>(branch)) {
+    if (statement.thisOrAncestorOfType<FunctionBody>() == body &&
+        _isRouteLocation(statement.expression)) {
+      reporter.reportNode(context, statement);
+    }
+  }
+}
+
+bool _isLoadingCondition(Expression condition) => switch (condition.unParenthesized) {
+  BinaryExpression(:final operator, :final leftOperand, :final rightOperand)
+      when operator.lexeme == '&&' || operator.lexeme == '||' =>
+    _isLoadingCondition(leftOperand) || _isLoadingCondition(rightOperand),
+  BinaryExpression(:final operator, :final leftOperand, :final rightOperand)
+      when operator.lexeme == '==' =>
+    _isLoadingEnumReference(leftOperand) || _isLoadingEnumReference(rightOperand),
+  final Expression flag => _isLoadingFlag(flag),
+};
+
+bool _matchesLoadingConstant(DartPattern pattern) =>
+    collectNodes<ConstantPattern>(pattern)
+        .any((constant) => _isLoadingEnumReference(constant.expression));
+
+bool _isLoadingEnumReference(Expression expression) => switch (expression.unParenthesized) {
+  PrefixedIdentifier(:final identifier) => _isLoadingEnumConstant(identifier),
+  PropertyAccess(:final propertyName) => _isLoadingEnumConstant(propertyName),
+  DotShorthandPropertyAccess(:final propertyName) => _isLoadingEnumConstant(propertyName),
+  _ => false,
+};
+
+bool _isLoadingEnumConstant(SimpleIdentifier identifier) {
+  if (identifier.name != 'loading') return false;
+  final element = identifier.element;
+  final variable = element is PropertyAccessorElement ? element.variable : element;
+  return variable is FieldElement && variable.isEnumConstant;
+}
+
+bool _isLoadingFlag(Expression expression) {
+  final name = switch (expression) {
+    SimpleIdentifier(:final name) => name,
+    PrefixedIdentifier(:final identifier) => identifier.name,
+    PropertyAccess(:final propertyName) => propertyName.name,
+    _ => null,
+  };
+  return name == 'isLoading' && (expression.staticType?.isDartCoreBool ?? false);
+}
+
+bool _isRouteLocation(Expression? expression) {
+  final value = expression?.unParenthesized;
+  if (value is SimpleStringLiteral) return value.value.startsWith('/');
+  if (value is ConditionalExpression) {
+    return _isRouteLocation(value.thenExpression) || _isRouteLocation(value.elseExpression);
+  }
+  final (target, name) = switch (value) {
+    PropertyAccess(:final realTarget, :final propertyName) => (realTarget, propertyName.name),
+    PrefixedIdentifier(:final prefix, :final identifier) => (prefix, identifier.name),
+    _ => (null, null),
+  };
+  final type = target?.staticType;
+  return name == 'location' && type != null && goRouteDataChecker.isAssignableFromType(type);
+}
+
 void _reportContextNavigationExtensions(
   ScannerRuleReporter reporter,
   SourceScannerContext context,
@@ -413,6 +536,24 @@ void _reportContextNavigationExtensions(
     _reportNavigationExtensionLines(reporter, context, lineIndex + 1, end);
     lineIndex = end;
   }
+  for (final extension in context.unit.declarations.whereType<ExtensionDeclaration>()) {
+    final extendedType = extension.onClause?.extendedType.type;
+    if (extendedType == null || !_buildContextChecker.isExactlyType(extendedType)) continue;
+    for (final call in collectNodes<MethodInvocation>(extension)) {
+      if (_isStringRouteNavigation(call)) reporter.reportNode(context, call);
+    }
+  }
+}
+
+const _buildContextChecker = TypeChecker.fromName('BuildContext', packageName: 'flutter');
+
+/// Forward navigation that takes a raw location: go_router's `BuildContext`
+/// helpers or a `GoRouter` instance, as opposed to a typed `GoRouteData`.
+bool _isStringRouteNavigation(MethodInvocation node) {
+  if (!isResolvedForwardNavigation(node)) return false;
+  final targetType = node.realTarget?.staticType;
+  return isGoRouterHelperMember(node.methodName.element) ||
+      (targetType != null && goRouterChecker.isExactlyType(targetType));
 }
 
 int _navigationExtensionEnd(int start, int extensionEnd, int sourceLength) {
@@ -504,4 +645,26 @@ void _reportPopFallbackHelper(
   if (!_popFallbackBodyLooksLikeHelper(body)) return;
   if (_popFallbackHasRequiredSafetyChecks(body)) return;
   reporter.report(context, lineIndex, column);
+}
+
+Expression? _propertyTarget(SimpleIdentifier identifier) => switch (identifier.parent) {
+  final PropertyAccess access when access.propertyName == identifier => access.realTarget,
+  final PrefixedIdentifier prefixed when prefixed.identifier == identifier => prefixed.prefix,
+  _ => null,
+};
+
+const _globalKeyChecker = TypeChecker.fromName('GlobalKey', packageName: 'flutter');
+const _navigatorStateChecker = TypeChecker.fromName('NavigatorState', packageName: 'flutter');
+
+bool _isNavigatorGlobalKey(DartType? type) {
+  if (type is! InterfaceType) return false;
+  final key = [
+    type,
+    ...type.element.allSupertypes,
+  ].whereType<InterfaceType>().where((candidate) => _globalKeyChecker.isExactlyType(candidate));
+  return key.any(
+    (candidate) =>
+        candidate.typeArguments.length == 1 &&
+        _navigatorStateChecker.isAssignableFromType(candidate.typeArguments.single),
+  );
 }

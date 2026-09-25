@@ -1,7 +1,11 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'riverpod_source_rules/riverpod_source_rules_part_01.dart';
 part 'riverpod_source_rules/riverpod_source_rules_part_02.dart';
@@ -374,18 +378,42 @@ int _functionProviderEnd(SourceScannerContext context, int declarationLine) {
   return declarationLine;
 }
 
-Set<String> _watchedProviderNames(
+/// Whether [definition] watches at least one provider and every `watch`
+/// resolves, through its generated `@ProviderFor` variable, to a
+/// `@Riverpod(keepAlive: true)` source, in this file or another. An
+/// unresolved or auto-dispose dependency keeps the provider clean.
+bool _watchesOnlyKeepAliveProviders(
   SourceScannerContext context,
   _RiverpodProviderDefinition definition,
 ) {
-  final body = context.source.masked
-      .sublist(definition.bodyStart, definition.bodyEnd + 1)
-      .join('\n');
-  return RegExp(r'\bref\s*\.\s*watch\s*\(\s*([A-Za-z_]\w*Provider)\b')
-      .allMatches(body)
-      .map((match) => match.group(1) ?? '')
-      .where((name) => name.isNotEmpty)
-      .toSet();
+  final lineInfo = context.unit.lineInfo;
+  final declaration = context.unit.declarations
+      .where(
+        (member) =>
+            lineInfo.getLocation(member.firstTokenAfterCommentAndMetadata.offset).lineNumber - 1 ==
+            definition.bodyStart,
+      )
+      .firstOrNull;
+  if (declaration == null) return false;
+  final watches = _ProviderWatches();
+  declaration.accept(watches);
+  return watches.invocations.isNotEmpty &&
+      watches.invocations.every(
+        (watch) =>
+            isKeepAliveProviderExpression(watch.argumentList.arguments.first.argumentExpression),
+      );
+}
+
+final class _ProviderWatches extends RecursiveAstVisitor<void> {
+  final invocations = <MethodInvocation>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.methodName.name == 'watch' && node.argumentList.arguments.isNotEmpty) {
+      invocations.add(node);
+    }
+    super.visitMethodInvocation(node);
+  }
 }
 
 bool _hasBlockSelectCallback(String invocation) =>
@@ -419,14 +447,76 @@ bool _isKeepAliveRiverpodAnnotation(SourceScannerContext context, int lineIndex)
 }
 
 bool _hasKeepAliveTickerModeWorkaround(SourceScannerContext context, int annotationLine) {
-  return context.nearOriginal(
-    annotationLine,
-    RegExp(
-      r'(?:#4709|riverpod#4709|TickerMode|pausedActiveSubscriptionCount)',
-      caseSensitive: false,
-    ),
-    6,
+  final workaround = RegExp(
+    r'(?:#4709|riverpod#4709|TickerMode|pausedActiveSubscriptionCount)',
+    caseSensitive: false,
   );
+  final lineInfo = context.unit.lineInfo;
+  for (final declaration in context.unit.declarations) {
+    if (!declaration.metadata.any(
+      (annotation) => lineInfo.getLocation(annotation.offset).lineNumber - 1 == annotationLine,
+    )) {
+      continue;
+    }
+    return _declarationComments(context, declaration).any(workaround.hasMatch);
+  }
+  return false;
+}
+
+/// Comments owned by [declaration]: its leading comments and comments between
+/// its metadata and its name, such as a trailing note on the annotation line.
+Iterable<String> _declarationComments(
+  SourceScannerContext context,
+  CompilationUnitMember declaration,
+) {
+  // Documentation comments precede the first code token, so start there.
+  final first = declaration.metadata.isEmpty
+      ? declaration.firstTokenAfterCommentAndMetadata
+      : declaration.metadata.first.beginToken;
+  final nameToken = switch (declaration) {
+    FunctionDeclaration(:final name) => name,
+    ClassDeclaration(:final namePart) => namePart.typeName,
+    _ => declaration.firstTokenAfterCommentAndMetadata,
+  };
+  return _ownedComments(context, first, nameToken);
+}
+
+/// Comments attached to the tokens [first]..[last]. Leading comments that sit
+/// on the previous token's line belong to the previous code, not this node.
+/// With [trailing], a comment after [last] on the same line is included.
+Iterable<String> _ownedComments(
+  SourceScannerContext context,
+  Token first,
+  Token last, {
+  bool trailing = false,
+}) {
+  final lineInfo = context.unit.lineInfo;
+  int lineOf(int offset) => lineInfo.getLocation(offset).lineNumber;
+  final previous = first.previous;
+  final previousLine = previous == null || previous.isEof ? -1 : lineOf(previous.end);
+  final lastLine = lineOf(last.end);
+  final next = last.next;
+  return [
+    ..._commentTokens(first).where((comment) => lineOf(comment.offset) > previousLine),
+    for (final token in _tokensAfter(first, last)) ..._commentTokens(token),
+    if (trailing && next != null)
+      ..._commentTokens(next).where((comment) => lineOf(comment.offset) == lastLine),
+  ].map((comment) => comment.lexeme);
+}
+
+Iterable<Token> _commentTokens(Token token) sync* {
+  for (Token? comment = token.precedingComments; comment != null; comment = comment.next) {
+    yield comment;
+  }
+}
+
+/// Tokens after [first] up to and including [last].
+Iterable<Token> _tokensAfter(Token first, Token last) sync* {
+  if (first == last) return;
+  for (Token? token = first.next; token != null && !token.isEof; token = token.next) {
+    yield token;
+    if (token == last) return;
+  }
 }
 
 bool _hasFamilySignatureAfterKeepAlive(SourceScannerContext context, int annotationLine) {
@@ -475,101 +565,31 @@ bool _registersDisposeCleanup(
   return RegExp(r'\bref\s*\.\s*onDispose\s*\(').hasMatch(body);
 }
 
-int? _broadRefWatchColumn(
-  SourceScannerContext context,
-  int lineIndex,
-  int methodEnd,
-  Set<int> scalarOffsets,
-) {
-  final line = context.source.masked[lineIndex];
-  for (final match in RegExp(r'\bref\s*\.\s*watch\s*\(').allMatches(line)) {
-    final offset = context.source.lineOffsets[lineIndex] + match.start;
-    if (scalarOffsets.contains(offset)) continue;
-    final invocation = _refWatchInvocation(context, lineIndex, methodEnd, match.start);
-    if (!RegExp(r'\.\s*select\s*\(').hasMatch(invocation) &&
-        !RegExp(r'\.\s*notifier\b').hasMatch(invocation) &&
-        !_isProjectionProviderWatch(invocation)) {
-      return match.start;
-    }
-  }
-  return null;
-}
-
 final _eventSignalProviderName = RegExp(
-  r'(?:Signal|Signals|Event|Events|Pulse|Pulses|Serial|Serials)$',
-);
-final _eventSignalFunctionProvider = RegExp(
-  r'^\s*(?:Future\s*<[^>]+>|Stream\s*<[^>]+>|[A-Za-z_]\w*(?:<[^>]+>)?\??)\s+'
-  r'([A-Za-z_]\w*)\s*\(\s*Ref\s+ref\b',
+  r'(?:Signal|Signals|Event|Events|Pulse|Pulses|Serial|Serials)Provider$',
 );
 
-bool _hasRiverpodAnnotation(SourceScannerContext context, ScannerClassSpan classSpan) {
-  for (var i = classSpan.start - 1; i >= 0 && i >= classSpan.start - 6; i--) {
-    final line = context.source.masked[i].trim();
-    if (line.isEmpty) continue;
-    if (line.startsWith('@riverpod') || line.startsWith('@Riverpod')) return true;
-    if (!line.startsWith('//')) return false;
-  }
-  return false;
+/// `@riverpod` / `@Riverpod(...)`, resolved to the annotation's `Riverpod` type.
+bool _isRiverpodAnnotation(Annotation annotation) {
+  final type = switch (annotation.element) {
+    ConstructorElement(:final returnType) => returnType,
+    PropertyAccessorElement(:final returnType) => returnType,
+    _ => null,
+  };
+  return type?.element?.name == 'Riverpod';
 }
 
-bool _isProjectionProviderWatch(String invocation) {
-  final providerName = _watchedProviderName(invocation);
-  if (providerName == null) return false;
-  return _isProjectionProviderName(providerName);
-}
+const _functionalProviderType = TypeChecker.fromName(
+  r'$FunctionalProvider',
+  packageName: 'riverpod',
+);
 
-String? _watchedProviderName(String invocation) {
-  final match = RegExp(r'\bref\s*\.\s*watch\s*\(\s*([A-Za-z_]\w*Provider)\b')
-      .firstMatch(invocation);
-  return match?.group(1);
-}
-
-bool _isProjectionProviderName(String providerName) {
-  final base = providerName.endsWith('Provider')
-      ? providerName.substring(0, providerName.length - 'Provider'.length)
-      : providerName;
-  final normalized = base.toLowerCase();
-
-  if (normalized.endsWith('byid') ||
-      normalized.endsWith('category') ||
-      normalized.endsWith('categories') ||
-      normalized.endsWith('count') ||
-      normalized.endsWith('data') ||
-      normalized.endsWith('date') ||
-      normalized.endsWith('dates') ||
-      normalized.endsWith('days') ||
-      normalized.endsWith('direction') ||
-      normalized.endsWith('enabled') ||
-      normalized.endsWith('entries') ||
-      normalized.endsWith('entry') ||
-      normalized.endsWith('ids') ||
-      normalized.endsWith('indices') ||
-      normalized.endsWith('map') ||
-      normalized.endsWith('mode') ||
-      normalized.endsWith('name') ||
-      normalized.endsWith('reminder') ||
-      normalized.endsWith('router') ||
-      normalized.endsWith('session') ||
-      normalized.endsWith('sessions') ||
-      normalized.endsWith('share') ||
-      normalized.endsWith('sound') ||
-      normalized.endsWith('summary') ||
-      normalized.endsWith('timer') ||
-      normalized.endsWith('unit') ||
-      normalized.endsWith('value') ||
-      normalized.endsWith('vibration') ||
-      normalized.endsWith('version')) {
-    return true;
-  }
-
-  if (RegExp(
-    r'(?:count|data|dates|days|entries|entry|ids|indices|list|map|sets|summary|value)for[a-z0-9]+$',
-  ).hasMatch(normalized)) {
-    return true;
-  }
-
-  return false;
+/// A watch of a computed (functional) provider, whose whole value can already
+/// be the render projection (performance.md:6; see [_consumesProjection]).
+/// Notifier providers hold mutable state and need `select`.
+bool _isProjectionProviderWatch(Expression argument) {
+  final type = argument.staticType;
+  return type is InterfaceType && _functionalProviderType.isAssignableFromType(type);
 }
 
 List<String> _refWatchInvocations(SourceScannerContext context, int lineIndex, int methodEnd) {

@@ -166,46 +166,80 @@ class TodoTitle {
   }
 }
 
+const _riverpodMutationStub = r'''
+abstract class ProviderListenable<T> {}
+sealed class MutationState<T> {}
+final class MutationTransaction {
+  T get<T>(ProviderListenable<T> listenable) => throw 'synthetic';
+}
+abstract class MutationTarget {}
+final class Mutation<T> implements ProviderListenable<MutationState<T>> {
+  Future<T> run(MutationTarget target, Future<T> Function(MutationTransaction tsx) cb) =>
+      throw 'synthetic';
+}
+abstract class Ref implements MutationTarget {
+  T read<T>(ProviderListenable<T> listenable) => throw 'synthetic';
+}
+''';
+
+abstract class _RiverpodMutationRuleTest extends _RiverpodRuleTest {
+  @override
+  void setUp() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', _riverpodMutationStub);
+    super.setUp();
+  }
+}
+
 @reflectiveTest
-final class RiverpodMutationExperimentalWarningTest extends _RiverpodRuleTest {
+final class RiverpodMutationExperimentalWarningTest extends _RiverpodMutationRuleTest {
   @override
   String get ruleName => 'riverpod_mutation_experimental_warning';
   @override
-  String get needle => 'Mutation<int>()';
+  String get needle => 'Mutation<void>()';
   @override
-  String get path =>
-      '$testPackageLibPath/features/todos/presentation/notifiers/todos_notifier.dart';
+  String get path => '$testPackageLibPath/features/todos/presentation/screens/add_todo_screen.dart';
   @override
   String get source => r'''
-class Mutation<T> {
-  const Mutation();
-}
+import 'package:riverpod/riverpod.dart';
 
-final saveMutation = Mutation<int>();
+final removeTodoMutation = Mutation<void>();
 ''';
 
-  Future<void> test_allowsNearbyExperimentalWarning() async {
+  Future<void> test_allowsDocumentedTrailingExperimentalNote() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+final addTodoMutation = Mutation<void>(); // experimental API — may change without major bump
+''', path: path);
+  }
+
+  Future<void> test_allowsLeadingExperimentalNote() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+// Mutation is experimental in Riverpod 3.
+final addTodoMutation = Mutation<void>();
+''', path: path);
+  }
+
+  Future<void> test_reportsMutationBesideNeighbourExperimentalNote() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:riverpod/riverpod.dart';
+
+final addTodoMutation = Mutation<void>(); // experimental API — may change without major bump
+final removeTodoMutation = Mutation<int>();
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'Mutation<int>()', ruleName)]);
+  }
+
+  Future<void> test_allowsLocalMutationLookalike() async {
     await assertAllows(r'''
 class Mutation<T> {
   const Mutation();
 }
 
-// experimental API while Riverpod finalizes mutation support.
-final saveMutation = Mutation<int>();
-''', path: path);
-  }
-
-  Future<void> test_allowsMutationClassDeclaration() async {
-    await assertAllows(r'''
-class Mutation<T> {
-  const Mutation();
-}
-''', path: path);
-  }
-
-  Future<void> test_allowsTypedefDeclaration() async {
-    await assertAllows(r'''
-typedef Mutation<T> = Object;
+final widget = Mutation<int>();
 ''', path: path);
   }
 
@@ -222,15 +256,241 @@ const graphql = Graphql();
 final saveMutation = graphql.Mutation<int>();
 ''', path: path);
   }
-
-  Future<void> test_allowsGraphqlMutationWidgetOutsideNotifier() async {
-    await assertAllows(r'''
-class Mutation<T> {
-  const Mutation();
 }
 
-final widget = Mutation<int>();
-''', path: '$testPackageLibPath/features/todos/presentation/widgets/mutation_widget.dart');
+@reflectiveTest
+final class RiverpodMutationTopLevelTest extends _RiverpodMutationRuleTest {
+  @override
+  String get ruleName => 'riverpod_mutation_top_level';
+  @override
+  String get needle => 'Mutation<void>()';
+  @override
+  String get source => r'''
+import 'package:riverpod/riverpod.dart';
+
+class AddTodoScreen {
+  Object build() {
+    final localMutation = Mutation<void>();
+    return localMutation;
+  }
+}
+''';
+
+  Future<void> test_allowsDocumentedFileScopeFinal() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+final addTodoMutation = Mutation<void>(); // experimental API — may change without major bump
+''');
+  }
+
+  Future<void> test_reportsStaticClassField() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+class TodoMutations {
+  static final addTodo = Mutation<void>();
+}
+''';
+    await assertDiagnostics(source, [compatLint(source, needle, ruleName)]);
+  }
+
+  Future<void> test_reportsNonFinalTopLevel() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+var addTodoMutation = Mutation<void>();
+''';
+    await assertDiagnostics(source, [compatLint(source, needle, ruleName)]);
+  }
+
+  Future<void> test_allowsLocalMutationLookalike() async {
+    await assertAllows(r'''
+class Mutation<T> {}
+
+Object build() {
+  final localMutation = Mutation<void>();
+  return localMutation;
+}
+''');
+  }
+}
+
+@reflectiveTest
+final class RiverpodMutationRefReadTest extends _RiverpodMutationRuleTest {
+  @override
+  String get ruleName => 'riverpod_mutation_ref_read';
+  @override
+  String get needle => 'ref.read(todoListProvider)';
+  @override
+  String get source => r'''
+import 'package:riverpod/riverpod.dart';
+
+final todoListProvider = _Listenable();
+final class _Listenable implements ProviderListenable<Object> {}
+final removeTodoMutation = Mutation<void>();
+
+void onPressed(Ref ref) {
+  removeTodoMutation.run(ref, (tsx) async {
+    ref.read(todoListProvider);
+  });
+}
+''';
+
+  Future<void> test_allowsDocumentedTransactionGet() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+final todoListProvider = _Listenable();
+final class _Listenable implements ProviderListenable<Object> {}
+final addTodoMutation = Mutation<void>();
+
+void onPressed(Ref ref) {
+  addTodoMutation.run(ref, (tsx) async {
+    tsx.get(todoListProvider);
+  });
+}
+''');
+  }
+
+  Future<void> test_allowsRefReadOutsideMutationCallback() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+final todoListProvider = _Listenable();
+final class _Listenable implements ProviderListenable<Object> {}
+final addTodoMutation = Mutation<void>();
+
+void onPressed(Ref ref) {
+  ref.read(todoListProvider);
+  addTodoMutation.run(ref, (tsx) async {});
+}
+''');
+  }
+
+  Future<void> test_allowsReadInLookalikeRun() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+final todoListProvider = _Listenable();
+final class _Listenable implements ProviderListenable<Object> {}
+class Job {
+  Future<void> run(Object target, Future<void> Function(Object tsx) cb) => cb(target);
+}
+final job = Job();
+
+void onPressed(Ref ref) {
+  job.run(ref, (tsx) async {
+    ref.read(todoListProvider);
+  });
+}
+''');
+  }
+}
+
+const _asyncValueDispatchStub = r'''
+sealed class AsyncValue<T> {}
+final class AsyncData<T> extends AsyncValue<T> {
+  AsyncData(this.value);
+  final T value;
+}
+final class AsyncError<T> extends AsyncValue<T> {
+  AsyncError(this.error);
+  final Object error;
+}
+final class AsyncLoading<T> extends AsyncValue<T> {}
+extension AsyncValueExtensions<T> on AsyncValue<T> {
+  R when<R>({
+    required R Function(T value) data,
+    required R Function() loading,
+    required R Function(Object error) error,
+  }) => throw StateError('synthetic');
+  R maybeWhen<R>({R Function(T value)? data, required R Function() orElse}) =>
+      throw StateError('synthetic');
+  R? whenOrNull<R>({R Function(T value)? data}) => throw StateError('synthetic');
+  R map<R>({required R Function(AsyncData<T> data) data}) => throw StateError('synthetic');
+  R maybeMap<R>({R Function(AsyncData<T> data)? data, required R Function() orElse}) =>
+      throw StateError('synthetic');
+  R? mapOrNull<R>({R Function(AsyncData<T> data)? data}) => throw StateError('synthetic');
+  AsyncValue<R> whenData<R>(R Function(T value) cb) => throw StateError('synthetic');
+}
+''';
+
+/// freezed-sealed.md:9 matches unions with `switch`, never `.when()`/`.map()`;
+/// Riverpod AsyncValue is sealed (freezed-sealed.md:136-146).
+@reflectiveTest
+final class AsyncValueSwitchOverWhenTest extends _RiverpodRuleTest {
+  @override
+  void setUp() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', _asyncValueDispatchStub);
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'async_value_switch_over_when';
+  @override
+  String get needle => 'when(';
+  @override
+  String get source => r'''
+import 'package:riverpod/riverpod.dart';
+
+String label(AsyncValue<int> result) => result.when(
+  data: (value) => '$value',
+  loading: () => 'loading',
+  error: (error) => 'error',
+);
+''';
+
+  Future<void> test_reportsEveryWhenAndMapHelper() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+class ResultView {
+  Object build(AsyncValue<int> result) => [
+    result.maybeWhen(orElse: () => 0),
+    result.whenOrNull(data: (value) => value),
+    result.map(data: (data) => data.value),
+    result.maybeMap(orElse: () => 0),
+    result.mapOrNull(data: (data) => data.value),
+  ];
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      for (final helper in const ['maybeWhen(', 'whenOrNull(', 'map(', 'maybeMap(', 'mapOrNull('])
+        compatLint(analyzedSource, helper, ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillSealedSwitchAndWhenData() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+class ResultView {
+  Object build(AsyncValue<int> result) => (
+    switch (result) {
+      AsyncData(:final value) => '$value',
+      AsyncError(:final error) => 'Error: $error',
+      AsyncLoading() => 'loading',
+    },
+    result.whenData((value) => value + 1),
+  );
+}
+''');
+  }
+
+  Future<void> test_allowsSameNamedLocalAsyncValue() async {
+    await assertAllows(r'''
+class AsyncValue<T> {
+  R when<R>({required R Function(T value) data}) => throw StateError('synthetic');
+  R map<R>(R Function(T value) cb) => throw StateError('synthetic');
+}
+
+Object label(AsyncValue<int> result) => (
+  result.when(data: (value) => value),
+  result.map((value) => value),
+);
+''');
   }
 }
 
@@ -241,191 +501,149 @@ final class RiverpodAutoDisposeKeepAliveDependenciesTest extends _RiverpodRuleTe
   @override
   String get needle => '@riverpod';
   @override
+  bool get addIgnorePrefix => false;
+
+  /// performance.md:169: a computed provider over keepAlive providers declared
+  /// in another file (plain and `.select` watches) stays keepAlive.
+  @override
   String get source => r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-const riverpod = Object();
-
-class Ref {
-  Object watch(Object provider) => Object();
-}
-
-@Riverpod(keepAlive: true)
-Object activeItem(Ref ref) => Object();
-
-@Riverpod(keepAlive: true)
-Object exercises(Ref ref) => Object();
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'sources.dart';
 
 @riverpod
-Object itemSummary(Ref ref) {
-  ref.watch(activeItemProvider);
-  ref.watch(exercisesProvider.select((value) => value));
-  return Object();
+int cartTotal(Ref ref) {
+  final items = ref.watch(cartItemsProvider);
+  final rate = ref.watch(taxRateProvider.select((rate) => rate));
+  return items.length * rate;
 }
 ''';
 
-  Future<void> test_reportsClassProvider() async {
-    final analyzedSource = _analyzedSource(r'''
+  @override
+  void setUp() {
+    newPackage('riverpod_annotation').addFile('lib/riverpod_annotation.dart', r'''
 class Riverpod {
-  const Riverpod({bool keepAlive = false});
+  const Riverpod({this.keepAlive = false});
+  final bool keepAlive;
 }
-
-const riverpod = Object();
-
+const riverpod = Riverpod();
+class ProviderFor {
+  const ProviderFor(this.value);
+  final Object value;
+}
 class Ref {
-  Object watch(Object provider) => Object();
+  T watch<T>(ProviderListenable<T> provider) => throw UnimplementedError();
+  T read<T>(ProviderListenable<T> provider) => throw UnimplementedError();
 }
+class ProviderListenable<T> {
+  const ProviderListenable();
+  ProviderListenable<R> select<R>(R Function(T value) selector) => throw UnimplementedError();
+}
+''');
+    super.setUp();
+    newFile('$testPackageLibPath/sources.dart', r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 @Riverpod(keepAlive: true)
-Object activeItem(Ref ref) => Object();
+List<int> cartItems(Ref ref) => const [];
+
+@Riverpod(keepAlive: true)
+int taxRate(Ref ref) => 2;
+
+@riverpod
+int discount(Ref ref) => 0;
+
+@ProviderFor(cartItems)
+const cartItemsProvider = ProviderListenable<List<int>>();
+@ProviderFor(taxRate)
+const taxRateProvider = ProviderListenable<int>();
+@ProviderFor(discount)
+const discountProvider = ProviderListenable<int>();
+const manualProvider = ProviderListenable<int>();
+''');
+  }
+
+  Future<void> test_reportsSameFileClassNotifier() async {
+    const source = r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+@Riverpod(keepAlive: true)
+int activeItem(Ref ref) => 0;
+
+@ProviderFor(activeItem)
+const activeItemProvider = ProviderListenable<int>();
 
 @riverpod
 class ItemSummaryNotifier {
-  Object build() {
-    ref.watch(activeItemProvider);
-    return Object();
-  }
+  ItemSummaryNotifier(this.ref);
+  final Ref ref;
+  int build() => ref.watch(activeItemProvider);
 }
-''', addIgnorePrefix: true);
-
-    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '@riverpod', ruleName)]);
-  }
-
-  Future<void> test_allowsAlreadyKeepAlive() async {
-    await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class Ref {
-  Object watch(Object provider) => Object();
-}
-
-@Riverpod(keepAlive: true)
-Object activeItem(Ref ref) => Object();
-
-@Riverpod(keepAlive: true)
-Object itemSummary(Ref ref) {
-  ref.watch(activeItemProvider);
-  return Object();
-}
-''');
+''';
+    await assertDiagnostics(source, [compatLint(source, '@riverpod\nclass', ruleName)]);
   }
 
   Future<void> test_allowsMixedKeepAliveAndAutoDisposeDependencies() async {
     await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-const riverpod = Object();
-
-class Ref {
-  Object watch(Object provider) => Object();
-}
-
-@Riverpod(keepAlive: true)
-Object activeItem(Ref ref) => Object();
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'sources.dart';
 
 @riverpod
-Object transientSelection(Ref ref) => Object();
-
-@riverpod
-Object itemSummary(Ref ref) {
-  ref.watch(activeItemProvider);
-  ref.watch(transientSelectionProvider);
-  return Object();
-}
-''');
+int cartTotal(Ref ref) => ref.watch(cartItemsProvider).length - ref.watch(discountProvider);
+''', addIgnorePrefix: false);
   }
 
-  Future<void> test_allowsUnknownExternalDependency() async {
+  Future<void> test_allowsUnresolvedDependency() async {
     await assertAllows(r'''
-const riverpod = Object();
-
-class Ref {
-  Object watch(Object provider) => Object();
-}
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'sources.dart';
 
 @riverpod
-Object itemSummary(Ref ref) {
-  ref.watch(externalProvider);
-  return Object();
-}
-''');
+int cartTotal(Ref ref) => ref.watch(cartItemsProvider).length + ref.watch(manualProvider);
+''', addIgnorePrefix: false);
+  }
+
+  Future<void> test_allowsAlreadyKeepAlive() async {
+    await assertAllows(r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'sources.dart';
+
+@Riverpod(keepAlive: true)
+int cartTotal(Ref ref) => ref.watch(cartItemsProvider).length;
+''', addIgnorePrefix: false);
   }
 
   Future<void> test_allowsFamilyProviderTarget() async {
     await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-const riverpod = Object();
-
-class Ref {
-  Object watch(Object provider) => Object();
-}
-
-@Riverpod(keepAlive: true)
-Object activeItem(Ref ref) => Object();
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'sources.dart';
 
 @riverpod
-Object itemSummary(Ref ref, String itemId) {
-  ref.watch(activeItemProvider);
-  return Object();
-}
-''');
+int cartTotal(Ref ref, int multiplier) => ref.watch(cartItemsProvider).length * multiplier;
+''', addIgnorePrefix: false);
   }
 
   Future<void> test_allowsFamilyNotifierTarget() async {
     await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-const riverpod = Object();
-
-class Ref {
-  Object watch(Object provider) => Object();
-}
-
-@Riverpod(keepAlive: true)
-Object activeItem(Ref ref) => Object();
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'sources.dart';
 
 @riverpod
-class ItemSummaryNotifier {
-  Object build(String itemId) {
-    ref.watch(activeItemProvider);
-    return Object();
-  }
+class CartTotalNotifier {
+  CartTotalNotifier(this.ref);
+  final Ref ref;
+  int build(int multiplier) => ref.watch(cartItemsProvider).length * multiplier;
 }
-''');
+''', addIgnorePrefix: false);
   }
 
   Future<void> test_allowsReadOnlyKeepAliveProviderUse() async {
     await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-const riverpod = Object();
-
-class Ref {
-  Object read(Object provider) => Object();
-}
-
-@Riverpod(keepAlive: true)
-Object activeItem(Ref ref) => Object();
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'sources.dart';
 
 @riverpod
-Object itemSummary(Ref ref) {
-  ref.read(activeItemProvider);
-  return Object();
-}
-''');
+int cartTotal(Ref ref) => ref.read(cartItemsProvider).length;
+''', addIgnorePrefix: false);
   }
 }
 
@@ -546,5 +764,9 @@ class DraftNotifier {
   Object build() => Object();
 }
 ''', path: '$testPackageLibPath/core/notifiers/draft_notifier.dart');
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(rule.diagnosticCodes.single.severity, DiagnosticSeverity.ERROR);
   }
 }

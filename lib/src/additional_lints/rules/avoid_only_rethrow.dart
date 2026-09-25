@@ -2,11 +2,12 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-/// Warns when a catch clause contains only a `rethrow` statement.
+/// Warns when the last catch clause contains only a `rethrow` statement.
 ///
 /// Such catch clauses are redundant because they don't handle exceptions —
 /// they simply re-throw them. Either add meaningful exception handling or
-/// remove the catch clause entirely.
+/// remove the catch clause entirely. An earlier rethrow-only clause still
+/// matters: it keeps its error type out of a later catch.
 ///
 /// **Bad:**
 /// ```dart
@@ -35,6 +36,7 @@ class AvoidOnlyRethrow extends TryStatementCheckRule {
     'avoid_only_rethrow',
     'Catch clause contains only a rethrow statement.',
     correctionMessage: 'Remove the redundant try-catch block.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidOnlyRethrow()
@@ -45,18 +47,11 @@ class AvoidOnlyRethrow extends TryStatementCheckRule {
       );
 
   @override
-  @override
   void checkTryStatement(TryStatement node) {
-    for (final catchClause in node.catchClauses) {
-      final statements = catchClause.body.statements;
-      if (statements.length != 1) continue;
-
-      final statement = statements.first;
-      if (statement is! ExpressionStatement) continue;
-
-      if (statement.expression is RethrowExpression) {
-        reportAtNode(catchClause);
-      }
+    final catchClause = node.catchClauses.lastOrNull;
+    final statement = catchClause?.body.statements.singleOrNull;
+    if (statement is ExpressionStatement && statement.expression is RethrowExpression) {
+      reportAtNode(catchClause);
     }
   }
 }

@@ -182,6 +182,33 @@ class ItemNotifier {
 ''');
   }
 
+  // Row 21: the skill's indexOfByKey (collections-helpers.md) subscripted in place.
+  Future<void> test_reportsIndexOfByKeySubscriptedInPlace() async {
+    const source = r'''
+class ItemNotifier {
+  Item? itemById(List<Item> items, String itemId) {
+    return items.indexOfByKey((item) => item.id)[itemId];
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '.indexOfByKey(', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillCachedIndexOfByKey() async {
+    await assertAllows(r'''
+class ItemNotifier {
+  List<Item?> itemsByIds(List<Item> items, List<String> ids) {
+    final itemsById = items.indexOfByKey((item) => item.id);
+    return [for (final id in ids) itemsById[id]];
+  }
+}
+''');
+  }
+
   Future<void> test_allowsReturnedIndexMap() async {
     await assertAllows(r'''
 Map<String, Item> itemsById(List<Item> items) {
@@ -193,27 +220,171 @@ Map<String, Item> itemsById(List<Item> items) {
 
 @reflectiveTest
 final class LinearIdLookupInHotPathTest extends _RuntimeBugRuleTest {
+  static const _item = r'''
+import 'package:flutter/widgets.dart';
+
+class Item {
+  const Item(this.id);
+  final String id;
+}
+''';
+
   @override
   String get ruleName => 'linear_id_lookup_in_hot_path';
   @override
   String get needle => '.firstWhere(';
   @override
-  String get source => r'''
-class ItemNotifier {
-  Item? _itemById(List<Item> items, String itemId) {
-    return items.firstWhere((item) => item.id == itemId);
+  String get source =>
+      '''
+$_item
+void applyAll(List<Item> items, List<String> changes, String selectedId) {
+  for (final change in changes) {
+    final selected = items.firstWhere((item) => item.id == selectedId);
+    print('\$change \$selected');
   }
 }
 ''';
 
-  Future<void> test_reportsMultilineFirstWhereLookup() async {
-    const source = r'''
-class ItemNotifier {
-  Item? _itemById(List<Item> items, String itemId) {
-    return items.firstWhere(
-      (item) => item.id == itemId,
-    );
+  Future<void> test_reportsMultilineLookupInIterationCallback() async {
+    const source =
+        '''
+$_item
+List<Item> resolve(List<Item> items, List<String> ids) {
+  return ids
+      .map(
+        (id) => items.firstWhere(
+          (item) => item.id == id,
+        ),
+      )
+      .toList();
+}
+''';
+
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
   }
+
+  Future<void> test_reportsLookupInForEachCallback() async {
+    const source =
+        '''
+$_item
+void apply(List<Item> items, List<String> ids) {
+  ids.forEach((id) {
+    final index = items.indexWhere((item) => item.id == id);
+    print(index);
+  });
+}
+''';
+
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
+  }
+
+  Future<void> test_reportsLookupInCollectionFor() async {
+    const source =
+        '''
+$_item
+List<Item> resolve(List<Item> items, List<String> ids) => [
+  for (final id in ids) items.firstWhere((item) => item.id == id),
+];
+''';
+
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
+  }
+
+  Future<void> test_reportsNestedIndexWhereLookup() async {
+    const source =
+        '''
+$_item
+class Change {
+  const Change(this.itemId);
+  final String itemId;
+}
+
+class ItemRepository {
+  void applyChanges(List<Item> items, List<Change> changes) {
+    for (final change in changes) {
+      final index = items.indexWhere((item) => item.id == change.itemId);
+      if (index >= 0) print(change);
+    }
+  }
+}
+''';
+
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
+  }
+
+  Future<void> test_reportsManualLookupLoopInsideLoop() async {
+    const source =
+        '''
+$_item
+void apply(List<Item> items, List<String> ids) {
+  for (final id in ids) {
+    for (final item in items) {
+      if (item.id == id) print(item);
+    }
+  }
+}
+''';
+
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'for (final item', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsLookupInBuild() async {
+    const source =
+        '''
+$_item
+class ItemTile extends Widget {
+  ItemTile(this.items, this.itemId);
+  final List<Item> items;
+  final String itemId;
+
+  Widget build(BuildContext context) {
+    final item = items.firstWhere((item) => item.id == itemId);
+    print(item);
+    return this;
+  }
+}
+''';
+
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
+  }
+
+  Future<void> test_reportsIndexedManualLookupInsideCallback() async {
+    const source =
+        '''
+$_item
+void apply(List<Item> items, List<String> ids) {
+  ids.forEach((id) {
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].id == id) print(i);
+    }
+  });
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'for (var i', ruleName)]);
+  }
+
+  Future<void> test_reportsLookupInWidgetBuilderFunction() async {
+    const source =
+        '''
+$_item
+Widget buildTile(List<Item> items, String itemId, Widget Function(Item) tile) {
+  return tile(items.firstWhere((item) => item.id == itemId));
 }
 ''';
     final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
@@ -221,27 +392,172 @@ class ItemNotifier {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
   }
 
-  Future<void> test_reportsManualByIdLoop() async {
-    const source = r'''
+  Future<void> test_allowsLookupInSingleCallMapCallback() async {
+    await assertAllows('''
+$_item
+void cache(Map<String, Item> cache, List<Item> items, String itemId) {
+  cache.putIfAbsent(itemId, () => items.firstWhere((item) => item.id == itemId));
+}
+''');
+  }
+
+  Future<void> test_reportsLookupOverIdListInNotifier() async {
+    const source =
+        '''
+$_item
+class ItemNotifier {
+  void removeAll(List<Item> items, List<String> ids) {
+    for (final id in ids) {
+      final index = items.indexWhere((item) => item.id == id);
+      if (index >= 0) items.removeAt(index);
+    }
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
+  }
+
+  Future<void> test_reportsCompoundAndBlockPredicatesInLoop() async {
+    const source =
+        '''
+$_item
+void apply(List<Item> items, List<String> ids, bool active) {
+  for (final id in ids) {
+    final first = items.firstWhere((item) => item.id == id && active);
+    final index = items.indexWhere((item) {
+      return item.id == id;
+    });
+    print('\$first \$index');
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '.firstWhere(', ruleName),
+      compatLint(analyzedSource, '.indexWhere(', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsLookupInGetters() async {
+    const source =
+        '''
+$_item
+class ItemsState {
+  const ItemsState(this.items, this.itemId);
+  final List<Item> items;
+  final String itemId;
+
+  Item get item => items.firstWhere((item) => item.id == itemId);
+}
+
+List<Item> currentItems = const [];
+
+int get selectedIndex {
+  return currentItems.indexWhere((item) => item.id == 'selected');
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '.firstWhere(', ruleName),
+      compatLint(analyzedSource, '.indexWhere(', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsOneOffRepositoryMutation() async {
+    await assertAllows('''
+final class StoredValue {
+  const StoredValue(this.id);
+  final String id;
+}
+
+abstract interface class IExampleRepository {
+  void replace(String id, StoredValue replacement);
+}
+
+final class ExampleRepository implements IExampleRepository {
+  ExampleRepository(this._values);
+  final List<StoredValue> _values;
+
+  @override
+  void replace(String id, StoredValue replacement) {
+    final index = _values.indexWhere((value) => value.id == id);
+    if (index != -1) _values[index] = replacement;
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsOneOffNotifierLookup() async {
+    await assertAllows('''
+$_item
+class ItemNotifier {
+  Item? itemById(List<Item> items, String itemId) {
+    return items.firstWhere(
+      (item) => item.id == itemId,
+    );
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsSingleManualLookupLoop() async {
+    await assertAllows('''
+$_item
 Item? itemById(List<Item> items, String itemId) {
   for (final item in items) {
     if (item.id == itemId) return item;
   }
   return null;
 }
-''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+''');
+  }
 
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'Item? itemById', ruleName),
-    ]);
+  Future<void> test_allowsLookupInTapCallbackInsideBuild() async {
+    await assertAllows('''
+$_item
+class Button extends Widget {
+  Button({required this.onPressed});
+  final void Function() onPressed;
+}
+
+class ItemTile extends Widget {
+  ItemTile(this.items, this.itemId);
+  final List<Item> items;
+  final String itemId;
+
+  Widget build(BuildContext context) {
+    return Button(
+      onPressed: () {
+        final item = items.firstWhere((item) => item.id == itemId);
+        print(item);
+      },
+    );
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsLookupInLoopIterable() async {
+    await assertAllows('''
+$_item
+void printFrom(List<Item> items, String itemId) {
+  for (final item in items.skip(items.indexWhere((item) => item.id == itemId))) {
+    print(item);
+  }
+}
+''');
   }
 
   Future<void> test_allowsMapIndex() async {
-    await assertAllows(r'''
-class ItemNotifier {
-  Item? _itemById(Map<String, Item> itemsById, String itemId) {
-    return itemsById[itemId];
+    await assertAllows('''
+$_item
+void apply(Map<String, Item> itemsById, List<String> ids) {
+  for (final id in ids) {
+    print(itemsById[id]);
   }
 }
 ''');
@@ -282,6 +598,71 @@ class ItemRepository {
     final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
 
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
+  }
+
+  Future<void> test_reportsLookupOverIdListInNotifier() async {
+    const source = r'''
+class ItemNotifier {
+  void removeAll(List<Object> items, List<String> ids) {
+    for (final id in ids) {
+      final index = items.indexWhere((item) => item.id == id);
+      if (index >= 0) items.removeAt(index);
+    }
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
+  }
+
+  Future<void> test_allowsLookupByUnrelatedLongerName() async {
+    await assertAllows(r'''
+class ItemNotifier {
+  void removeAll(List<Object> items, List<String> ids, String idx) {
+    for (final id in ids) {
+      final index = items.indexWhere((item) => item.id == idx);
+      if (index >= 0) print(id);
+    }
+  }
+}
+''');
+  }
+
+  Future<void> test_reportsNestedLookupInTopLevelFunction() async {
+    const source = r'''
+void applyChanges(List<Object> items, List<Object> changes) {
+  for (final change in changes) {
+    final index = items.indexWhere((item) => item.id == change.itemId);
+    if (index >= 0) apply(change);
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
+  }
+
+  Future<void> test_reportsNestedLookupInCollectionFor() async {
+    const source = r'''
+List<Object> resolve(List<Object> items, List<String> ids) => [
+  for (final id in ids) items.firstWhere((item) => item.id == id),
+];
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
+  }
+
+  Future<void> test_allowsLookupNotKeyedByLoopVariable() async {
+    await assertAllows(r'''
+void applyAll(List<Object> items, List<Object> changes, String selectedId) {
+  for (final change in changes) {
+    final selected = items.firstWhere((item) => item.id == selectedId);
+    print('$change $selected');
+  }
+}
+''');
   }
 
   Future<void> test_allowsPreIndexedMap() async {
@@ -334,6 +715,55 @@ class ImportRemoteDatasource {
     await assertDiagnostics(analyzedSource, [
       compatLint(analyzedSource, 'createExecution(', ruleName),
     ]);
+  }
+
+  Future<void> test_reportsClientWaitingForBackendCompletion() async {
+    const source = r'''
+class DeleteResult {}
+
+abstract interface class AccountRemote {
+  Future<DeleteResult> deleteAccount(String userId, {bool waitForCompletion = false});
+  Future<bool> startDeleteAccount(String userId);
+  Future<bool> waitForAccountDeleted(String userId, {int maxAttempts = 30});
+  Future<DeleteResult> refreshProfile(String userId, {bool waitForCompletion = false});
+}
+
+class AccountRepository {
+  AccountRepository(this.remote);
+  final AccountRemote remote;
+
+  Future<DeleteResult> deleteAccount(String userId) async {
+    final result = await remote.deleteAccount(userId, waitForCompletion: true);
+    return result;
+  }
+
+  Future<bool> deleteAccountInBackground(String userId) async {
+    final started = await remote.startDeleteAccount(userId);
+    if (!started) return false;
+    await remote.deleteAccount(userId, waitForCompletion: false);
+    return remote.waitForAccountDeleted(userId, maxAttempts: 60);
+  }
+
+  Future<DeleteResult> refresh(String userId) {
+    return remote.refreshProfile(userId, waitForCompletion: true);
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'deleteAccount(userId, waitForCompletion: true);', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsUnresolvedWaitForCompletionLookalike() async {
+    await assertAllows(r'''
+class AccountRepository {
+  Future<void> deleteAccount(String userId) async {
+    await remote.deleteAccount(userId, waitForCompletion: true);
+  }
+}
+''');
   }
 
   Future<void> test_allowsAsyncExecution() async {
@@ -426,42 +856,115 @@ class AuthNotifier {
 }
 ''');
   }
+
+  // networking.md "Long-Running Remote Work" WRONG: reports before reconcile.
+  Future<void> test_reportsSkillTelemetryBeforeWaitForReconcile() async {
+    final source = _analyzedSource(r'''
+class DeleteResult {
+  const DeleteResult.ok();
+  const DeleteResult.timedOut();
 }
 
-@reflectiveTest
-final class StorageClearPreservesMigrationStateTest extends _RuntimeBugRuleTest {
-  @override
-  String get ruleName => 'storage_clear_preserves_migration_state';
-  @override
-  String get needle => '.clear()';
-  @override
-  String get source => r'''
-class SettingsLocalDatasource {
-  Future<void> resetAll() async {
-    final lastOpenedAppVersion = await _storage.read<String>(localDataLastOpenedAppVersionKey);
-    await _storage.clear();
-    if (lastOpenedAppVersion != null) {
-      await _storage.save(localDataLastOpenedAppVersionKey, lastOpenedAppVersion);
+class AccountRepository {
+  Future<DeleteResult> deleteAccount(String userId) async {
+    try {
+      return await remote.startDeleteAccount(userId);
+    } on Exception catch (e, s) {
+      Crash.error(e, s, reason: 'deleteAccount');
+      final deleted = await remote.waitForAccountDeleted(userId, maxAttempts: 60);
+      return deleted ? .ok() : .timedOut();
     }
   }
 }
-''';
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(source, [compatLint(source, 'Crash.error', ruleName)]);
+  }
 
-  Future<void> test_allowsHardClear() async {
+  // networking.md: log/report destructive failures only after reconcile, so a
+  // catch around async-started destructive work that reports and never
+  // reconciles is also wrong.
+  Future<void> test_reportsTelemetryWithoutReconcileAfterAsyncStart() async {
+    final source = _analyzedSource(r'''
+class AccountRepository {
+  Future<bool> deleteAccount(String userId) async {
+    try {
+      await remote.startDeleteAccount(userId);
+      return true;
+    } on Exception catch (e, s) {
+      Crash.error(e, s, reason: 'startDelete');
+      return false;
+    }
+  }
+
+  Future<bool> removeWorkspace(String workspaceId) async {
+    try {
+      await functions.createExecution(functionId: workspaceFunctionId, xasync: true);
+      return true;
+    } catch (e, s) {
+      Sentry.captureException(e, stackTrace: s);
+      return false;
+    }
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(source, [
+      compatLint(source, 'Crash.error', ruleName),
+      compatLint(source, 'Sentry.captureException', ruleName),
+    ]);
+  }
+
+  // networking.md RIGHT and debounce-gate-batch.md DO: async-start, then
+  // reconcile before any telemetry.
+  Future<void> test_allowsSkillAsyncStartThenReconcile() async {
     await assertAllows(r'''
-class SettingsLocalDatasource {
-  Future<void> resetAll() async {
-    await _storage.clear();
+class DeleteResult {
+  const DeleteResult.ok();
+  const DeleteResult.timedOut();
+}
+
+class AccountRepository {
+  Future<DeleteResult> deleteAccount(String userId) async {
+    final started = await remote.startDeleteAccount(userId);
+    if (!started.ok) return started;
+    final deleted = await remote.waitForAccountDeleted(userId, maxAttempts: 60);
+    return deleted ? .ok() : .timedOut();
+  }
+
+  Future<bool> deleteUser(String userId) async {
+    try {
+      await functions.createExecution(functionId: deleteAccountFunctionId, xasync: true);
+      return await waitForDeleted(userId, maxAttempts: 60);
+    } catch (e, s) {
+      final deleted = await _reconcileDeletedState();
+      if (!deleted) Crash.error(e, s);
+      return deleted;
+    }
   }
 }
 ''');
   }
 
-  Future<void> test_allowsNonStorageBoundaryClass() async {
+  // state-management-lifecycle.md: ordinary notifier delete methods catch and
+  // report; no async-started long-running work, so nothing to reconcile.
+  Future<void> test_allowsOrdinaryDestructiveTelemetry() async {
     await assertAllows(r'''
-class MemoryCache {
-  Future<void> resetAll() async {
-    await _storage.clear();
+class ProductNotifier {
+  Future<void> deleteProduct(String id) async {
+    try {
+      await ref.read(productRepositoryProvider).delete(id);
+    } on Exception catch (e, s) {
+      state = state.copyWith(error: AppErrorMapper.from(e));
+      Crash.error(e, s, reason: 'ProductNotifier.deleteProduct');
+    }
+  }
+
+  Future<void> cancelSession() async {
+    try {
+      startTimer();
+      await session.close();
+    } on Exception catch (e, s) {
+      Crash.error(e, s, reason: 'cancelSession');
+    }
   }
 }
 ''');

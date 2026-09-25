@@ -13,6 +13,7 @@ final class GuardContextPop extends GeneratedMethodInvocationCheckRule {
     'guard_context_pop',
     'Guard context.pop() with context.canPop().',
     correctionMessage: 'Check context.canPop() before context.pop(), then navigate to a typed fallback when false.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   GuardContextPop()

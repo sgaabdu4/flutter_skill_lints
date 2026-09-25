@@ -2,6 +2,7 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
@@ -18,6 +19,7 @@ class AvoidInlineErrorCodes extends CompilationUnitRule {
     correctionMessage:
         'Move raw error/status codes into a dedicated *ErrorCodes, *StatusCodes, '
         'or *ResponseCodes owner and compare against the named constant.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidInlineErrorCodes()
@@ -60,13 +62,30 @@ bool _isStatusCodeComparison(AstNode node) {
   if (parent is! BinaryExpression) return false;
   if (!_isComparisonOperator(parent.operator.type)) return false;
 
+  final Expression codeOperand;
   if (_containsNode(parent.leftOperand, reportNode)) {
-    return isStatusCodeExpression(parent.rightOperand);
+    codeOperand = parent.rightOperand;
+  } else if (_containsNode(parent.rightOperand, reportNode)) {
+    codeOperand = parent.leftOperand;
+  } else {
+    return false;
   }
-  if (_containsNode(parent.rightOperand, reportNode)) {
-    return isStatusCodeExpression(parent.leftOperand);
-  }
-  return false;
+  return isStatusCodeExpression(codeOperand) && !_isExceptionCode(codeOperand);
+}
+
+/// Whether [expression] reads a code from a caught exception (`e.code` where `e` is a
+/// dart:core [Exception]), as in the skill's retry classification `e.code == 429`.
+bool _isExceptionCode(Expression expression) {
+  final receiver = switch (expression.unParenthesized) {
+    PrefixedIdentifier(:final prefix) => prefix,
+    PropertyAccess(:final realTarget) => realTarget,
+    _ => null,
+  };
+  final type = receiver?.staticType;
+  if (type is! InterfaceType) return false;
+  return [type, ...type.element.allSupertypes].any(
+    (candidate) => candidate.element.name == 'Exception' && candidate.element.library.isDartCore,
+  );
 }
 
 bool _isComparisonOperator(TokenType type) {

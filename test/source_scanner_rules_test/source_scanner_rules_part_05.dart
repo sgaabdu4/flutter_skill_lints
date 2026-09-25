@@ -49,6 +49,104 @@ void build(ref, context) {
     newFile(path, analyzedSource);
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'ref.read', ruleName)]);
   }
+
+  Future<void> test_reportsSharedOrganismProviderWatch() async {
+    final analyzedSource = _analyzedSource(r'''
+void build(ref, provider) {
+  ref.watch(provider);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/widgets/organisms/order_summary.dart';
+
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'ref.watch', ruleName)]);
+  }
+
+  Future<void> test_allowsProviderAccessInScreens() async {
+    await assertAllows(r'''
+void build(ref, provider) {
+  ref.watch(provider);
+}
+''', path: '$testPackageLibPath/features/orders/presentation/screens/orders_screen.dart');
+  }
+}
+
+@reflectiveTest
+final class AtomicPageConsumerWidgetTest extends _ArchitectureRuleTest {
+  @override
+  String get ruleName => 'atomic_page_consumer_widget';
+  @override
+  String get needle => 'OrdersScreen extends StatelessWidget';
+  @override
+  String get path => '$testPackageLibPath/features/orders/presentation/screens/orders_screen.dart';
+  @override
+  String get source => r'''
+import 'package:flutter/widgets.dart';
+
+class OrdersScreen extends StatelessWidget {}
+''';
+
+  @override
+  void setUp() {
+    newPackage('flutter_riverpod').addFile('lib/flutter_riverpod.dart', r'''
+import 'package:flutter/widgets.dart';
+
+abstract class ConsumerStatefulWidget extends StatefulWidget {}
+abstract class ConsumerWidget extends ConsumerStatefulWidget {}
+abstract class ConsumerState<T extends ConsumerStatefulWidget> extends State<T> {}
+''');
+    super.setUp();
+  }
+
+  @override
+  void _addFlutterPackage() {
+    newPackage('flutter').addFile('lib/widgets.dart', r'''
+abstract class Widget {}
+abstract class StatelessWidget extends Widget {}
+abstract class StatefulWidget extends Widget {}
+abstract class State<T extends StatefulWidget> {}
+''');
+  }
+
+  void test_reportsAsError() {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
+  Future<void> test_reportsStatefulScreen() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/widgets.dart';
+
+class OrdersScreen extends StatefulWidget {}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, 'OrdersScreen extends StatefulWidget', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsConsumerScreens() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class OrdersScreen extends ConsumerWidget {}
+
+class OrderEditorScreen extends ConsumerStatefulWidget {}
+
+class _OrderEditorScreenState extends ConsumerState<OrderEditorScreen> {}
+
+class _OrdersBody extends StatelessWidget {}
+''', path: path);
+  }
+
+  Future<void> test_allowsStatelessWidgetsOutsideScreens() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+
+class OrderTile extends StatelessWidget {}
+''', path: '$testPackageLibPath/features/orders/presentation/widgets/order_tile.dart');
+  }
 }
 
 @reflectiveTest
@@ -68,6 +166,29 @@ class User {
   final String orgId;
 }
 ''';
+
+  Future<void> test_reportsFreezedRawIntIds() async {
+    const source = r'''
+// ignore_for_file: redirect_to_non_class
+class Order {
+  const factory Order({required int userId, required int productId}) = _Order;
+}
+''';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [
+      compatLint(source, '  const factory Order', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsTypedIdsAndSingleRawId() async {
+    await assertAllows(r'''
+// ignore_for_file: redirect_to_non_class
+extension type UserId(int value) {}
+class Order {
+  const factory Order({required UserId userId, required int productId, int? count}) = _Order;
+}
+''', path: path);
+  }
 }
 
 @reflectiveTest
@@ -152,6 +273,89 @@ final class StyleRawTokenTest extends _UiRuleTest {
   bool get lineStart => true;
   @override
   String get source => 'final inset = EdgeInsets.all(8);';
+
+  void test_reportsAsError() {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
+  @override
+  bool get addFlutterPackageDep => true;
+
+  @override
+  void _addFlutterPackage() {}
+
+  Future<void> test_reportsResolvedRawColors() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+final material = Colors.red;
+final cupertino = CupertinoColors.systemBlue;
+const hex = Color(0xFF123456);
+const argb = Color.fromARGB(255, 1, 2, 3);
+const rgbo = Color.fromRGBO(1, 2, 3, 0.5);
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/widgets/atoms/palette_atom.dart';
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      for (final needle in [
+        'final material',
+        'final cupertino',
+        'const hex',
+        'const argb',
+        'const rgbo',
+      ])
+        compatLint(analyzedSource, needle, ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_reportsResolvedRawSizes() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/material.dart';
+
+extension on TextStyle {
+  TextStyle copyWith({double? fontSize}) => this;
+}
+
+Widget icon() => const Icon(null, size: 24);
+TextStyle? body(TextStyle? base) => base?.copyWith(fontSize: 18);
+const side = BorderSide(width: 3);
+''', addIgnorePrefix: addIgnorePrefix);
+    final path = '$testPackageLibPath/core/widgets/atoms/size_atom.dart';
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      for (final needle in ['Widget icon()', 'TextStyle? body', 'const side'])
+        compatLint(analyzedSource, needle, ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsTokenSizesAndUnrelatedPalettes() async {
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+
+abstract final class AppTokens {
+  static const double iconMd = 24;
+  static const double fontBody = 14;
+  static const double hairline = 1;
+}
+
+abstract final class Palette {
+  static const red = 1;
+}
+
+extension on TextStyle {
+  TextStyle copyWith({double? fontSize}) => this;
+}
+
+Widget icon() => const Icon(null, size: AppTokens.iconMd);
+TextStyle body(TextStyle base) => base.copyWith(fontSize: AppTokens.fontBody);
+const side = BorderSide(width: AppTokens.hairline);
+const none = BorderSide(width: 0);
+final unrelated = Palette.red;
+''', path: '$testPackageLibPath/core/widgets/atoms/token_atom.dart');
+  }
 
   Future<void> test_allowsRawTokensInThemeDefinitions() async {
     await assertAllows('''
@@ -250,6 +454,52 @@ class EdgeInsets {
 final padding = EdgeInsets.only(right: i < labels.length - 1 ? DesignTokens.spacingLg : 0);
 ''');
   }
+
+  Future<void> test_allowsTokenNamesEndingInDigits() async {
+    await assertAllows('''
+abstract final class Spacing {
+  static const s8 = 8.0;
+  static const s24 = 24.0;
+}
+
+class EdgeInsets {
+  const EdgeInsets.all(double value);
+}
+
+EdgeInsets padding(bool isExpanded) => EdgeInsets.all(isExpanded ? Spacing.s24 : Spacing.s8);
+''');
+  }
+
+  Future<void> test_allowsLiteralsOutsideTheStyleValue() async {
+    await assertAllows('''
+abstract final class Spacing {
+  static const s8 = 8.0;
+  static const s24 = 24.0;
+}
+
+class EdgeInsets {
+  const EdgeInsets.all(double value);
+}
+
+EdgeInsets padding(int count) => EdgeInsets.all(count > 1 ? Spacing.s24 : Spacing.s8);
+final spacer = SizedBox(height: Spacing.s8, child: Text('x', maxLines: 2));
+''');
+  }
+
+  Future<void> test_reportsRawLiteralOnWrappedArgumentLine() async {
+    final analyzedSource = _analyzedSource('''
+class EdgeInsets {
+  const EdgeInsets.symmetric({double? horizontal});
+}
+
+final padding = EdgeInsets.symmetric(
+  horizontal: 16,
+);
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'horizontal: 16', ruleName, lineStart: true),
+    ]);
+  }
 }
 
 @reflectiveTest
@@ -260,6 +510,10 @@ final class StyleRawTextStyleTest extends _UiRuleTest {
   String get needle => 'TextStyle()';
   @override
   String get source => 'final style = TextStyle();';
+
+  void test_reportsAsError() {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
 
   Future<void> test_allowsTextStyleInThemeDefinitions() async {
     await assertAllows('''
@@ -288,6 +542,11 @@ void main() {
 final class StringsHardcodedTest extends _UiRuleTest {
   @override
   String get ruleName => 'strings_hardcoded';
+
+  Future<void> test_severityIsError() async {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
   @override
   String get needle => "Text('Save'";
   @override
@@ -301,17 +560,59 @@ class Text {
 final text = Text('Save');
 ''';
 
-  Future<void> test_allowsStringsDefinitionFiles() async {
+  Future<void> test_reportsStringsDefinitionFiles() async {
     final filePath = '$testPackageLibPath/features/settings/settings_strings.dart';
-    newFile(filePath, r'''
+    const source = r'''
 class Text {
   Text(String data);
 }
 
 final text = Text('Save');
-''');
+''';
+    newFile(filePath, source);
 
-    await assertNoDiagnosticsInFile(filePath);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, "final text = Text('Save')", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSampleTextInsideResolvedPreview() async {
+    await assertAllows(r'''
+import 'package:flutter/widget_previews.dart';
+
+class Text {
+  Text(String data);
+}
+
+@Preview(name: 'Card')
+Text cardPreview() => Text('Suture Kit');
+''', path: '$testPackageLibPath/features/probe/presentation/widgets/card_preview.dart');
+  }
+
+  Future<void> test_reportsTextUnderLookalikePreviewAnnotation() async {
+    final filePath = '$testPackageLibPath/features/probe/presentation/widgets/card_preview.dart';
+    final analyzedSource = _analyzedSource(r'''
+class Preview {
+  const Preview({String? name});
+}
+
+class Text {
+  Text(String data);
+}
+
+@Preview(name: 'Card')
+Text cardPreview() => Text('Suture Kit');
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(filePath, analyzedSource);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(
+        analyzedSource,
+        "Text cardPreview() => Text('Suture Kit')",
+        ruleName,
+        lineStart: true,
+      ),
+    ]);
   }
 
   Future<void> test_allowsHardcodedLookingTextInsideDebugPrintWithParen() async {
@@ -331,6 +632,11 @@ void log() {
 final class L10nContextDirectAccessTest extends _UiRuleTest {
   @override
   String get ruleName => 'l10n_context_direct_access';
+
+  Future<void> test_severityIsError() async {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
   @override
   String get needle => 'context.l10n.deleteTitle';
   @override
@@ -409,173 +715,94 @@ final class UiSnackbarBoundaryTest extends _UiRuleTest {
   @override
   String get source =>
       'void build(context) { ScaffoldMessenger.of(context).showSnackBar(Object()); }';
+
+  @override
+  void setUp() {
+    // Mirrors riverpod 3: codegen `_$X extends $Notifier` reaches AnyNotifier
+    // without passing through the hand-written Notifier.
+    newPackage('riverpod').addFile('lib/riverpod.dart', r'''
+abstract class AnyNotifier<StateT, ValueT> {
+  late StateT state;
 }
-
-@reflectiveTest
-final class WidgetInfraDependencyBoundaryTest extends _UiRuleTest {
-  @override
-  String get ruleName => 'widget_infra_dependency_boundary';
-  @override
-  String get needle => 'cacheManager: DefaultCacheManager';
-  @override
-  String get path => '$testPackageLibPath/features/social/presentation/widgets/avatar.dart';
-  @override
-  String get source => r'''
-class DefaultCacheManager {}
-
-class Avatar extends StatelessWidget {
-  Widget build(BuildContext context) => CachedNetworkAvatar(
-    url: avatarUrl,
-    cacheManager: DefaultCacheManager(),
-  );
-}
-''';
-
-  Future<void> test_reportsInfraField() async {
-    final analyzedSource = _analyzedSource(r'''
-class BaseCacheManager {}
-
-class Avatar extends StatelessWidget {
-  final BaseCacheManager cacheManager;
-
-  const Avatar({required this.cacheManager});
-}
-''', addIgnorePrefix: addIgnorePrefix);
-    newFile(path, analyzedSource);
-
-    await assertDiagnosticsInFile(path, [
-      compatLint(analyzedSource, 'BaseCacheManager cacheManager', ruleName),
-    ]);
+abstract class $Notifier<StateT> extends AnyNotifier<StateT, StateT> {}
+abstract class Notifier<T> extends $Notifier<T> {}
+''');
+    super.setUp();
   }
 
-  Future<void> test_reportsTypedConstructorParam() async {
-    final analyzedSource = _analyzedSource(r'''
-class UserService {}
-
-class Avatar extends StatelessWidget {
-  const Avatar({required UserService userService});
-}
-''', addIgnorePrefix: addIgnorePrefix);
-    newFile(path, analyzedSource);
-
-    await assertDiagnosticsInFile(path, [
-      compatLint(analyzedSource, 'UserService userService', ruleName),
-    ]);
-  }
-
-  Future<void> test_reportsLocalInfraConstructor() async {
-    final analyzedSource = _analyzedSource(r'''
-class DefaultCacheManager {}
-
-class Avatar extends StatelessWidget {
-  Widget build(BuildContext context) {
-    final cacheManager = DefaultCacheManager();
-    return CachedNetworkAvatar(cacheManager: cacheManager);
-  }
-}
-''', addIgnorePrefix: addIgnorePrefix);
-    newFile(path, analyzedSource);
-
-    await assertDiagnosticsInFile(path, [
-      compatLint(analyzedSource, 'final cacheManager', ruleName),
-    ]);
-  }
-
-  Future<void> test_allowsInfraWiringOutsideUiFiles() async {
-    await assertAllows(r'''
-class BaseCacheManager {}
-class DefaultCacheManager extends BaseCacheManager {}
-
-final BaseCacheManager cacheManager = DefaultCacheManager();
-''', path: '$testPackageLibPath/core/utils/cached_avatar_bytes_loader.dart');
-  }
-
-  Future<void> test_allowsPrimitiveWidgetProps() async {
-    await assertAllows(r'''
-class Avatar extends StatelessWidget {
-  final String seed;
-  final double size;
-  final VoidCallback? onTap;
-
-  const Avatar({required this.seed, required this.size, this.onTap});
-}
-''', path: path);
-  }
-}
-
-@reflectiveTest
-final class WidgetTopLevelFunctionBoundaryTest extends _UiRuleTest {
-  @override
-  String get ruleName => 'widget_top_level_function_boundary';
-  @override
-  String get needle => 'Future<void> createSquad';
-  @override
-  bool get lineStart => true;
-  @override
-  String get path => '$testPackageLibPath/features/social/presentation/widgets/squad_actions.dart';
-  @override
-  String get source => r'''
-Future<void> createSquad(BuildContext context, WidgetRef ref) async {}
-''';
-
-  Future<void> test_reportsPrivateTopLevelHelper() async {
-    final analyzedSource = _analyzedSource(r'''
-bool _canShowAction(Object state) => true;
-''', addIgnorePrefix: addIgnorePrefix);
-    newFile(path, analyzedSource);
-
-    await assertDiagnosticsInFile(path, [
-      compatLint(analyzedSource, 'bool _canShowAction', ruleName, lineStart: true),
-    ]);
-  }
-
-  Future<void> test_allowsStaticClassApi() async {
-    await assertAllows(r'''
-abstract final class SquadActions {
-  static Future<void> createSquad(BuildContext context, WidgetRef ref) async {}
-}
-''', path: path);
-  }
-
-  Future<void> test_allowsProviderFiles() async {
-    await assertAllows(r'''
-Future<void> createSquad(BuildContext context, WidgetRef ref) async {}
-''', path: '$testPackageLibPath/features/social/presentation/notifiers/squad_actions.dart');
-  }
-}
-
-@reflectiveTest
-final class WidgetActionsNamespaceBoundaryTest extends _UiRuleTest {
-  @override
-  String get ruleName => 'widget_actions_namespace_boundary';
-  @override
-  String get needle => 'class SquadActions';
-  @override
-  String get path => '$testPackageLibPath/features/social/presentation/widgets/squad_actions.dart';
-  @override
-  String get source => r'''
-abstract final class SquadActions {
-  static Future<void> createSquad(BuildContext context, WidgetRef ref) async {
-    ref.read(squadProvider.notifier).createSquad();
-  }
+  static const _snackBarUtils = '''
+abstract final class SnackBarUtils {
+  static void showError(String message) {}
 }
 ''';
 
-  Future<void> test_allowsCoordinatorActionNamespace() async {
-    await assertAllows(r'''
-abstract final class SquadActions {
-  static Future<void> createSquad(BuildContext context, WidgetRef ref) async {
-    ref.read(squadProvider.notifier).createSquad();
+  // context-ui.md:69: do not call SnackBarUtils.show... from notifiers.
+  Future<void> test_reportsCodegenNotifierSnackBarUtilsCall() async {
+    final source = _analyzedSource('''
+import 'package:riverpod/riverpod.dart';
+
+$_snackBarUtils
+abstract class _\$ProfileNotifier extends \$Notifier<int> {}
+
+class ProfileNotifier extends _\$ProfileNotifier {
+  void save() {
+    SnackBarUtils.showError('Save failed');
   }
 }
-''', path: '$testPackageLibPath/features/social/presentation/coordinators/squad_actions.dart');
+''', addIgnorePrefix: true);
+    final filePath =
+        '$testPackageLibPath/features/profile/presentation/providers/profile_notifier.dart';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, "SnackBarUtils.showError('Save failed')", ruleName),
+    ]);
   }
 
-  Future<void> test_allowsRenderOnlyWidgetActions() async {
-    await assertAllows(r'''
-abstract final class EmptySquadActions {
-  static Widget iconButton(VoidCallback onTap) => IconButton(onPressed: onTap);
+  // context-ui.md:69: do not call SnackBarUtils.show... from repositories.
+  Future<void> test_reportsRepositorySnackBarUtilsCall() async {
+    final source = _analyzedSource('''
+$_snackBarUtils
+final class ProfileRepositoryImpl {
+  Future<void> save() async {
+    SnackBarUtils.showError('Save failed');
+  }
 }
-''', path: '$testPackageLibPath/features/social/presentation/widgets/empty_squad_actions.dart');
+''', addIgnorePrefix: true);
+    final filePath =
+        '$testPackageLibPath/features/profile/data/repositories/profile_repository_impl.dart';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, "SnackBarUtils.showError('Save failed')", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsNonSnackBarUtilsShowInNotifier() async {
+    await assertAllows('''
+import 'package:riverpod/riverpod.dart';
+
+abstract final class Toast {
+  static void showError(String message) {}
+}
+
+abstract class _\$ProfileNotifier extends \$Notifier<int> {}
+
+class ProfileNotifier extends _\$ProfileNotifier {
+  void save() {
+    Toast.showError('Save failed');
+  }
+}
+''', path: '$testPackageLibPath/features/profile/presentation/providers/profile_notifier.dart');
+  }
+
+  // context-ui.md:69: the UI helper may wrap SnackBarUtils.
+  Future<void> test_allowsUiHelperWrappingSnackBarUtils() async {
+    await assertAllows('''
+$_snackBarUtils
+void showProfileSaveFailedSnackBar(String message) {
+  SnackBarUtils.showError(message);
+}
+''', path: '$testPackageLibPath/core/utils/profile_snack_bars.dart');
   }
 }

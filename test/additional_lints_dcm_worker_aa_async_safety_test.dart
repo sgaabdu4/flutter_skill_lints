@@ -215,208 +215,6 @@ class Controller extends Notifier<ViewState> {
 ''');
   }
 
-  Future<void> test_reportsFakeGeneratedCopyWithWithoutFreezedAnnotation_lint() async {
-    newFile('$testPackageLibPath/view_state.dart', r'''
-part 'view_state.freezed.dart';
-
-class ViewState with _$ViewState {
-  const ViewState({required this.loading, this.value});
-
-  final bool loading;
-  final int? value;
-}
-''');
-    newFile('$testPackageLibPath/view_state.freezed.dart', r'''
-part of 'view_state.dart';
-
-mixin _$ViewState {
-  ViewStateCopyWith get copyWith => ViewStateCopyWith(this as ViewState);
-}
-
-class ViewStateCopyWith {
-  ViewStateCopyWith(this.state);
-  final ViewState state;
-
-  ViewState call({bool? loading, int? value}) => ViewState(
-    loading: loading ?? state.loading,
-    value: value ?? state.value,
-  );
-}
-''');
-    const source = r'''
-import 'package:riverpod/riverpod.dart';
-import 'view_state.dart';
-
-Future<int> request() async => 1;
-
-class Controller extends Notifier<ViewState> {
-  ViewState build() => const ViewState(loading: false);
-
-  int revision = 0;
-
-  Future<void> refresh() async {
-    final ticket = ++revision;
-    state = state.copyWith(loading: true);
-    final value = await request();
-    if (!ref.mounted || ticket != revision) return;
-    state = state.copyWith(loading: false, value: value);
-  }
-}
-''';
-    await assertDiagnostics(source, [
-      lint(source.lastIndexOf('state = state.copyWith'), 'state'.length),
-    ]);
-  }
-
-  Future<void> test_reportsGuardedUpdateToSameDataField_lint() async {
-    const source = r'''
-import 'package:riverpod/riverpod.dart';
-
-class ViewState {
-  const ViewState();
-  ViewState copyWith({bool? loading, int? value}) => this;
-}
-
-Future<int> request() async => 1;
-
-class Controller extends Notifier<ViewState> {
-  Controller() {
-    state = const ViewState();
-  }
-
-  int revision = 0;
-
-  Future<void> refresh() async {
-    final ticket = ++revision;
-    state = state.copyWith(value: 1);
-    final value = await request();
-    if (!ref.mounted || ticket != revision) return;
-    state = state.copyWith(loading: false, value: value);
-  }
-}
-''';
-    await assertDiagnostics(source, [
-      lint(source.lastIndexOf('state = state.copyWith'), 'state'.length),
-    ]);
-  }
-
-  Future<void> test_reportsUnrelatedInequalityAsStaleGuard_lint() async {
-    const source = r'''
-import 'package:riverpod/riverpod.dart';
-
-class ViewState {
-  const ViewState();
-  ViewState copyWith({bool? loading, int? value}) => this;
-}
-
-Future<int> request() async => 1;
-
-class Controller extends Notifier<ViewState> {
-  Controller() { state = const ViewState(); }
-  int revision = 0;
-
-  Future<void> refresh(int a, int b) async {
-    final ticket = ++revision;
-    state = state.copyWith(loading: true);
-    final value = await request();
-    if (!ref.mounted || a != b) return;
-    state = state.copyWith(loading: false, value: value);
-  }
-}
-''';
-    await assertDiagnostics(source, [
-      lint(source.lastIndexOf('state = state.copyWith'), 'state'.length),
-    ]);
-  }
-
-  Future<void> test_reportsPostAwaitTokenCaptureAsStaleGuard_lint() async {
-    const source = r'''
-import 'package:riverpod/riverpod.dart';
-
-class ViewState {
-  const ViewState();
-  ViewState copyWith({bool? loading, int? value}) => this;
-}
-
-Future<int> request() async => 1;
-
-class Controller extends Notifier<ViewState> {
-  Controller() { state = const ViewState(); }
-  int revision = 0;
-
-  Future<void> refresh() async {
-    state = state.copyWith(loading: true);
-    final value = await request();
-    final ticket = ++revision;
-    if (!ref.mounted || ticket != revision) return;
-    state = state.copyWith(loading: false, value: value);
-  }
-}
-''';
-    await assertDiagnostics(source, [
-      lint(source.lastIndexOf('state = state.copyWith'), 'state'.length),
-    ]);
-  }
-
-  Future<void> test_reportsLocalCounterAsStaleGuard_lint() async {
-    const source = r'''
-import 'package:riverpod/riverpod.dart';
-
-class ViewState {
-  const ViewState();
-  ViewState copyWith({bool? loading, int? value}) => this;
-}
-
-Future<int> request() async => 1;
-
-class Controller extends Notifier<ViewState> {
-  Controller() { state = const ViewState(); }
-
-  Future<void> refresh() async {
-    var revision = 0;
-    final ticket = ++revision;
-    state = state.copyWith(loading: true);
-    final value = await request();
-    if (!ref.mounted || ticket != revision) return;
-    state = state.copyWith(loading: false, value: value);
-  }
-}
-''';
-    await assertDiagnostics(source, [
-      lint(source.lastIndexOf('state = state.copyWith'), 'state'.length),
-    ]);
-  }
-
-  Future<void> test_reportsMutableTokenAsStaleGuard_lint() async {
-    const source = r'''
-import 'package:riverpod/riverpod.dart';
-
-class ViewState {
-  const ViewState();
-  ViewState copyWith({bool? loading, int? value}) => this;
-}
-
-Future<int> request() async => 1;
-
-class Controller extends Notifier<ViewState> {
-  Controller() { state = const ViewState(); }
-  int revision = 0;
-
-  Future<void> refresh() async {
-    var ticket = ++revision;
-    state = state.copyWith(loading: true);
-    final value = await request();
-    if (!ref.mounted || ticket != revision) return;
-    state = state.copyWith(loading: false, value: value);
-    ticket++;
-  }
-}
-''';
-    await assertDiagnostics(source, [
-      lint(source.lastIndexOf('state = state.copyWith'), 'state'.length),
-    ]);
-  }
-
   Future<void> test_reportsLocalStateAndMountedNames_lint() async {
     const source = r'''
 class LocalRef { bool get mounted => true; }
@@ -443,6 +241,31 @@ class Controller {
     await assertDiagnostics(source, [
       lint(source.lastIndexOf('state = state.copyWith'), 'state'.length),
     ]);
+  }
+
+  Future<void> test_allowsSkillLoadMoreMountedGuard_noLint() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+Future<int> fetch() async => 1;
+
+class Feed extends Notifier<int> {
+  Future<void> loadMore() async {
+    if (state > 9) return;
+    state = -1;
+    final page = await fetch();
+    if (!ref.mounted) return;
+    state = page;
+  }
+
+  Future<void> loadUnguarded() async {
+    state = -1;
+    final page = await fetch();
+    state = page;
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.lastIndexOf('state = page'), 'state'.length)]);
   }
 
   Future<void> test_reportsTransitionAfterSecondAwait_lint() async {

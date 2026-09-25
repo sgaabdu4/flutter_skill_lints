@@ -12,6 +12,7 @@ class PreferAbstractFinalStaticClass extends ClassDeclarationRule {
     correctionMessage:
         "Add 'abstract final' modifiers to prevent "
         'instantiation and inheritance.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   PreferAbstractFinalStaticClass()

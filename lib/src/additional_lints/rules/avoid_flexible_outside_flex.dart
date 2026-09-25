@@ -5,18 +5,21 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type_system.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when a Flexible or Expanded widget is used outside a Flex widget.
 ///
 /// Stateless and stateful widgets may compose the path to the Flex parent.
-/// Report only a proven incompatible render-object parent; a constructor's
-/// source nesting alone cannot establish an extracted widget's runtime parent.
+/// Report only a proven incompatible render-object or scroll-view parent; a
+/// constructor's source nesting alone cannot establish an extracted widget's
+/// runtime parent.
 class AvoidFlexibleOutsideFlex extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_flexible_outside_flex',
     '{0} has a non-Flex render-object parent.',
     correctionMessage: 'Move {0} inside a Row, Column, or Flex, or remove the wrapper.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidFlexibleOutsideFlex()
@@ -54,12 +57,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     TypeChecker.fromName('Flex', packageName: 'flutter'),
   ]);
 
-  static const _renderObjectChecker = TypeChecker.fromName(
-    'RenderObjectWidget',
-    packageName: 'flutter',
-  );
-  static const _containerChecker = TypeChecker.fromName('Container', packageName: 'flutter');
-
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     final constructorType = node.constructorName.type;
@@ -69,71 +66,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     // Only interested in Flexible / Expanded
     if (!_flexibleChecker.isSuperOf(element)) return;
 
-    if (!_hasIncompatibleParent(node)) return;
+    if (!hasProvenForeignRenderParent(node, _flexChecker, typeSystem)) return;
 
     final widgetName = constructorType.name.lexeme;
     rule.reportAtNode(node.constructorName, arguments: [widgetName]);
-  }
-
-  bool _hasIncompatibleParent(InstanceCreationExpression node) {
-    AstNode? parent = _directWidgetArgumentList(node)?.parent;
-    while (parent is InstanceCreationExpression) {
-      final element = parent.constructorName.type.element;
-      if (element == null || _flexChecker.isSuperOf(element)) return false;
-      if (_renderObjectChecker.isSuperOf(element) || _containerAddsRenderParent(parent)) {
-        return true;
-      }
-      final type = parent.staticType;
-      if (type == null || !_containerChecker.isExactlyType(type)) return false;
-      parent = _directWidgetArgumentList(parent)?.parent;
-    }
-    return false;
-  }
-
-  bool _containerAddsRenderParent(InstanceCreationExpression parent) {
-    final type = parent.staticType;
-    if (type == null || !_containerChecker.isExactlyType(type)) return false;
-    const renderProperties = {
-      'alignment',
-      'padding',
-      'color',
-      'decoration',
-      'foregroundDecoration',
-      'width',
-      'height',
-      'constraints',
-      'margin',
-      'transform',
-    };
-    return parent.argumentList.arguments.whereType<NamedArgument>().any((argument) {
-      final valueType = argument.argumentExpression.staticType;
-      return renderProperties.contains(argument.name.lexeme) &&
-          valueType != null &&
-          typeSystem.isNonNullable(valueType);
-    });
-  }
-
-  static ArgumentList? _directWidgetArgumentList(InstanceCreationExpression node) {
-    AstNode? current = node.parent;
-    while (current != null) {
-      if (current is ListLiteral) {
-        current = current.parent;
-        continue;
-      }
-      if (current is NamedArgument) {
-        current = current.parent;
-        continue;
-      }
-      if (current is ArgumentList) {
-        return current;
-      }
-      if (current is FunctionExpression ||
-          current is FunctionDeclaration ||
-          current is MethodDeclaration) {
-        return null;
-      }
-      current = current.parent;
-    }
-    return null;
   }
 }

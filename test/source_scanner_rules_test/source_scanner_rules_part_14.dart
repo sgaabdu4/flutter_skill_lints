@@ -27,6 +27,18 @@ class ConfirmDialog extends ConsumerWidget {
 }
 ''';
 
+  Future<void> test_reportsMultilineWatchFromSkillNeverExample() async {
+    final analyzedSource = _analyzedSource(_skillNeverConfirmDialog, addIgnorePrefix: true);
+    final filePath = '$testPackageLibPath/features/confirm/presentation/confirm_dialog.dart';
+    newFile(filePath, analyzedSource);
+
+    await assertDiagnosticsInFile(filePath, [compatLint(analyzedSource, 'ref.watch(\n', ruleName)]);
+  }
+
+  Future<void> test_severityIsError() async {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
+
   Future<void> test_allowsNonDialogClass() async {
     await assertAllows(r'''
 class WidgetRef {
@@ -168,6 +180,12 @@ class TimerControls extends ConsumerWidget {
 @reflectiveTest
 final class DialogButtonPopThenStateMutationTest extends _DialogRuleTest {
   @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'dialog_button_pop_then_state_mutation';
   @override
   String get needle => 'ref.read(formProvider.notifier).reset()';
@@ -225,6 +243,61 @@ class DetailScreen extends ConsumerWidget {
 }
 ''');
   }
+
+  Future<void> test_reportsSecondPopAfterRootNavigatorPop() async {
+    const source = r'''
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class ConfirmDialog extends Widget {
+  Future<void> onConfirm(BuildContext context, Future<bool> save) async {
+    final ok = await save;
+    Navigator.of(context, rootNavigator: true).pop();
+    if (ok) context.pop();
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'context.pop();', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsTypedRoutePushAfterSheetPop() async {
+    const source = r'''
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class CreateExerciseRoute extends GoRouteData {
+  const CreateExerciseRoute();
+}
+
+class MenuSheet extends Widget {
+  Future<void> onCreateTapped(BuildContext context) async {
+    Navigator.of(context).pop();
+    await const CreateExerciseRoute().push<String>(context);
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'const CreateExerciseRoute().push', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSeparateButtonPopsWithResults() async {
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+
+enum CreateChoice { exercise }
+
+class ChoiceSheet extends Widget {
+  void Function() cancel(BuildContext context) => () => Navigator.of(context).pop();
+  void Function() confirm(BuildContext context) =>
+      () => Navigator.of(context).pop(CreateChoice.exercise);
+}
+''');
+  }
 }
 
 @reflectiveTest
@@ -246,6 +319,61 @@ class Reader {
   }
 }
 ''';
+
+  Future<void> test_reportsMultilineSelectFromSkillNeverExample() async {
+    final analyzedSource = _analyzedSource(_skillNeverConfirmDialog, addIgnorePrefix: true);
+    final filePath = '$testPackageLibPath/features/confirm/presentation/confirm_dialog.dart';
+    newFile(filePath, analyzedSource);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(
+        analyzedSource,
+        '.select((s) => (isSaving: s.isSaving, itemsByCategoryId: s.itemsByCategoryId)),',
+        ruleName,
+      ),
+    ]);
+  }
+
+  Future<void> test_resolvedGettersDecideRecordFieldIdentity() async {
+    const source = r'''
+class FormState {
+  FormState({required this.isSaving, required this.tagsMap, required this.items});
+  final bool isSaving;
+  final Map<String, int> tagsMap;
+  final List<String> items;
+  Set<String> get selected => items.toSet();
+}
+
+class Provider<T> {
+  Provider<R> select<R>(R Function(T state) selector) => Provider<R>();
+}
+
+class WidgetRef {
+  external T watch<T>(Provider<T> provider);
+}
+
+final formProvider = Provider<FormState>();
+
+class Reader {
+  Reader(this.ref);
+  final WidgetRef ref;
+
+  Object build() {
+    final stable = ref.watch(formProvider.select((s) => (saving: s.isSaving, tags: s.tagsMap)));
+    final fresh = ref.watch(formProvider.select((s) => (saving: s.isSaving, picked: s.selected)));
+    return (stable, fresh);
+  }
+}
+''';
+
+    await assertDiagnostics(source, [
+      compatLint(source, '.select((s) => (saving: s.isSaving, picked: s.selected)));', ruleName),
+    ]);
+  }
+
+  Future<void> test_severityIsError() async {
+    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
+  }
 
   Future<void> test_allowsPrimitiveSelect() async {
     await assertAllows(r'''
@@ -533,6 +661,83 @@ class SubmitButton extends ConsumerWidget {
 ''');
   }
 
+  Future<void> test_reportsGoNavigationChainedOffAwaitedMutation() async {
+    final analyzedSource = _analyzedSource(r'''
+class WidgetRef {
+  Object read(Object provider) => Object();
+}
+class ConsumerWidget extends Widget {}
+class BuildContext { bool get mounted => true; }
+extension on BuildContext { void go(String location) {} }
+class OrdersRoute { const OrdersRoute(); void go(BuildContext context) {} }
+
+class SubmitButton extends ConsumerWidget {
+  final ref = WidgetRef();
+
+  Future<void> onPressed(BuildContext context) async {
+    await ref.read(formProvider.notifier).save();
+    if (!context.mounted) return;
+    context.go('/orders');
+  }
+
+  Future<void> onSaved(BuildContext context) async {
+    await ref.read(formProvider.notifier).save();
+    if (!context.mounted) return;
+    const OrdersRoute().go(context);
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, ".go('/orders')", ruleName),
+      compatLint(analyzedSource, '.go(context);', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsNavigationNotChainedOffNotifierMutation() async {
+    await assertAllows(r'''
+class WidgetRef {
+  Object read(Object provider) => Object();
+}
+class ConsumerWidget extends Widget {}
+class BuildContext { bool get mounted => true; }
+extension on BuildContext {
+  void go(String location) {}
+  Future<void> push(String location) async {}
+}
+class Shell { void goBranch(int index) {} }
+Future<bool?> showDialog(BuildContext context) async => true;
+
+class SubmitButton extends ConsumerWidget {
+  final ref = WidgetRef();
+  final shell = Shell();
+
+  Future<void> onSaved(BuildContext context) async {
+    await ref.read(formProvider.notifier).save();
+    if (!context.mounted) return;
+    await context.push('/orders/new');
+  }
+
+  Future<void> onConfirmed(BuildContext context) async {
+    final confirmed = await showDialog(context);
+    if (confirmed != true || !context.mounted) return;
+    context.go('/orders');
+  }
+
+  Future<void> onTab(BuildContext context) async {
+    await showDialog(context);
+    shell.goBranch(1);
+  }
+
+  Widget build(BuildContext context) => Column(children: [
+    Button(onPressed: () async {
+      await ref.read(formProvider.notifier).save();
+    }),
+    Button(onPressed: () => context.go('/orders')),
+  ]);
+}
+''');
+  }
+
   Future<void> test_allowsResetInsideNotifier() async {
     await assertAllows(r'''
 class WidgetRef {
@@ -610,34 +815,126 @@ abstract class _RuntimeBugRuleTest extends _SourceRuleTest {
 @reflectiveTest
 final class ModalHelperRequiresRouteSettingsTest extends _DialogRuleTest {
   @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'modal_helper_requires_route_settings';
   @override
   String get needle => 'showDialog<T>(';
   @override
   String get source => r'''
-Future<T?> openConfirm<T>(Object context) => showDialog<T>(
+import 'package:flutter/material.dart';
+
+Future<T?> openConfirm<T>(BuildContext context) => showDialog<T>(
   context: context,
-  builder: (_) => Object(),
+  builder: (_) => Widget(),
 );
 ''';
 
   Future<void> test_allowsWithRouteSettings() async {
     await assertAllows(r'''
-Future<T?> openConfirm<T>(Object context) => showDialog<T>(
+import 'package:flutter/material.dart';
+
+Future<T?> openConfirm<T>(BuildContext context) => showDialog<T>(
   context: context,
-  routeSettings: const Object(),
-  builder: (_) => Object(),
+  routeSettings: const RouteSettings(name: 'confirm'),
+  builder: (_) => Widget(),
 );
 ''');
   }
 
   Future<void> test_allowsSheetWithRouteSettings() async {
     await assertAllows(r'''
-Future<T?> openSheet<T>(Object context) => showModalBottomSheet<T>(
+import 'package:flutter/material.dart';
+
+Future<T?> openSheet<T>(BuildContext context) => showModalBottomSheet<T>(
   context: context,
-  routeSettings: const Object(),
-  builder: (_) => Object(),
+  routeSettings: const RouteSettings(name: 'confirm'),
+  builder: (_) => Widget(),
 );
 ''');
   }
+
+  Future<void> test_allowsSkillShowAppSheetHelperAndCallers() async {
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+
+Future<T?> showAppSheet<T>({
+  required BuildContext context,
+  required String routeName,
+  required WidgetBuilder builder,
+}) {
+  return showModalBottomSheet<T>(
+    context: context,
+    routeSettings: RouteSettings(name: routeName),
+    builder: builder,
+  );
 }
+
+typedef WidgetBuilder = Widget Function(BuildContext context);
+
+Future<void> openMenu(BuildContext context) async {
+  await showAppSheet<void>(context: context, routeName: 'menu', builder: (_) => Widget());
+}
+''');
+  }
+
+  // context-ui.md:40-52: the skill's BuildContext extension helper and caller.
+  Future<void> test_allowsSkillModalContextExtension() async {
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+
+typedef WidgetBuilder = Widget Function(BuildContext context);
+
+extension ModalContextX on BuildContext {
+  Future<T?> showAppSheet<T>({
+    required String routeName,
+    required WidgetBuilder builder,
+  }) {
+    return showModalBottomSheet<T>(
+      context: this,
+      routeSettings: RouteSettings(name: routeName),
+      builder: builder,
+    );
+  }
+}
+
+Future<void> openMenu(BuildContext context) async {
+  await context.showAppSheet<void>(routeName: 'menu', builder: (_) => Widget());
+}
+''', path: '$testPackageLibPath/core/extensions/context_extensions.dart');
+  }
+}
+
+const _skillNeverConfirmDialog = r'''
+class WidgetRef {
+  dynamic watch(Object? provider) => null;
+  dynamic read(Object? provider) => null;
+}
+class ConsumerWidget extends Widget {}
+
+// NEVER — dialog hosts mutation + watches mutable record
+class ConfirmDialog extends ConsumerWidget {
+  ConfirmDialog({required this.id});
+  final String id;
+
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entity = ref.watch(entityProvider(id));
+    final (:isSaving, :itemsByCategoryId) = ref.watch(
+      formProvider.select((s) => (isSaving: s.isSaving, itemsByCategoryId: s.itemsByCategoryId)),
+    );
+    return AppPrimaryButton(
+      onPressed: () async {
+        final ok = await ref.read(formProvider.notifier).save(entity);
+        if (!context.mounted) return;
+        Navigator.of(context, rootNavigator: true).pop();
+        if (ok) context.pop();
+      },
+      label: itemsByCategoryId.isEmpty ? 'Exit' : 'Confirm',
+    );
+  }
+}
+''';

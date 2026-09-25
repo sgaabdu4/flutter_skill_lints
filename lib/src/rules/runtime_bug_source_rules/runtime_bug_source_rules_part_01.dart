@@ -12,7 +12,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       'sync_save_all_no_dirty_guard',
       'saveAll called inside sync push without a dirty-list guard.',
       correctionMessage: 'Check the changed-row list and return early when empty before `saveAll(...)`. Otherwise every sync cycle rewrites the whole collection.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags `.saveAll(... .map(Model.fromEntity).toList())` inside a method body that has no earlier `isEmpty` early-return guard.',
     scan: _scanSyncSaveAllGuards,
@@ -30,7 +30,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       'save_all_full_collection_after_subset_mutation',
       'saveAll rewrites a full collection after subset mutation.',
       correctionMessage: 'Collect changed rows and call mergeAll/saveMany, or add an ignore comment when a full rewrite is intentional.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags `saveAll(fullCollection.map(Model.fromEntity).toList())` after mutating indexed rows of that same collection.',
     scan: _scanSubsetSaveAllWrites,
@@ -47,7 +47,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       'collection_getter_allocates_each_access',
       'Collection getter allocates a fresh Map/List/Set on every access.',
       correctionMessage: 'Use a generated computed provider/service/repository cache; for non-const classes, an instance `late final` derived field is also valid.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags Map/List/Set getters that build collection values in the getter body without an obvious cache.',
     scan: _scanCollectionGetterAllocations,
@@ -81,18 +81,20 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
 
   /// Single id lookups must use the shared Iterable lookup extension.
   ///
-  /// Why: `items.indexBy((item) => item.id)[id]` spreads lookup mechanics
-  /// across call sites and allocates a map for a one-off read. Keep the
-  /// primitive in the shared Iterable extension; reserve `indexBy` for
-  /// providers/services that intentionally return or reuse the full index.
+  /// Why: `items.indexBy((item) => item.id)[id]` or the skill's
+  /// `items.indexOfByKey((item) => item.id)[id]` spreads lookup mechanics
+  /// across call sites and allocates a map for a one-off read. Use
+  /// `lookupByKey` for one read; keep `indexOfByKey` for a cached index that is
+  /// reused (`final productsById = products.indexOfByKey(...)`,
+  /// collections-helpers.md).
   scannerRule(
     code: const LintCode(
       'ad_hoc_id_index_lookup',
       'Ad-hoc id lookup belongs in an extension.',
-      correctionMessage: 'Use `lookupByKey` / `indexOfByKey`, or expose a computed provider/service-owned index when the full map is reused.',
+      correctionMessage: 'Use `lookupByKey` for a one-off read, or cache the `indexOfByKey` map (or a computed provider/service-owned index) when it is reused.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags `items.indexBy((item) => item.id)[id]` one-off lookups outside the shared Iterable extension.',
+    description: 'Flags `items.indexBy((item) => item.id)[id]` and `items.indexOfByKey((item) => item.id)[id]` one-off lookups outside the shared Iterable extension.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       if (context.path.endsWith('iterable_extensions.dart')) return;
@@ -105,12 +107,14 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     },
   ),
 
-  /// Id lookups on hot paths must use an index instead of linear search.
+  /// Repeated id lookups on hot paths must use an index instead of linear search.
   ///
-  /// Why: `firstWhere`, `indexWhere`, or hand-written `for` helpers named
-  /// `*ById` scan the full collection on every call. In widgets, notifiers,
-  /// repositories, and providers those calls often sit behind taps, timers, or
-  /// rebuilds. Pre-index by id with a Map and reuse that lookup.
+  /// Why: `firstWhere`, `indexWhere`, or a hand-written `for` scan by `.id`
+  /// inside a loop, a collection-for, an iteration callback such as `map` or
+  /// `forEach`, a widget build path, or a getter repeats a full scan per
+  /// element, per frame, or per access. Pre-index by id with a Map and reuse
+  /// that lookup. A single lookup in a one-off method is not repeated and is not
+  /// reported.
   scannerRule(
     code: const LintCode(
       'linear_id_lookup_in_hot_path',
@@ -118,11 +122,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       correctionMessage: 'Build/reuse a `Map<Id, Item>` index for id lookups instead of firstWhere/indexWhere/manual loops.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags firstWhere/indexWhere/manual *ById loops over `.id == ...` in likely-hot widget, notifier, repository, or provider code.',
+    description: 'Flags firstWhere/indexWhere/manual `.id ==` loops that repeat inside a loop, collection-for, iteration callback, widget build path, or getter.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      _reportManualIdLookupFunctions(reporter, context);
-      _reportHotClassIdLookups(reporter, context);
+      _reportRepeatedIdLookups(reporter, context);
     },
   ),
 
@@ -136,14 +139,12 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       'nested_linear_lookup_by_id',
       'Nested loop performs an inner linear id lookup.',
       correctionMessage: 'Build a lookup map before the loop and read by id inside the loop instead of calling indexWhere/firstWhere repeatedly.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags `for (final item in items) { otherItems.indexWhere((x) => x.id == item.otherId) }` patterns.',
+    description: 'Flags `for (final item in items) { otherItems.indexWhere((x) => x.id == item.otherId) }` patterns, including loops over id lists such as `x.id == id`.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (final method in context.methods) {
-        _reportNestedIdLookups(reporter, context, method);
-      }
+      _reportNestedIdLookups(reporter, context);
     },
   ),
 
@@ -155,15 +156,16 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   /// the app wait on the function response and often surfaces a timeout even
   /// when the backend operation succeeds. Async-start the Function, then
   /// reconcile against the source of truth with bounded polling or a realtime
-  /// observer.
+  /// observer. A destructive/batch remote call passed `waitForCompletion: true`
+  /// blocks the client the same way.
   scannerRule(
     code: const LintCode(
       'appwrite_blocking_function_execution_in_client',
       'Long-running Appwrite Function execution waits synchronously on the client.',
       correctionMessage: 'Pass `xasync: true`, treat the response as an async-start acknowledgement, then reconcile the source of truth with bounded polling/realtime.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags Appwrite `createExecution(...)` calls in likely long-running/destructive client methods unless the call explicitly passes `xasync: true`.',
+    description: 'Flags Appwrite `createExecution(...)` calls in likely long-running/destructive client methods unless the call explicitly passes `xasync: true`, and long-running remote calls that pass a resolved `waitForCompletion: true`.',
     scan: _scanBlockingFunctionExecutions,
   ),
 
@@ -174,26 +176,25 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   /// exception before checking whether the entity/account is gone creates false
   /// Crashlytics/Sentry noise and may show a user-facing error for a successful
   /// operation. Reconcile first; report only when the source of truth still
-  /// shows failure.
+  /// shows failure. A catch around async-started long-running work
+  /// (networking.md "Long-Running Remote Work") that reports and never
+  /// reconciles is flagged too.
   scannerRule(
     code: const LintCode(
       'destructive_failure_logged_before_reconcile',
       'Destructive mutation reports failure before source-of-truth reconciliation.',
       correctionMessage: 'Call a reconcile/verify/waitFor source-of-truth check first, then log/report the exception only when reconciliation fails.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags Crash/Sentry/Firebase error reporting before a later reconcile/verify call inside delete/remove/deactivate methods.',
+    description: 'Flags Crash/Sentry/Firebase error reporting before a later reconcile/verify call inside delete/remove/deactivate methods, or in the catch of async-started long-running work that never reconciles.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
+      final tries = collectNodes<TryStatement>(context.unit);
       for (final method in context.methods) {
         if (!_methodLooksDestructive(method.name)) continue;
-        for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-          final line = context.source.masked[i];
-          final match = _failureTelemetryCall.firstMatch(line);
-          if (match == null) continue;
-          if (!_hasLaterReconcileCall(context, i + 1, method.end)) continue;
-          reporter.report(context, i, match.start);
-        }
+        _reportTelemetryBeforeReconcile(reporter, context, method);
+        if (_hasLaterReconcileCall(context, method.start, method.end)) continue;
+        _reportUnreconciledLongRunningCatches(reporter, context, method, tries);
       }
     },
   ),
@@ -208,7 +209,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       'storage_clear_preserves_migration_state',
       'Reset/clear method preserves migration state around local storage clear.',
       correctionMessage: 'Remove migration/version/install marker preservation. Let reset/clear hard-clear app-owned local storage.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags datasource/repository reset/clear methods that read and restore migration/version/install markers around storage clear.',
     scan: (reporter, context) {
@@ -228,16 +229,16 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       'notifier_persistence_no_debounce',
       'Persistence helper has no debounce / Timer / delayed indirection.',
       correctionMessage: 'Wrap the persist call in a `Timer` (cancel-and-restart on next call) or a `Debouncer` so rapid mutations coalesce into one write.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags `_schedule*Persist` / `_persistDraft` helper methods that lack any Timer/Future.delayed/Debouncer reference inside their class.',
+    description: 'Flags `_schedule*Persist` / `_persistDraft` helper methods reached from synchronous or state-writing mutation paths when their class lacks any Timer/Future.delayed/Debouncer reference. Awaited one-shot lifecycle writes are allowed.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       for (final classSpan in context.classes) {
         if (!classSpan.isNotifier) continue;
         if (!_hasPersistHelper(context, classSpan)) continue;
         if (_hasDebounceMechanism(context, classSpan)) continue;
-        final helperLine = _persistHelperLine(context, classSpan);
+        final helperLine = _mutationPathPersistHelperLine(context, classSpan);
         if (helperLine == null) continue;
         final line = context.source.masked[helperLine];
         final col = _persistHelperPattern.firstMatch(line)?.start ?? 0;
@@ -257,8 +258,8 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'notifier_async_init_stale_state_write',
       'Async notifier init/restore/load writes state after await without a stale guard.',
-      correctionMessage: 'Capture a generation/request token before the await and return if it is stale before assigning `state`.',
-      severity: DiagnosticSeverity.WARNING,
+      correctionMessage: 'Capture a generation/request token before the await and return if it is stale before assigning `state`, or return when `!ref.mounted`.',
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags private notifier init/restore/load methods that await and then assign state without an obvious generation/request/stale guard.',
     scan: _scanAsyncNotifierStaleStateWrites,
@@ -276,7 +277,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       'webview_init_in_build_no_gate',
       'Heavy widget (WebView / native player) constructed in build without a user-action gate.',
       correctionMessage: 'Add a `bool _userRequested = false` (or `_userTapped...` / `_userOpened...`) field, set it in an `onTap` callback, and construct the heavy widget only when the flag is true.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags `InAppWebView`, `IOSInAppWebViewWidget`, `WebViewWidget`, `YoutubePlayer`, or `VideoPlayer` constructors inside `build()` of classes that declare no `_user*` / `*Tapped` / `*Requested` boolean gate field.',
     scan: (reporter, context) {
@@ -295,7 +296,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       'service_storage_read_no_memo',
       'Service reads from storage without an in-memory memo.',
       correctionMessage: 'Add a `Map<String, T> _cache` field; check it before `_storage.read(...)`. Write through on `markSeen` / equivalent.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags `_storage.read` / `box.get` calls inside *Service classes that declare no `Map<String,*>` cache field.',
     scan: (reporter, context) {
@@ -324,10 +325,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'keepalive_watches_unbounded_collection',
       'keepAlive notifier watches an unbounded collection getter.',
-      correctionMessage: 'Return a bounded projection (e.g. `s.lastNDays` / `s.count`) instead of deriving and retaining a new collection from the full source list.',
-      severity: DiagnosticSeverity.WARNING,
+      correctionMessage: 'Return a bounded projection (e.g. `s.count`) instead of returning or deriving from the full source collection.',
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags `@Riverpod(keepAlive: true)` notifiers whose build() derives retained state from `s.<unboundedCollectionName>`.',
+    description: 'Flags `@Riverpod(keepAlive: true)` providers whose build() returns or derives from `s.<unboundedCollectionName>` of a provider that is not resolved as `@Riverpod(keepAlive: true)`.',
     scan: _scanKeepAliveUnboundedCollections,
   ),
 
@@ -341,7 +342,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       'datasource_missing_batch_loader',
       'Datasource interface has many single-field getters but no batch loader.',
       correctionMessage: 'Expose a `Future<SettingsSnapshot> loadAll()` aggregator so callers can fetch everything in one read.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags abstract `*LocalDatasource` / `*RemoteDatasource` interfaces with 5+ single-value async getters and no loadAll/getAll/readAll method.',
     scan: (reporter, context) {
@@ -485,6 +486,43 @@ void _scanBlockingFunctionExecutions(ScannerRuleReporter reporter, SourceScanner
   for (final method in context.methods) {
     _reportBlockingFunctionExecutionsInMethod(reporter, context, method);
   }
+  final completionWaits = _CompletionWaitVisitor();
+  context.unit.accept(completionWaits);
+  for (final call in completionWaits.calls) {
+    reporter.reportOffset(context, call.methodName.offset);
+  }
+}
+
+/// Long-running remote calls that make the client wait for backend completion
+/// (networking.md "Long-Running Remote Work"): a resolved `bool waitForCompletion`
+/// parameter passed `true` on a destructive/batch call or inside such a method.
+final class _CompletionWaitVisitor extends RecursiveAstVisitor<void> {
+  final calls = <MethodInvocation>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (_waitsForBackendCompletion(node) && _isLongRunningCall(node)) calls.add(node);
+    super.visitMethodInvocation(node);
+  }
+}
+
+bool _waitsForBackendCompletion(MethodInvocation node) {
+  return node.argumentList.arguments.any((argument) {
+    final parameter = argument.correspondingParameter;
+    final value = argument.argumentExpression;
+    return argument is NamedArgument &&
+        parameter != null &&
+        parameter.name == 'waitForCompletion' &&
+        parameter.type.isDartCoreBool &&
+        value is BooleanLiteral &&
+        value.value;
+  });
+}
+
+bool _isLongRunningCall(MethodInvocation node) {
+  if (_longRunningOperationName.hasMatch(node.methodName.name)) return true;
+  final enclosing = node.thisOrAncestorOfType<MethodDeclaration>()?.name.lexeme;
+  return enclosing != null && _longRunningOperationName.hasMatch(enclosing);
 }
 
 void _reportBlockingFunctionExecutionsInMethod(

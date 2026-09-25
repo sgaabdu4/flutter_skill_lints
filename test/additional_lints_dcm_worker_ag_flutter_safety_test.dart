@@ -81,6 +81,21 @@ class Expanded extends Flexible {
 class SizedBox extends Widget {
   const SizedBox();
 }
+abstract class ScrollView extends StatelessWidget {
+  const ScrollView();
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+class ListView extends ScrollView {
+  const ListView({List<Widget> children = const []});
+  const ListView.builder({required Widget Function(BuildContext, int) itemBuilder});
+}
+class SingleChildScrollView extends StatelessWidget {
+  const SingleChildScrollView({required this.child});
+  final Widget child;
+  @override
+  Widget build(BuildContext context) => child;
+}
 ''');
   }
 }
@@ -524,6 +539,26 @@ Widget build(Object? padding) => Container(padding: padding, child: Expanded(chi
   void setUp() {
     rule = AvoidFlexibleOutsideFlex();
     super.setUp();
+  }
+
+  Future<void> test_expandedUnderScrollViews_lint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+Widget list() => ListView(children: [const SizedBox(), Expanded(child: const SizedBox())]);
+Widget scroll() => SingleChildScrollView(child: Expanded(child: const SizedBox()));
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf('Expanded('), 'Expanded'.length),
+      lint(source.lastIndexOf('Expanded('), 'Expanded'.length),
+    ]);
+  }
+
+  Future<void> test_expandedInListBuilderOrAroundList_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+Widget builder() => ListView.builder(itemBuilder: (context, index) => Expanded(child: const SizedBox()));
+Widget around() => Row(children: [Expanded(child: ListView(children: [const SizedBox()]))]);
+''');
   }
 
   Future<void> test_extractedExpandedWidget_noLint() async {

@@ -1,7 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_non_null_assertion.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nullable_interpolation.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nullable_tostring.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
@@ -10,7 +9,6 @@ void main() {
   defineReflectiveSuite(() {
     defineReflectiveTests(AvoidNullableInterpolationTest);
     defineReflectiveTests(AvoidNullableToStringTest);
-    defineReflectiveTests(AvoidNonNullAssertionTest);
   });
 }
 
@@ -74,29 +72,6 @@ void update(String? value) {
   Future<void> test_nonNullableTarget_noLint() async {
     await assertNoDiagnostics(r'''
 String label(Object value) => value.toString();
-''');
-  }
-}
-
-@reflectiveTest
-final class AvoidNonNullAssertionTest extends AnalysisRuleTest {
-  @override
-  void setUp() {
-    rule = AvoidNonNullAssertion();
-    super.setUp();
-  }
-
-  Future<void> test_postfixBang_lint() async {
-    const source = r'''
-String label(String? value) => value!;
-''';
-
-    await assertDiagnostics(source, [lint(source.indexOf('!'), '!'.length)]);
-  }
-
-  Future<void> test_isNotNullCheck_noLint() async {
-    await assertNoDiagnostics(r'''
-bool hasValue(String? value) => value != null;
 ''');
   }
 }

@@ -292,7 +292,285 @@ class SearchSheet {
 }
 ''');
   }
+
+  /// #37: the issue's hand-written copyWith update and the skill's `setName`
+  /// form handler (lists-forms-workflows.md) are synchronous state-only
+  /// updates, as lambdas or tear-offs.
+  Future<void> test_allowsIssue37SynchronousFormHandlers() async {
+    await assertAllows(
+      _formNotifierSource +
+          r'''
+class Provider { final notifier = FormNotifier(); }
+class Ref { FormNotifier read(FormNotifier notifier) => notifier; }
+final formProvider = Provider();
+List<Object> build(Ref ref) => [
+  TextField(onChanged: (value) => ref.read(formProvider.notifier).update(value)),
+  TextField(onChanged: (value) => ref.read(formProvider.notifier).setName(value)),
+  TextField(onChanged: ref.read(formProvider.notifier).setName),
+];
+''',
+    );
+  }
+
+  /// #37: the notifier and its state live in another library (the usual
+  /// widget/notifier layout); its synchronous signature is the evidence.
+  Future<void> test_allowsIssue37SynchronousFormHandlersFromAnotherFile() async {
+    newFile('$testPackageLibPath/form_notifier.dart', _formNotifierSource);
+    await assertAllows(r'''
+import 'form_notifier.dart';
+class Provider { final notifier = FormNotifier(); }
+class Ref { FormNotifier read(FormNotifier notifier) => notifier; }
+final formProvider = Provider();
+List<Object> build(Ref ref) => [
+  TextField(onChanged: (value) => ref.read(formProvider.notifier).update(value)),
+  TextField(onChanged: ref.read(formProvider.notifier).setName),
+];
+''');
+  }
+
+  /// #37: a tear-off to an async remote request reaches async work.
+  Future<void> test_reportsIssue37AsyncTearOff() async {
+    const source = r'''
+class TextField { TextField({required void Function(String) onChanged}); }
+class SearchNotifier {
+  Future<void> search(String query) async {}
 }
+class Provider { final notifier = SearchNotifier(); }
+class Ref { SearchNotifier read(SearchNotifier notifier) => notifier; }
+final searchProvider = Provider();
+Object build(Ref ref) => TextField(onChanged: ref.read(searchProvider.notifier).search);
+''';
+    await assertDiagnostics(source, [compatLint(source, 'TextField(onChanged:', ruleName)]);
+  }
+
+  /// #37: a cross-file async notifier method reports as a lambda or tear-off.
+  Future<void> test_reportsIssue37AsyncRequestFromAnotherFile() async {
+    newFile('$testPackageLibPath/search_notifier.dart', r'''
+class SearchNotifier {
+  Future<void> search(String query) async {}
+}
+''');
+    const source = r'''
+import 'search_notifier.dart';
+class TextField { TextField({required void Function(String) onChanged}); }
+class Provider { final notifier = SearchNotifier(); }
+class Ref { SearchNotifier read(SearchNotifier notifier) => notifier; }
+final searchProvider = Provider();
+List<Object> build(Ref ref) => [
+  TextField(onChanged: ref.read(searchProvider.notifier).search),
+  TextField(onChanged: (value) => ref.read(searchProvider.notifier).search(value)),
+];
+''';
+    await assertDiagnostics(source, [
+      compatLint(source, 'TextField(onChanged: ref', ruleName),
+      compatLint(source, 'TextField(onChanged: (value)', ruleName),
+    ]);
+  }
+
+  /// #37: a synchronous `void` method in another file that forwards to a
+  /// Future (directly or through an unresolved generic `ref.read<T>`) still
+  /// reaches async work; a state-only neighbor stays clean.
+  Future<void> test_reportsCrossFileSynchronousForwarders() async {
+    newFile('$testPackageLibPath/input_notifier.dart', r'''
+import 'dart:async';
+class Provider<T> { Provider(this.value); final T value; }
+class Ref { T read<T>(Provider<T> provider) => provider.value; }
+class SearchNotifier { Future<void> search(String query) async {} }
+final searchProvider = Provider(SearchNotifier());
+class InputNotifier {
+  InputNotifier(this.ref);
+  final Ref ref;
+  String state = '';
+  void update(String value) { state = value; }
+  Future<void> fetch(String value) async {}
+  void forward(String value) { unawaited(fetch(value)); }
+  void updateAndSearch(String value) {
+    state = value;
+    unawaited(ref.read(searchProvider).search(value));
+  }
+}
+final inputProvider = Provider(InputNotifier(Ref()));
+''');
+    const source = r'''
+import 'input_notifier.dart';
+class TextField { TextField({required void Function(String) onChanged}); }
+List<Object> build(Ref ref) => [
+  TextField(onChanged: (value) => ref.read(inputProvider).update(value)),
+  TextField(onChanged: (value) => ref.read(inputProvider).forward(value)),
+  TextField(onChanged: ref.read(inputProvider).forward),
+  TextField(onChanged: (value) => ref.read(inputProvider).updateAndSearch(value)),
+];
+''';
+    await assertDiagnostics(source, [
+      compatLint(
+        source,
+        'TextField(onChanged: (value) => ref.read(inputProvider).forward',
+        ruleName,
+      ),
+      compatLint(source, 'TextField(onChanged: ref.read(inputProvider).forward', ruleName),
+      compatLint(
+        source,
+        'TextField(onChanged: (value) => ref.read(inputProvider).updateAndSearch',
+        ruleName,
+      ),
+    ]);
+  }
+
+  /// #37: the skill's `setName` (lists-forms-workflows.md:205-210) on a
+  /// Freezed state, with state, generated part and notifier in other files.
+  /// The generated callable `copyWith` is synchronous.
+  Future<void> test_allowsCrossFileFreezedCallableCopyWith() async {
+    newFile('$testPackageLibPath/form_state.dart', r'''
+import 'package:freezed_annotation/freezed_annotation.dart';
+part 'form_state.freezed.dart';
+@freezed
+abstract class ProductFormState with _$ProductFormState {
+  const factory ProductFormState({required String draftName, String? nameError}) =
+      _ProductFormState;
+}
+''');
+    newFile('$testPackageLibPath/form_state.freezed.dart', r'''
+part of 'form_state.dart';
+T _$identity<T>(T value) => value;
+mixin _$ProductFormState {
+  String get draftName;
+  String? get nameError;
+  $ProductFormStateCopyWith<ProductFormState> get copyWith =>
+      _$ProductFormStateCopyWithImpl<ProductFormState>(this as ProductFormState, _$identity);
+}
+abstract mixin class $ProductFormStateCopyWith<$Res> {
+  $Res call({String draftName, String? nameError});
+}
+class _$ProductFormStateCopyWithImpl<$Res> implements $ProductFormStateCopyWith<$Res> {
+  _$ProductFormStateCopyWithImpl(this._self, this._then);
+  final ProductFormState _self;
+  final $Res Function(ProductFormState) _then;
+  @override
+  $Res call({Object? draftName, Object? nameError}) => _then(_self);
+}
+class _ProductFormState with _$ProductFormState implements ProductFormState {
+  const _ProductFormState({required this.draftName, this.nameError});
+  @override
+  final String draftName;
+  @override
+  final String? nameError;
+}
+''');
+    newFile('$testPackageLibPath/form_notifier.dart', r'''
+import 'form_state.dart';
+abstract class Notifier<S> {
+  late S state;
+}
+class ProductFormNotifier extends Notifier<ProductFormState> {
+  void setName(String value) {
+    String? validationMessage;
+    if (value.isEmpty) validationMessage = 'Name required';
+    if (value.length < 3) validationMessage = 'Name too short';
+    state = state.copyWith(draftName: value, nameError: validationMessage);
+  }
+}
+''');
+    await assertAllows(r'''
+import 'form_notifier.dart';
+class TextField { TextField({required void Function(String) onChanged}); }
+class Provider { final notifier = ProductFormNotifier(); }
+class Ref { ProductFormNotifier read(ProductFormNotifier notifier) => notifier; }
+final formProvider = Provider();
+List<Object> build(Ref ref) => [
+  TextField(onChanged: (value) => ref.read(formProvider.notifier).setName(value)),
+  TextField(onChanged: ref.read(formProvider.notifier).setName),
+];
+''');
+  }
+
+  /// lists-forms-workflows.md SearchNotifier DO: the notifier in another file
+  /// debounces its async work, so the TextField forwarding to it is clean.
+  Future<void> test_allowsCrossFileNotifierDebounce() async {
+    newFile('$testPackageLibPath/search_notifier.dart', r'''
+import 'dart:async';
+final class Debouncer {
+  Debouncer(this.duration);
+  final Duration duration;
+  Timer? _timer;
+  void call(void Function() action) {
+    _timer?.cancel();
+    _timer = Timer(duration, action);
+  }
+}
+class SearchNotifier {
+  final _debouncer = Debouncer(const Duration(milliseconds: 150));
+  String state = '';
+  void search(String query) {
+    state = query;
+    _debouncer.call(() async {
+      state = await _load(query);
+    });
+  }
+  Future<String> _load(String query) async => query;
+}
+''');
+    await assertAllows(r'''
+import 'search_notifier.dart';
+class TextField { TextField({required void Function(String) onChanged}); }
+class Provider { final notifier = SearchNotifier(); }
+class Ref { SearchNotifier read(SearchNotifier notifier) => notifier; }
+final searchProvider = Provider();
+Object build(Ref ref) =>
+    TextField(onChanged: (value) => ref.read(searchProvider.notifier).search(value));
+''');
+  }
+
+  /// debounce-gate-batch.md:21-31 DO: Timer cancel-and-restart in the widget.
+  Future<void> test_allowsSkillTimerDebounceDo() async {
+    await assertAllows(r'''
+import 'dart:async';
+class TextField { TextField({required void Function(String) onChanged}); }
+class SearchNotifier { Future<void> search(String query) async {} }
+class Provider { final notifier = SearchNotifier(); }
+class Ref { SearchNotifier read(SearchNotifier notifier) => notifier; }
+final searchProvider = Provider();
+class SearchSheet {
+  SearchSheet(this.ref);
+  final Ref ref;
+  Timer? _debounce;
+  Object build() => TextField(onChanged: (v) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 150), () {
+      ref.read(searchProvider.notifier).search(v);
+    });
+  });
+}
+''');
+  }
+}
+
+const _formNotifierSource = r'''
+class TextField { TextField({required void Function(String) onChanged}); }
+class FormState {
+  const FormState({this.draftName = '', this.nameError, this.value = ''});
+  final String draftName;
+  final String? nameError;
+  final String value;
+  FormState copyWith({String? draftName, String? nameError, String? value}) => FormState(
+    draftName: draftName ?? this.draftName,
+    nameError: nameError,
+    value: value ?? this.value,
+  );
+}
+class FormNotifier {
+  FormState state = const FormState();
+  void update(String value) {
+    state = state.copyWith(value: value);
+    if (value.isEmpty) return;
+  }
+  void setName(String value) {
+    String? validationMessage;
+    if (value.isEmpty) validationMessage = 'Name required';
+    if (value.length < 3) validationMessage = 'Name too short';
+    state = state.copyWith(draftName: value, nameError: validationMessage);
+  }
+}
+''';
 
 @reflectiveTest
 final class SliderOnChangedNoDebounceTest extends _RuntimeBugRuleTest {

@@ -1,11 +1,13 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Avoid dynamic except at JSON map boundaries.
 ///
 /// Why: `dynamic` disables static checking in normal app code and hides runtime errors. The only
-/// built-in allowance is `Map<String, dynamic>` because JSON payloads commonly need that shape.
+/// built-in allowance is `Map<String, dynamic>` (including `<String, dynamic>{}` literals and
+/// `cast<String, dynamic>()`) because JSON payloads commonly need that shape.
 /// For untyped runtime APIs, keep the lint visible and add a targeted ignore with a local reason.
 final class AvoidDynamicExceptJsonMaps extends GeneratedNamedTypeCheckRule {
   static const LintCode code = LintCode(
@@ -26,20 +28,9 @@ final class AvoidDynamicExceptJsonMaps extends GeneratedNamedTypeCheckRule {
   @override
   void checkNamedType(NamedType node) {
     if (node.name.lexeme != 'dynamic') return;
-    if (_isAllowedJsonMapDynamic(node)) return;
+    if (isJsonMapDynamicValueType(node)) return;
     if (_isAllowedJsonMapCastDynamic(node)) return;
     reportAtNode(node);
-  }
-
-  bool _isAllowedJsonMapDynamic(NamedType node) {
-    final parent = node.parent;
-    if (parent is! TypeArgumentList) return false;
-    final mapType = parent.parent;
-    if (mapType is! NamedType || mapType.name.lexeme != 'Map') return false;
-    final arguments = parent.arguments;
-    if (arguments.length != 2) return false;
-    final keyType = arguments.first;
-    return keyType is NamedType && keyType.name.lexeme == 'String' && arguments.last == node;
   }
 
   bool _isAllowedJsonMapCastDynamic(NamedType node) {

@@ -11,9 +11,15 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when an untyped or non-recoverable value is thrown.
 ///
+/// Resolved `dart:core` `Error.throwWithStackTrace` calls follow the same
+/// contract, except when they propagate the error and stack trace caught by
+/// the same enclosing catch clause. The documented scoped Riverpod provider
+/// stub (`@Riverpod(dependencies: [...])` with an expression body of
+/// `throw UnimplementedError()`) is allowed because it must be overridden.
 /// Typed [Exception] subtypes, including `FormatException`, may be thrown by
 /// parsers and infrastructure code. Throws in resolved Flutter `Widget` or
 /// `State` members, Flutter widget callbacks, and Riverpod notifier methods
+/// (hand-written or `@riverpod` codegen, resolved through `AnyNotifier`)
 /// remain warnings. Direct same-unit function and method references passed to
 /// Flutter callbacks are recognized. The rule cannot prove that a caller
 /// catches a failure or discover every callback connection across files.
@@ -22,6 +28,7 @@ class AvoidThrow extends AnalysisRule {
     'avoid_throw',
     'Avoid throw expressions.',
     correctionMessage: 'Return a typed failure or use the project error boundary.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidThrow()
@@ -38,6 +45,7 @@ class AvoidThrow extends AnalysisRule {
     if (isGeneratedRuleContext(context)) return;
     final visitor = _Visitor(this, context.definingUnit.file.path);
     registry.addThrowExpression(this, visitor);
+    registry.addMethodInvocation(this, visitor);
   }
 }
 
@@ -50,10 +58,24 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitThrowExpression(ThrowExpression node) {
-    if (_isValueObjectArgumentGuard(node, path)) return;
+    if (_isValueObjectArgumentGuard(node, path) || _isScopedProviderOverrideStub(node)) return;
     if (_isRecoverableException(node.expression.staticType) && !_isPresentationContext(node)) {
       return;
     }
+    rule.reportAtNode(node);
+  }
+
+  /// Applies the direct-throw contract to resolved `dart:core`
+  /// `Error.throwWithStackTrace`, except when it propagates the error and
+  /// stack trace caught by the same enclosing catch clause.
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (!_isCoreThrowWithStackTrace(node.methodName.element)) return;
+    final arguments = node.argumentList.arguments;
+    if (arguments.length != 2) return;
+    final error = arguments[0].argumentExpression;
+    if (_isCaughtPairPropagation(node, error, arguments[1].argumentExpression)) return;
+    if (_isRecoverableException(error.staticType) && !_isPresentationContext(node)) return;
     rule.reportAtNode(node);
   }
 
@@ -123,7 +145,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   bool _isRiverpodNotifierMethod(MethodDeclaration method) {
     final classElement = enclosingClass(method)?.declaredFragment?.element;
-    return classElement != null && _riverpodNotifierChecker.isSuperOf(classElement);
+    return classElement != null && riverpodNotifierChecker.isSuperOf(classElement);
   }
 }
 
@@ -175,13 +197,10 @@ const _exceptionChecker = TypeChecker.fromUrl('dart:core#Exception');
 const _errorChecker = TypeChecker.fromUrl('dart:core#Error');
 const _flutterWidgetChecker = TypeChecker.fromName('Widget', packageName: 'flutter');
 const _flutterStateChecker = TypeChecker.fromName('State', packageName: 'flutter');
-const _riverpodNotifierChecker = TypeChecker.any([
-  TypeChecker.fromName('Notifier', packageName: 'riverpod'),
-  TypeChecker.fromName('AsyncNotifier', packageName: 'riverpod'),
-  TypeChecker.fromName('StreamNotifier', packageName: 'riverpod'),
-  TypeChecker.fromName('StateNotifier', packageName: 'state_notifier'),
-]);
-
+const _riverpodAnnotationChecker = TypeChecker.fromName(
+  'Riverpod',
+  packageName: 'riverpod_annotation',
+);
 bool _isRecoverableException(DartType? type) {
   if (type is! InterfaceType || !_exceptionChecker.isAssignableFromType(type)) {
     return false;
@@ -192,36 +211,155 @@ bool _isRecoverableException(DartType? type) {
   return element.name != 'Exception' || element.library.identifier != 'dart:core';
 }
 
+bool _isCoreThrowWithStackTrace(Element? element) {
+  if (element is! MethodElement || !element.isStatic || element.name != 'throwWithStackTrace') {
+    return false;
+  }
+  final owner = element.enclosingElement;
+  return owner is ClassElement && owner.name == 'Error' && owner.library.identifier == 'dart:core';
+}
+
+bool _isCaughtPairPropagation(AstNode node, Expression error, Expression stackTrace) {
+  if (error is! SimpleIdentifier || stackTrace is! SimpleIdentifier) return false;
+  for (var clause = node.thisOrAncestorOfType<CatchClause>(); clause != null;) {
+    final caughtError = clause.exceptionParameter?.declaredFragment?.element;
+    if (caughtError != null && caughtError == error.element) {
+      final caughtStack = clause.stackTraceParameter?.declaredFragment?.element;
+      return caughtStack != null && caughtStack == stackTrace.element;
+    }
+    clause = clause.parent?.thisOrAncestorOfType<CatchClause>();
+  }
+  return false;
+}
+
+/// The documented scoped-provider stub that must be overridden before use:
+/// `@Riverpod(dependencies: [...]) T name(Ref ref) => throw UnimplementedError();`
+bool _isScopedProviderOverrideStub(ThrowExpression node) {
+  final body = node.parent;
+  final function = body?.parent?.parent;
+  if (body is! ExpressionFunctionBody ||
+      function is! FunctionDeclaration ||
+      function.parent is! CompilationUnit) {
+    return false;
+  }
+  final error = node.expression;
+  return error is InstanceCreationExpression &&
+      error.argumentList.arguments.isEmpty &&
+      _isCoreClassType(error.staticType, 'UnimplementedError') &&
+      function.metadata.any(_isScopedRiverpodAnnotation);
+}
+
+bool _isScopedRiverpodAnnotation(Annotation annotation) {
+  final constructor = annotation.element;
+  if (constructor is! ConstructorElement ||
+      !_riverpodAnnotationChecker.isExactly(constructor.enclosingElement)) {
+    return false;
+  }
+  final arguments = annotation.arguments?.arguments ?? const <Argument>[];
+  return arguments.any(
+    (argument) => argument is NamedArgument && argument.name.lexeme == 'dependencies',
+  );
+}
+
 bool _isValueObjectArgumentGuard(ThrowExpression node, String path) {
   if (!path.replaceAll('\\', '/').contains('/domain/values/')) return false;
-  final error = node.expression;
-  if (error is! InstanceCreationExpression || error.constructorName.element?.name != 'value') {
-    return false;
+  final parameter = _argumentErrorValueParameter(node.expression);
+  if (parameter == null) return false;
+  IfStatement? guard;
+  for (AstNode? parent = node.parent; parent != null; parent = parent.parent) {
+    if (parent is IfStatement && _contains(parent.thenStatement, node)) guard ??= parent;
+    if (parent is ConstructorDeclaration) {
+      return parent.factoryKeyword != null &&
+          guard != null &&
+          _referencesParameter(guard.expression, parameter, parent.body, {});
+    }
+    if (parent is MethodDeclaration) {
+      return _isPrivateStaticClassHelper(parent) &&
+          guard != null &&
+          _referencesParameter(guard.expression, parameter, parent.body, {});
+    }
   }
-  final type = error.staticType;
-  if (type is! InterfaceType ||
-      type.element.name != 'ArgumentError' ||
-      type.element.library.identifier != 'dart:core') {
-    return false;
+  return false;
+}
+
+/// value-objects.md "extracted guard helper": `static double _guard(...)` on the
+/// Value Object class, called from its public factory.
+bool _isPrivateStaticClassHelper(MethodDeclaration method) =>
+    method.isStatic &&
+    method.name.lexeme.startsWith('_') &&
+    method.parent?.parent is ClassDeclaration;
+
+/// The formal parameter passed as the value of a `dart:core`
+/// `ArgumentError.value(...)` creation, if [error] is one.
+FormalParameterElement? _argumentErrorValueParameter(Expression error) {
+  if (error is! InstanceCreationExpression ||
+      error.constructorName.element?.name != 'value' ||
+      !_isCoreClassType(error.staticType, 'ArgumentError')) {
+    return null;
   }
   final arguments = error.argumentList.arguments;
-  if (arguments.isEmpty) return false;
+  if (arguments.isEmpty) return null;
   final value = arguments.first.argumentExpression;
-  if (value is! SimpleIdentifier || value.element is! FormalParameterElement) return false;
-  IfStatement? guard;
-  ConstructorDeclaration? factory;
-  for (AstNode? parent = node.parent; parent != null; parent = parent.parent) {
-    if (parent is IfStatement &&
-        parent.thenStatement.offset <= node.offset &&
-        parent.thenStatement.end >= node.end) {
-      guard ??= parent;
-    }
-    if (parent is ConstructorDeclaration) {
-      factory = parent;
-      break;
+  final parameter = value is SimpleIdentifier ? value.element : null;
+  return parameter is FormalParameterElement ? parameter : null;
+}
+
+bool _contains(AstNode outer, AstNode inner) =>
+    outer.offset <= inner.offset && outer.end >= inner.end;
+
+bool _isCoreClassType(DartType? type, String name) =>
+    type is InterfaceType &&
+    type.element.name == name &&
+    type.element.library.identifier == 'dart:core';
+
+/// Whether [expression] reads [parameter] directly or through a `final` local
+/// of [body] whose initializer (transitively) reads it.
+bool _referencesParameter(
+  Expression expression,
+  FormalParameterElement parameter,
+  FunctionBody body,
+  Set<Element> visited,
+) {
+  final identifiers = <SimpleIdentifier>[];
+  expression.accept(_IdentifierCollector(identifiers));
+  for (final identifier in identifiers) {
+    final element = identifier.element;
+    if (element == parameter) return true;
+    if (element is! LocalVariableElement || !element.isFinal || !visited.add(element)) continue;
+    final initializer = _localInitializer(body, element);
+    if (initializer != null && _referencesParameter(initializer, parameter, body, visited)) {
+      return true;
     }
   }
-  return factory?.factoryKeyword != null &&
-      guard != null &&
-      RegExp('\\b${RegExp.escape(value.name)}\\b').hasMatch(guard.expression.toSource());
+  return false;
+}
+
+Expression? _localInitializer(FunctionBody body, LocalVariableElement local) {
+  final declarations = <VariableDeclaration>[];
+  body.accept(_LocalDeclarationCollector(declarations));
+  for (final declaration in declarations) {
+    if (declaration.declaredFragment?.element == local) return declaration.initializer;
+  }
+  return null;
+}
+
+final class _IdentifierCollector extends RecursiveAstVisitor<void> {
+  const _IdentifierCollector(this.identifiers);
+
+  final List<SimpleIdentifier> identifiers;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) => identifiers.add(node);
+}
+
+final class _LocalDeclarationCollector extends RecursiveAstVisitor<void> {
+  const _LocalDeclarationCollector(this.declarations);
+
+  final List<VariableDeclaration> declarations;
+
+  @override
+  void visitVariableDeclaration(VariableDeclaration node) {
+    declarations.add(node);
+    super.visitVariableDeclaration(node);
+  }
 }

@@ -321,17 +321,40 @@ final class UnvalidatedPersistedMapCastTest extends _HivePersistenceRuleTest {
   bool get addIgnorePrefix => false;
 
   @override
+  void setUp() {
+    newPackage('hive_ce').addFile('lib/hive_ce.dart', r'''
+abstract class Box<E> {
+  E? get(dynamic key);
+  Iterable<E> get values;
+  Future<void> put(dynamic key, E value);
+}
+''');
+    super.setUp();
+    // The analyzer mock SDK omits JSON decoding; add the real dart:convert signature.
+    final convert = sdkRoot.getFile('lib/convert/convert.dart');
+    convert.writeAsStringSync(
+      '${convert.readAsStringSync()}\nObject? jsonDecode(String source) => throw 0;\n',
+    );
+  }
+
+  @override
   String get source => r'''
-Object? readStoredValue(Object? raw) {
-  return raw as Map<String, dynamic>;
+import 'package:hive_ce/hive_ce.dart';
+
+Map<String, dynamic> readStoredValue(Box<Object?> box) {
+  return box.get('item') as Map<String, dynamic>;
 }
 ''';
 
   Future<void> test_allowsCheckedMapNormalization() async {
-    await assertAllows(r'''
+    await assertAllows(
+      r'''
+import 'package:hive_ce/hive_ce.dart';
+
 class PersistedMapFormatException implements Exception {}
 
-Map<String, dynamic> normalizeStoredMap(Object? raw) {
+Map<String, dynamic> normalizeStoredMap(Box<Object?> box) {
+  final raw = box.get('item');
   if (raw is! Map) throw PersistedMapFormatException();
   final entries = <String, dynamic>{};
   for (final entry in raw.entries) {
@@ -340,7 +363,10 @@ Map<String, dynamic> normalizeStoredMap(Object? raw) {
   }
   return entries;
 }
-''');
+''',
+      path: path,
+      addIgnorePrefix: false,
+    );
   }
 
   Future<void> test_allowsJsonBoundaryCastOutsidePersistencePath() async {
@@ -361,10 +387,71 @@ Map<String, dynamic> decodeResponse(Object? raw) => raw as Map<String, dynamic>;
     await assertNoDiagnosticsInFile(filePath);
   }
 
+  Future<void> test_allowsJsonDecoderInDatasourcesFolder() async {
+    await assertAllows(
+      r'''
+import 'dart:convert';
+
+class ProductModel {
+  ProductModel.fromJson(Map<String, dynamic> json);
+}
+
+List<ProductModel> decodeProducts(String responseBody) {
+  final Object? decoded = jsonDecode(responseBody);
+
+  return switch (decoded) {
+    List<Object?> items => [
+        for (final item in items)
+          ProductModel.fromJson(item as Map<String, dynamic>),
+      ],
+    _ => throw FormatException(),
+  };
+}
+''',
+      path: '$testPackageLibPath/features/products/data/datasources/product_json_decoder.dart',
+      addIgnorePrefix: false,
+    );
+  }
+
+  Future<void> test_allowsJsonDecodedCacheValueInHiveLibrary() async {
+    await assertAllows(
+      r'''
+import 'dart:convert';
+
+import 'package:hive_ce/hive_ce.dart';
+
+Map<String, dynamic> readCachedJson(Box<String> box) {
+  final decoded = jsonDecode(box.get('item') ?? '{}');
+  return decoded as Map<String, dynamic>;
+}
+''',
+      path: path,
+      addIgnorePrefix: false,
+    );
+  }
+
+  Future<void> test_reportsHiveValuesLoopCast() async {
+    const source = r'''
+import 'package:hive_ce/hive_ce.dart';
+
+List<Map<String, dynamic>> readAll(Box<Object?> box) {
+  return [
+    for (final raw in box.values) raw as Map<String, dynamic>,
+  ];
+}
+''';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [compatLint(source, 'as Map<String, dynamic>', ruleName)]);
+  }
+
   Future<void> test_reportsLocalDatasourceMapCast() async {
     final filePath = '$testPackageLibPath/features/items/data/datasources/item_datasource.dart';
     const source = r'''
-Object? readStoredValue(Object? raw) {
+import 'package:hive_ce/hive_ce.dart';
+
+Object? readStoredValue(Box<Object?> box) {
+  final raw = box.get('item');
   return raw as Map<String, dynamic>;
 }
 ''';

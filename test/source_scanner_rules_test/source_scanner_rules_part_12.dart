@@ -13,7 +13,12 @@ part 'services/functions.dart';
 part 'services/storage.dart';
 part 'services/tables_db.dart';
 part 'services/teams.dart';
+part 'services/service.dart';
 ''');
+    appwrite.addFile(
+      'lib/services/service.dart',
+      "part of '../appwrite.dart'; abstract class Service { void call(); }",
+    );
     appwrite.addFile('lib/services/account.dart', "part of '../appwrite.dart'; class Account {}");
     appwrite.addFile(
       'lib/services/functions.dart',
@@ -35,6 +40,7 @@ export 'src/player_value.dart';
       'class YoutubePlayerController {}',
     );
     youtube.addFile('lib/src/player_value.dart', 'class YoutubePlayerValue {}');
+    _addTestingNavigationPackages();
     super.setUp();
   }
 
@@ -44,14 +50,14 @@ export 'src/player_value.dart';
   String get needle => 'class MockUserRepository';
   @override
   String get source => '''
-class Mock {}
+import 'package:mocktail/mocktail.dart';
 class UserRepository {}
 class MockUserRepository extends Mock implements UserRepository {}
 ''';
 
   Future<void> test_allowsAbstractContractsWithoutNamingPrefix() async {
     await assertAllows(r'''
-class Mock { dynamic noSuchMethod(Invocation invocation) => null; }
+import 'package:mocktail/mocktail.dart';
 abstract interface class TestBridge { void send(); }
 abstract class BackendPort { void send(); }
 class MockTestBridge extends Mock implements TestBridge {}
@@ -63,7 +69,7 @@ class MockAlias extends Mock implements BridgeAlias {}
 
   Future<void> test_reportsConcreteContractWithInterfacePrefix() async {
     const source = r'''
-class Mock { dynamic noSuchMethod(Invocation invocation) => null; }
+import 'package:mocktail/mocktail.dart';
 interface class IConcreteBridge { void send() {} }
 class MockBridge extends Mock implements IConcreteBridge {}
 ''';
@@ -75,36 +81,58 @@ class MockBridge extends Mock implements IConcreteBridge {}
     ]);
   }
 
-  Future<void> test_allowsExternalSdkPartDeclarations() async {
-    final filePath = '$testPackageRootPath/test/helpers/appwrite_test_utils.dart';
-    newFile(filePath, r'''
+  /// #77: concrete SDK classes are mocked concretes regardless of package.
+  Future<void> test_reportsExternalSdkPartDeclarations() async {
+    const source = r'''
 import 'package:appwrite/appwrite.dart';
-class Mock {}
+import 'package:mocktail/mocktail.dart';
 class MockFunctions extends Mock implements Functions {}
 class MockStorage extends Mock implements Storage {}
 class MockTablesDB extends Mock implements TablesDB {}
 class MockAccount extends Mock implements Account {}
 class MockTeams extends Mock implements Teams {}
+''';
+    final filePath = '$testPackageRootPath/test/helpers/appwrite_test_utils.dart';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      for (final name in ['Functions', 'Storage', 'TablesDB', 'Account', 'Teams'])
+        compatLint(source, 'class Mock$name', ruleName),
+    ]);
+  }
+
+  /// #77: abstract contracts declared in a package part file stay allowed.
+  Future<void> test_allowsExternalAbstractPartDeclaration() async {
+    final filePath = '$testPackageRootPath/test/helpers/appwrite_service_test_utils.dart';
+    newFile(filePath, r'''
+import 'package:appwrite/appwrite.dart';
+import 'package:mocktail/mocktail.dart';
+class MockService extends Mock implements Service {}
 ''');
 
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsExternalPluginControllerMocks() async {
-    final filePath = '$testPackageRootPath/test/core/widgets/exercise_demo_sheet_test.dart';
-    newFile(filePath, r'''
+  /// #77: concrete plugin controllers are mocked concretes too.
+  Future<void> test_reportsExternalPluginControllerMocks() async {
+    const source = r'''
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
-class Mock {}
+import 'package:mocktail/mocktail.dart';
 class MockYoutubePlayerController extends Mock implements YoutubePlayerController {}
 class MockYoutubePlayerValue extends Mock implements YoutubePlayerValue {}
-''');
+''';
+    final filePath = '$testPackageRootPath/test/core/widgets/exercise_demo_sheet_test.dart';
+    newFile(filePath, source);
 
-    await assertNoDiagnosticsInFile(filePath);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'class MockYoutubePlayerController', ruleName),
+      compatLint(source, 'class MockYoutubePlayerValue', ruleName),
+    ]);
   }
 
   Future<void> test_localConcreteSdkNameStillReports() async {
     const source = r'''
-class Mock {}
+import 'package:mocktail/mocktail.dart';
 class Account {}
 class MockAccount extends Mock implements Account {}
 ''';
@@ -118,7 +146,7 @@ class MockAccount extends Mock implements Account {}
 
   Future<void> test_localFunctionsAndStorageConcreteNamesStillReport() async {
     const source = r'''
-class Mock {}
+import 'package:mocktail/mocktail.dart';
 class Functions {}
 class Storage {}
 class MockFunctions extends Mock implements Functions {}
@@ -135,7 +163,7 @@ class MockStorage extends Mock implements Storage {}
 
   Future<void> test_allowsLocalFunctionsAndStorageInterfaces() async {
     await assertAllows(r'''
-class Mock { dynamic noSuchMethod(Invocation invocation) => null; }
+import 'package:mocktail/mocktail.dart';
 abstract interface class Functions { void execute(); }
 abstract interface class Storage { void save(); }
 class MockFunctions extends Mock implements Functions {}
@@ -145,7 +173,7 @@ class MockStorage extends Mock implements Storage {}
 
   Future<void> test_concreteAliasStillReports() async {
     const source = r'''
-class Mock {}
+import 'package:mocktail/mocktail.dart';
 class ConcreteBridge {}
 typedef BridgeAlias = ConcreteBridge;
 class MockBridge extends Mock implements BridgeAlias {}
@@ -156,6 +184,40 @@ class MockBridge extends Mock implements BridgeAlias {}
     await assertDiagnosticsInFile(filePath, [
       compatLint(analyzedSource, 'class MockBridge', ruleName),
     ]);
+  }
+
+  Future<void> test_reportsFakeOfConcreteContract() async {
+    const source = r'''
+import 'package:mocktail/mocktail.dart';
+class ProductRepository {}
+class FakeProductRepository extends Fake implements ProductRepository {}
+''';
+    final filePath = '$testPackageRootPath/test/fake_concrete_test.dart';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    newFile(filePath, analyzedSource);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, 'class FakeProductRepository', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillFakeOfInterface() async {
+    await assertAllows(r'''
+import 'package:mocktail/mocktail.dart';
+abstract interface class IProductRepository { Future<List<Object>> fetchAll(); }
+class FakeProductRepository extends Fake implements IProductRepository {
+  List<Object> items = [];
+  @override
+  Future<List<Object>> fetchAll() async => items;
+}
+''', path: '$testPackageRootPath/test/fake_interface_test.dart');
+  }
+
+  Future<void> test_allowsLocalClassNamedMock() async {
+    await assertAllows(r'''
+class Mock {}
+class ProductRepository {}
+class MockProductRepository extends Mock implements ProductRepository {}
+''', path: '$testPackageRootPath/test/local_mock_name_test.dart');
   }
 }
 
@@ -193,23 +255,62 @@ final class TestTapAtTest extends _TestFileRuleTest {
 @reflectiveTest
 final class TestInlineValueKeyTest extends _TestRuleTest {
   @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'test_inline_value_key';
   @override
   String get needle => "ValueKey('todo-row')";
   @override
   String get source => r'''
-class ValueKey<T> {
-  const ValueKey(T value);
-}
+import 'package:flutter/foundation.dart';
 
 void main() {
   const ValueKey('todo-row');
 }
 ''';
+
+  Future<void> test_reportsInlineKeyFactoryString() async {
+    const source = r'''
+import 'package:flutter/foundation.dart';
+
+void main() {
+  const Key('probe.save');
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, "Key('probe.save')", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsRegistryConstantKeys() async {
+    await assertAllows(r'''
+import 'package:flutter/foundation.dart';
+
+abstract final class AppWidgetKeys {
+  static const productCloseButton = 'product.close.button';
+}
+
+void main() {
+  const ValueKey(AppWidgetKeys.productCloseButton);
+  const Key(AppWidgetKeys.productCloseButton);
+}
+''');
+  }
 }
 
 @reflectiveTest
 final class TestFirstMatchFinderTest extends _TestFileRuleTest {
+  @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
   @override
   String get ruleName => 'test_first_match_finder';
   @override
@@ -230,6 +331,291 @@ void main() {
 ''');
 
     await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsFirstOnFinder() async {
+    const source = r'''
+import 'package:flutter_test/flutter_test.dart';
+
+Future<void> tapFirst(WidgetTester tester) async {
+  await tester.tap(find.byType(Object).first);
+}
+''';
+    final filePath = '$testPackageRootPath/test/first_finder_test.dart';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    newFile(filePath, analyzedSource);
+    await assertDiagnosticsInFile(filePath, [compatLint(analyzedSource, 'first);', ruleName)]);
+  }
+
+  Future<void> test_allowsIterableFirstInsideFinderArgument() async {
+    await assertAllows(r'''
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  final names = <String>['a'];
+  find.text(names.first);
+}
+''', path: '$testPackageRootPath/test/finder_argument_test.dart');
+  }
+}
+
+@reflectiveTest
+final class TestNotifierOverrideTest extends _TestFileRuleTest {
+  @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'test_notifier_override';
+  @override
+  String get needle => 'overrideWith(FakeProductNames.new)';
+  @override
+  String get source => '''
+import 'package:riverpod/riverpod.dart';
+
+class ProductNames extends Notifier<List<String>> {
+  @override
+  List<String> build() => const [];
+}
+
+class FakeProductNames extends ProductNames {
+  @override
+  List<String> build() => const ['fake'];
+}
+
+final productNamesProvider = NotifierProvider<ProductNames, List<String>>(ProductNames.new);
+final overrides = [productNamesProvider.overrideWith(FakeProductNames.new)];
+''';
+
+  Future<void> test_reportsFamilyNotifierOverride() async {
+    const source = '''
+import 'package:riverpod/riverpod.dart';
+
+class ProductDetail extends AsyncNotifier<String> {
+  @override
+  Future<String> build() async => '';
+}
+
+final NotifierProviderFamily<ProductDetail, Object?, String> productDetailProvider =
+    throw ArgumentError('stub');
+final overrides = [productDetailProvider.overrideWith2((id) => ProductDetail())];
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    final filePath = '$testPackageRootPath/test/product_detail_test.dart';
+    newFile(filePath, analyzedSource);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, 'overrideWith2((id)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillBuildValueAndRepositoryOverrides() async {
+    await assertAllows('''
+import 'package:riverpod/riverpod.dart';
+
+abstract interface class IProductRepository {}
+class FakeProductRepository implements IProductRepository {}
+
+class Counter extends Notifier<int> {
+  @override
+  int build() => 0;
+}
+
+final counterProvider = NotifierProvider<Counter, int>(Counter.new);
+final productRepositoryProvider = Provider<IProductRepository>((ref) => FakeProductRepository());
+final overrides = [
+  counterProvider.overrideWithBuild((ref, notifier) => 42),
+  counterProvider.overrideWithValue(1),
+  productRepositoryProvider.overrideWith((ref) => FakeProductRepository()),
+  productRepositoryProvider.overrideWithValue(FakeProductRepository()),
+];
+''', path: '$testPackageRootPath/test/overrides_test.dart');
+  }
+
+  Future<void> test_allowsNotifierOverrideOutsideTests() async {
+    await assertAllows('''
+import 'package:riverpod/riverpod.dart';
+
+class Auth extends Notifier<bool> {
+  @override
+  bool build() => true;
+}
+
+class SignedOutAuth extends Auth {
+  @override
+  bool build() => false;
+}
+
+final authProvider = NotifierProvider<Auth, bool>(Auth.new);
+final overrides = [authProvider.overrideWith(SignedOutAuth.new)];
+''', path: '$testPackageLibPath/main_dev.dart');
+  }
+}
+
+@reflectiveTest
+final class TestE2eBlindSleepTest extends _TestRuleTest {
+  @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'test_e2e_blind_sleep';
+  @override
+  String get path => '$testPackageRootPath/integration_test/app_flow_test.dart';
+  @override
+  String get needle => 'Future<void>.delayed(const Duration(seconds: 2));';
+  @override
+  String get source => '''
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets('flow', (tester) async {
+    await Future<void>.delayed(const Duration(seconds: 2));
+    await tester.pump();
+  });
+}
+''';
+
+  Future<void> test_reportsHostDriverDelay() async {
+    const source = '''
+Future<void> main() async {
+  await Future.delayed(const Duration(milliseconds: 500));
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    final filePath = '$testPackageRootPath/test_driver/app_driver.dart';
+    newFile(filePath, analyzedSource);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, 'Future.delayed(const Duration(milliseconds: 500));', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsPollingLoopAndUnawaitedDelay() async {
+    await assertAllows('''
+import 'dart:async';
+
+Future<void> waitUntil(bool Function() ready) async {
+  while (!ready()) {
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+  }
+}
+
+void scheduleLater() {
+  unawaited(Future<void>.delayed(const Duration(seconds: 1)));
+}
+''', path: '$testPackageRootPath/integration_test/helpers/wait_helpers.dart');
+  }
+
+  Future<void> test_allowsDelayOutsideE2e() async {
+    await assertAllows('''
+Future<void> settle() async {
+  await Future<void>.delayed(const Duration(milliseconds: 10));
+}
+''', path: '$testPackageRootPath/test/unit/settle_test.dart');
+  }
+
+  Future<void> test_allowsLocalDelayedLookalike() async {
+    await assertAllows('''
+class Clock {
+  static Future<void> delayed(Duration duration) async {}
+}
+
+Future<void> main() async {
+  await Clock.delayed(const Duration(seconds: 1));
+}
+''', path: '$testPackageRootPath/integration_test/clock_test.dart');
+  }
+}
+
+@reflectiveTest
+final class TestTextLabelSelectorTest extends _TestFileRuleTest {
+  @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'test_text_label_selector';
+  @override
+  String get needle => "find.text('Save'));";
+  @override
+  String get source => '''
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets('saves', (tester) async {
+    await tester.tap(find.text('Save'));
+  });
+}
+''';
+
+  Future<void> test_reportsWidgetWithTextAndNestedLabelFinders() async {
+    const source = '''
+import 'package:flutter_test/flutter_test.dart';
+
+class ElevatedButton {}
+
+void main() {
+  testWidgets('edits', (tester) async {
+    await tester.longPress(find.widgetWithText(ElevatedButton, 'Delete'));
+    await tester.enterText(find.descendant(of: find.byType(ElevatedButton), matching: find.textContaining('Name')), 'x');
+  });
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    final filePath = '$testPackageRootPath/test/edit_test.dart';
+    newFile(filePath, analyzedSource);
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, "find.widgetWithText(ElevatedButton, 'Delete'));", ruleName),
+      compatLint(analyzedSource, "find.textContaining('Name')), 'x');", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillTextAssertionsAndKeyTaps() async {
+    await assertAllows('''
+import 'package:flutter/foundation.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+abstract final class AppWidgetKeys {
+  static const saveButton = ValueKey<String>('save_button');
+}
+
+void main() {
+  testWidgets('lists products', (tester) async {
+    await tester.tap(find.byKey(AppWidgetKeys.saveButton));
+    expect(find.text('Widget'), findsOneWidget);
+  });
+}
+''', path: '$testPackageRootPath/test/product_list_test.dart');
+  }
+
+  Future<void> test_allowsStableTextInE2e() async {
+    await assertAllows('''
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets('e2e', (tester) async {
+    await tester.tap(find.text('Save'));
+  });
+}
+''', path: '$testPackageRootPath/integration_test/save_flow_test.dart');
+  }
+
+  Future<void> test_allowsNonLiteralLabel() async {
+    await assertAllows('''
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets('localized', (tester) async {
+    const label = 'Save';
+    await tester.tap(find.text(label));
+  });
+}
+''', path: '$testPackageRootPath/test/localized_test.dart');
   }
 }
 
@@ -443,6 +829,36 @@ class _UsdMoney extends Money {
         'const factory Money.usd(int cents, Currency currency) = _UsdMoney;',
         ruleName,
       ),
+    ]);
+  }
+
+  Future<void> test_allowsCompositeCanonicalRedirect() async {
+    await assertAllows(r'''
+// ignore_for_file: redirect_to_non_class
+enum Currency { usd, eur }
+class Money {
+  const Money._();
+  const factory Money({required int cents, required Currency currency}) = _Money;
+  factory Money.usd(double dollars) => Money(cents: (dollars * 100).round(), currency: .usd);
+}
+''', path: '$testPackageLibPath/core/domain/values/money.dart');
+  }
+
+  Future<void> test_reportsSingleFieldAndNonConstPublicRedirects() async {
+    final filePath = '$testPackageLibPath/core/domain/values/email.dart';
+    const source = r'''
+// ignore_for_file: redirect_to_non_class
+class Email {
+  const factory Email({required String value}) = _Email;
+  factory Email.raw(String value) = _RawEmail;
+  const Email._();
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'const factory Email({required String value}) = _Email;', ruleName),
+      compatLint(source, 'factory Email.raw(String value) = _RawEmail;', ruleName),
     ]);
   }
 

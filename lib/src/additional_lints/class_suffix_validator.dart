@@ -3,6 +3,7 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
@@ -43,6 +44,10 @@ abstract class ClassSuffixValidator extends AnalysisRule {
   @override
   LintCode get diagnosticCode => _lintCode;
 
+  /// Whether [node], which declares [element], must carry [requiredSuffix].
+  bool requiresSuffix(ClassDeclaration node, ClassElement element) =>
+      typeChecker.isSuperOf(element);
+
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
     final visitor = _ClassSuffixVisitor(this);
@@ -64,7 +69,7 @@ class _ClassSuffixVisitor extends SimpleAstVisitor<void> {
     final className = name.lexeme;
 
     // Check if class extends/implements the target type and lacks the suffix
-    if (rule.typeChecker.isSuperOf(element) && !className.endsWith(rule.requiredSuffix)) {
+    if (!className.endsWith(rule.requiredSuffix) && rule.requiresSuffix(node, element)) {
       rule.reportAtToken(name, arguments: [className]);
     }
   }

@@ -99,10 +99,21 @@ final class PreferPrivateExtensionTypeFieldTest extends AnalysisRuleTest {
 
   Future<void> test_publicRepresentationField_lint() async {
     const source = r'''
-extension type UserId(String value) {}
+extension type UserId(String id) {}
 ''';
 
-    await assertDiagnostics(source, [lint(source.indexOf('value'), 'value'.length)]);
+    await assertDiagnostics(source, [lint(source.indexOf('id)'), 'id'.length)]);
+  }
+
+  Future<void> test_publicValueRepresentationField_noLint() async {
+    await assertNoDiagnostics(r'''
+extension type UserId(String value) {
+  bool get isValid => value.isNotEmpty;
+}
+extension type ProductId(String value) {}
+
+void deleteProduct(ProductId id) {}
+''');
   }
 
   Future<void> test_privateRepresentationField_noLint() async {

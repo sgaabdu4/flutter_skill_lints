@@ -1,9 +1,12 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_public_notifier_properties.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_ref_inside_state_dispose.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_immutable_provider_arguments.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/use_notifier_suffix.dart';
+import 'package:test/test.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
@@ -11,6 +14,7 @@ void main() {
     defineReflectiveTests(PreferImmutableProviderArgumentsTest);
     defineReflectiveTests(AvoidPublicNotifierPropertiesTest);
     defineReflectiveTests(AvoidRefInsideStateDisposeTest);
+    defineReflectiveTests(UseNotifierSuffixTest);
   });
 }
 
@@ -28,6 +32,10 @@ abstract class _RiverpodContractRuleTest extends AnalysisRuleTest {
   void _addRiverpodPackage() {
     newPackage('riverpod').addFile('lib/riverpod.dart', r'''
 class Ref {}
+
+abstract class AnyNotifier<StateT, ValueT> {}
+
+abstract class $Notifier<StateT> extends AnyNotifier<StateT, StateT> {}
 
 abstract class Notifier<T> {
   Ref get ref => throw UnimplementedError();
@@ -257,5 +265,71 @@ class HostState extends ConsumerState<ConsumerStatefulWidget> {
   }
 }
 ''');
+  }
+}
+
+@reflectiveTest
+final class UseNotifierSuffixTest extends _RiverpodContractRuleTest {
+  @override
+  void setUp() {
+    rule = UseNotifierSuffix();
+    super.setUp();
+  }
+
+  Future<void> test_generatedBaseWithoutSuffix_lint() async {
+    newFile('$testPackageLibPath/test.g.dart', r'''
+part of 'test.dart';
+
+abstract class _$Basket extends $Notifier<int> {}
+''');
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+part 'test.g.dart';
+
+class Basket extends _$Basket {}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('Basket extends'), 'Basket'.length)]);
+  }
+
+  Future<void> test_annotatedClassBeforeCodegen_lint() async {
+    const source = r'''
+// ignore_for_file: extends_non_class
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+@Riverpod(keepAlive: true)
+class Basket extends _$Basket {}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('Basket extends'), 'Basket'.length)]);
+  }
+
+  Future<void> test_manualNotifierWithoutSuffix_lint() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+class Counter extends Notifier<int> {}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('Counter'), 'Counter'.length)]);
+  }
+
+  Future<void> test_suffixedNotifiersAndNonNotifiers_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart' show $Notifier;
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+abstract class _$BasketNotifier extends $Notifier<int> {}
+
+@riverpod
+class BasketNotifier extends _$BasketNotifier {}
+
+@riverpod
+int basketTotal(Ref ref) => 0;
+
+class Basket {}
+''');
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(UseNotifierSuffix.code.severity, DiagnosticSeverity.ERROR);
   }
 }

@@ -11,7 +11,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
       'flutter_key_created_in_build',
       'Do not create keys inside build().',
       correctionMessage: 'Move stable keys to a field, registry, or source value outside build().',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags local key construction inside build methods so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
@@ -35,7 +35,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
       'flutter_unique_or_global_key',
       'Avoid UniqueKey and GlobalKey unless identity recreation or state access is required.',
       correctionMessage: 'Prefer ValueKey or ObjectKey for normal state preservation.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags UniqueKey and GlobalKey construction so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
@@ -67,7 +67,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
       'Avoid the Opacity widget for static opacity.',
       correctionMessage:
           'Use a semi-transparent color for static opacity or FadeTransition for animation.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags Opacity widget construction so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
@@ -85,7 +85,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
       'Avoid ShaderMask and ColorFilter saveLayer triggers in hot UI.',
       correctionMessage:
           'Prefer cheaper painting or precomputed assets when a saveLayer is not required.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags ShaderMask, ColorFiltered, and ColorFilter usage so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
@@ -108,7 +108,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
       'flutter_clip_save_layer',
       'Avoid Clip.antiAliasWithSaveLayer.',
       correctionMessage: 'Use border radius, Clip.hardEdge, or Clip.antiAlias when possible.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags Clip.antiAliasWithSaveLayer usage so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
@@ -131,7 +131,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
       'flutter_intrinsic_layout',
       'Avoid IntrinsicWidth and IntrinsicHeight in performance-sensitive UI.',
       correctionMessage: 'Prefer fixed constraints, ConstrainedBox, or direct layout.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description:
         'Flags intrinsic layout widgets so the Flutter skill violation is shown during analysis.',
@@ -149,7 +149,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
       'flutter_animated_builder_child',
       'AnimatedBuilder should pass static subtrees through child.',
       correctionMessage: 'Move static widgets to AnimatedBuilder.child and reuse child in builder.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags AnimatedBuilder calls without a child argument so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
@@ -175,7 +175,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
       'flutter_widget_operator_equals',
       'Do not override operator == on Widget classes.',
       correctionMessage: 'Use const constructors, stable inputs, and caching instead.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags operator == overrides on Widget classes so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {

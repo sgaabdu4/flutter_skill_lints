@@ -1,9 +1,12 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_assigning_notifiers.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_calling_notifier_members_inside_build.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nullable_async_value_pattern.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary_consumer_widgets.dart';
+import 'package:test/test.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
@@ -11,6 +14,7 @@ void main() {
     defineReflectiveTests(AvoidAssigningNotifiersTest);
     defineReflectiveTests(AvoidCallingNotifierMembersInsideBuildTest);
     defineReflectiveTests(AvoidNullableAsyncValuePatternTest);
+    defineReflectiveTests(AvoidUnnecessaryConsumerWidgetsTest);
   });
 }
 
@@ -313,5 +317,87 @@ String label(Box<String> box) {
   };
 }
 ''');
+  }
+}
+
+@reflectiveTest
+final class AvoidUnnecessaryConsumerWidgetsTest extends _RiverpodSafetyRuleTest {
+  @override
+  void setUp() {
+    rule = AvoidUnnecessaryConsumerWidgets();
+    super.setUp();
+  }
+
+  static const _staticPage = r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class AboutScreen extends ConsumerWidget {
+  const AboutScreen();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => const Widget();
+}
+''';
+
+  Future<void> test_severityIsError() async {
+    expect(AvoidUnnecessaryConsumerWidgets.code.severity, DiagnosticSeverity.ERROR);
+  }
+
+  Future<void> test_providerFreePageUnderScreens_noLint() async {
+    final filePath = '$testPackageLibPath/features/about/presentation/screens/about_screen.dart';
+    newFile(filePath, _staticPage);
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_unusedRefOutsideScreens_lint() async {
+    final filePath = '$testPackageLibPath/features/about/presentation/widgets/about_screen.dart';
+    newFile(filePath, _staticPage);
+
+    await assertDiagnosticsInFile(filePath, [
+      lint(_staticPage.indexOf('AboutScreen extends'), 'AboutScreen'.length),
+    ]);
+  }
+
+  Future<void> test_privateConsumerWidgetUnderScreens_lint() async {
+    final filePath = '$testPackageLibPath/features/about/presentation/screens/about_screen.dart';
+    const source = r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class _AboutHeader extends ConsumerWidget {
+  const _AboutHeader();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => const Widget();
+}
+
+const header = _AboutHeader();
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      lint(source.indexOf('_AboutHeader extends'), '_AboutHeader'.length),
+    ]);
+  }
+
+  Future<void> test_pageReadingRefUnderScreens_noLint() async {
+    final filePath = '$testPackageLibPath/features/about/presentation/screens/about_screen.dart';
+    newFile(filePath, r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final titleProvider = ProviderListenable<Widget>();
+
+class AboutScreen extends ConsumerWidget {
+  const AboutScreen();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => ref.watch(titleProvider);
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
   }
 }

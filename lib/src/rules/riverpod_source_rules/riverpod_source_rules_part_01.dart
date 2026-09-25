@@ -34,12 +34,12 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     ),
     description: 'Flags service locator classes in Riverpod apps so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(r'\bclass\s+(?:ServiceFactory|ServiceLocator|BackendProvider)\b')
-            .hasMatch(line)) {
-          reporter.report(context, i, line.indexOf('class'));
-        }
+      // The skill bans these class kinds by name: "NEVER create ServiceFactory,
+      // ServiceLocator, or BackendProvider class", including prefixed variants.
+      final banned = RegExp(r'(?:ServiceFactory|ServiceLocator|BackendProvider)$');
+      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+        if (!banned.hasMatch(declaration.namePart.typeName.lexeme)) continue;
+        _reportAtOffset(reporter, context, declaration.classKeyword.offset);
       }
     },
   ),
@@ -58,12 +58,51 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     ),
     description: 'Flags manual Riverpod provider declarations so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
+      final reportedLines = <int>{};
       for (var i = 0; i < context.source.length; i++) {
         final match = _manualProviderDeclarationMatch(context, i);
         if (match == null) continue;
+        reportedLines.add(i);
         reporter.report(context, i, match.column);
       }
+      _reportResolvedManualProviders(reporter, context, reportedLines);
     },
+  ),
+
+  /// Keep WidgetRef inside widgets.
+  ///
+  /// Why: `Ref` and `WidgetRef` stay separate; `WidgetRef` is for widgets only.
+  /// A service, repository or other non-widget class holding or accepting a
+  /// `WidgetRef` ties its lifetime to a widget element. Move the logic into a
+  /// generated provider/notifier that uses `Ref`.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_widget_ref_outside_widget',
+      'WidgetRef is for widgets only.',
+      correctionMessage: 'Move this logic into a generated provider or notifier and use its Ref instead of WidgetRef.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags WidgetRef types used inside classes that are not Widget or State subclasses.',
+    scan: _reportWidgetRefOutsideWidgets,
+  ),
+
+  /// Do not alias generated providers.
+  ///
+  /// Why: Generated provider names are the single source of truth. A top-level
+  /// or static `final cartAliasProvider = cartProvider;` creates a second name
+  /// for the same provider. Rename the annotated function/class and regenerate.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_generated_provider_alias',
+      'Do not alias generated providers.',
+      correctionMessage:
+          'Rename the annotated function/class, regenerate .g.dart, and update call sites instead.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags top-level or static declarations whose value is an existing provider variable.',
+    scan: _reportProviderAliases,
   ),
 
   /// Do not override generated notifier providers with state values.
@@ -103,14 +142,24 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       correctionMessage: 'Move the cache to one @riverpod source of truth or compute it locally without mutable cache fields.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags ConsumerState cache/source fields used with ref.watch so provider-derived data has one Riverpod source of truth.',
+    description:
+        'Flags ConsumerState cache/source fields and fields assigned from ref.watch/ref.read '
+        'results so provider-derived data has one Riverpod source of truth.',
     scan: (reporter, context) {
+      final reportedLines = <int>{};
       for (final classSpan in context.classes) {
         if (!_isConsumerStateClass(context, classSpan)) continue;
         if (!_classContainsRefWatch(context, classSpan)) continue;
 
-        reportDirectClassMemberMatches(reporter, context, classSpan, _derivedCacheField);
+        for (final lineIndex in directClassMemberLines(context, classSpan)) {
+          final line = context.source.masked[lineIndex];
+          final fieldName = _derivedCacheField.firstMatch(line)?.group(1);
+          if (fieldName == null) continue;
+          reportedLines.add(lineIndex);
+          reporter.report(context, lineIndex, line.indexOf(fieldName));
+        }
       }
+      _reportResolvedConsumerStateCaches(reporter, context, reportedLines);
     },
   ),
 
@@ -195,24 +244,20 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     description: 'Flags standalone Riverpod signal/event providers so mutation state stays in one notifier source of truth.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (final classSpan in context.classes) {
-        if (!_eventSignalProviderName.hasMatch(classSpan.name)) continue;
-        if (!_hasRiverpodAnnotation(context, classSpan)) continue;
-        reporter.report(
-          context,
-          classSpan.start,
-          context.source.masked[classSpan.start].indexOf('class'),
-        );
-      }
-
-      for (var i = 0; i < context.source.length; i++) {
-        if (!context.hasNearbyAnnotation(i, const {'riverpod', 'Riverpod'})) continue;
-        final line = context.source.masked[i];
-        final match = _eventSignalFunctionProvider.firstMatch(line);
-        if (match == null) continue;
-        final name = match.group(1);
+      for (final declaration in context.unit.declarations) {
+        final (name, offset) = switch (declaration) {
+          // riverpod_generator names `FooEventNotifier` `fooEventProvider`.
+          ClassDeclaration(:final metadata, :final namePart, :final classKeyword)
+              when metadata.any(_isRiverpodAnnotation) =>
+            (_classProviderName(namePart.typeName.lexeme), classKeyword.offset),
+          FunctionDeclaration(:final metadata, :final name)
+              when metadata.any(_isRiverpodAnnotation) =>
+            (_functionProviderGeneratedName(name.lexeme), name.offset),
+          _ => (null, 0),
+        };
         if (name == null || !_eventSignalProviderName.hasMatch(name)) continue;
-        reporter.report(context, i, line.indexOf(name));
+        final location = context.unit.lineInfo.getLocation(offset);
+        reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
       }
     },
   ),
@@ -226,27 +271,15 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       'riverpod_watch_no_select',
       'Prefer select when watching state in leaf widgets.',
       correctionMessage: 'Use ref.watch(provider.select((value) => value.field)).',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags broad ref.watch calls that do not use select so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      // Scalar values already form an atomic rebuild boundary.
-      final scalarWatches = _ScalarWatchVisitor();
-      context.unit.accept(scalarWatches);
-      // Generated providers legitimately watch dependencies in build().
-      for (final method in context.methods.where((m) => m.name == 'build')) {
-        if (context.classes.any(
-          (span) =>
-              span.start <= method.start &&
-              span.end >= method.end &&
-              _hasRiverpodAnnotation(context, span),
-        )) {
-          continue;
-        }
-        for (var i = method.start; i <= method.end; i++) {
-          final column = _broadRefWatchColumn(context, i, method.end, scalarWatches.offsets);
-          if (column != null) reporter.report(context, i, column);
-        }
+      final watches = _BroadBuildWatchVisitor();
+      context.unit.accept(watches);
+      for (final offset in watches.offsets) {
+        final location = context.unit.lineInfo.getLocation(offset);
+        reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
       }
     },
   ),
@@ -283,19 +316,96 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
         _scanSelectViolations(reporter, context, _hasIdentitySelectCallback),
   ),
 
-  /// Mutation<T> usage should carry an experimental warning.
+  /// Riverpod Mutation<T>() declarations must carry an experimental note.
   ///
-  /// Why: Riverpod Mutation is still experimental. Keep a nearby note so code reviewers
-  /// see the API stability boundary at the call site.
+  /// Why: Riverpod Mutation is still experimental. The skill's file-scope
+  /// mutation carries the note on its own declaration so reviewers see the API
+  /// stability boundary.
   scannerRule(
     code: const LintCode(
       'riverpod_mutation_experimental_warning',
-      'Mutation<T> usage must have nearby experimental context.',
-      correctionMessage: 'Add a nearby comment that says Mutation is experimental.',
-      severity: DiagnosticSeverity.WARNING,
+      'Mutation<T> declarations must carry an experimental note.',
+      correctionMessage:
+          'Add a comment on the Mutation declaration that says the API is experimental.',
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags Mutation<T> usage without nearby experimental context so the Flutter skill violation is shown during analysis.',
+    description: 'Flags Riverpod Mutation<T>() creations whose declaration has no experimental comment so the Flutter skill violation is shown during analysis.',
     scan: _scanMutationExperimentalWarning,
+  ),
+
+  /// Riverpod mutations are file-scope finals.
+  ///
+  /// Why: The skill declares one mutation as one file-scope `final` so the same
+  /// instance is shared across rebuilds and consumers. A Mutation created in
+  /// build(), a method, or a class field is a new or class-owned instance.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_mutation_top_level',
+      'Declare Mutation<T> as a file-scope final.',
+      correctionMessage:
+          'Move the Mutation to a top-level final so rebuilds and consumers share one instance.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags Riverpod Mutation<T>() creations that are not the initializer of a top-level final so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      final creations = _RiverpodMutationCreations();
+      context.unit.accept(creations);
+      for (final creation in creations.nodes) {
+        final variable = creation.parent;
+        final list = variable?.parent;
+        if (variable is VariableDeclaration &&
+            variable.initializer == creation &&
+            list is VariableDeclarationList &&
+            list.isFinal &&
+            list.parent is TopLevelVariableDeclaration) {
+          continue;
+        }
+        _reportAtOffset(reporter, context, creation.offset);
+      }
+    },
+  ),
+
+  /// Use tsx.get instead of ref.read inside Mutation.run.
+  ///
+  /// Why: The skill reads providers through the mutation transaction because
+  /// tsx.get keeps them alive until the mutation completes; ref.read does not.
+  scannerRule(
+    code: const LintCode(
+      'riverpod_mutation_ref_read',
+      'Use tsx.get instead of ref.read inside Mutation.run.',
+      correctionMessage: 'Read providers through the mutation transaction (tsx.get) so they stay alive until the mutation completes.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags Riverpod read calls inside a Riverpod Mutation.run callback so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      final reads = _RiverpodReadsInMutationRun();
+      context.unit.accept(reads);
+      for (final read in reads.nodes) {
+        _reportAtOffset(reporter, context, read.offset);
+      }
+    },
+  ),
+
+  /// Match AsyncValue with a sealed switch, not when/map helpers.
+  ///
+  /// Why: The skill matches unions with a Dart `switch` and never `.when()` or
+  /// `.map()`. Riverpod AsyncValue is sealed, so the skill switches over
+  /// `AsyncData(:final value)`, `AsyncError(:final error)` and `AsyncLoading()`.
+  scannerRule(
+    code: const LintCode(
+      'async_value_switch_over_when',
+      'Match AsyncValue with a switch, not when/map.',
+      correctionMessage: 'Use switch (value) { AsyncData(:final value) => ..., AsyncError(:final error) => ..., AsyncLoading() => ... }.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags Riverpod AsyncValue when/maybeWhen/whenOrNull/map/maybeMap/mapOrNull calls so the Flutter skill violation is shown during analysis.',
+    scan: (reporter, context) {
+      final calls = _AsyncValueWhenMapCalls();
+      context.unit.accept(calls);
+      for (final call in calls.nodes) {
+        _reportAtOffset(reporter, context, call.methodName.offset);
+      }
+    },
   ),
 
   /// Keep derived providers alive when all watched dependencies are keepAlive.
@@ -309,23 +419,13 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       'Use keepAlive when all watched dependencies are keepAlive.',
       correctionMessage:
           'Change @riverpod to @Riverpod(keepAlive: true), unless this provider has parameters.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags auto-dispose providers whose same-file watched dependencies are all keepAlive.',
+    description: 'Flags auto-dispose providers without parameters whose watched dependencies all resolve, through their generated `@ProviderFor` variables, to `@Riverpod(keepAlive: true)` sources in any file.',
     scan: (reporter, context) {
-      final definitions = _providerDefinitions(context);
-      final definitionsByName = {
-        for (final definition in definitions) definition.providerName: definition,
-      };
-
-      for (final definition in definitions) {
+      for (final definition in _providerDefinitions(context)) {
         if (definition.keepAlive || definition.hasParameters) continue;
-        final watchedProviders = _watchedProviderNames(context, definition);
-        if (watchedProviders.isEmpty) continue;
-        if (!watchedProviders.every((name) => definitionsByName[name]?.keepAlive ?? false)) {
-          continue;
-        }
+        if (!_watchesOnlyKeepAliveProviders(context, definition)) continue;
         reporter.report(context, definition.annotationLine, 0);
       }
     },
@@ -342,7 +442,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       'riverpod_feature_notifier_keepalive',
       'Feature notifiers should use keepAlive.',
       correctionMessage: 'Change @riverpod to @Riverpod(keepAlive: true), or add an autoDispose rationale comment.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description:
         'Flags non-family feature presentation notifiers that auto-dispose without rationale.',
@@ -369,7 +469,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       'riverpod_keepalive_family',
       'Avoid keepAlive family providers.',
       correctionMessage: 'Use auto-dispose families unless the cache is bounded.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags keepAlive Riverpod families with required parameters so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
@@ -437,29 +537,21 @@ void _reportProviderArgWrapperLocal(
 }
 
 void _scanMutationExperimentalWarning(ScannerRuleReporter reporter, SourceScannerContext context) {
-  if (!context.path.contains('/notifiers/') && !context.path.endsWith('_notifier.dart')) {
-    return;
-  }
-  final mutationUsage = RegExp(r'\bMutation\s*<');
   final experimental = RegExp(r'\bexperimental\b', caseSensitive: false);
-  for (var lineIndex = 0; lineIndex < context.source.length; lineIndex++) {
-    final line = context.source.masked[lineIndex];
-    if (_isMutationDeclaration(line)) continue;
-    final match = mutationUsage.firstMatch(line);
-    if (_isMutationMemberAccess(line, match) || match == null) continue;
-    if (context.nearOriginal(lineIndex, experimental, 5)) continue;
-    reporter.report(context, lineIndex, match.start);
+  final creations = _RiverpodMutationCreations();
+  context.unit.accept(creations);
+  for (final creation in creations.nodes) {
+    final owner = creation.thisOrAncestorMatching(
+      (node) => node is Statement || node is CompilationUnitMember || node is ClassMember,
+    );
+    if (owner == null) continue;
+    final first = owner is AnnotatedNode
+        ? (owner.metadata.isEmpty
+              ? owner.firstTokenAfterCommentAndMetadata
+              : owner.metadata.first.beginToken)
+        : owner.beginToken;
+    final comments = _ownedComments(context, first, owner.endToken, trailing: true);
+    if (comments.any(experimental.hasMatch)) continue;
+    _reportAtOffset(reporter, context, creation.offset);
   }
-}
-
-bool _isMutationDeclaration(String line) {
-  return RegExp(r'^\s*class\s+Mutation\s*<').hasMatch(line) ||
-      RegExp(r'^\s*typedef\s+Mutation\s*<').hasMatch(line) ||
-      RegExp(r'^\s*Mutation\s*<[^>]+>\s+\w+(?:<[^>]+>)?\s*\(').hasMatch(line) ||
-      RegExp(r'^\s*(?:[A-Za-z_]\w*(?:<[^>]+>)?\??|void)\s+Mutation(?:<[^>]+>)?\s*\(')
-          .hasMatch(line);
-}
-
-bool _isMutationMemberAccess(String line, RegExpMatch? match) {
-  return match != null && match.start > 0 && line[match.start - 1] == '.';
 }

@@ -1,8 +1,12 @@
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/token.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'runtime_bug_source_rules/runtime_bug_source_rules_part_01.dart';
@@ -131,7 +135,7 @@ final _userVisibleDelaySignal = RegExp(
 );
 
 final _backgroundDurationExemption = RegExp(
-  r'retry|backoff|timeout|poll|ceiling|sync|backfill|rest|reminder|notification|alarm|snooze|cleanup|temp|expiry|expiration|ttl|ticker|periodic|interval|dismiss|snack|toast|overlay|banner',
+  r'retry|backoff|timeout|poll|ceiling|(?<!a)sync|backfill|rest|reminder|notification|alarm|snooze|cleanup|temp|expiry|expiration|ttl|ticker|periodic|interval|dismiss|snack|toast|overlay|banner',
   caseSensitive: false,
 );
 
@@ -153,25 +157,10 @@ final _collectionExpressionAllocation = RegExp(
   r'\bfor\s*\(|\.\s*(?:map|where|toList|toSet)\s*\(|[\{\[]\s*for\s*\(',
 );
 
-final _byIdFunctionStart = RegExp(
-  r'^\s*(?:[A-Za-z_]\w*(?:\s*<[^;]+>)?\??)\s+_?[A-Za-z_]\w*ById\s*\([^)]*\)\s*\{',
-);
-
 final _adHocIdIndexLookup = RegExp(
-  r'\.\s*indexBy\s*\(\s*'
+  r'\.\s*(?:indexBy|indexOfByKey)\s*\(\s*'
   r'(?:\([A-Za-z_]\w*\)|[A-Za-z_]\w*)\s*=>\s*[A-Za-z_]\w*\s*\.\s*id\s*'
   r'\)\s*\[',
-);
-
-final _linearIdLookupCall = RegExp(r'\.\s*(?:firstWhere|indexWhere)\s*\(');
-
-final _linearIdLookup = RegExp(
-  r'\.\s*(?:firstWhere|indexWhere)\s*\(\s*'
-  r'(?:\([A-Za-z_]\w*\)|[A-Za-z_]\w*)\s*=>\s*[A-Za-z_]\w*\s*\.\s*id\s*==',
-);
-
-final _forEachLoop = RegExp(
-  r'\bfor\s*\(\s*(?:final\s+)?(?:[A-Za-z_]\w*\s+)?([A-Za-z_]\w*)\s+in\s+[A-Za-z_]\w*',
 );
 
 final _heavyWidgetInit = RegExp(
@@ -195,24 +184,6 @@ final _watchUnboundedCollection = RegExp(
   r'(?:logs|items|entries|history|records|events|messages|notifications|posts|comments|rows|results|all)\b',
 );
 
-final _directCollectionProjection = RegExp(
-  r'\breturn\s+ref\s*\.\s*watch\s*\([\s\S]*?\.select\s*\([\s\S]*?=>\s*\w+\s*\.\s*'
-  r'(?:logs|items|entries|history|records|events|messages|notifications|posts|comments|rows|results|all)'
-  r'\s*\)\s*\)\s*;',
-);
-
-final _expressionCollectionProjection = RegExp(
-  r'=>\s*ref\s*\.\s*watch\s*\([\s\S]*?\.select\s*\([\s\S]*?=>\s*\w+\s*\.\s*'
-  r'(?:logs|items|entries|history|records|events|messages|notifications|posts|comments|rows|results|all)'
-  r'\s*\)\s*\)\s*;',
-);
-
-final _localCollectionProjection = RegExp(
-  r'\bfinal\s+(\w+)\s*=\s*ref\s*\.\s*watch\s*\([\s\S]*?\.select\s*\([\s\S]*?=>\s*\w+\s*\.\s*'
-  r'(?:logs|items|entries|history|records|events|messages|notifications|posts|comments|rows|results|all)'
-  r'\s*\)\s*\)\s*;\s*return\s+\1\s*;',
-);
-
 final _datasourceInterfaceSignature = RegExp(
   r'\babstract\s+(?:interface\s+)?class\s+I?\w*(?:Local|Remote)Datasource\b',
 );
@@ -227,8 +198,6 @@ final _singleValueGetter = RegExp(
 final _saveMethodCall = RegExp(r'\.\s*save(?:[A-Z]\w*)?\s*\(');
 
 final _notifierAccess = RegExp(r'\.\s*notifier\s*\)');
-
-final _positiveGuard = RegExp(r'\bif\s*\([^)]*(?:>\s*0\b|>=\s*1\b|!=\s*0\b)');
 
 final _unitPrimitiveLocal = RegExp(
   r'\b(?:double|int|num)\s+([A-Za-z_]\w*(?:Meters|Seconds|Minutes|Hours|Kilometers|Miles|Cents|Percent|Kilograms|Grams|Pounds|Bytes|Pixels))\b\s*=',
@@ -286,6 +255,66 @@ bool _methodLooksDestructive(String methodName) => RegExp(
   r'^(?:delete|remove|destroy|deactivate|close|cancel|purge|wipe)',
   caseSensitive: false,
 ).hasMatch(methodName);
+
+int _lineOf(SourceScannerContext context, int offset) =>
+    context.unit.lineInfo.getLocation(offset).lineNumber - 1;
+
+/// An async start of long-running destructive or batch work (networking.md
+/// "Long-Running Remote Work"): `startDeleteAccount(...)` or
+/// `createExecution(..., xasync: true)`.
+bool _startsLongRunningWork(Block block) => collectNodes<MethodInvocation>(block).any((call) {
+  final name = call.methodName.name;
+  return name.startsWith('start') && _longRunningOperationName.hasMatch(name) ||
+      call.argumentList.arguments.any(
+        (argument) => switch (argument) {
+          NamedArgument(
+            name: Token(lexeme: 'xasync'),
+            argumentExpression: BooleanLiteral(value: true),
+          ) =>
+            true,
+          _ => false,
+        },
+      );
+});
+
+void _reportTelemetryBeforeReconcile(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+) {
+  for (var i = method.start; i <= method.end && i < context.source.length; i++) {
+    final match = _failureTelemetryCall.firstMatch(context.source.masked[i]);
+    if (match == null) continue;
+    if (!_hasLaterReconcileCall(context, i + 1, method.end)) continue;
+    reporter.report(context, i, match.start);
+  }
+}
+
+/// Reports telemetry in the catch of a try that async-starts long-running
+/// work inside [method]; callers skip methods that reconcile.
+void _reportUnreconciledLongRunningCatches(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+  List<TryStatement> tries,
+) {
+  for (final statement in tries) {
+    final line = _lineOf(context, statement.offset);
+    if (line < method.start || line > method.end) continue;
+    if (!_startsLongRunningWork(statement.body)) continue;
+    for (final clause in statement.catchClauses) {
+      _reportTelemetryLines(reporter, context, clause.body);
+    }
+  }
+}
+
+void _reportTelemetryLines(ScannerRuleReporter reporter, SourceScannerContext context, Block body) {
+  final end = _lineOf(context, body.end);
+  for (var i = _lineOf(context, body.offset); i <= end; i++) {
+    final match = _failureTelemetryCall.firstMatch(context.source.masked[i]);
+    if (match != null) reporter.report(context, i, match.start);
+  }
+}
 
 bool _hasLaterReconcileCall(SourceScannerContext context, int startLine, int endLine) {
   for (var i = startLine; i <= endLine && i < context.source.length; i++) {
@@ -375,30 +404,6 @@ bool _collectionGetterAllocates(String body) {
   }
   return _collectionExpressionAllocation.hasMatch(body);
 }
-
-bool _isHotLookupClass(SourceScannerContext context, ScannerClassSpan classSpan) =>
-    classSpan.isNotifier ||
-    context.isUiFile ||
-    context.isRepositoryPath ||
-    classSpan.name.endsWith('Repository') ||
-    classSpan.name.endsWith('Service');
-
-bool _isIndexLookupInsideForBlock(SourceScannerContext context, int methodStart, int lookupLine) {
-  final line = context.source.masked[lookupLine];
-  if (!line.contains('.indexWhere')) return false;
-  final start = lookupLine - 6 < methodStart ? methodStart : lookupLine - 6;
-  for (var i = start; i < lookupLine; i++) {
-    if (context.source.masked[i].contains('for (')) return true;
-  }
-  return false;
-}
-
-RegExp _nestedIdLookup(String loopVar) => RegExp(
-  r'\.\s*(?:indexWhere|firstWhere)\s*\(\s*'
-  r'(?:\([A-Za-z_]\w*\)|[A-Za-z_]\w*)\s*=>\s*[A-Za-z_]\w*\s*\.\s*id\s*==\s*'
-  '${RegExp.escape(loopVar)}'
-  r'\s*\.',
-);
 
 int? _findBlockEnd(SourceScannerContext context, int startLine, int maxLine) {
   final state = _BraceScanState();
@@ -506,11 +511,136 @@ int? _durationLiteralMs(String line) {
   return seconds == null ? null : seconds * 1000;
 }
 
-int? _persistHelperLine(SourceScannerContext context, ScannerClassSpan classSpan) {
-  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-    if (_persistHelperPattern.hasMatch(context.source.masked[i])) return i;
+/// Returns the first persist helper line in [classSpan] that a synchronous or
+/// repeated mutation path reaches. Awaited one-shot lifecycle writes (for
+/// example a resource handle saved after an awaited create) do not need a
+/// debounce. Uses resolve to the declared helper, a helper called from another
+/// helper inherits that helper's verdict, and a helper with no resolved use in
+/// the class stays reported.
+int? _mutationPathPersistHelperLine(SourceScannerContext context, ScannerClassSpan classSpan) {
+  final helpers = _persistHelperDeclarations(context, classSpan);
+  if (helpers.isEmpty) return null;
+
+  final classNode = helpers.values.first.node.thisOrAncestorOfType<ClassDeclaration>();
+  if (classNode == null) return null;
+  final uses = _PersistHelperUseFinder(helpers.keys.toSet());
+  classNode.accept(uses);
+
+  final verdicts = <ExecutableElement, bool>{};
+  bool reachesMutationPath(ExecutableElement helper) {
+    final known = verdicts[helper];
+    if (known != null) return known;
+    verdicts[helper] = false;
+    final helperUses = uses.uses[helper] ?? const <SimpleIdentifier>[];
+    final verdict =
+        helperUses.isEmpty ||
+        helperUses.any((use) {
+          final caller = use.thisOrAncestorOfType<MethodDeclaration>()?.declaredFragment?.element;
+          if (caller != null && helpers.containsKey(caller)) {
+            return reachesMutationPath(caller);
+          }
+          return !_isAwaitedLifecycleCall(use);
+        });
+    return verdicts[helper] = verdict;
+  }
+
+  for (final MapEntry(key: helper, value: (:line, node: _)) in helpers.entries) {
+    if (reachesMutationPath(helper)) return line;
   }
   return null;
+}
+
+/// Resolves the `_persistHelperPattern` lines in [classSpan] to their declared
+/// class methods, in source order. Local lookalike functions are skipped.
+Map<ExecutableElement, ({MethodDeclaration node, int line})> _persistHelperDeclarations(
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+) {
+  final helpers = <ExecutableElement, ({MethodDeclaration node, int line})>{};
+  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
+    final match = _persistHelperPattern.firstMatch(context.source.masked[i]);
+    if (match == null) continue;
+    final offset = context.source.lineOffsets[i] + match.start;
+    final declaration = context.unit
+        .nodeCovering(offset: offset)
+        ?.thisOrAncestorMatching((node) => node is MethodDeclaration || node is FunctionBody);
+    if (declaration is! MethodDeclaration) continue;
+    final element = declaration.declaredFragment?.element;
+    if (element != null) helpers[element] = (node: declaration, line: i);
+  }
+  return helpers;
+}
+
+/// A helper invocation is a one-shot lifecycle write when its enclosing body is
+/// asynchronous and either never writes `state` or awaited another result
+/// before the call. Synchronous bodies, tear-offs and async setters that write
+/// `state` without awaiting a lifecycle result are repeated mutation paths.
+bool _isAwaitedLifecycleCall(SimpleIdentifier use) {
+  final parent = use.parent;
+  if (parent is! MethodInvocation || parent.methodName != use) return false;
+  final body = use.thisOrAncestorOfType<FunctionBody>();
+  if (body == null || !body.isAsynchronous) return false;
+  final facts = _AsyncBodyFacts(body);
+  body.accept(facts);
+  if (!facts.writesState) return true;
+  return facts.awaitEnds.any((end) => end <= parent.offset);
+}
+
+final class _PersistHelperUseFinder extends RecursiveAstVisitor<void> {
+  _PersistHelperUseFinder(this.helpers);
+
+  final Set<ExecutableElement> helpers;
+  final uses = <ExecutableElement, List<SimpleIdentifier>>{};
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    final element = node.element?.baseElement;
+    if (element is ExecutableElement && helpers.contains(element)) {
+      (uses[element] ??= []).add(node);
+    }
+  }
+}
+
+final class _AsyncBodyFacts extends RecursiveAstVisitor<void> {
+  _AsyncBodyFacts(this.body);
+
+  final FunctionBody body;
+  final awaitEnds = <int>[];
+  bool writesState = false;
+
+  @override
+  void visitBlockFunctionBody(BlockFunctionBody node) {
+    if (node == body) super.visitBlockFunctionBody(node);
+  }
+
+  @override
+  void visitExpressionFunctionBody(ExpressionFunctionBody node) {
+    if (node == body) super.visitExpressionFunctionBody(node);
+  }
+
+  @override
+  void visitAwaitExpression(AwaitExpression node) {
+    awaitEnds.add(node.end);
+    super.visitAwaitExpression(node);
+  }
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    final target = node.leftHandSide;
+    final writesStateMember = switch (target) {
+      SimpleIdentifier(name: 'state') => true,
+      PropertyAccess(target: ThisExpression(), propertyName: SimpleIdentifier(name: 'state')) =>
+        true,
+      _ => false,
+    };
+    final written = node.writeElement;
+    if (writesStateMember &&
+        written is! LocalVariableElement &&
+        written is! FormalParameterElement) {
+      writesState = true;
+    }
+    super.visitAssignmentExpression(node);
+  }
 }
 
 int? _unguardedAsyncStateWriteLine(SourceScannerContext context, ScannerMethodSpan method) {
@@ -524,9 +654,31 @@ int? _unguardedAsyncStateWriteLine(SourceScannerContext context, ScannerMethodSp
     if (awaitLine == null) continue;
     if (!_notifierStateWrite.hasMatch(line)) continue;
     if (_hasStaleGuardBetween(context, awaitLine + 1, i - 1)) return null;
+    if (_hasRefMountedGuardBefore(context, awaitLine, i)) return null;
     return i;
   }
   return null;
+}
+
+/// `if (!ref.mounted) return;` on the notifier's Riverpod ref, after the await and in a block
+/// enclosing the state write.
+bool _hasRefMountedGuardBefore(SourceScannerContext context, int awaitLine, int writeLine) {
+  final column = _notifierStateWrite.firstMatch(context.source.masked[writeLine])?.start ?? 0;
+  AstNode? node = context.unit.nodeCovering(offset: context.source.lineOffsets[writeLine] + column);
+  while (node != null && node is! FunctionBody) {
+    final parent = node.parent;
+    if (parent is Block && _blockGuardsBefore(context, parent, node, awaitLine)) return true;
+    node = parent;
+  }
+  return false;
+}
+
+/// Whether [block] has `if (!ref.mounted) return;` after [awaitLine] and before [child].
+bool _blockGuardsBefore(SourceScannerContext context, Block block, AstNode child, int awaitLine) {
+  return block.statements.takeWhile((statement) => statement != child).any((statement) {
+    final line = context.unit.lineInfo.getLocation(statement.offset).lineNumber - 1;
+    return line > awaitLine && statementIsMountedReturnGuard(statement, 'ref');
+  });
 }
 
 bool _hasStaleGuardBetween(SourceScannerContext context, int startLine, int endLine) {
@@ -606,10 +758,13 @@ int? _findFunctionDeclarationAfter(SourceScannerContext context, int annotationL
   return null;
 }
 
+/// Last line of the top-level function declared on [fnLine], for block and
+/// `=>` expression bodies alike.
 int? _findFunctionBodyEnd(SourceScannerContext context, int fnLine) {
-  final state = _BraceScanState();
-  for (var i = fnLine; i < context.source.length && i < fnLine + 200; i++) {
-    if (_scanBraceLine(state, context.source.masked[i])) return i;
+  final lineInfo = context.unit.lineInfo;
+  for (final declaration in context.unit.declarations.whereType<FunctionDeclaration>()) {
+    if (lineInfo.getLocation(declaration.name.offset).lineNumber - 1 != fnLine) continue;
+    return lineInfo.getLocation(declaration.end - 1).lineNumber - 1;
   }
   return null;
 }
@@ -636,13 +791,6 @@ int _countSingleValueGetters(SourceScannerContext context, ScannerClassSpan clas
   return count;
 }
 
-bool _hasPositiveGuard(SourceScannerContext context, int methodStart, int saveLine) {
-  for (var i = methodStart; i < saveLine; i++) {
-    if (_positiveGuard.hasMatch(context.source.masked[i])) return true;
-  }
-  return false;
-}
-
 bool _methodHasNotifierAccess(SourceScannerContext context, ScannerMethodSpan method) {
   for (var i = method.start; i <= method.end && i < context.source.length; i++) {
     if (_notifierAccess.hasMatch(context.source.masked[i])) return true;
@@ -656,22 +804,22 @@ int? _unboundedCollectionWatchColumn(SourceScannerContext context, int startLine
   if (watchStart < 0) return null;
   final window = sourceLineWindow(context, startLine, endLine, 8);
   if (!_watchUnboundedCollection.hasMatch(window)) return null;
-  if (_isPureCollectionProjection(window)) return null;
+  if (_watchesKeepAliveProvider(context, startLine, watchStart)) return null;
   return watchStart;
 }
 
-bool _isPureCollectionProjection(String window) {
-  return _directCollectionProjection.hasMatch(window) ||
-      _expressionCollectionProjection.hasMatch(window) ||
-      _localCollectionProjection.hasMatch(window);
-}
-
-bool _lineHasNumericNamedArg(SourceScannerContext context, int saveLine, int methodEnd) {
-  final end = saveLine + 8 > methodEnd ? methodEnd : saveLine + 8;
-  for (var i = saveLine; i <= end && i < context.source.length; i++) {
-    if (_numericNamedArg.hasMatch(context.source.masked[i])) return true;
+/// Whether the `ref.watch(...)` at [column] reads a generated provider whose
+/// source declaration is `@Riverpod(keepAlive: true)`. A keepAlive source
+/// already retains the collection for the session, so a keepAlive derived
+/// provider over it follows the performance guide's lifecycle-matching rule.
+bool _watchesKeepAliveProvider(SourceScannerContext context, int lineIndex, int column) {
+  AstNode? node = context.unit.nodeCovering(offset: context.source.lineOffsets[lineIndex] + column);
+  while (node != null && !(node is MethodInvocation && node.methodName.name == 'watch')) {
+    node = node.parent;
   }
-  return false;
+  if (node is! MethodInvocation) return false;
+  final arguments = node.argumentList.arguments;
+  return arguments.isNotEmpty && isKeepAliveProviderExpression(arguments.first.argumentExpression);
 }
 
 final _textInputConstructor = RegExp(

@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
@@ -14,6 +15,7 @@ final class UseRefMountedAfterAwait extends GeneratedMethodDeclarationCheckRule 
     'use_ref_mounted_after_await',
     "Don't use ref or state after an await in Notifier methods without checking ref.mounted.",
     correctionMessage: "Add 'if (!ref.mounted) return;' immediately after the await.",
+    severity: DiagnosticSeverity.ERROR,
   );
 
   UseRefMountedAfterAwait()
@@ -25,26 +27,64 @@ final class UseRefMountedAfterAwait extends GeneratedMethodDeclarationCheckRule 
 
   @override
   void checkMethodDeclaration(MethodDeclaration node) {
-    if (!node.body.isAsynchronous) return;
     final classNode = enclosingClass(node);
     if (classNode == null || !isNotifierClass(classNode)) return;
-    final body = node.body;
-    if (body is! BlockFunctionBody) return;
 
     final scanner = AsyncStatementScanner(
       guardTarget: 'ref',
       accessTargets: const {'ref', 'state'},
       onViolation: reportAtNode,
       additionalMountedCondition: (condition) => _resolvedMountedHelperGuard(condition, classNode),
+      mountedWhenTrue: (condition) => _mountedWhenTrue(condition, classNode),
     );
-    scanner.scanBlock(body.block);
+    _scanAsyncBody(scanner, node.body);
+    // Async closures resume after their own awaits, even inside sync methods.
+    node.body.accept(_AsyncClosureVisitor((body) => _scanAsyncBody(scanner, body)));
   }
+}
+
+void _scanAsyncBody(AsyncStatementScanner scanner, FunctionBody body) {
+  if (!body.isAsynchronous) return;
+  switch (body) {
+    case BlockFunctionBody(:final block):
+      scanner.scanBlock(block);
+    case ExpressionFunctionBody(:final expression):
+      scanner.scanExpression(expression);
+    default:
+      return;
+  }
+}
+
+final class _AsyncClosureVisitor extends RecursiveAstVisitor<void> {
+  _AsyncClosureVisitor(this.onBody);
+
+  final void Function(FunctionBody body) onBody;
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {
+    onBody(node.body);
+    super.visitFunctionExpression(node);
+  }
+}
+
+/// A condition that can only be true while the notifier is still mounted.
+bool _mountedWhenTrue(Expression condition, ClassDeclaration owner) {
+  final value = condition.unParenthesized;
+  if (isTargetProperty(value, 'ref', 'mounted')) return isRiverpodRefAccess(value);
+  if (value is BinaryExpression && value.operator.lexeme == '&&') {
+    return _mountedWhenTrue(value.leftOperand, owner) &&
+        isPureMountedGuardSuffix(value.rightOperand);
+  }
+  return _isResolvedMountedHelperCall(value, owner);
 }
 
 bool _resolvedMountedHelperGuard(Expression condition, ClassDeclaration owner) {
   final guard = condition.unParenthesized;
   if (guard is! PrefixExpression || guard.operator.lexeme != '!') return false;
-  final call = guard.operand.unParenthesized;
+  return _isResolvedMountedHelperCall(guard.operand.unParenthesized, owner);
+}
+
+bool _isResolvedMountedHelperCall(Expression call, ClassDeclaration owner) {
   if (call is! MethodInvocation || call.target != null && call.target is! ThisExpression) {
     return false;
   }

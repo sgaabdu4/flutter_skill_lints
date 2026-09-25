@@ -3,73 +3,6 @@
 part of '../source_scanner_rules_test.dart';
 
 @reflectiveTest
-final class NotifierLocalDependencyCacheTest extends _NotifierRuleTest {
-  @override
-  String get ruleName => 'notifier_local_dependency_cache';
-  @override
-  String get needle => '_repository';
-  @override
-  String get source => r'''
-class Notifier<T> {}
-
-abstract interface class IThingRepository {}
-
-class ThingNotifier extends Notifier<int> {
-  IThingRepository? _repository;
-
-  int build() => 0;
-}
-''';
-
-  Future<void> test_reportsServiceCache() async {
-    const source = r'''
-class Notifier<T> {}
-
-abstract interface class IThingService {}
-
-class ThingNotifier extends Notifier<int> {
-  late final IThingService _service;
-
-  int build() => 0;
-}
-''';
-
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
-    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '_service', ruleName)]);
-  }
-
-  Future<void> test_allowsStatelessProviderHelper() async {
-    await assertAllows(r'''
-class Ref {
-  T read<T>(Object provider) => throw UnimplementedError();
-}
-
-abstract interface class IThingRepository {}
-final thingRepositoryProvider = Object();
-
-IThingRepository readThingRepository(Ref ref) => ref.read(thingRepositoryProvider);
-
-class ThingNotifier {
-  int build() => 0;
-}
-''');
-  }
-
-  Future<void> test_allowsLifecycleResourceField() async {
-    await assertAllows(r'''
-class Notifier<T> {}
-class Timer {}
-
-class ThingNotifier extends Notifier<int> {
-  Timer? _timer;
-
-  int build() => 0;
-}
-''');
-  }
-}
-
-@reflectiveTest
 final class NotifierEnsureDepsTest extends _NotifierFixtureTest {
   @override
   String get ruleName => 'notifier_ensure_deps';
@@ -138,6 +71,49 @@ class TestableItemsNotifier {
 final class NotifierWatchMethodTest extends _NotifierFixtureTest {
   @override
   String get ruleName => 'notifier_watch_method';
+
+  static const _prelude = r'''
+class Notifier<T> {
+  Ref get ref => Ref();
+}
+
+class Ref {
+  Object watch(Object provider) => Object();
+  void listen(Object provider, void Function(Object? previous, Object next) listener) {}
+}
+
+final authProvider = Object();
+''';
+
+  /// async-mutations.md:61: use ref.listen in build() for side effects.
+  Future<void> test_reportsListenOutsideBuild() async {
+    final analyzedSource = _analyzedSource('''$_prelude
+class SessionNotifier extends Notifier<int> {
+  int build() => 0;
+
+  void startListening() {
+    ref.listen(authProvider, (previous, next) {});
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'void startListening', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsWatchAndListenInBuild() async {
+    await assertAllows('''$_prelude
+class SessionNotifier extends Notifier<int> {
+  int build() {
+    ref.watch(authProvider);
+    ref.listen(authProvider, (previous, next) {});
+    return 0;
+  }
+
+  void listen() {}
+}
+''');
+  }
 }
 
 abstract class _ServicesMixinsRuleTest extends _SourceRuleTest {
@@ -161,6 +137,7 @@ final class ServiceSingletonTest extends _ServicesMixinsRuleTest {
 
   Future<void> test_allowsPlainBoringSingleton() async {
     await assertAllows('''
+/// Talks to the push backend through its locator.
 final class UserService {
   UserService._();
 
@@ -241,6 +218,88 @@ final class UserService {
     await assertDiagnostics(analyzedSource, [
       compatLint(analyzedSource, 'static final UserService instance', ruleName),
     ]);
+  }
+
+  Future<void> test_reportsPublicConstructorNextToPrivateConstructor() async {
+    const source = '''
+final class RunService {
+  RunService();
+  RunService._();
+
+  static final RunService instance = RunService._();
+
+  Future<void> run() async {}
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'static final RunService instance', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsPublicGetterOverPrivateField() async {
+    const source = '''
+final class TokenService {
+  TokenService._();
+
+  static final TokenService instance = TokenService._();
+
+  final String _token = 'token';
+
+  String get token => _token;
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'static final TokenService instance', ruleName),
+    ]);
+  }
+
+  /// #51: cache singletons belong to service_singleton, including the factory-exposed shape.
+  Future<void> test_reportsFactoryAndInstanceCacheSingletons() async {
+    const source = '''
+class SharedCache {
+  SharedCache._();
+  static final SharedCache instance = SharedCache._();
+  final Map<String, String> entries = <String, String>{};
+  void put(String key, String value) => entries[key] = value;
+}
+
+class SharedCacheWithFactory {
+  SharedCacheWithFactory._();
+  static final SharedCacheWithFactory _instance = SharedCacheWithFactory._();
+  factory SharedCacheWithFactory() => _instance;
+  final Map<String, String> entries = <String, String>{};
+  void put(String key, String value) => entries[key] = value;
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'static final SharedCache instance', ruleName),
+      compatLint(analyzedSource, 'factory SharedCacheWithFactory()', ruleName),
+    ]);
+  }
+
+  /// #51 control: constant and registry instances are not singletons.
+  Future<void> test_allowsConstantAndRegistryInstances() async {
+    await assertAllows('''
+final class Money {
+  const Money(this.cents);
+
+  static const zero = Money(0);
+
+  final int cents;
+}
+
+final class Palette {
+  Palette._(this.hex);
+
+  static final light = Palette._(0xFFFFFF);
+  static final dark = Palette._(0x000000);
+
+  final int hex;
+}
+''');
   }
 
   Future<void> test_reportsDebugInjectionSeam() async {
@@ -362,305 +421,100 @@ class AuthRemoteDatasource {
 }
 
 @reflectiveTest
-final class ServiceProviderWatchDependencyTest extends _ServicesExtendedRuleTest {
-  @override
-  void setUp() {
-    newPackage('sdk').addFile('lib/sdk.dart', r'''
-class Client {
-  const Client();
-}
-
-class Repository<T> {
-  const Repository();
-}
-''');
-    newPackage('appwrite')
-      ..addFile('lib/src/service.dart', 'class Service {}')
-      ..addFile('lib/appwrite.dart', r'''
-import 'src/service.dart';
-
-class TablesDB extends Service {
-  TablesDB(Object client);
-}
-
-class Account extends Service {
-  Account(Object client);
-}
-''');
-    super.setUp();
-  }
-
-  @override
-  String get ruleName => 'service_provider_watch_dependency';
-  @override
-  String get needle => 'ref.watch(flutterLocalNotificationsPluginProvider)';
-  @override
-  String get source => r'''
+final class RiverpodConfigDestructuringTest extends _ServicesExtendedRuleTest {
+  static const _stubs = r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
 }
 
-class FlutterLocalNotificationsPlugin {}
-class NotificationTapPayloadBus {}
-abstract interface class INotificationService {}
-class NotificationService implements INotificationService {
-  NotificationService({
-    required FlutterLocalNotificationsPlugin plugin,
-    required NotificationTapPayloadBus tapPayloadBus,
-  });
-}
-
-@Riverpod(keepAlive: true)
-INotificationService notificationService(Ref ref) {
-  final service = NotificationService(
-    plugin: ref.watch(flutterLocalNotificationsPluginProvider),
-    tapPayloadBus: ref.read(notificationTapPayloadBusProvider),
-  );
-  return service;
-}
-''';
-
-  Future<void> test_reportsRepositoryFactoryWatch() async {
-    const source = r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class StorageLocalDatasource {}
-abstract interface class IAuthLocalDatasource {}
-class AuthLocalDatasource implements IAuthLocalDatasource {
-  AuthLocalDatasource(StorageLocalDatasource storage);
-}
-
-@Riverpod(keepAlive: true)
-IAuthLocalDatasource authLocalDatasource(Ref ref) {
-  return AuthLocalDatasource(ref.watch(storageLocalDatasourceProvider));
-}
-''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'ref.watch(storageLocalDatasourceProvider)', ruleName),
-    ]);
-  }
-
-  Future<void> test_allowsCollectionProjectionNamedQueue() async {
-    await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
+class Provider<T> {}
 class Ref {
-  List<int> watch(Object provider) => const [1, 2];
+  T watch<T>(Provider<T> provider) => throw UnimplementedError();
+  T read<T>(Provider<T> provider) => throw UnimplementedError();
 }
 
-typedef QueueProjection = ({List<int> items, int count});
-final itemSourceProvider = Object();
-
-@Riverpod(keepAlive: true)
-QueueProjection selectedItemsQueue(Ref ref) {
-  final items = ref.watch(itemSourceProvider);
-  return (items: List.unmodifiable(items), count: items.length);
+class BackendConfig {
+  const BackendConfig(this.endpoint, this.apiKey);
+  final String endpoint;
+  final String apiKey;
+  String describe() => endpoint;
 }
-''');
-  }
-
-  Future<void> test_allowsCollectionProjectionWhoseElementLooksLikeService() async {
-    await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
+class HttpClient {
+  HttpClient(String endpoint, String apiKey);
+  HttpClient.fromConfig(BackendConfig config);
 }
-const riverpod = Riverpod();
-
-class ItemService {
-  const ItemService(this.code);
-  final String code;
-}
-
-class Ref {
-  List<ItemService> watch(Object provider) => const [];
-}
-
-final sourceServicesProvider = Object();
-final searchProvider = Object();
-
-@riverpod
-List<ItemService> filteredItemServices(Ref ref) {
-  final search = ref.watch(searchProvider);
-  final services = ref.watch(sourceServicesProvider);
-  return services.where((service) => service.code.contains(search.toString())).toList();
-}
-''');
-  }
-
-  Future<void> test_reportsTypedStableServiceWatchWithGenericFactoryName() async {
-    const source = r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class Ref {
-  Object watch(Object provider) => Object();
-}
-
-abstract interface class IQueueService {}
-class QueueService implements IQueueService {
-  QueueService(Object client);
-}
-final clientProvider = Object();
-
-@Riverpod(keepAlive: true)
-IQueueService createQueue(Ref ref) => QueueService(ref.watch(clientProvider));
+final backendConfigProvider = Provider<BackendConfig>();
 ''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'ref.watch(clientProvider)', ruleName),
-    ]);
-  }
 
-  Future<void> test_reportsGenericInfrastructureReturnType() async {
-    const source = r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class Item {}
-abstract interface class IRepository<T> {}
-class Repository<T> implements IRepository<T> {
-  Repository(Object client);
-}
-class Ref { Object watch(Object provider) => Object(); }
-final clientProvider = Object();
-final accountClientProvider = Object();
-
+  @override
+  String get ruleName => 'riverpod_config_destructuring';
+  @override
+  String get needle => 'ref.watch(backendConfigProvider)';
+  @override
+  String get source =>
+      '''
+$_stubs
 @Riverpod(keepAlive: true)
-IRepository<Item> repository(Ref ref) => Repository<Item>(ref.watch(clientProvider));
+HttpClient backendClient(Ref ref) {
+  final config = ref.watch(backendConfigProvider);
+  return HttpClient(config.endpoint, config.apiKey);
+}
 ''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'ref.watch(clientProvider)', ruleName),
-    ]);
-  }
 
-  Future<void> test_reportsQualifiedInfrastructureReturnTypeThroughFuture() async {
-    const source = r'''
-import 'package:sdk/sdk.dart' as sdk;
+  Future<void> test_reportsAwaitedReadConfigLocal() async {
+    const source =
+        '''
+$_stubs
+final appConfigProvider = Provider<Future<BackendConfig>>();
 
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class Ref { Object watch(Object provider) => Object(); }
-final clientProvider = Object();
-
-@Riverpod(keepAlive: true)
-Future<sdk.Repository<int>> repository(Ref ref) async {
-  ref.watch(clientProvider);
-  return const sdk.Repository<int>();
+Future<HttpClient> connect(Ref ref) async {
+  final config = await ref.read(appConfigProvider);
+  return HttpClient(config.endpoint, config.apiKey);
 }
 ''';
     final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
     await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'ref.watch(clientProvider)', ruleName),
+      compatLint(analyzedSource, 'ref.read(appConfigProvider)', ruleName),
     ]);
   }
 
-  Future<void> test_reportsAppwriteTablesAndAccountServicesByResolvedBase() async {
-    const source = r'''
-import 'package:appwrite/appwrite.dart' as appwrite;
-
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class Ref { Object watch(Object provider) => Object(); }
-final clientProvider = Object();
-
+  Future<void> test_allowsSkillDestructuredConfig() async {
+    await assertAllows('''
+$_stubs
 @Riverpod(keepAlive: true)
-appwrite.TablesDB appwriteTablesDB(Ref ref) =>
-    appwrite.TablesDB(ref.watch(clientProvider));
-
-@Riverpod(keepAlive: true)
-Future<appwrite.Account> appwriteAccount(Ref ref) async {
-  return appwrite.Account(ref.watch(accountClientProvider));
-}
-''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'ref.watch(clientProvider)', ruleName),
-      compatLint(analyzedSource, 'ref.watch(accountClientProvider)', ruleName),
-    ]);
-  }
-
-  Future<void> test_allowsLocalServiceBaseLookalike() async {
-    await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class Service {}
-class TablesDB extends Service {
-  TablesDB(Object client);
-}
-class Ref { Object watch(Object provider) => Object(); }
-final clientProvider = Object();
-
-@Riverpod(keepAlive: true)
-TablesDB localTablesDB(Ref ref) => TablesDB(ref.watch(clientProvider));
-''');
-  }
-
-  Future<void> test_doesNotUnwrapUserDefinedFutureName() async {
-    await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class Future<T> {
-  const Future();
-}
-
-abstract interface class IRepository<T> {}
-class Ref { Object watch(Object provider) => Object(); }
-final dependencyProvider = Object();
-
-@Riverpod(keepAlive: true)
-Future<IRepository<int>> projectedValue(Ref ref) {
-  ref.watch(dependencyProvider);
-  return const Future<IRepository<int>>();
+HttpClient backendClient(Ref ref) {
+  final BackendConfig(:endpoint, :apiKey) = ref.watch(backendConfigProvider);
+  return HttpClient(endpoint, apiKey);
 }
 ''');
   }
 
-  Future<void> test_allowsReadDependency() async {
-    await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
+  Future<void> test_allowsConfigUsedBeyondPropertyReads() async {
+    await assertAllows('''
+$_stubs
+class Cart {
+  final List<int> items = const [];
+}
+final cartProvider = Provider<Cart>();
+
+HttpClient wholeConfig(Ref ref) {
+  final config = ref.watch(backendConfigProvider);
+  print(config.endpoint);
+  return HttpClient.fromConfig(config);
 }
 
-class FlutterLocalNotificationsPlugin {}
-abstract interface class INotificationService {}
-class NotificationService implements INotificationService {
-  NotificationService({required FlutterLocalNotificationsPlugin plugin});
+String configMethod(Ref ref) {
+  final config = ref.read(backendConfigProvider);
+  return config.describe();
 }
 
-@Riverpod(keepAlive: true)
-INotificationService notificationService(Ref ref) {
-  return NotificationService(plugin: ref.read(flutterLocalNotificationsPluginProvider));
-}
-''');
-  }
-
-  Future<void> test_allowsComputedProviderWatch() async {
-    await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
+void unusedConfig(Ref ref) {
+  final config = ref.watch(backendConfigProvider);
 }
 
-const riverpod = Riverpod();
-
-@riverpod
-int selectedCount(Ref ref) {
-  return ref.watch(counterProvider);
+int nonConfigValue(Ref ref) {
+  final cart = ref.watch(cartProvider);
+  return cart.items.length;
 }
 ''');
   }
@@ -749,58 +603,53 @@ mixin CacheMixin {
       compatLint(source, 'bool _isReady = false', ruleName, lineStart: true),
     ]);
   }
-}
 
-abstract class _DataCrashRuleTest extends _SourceRuleTest {
-  @override
-  List<ScannerRule> get rules => dataCrashSourceRules;
-}
+  Future<void> test_reportsUninitializedLateAndStaticMutableFields() async {
+    final filePath = '$testPackageLibPath/core/mixins/remember_mixin.dart';
+    const source = r'''
+mixin RememberMixin {
+  String? _cached;
+  late int _hits;
+  static var _instances = 0;
+  final String label = 'remember';
 
-@reflectiveTest
-final class DataLogRethrowTest extends _DataCrashRuleTest {
-  @override
-  String get ruleName => 'data_log_rethrow';
-  @override
-  String get needle => 'log(error);';
-  @override
-  bool get lineStart => true;
-  @override
-  String get path => '$testPackageLibPath/features/todos/data/repositories/todo_repository.dart';
-  @override
-  String get source => r'''
-void log(Object value) {}
-
-void load() {
-  try {
-    throw Object();
-  } catch (error) {
-    log(error);
-    rethrow;
+  String remember(String value) {
+    _hits = _instances;
+    return _cached ??= '$value$_hits$label';
   }
 }
 ''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(source, 'String? _cached;', ruleName, lineStart: true),
+      compatLint(source, 'late int _hits;', ruleName, lineStart: true),
+      compatLint(source, 'static var _instances', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsExpressionBodiedMethodsAndGetters() async {
+    final filePath = '$testPackageLibPath/core/mixins/connectivity_mixin.dart';
+    newFile(filePath, r'''
+class ConnectivityService {
+  bool get isConnected => true;
+}
+class StatefulWidget {}
+class State<T extends StatefulWidget> {
+  bool get mounted => true;
 }
 
-@reflectiveTest
-final class CrashPossiblePiiTest extends _DataCrashRuleTest {
-  @override
-  String get ruleName => 'crash_possible_pii';
-  @override
-  String get needle => 'Crash.error(email)';
-  @override
-  bool get lineStart => true;
-  @override
-  String get source => r'''
-class Crash {
-  static void error(Object value) {}
+mixin ConnectivityMixin {
+  bool checkConnectivity(ConnectivityService service) => service.isConnected;
 }
 
-final email = Object();
-
-void recordCrash() {
-  Crash.error(email);
+mixin RouteAwareMixin<T extends StatefulWidget> on State<T> {
+  bool get isActive => mounted;
 }
-''';
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
 }
 
 abstract class _TestRuleTest extends _SourceRuleTest {

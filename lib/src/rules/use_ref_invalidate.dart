@@ -12,6 +12,7 @@ final class UseRefInvalidate extends GeneratedExpressionStatementCheckRule {
     'use_ref_invalidate',
     'Use ref.invalidate when the result of ref.refresh is ignored.',
     correctionMessage: 'Replace the ignored ref.refresh(...) call with ref.invalidate(...).',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   UseRefInvalidate()

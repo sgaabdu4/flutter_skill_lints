@@ -8,6 +8,15 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when executable code uses raw string or numeric literals instead of
 /// named constants, value objects, or semantic helpers.
+///
+/// Deterministic sample data inside resolved Flutter `@Preview` functions,
+/// methods, and constructors is exempt; look-alike annotations still report.
+/// Route names passed to a resolved `routeName` parameter or Flutter's
+/// `RouteSettings(name:)` are exempt (modals-navigation.md). JSON and
+/// request-body keys inside a `*Model` class or a `data/models/` file are
+/// exempt: data-layer models are the codec owners (architecture.md). Files under
+/// `core/constants/` such as `storage_keys.dart` and `api_paths.dart` are key
+/// owners and are not checked.
 class AvoidMagicLiterals extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_magic_literals',
@@ -17,6 +26,7 @@ class AvoidMagicLiterals extends CompilationUnitRule {
         'and move numeric thresholds, grid sizes, or windows into named constants, '
         'value objects, or semantic helpers. Do not appease this rule with names '
         'that only encode the literal type or value.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidMagicLiterals()
@@ -109,13 +119,15 @@ bool _isExcludedContext(RuleContext context) {
 
 bool _shouldReportString(StringLiteral node, String value) {
   if (value.trim().isEmpty) return false;
-  if (_isAllowedLiteralContext(node)) return false;
+  if (_isAllowedLiteralContext(node) || _isRouteNameArgument(node)) return false;
+  if (_isCodecOwnedKey(node)) return false;
 
   return _isStringKeyContext(node) || _isStringBoundaryArgument(node);
 }
 
 bool _shouldReportInterpolation(StringInterpolation node) {
-  if (_isAllowedLiteralContext(node)) return false;
+  if (_isAllowedLiteralContext(node) || _isRouteNameArgument(node)) return false;
+  if (_isCodecOwnedKey(node)) return false;
 
   final hasRawText = node.elements.whereType<InterpolationString>().any(
     (element) => element.value.trim().isNotEmpty,
@@ -135,7 +147,8 @@ bool _isAllowedLiteralContext(AstNode node) {
       _isInConstVariableInitializer(node) ||
       _isDirectVariableInitializer(node) ||
       _isInDefaultFormalParameter(node) ||
-      _isInEnumConstant(node);
+      _isInEnumConstant(node) ||
+      enclosingWidgetPreview(node) != null;
 }
 
 bool _isInDirective(AstNode node) => node.thisOrAncestorOfType<Directive>() != null;
@@ -202,6 +215,37 @@ bool _hasUnaryMinus(AstNode node) {
 }
 
 bool _isAllowedNumber(num value) => value == -1 || value == 0 || value == 1;
+
+/// A route name recorded for modal/route observers (modals-navigation.md): a string bound to
+/// a resolved `routeName` parameter or to Flutter's `RouteSettings(name:)`.
+bool _isRouteNameArgument(AstNode node) {
+  final argument = node.parent;
+  if (argument is! NamedArgument || !identical(argument.argumentExpression, node)) return false;
+  final parameter = argument.correspondingParameter;
+  if (parameter == null) return false;
+  if (parameter.name == 'routeName') return true;
+  final creation = argument.parent?.parent;
+  if (parameter.name != 'name' || creation is! InstanceCreationExpression) return false;
+  final owner = creation.constructorName.element?.enclosingElement;
+  return owner?.name == 'RouteSettings' &&
+      owner!.library.uri.toString().startsWith('package:flutter/');
+}
+
+bool _isCodecOwnedKey(AstNode node) {
+  return _isStringKeyContext(node) && _isInModelCodecOwner(node);
+}
+
+/// Data-layer models own JSON/request-body keys (architecture.md): a class
+/// named `*Model`, or any code in a `data/models/` file.
+bool _isInModelCodecOwner(AstNode node) {
+  final className = node.thisOrAncestorOfType<ClassDeclaration>()?.namePart.typeName.lexeme;
+  if (className != null && className.endsWith('Model')) return true;
+
+  final root = node.root;
+  if (root is! CompilationUnit) return false;
+  final path = root.declaredFragment?.source.fullName.replaceAll('\\', '/') ?? '';
+  return path.contains('/data/models/');
+}
 
 bool _isStringKeyContext(AstNode node) {
   final parent = node.parent;

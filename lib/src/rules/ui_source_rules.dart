@@ -1,6 +1,11 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/constant_expression.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'ui_source_rules/ui_source_rules_part_01.dart';
 
@@ -26,37 +31,136 @@ final _currentTimeBoundary = RegExp(
   r'\b(?:DateTimeX\s*\.\s*)?now(?:Local|Utc)\s*\(\s*\)\s*\.\s*(?:startOfDay|endOfDay)\b',
 );
 
-bool _hasRawStyleToken(String line) {
-  if (RegExp(r'\bColor\s*\(\s*0x[0-9A-Fa-f]+').hasMatch(line)) {
-    return true;
-  }
+const _dartUiColorChecker = TypeChecker.fromUrl('dart:ui#Color');
+const _rawColorPaletteChecker = TypeChecker.any([
+  TypeChecker.fromName('Colors', packageName: 'flutter'),
+  TypeChecker.fromName('CupertinoColors', packageName: 'flutter'),
+]);
+const _iconChecker = TypeChecker.fromName('Icon', packageName: 'flutter');
+const _borderSideChecker = TypeChecker.fromName('BorderSide', packageName: 'flutter');
+const _textStyleChecker = TypeChecker.fromName('TextStyle', packageName: 'flutter');
 
-  final visualConstructor = RegExp(
-    r'\b(?:EdgeInsets|BorderRadius|Radius|SizedBox)(?:\.\w+)?\s*\([^)]*',
-  );
-  for (final match in visualConstructor.allMatches(line)) {
-    if (_hasMeaningfulNumericLiteral(line.substring(match.start))) {
-      return true;
-    }
-  }
-  return false;
+/// Lines holding raw spacing, radius, or size literals, or resolved raw
+/// colors, icon sizes, font sizes, or border widths.
+Set<int> _rawStyleTokenLines(SourceScannerContext context) {
+  final visitor = _RawStyleTokenVisitor();
+  context.unit.accept(visitor);
+  return {
+    for (final offset in visitor.offsets) context.unit.lineInfo.getLocation(offset).lineNumber - 1,
+  };
 }
 
-bool _hasMeaningfulNumericLiteral(String line) {
-  final numericLiteral = RegExp(r'(?<![A-Za-z_])(?:\d+(?:\.\d+)?|\.\d+)');
-  for (final match in numericLiteral.allMatches(line)) {
-    final literal = match.group(0);
-    if (literal == null) continue;
+final class _RawStyleTokenVisitor extends RecursiveAstVisitor<void> {
+  final offsets = <int>[];
 
-    final value = double.tryParse(literal);
-    if (value == null || value == 0) continue;
-
-    final previous = _previousNonWhitespace(line, match.start);
-    if (previous != null && '+-*/'.contains(previous)) continue;
-
-    return true;
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    _addGeometryLiterals(node.constructorName.type.name.lexeme, node.argumentList);
+    final owner = node.constructorName.element?.enclosingElement;
+    if (owner != null) {
+      final rawArgument = switch (owner) {
+        _ when _dartUiColorChecker.isExactly(owner) => node,
+        _ when _iconChecker.isExactly(owner) => _rawNumericArgument(node.argumentList, 'size'),
+        _ when _borderSideChecker.isExactly(owner) => _rawNumericArgument(
+          node.argumentList,
+          'width',
+        ),
+        _ when owner.library.identifier.startsWith('package:flutter/') => _rawNumericArgument(
+          node.argumentList,
+          'iconSize',
+        ),
+        _ => null,
+      };
+      if (rawArgument != null) offsets.add(rawArgument.offset);
+    }
+    super.visitInstanceCreationExpression(node);
   }
-  return false;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    // Unresolved `EdgeInsets.all(8)` and `SizedBox(height: 8)` stay invocations.
+    final typeName = switch (node.realTarget) {
+      null => node.methodName.name,
+      SimpleIdentifier(:final name) => name,
+      _ => null,
+    };
+    if (typeName != null) _addGeometryLiterals(typeName, node.argumentList);
+    final targetType = node.realTarget?.staticType;
+    if (node.methodName.name == 'copyWith' &&
+        targetType != null &&
+        _textStyleChecker.isExactlyType(targetType)) {
+      if (_rawNumericArgument(node.argumentList, 'fontSize') case final argument?) {
+        offsets.add(argument.offset);
+      }
+    }
+    super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    final owner = node.element?.enclosingElement;
+    if (owner != null && _rawColorPaletteChecker.isExactly(owner)) {
+      offsets.add(node.offset);
+    }
+    super.visitSimpleIdentifier(node);
+  }
+
+  /// Non-zero numeric literals that flow into a spacing, radius, or size
+  /// constructor's arguments.
+  void _addGeometryLiterals(String typeName, ArgumentList arguments) {
+    if (!_geometryTypeNames.contains(typeName)) return;
+    for (final argument in arguments.arguments) {
+      if (argument is NamedArgument) {
+        _addStyleValueLiterals(argument.argumentExpression);
+      } else if (argument is Expression) {
+        _addStyleValueLiterals(argument);
+      }
+    }
+  }
+
+  /// Walks only the parts of [expression] that become the style value: not
+  /// conditions, arithmetic right operands (`height / 2`), nested calls, or
+  /// closures.
+  void _addStyleValueLiterals(Expression expression) {
+    switch (expression) {
+      case ParenthesizedExpression(:final expression):
+        _addStyleValueLiterals(expression);
+      case PrefixExpression(:final operator, :final operand) when operator.lexeme == '-':
+        _addStyleValueLiterals(operand);
+      case ConditionalExpression(:final thenExpression, :final elseExpression):
+        _addStyleValueLiterals(thenExpression);
+        _addStyleValueLiterals(elseExpression);
+      case BinaryExpression(:final operator, :final leftOperand, :final rightOperand):
+        if (_arithmeticOperators.contains(operator.lexeme)) {
+          _addStyleValueLiterals(leftOperand);
+        } else if (operator.lexeme == '??') {
+          _addStyleValueLiterals(leftOperand);
+          _addStyleValueLiterals(rightOperand);
+        }
+      case IntegerLiteral(:final value) when value != null && value != 0:
+      case DoubleLiteral(:final value) when value != 0:
+        offsets.add(expression.offset);
+      default:
+        break;
+    }
+  }
+}
+
+const _geometryTypeNames = {'EdgeInsets', 'BorderRadius', 'Radius', 'SizedBox'};
+const _arithmeticOperators = {'+', '-', '*', '/', '~/', '%'};
+
+/// A non-zero numeric literal passed as [name], optionally negated.
+Expression? _rawNumericArgument(ArgumentList arguments, String name) {
+  final argument = namedArgumentExpression(arguments, name);
+  final literal = argument is PrefixExpression && argument.operator.lexeme == '-'
+      ? argument.operand
+      : argument;
+  final value = switch (literal) {
+    IntegerLiteral(:final value) => value?.toDouble(),
+    DoubleLiteral(:final value) => value,
+    _ => null,
+  };
+  return value == null || value == 0 ? null : argument;
 }
 
 ({int lineIndex, int column}) _lineColumnForOffset(SourceScannerSource source, int offset) {
@@ -68,21 +172,46 @@ bool _hasMeaningfulNumericLiteral(String line) {
   return (lineIndex: lineIndex, column: offset - source.lineOffsets[lineIndex]);
 }
 
+/// Whether [offset] sits in a static member of an extension on dart:core
+/// `DateTime`, the skill's `DateTimeX.nowUtc()`/`nowLocal()` owner
+/// (primitive-formatting.md).
 bool _isAllowedDateTimeExtensionCurrentBoundary(SourceScannerContext context, int offset) {
-  if (!context.path.endsWith('/core/extensions/date_time_extensions.dart')) {
-    return false;
-  }
-
-  final (:lineIndex, :column) = _lineColumnForOffset(context.source, offset);
-  final line = context.source.masked[lineIndex];
-  final call = _currentDateTimeCall.matchAsPrefix(line, column);
-  if (call == null || !call.group(0)!.contains('timestamp')) return false;
-
-  final start = lineIndex < 3 ? 0 : lineIndex - 3;
-  final window = context.source.masked.sublist(start, lineIndex + 1).join('\n');
-  return RegExp(r'\bstatic\s+DateTime\s+nowUtc\s*\(\s*\)\s*=>\s*DateTime\s*\.\s*timestamp\s*\(')
-      .hasMatch(window);
+  return _dateTimeExtensions(context)
+      .expand((extension) => extension.body.members)
+      .whereType<MethodDeclaration>()
+      .any((member) => member.isStatic && offset >= member.offset && offset < member.end);
 }
+
+/// Whether [offset] sits in an extension on dart:core `DateTime`, where the
+/// skill keeps current-date windows.
+bool _isInsideDateTimeExtension(SourceScannerContext context, int offset) {
+  return _dateTimeExtensions(context)
+      .any((extension) => offset >= extension.offset && offset < extension.end);
+}
+
+Iterable<ExtensionDeclaration> _dateTimeExtensions(SourceScannerContext context) {
+  return context.unit.declarations.whereType<ExtensionDeclaration>().where(
+    (extension) => _extendsCoreType(extension, const {'DateTime'}),
+  );
+}
+
+/// Whether [extension] is on one of the dart:core [typeNames], the skill's
+/// primitive owners in `core/extensions/` (primitive-formatting.md).
+bool _extendsCoreType(ExtensionDeclaration? extension, Set<String> typeNames) {
+  final type = extension?.declaredFragment?.element.extendedType;
+  return type is InterfaceType &&
+      type.element.library.isDartCore &&
+      typeNames.contains(type.element.name);
+}
+
+const _coreNumTypes = {'num', 'int', 'double'};
+
+/// intl formatters and the dart:core types whose extensions own them:
+/// `DateTimeX.formatShortDate` and `NumX.asCurrency` (primitive-formatting.md).
+const _intlFormatterOwners = {
+  'DateFormat': {'DateTime'},
+  'NumberFormat': _coreNumTypes,
+};
 
 bool _isRawStringLiteralText(SourceScannerContext context, int offset) {
   final (:lineIndex, :column) = _lineColumnForOffset(context.source, offset);
@@ -100,14 +229,6 @@ bool _isRawStringLiteralText(SourceScannerContext context, int offset) {
     return prefixIndex >= 0 && (line[prefixIndex] == 'r' || line[prefixIndex] == 'R');
   }
   return false;
-}
-
-String? _previousNonWhitespace(String text, int beforeIndex) {
-  for (var i = beforeIndex - 1; i >= 0; i--) {
-    final char = text[i];
-    if (char.trim().isNotEmpty) return char;
-  }
-  return null;
 }
 
 final _widgetSurface = RegExp(
@@ -310,9 +431,113 @@ final class _WidgetCatchVisitor extends RecursiveAstVisitor<void> {
   @override
   void visitTryStatement(TryStatement node) {
     if (node.catchClauses.isNotEmpty) {
-      final location = context.unit.lineInfo.getLocation(node.tryKeyword.offset);
-      reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+      _reportAtOffset(reporter, context, node.tryKeyword.offset);
     }
     super.visitTryStatement(node);
   }
 }
+
+/// Reports `SnackBarUtils.show...` calls from notifiers, repositories, and
+/// datasources (context-ui.md: only the UI helper may wrap SnackBarUtils).
+final class _SnackBarUtilsDispatchVisitor extends RecursiveAstVisitor<void> {
+  _SnackBarUtilsDispatchVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final target = node.target;
+    if (target is Identifier &&
+        target.element is ClassElement &&
+        target.name == 'SnackBarUtils' &&
+        node.methodName.name.startsWith('show') &&
+        (context.isDataPath || isEnclosedClassAssignableTo(node, riverpodNotifierChecker))) {
+      _reportAtOffset(reporter, context, node.offset);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+void _reportAtOffset(ScannerRuleReporter reporter, SourceScannerContext context, int offset) {
+  final location = context.unit.lineInfo.getLocation(offset);
+  reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+}
+
+/// Reports intl `DateFormat`/`NumberFormat` construction outside the
+/// dart:core primitive extension that owns it.
+final class _AdHocIntlFormatVisitor extends RecursiveAstVisitor<void> {
+  _AdHocIntlFormatVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final formatter = node.constructorName.element?.enclosingElement;
+    final owners = _intlFormatterOwners[formatter?.name];
+    if (formatter != null &&
+        owners != null &&
+        formatter.library.uri.toString().startsWith('package:intl/') &&
+        !_extendsCoreType(node.thisOrAncestorOfType<ExtensionDeclaration>(), owners)) {
+      _reportAtOffset(reporter, context, node.offset);
+    }
+    super.visitInstanceCreationExpression(node);
+  }
+}
+
+/// Reports dart:core `num.clamp` calls outside an extension on num.
+final class _InlineNumClampVisitor extends RecursiveAstVisitor<void> {
+  _InlineNumClampVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final owner = node.methodName.element?.enclosingElement;
+    if (node.methodName.name == 'clamp' &&
+        owner is InterfaceElement &&
+        owner.library.isDartCore &&
+        _coreNumTypes.contains(owner.name) &&
+        !_extendsCoreType(node.thisOrAncestorOfType<ExtensionDeclaration>(), _coreNumTypes)) {
+      _reportAtOffset(reporter, context, node.methodName.offset);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+final class _DynamicListViewChildrenVisitor extends RecursiveAstVisitor<void> {
+  _DynamicListViewChildrenVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final constructor = node.constructorName;
+    if (constructor.type.name.lexeme == 'ListView' && constructor.name == null) {
+      final children = namedArgumentExpression(node.argumentList, 'children');
+      if (children != null && _isDynamicChildren(children)) {
+        final location = context.unit.lineInfo.getLocation(constructor.offset);
+        reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+      }
+    }
+    super.visitInstanceCreationExpression(node);
+  }
+}
+
+bool _isDynamicChildren(Expression children) {
+  final expression = unparenthesizedExpression(children);
+  if (expression is! ListLiteral) return !isConstantExpression(expression);
+  return expression.elements.any(_isDynamicCollectionElement);
+}
+
+bool _isDynamicCollectionElement(CollectionElement element) => switch (element) {
+  ForElement() => true,
+  SpreadElement(:final expression) => !isConstantExpression(expression),
+  IfElement(:final thenElement, :final elseElement) =>
+    _isDynamicCollectionElement(thenElement) ||
+        (elseElement != null && _isDynamicCollectionElement(elseElement)),
+  _ => false,
+};

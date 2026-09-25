@@ -372,6 +372,47 @@ abstract final class ExerciseListData {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, '.add', ruleName)]);
   }
 
+  Future<void> test_reportsExpressionBodiedPrivateHelper() async {
+    final analyzedSource = _analyzedSource(r'''
+class StatefulWidget extends Widget {}
+class State<T> extends Widget {}
+
+class ExerciseList extends StatefulWidget {}
+
+class _ExerciseListState extends State<ExerciseList> {
+  List<Exercise> _visible(List<Exercise> items) => items.where((item) => item.isVisible).toList();
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [compatLint(analyzedSource, '.where', ruleName)]);
+  }
+
+  Future<void> test_reportsWrappedExpressionBodiedDataNamespaceHelper() async {
+    final analyzedSource = _analyzedSource(r'''
+abstract final class ExerciseListData {
+  static List<Exercise> visible(List<Exercise> items) =>
+      items.where((item) => item.isVisible).toList();
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [compatLint(analyzedSource, '.where', ruleName)]);
+  }
+
+  Future<void> test_allowsExpressionBodiedHelperWithoutCollectionWork() async {
+    await assertAllows(r'''
+class StatefulWidget extends Widget {}
+class State<T> extends Widget {}
+
+class ExerciseList extends StatefulWidget {}
+
+class _ExerciseListState extends State<ExerciseList> {
+  List<Exercise> _items(List<Exercise> items) => items;
+}
+''', path: path);
+  }
+
   Future<void> test_reportsTopLevelDerivedCollection() async {
     final analyzedSource = _analyzedSource(r'''
 final _visibleExercises = Exercise.values

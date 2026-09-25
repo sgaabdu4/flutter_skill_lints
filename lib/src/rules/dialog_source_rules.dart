@@ -1,5 +1,9 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -15,7 +19,7 @@ final List<ScannerRule> dialogSourceRules = [
       'dialog_widget_subscribes_to_mutable_provider',
       'Dialog/sheet widget watches a provider its own action also mutates.',
       correctionMessage: 'Pass an immutable snapshot value object via the constructor. The dialog must not subscribe to state its own action mutates.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags dialog/sheet widgets that ref.watch and ref.read(...notifier).<method>() on the same provider so the Flutter skill modal snapshot pattern is shown during analysis.',
     scan: (reporter, context) {
@@ -35,7 +39,7 @@ final List<ScannerRule> dialogSourceRules = [
       'modal_high_frequency_watch_not_leaf',
       'Modal parent watches a high-frequency provider field.',
       correctionMessage: 'Extract the ticking/progress controls to a leaf ConsumerWidget and watch seconds/progress/isRunning there instead of in the sheet/dialog parent.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags dialog/sheet classes that watch timer, ticker, progress, or running-state provider fields in build().',
     scan: (reporter, context) {
@@ -60,11 +64,14 @@ final List<ScannerRule> dialogSourceRules = [
     description: 'Flags code that runs after Navigator.pop inside a dialog/sheet widget so the modal snapshot pattern is shown during analysis.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (final classSpan in context.classes) {
-        if (_isDialogHostClass(context, classSpan)) {
-          _reportDialogPostPopMutation(reporter, context, classSpan);
-        }
+      final dialogSpans = [
+        for (final classSpan in context.classes)
+          if (_isDialogHostClass(context, classSpan)) classSpan,
+      ];
+      for (final classSpan in dialogSpans) {
+        _reportDialogPostPopMutation(reporter, context, classSpan);
       }
+      _reportDialogPostPopNavigation(reporter, context, dialogSpans);
     },
   ),
 
@@ -80,25 +87,15 @@ final List<ScannerRule> dialogSourceRules = [
       'select_returns_unstable_record_identity',
       'Record select includes a getter that returns a fresh Map/Set/List each call.',
       correctionMessage: 'Records compare by field identity; getters that build a fresh Map/Set/List each call cause a rebuild on every notify. Watch primitive fields or memoize the derived value in a provider.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags ref.watch(...select((s) => (...record literal...))) where any field reads a getter whose name implies a fresh Map/Set/List per call.',
+    description: 'Flags ref.watch(...select((s) => (...record literal...))) where a field reads an explicit getter returning a Map/Set/Iterable (or, unresolved, a getter whose name implies one).',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        final selectMatch = _selectRecordStart.firstMatch(line);
-        if (selectMatch == null) continue;
-
-        final window = StringBuffer(line);
-        final end = (i + 6 > context.source.length) ? context.source.length : i + 6;
-        for (var j = i + 1; j < end; j++) {
-          window.write('\n');
-          window.write(context.source.masked[j]);
-        }
-        final body = window.toString();
-        if (!_unstableGetterField.hasMatch(body)) continue;
-        reporter.report(context, i, line.indexOf('.select'));
+      final visitor = _UnstableRecordSelectVisitor();
+      context.unit.accept(visitor);
+      for (final select in visitor.selects) {
+        reporter.reportOffset(context, select.operator!.offset);
       }
     },
   ),
@@ -162,15 +159,17 @@ final List<ScannerRule> dialogSourceRules = [
   /// the same mutation may have triggered a parent rebuild that unmounted the
   /// widget. context.mounted goes false, the teardown is skipped, and the
   /// screen never sees the cleared state. Make the notifier method own its
-  /// own teardown on the success path.
+  /// own teardown on the success path. Screens self-navigate from the cleared
+  /// state (`onMissing*` hooks), so a widget-side `.go(context)` chained off
+  /// the awaited mutation is reported too.
   scannerRule(
     code: const LintCode(
       'widget_calls_notifier_teardown_after_await',
-      'Widget calls notifier.reset/clear/dispose after awaiting a notifier mutation.',
-      correctionMessage: 'Move the teardown into the notifier method on its success path. Widgets dispatch and observe state; they do not orchestrate notifier lifecycle.',
-      severity: DiagnosticSeverity.WARNING,
+      'Widget calls notifier.reset/clear/dispose or navigates with .go(context) after awaiting a notifier mutation.',
+      correctionMessage: 'Move the teardown into the notifier method on its success path and let the screen self-navigate from observed state (onMissing* hooks). Widgets dispatch and observe state; they do not orchestrate notifier lifecycle.',
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags reset/clear/dispose calls that follow an awaited notifier mutation in non-notifier files so the notifier owns its own teardown.',
+    description: 'Flags reset/clear/dispose calls and .go(context)/context.go(...) navigation that follow an awaited notifier mutation in widget classes so the notifier owns its own teardown.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       _reportNotifierTeardownCalls(reporter, context);
@@ -188,7 +187,7 @@ final List<ScannerRule> dialogSourceRules = [
       'popscope_bypass_uses_go_not_pop',
       'Pop navigation after an awaited modal triggers PopScope interception.',
       correctionMessage: 'Use a typed `<Route>().go(context)` (or `context.go(...)`) for intentional navigation after an awaited modal; pop navigation triggers PopScope.onPopInvoked.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description:
         'Flags context.pop* calls that follow an awaited modal helper inside the same method.',
@@ -218,26 +217,22 @@ final List<ScannerRule> dialogSourceRules = [
   /// Why: Without a route name, the dialog/sheet route does not appear in
   /// observer logs, analytics, or `GoRouter` debug output as anything other
   /// than `?`. Pass `routeSettings: const RouteSettings(name: '<feature>-<intent>')`
-  /// at every call site (including app-wide wrappers like `showAppDialog` /
-  /// `showAppBottomSheet`).
+  /// wherever a Flutter modal launcher is called; app helpers such as
+  /// `showAppSheet` pass it once inside the helper.
   scannerRule(
     code: const LintCode(
       'modal_helper_requires_route_settings',
       'show modal helper missing routeSettings.',
       correctionMessage: 'Pass `routeSettings: const RouteSettings(name: "...")` so the dialog/sheet shows up in observer logs and analytics.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags showDialog/showModalBottomSheet calls without a routeSettings argument.',
+    description: 'Flags Flutter modal launchers (showDialog, showModalBottomSheet, ...) called without a routeSettings argument.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        final match = _showModalCall.firstMatch(line);
-        if (match == null) continue;
-        final args = _collectArgList(context, i, match.end);
-        if (args == null) continue;
-        if (_routeSettingsArg.hasMatch(args)) continue;
-        reporter.report(context, i, match.start);
+      for (final call in collectNodes<MethodInvocation>(context.unit)) {
+        if (_isFlutterModalLauncherWithoutRouteSettings(call)) {
+          reporter.reportNode(context, call.methodName);
+        }
       }
     },
   ),
@@ -259,41 +254,146 @@ void _reportMutableProviderClass(
   SourceScannerContext context,
   ScannerClassSpan classSpan,
 ) {
-  final mutated = _mutatedProviders(context, classSpan);
-  if (mutated.isEmpty) return;
-  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-    _reportWatchedMutation(reporter, context, i, mutated);
+  for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+    if (declaration.namePart.typeName.lexeme != classSpan.name) continue;
+    final accesses = _ProviderAccessVisitor();
+    declaration.accept(accesses);
+    for (final (:watch, :provider) in accesses.watches) {
+      if (!accesses.mutated.contains(provider)) continue;
+      final ref = watch.target!;
+      final lineIndex = context.unit.lineInfo.getLocation(ref.offset).lineNumber - 1;
+      if (_lineIgnoresRule(context, lineIndex, 'dialog_widget_subscribes_to_mutable_provider')) {
+        continue;
+      }
+      reporter.reportOffset(context, ref.offset);
+    }
   }
 }
 
-Set<String> _mutatedProviders(SourceScannerContext context, ScannerClassSpan classSpan) {
-  final providers = <String>{};
-  for (var i = classSpan.start; i <= classSpan.end && i < context.source.length; i++) {
-    for (final match in _refReadNotifierMethod.allMatches(context.source.masked[i])) {
-      final provider = match.group(1);
-      if (provider != null && provider.isNotEmpty) providers.add(provider);
+/// Collects `ref.watch(<provider>)` calls and the providers mutated through
+/// `ref.read(<provider>.notifier)`, keyed by their [_providerKey].
+final class _ProviderAccessVisitor extends RecursiveAstVisitor<void> {
+  final watches = <({MethodInvocation watch, Object provider})>[];
+  final mutated = <Object>{};
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final argument = _refCallArgument(node);
+    if (argument != null) {
+      final provider = _providerKey(argument);
+      if (provider != null && node.methodName.name == 'watch') {
+        watches.add((watch: node, provider: provider));
+      } else if (provider != null && _readsNotifier(argument)) {
+        mutated.add(provider);
+      }
     }
+    super.visitMethodInvocation(node);
   }
-  return providers;
 }
 
-void _reportWatchedMutation(
-  ScannerRuleReporter reporter,
-  SourceScannerContext context,
-  int lineIndex,
-  Set<String> mutated,
-) {
-  final line = context.source.masked[lineIndex];
-  for (final match in _refWatchProvider.allMatches(line)) {
-    final provider = match.group(1) ?? '';
-    if (!mutated.contains(provider)) continue;
-    if (_lineIgnoresRule(context, lineIndex, 'dialog_widget_subscribes_to_mutable_provider')) {
-      return;
+/// The single argument of `ref.watch(...)` / `ref.read(...)` on a Riverpod `WidgetRef`/`Ref`.
+Expression? _refCallArgument(MethodInvocation node) {
+  if (!const {'watch', 'read'}.contains(node.methodName.name)) return null;
+  if (!_isRiverpodRef(node.realTarget)) return null;
+  final arguments = node.argumentList.arguments;
+  return arguments.length == 1 ? arguments.single.argumentExpression : null;
+}
+
+bool _isRiverpodRef(Expression? target) {
+  if (target == null) return false;
+  final type = target.staticType;
+  if (type is InterfaceType) return const {'WidgetRef', 'Ref'}.contains(type.element.name);
+  return target is SimpleIdentifier && target.name == 'ref';
+}
+
+bool _readsNotifier(Expression argument) => switch (argument.unParenthesized) {
+  PrefixedIdentifier(:final identifier) => identifier.name == 'notifier',
+  PropertyAccess(:final propertyName) => propertyName.name == 'notifier',
+  _ => false,
+};
+
+/// The provider a `watch`/`read` argument listens to, with `.select(...)`, `.notifier`,
+/// `.future`, family calls and casts stripped: its element when resolved, otherwise its name.
+Object? _providerKey(Expression argument) {
+  final root = _providerRoot(argument);
+  return root == null ? null : root.element ?? root.name;
+}
+
+SimpleIdentifier? _providerRoot(Expression expression) => switch (expression.unParenthesized) {
+  SimpleIdentifier() && final identifier => identifier,
+  AsExpression(:final expression) => _providerRoot(expression),
+  PrefixedIdentifier(:final prefix, :final identifier)
+      when _providerAccessors.contains(identifier.name) =>
+    prefix,
+  PropertyAccess(:final target?, :final propertyName)
+      when _providerAccessors.contains(propertyName.name) =>
+    _providerRoot(target),
+  MethodInvocation(:final target?, :final methodName)
+      when const {'select', 'selectAsync'}.contains(methodName.name) =>
+    _providerRoot(target),
+  MethodInvocation(target: null, :final methodName) => methodName,
+  FunctionExpressionInvocation(:final function) => _providerRoot(function),
+  _ => null,
+};
+
+const _providerAccessors = {'notifier', 'future', 'stream'};
+
+/// Finds `ref.watch(<provider>.select((s) => (...record...)))` selects whose record reads a
+/// getter that builds a fresh collection per call.
+final class _UnstableRecordSelectVisitor extends RecursiveAstVisitor<void> {
+  final selects = <MethodInvocation>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.methodName.name == 'select' && _isWatchedSelect(node)) {
+      final record = _selectedRecord(node);
+      if (record != null && record.fields.any(_readsUnstableGetter)) selects.add(node);
     }
-    reporter.report(context, lineIndex, match.start);
-    return;
+    super.visitMethodInvocation(node);
   }
 }
+
+bool _isWatchedSelect(MethodInvocation select) {
+  final arguments = select.parent;
+  final watch = arguments?.parent;
+  return arguments is ArgumentList &&
+      watch is MethodInvocation &&
+      watch.methodName.name == 'watch' &&
+      _isRiverpodRef(watch.realTarget);
+}
+
+RecordLiteral? _selectedRecord(MethodInvocation select) {
+  final arguments = select.argumentList.arguments;
+  if (arguments.length != 1) return null;
+  final selector = arguments.single.argumentExpression.unParenthesized;
+  if (selector is! FunctionExpression) return null;
+  final body = selector.body;
+  final returned = body is ExpressionFunctionBody ? body.expression.unParenthesized : null;
+  return returned is RecordLiteral ? returned : null;
+}
+
+/// A record field reading an explicit (non-synthetic) getter that returns a Map, Set or
+/// Iterable. Stored fields keep their identity between notifications. Unresolved reads
+/// fall back to getter names such as `tagsMap` or `itemsByCategoryId`.
+bool _readsUnstableGetter(RecordLiteralField field) {
+  final property = switch (field.fieldExpression.unParenthesized) {
+    PrefixedIdentifier(:final identifier) => identifier,
+    PropertyAccess(:final propertyName) => propertyName,
+    _ => null,
+  };
+  if (property == null) return false;
+  final element = property.element;
+  if (element is GetterElement) {
+    return element.isOriginDeclaration &&
+        _collectionChecker.isAssignableFromType(element.returnType);
+  }
+  return element == null && _unstableGetterName.hasMatch(property.name);
+}
+
+const _collectionChecker = TypeChecker.any([
+  TypeChecker.fromUrl('dart:core#Map'),
+  TypeChecker.fromUrl('dart:core#Iterable'),
+]);
 
 void _reportHighFrequencyModalWatches(ScannerRuleReporter reporter, SourceScannerContext context) {
   for (final classSpan in context.classes) {
@@ -409,24 +509,19 @@ void _reportTeardownMatches(
       reporter.report(context, lineIndex, match.start);
     }
   }
+  for (final match in _goNavigationCall.allMatches(line)) {
+    reporter.report(context, lineIndex, match.start);
+  }
 }
 
-final _showModalCall = RegExp(
-  r'\b(?:show(?:Dialog|ModalBottomSheet)|show[A-Z]\w*(?:Dialog|Sheet|BottomSheet))'
-  r'(?:\s*<[^>]*>)?\s*\(',
-);
-
-final _routeSettingsArg = RegExp(r'\brouteSettings\s*:');
-
-String? _collectArgList(SourceScannerContext context, int startLine, int startCol) {
-  final state = _ArgumentCollectionState();
-  for (var i = startLine; i < context.source.length && i < startLine + 40; i++) {
-    final line = context.source.masked[i];
-    final from = i == startLine ? startCol - 1 : 0;
-    if (_collectArgumentLine(state, line, from < 0 ? 0 : from)) return state.buffer.toString();
-    state.buffer.write('\n');
+bool _isFlutterModalLauncherWithoutRouteSettings(MethodInvocation call) {
+  final element = call.methodName.element;
+  if (element is! TopLevelFunctionElement) return false;
+  if (!element.library.identifier.startsWith('package:flutter/')) return false;
+  if (!element.formalParameters.any((parameter) => parameter.name == 'routeSettings')) {
+    return false;
   }
-  return null;
+  return namedArgumentExpression(call.argumentList, 'routeSettings') == null;
 }
 
 void _reportDialogPostPopMutation(
@@ -441,6 +536,29 @@ void _reportDialogPostPopMutation(
     _rememberPopInvocation(state, i, line);
     state.depth += braceDelta(line);
     if (state.hasPop && state.depth < state.popDepth) state.clearPop();
+  }
+}
+
+/// Reports resolved navigation (another pop, or a typed-route / go_router /
+/// Navigator push) that runs after a resolved pop in the same block. Offenders
+/// the line scanner already reports are skipped.
+void _reportDialogPostPopNavigation(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  List<ScannerClassSpan> dialogSpans,
+) {
+  int lineOf(AstNode node) => context.unit.lineInfo.getLocation(node.offset).lineNumber - 1;
+  for (final pop in collectNodes<MethodInvocation>(context.unit)) {
+    if (!isResolvedNavigationPop(pop)) continue;
+    final popLine = lineOf(pop);
+    if (!dialogSpans.any((span) => span.contains(popLine))) continue;
+    final offender = followingBlockStatements(pop)
+        .expand(collectNodes<MethodInvocation>)
+        .where((call) => isResolvedNavigationPop(call) || isResolvedForwardNavigation(call))
+        .firstOrNull;
+    if (offender == null) continue;
+    if (_postPopOffender.hasMatch(context.source.masked[lineOf(offender)])) continue;
+    reporter.reportNode(context, offender);
   }
 }
 
@@ -462,20 +580,6 @@ void _rememberPopInvocation(_DialogPopState state, int lineIndex, String line) {
   if (_popInvocation.hasMatch(line)) state.recordPop(lineIndex);
 }
 
-bool _collectArgumentLine(_ArgumentCollectionState state, String line, int start) {
-  for (var column = start; column < line.length; column++) {
-    final char = line[column];
-    if (char == '(') {
-      state.depth++;
-      state.sawOpen = true;
-    } else if (char == ')' && --state.depth == 0 && state.sawOpen) {
-      return true;
-    }
-    if (state.sawOpen) state.buffer.write(char);
-  }
-  return false;
-}
-
 final class _DialogPopState {
   int depth = 0;
   int popLine = -1;
@@ -494,21 +598,9 @@ final class _DialogPopState {
   }
 }
 
-final class _ArgumentCollectionState {
-  final buffer = StringBuffer();
-  int depth = 0;
-  bool sawOpen = false;
-}
-
 // ---------------------------------------------------------------------------
 // Shared regex patterns and helpers
 // ---------------------------------------------------------------------------
-
-final _refReadNotifierMethod = RegExp(
-  r'\bref\s*\.\s*read\s*\(\s*([A-Za-z_]\w*)\b[^)]*\.\s*notifier\s*\)',
-);
-
-final _refWatchProvider = RegExp(r'\bref\s*\.\s*watch\s*\(\s*([A-Za-z_]\w*)\b');
 
 final _highFrequencyWatch = RegExp(
   r'\bref\s*\.\s*watch\s*\([\s\S]*?\.\s*select\s*\(\s*'
@@ -527,15 +619,9 @@ final _postPopOffender = RegExp(
   r'\b[A-Z]\w*Route\s*\([^)]*\)\s*\.\s*go\s*\()',
 );
 
-final _selectRecordStart = RegExp(
-  r'\bref\s*\.\s*watch\s*\([^)]*\.\s*select\s*\(\s*\([A-Za-z_]\w*\)\s*=>\s*\(',
+final _unstableGetterName = RegExp(
+  r'^[A-Za-z_]\w*(?:Map|Set|Sets|Ids|Items|Entries|sBy[A-Z]\w*|By[A-Z]\w*)$',
 );
-
-final _unstableGetterField = RegExp(
-  r'[A-Za-z_]\w*\s*:\s*[A-Za-z_]\w*\s*\.\s*'
-  r'([A-Za-z_]\w*(?:Map|Set|Sets|Ids|Items|Entries|sBy[A-Z]\w*|By[A-Z]\w*))\b',
-);
-
 final _buildFieldAssignment = RegExp(
   r'^\s*(?:this\s*\.\s*[A-Za-z_]\w*|_[A-Za-z]\w*)\s*(?:\?\?=|=(?![=>]))',
 );
@@ -551,6 +637,8 @@ final _awaitedNotifierMethod = RegExp(
 final _notifierTeardown = RegExp(
   r'\bref\s*\.\s*read\s*\(\s*([A-Za-z_]\w*)\b[^)]*\.\s*notifier\s*\)\s*\.\s*(?:reset|clear|dispose)\s*\(',
 );
+
+final _goNavigationCall = RegExp(r'\.\s*go\s*\(');
 
 final _awaitModalCall = RegExp(
   r'\bawait\s+(?:\w+\s*\.\s*)?'

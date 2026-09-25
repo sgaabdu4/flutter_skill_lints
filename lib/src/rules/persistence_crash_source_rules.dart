@@ -1,33 +1,36 @@
+import 'dart:math' as math;
+
+import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/scope.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
+part 'persistence_crash_source_rules/persistence_crash_source_rules_part_01.dart';
+
 final List<ScannerRule> persistenceCrashSourceRules = [
-  /// Hive generated adapters should reserve @HiveType ids.
+  /// Hive generated adapters must reserve every @HiveType id.
   ///
-  /// Why: Flags @GenerateAdapters without reservedTypeIds when @HiveType exists. Add
-  /// reservedTypeIds when @HiveType classes share a file with adapters.
+  /// Why: @GenerateAdapters assigns ids to its specs. A @HiveType class in the same
+  /// registration scope keeps its hand-written id, so every such id must appear in
+  /// reservedTypeIds or a generated adapter can claim it. The check resolves the
+  /// annotations and follows the analyzer's import graph, so it also sees @HiveType
+  /// classes that live in another file of the registration scope.
   scannerRule(
     code: const LintCode(
       'hive_reserved_type_ids_missing',
-      'Hive generated adapters should reserve @HiveType ids.',
-      correctionMessage: 'Add reservedTypeIds when @HiveType classes share a file with adapters.',
+      'Hive generated adapters must reserve every @HiveType typeId.',
+      correctionMessage:
+          'Add each @HiveType typeId from the same registration scope to reservedTypeIds.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags @GenerateAdapters without reservedTypeIds when @HiveType exists so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      if (_annotationSpans(context, 'HiveType').isEmpty) return;
-      final adapterSpans = _annotationSpans(context, 'GenerateAdapters');
-      for (final span in adapterSpans) {
-        if (!RegExp(r'\breservedTypeIds\s*:').hasMatch(span.text)) {
-          reporter.report(context, span.start, 0);
-        }
-      }
-    },
+    description: 'Flags @GenerateAdapters whose reservedTypeIds omit a @HiveType typeId from the same resolved import graph.',
+    scan: _reportUnreservedHiveTypeIds,
   ),
 
   /// Hive tests should close boxes.
@@ -51,47 +54,127 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     },
   ),
 
-  /// Hive typeId values must be unique in a file.
+  /// Hive typeId values must be unique across a registration scope.
   ///
-  /// Why: Flags duplicate Hive typeId values in the same file. Assign a fresh permanent
-  /// typeId and retire the old id.
+  /// Why: Hive registers one adapter per typeId. Two @HiveType classes that share an
+  /// id break registration or read each other's bytes. The check resolves @HiveType
+  /// ids in this library and in every library the analyzer's import graph reaches, and
+  /// reports where the two ids first meet. Assign a fresh permanent typeId and retire
+  /// the old id.
   scannerRule(
     code: const LintCode(
       'hive_duplicate_type_id',
-      'Hive typeId values must be unique in a file.',
+      'Hive typeId values must be unique across registered types.',
       correctionMessage: 'Assign a fresh permanent typeId and retire the old id.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags duplicate Hive typeId values in the same file so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      _reportDuplicateAnnotationIds(
-        reporter: reporter,
-        context: context,
-        annotationName: 'HiveType',
-        idPattern: RegExp(r'\btypeId\s*:\s*(\d+)\b'),
-      );
-    },
+    description: 'Flags @HiveType typeIds that collide within the same resolved import graph, including across files.',
+    scan: _reportDuplicateHiveTypeIds,
   ),
 
-  /// HiveField indices must be unique in a file.
+  /// HiveField indices must be unique within one class.
   ///
-  /// Why: Flags duplicate HiveField indices in the same file. Append with a new HiveField
-  /// index; never reuse a retired index.
+  /// Why: HiveField indexes are per @HiveType class. Two fields of the same class with
+  /// the same index overwrite each other on disk; separate classes may each use 0, 1.
+  /// Append with a new HiveField index; never reuse a retired index.
   scannerRule(
     code: const LintCode(
       'hive_duplicate_field_id',
-      'HiveField indices must be unique in a file.',
+      'HiveField indices must be unique within a class.',
       correctionMessage: 'Append with a new HiveField index; never reuse a retired index.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags duplicate HiveField indices in the same file so the Flutter skill violation is shown during analysis.',
+    description: 'Flags a resolved HiveField index used twice in the same class or enum.',
+    scan: _reportDuplicateHiveFieldIds,
+  ),
+
+  /// Freezed classes use @GenerateAdapters, not @HiveType.
+  ///
+  /// Why: hive-persistence.md: "@HiveType for non-Freezed. @GenerateAdapters for
+  /// Freezed." Freezed owns the constructor, so its Hive slots come from the
+  /// AdapterSpec schema instead of hand-written annotations.
+  scannerRule(
+    code: const LintCode(
+      'hive_type_on_freezed_class',
+      'Freezed classes must use @GenerateAdapters, not @HiveType.',
+      correctionMessage:
+          'Remove @HiveType/@HiveField and add AdapterSpec<Model>() to the @GenerateAdapters list.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags a class annotated with both a resolved Freezed annotation and a hive_ce @HiveType.',
     scan: (reporter, context) {
-      _reportDuplicateAnnotationIds(
-        reporter: reporter,
-        context: context,
-        annotationName: 'HiveField',
-        idPattern: RegExp(r'@HiveField\s*\(\s*(\d+)\b'),
-      );
+      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+        final metadata = declaration.metadata;
+        final isFreezed = metadata.any(
+          (annotation) =>
+              isPackageAnnotation(annotation.elementAnnotation, 'freezed_annotation', 'Freezed'),
+        );
+        if (!isFreezed) continue;
+        for (final annotation in metadata) {
+          if (_isHiveAnnotation(annotation.elementAnnotation, 'HiveType')) {
+            _reportAtOffset(reporter, context, annotation.offset);
+          }
+        }
+      }
+    },
+  ),
+
+  /// AdapterSpec names a persistence Model, never a domain type.
+  ///
+  /// Why: hive-persistence.md: "AdapterSpec<T>() always names a persistence-layer Model
+  /// from /data/models/, never a /domain/entities/ class. Domain entities stay
+  /// Hive-free." The resolved type argument's declaring library decides the layer.
+  scannerRule(
+    code: const LintCode(
+      'hive_adapter_spec_domain_type',
+      'AdapterSpec must name a /data/models/ Model, not a domain type.',
+      correctionMessage: 'Point AdapterSpec at the persistence Model and map it to the domain entity in the mapper.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags AdapterSpec<T>() in @GenerateAdapters when the resolved T is declared under /domain/.',
+    scan: (reporter, context) {
+      for (final annotation in _unitAnnotations(context.unit)) {
+        if (!_isHiveAnnotation(annotation.elementAnnotation, 'GenerateAdapters')) continue;
+        final specs = annotation.arguments?.arguments.firstOrNull;
+        if (specs is! ListLiteral) continue;
+        for (final spec in specs.elements.whereType<InstanceCreationExpression>()) {
+          final type = spec.staticType;
+          if (type is! InterfaceType || type.typeArguments.isEmpty) continue;
+          final model = type.typeArguments.first.element;
+          final path = model?.library?.firstFragment.source.fullName.replaceAll('\\', '/');
+          if (path != null && path.contains('/domain/')) {
+            _reportAtOffset(reporter, context, spec.offset);
+          }
+        }
+      }
+    },
+  ),
+
+  /// Notifiers never touch Hive.
+  ///
+  /// Why: hive-persistence.md: "Notifier consumes IOrderRepository only — never
+  /// touches Hive." Storage calls stay in local datasources behind the repository, so
+  /// tests override the repository without Hive setup.
+  scannerRule(
+    code: const LintCode(
+      'notifier_hive_access',
+      'Notifiers must not touch Hive.',
+      correctionMessage:
+          'Move box access into a local datasource and call it through the repository interface.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags references to hive_ce APIs inside classes whose resolved supertypes include a Riverpod Notifier.',
+    scan: (reporter, context) {
+      for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
+        final element = declaration.declaredFragment?.element;
+        if (element == null || !element.allSupertypes.any(_isRiverpodNotifierType)) continue;
+        final visitor = _HiveReferenceVisitor();
+        declaration.body.accept(visitor);
+        for (final offset in visitor.offsets) {
+          _reportAtOffset(reporter, context, offset);
+        }
+      }
     },
   ),
 
@@ -144,24 +227,23 @@ final List<ScannerRule> persistenceCrashSourceRules = [
   /// Fire-and-forget futures need local error handling.
   ///
   /// Why: Flags feasible unawaited fire-and-forget calls without catch handling. Catch inside
-  /// the fire-and-forget future or attach catchError.
+  /// the fire-and-forget future or attach catchError. A resolved callee whose futures are
+  /// all Riverpod `Mutation.run` calls, Flutter/go_router route or modal futures, or
+  /// callees that catch internally already captures its failures and is not reported.
   scannerRule(
     code: const LintCode(
       'fire_and_forget_missing_catch',
       'Fire-and-forget futures need local error handling.',
       correctionMessage: 'Catch inside the fire-and-forget future or attach catchError.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags feasible unawaited fire-and-forget calls without catch handling so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        final column = line.indexOf('unawaited(');
-        if (column < 0) continue;
-        final statement = _statementFrom(context, i);
-        if (!_isFeasibleFireAndForgetRisk(statement)) continue;
-        if (_hasCatchGuard(statement) || _usesKnownGuardedFireAndForgetHelper(statement)) continue;
-        reporter.report(context, i, column);
+      final visitor = _UnawaitedVisitor();
+      context.unit.accept(visitor);
+      for (final invocation in visitor.invocations) {
+        if (_isFireAndForgetGuarded(context, invocation)) continue;
+        reporter.reportOffset(context, invocation.offset);
       }
     },
   ),
@@ -442,52 +524,6 @@ final class _CrashShadowVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
-void _reportDuplicateAnnotationIds({
-  required ScannerRuleReporter reporter,
-  required SourceScannerContext context,
-  required String annotationName,
-  required RegExp idPattern,
-}) {
-  final seen = <String, int>{};
-  for (final span in _annotationSpans(context, annotationName)) {
-    final match = idPattern.firstMatch(span.text);
-    final id = match?.group(1);
-    if (id == null) continue;
-    if (seen.containsKey(id)) {
-      reporter.report(context, span.start, span.column);
-      continue;
-    }
-    seen[id] = span.start;
-  }
-}
-
-List<_AnnotationSpan> _annotationSpans(SourceScannerContext context, String name) {
-  final spans = <_AnnotationSpan>[];
-  final startsAnnotation = RegExp('@$name\\b');
-  for (var i = 0; i < context.source.length; i++) {
-    final line = context.source.masked[i];
-    final match = startsAnnotation.firstMatch(line);
-    if (match == null) continue;
-
-    final buffer = StringBuffer(line);
-    var end = i;
-    var depth = _parenDelta(line);
-    final hasArguments = line.contains('(');
-    while (hasArguments && depth > 0 && end + 1 < context.source.length) {
-      end++;
-      final nextLine = context.source.masked[end];
-      buffer
-        ..write('\n')
-        ..write(nextLine);
-      depth += _parenDelta(nextLine);
-    }
-
-    spans.add(_AnnotationSpan(i, match.start, buffer.toString()));
-    i = end;
-  }
-  return spans;
-}
-
 int? _firstLineMatching(SourceScannerContext context, RegExp pattern) {
   for (var i = 0; i < context.source.length; i++) {
     if (pattern.hasMatch(context.source.masked[i])) return i;
@@ -504,9 +540,7 @@ bool _containsMatch(SourceScannerContext context, RegExp pattern) {
 
 bool _isCrashServiceContext(SourceScannerContext context) {
   final normalized = context.path.replaceAll('\\', '/').toLowerCase();
-  return normalized.endsWith('/crash_service.dart') ||
-      normalized.endsWith('/crash.dart') ||
-      normalized.contains('/core/crash/');
+  return normalized.endsWith('/crash_service.dart');
 }
 
 bool _isMainEntrypoint(SourceScannerContext context) {
@@ -551,16 +585,317 @@ bool _hasCatchGuard(String statement) {
   return RegExp(r'\b(?:catch|on\s+[A-Za-z_][A-Za-z0-9_]*)\b').hasMatch(statement);
 }
 
-bool _usesKnownGuardedFireAndForgetHelper(String statement) {
-  return RegExp(r'\bunawaited\s*\(\s*_(?:send|runCrashOperation)\s*\(').hasMatch(statement);
+final class _UnawaitedVisitor extends RecursiveAstVisitor<void> {
+  final invocations = <MethodInvocation>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final element = node.methodName.element;
+    if (node.target == null &&
+        node.methodName.name == 'unawaited' &&
+        (element == null || element.library?.isDartAsync == true)) {
+      invocations.add(node);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+/// Whether the future passed to `unawaited` handles its own errors: a `catchError`/`onError`
+/// chain, an inline closure or resolved callee whose failures are captured (see
+/// [_FailureCapture]). Callees without an available body (SDK, abstract, external) keep the
+/// keyword heuristic.
+bool _isFireAndForgetGuarded(SourceScannerContext context, MethodInvocation invocation) {
+  final arguments = invocation.argumentList.arguments;
+  if (arguments.isEmpty) return true;
+  final future = arguments.first.argumentExpression.unParenthesized;
+  if (future is MethodInvocation &&
+      const {'catchError', 'onError'}.contains(future.methodName.name)) {
+    return true;
+  }
+
+  final element = _invokedElement(future);
+  if (_isFailureRecordingCall(element)) return true;
+  final capture = _FailureCapture(context);
+  final closure = future is FunctionExpressionInvocation ? future.function.unParenthesized : null;
+  final handled = closure is FunctionExpression
+      ? capture.handlesBody(closure.body, 0, null)
+      : capture.handlesCallee(element, 0);
+  if (handled != null) return handled;
+
+  final lineIndex = context.source.lineOffsets.lastIndexWhere(
+    (start) => start <= invocation.offset,
+  );
+  final statement = _statementFrom(context, lineIndex);
+  return !_isFeasibleFireAndForgetRisk(statement) || _hasCatchGuard(statement);
+}
+
+FunctionBody? _declaredBody(SourceScannerContext context, Element? element) {
+  if (element is! ExecutableElement) return null;
+  final declared = element.baseElement;
+  if (declared.isAbstract || declared.isExternal) return null;
+  final library = declared.library;
+  if (library.isInSdk) return null;
+
+  AstNode? node;
+  if (library == context.unit.declaredFragment?.element) {
+    final finder = _DeclarationFinder(declared);
+    context.unit.accept(finder);
+    node = finder.node;
+  }
+  if (node == null) {
+    final parsed = library.session.getParsedLibraryByElement(library);
+    if (parsed is! ParsedLibraryResult) return null;
+    try {
+      node = parsed.getFragmentDeclaration(declared.firstFragment)?.node;
+    } on ArgumentError {
+      return null;
+    }
+  }
+
+  final body = switch (node) {
+    MethodDeclaration(:final body) => body,
+    FunctionDeclaration(:final functionExpression) => functionExpression.body,
+    _ => null,
+  };
+  return body is EmptyFunctionBody ? null : body;
+}
+
+bool _catchesInternally(FunctionBody body) {
+  if (body is BlockFunctionBody && body.block.statements.isEmpty) return true;
+  final visitor = _CatchVisitor();
+  body.accept(visitor);
+  return visitor.catches;
+}
+
+/// Decides whether a fire-and-forget callee's failures are captured by a mechanism the
+/// building-flutter-apps skill prescribes, following resolved callees a few levels deep:
+///
+/// - the body catches internally (services-and-singletons.md "Catch internally"), or
+/// - it throws nothing and every future it awaits or returns is captured: a Riverpod
+///   `Mutation.run` (failures land in the mutation's `MutationError` state), a route or
+///   modal future (it completes with the popped result, not an error), or a resolved
+///   callee that is itself captured (including same-class calls such as
+///   lists-forms-workflows.md `loadMore` awaiting `_loadPage`), or
+/// - it has no future and makes no call at all (for example `async => null`).
+final class _FailureCapture {
+  _FailureCapture(this.context);
+
+  static const _maxDepth = 3;
+
+  final SourceScannerContext context;
+  final Set<ExecutableElement> _visiting = {};
+
+  /// Whether [element]'s declared body captures its failures; null when no body is
+  /// available (SDK, abstract or external callee).
+  bool? handlesCallee(Element? element, int depth) {
+    if (element is! ExecutableElement) return null;
+    final declared = element.baseElement;
+    final body = _declaredBody(context, declared);
+    if (body == null) return null;
+    if (!_visiting.add(declared)) return false;
+    final owner = declared.enclosingElement;
+    try {
+      return handlesBody(
+        body,
+        depth,
+        declared.firstFragment.libraryFragment.scope,
+        owner: owner is InterfaceElement ? owner : null,
+      );
+    } finally {
+      _visiting.remove(declared);
+    }
+  }
+
+  /// [scope] and [owner] resolve top-level and same-class calls when [body] comes from
+  /// another library, whose declaration is only available as a parsed (unresolved) AST.
+  bool handlesBody(FunctionBody body, int depth, Scope? scope, {InterfaceElement? owner}) {
+    if (_catchesInternally(body)) return true;
+    final sources = _FutureSourceCollector();
+    body.accept(sources);
+    if (sources.throws) return false;
+    if (sources.futures.isEmpty) return !sources.calls;
+    return sources.futures.every((future) => _handlesFuture(future, depth, scope, owner));
+  }
+
+  bool _handlesFuture(Expression future, int depth, Scope? scope, InterfaceElement? owner) {
+    final element =
+        _invokedElement(future) ??
+        _unresolvedTopLevelCall(future, scope) ??
+        _unresolvedSameClassCall(future, owner);
+    if (_isFailureRecordingCall(element)) return true;
+    if (depth >= _maxDepth) return false;
+    return handlesCallee(element, depth + 1) ?? false;
+  }
+}
+
+Element? _invokedElement(Expression expression) => switch (expression.unParenthesized) {
+  MethodInvocation(:final methodName) => methodName.element,
+  FunctionExpressionInvocation(:final element) => element,
+  _ => null,
+};
+
+Element? _unresolvedTopLevelCall(Expression expression, Scope? scope) => switch (expression) {
+  MethodInvocation(target: null, :final methodName) when scope != null =>
+    scope.lookup(methodName.name).getter,
+  _ => null,
+};
+
+Element? _unresolvedSameClassCall(Expression expression, InterfaceElement? owner) =>
+    switch (expression.unParenthesized) {
+      MethodInvocation(target: null || ThisExpression(), :final methodName) when owner != null =>
+        owner.getMethod(methodName.name),
+      _ => null,
+    };
+
+/// A Riverpod `Mutation.run`, or a Flutter / go_router navigation call (including a
+/// go_router_builder route's generated `push`, and `maybePop`) whose future completes with
+/// the route result.
+bool _isFailureRecordingCall(Element? element) {
+  if (element is! ExecutableElement) return false;
+  final declared = element.baseElement;
+  final uri = declared.library.uri.toString();
+  final owner = declared.enclosingElement;
+  final ownerName = owner is InterfaceElement ? owner.name : null;
+  if (uri.startsWith('package:riverpod/')) {
+    return declared.name == 'run' && ownerName == 'Mutation';
+  }
+  if (!_routePushMethods.contains(declared.name)) {
+    return uri.startsWith('package:flutter/') &&
+        declared is TopLevelFunctionElement &&
+        _flutterModalFunctions.contains(declared.name);
+  }
+  if (uri.startsWith('package:go_router/')) return true;
+  if (uri.startsWith('package:flutter/')) {
+    return const {'Navigator', 'NavigatorState'}.contains(ownerName);
+  }
+  return owner is InterfaceElement &&
+      owner.allSupertypes.any(
+        (type) =>
+            type.element.library.uri.toString().startsWith('package:go_router/') &&
+            type.element.getMethod(declared.name!) != null,
+      );
+}
+
+const _flutterModalFunctions = {
+  'showAdaptiveDialog',
+  'showCupertinoDialog',
+  'showCupertinoModalPopup',
+  'showCupertinoSheet',
+  'showDialog',
+  'showGeneralDialog',
+  'showModalBottomSheet',
+};
+
+const _routePushMethods = {
+  'maybePop',
+  'push',
+  'pushAndRemoveUntil',
+  'pushNamed',
+  'pushNamedAndRemoveUntil',
+  'pushReplacement',
+  'pushReplacementNamed',
+  'replace',
+  'replaceNamed',
+};
+
+/// Collects the futures a body awaits or returns, whether it throws, and whether it calls
+/// anything. Nested closures run on their own schedule and are skipped.
+final class _FutureSourceCollector extends RecursiveAstVisitor<void> {
+  final futures = <Expression>[];
+  bool throws = false;
+  bool calls = false;
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {}
+
+  @override
+  void visitThrowExpression(ThrowExpression node) {
+    throws = true;
+    super.visitThrowExpression(node);
+  }
+
+  @override
+  void visitAwaitExpression(AwaitExpression node) {
+    futures.add(node.expression.unParenthesized);
+    super.visitAwaitExpression(node);
+  }
+
+  @override
+  void visitReturnStatement(ReturnStatement node) {
+    _addReturned(node.expression);
+    super.visitReturnStatement(node);
+  }
+
+  @override
+  void visitExpressionFunctionBody(ExpressionFunctionBody node) {
+    _addReturned(node.expression);
+    super.visitExpressionFunctionBody(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    calls = true;
+    super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
+    calls = true;
+    super.visitFunctionExpressionInvocation(node);
+  }
+
+  void _addReturned(Expression? expression) {
+    final returned = expression?.unParenthesized;
+    if (returned == null || returned is AwaitExpression) return;
+    final type = returned.staticType;
+    // A parsed body from another library has no types: any returned call may be a future.
+    final isFuture = type == null
+        ? returned is MethodInvocation || returned is FunctionExpressionInvocation
+        : type is InterfaceType && (type.isDartAsyncFuture || type.isDartAsyncFutureOr);
+    if (isFuture) futures.add(returned);
+  }
+}
+
+final class _DeclarationFinder extends RecursiveAstVisitor<void> {
+  _DeclarationFinder(this.element);
+
+  final ExecutableElement element;
+  AstNode? node;
+
+  @override
+  void visitMethodDeclaration(MethodDeclaration node) {
+    if (node.declaredFragment?.element == element) this.node = node;
+  }
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    if (node.declaredFragment?.element == element) {
+      this.node = node;
+      return;
+    }
+    super.visitFunctionDeclaration(node);
+  }
+}
+
+final class _CatchVisitor extends RecursiveAstVisitor<void> {
+  bool catches = false;
+
+  @override
+  void visitTryStatement(TryStatement node) {
+    if (node.catchClauses.isNotEmpty) catches = true;
+    super.visitTryStatement(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (const {'catchError', 'onError'}.contains(node.methodName.name)) catches = true;
+    super.visitMethodInvocation(node);
+  }
 }
 
 int _parenDelta(String line) => countCharacter(line, '(') - countCharacter(line, ')');
 
-final class _AnnotationSpan {
-  const _AnnotationSpan(this.start, this.column, this.text);
-
-  final int start;
-  final int column;
-  final String text;
+void _reportAtOffset(ScannerRuleReporter reporter, SourceScannerContext context, int offset) {
+  final location = context.unit.lineInfo.getLocation(offset);
+  reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
 }

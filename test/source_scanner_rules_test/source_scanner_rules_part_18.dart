@@ -62,6 +62,34 @@ class SearchNotifier {
   static const _searchDebounceDuration = Duration(milliseconds: 500);
 }
 ''';
+
+  Future<void> test_reportsHardWaitInAsyncMethod() async {
+    final analyzedSource = _analyzedSource(r'''
+class SaveNotifier extends AsyncNotifier<void> {
+  Future<void> save() async {
+    state = AsyncLoading();
+    await Future<void>.delayed(const Duration(milliseconds: 51));
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path!, analyzedSource);
+
+    await assertDiagnosticsInFile(path!, [
+      compatLint(analyzedSource, 'Duration(milliseconds: 51)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSyncSettleTimerInAsyncMethod() async {
+    await assertAllows(r'''
+class SaveNotifier {
+  static const _syncSettleDelay = Duration(seconds: 2);
+
+  Future<void> save() async {
+    await Future<void>.delayed(_syncSettleDelay);
+  }
+}
+''', path: path);
+  }
 }
 
 @reflectiveTest
@@ -409,10 +437,137 @@ class Helper {
 }
 ''');
   }
+
+  Future<void> test_allowsAwaitedResourceHandleLifecycleWrites() async {
+    await assertAllows(r'''
+class Store {
+  Future<void> write(String handle) async {}
+}
+class Remote {
+  Future<String> create() async => 'synthetic';
+}
+class Resource {
+  const Resource(this.handle);
+  final String handle;
+}
+class ResourceNotifier {
+  ResourceNotifier(this.store, this.remote);
+  final Store store;
+  final Remote remote;
+
+  Future<void> createResource() async {
+    final handle = await remote.create();
+    await _persistResourceHandle(handle);
+  }
+  Future<void> reuseResource(Resource existing) async {
+    await _persistResourceHandle(existing.handle);
+  }
+  Future<void> _persistResourceHandle(String handle) async {
+    await store.write(handle);
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsStateWriteAfterAwaitedLifecycleResult() async {
+    await assertAllows(r'''
+class Remote {
+  Future<String> create() async => 'synthetic';
+}
+class ResourceNotifier {
+  ResourceNotifier(this.remote);
+  final Remote remote;
+  String state = '';
+
+  Future<void> createResource() async {
+    final handle = await remote.create();
+    state = handle;
+    await _persistResourceHandle(handle);
+  }
+  Future<void> _persistResourceHandle(String handle) async {}
+}
+''');
+  }
+
+  Future<void> test_allowsLookalikeLocalPersistFunctionInSetter() async {
+    await assertAllows(r'''
+class ResourceNotifier {
+  String state = '';
+
+  void rename(String handle) {
+    Future<void> _persistResourceHandle(String value) async {}
+    state = handle;
+    _persistResourceHandle(handle);
+  }
+  Future<void> reuseResource(String handle) async {
+    await _persistResourceHandle(handle);
+  }
+  Future<void> _persistResourceHandle(String handle) async {}
+}
+''');
+  }
+
+  Future<void> test_reportsAsyncSetterPersistingAfterStateWrite() async {
+    const source = r'''
+class ThemeNotifier {
+  String state = 'light';
+
+  Future<void> setTheme(String mode) async {
+    state = mode;
+    await _persistTheme();
+  }
+  Future<void> _persistTheme() async {}
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'Future<void> _persistTheme(', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsSyncDraftUpdateCallingAsyncPersist() async {
+    const source = r'''
+class DraftNotifier {
+  String state = '';
+
+  Future<void> reuseDraft(String draft) async {
+    await _persistDraft(draft);
+  }
+  void updateDraft(String draft) {
+    state = draft;
+    _persistDraft(draft);
+  }
+  Future<void> _persistDraft(String draft) async {}
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'Future<void> _persistDraft(', ruleName),
+    ]);
+  }
 }
 
 @reflectiveTest
 final class NotifierAsyncInitStaleStateWriteTest extends _RuntimeBugRuleTest {
+  @override
+  void setUp() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', r'''
+class Ref {
+  bool get mounted => true;
+  T read<T>(Object provider) => throw UnimplementedError();
+}
+
+abstract class Notifier<T> {
+  Ref get ref => Ref();
+  late T state;
+  T build();
+}
+''');
+    super.setUp();
+  }
+
   @override
   String get ruleName => 'notifier_async_init_stale_state_write';
   @override
@@ -458,6 +613,58 @@ class ActiveWorkoutNotifier extends _$ActiveWorkoutNotifier {
 }
 ''');
   }
+
+  Future<void> test_allowsSkillRefMountedGuard() async {
+    await assertAllows(
+      _productEditorSource('''
+    final product = await ref.read<Future<String>>(productRepositoryProvider);
+    if (!ref.mounted) return;
+    state = state.copyWith(name: product);'''),
+      addIgnorePrefix: false,
+    );
+  }
+
+  Future<void> test_reportsMountedGuardOnNonRiverpodRefOrBeforeAwait() async {
+    final source = _productEditorSource('''
+    if (!ref.mounted) return;
+    final product = await ref.read<Future<String>>(productRepositoryProvider);
+    final other = _FakeRef();
+    if (!other.mounted) return;
+    state = state.copyWith(name: product);''');
+    await assertDiagnostics(source, [
+      compatLint(source, 'state = state.copyWith(name: product)', ruleName),
+    ]);
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(rule.diagnosticCodes.single.severity, DiagnosticSeverity.ERROR);
+  }
+
+  String _productEditorSource(String body) =>
+      '''
+import 'package:riverpod/riverpod.dart';
+
+final productRepositoryProvider = Object();
+
+class _FakeRef {
+  bool get mounted => true;
+}
+
+class ProductFormState {
+  const ProductFormState();
+
+  ProductFormState copyWith({String? name}) => this;
+}
+
+class ProductEditor extends Notifier<ProductFormState> {
+  @override
+  ProductFormState build() => const ProductFormState();
+
+  Future<void> _loadProduct(String id) async {
+$body
+  }
+}
+''';
 
   Future<void> test_allowsNonNotifierClass() async {
     await assertAllows(r'''

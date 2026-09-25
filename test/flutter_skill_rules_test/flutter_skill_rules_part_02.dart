@@ -120,6 +120,63 @@ class TodosNotifier extends Notifier<int> {
 }
 ''');
   }
+
+  Future<void> test_reportsHelperThatReadsStateTransitively() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    _prime();
+    _warm();
+    return 0;
+  }
+
+  void _prime() {
+    if (state > 0) return;
+  }
+
+  void _warm() => this._touch();
+
+  void _touch() => print(state);
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, '_prime()'), lintFor(source, '_warm()')]);
+  }
+
+  Future<void> test_allowsHelpersThatOnlyWriteOrReadAfterAwait() async {
+    await assertNoDiagnostics(r'''
+import 'dart:async';
+
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    _seed();
+    unawaited(_later());
+    _register(() => state);
+    return 0;
+  }
+
+  void _seed() {
+    state = 1;
+  }
+
+  Future<void> _later() async {
+    await Future<void>.value();
+    state = state + 1;
+  }
+
+  void _register(int Function() read) {}
+}
+''');
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(AvoidSyncNotifierStateRead.code.severity, DiagnosticSeverity.ERROR);
+  }
 }
 
 @reflectiveTest
@@ -148,6 +205,48 @@ void example() {
 ''';
 
     await assertDiagnostics(source, [lintFor(source, 'showDialogBottomSheet<void>()')]);
+  }
+
+  Future<void> test_reportsFutureDroppedFromNullableNamedVoidCallback() async {
+    const source = r'''
+Future<void> trackTap() async {}
+
+class TextButton {
+  const TextButton({this.onPressed});
+
+  final void Function()? onPressed;
+}
+
+TextButton example() {
+  return TextButton(
+    onPressed: () {
+      trackTap();
+    },
+  );
+}
+''';
+
+    await assertDiagnostics(source, [lintForLast(source, 'trackTap()')]);
+  }
+
+  Future<void> test_allowsFutureFromNamedFutureCallback() async {
+    await assertNoDiagnostics(r'''
+Future<void> trackTap() async {}
+
+class AsyncButton {
+  const AsyncButton({this.onPressed});
+
+  final Future<void> Function()? onPressed;
+}
+
+AsyncButton example() {
+  return AsyncButton(
+    onPressed: () {
+      return trackTap();
+    },
+  );
+}
+''');
   }
 
   Future<void> test_allowsUnawaitedFutureFromVoidCallback() async {
@@ -544,5 +643,152 @@ class TodosNotifier extends Notifier<int> {
 }
 ''';
     await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
+  }
+
+  Future<void> test_allowsSkillMountedGuardExamples() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+class Repo {
+  Future<void> save(int value) async {}
+  Future<int> fetch() async => 0;
+}
+final repoProvider = Provider((ref) => Repo());
+class OrderNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  bool _isActive() => ref.mounted;
+  Future<void> save() async {
+    state = 1;
+    try {
+      await ref.read(repoProvider).save(state);
+      if (!ref.mounted) return;
+      state = 2;
+    } catch (error) {
+      if (!ref.mounted) return;
+      state = 3;
+    }
+  }
+  Future<void> refresh() async {
+    state = 1;
+    try {
+      await ref.read(repoProvider).fetch();
+    } finally {
+      if (ref.mounted) {
+        state = 0;
+      }
+    }
+  }
+  Future<void> loadMore() async {
+    if (state > 9) return;
+    state = 1;
+    final page = await ref.read(repoProvider).fetch();
+    if (!ref.mounted) return;
+    state = page;
+  }
+  Future<void> reloadAll(List<int> ids) async {
+    for (final id in ids) {
+      if (!_isActive()) return;
+      state = id;
+      await ref.read(repoProvider).save(id);
+    }
+  }
+  Future<void> reloadEach(List<int> ids) async {
+    for (final id in ids) {
+      state = id;
+      await ref.read(repoProvider).save(id);
+      if (!ref.mounted) return;
+    }
+    state = 0;
+  }
+  void start() {
+    Future.microtask(() async {
+      await ref.read(repoProvider).fetch();
+      if (!ref.mounted) return;
+      state = 1;
+    });
+  }
+}
+''');
+  }
+
+  Future<void> test_reportsNestedAccessAfterAwait() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+class OrderNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  Future<void> ifBlock(bool empty) async {
+    await Future<void>.value();
+    if (empty) {
+      state = 1;
+    }
+  }
+  Future<void> tryBody() async {
+    await Future<void>.value();
+    try {
+      state = 2;
+    } catch (_) {
+      return;
+    }
+  }
+  Future<void> catchBody() async {
+    try {
+      await Future<void>.value();
+      if (!ref.mounted) return;
+    } catch (error) {
+      state = 3;
+    }
+  }
+  Future<void> finallyBody() async {
+    try {
+      await Future<void>.value();
+    } finally {
+      state = 4;
+    }
+  }
+}
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf('state = 1'), 5),
+      lint(source.indexOf('state = 2'), 5),
+      lint(source.indexOf('state = 3'), 5),
+      lint(source.indexOf('state = 4'), 5),
+    ]);
+  }
+
+  Future<void> test_reportsInlineLoopAndClosureAwaits() async {
+    const source = r'''
+import 'dart:async';
+import 'package:riverpod/riverpod.dart';
+class OrderNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  Future<int> fetch() async => 1;
+  Future<void> inline() async {
+    state = state + await fetch();
+  }
+  Future<void> argument() async {
+    print([await fetch(), ref.hashCode]);
+  }
+  Future<void> pages() async {
+    for (var i = 0; i < 3; i++) {
+      state = i;
+      await fetch();
+    }
+  }
+  void start() {
+    unawaited(Future.microtask(() async {
+      final value = await fetch();
+      state = value;
+    }));
+  }
+}
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf('state = state'), 5),
+      lint(source.indexOf('ref.hashCode'), 12),
+      lint(source.indexOf('state = i'), 5),
+      lint(source.indexOf('state = value'), 5),
+    ]);
   }
 }

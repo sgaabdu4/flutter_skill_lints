@@ -133,6 +133,29 @@ void main() {
     expect(message, contains('Future.wait'));
   });
 
+  test('router-extra diagnostic points to typed route params, not a codec', () {
+    final rule = flutterSkillRules.singleWhere((rule) => rule.name == 'router_complex_extra');
+    final code = rule.diagnosticCodes.singleWhere(
+      (code) => code.lowerCaseName == 'router_complex_extra',
+    );
+    final message = code.correctionMessage ?? '';
+
+    expect(message, contains('stable IDs'));
+    expect(message, contains('path/query params'));
+    expect(message, contains('typed routes'));
+    expect(message, isNot(contains('extraCodec')));
+    expect(message, isNot(contains('configure')));
+  });
+
+  test('repeated id lookup diagnostics are errors', () {
+    for (final name in ['linear_id_lookup_in_hot_path', 'nested_linear_lookup_by_id']) {
+      final rule = flutterSkillRules.singleWhere((rule) => rule.name == name);
+      final code = rule.diagnosticCodes.singleWhere((code) => code.lowerCaseName == name);
+
+      expect(code.severity, DiagnosticSeverity.ERROR, reason: name);
+    }
+  });
+
   test('ref-read-in-build diagnostic explains callback reads', () {
     final registry = _RecordingPluginRegistry('flutter_skill_lints_additional');
     final plugin = AdditionalLintsPlugin();
@@ -255,7 +278,7 @@ void main() {
     );
 
     expect(registry.warningRules.length, _enabledAdditionalRuleCount);
-    expect(registeredFixCount, 64);
+    expect(registeredFixCount, 63);
     expect(registry.assistKinds, hasLength(1));
     expect(registry.warningRules, containsPair('avoid_ref_read_inside_build', isNotNull));
     expect(registry.warningRules, containsPair('use_ref_and_state_synchronously', isNotNull));
@@ -313,9 +336,58 @@ void main() {
       'prefer_overriding_parent_equality',
       'list_all_equatable_fields',
       'prefer_equatable_mixin',
+      'prefer_compute_over_isolate_run',
+      'avoid_missing_controller',
+      // No skill basis; the skill's own Debouncer.call and inline record
+      // signatures (dart-patterns-records.md:61-80) contradict them.
+      'avoid_declaring_call_method',
+      'move_records_to_typedefs',
+      // Duplicates use_dedicated_media_query_methods: one read reported twice.
+      'prefer_dedicated_media_query_methods',
+      // Duplicates avoid_null_bang, which core-stack.md:60 names.
+      'avoid_non_null_assertion',
+      // No skill basis; testing.md compares with bare expected values, and
+      // expect() already wraps them in equals().
+      'prefer_test_matchers',
     ]) {
       expect(paths, isNot(contains(forbidden)));
     }
+  });
+
+  test('model skill MUST and NEVER diagnostics report at error severity', () {
+    final registry = _RecordingPluginRegistry('flutter_skill_lints');
+    FlutterSkillLintsPlugin().register(registry);
+
+    for (final name in _modelSkillErrorDiagnostics) {
+      final rule = registry.warningRules[name];
+      expect(rule, isNotNull, reason: name);
+      expect(
+        rule!.diagnosticCodes.map((code) => code.severity),
+        everyElement(DiagnosticSeverity.ERROR),
+        reason: name,
+      );
+    }
+  });
+
+  test('skill MUST and NEVER sweep diagnostics report at error severity', () {
+    for (final name in _sweepSkillErrorDiagnostics) {
+      final rule = flutterSkillRules.singleWhere((rule) => rule.name == name);
+      expect(
+        rule.diagnosticCodes.map((code) => code.severity),
+        everyElement(DiagnosticSeverity.ERROR),
+        reason: name,
+      );
+    }
+  });
+
+  test('every skill diagnostic outside the non-error allowlist is an error', () {
+    final nonError = <String>[
+      for (final rule in flutterSkillRules)
+        for (final code in rule.diagnosticCodes)
+          if (code.severity != DiagnosticSeverity.ERROR) code.lowerCaseName,
+    ];
+
+    expect(nonError.where((name) => !_nonErrorSkillDiagnostics.contains(name)), isEmpty);
   });
 
   test('appends Flutter skill rules after additional analyzer rules', () {
@@ -336,9 +408,66 @@ void main() {
   });
 }
 
-const _enabledFlutterSkillRuleCount = 187;
-const _enabledFlutterSkillDiagnosticCount = 195;
-const _enabledAdditionalRuleCount = 280;
+const _enabledFlutterSkillRuleCount = 229;
+const _enabledFlutterSkillDiagnosticCount = 237;
+const _enabledAdditionalRuleCount = 273;
+
+const _modelSkillErrorDiagnostics = [
+  'use_sealed_freezed_classes',
+  'freezed_legacy_when_map',
+  'use_freezed_instead_of_immutable',
+  'vo_public_raw_constructor',
+  'domain_raw_required_string',
+  'domain_unit_primitive',
+  'avoid_throw',
+  'typed_id_raw_id',
+  'avoid_positional_record_fields',
+  'prefer_dot_shorthands',
+  'prefer_wildcard_pattern',
+  'use_existing_destructuring',
+  'datetime_now_requires_timezone_intent',
+  'domain_entity_primitive_factory',
+  'avoid_returning_widgets',
+  'prefer_class_destructuring',
+  'ad_hoc_id_index_lookup',
+  'ui_snackbar_boundary',
+  'ad_hoc_intl_format',
+  'inline_num_clamp',
+  'record_use_outside_ffi',
+];
+
+/// Skill codes whose MUST/NEVER text was confirmed in the final severity sweep.
+const _sweepSkillErrorDiagnostics = [
+  // performance.md: "Never override `operator ==` on Widget".
+  'flutter_widget_operator_equals',
+  // common-patterns.md rule 7: "MUST guard page back with a typed fallback route".
+  'guard_context_pop',
+  // common-patterns.md rule 10: "mutation order MUST be: persist write -> targeted parent sync -> navigate".
+  'state_broad_invalidation',
+  // modals-navigation.md: "NEVER — dialog hosts mutation + watches mutable record".
+  'dialog_widget_subscribes_to_mutable_provider',
+  'select_returns_unstable_record_identity',
+];
+
+/// Skill codes that stay below error because no skill MUST/NEVER backs them.
+const _nonErrorSkillDiagnostics = [
+  // No skill text bans `dynamic`; the profile only enables no_dynamic_casts and avoid_dynamic_calls.
+  'avoid_dynamic_except_json_maps',
+  // `_ensureRepository` is only a trigger signal; no MUST/NEVER covers null repository returns.
+  'avoid_silent_repository_null_return',
+  // flutter-optimizations.md: "Use `CustomScrollView`, not `ListView` in `SingleChildScrollView`" (no MUST/NEVER).
+  'avoid_list_in_single_child_scroll_view',
+  // layout-diagnostics.md: "Adapt via LayoutBuilder/MediaQuery.sizeOf, not device type/orientation" (no MUST/NEVER).
+  'avoid_orientation_layout',
+  // flutter-optimizations.md: "Use `borderRadius` on `Container`, not `ClipRRect` wrap" (no MUST/NEVER).
+  'avoid_clip_rrect_container',
+  // Not named by the skill; performance.md rules 15/16 belong to the id-lookup and save-all lints.
+  'full_collection_load_in_loop',
+  // services-and-singletons.md: "The callee catches internally" (no MUST/NEVER); platform commands are unnamed.
+  'unguarded_fire_and_forget_platform_command',
+  // The skill never mandates this fallback check.
+  'implicit_null_fallback',
+];
 
 Iterable<String> _documentedLintCodes(String text) sync* {
   var depth = 0;

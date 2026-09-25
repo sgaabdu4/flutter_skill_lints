@@ -1,6 +1,8 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_commented_out_code.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_returning_widgets.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_class_destructuring.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_explicit_function_type.dart';
@@ -9,6 +11,7 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_single_wid
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_closest_build_context.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_existing_variable.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_sliver_prefix.dart';
+import 'package:test/test.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 part 'additional_lints_false_positive_test/use_existing_variable_cases.dart';
@@ -23,6 +26,7 @@ void main() {
     defineReflectiveTests(UseExistingVariableFalsePositiveTest);
     defineReflectiveTests(PreferClassDestructuringFalsePositiveTest);
     defineReflectiveTests(UseSliverPrefixFalsePositiveTest);
+    defineReflectiveTests(AvoidCommentedOutCodeFalsePositiveTest);
   });
 }
 
@@ -34,7 +38,8 @@ abstract class _AdditionalLintRuleTest extends AnalysisRuleTest {
   }
 
   void _addFlutterPackage() {
-    newPackage('flutter').addFile('lib/widgets.dart', r'''
+    newPackage('flutter')
+      ..addFile('lib/widgets.dart', r'''
 class BuildContext {}
 class Key {
   const Key(String value);
@@ -58,6 +63,15 @@ class SliverList extends Widget {
 }
 class Icon extends Widget {
   const Icon();
+}
+''')
+      ..addFile('lib/widget_previews.dart', r'''
+base class Preview {
+  const Preview({String? name});
+}
+
+abstract base class MultiPreview {
+  const MultiPreview();
 }
 ''');
   }
@@ -109,6 +123,10 @@ final class AvoidReturningWidgetsFalsePositiveTest extends _AdditionalLintRuleTe
     super.setUp();
   }
 
+  Future<void> test_severityIsError() async {
+    expect(AvoidReturningWidgets.code.severity, DiagnosticSeverity.ERROR);
+  }
+
   Future<void> test_reportsHelperReturningWidget() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
@@ -117,6 +135,36 @@ Widget tile() => const Widget();
 ''';
 
     await assertDiagnostics(source, [lint(source.indexOf('tile'), 'tile'.length)]);
+  }
+
+  Future<void> test_allowsResolvedPreviewFunction() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widget_previews.dart';
+import 'package:flutter/widgets.dart';
+
+@Preview(name: 'Tile')
+Widget tilePreview() => const Widget();
+
+final class TilePreviews {
+  @Preview(name: 'Tile static')
+  static Widget tileStaticPreview() => const Widget();
+}
+''');
+  }
+
+  Future<void> test_reportsFunctionUnderLookalikePreviewAnnotation() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class Preview {
+  const Preview({String? name});
+}
+
+@Preview(name: 'Tile')
+Widget tilePreview() => const Widget();
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('tilePreview'), 'tilePreview'.length)]);
   }
 
   Future<void> test_reportsHelperReturningWidgetList() async {
@@ -129,6 +177,51 @@ List<Widget> headerChildren() => const <Widget>[];
     await assertDiagnostics(source, [
       lint(source.indexOf('headerChildren'), 'headerChildren'.length),
     ]);
+  }
+
+  // collections-helpers.md: the skill's WidgetListX.separatedBy utility.
+  Future<void> test_allowsWidgetListExtensionReturningWidgetList() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+extension WidgetListX on List<Widget> {
+  List<Widget> separatedBy(Widget separator) {
+    return [
+      for (final child in this) ...[
+        if (!identical(child, first)) separator,
+        child,
+      ],
+    ];
+  }
+}
+
+extension WidgetIterableX on Iterable<Widget> {
+  Iterable<Widget> spaced(Widget gap) => expand((child) => [child, gap]);
+}
+''');
+  }
+
+  Future<void> test_reportsWidgetExtensionsOutsideCollectionUtilities() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+extension WidgetListX on List<Widget> {
+  Widget first2() => first;
+}
+
+extension ContextX on BuildContext {
+  List<Widget> headerChildren() => const <Widget>[];
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('first2'), 'first2'.length),
+      lint(source.indexOf('headerChildren'), 'headerChildren'.length),
+    ]);
+  }
+
+  void test_severity_error() {
+    expect(AvoidReturningWidgets.code.severity, DiagnosticSeverity.ERROR);
   }
 
   Future<void> test_reportsPrivateMethodReturningWidgetList() async {
@@ -465,6 +558,45 @@ final class PreferClassDestructuringFalsePositiveTest extends _AdditionalLintRul
     super.setUp();
   }
 
+  // Row 19: the skill's DateTimeX.localDayStart (primitive-formatting.md).
+  Future<void> test_allowsPropertyReadsPassedToConstructor() async {
+    await assertNoDiagnostics(r'''
+class Day {
+  const Day(this.year, this.month, {required this.day});
+  final int year;
+  final int month;
+  final int day;
+}
+
+Day localDayStart(Day local) {
+  return Day(local.year, local.month, day: local.day);
+}
+''');
+  }
+
+  Future<void> test_reportsPropertyReadsIntoLocals() async {
+    const source = r'''
+class Span {
+  int get inHours => 1;
+  int get inMinutes => 2;
+  int get inSeconds => 3;
+}
+
+int classAccess(Span d) {
+  final a = d.inHours;
+  final b = d.inMinutes;
+  final c = d.inSeconds;
+  return a + b + c;
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('d.inHours'), 'd.inHours'.length)]);
+  }
+
+  void test_severity_error() {
+    expect(PreferClassDestructuring.code.severity, DiagnosticSeverity.ERROR);
+  }
+
   Future<void> test_allowsPropertyAssertionsInTests() async {
     final filePath = '$testPackageRootPath/test/workout_test.dart';
     newFile(filePath, r'''
@@ -562,5 +694,161 @@ class CatalogSliverList extends StatelessWidget {
   Widget build(BuildContext context) => const SliverList();
 }
 ''');
+  }
+}
+
+@reflectiveTest
+final class AvoidCommentedOutCodeFalsePositiveTest extends _AdditionalLintRuleTest {
+  @override
+  void setUp() {
+    rule = AvoidCommentedOutCode();
+    super.setUp();
+  }
+
+  Future<void> test_allowsParenthesizedHyphenatedDescription() async {
+    await assertNoDiagnostics(r'''
+abstract final class CommentProbe {
+  static const fbs = '60-100'; // Glucose (GOD-POD Method)
+}
+''');
+  }
+
+  Future<void> test_allowsParenthesizedDescriptionThatWouldParseAsCall() async {
+    await assertNoDiagnostics(r'''
+abstract final class CommentProbe {
+  static const ldl = '0-130'; // Cholesterol (total)
+}
+''');
+  }
+
+  Future<void> test_allowsUnspacedDescriptionThatDoesNotParse() async {
+    await assertNoDiagnostics(r'''
+abstract final class CommentProbe {
+  static const fbs = '60-100'; // Glucose(GOD-POD Method)
+}
+''');
+  }
+
+  Future<void> test_doesNotGroupTrailingDescriptionsWithLaterCode() async {
+    const source = r'''
+abstract final class CommentProbe {
+  static const fbs = '60-100'; // Glucose (GOD-POD Method)
+  static const ldl = '0-130'; // Cholesterol (total)
+}
+
+void commentControls() {
+  // foo(bar);
+  // final x = 1;
+}
+''';
+    final start = source.indexOf('// foo');
+    final end = source.indexOf('// final x = 1;') + '// final x = 1;'.length;
+    await assertDiagnostics(source, [lint(start, end - start)]);
+  }
+
+  Future<void> test_reportsCommentedOutCallStatement() async {
+    const source = r'''
+void run() {
+  // foo(bar);
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('// foo'), '// foo(bar);'.length)]);
+  }
+
+  Future<void> test_reportsCommentedOutCallWithoutSemicolon() async {
+    const source = r'''
+void run() {
+  // foo(bar)
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('// foo'), '// foo(bar)'.length)]);
+  }
+
+  Future<void> test_reportsCommentedOutDeclaration() async {
+    const source = r'''
+void run() {
+  // final x = 1;
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('// final'), '// final x = 1;'.length)]);
+  }
+
+  Future<void> test_reportsCommentedOutMultilineCall() async {
+    const source = r'''
+void run() {
+  // save(
+  //   item,
+  // );
+}
+''';
+    final start = source.indexOf('// save(');
+    final end = source.indexOf('// );') + '// );'.length;
+    await assertDiagnostics(source, [lint(start, end - start)]);
+  }
+
+  Future<void> test_allowsProseStartingWithTypeKeyword() async {
+    await assertNoDiagnostics(r'''
+void run() {
+  // Widget — use .select() on the computed getter
+  print(1);
+}
+''');
+  }
+
+  Future<void> test_allowsProseWithAssignmentLikeEquals() async {
+    await assertNoDiagnostics(r'''
+void run() {
+  // ✅ DO — fixed sequence: persist → targeted sync → navigate.
+  //    Reorder = UI flicker (stale parent) OR lost writes on dispose.
+  print(1);
+}
+''');
+  }
+
+  Future<void> test_reportsCommentedOutAssignmentWithoutSemicolon() async {
+    const source = r'''
+void run() {
+  // count = 1
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('// count'), '// count = 1'.length)]);
+  }
+
+  Future<void> test_reportsCommentedOutMultilineDeclaration() async {
+    const source = r'''
+void run() {
+  // final items = watch(
+  //   provider,
+  // );
+}
+''';
+    final start = source.indexOf('// final');
+    final end = source.indexOf('// );') + '// );'.length;
+    await assertDiagnostics(source, [lint(start, end - start)]);
+  }
+
+  Future<void> test_reportsCommentedOutConstructorCallAfterProse() async {
+    const source = r'''
+void run() {
+  // inside UserModel.toEntity() or UserImportService — outside /domain/:
+  //   User(email: Email(json['email'] as String))
+}
+''';
+    final start = source.indexOf('// inside');
+    final end = source.indexOf('String))') + 'String))'.length;
+    await assertDiagnostics(source, [lint(start, end - start)]);
+  }
+
+  Future<void> test_reportsCommentedOutBlock() async {
+    const source = r'''
+void run() {
+  // if (ready) {
+  //   doThing();
+  // }
+}
+''';
+    final start = source.indexOf('// if');
+    final end = source.lastIndexOf('// }') + '// }'.length;
+    await assertDiagnostics(source, [lint(start, end - start)]);
   }
 }

@@ -3,32 +3,41 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when a user-facing string literal is hardcoded in widget UI code
-/// instead of being sourced from localization or a dedicated strings constant.
+/// Warns when user-facing copy in widget UI does not come from gen-l10n.
 ///
-/// Flags string literals passed as the data of a [Text] widget or to a curated
-/// set of user-facing named parameters (for example `label`, `hintText`,
-/// `title`, `tooltip`, `semanticLabel`). Constant/strings/localization files,
-/// generated sources, and tests are exempt.
+/// Flags string literals, and resolved `const` String variables or static
+/// fields (for example a `*Strings` constants class), passed as the data of a
+/// [Text] widget or to a curated set of user-facing named parameters (for
+/// example `label`, `hintText`, `title`, `tooltip`, `semanticLabel`). Inside
+/// Flutter widget and `State` classes it also flags prose (text with
+/// whitespace or ending in sentence punctuation) passed to a function-typed
+/// value such as `widget.onError('Please choose a time')`; identifiers, keys,
+/// URLs, declared methods or functions, and top-level or static function
+/// variables such as `debugPrint` stay clean. Sample data inside
+/// resolved `@Preview` declarations, `/l10n/` and `/generated/` sources, and
+/// tests are exempt.
 class AvoidHardcodedStrings extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_hardcoded_strings',
     'Avoid hardcoded user-facing strings in widget UI.',
     correctionMessage:
-        'Move the text into localization (AppLocalizations / context.l10n) or a '
-        'dedicated *_strings.dart constant and reference it here.',
+        'Move the text into the gen-l10n ARB files and read it through '
+        'AppLocalizations (context.l10n).',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidHardcodedStrings()
     : super(
         name: 'avoid_hardcoded_strings',
         description:
-            'Warns when user-facing string literals are hardcoded in widget UI '
-            'instead of being sourced from localization or a strings constant.',
+            'Warns when user-facing strings in widget UI are hardcoded literals or '
+            'String constants instead of gen-l10n AppLocalizations lookups.',
       );
 
   @override
@@ -37,7 +46,10 @@ class AvoidHardcodedStrings extends AnalysisRule {
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
     if (_isExcludedContext(context)) return;
-    registry.addInstanceCreationExpression(this, _Visitor(this));
+    final visitor = _Visitor(this);
+    registry.addInstanceCreationExpression(this, visitor);
+    registry.addFunctionExpressionInvocation(this, visitor);
+    registry.addMethodInvocation(this, visitor);
   }
 }
 
@@ -47,9 +59,15 @@ final class _Visitor extends SimpleAstVisitor<void> {
   final AvoidHardcodedStrings rule;
 
   static const _textChecker = TypeChecker.fromName('Text', packageName: 'flutter');
+  static const _widgetOrStateChecker = TypeChecker.any([
+    TypeChecker.fromName('Widget', packageName: 'flutter'),
+    flutterStateChecker,
+  ]);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    if (enclosingWidgetPreview(node) != null) return;
+
     final arguments = node.argumentList.arguments;
 
     final type = node.staticType;
@@ -61,13 +79,62 @@ final class _Visitor extends SimpleAstVisitor<void> {
     }
 
     for (final argument in arguments.whereType<NamedArgument>()) {
-      if (!_isUserFacingLabel(argument.name.lexeme)) continue;
+      if (!isUserFacingLabel(argument.name.lexeme)) continue;
       if (_isUserFacingLiteral(argument.argumentExpression)) {
         rule.reportAtNode(argument.argumentExpression);
       }
     }
   }
+
+  /// Callback fields, parameters, and locals resolve as function-expression
+  /// invocations; declared methods and functions do not. Top-level and static
+  /// function variables such as `debugPrint` are global hooks and are skipped.
+  @override
+  void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
+    if (node.function.staticType is FunctionType) {
+      _reportCallbackProse(node, node.function, node.argumentList);
+    }
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final target = node.realTarget;
+    if (node.methodName.name == 'call' && target?.staticType is FunctionType) {
+      _reportCallbackProse(node, target, node.argumentList);
+    }
+  }
+
+  void _reportCallbackProse(AstNode node, Expression? callee, ArgumentList arguments) {
+    if (_isGlobalFunctionVariable(callee) ||
+        enclosingWidgetPreview(node) != null ||
+        !isEnclosedClassAssignableTo(node, _widgetOrStateChecker)) {
+      return;
+    }
+    for (final argument in arguments.arguments) {
+      final expression = argument.argumentExpression;
+      final text = _callbackArgumentText(expression);
+      if (text != null && _isProse(text)) rule.reportAtNode(expression);
+    }
+  }
 }
+
+/// The literal text of a callback argument; interpolated values become `$`.
+String? _callbackArgumentText(Expression expression) => switch (expression) {
+  StringInterpolation(:final elements) => [
+    for (final element in elements) element is InterpolationString ? element.value : r'$',
+  ].join(),
+  _ => stringLiteralText(expression) ?? _constantStringText(expression),
+};
+
+/// Prose contains whitespace or ends in sentence punctuation; identifiers,
+/// keys, paths, and URLs do not.
+bool _isProse(String text) {
+  final trimmed = text.trim();
+  return hasLetter(trimmed) && (_whitespace.hasMatch(trimmed) || _sentenceEnd.hasMatch(trimmed));
+}
+
+final RegExp _whitespace = RegExp(r'\s');
+final RegExp _sentenceEnd = RegExp(r'[A-Za-z][.!?…]+$');
 
 Expression? _firstPositional(NodeList<Argument> arguments) {
   return arguments.isEmpty ? null : arguments.first.argumentExpression;
@@ -76,68 +143,36 @@ Expression? _firstPositional(NodeList<Argument> arguments) {
 bool _isExcludedContext(RuleContext context) {
   final path = productionLibPath(context);
   if (path == null) return true;
-  return path.endsWith('_strings.dart') ||
-      path.endsWith('_constants.dart') ||
-      path.endsWith('_keys.dart') ||
-      path.contains('/constants/') ||
-      path.contains('/l10n/') ||
-      path.contains('/generated/');
+  return path.contains('/l10n/') || path.contains('/generated/');
 }
-
-bool _isUserFacingLabel(String name) => _userFacingLabels.contains(name.toLowerCase());
 
 bool _isUserFacingLiteral(Expression expression) {
-  final text = _literalText(expression);
-  return text != null && _hasLetter(text);
+  final text = stringLiteralText(expression) ?? _constantStringText(expression);
+  return text != null && hasLetter(text);
 }
 
-String? _literalText(Expression expression) {
-  if (expression is SimpleStringLiteral) return expression.value;
-
-  if (expression is AdjacentStrings) {
-    final buffer = StringBuffer();
-    for (final string in expression.strings) {
-      final part = _literalText(string);
-      if (part != null) buffer.write(part);
-    }
-    return buffer.toString();
-  }
-
-  if (expression is StringInterpolation) {
-    final buffer = StringBuffer();
-    for (final element in expression.elements) {
-      if (element is InterpolationString) buffer.write(element.value);
-    }
-    return buffer.toString();
-  }
-
-  return null;
+/// The value of a resolved `const` String variable or static field.
+String? _constantStringText(Expression expression) {
+  final variable = _referencedElement(expression);
+  if (variable is! VariableElement || !variable.isConst) return null;
+  return variable.computeConstantValue()?.toStringValue();
 }
 
-bool _hasLetter(String value) => _letter.hasMatch(value);
+/// Whether [callee] reads a top-level variable or static field, such as
+/// `debugPrint`; these are global hooks, not the widget's callbacks.
+bool _isGlobalFunctionVariable(Expression? callee) {
+  final variable = callee == null ? null : _referencedElement(callee);
+  return variable is TopLevelVariableElement || (variable is FieldElement && variable.isStatic);
+}
 
-final RegExp _letter = RegExp('[A-Za-z]');
-
-const _userFacingLabels = {
-  'text',
-  'data',
-  'label',
-  'labeltext',
-  'hint',
-  'hinttext',
-  'helpertext',
-  'errortext',
-  'title',
-  'subtitle',
-  'tooltip',
-  'semanticslabel',
-  'semanticlabel',
-  'message',
-  'placeholder',
-  'prefixtext',
-  'suffixtext',
-  'toptext',
-  'bottomtext',
-  'description',
-  'heading',
-};
+/// The resolved element an identifier or property access reads, with getters
+/// unwrapped to their variable.
+Element? _referencedElement(Expression expression) {
+  final element = switch (expression) {
+    SimpleIdentifier(:final element) => element,
+    PrefixedIdentifier(:final element) => element,
+    PropertyAccess(:final propertyName) => propertyName.element,
+    _ => null,
+  };
+  return element is PropertyAccessorElement ? element.variable : element;
+}

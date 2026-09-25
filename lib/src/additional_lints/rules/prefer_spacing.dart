@@ -119,7 +119,7 @@ class _Visitor extends SimpleAstVisitor<void> {
         ?.argumentExpression;
     if (alignment == null) return true;
     final name = _flutterEnumConstantName(alignment, 'MainAxisAlignment');
-    return const {'start', 'center', 'end', 'spaceBetween'}.contains(name);
+    return const {'start', 'center', 'end'}.contains(name);
   }
 
   String? _flutterEnumConstantName(Expression? expression, String enumName) {
@@ -139,7 +139,8 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   /// Pattern 1: Direct SizedBox widgets used as spacers in a children list.
-  /// Only triggers when all SizedBox spacers have the same value (uniform).
+  /// Only triggers when two or more SizedBox spacers have the same value
+  /// (uniform). A single SizedBox gap is the skill's own Row layout.
   void _checkDirectSizedBoxInList(ListLiteral list, FlexAxis parentAxis) {
     final sizedBoxes = _uniformSizedBoxes(list, parentAxis);
     if (sizedBoxes == null) return;
@@ -149,7 +150,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   List<Expression>? _uniformSizedBoxes(ListLiteral list, FlexAxis parentAxis) {
-    if (list.elements.length < 3 || list.elements.length.isEven) return null;
+    if (list.elements.length < 5 || list.elements.length.isEven) return null;
     final sizedBoxes = <Expression>[];
     String? uniformValue;
     for (var index = 0; index < list.elements.length; index++) {

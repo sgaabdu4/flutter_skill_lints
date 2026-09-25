@@ -5,6 +5,12 @@ part of '../source_scanner_rules_test.dart';
 @reflectiveTest
 final class RouterDirectRouteCallTest extends _RouterRuleTest {
   @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'router_direct_route_call';
   @override
   String get needle => 'context.go';
@@ -256,6 +262,37 @@ class StartButton {
     await assertDiagnosticsInFile(libraryPath, [compatLint(librarySource, 'context.go', ruleName)]);
     await assertNoDiagnosticsInFile(partPath);
   }
+
+  Future<void> test_reportsInjectedRouterNavigation() async {
+    const source = r'''
+import 'package:go_router/go_router.dart';
+
+GoRouter readRouter() => GoRouter();
+
+void openHome() {
+  readRouter().go('/home');
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, "readRouter().go('/home');", ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsTypedRouteNavigation() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+void openHome(BuildContext context) {
+  const HomeRoute().go(context);
+}
+''');
+  }
 }
 
 @reflectiveTest
@@ -413,6 +450,12 @@ void open(context) {
 @reflectiveTest
 final class RouterProviderScopeNavigationReadTest extends _RouterRuleTest {
   @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'router_container_navigation_escape';
   @override
   String get needle => 'ProviderScope.containerOf';
@@ -493,6 +536,34 @@ void open(ref, context) {
 }
 ''');
   }
+
+  Future<void> test_reportsNavigatorGlobalKeyCurrentContext() async {
+    const source = r'''
+import 'package:flutter/material.dart';
+
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
+BuildContext? escape() {
+  return rootNavigatorKey.currentContext;
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'rootNavigatorKey.currentContext;', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsNonNavigatorGlobalKeyCurrentContext() async {
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+
+class FormState {}
+
+final formKey = GlobalKey<FormState>();
+
+BuildContext? formContext() => formKey.currentContext;
+''');
+  }
 }
 
 abstract class _NotifierRuleTest extends _SourceRuleTest {
@@ -530,4 +601,216 @@ class TodosNotifier extends Notifier<int> {
   }
 }
 ''';
+}
+
+const _notifierRefRiverpodStub = r'''
+class Ref {}
+
+abstract class AnyNotifier<StateT, ValueT> {
+  Ref get ref => throw UnimplementedError();
+}
+
+abstract class Notifier<T> extends AnyNotifier<T, T> {}
+
+abstract class AsyncNotifier<T> extends AnyNotifier<Future<T>, T> {}
+''';
+
+@reflectiveTest
+final class NotifierStoredRefFieldTest extends _NotifierRuleTest {
+  @override
+  void setUp() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', _notifierRefRiverpodStub);
+    newPackage('riverpod_annotation').addFile('lib/riverpod_annotation.dart', r'''
+export 'package:riverpod/riverpod.dart' show Ref;
+
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+
+const riverpod = Riverpod();
+''');
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'notifier_stored_ref_field';
+  @override
+  String get needle => '_savedRef';
+  @override
+  String get source => r'''
+import 'package:riverpod/riverpod.dart';
+
+class CartNotifier extends Notifier<int> {
+  late final Ref _savedRef = ref;
+
+  int build() => 0;
+}
+''';
+
+  Future<void> test_reportsInferredRefField() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:riverpod/riverpod.dart';
+
+class OrdersNotifier extends AsyncNotifier<int> {
+  late final _r = ref;
+
+  Future<int> build() async => 0;
+}
+''', addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '_r = ref', ruleName)]);
+  }
+
+  Future<void> test_reportsAnnotatedNotifierBeforeCodegen() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+@riverpod
+class ProductEditorNotifier extends _$ProductEditorNotifier {
+  Ref? _ref;
+
+  int build() => 0;
+}
+''', addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '_ref;', ruleName)]);
+  }
+
+  Future<void> test_allowsRefFieldOutsideNotifier() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+class CartSession {
+  CartSession(this._ref);
+
+  final Ref _ref;
+}
+''');
+  }
+
+  Future<void> test_allowsInheritedRefAndNonRefFields() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+class CartNotifier extends Notifier<int> {
+  final _pending = <int>[];
+
+  int build() {
+    final current = ref;
+    return _pending.length + (identical(current, ref) ? 0 : 1);
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsUnrelatedRefTypeInNotifierLikeClass() async {
+    await assertAllows(r'''
+class Ref {}
+
+class Notifier<T> {}
+
+class CartNotifier extends Notifier<int> {
+  final Ref _ref = Ref();
+}
+''');
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(rule.diagnosticCodes.single.severity, DiagnosticSeverity.ERROR);
+  }
+}
+
+@reflectiveTest
+final class NotifierTimerWithoutOnDisposeTest extends _NotifierRuleTest {
+  @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'notifier_timer_without_on_dispose';
+  @override
+  String get needle => '_debounce;';
+  @override
+  String get source => '''
+import 'dart:async';
+import 'package:riverpod/riverpod.dart';
+
+class ProductSearch extends Notifier<List<String>> {
+  Timer? _debounce;
+
+  @override
+  List<String> build() => const <String>[];
+
+  void onQueryChanged(String query) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {});
+  }
+}
+''';
+
+  Future<void> test_reportsSkillDraftNotifierAsWritten() async {
+    const source = '''
+import 'dart:async';
+import 'package:riverpod/riverpod.dart';
+
+class DraftNotifier extends AsyncNotifier<String> {
+  Timer? _persistTimer;
+
+  @override
+  Future<String> build() async => '';
+
+  void schedulePersist() {
+    _persistTimer?.cancel();
+    _persistTimer = Timer(const Duration(milliseconds: 50), () {});
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '_persistTimer;', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsTimerCancelledInOnDispose() async {
+    await assertAllows('''
+import 'dart:async';
+import 'package:riverpod/riverpod.dart';
+
+class ProductSearchOk extends Notifier<List<String>> {
+  Timer? _debounce;
+
+  @override
+  List<String> build() {
+    ref.onDispose(() => _debounce?.cancel());
+    return const <String>[];
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsTimerOutsideNotifier() async {
+    await assertAllows('''
+import 'dart:async';
+
+class Ticker {
+  Timer? _timer;
+  void stop() => _timer?.cancel();
+}
+''');
+  }
+
+  Future<void> test_allowsLocalTimerLookalike() async {
+    await assertAllows('''
+import 'package:riverpod/riverpod.dart';
+
+class Timer {}
+
+class Stopwatch extends Notifier<int> {
+  Timer? _timer;
+
+  @override
+  int build() => 0;
+}
+''');
+  }
 }

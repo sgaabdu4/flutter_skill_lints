@@ -10,9 +10,12 @@ import 'package:flutter_skill_lints/src/rules/services_extended_source_rules.dar
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
+part 'extended_source_rules_test/extended_source_rules_part_01.dart';
+
 void main() {
   defineReflectiveSuite(() {
     defineReflectiveTests(ArchModelMissingToEntityTest);
+    defineReflectiveTests(ArchRepositoryInlineEntityMappingTest);
     defineReflectiveTests(ArchModelExtendsEntityTest);
     defineReflectiveTests(ArchDomainJsonAnnotationTest);
     defineReflectiveTests(FreezedMissingPrivateConstructorTest);
@@ -121,6 +124,131 @@ final class ArchModelMissingToEntityTest extends _ArchitectureExtendedRuleTest {
   String get needle => '// ignore_for_file';
   @override
   bool get lineStart => true;
+
+  static const _modelSource = r'''
+final class WorkoutSetModel {
+  const WorkoutSetModel({required this.id});
+  final String id;
+}
+''';
+
+  Future<void> test_allowsMapperExtensionInDataMappers() async {
+    final modelPath = '$testPackageLibPath/features/workouts/data/models/workout_set_model.dart';
+    newFile(modelPath, _modelSource);
+    newFile('$testPackageLibPath/features/workouts/domain/entities/workout_set.dart', r'''
+final class WorkoutSet {
+  const WorkoutSet({required this.id});
+  final String id;
+}
+''');
+    newFile('$testPackageLibPath/features/workouts/data/mappers/workout_set_mapper.dart', r'''
+import '../../domain/entities/workout_set.dart';
+import '../models/workout_set_model.dart';
+
+extension WorkoutSetMapper on WorkoutSetModel {
+  WorkoutSet toEntity() => WorkoutSet(id: id);
+}
+''');
+
+    await assertNoDiagnosticsInFile(modelPath);
+  }
+
+  Future<void> test_reportsMapperExtensionOnAnotherModel() async {
+    final modelPath = '$testPackageLibPath/features/workouts/data/models/workout_set_model.dart';
+    newFile(modelPath, _modelSource);
+    newFile('$testPackageLibPath/features/workouts/data/mappers/workout_set_mapper.dart', r'''
+final class OtherModel {}
+
+extension WorkoutSetMapper on OtherModel {
+  Object toEntity() => Object();
+}
+''');
+
+    await assertDiagnosticsInFile(modelPath, [
+      compatLint(_modelSource, 'final class', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsToDomainMapper() async {
+    await assertAllows(r'''
+final class OrderModel {
+  const OrderModel({required this.id});
+  final String id;
+  Object toDomain() => Object();
+}
+''', path: '$testPackageLibPath/features/orders/data/models/order_model.dart');
+  }
+}
+
+@reflectiveTest
+final class ArchRepositoryInlineEntityMappingTest extends _ArchitectureExtendedRuleTest {
+  @override
+  String get ruleName => 'arch_repository_inline_entity_mapping';
+  @override
+  String get path => '$testPackageLibPath/features/products/repositories/product_repository.dart';
+  @override
+  bool get addIgnorePrefix => false;
+  @override
+  String get needle => 'Product(id: ProductId(model.id)';
+  @override
+  String get source => r'''
+import '../data/models/product_model.dart';
+import '../domain/entities/product.dart';
+import '../domain/values/product_id.dart';
+
+final class ProductRepository {
+  Product map(ProductModel model) => Product(id: ProductId(model.id), name: model.name);
+}
+''';
+
+  @override
+  void setUp() {
+    super.setUp();
+    newFile('$testPackageLibPath/features/products/domain/values/product_id.dart', r'''
+final class ProductId {
+  const ProductId(this.value);
+  final String value;
+}
+''');
+    newFile('$testPackageLibPath/features/products/domain/entities/product.dart', r'''
+import '../values/product_id.dart';
+
+final class Product {
+  const Product({required this.id, required this.name});
+  final ProductId id;
+  final String name;
+}
+''');
+    newFile('$testPackageLibPath/features/products/data/models/product_model.dart', r'''
+import '../../domain/entities/product.dart';
+import '../../domain/values/product_id.dart';
+
+final class ProductModel {
+  const ProductModel({required this.id, required this.name});
+  final String id;
+  final String name;
+
+  Product toEntity() => Product(id: ProductId(id), name: name);
+}
+''');
+  }
+
+  Future<void> test_allowsToEntityAndEntitiesBuiltFromDomainInputs() async {
+    await assertAllows(
+      r'''
+import '../data/models/product_model.dart';
+import '../domain/entities/product.dart';
+import '../domain/values/product_id.dart';
+
+final class ProductRepository {
+  Product map(ProductModel model) => model.toEntity();
+  Product draft(ProductId id) => Product(id: id, name: 'Draft');
+}
+''',
+      path: path,
+      addIgnorePrefix: false,
+    );
+  }
 }
 
 @reflectiveTest
@@ -267,6 +395,256 @@ class Shell {
   @override
   bool get lineStart => true;
 
+  @override
+  void setUp() {
+    newPackage('flutter').addFile('lib/material.dart', '''
+class BuildContext {}
+abstract class Widget {
+  const Widget();
+}
+abstract class StatelessWidget extends Widget {
+  const StatelessWidget();
+  Widget build(BuildContext context);
+}
+class SizedBox extends Widget {
+  const SizedBox();
+}
+class NavigationBar extends Widget {
+  const NavigationBar({int selectedIndex = 0, void Function(int)? onDestinationSelected, List<Widget> destinations = const []});
+}
+class NavigationRail extends Widget {
+  const NavigationRail({int? selectedIndex, void Function(int)? onDestinationSelected});
+}
+class BottomNavigationBar extends Widget {
+  const BottomNavigationBar({int currentIndex = 0, void Function(int)? onTap});
+}
+class TextButton extends Widget {
+  const TextButton({void Function()? onPressed});
+}
+''');
+    newPackage('go_router').addFile('lib/go_router.dart', '''
+import 'package:flutter/material.dart';
+abstract class GoRouteData {
+  const GoRouteData();
+  void go(BuildContext context) {}
+  Future<T?> push<T>(BuildContext context) async => null;
+}
+class StatefulNavigationShell extends Widget {
+  const StatefulNavigationShell();
+  int get currentIndex => 0;
+  void goBranch(int index, {bool initialLocation = false}) {}
+}
+''');
+    super.setUp();
+  }
+
+  Future<void> test_reportsInlineTabCallbackPush() async {
+    const source = '''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+class AppShellInlineScaffold extends StatelessWidget {
+  const AppShellInlineScaffold({required this.navigationShell});
+
+  final StatefulNavigationShell navigationShell;
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(
+      selectedIndex: navigationShell.currentIndex,
+      onDestinationSelected: (index) => unawaited(const HomeRoute().push<void>(context)),
+    );
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'const HomeRoute().push<void>(context)),', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsPushInMethodReferencedByTabCallback() async {
+    const source = '''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+class AppShellScaffold extends StatelessWidget {
+  const AppShellScaffold({required this.navigationShell});
+
+  final StatefulNavigationShell navigationShell;
+
+  Future<void> onTab(BuildContext context, int index) async {
+    if (index == 0) {
+      await const HomeRoute().push<void>(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(
+      selectedIndex: navigationShell.currentIndex,
+      onDestinationSelected: (index) => onTab(context, index),
+    );
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'const HomeRoute().push<void>(context);', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsTypedGoInBottomNavigationTap() async {
+    const source = '''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+class AppShellScaffold extends StatelessWidget {
+  const AppShellScaffold({required this.navigationShell});
+
+  final StatefulNavigationShell navigationShell;
+
+  void _onTap(int index) {}
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomNavigationBar(
+      currentIndex: navigationShell.currentIndex,
+      onTap: (index) => const HomeRoute().go(context),
+    );
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'const HomeRoute().go(context),', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsMixedTabCallbackOnce() async {
+    const source = '''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+class AppShellMixedScaffold extends StatelessWidget {
+  const AppShellMixedScaffold({required this.navigationShell});
+
+  final StatefulNavigationShell navigationShell;
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationRail(
+      selectedIndex: navigationShell.currentIndex,
+      onDestinationSelected: (index) => index == 0
+          ? unawaited(const HomeRoute().push<void>(context))
+          : navigationShell.goBranch(index),
+    );
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '          ? unawaited', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsSkillGoBranchTearOff() async {
+    await assertAllows('''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+class AppShellScaffold extends StatelessWidget {
+  const AppShellScaffold({required this.navigationShell});
+
+  final StatefulNavigationShell navigationShell;
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomNavigationBar(
+      currentIndex: navigationShell.currentIndex,
+      onTap: navigationShell.goBranch,
+    );
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsNonTabPushInShellClass() async {
+    await assertAllows('''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+class AppShellScaffold extends StatelessWidget {
+  const AppShellScaffold({required this.navigationShell});
+
+  final StatefulNavigationShell navigationShell;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(onPressed: () => unawaited(const HomeRoute().push<void>(context)));
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsTabPushWithoutShell() async {
+    await assertAllows('''
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+}
+
+class PlainTabs extends StatelessWidget {
+  const PlainTabs();
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(onDestinationSelected: (index) => unawaited(const HomeRoute().push<void>(context)));
+  }
+}
+''');
+  }
+
   Future<void> test_allowsStandaloneRoutePushInFileWithShellRoute() async {
     await assertAllows('''
 class MainShellRoute {
@@ -317,251 +695,4 @@ class HostCard {
 }
 ''');
   }
-}
-
-abstract class _ServicesExtendedRuleTest extends _ExtendedSourceRuleTest {
-  @override
-  List<ScannerRule> get rules => servicesExtendedSourceRules;
-}
-
-@reflectiveTest
-final class ServiceStaticSideEffectTest extends _ServicesExtendedRuleTest {
-  @override
-  String get ruleName => 'service_static_side_effect';
-  @override
-  String get source => '''
-abstract final class TokenUtils {
-  static String make() => DateTime.now().millisecondsSinceEpoch.toString();
-}
-''';
-  @override
-  String get needle => 'abstract final class TokenUtils';
-
-  Future<void> test_allowsTinyDirectSdkFacade() async {
-    await assertAllows('''
-abstract final class AnalyticsLog {
-  static FirebaseAnalytics get _analytics => FirebaseAnalytics.instance;
-
-  static Future<void> event(String name) {
-    return _analytics.logEvent(name: name);
-  }
-
-  static Future<void> breadcrumb(String message) {
-    return FirebaseCrashlytics.instance.log(message);
-  }
-}
-''');
-  }
-
-  Future<void> test_reportsDataReturningStaticFacade() async {
-    const source = '''
-abstract final class AnalyticsLog {
-  static FirebaseAnalytics get _analytics => FirebaseAnalytics.instance;
-
-  static Future<String> userId() async => 'id';
-}
-''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'abstract final class AnalyticsLog', ruleName),
-    ]);
-  }
-
-  Future<void> test_reportsPublicStaticGetter() async {
-    const source = '''
-abstract final class AnalyticsLog {
-  static FirebaseAnalytics get analytics => FirebaseAnalytics.instance;
-
-  static Future<void> event(String name) {
-    return analytics.logEvent(name: name);
-  }
-}
-''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'abstract final class AnalyticsLog', ruleName),
-    ]);
-  }
-
-  Future<void> test_reportsOverbuiltDebugBackendFacade() async {
-    const source = '''
-abstract final class AnalyticsLog {
-  static IAnalyticsBackend _backend = FirebaseAnalyticsBackend();
-
-  static void debugUseBackend(IAnalyticsBackend backend) {
-    _backend = backend;
-  }
-
-  static Future<void> event(String name) {
-    return FirebaseAnalytics.instance.logEvent(name: name);
-  }
-}
-''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'abstract final class AnalyticsLog', ruleName),
-    ]);
-  }
-}
-
-@reflectiveTest
-final class ServiceRandomPerCallTest extends _ServicesExtendedRuleTest {
-  @override
-  String get ruleName => 'service_random_per_call';
-  @override
-  String get source => '''
-class RetryDelay {
-  int next() {
-    final rng = math.Random();
-    return rng.nextInt(10);
-  }
-}
-''';
-  @override
-  String get needle => 'Random';
-}
-
-@reflectiveTest
-final class HiddenDependencyFallbackTest extends _ServicesExtendedRuleTest {
-  @override
-  String get ruleName => 'hidden_dependency_fallback';
-  @override
-  String get source => '''
-class NotificationServiceHost {
-  NotificationServiceHost({FlutterLocalNotificationsPlugin? plugin})
-    : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
-
-  final FlutterLocalNotificationsPlugin _plugin;
-}
-''';
-  @override
-  String get needle => '?? FlutterLocalNotificationsPlugin';
-
-  Future<void> test_reportsRepositoryFallback() async {
-    const source = '''
-class ExerciseRepository {
-  ExerciseRepository([IRemoteMutationQueue? queue])
-    : _queue = queue ?? RemoteMutationQueue();
-
-  final IRemoteMutationQueue _queue;
-}
-''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, '?? RemoteMutationQueue', ruleName),
-    ]);
-  }
-
-  Future<void> test_reportsFunctionDependencyFallback() async {
-    const source = '''
-typedef DeleteAccountPollDelay = Future<void> Function(Duration duration);
-
-class AuthRemoteDatasource {
-  AuthRemoteDatasource({DeleteAccountPollDelay? deleteAccountPollDelay})
-    : _delay = deleteAccountPollDelay ?? ((duration) => Future<void>.delayed(duration));
-
-  final DeleteAccountPollDelay _delay;
-}
-''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'deleteAccountPollDelay ??', ruleName),
-    ]);
-  }
-
-  Future<void> test_allowsNullableDomainValueFallback() async {
-    await assertAllows('''
-class FormState {
-  final String? title;
-  String get displayTitle => title ?? 'Untitled';
-}
-''');
-  }
-
-  Future<void> test_allowsFallbacksInTests() async {
-    await assertAllows('''
-void main() {
-  final service = overrideService ?? FakeNotificationService();
-}
-''', path: '$testPackageRootPath/test/service_test.dart');
-  }
-}
-
-@reflectiveTest
-final class ImplicitNullFallbackTest extends _ServicesExtendedRuleTest {
-  @override
-  String get ruleName => 'implicit_null_fallback';
-  @override
-  String get source => '''
-class PermissionState {
-  bool resolve(bool? granted) => granted ?? false;
-}
-''';
-  @override
-  String get needle => '?? false';
-
-  Future<void> test_reportsChainedPrimitiveFallback() async {
-    const source = '''
-class Insets {
-  double resolve(double? bottom, double? vertical) => bottom ?? vertical ?? 0;
-}
-''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, '?? vertical ??', ruleName),
-    ]);
-  }
-
-  Future<void> test_reportsNullableCallbackToStringFallback() async {
-    const source = '''
-class ChipGroup<T> {
-  String label(T item, String Function(T)? labelBuilder) =>
-      labelBuilder?.call(item) ?? item.toString();
-}
-''';
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, '?.call(item) ??', ruleName),
-    ]);
-  }
-
-  Future<void> test_allowsCopyWithFallback() async {
-    await assertAllows('''
-class FormState {
-  const FormState(this.title);
-  final String title;
-
-  FormState copyWith({String? title}) => FormState(title ?? this.title);
-}
-''');
-  }
-
-  Future<void> test_allowsThrowFallback() async {
-    await assertAllows('''
-class RequiredLookup {
-  String read(Map<String, String> values) =>
-      values['id'] ?? (throw StateError('missing id'));
-}
-''');
-  }
-
-  Future<void> test_allowsFallbacksInTests() async {
-    await assertAllows('''
-void main() {
-  final granted = overrideGranted ?? false;
-}
-''', path: '$testPackageRootPath/test/permission_test.dart');
-  }
-}
-
-@reflectiveTest
-final class FireForgetInTestsTest extends _ServicesExtendedRuleTest {
-  @override
-  String get ruleName => 'fire_forget_in_tests';
-  @override
-  String get path => '$testPackageRootPath/test/analytics_test.dart';
-  @override
-  String get source => 'void main() { unawaited(service.track()); }';
-  @override
-  String get needle => 'unawaited';
 }

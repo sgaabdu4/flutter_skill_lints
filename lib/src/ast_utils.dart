@@ -2,20 +2,92 @@ import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/mounted_guard_utils.dart';
 
-/// Recognizes a value annotated by the actual Freezed annotation library.
-bool isFreezedInterfaceType(InterfaceType type) =>
-    type.element.metadata.annotations.any((annotation) {
-      final owner = annotation.element;
-      return (owner?.name == 'freezed' || owner?.name == 'Freezed') &&
-          owner?.library?.uri.toString() == 'package:freezed_annotation/freezed_annotation.dart';
-    });
+part 'ast_utils/ast_utils_part_01.dart';
 
-bool isGeneratedRuleContext(RuleContext context) {
-  final path = context.definingUnit.file.path.replaceAll('\\', '/');
+/// Whether [provider], a `ref.watch` argument, resolves through its generated
+/// `@ProviderFor` variable to a `@Riverpod(keepAlive: true)` source, in any
+/// file. `.select(...)`, `.notifier`/`.future` and family calls are stripped
+/// down to the provider variable.
+bool isKeepAliveProviderExpression(Expression provider) {
+  Expression? current = provider.unParenthesized;
+  while (current != null) {
+    final element = switch (current) {
+      SimpleIdentifier(:final element) => element,
+      PrefixedIdentifier(:final identifier) => identifier.element,
+      PropertyAccess(:final propertyName) => propertyName.element,
+      _ => null,
+    };
+    final variable = element is PropertyAccessorElement ? element.variable : element;
+    if (variable is TopLevelVariableElement) return _isKeepAliveProviderVariable(variable);
+    current = switch (current) {
+      MethodInvocation(:final target, methodName: SimpleIdentifier(name: 'select')) => target,
+      PrefixedIdentifier(:final prefix) => prefix,
+      PropertyAccess(:final target) => target,
+      FunctionExpressionInvocation(:final function) => function,
+      _ => null,
+    };
+  }
+  return false;
+}
+
+bool _isKeepAliveProviderVariable(TopLevelVariableElement variable) {
+  final source = variable.metadata.annotations
+      .map((annotation) => annotation.computeConstantValue())
+      .where((value) => _isRiverpodAnnotationType(value?.type, 'ProviderFor'))
+      .map((value) => value?.getField('value'))
+      .firstOrNull;
+  final declaration = source?.toTypeValue()?.element ?? source?.toFunctionValue();
+  if (declaration == null) return false;
+  return declaration.metadata.annotations.any((annotation) {
+    final value = annotation.computeConstantValue();
+    return _isRiverpodAnnotationType(value?.type, 'Riverpod') &&
+        value?.getField('keepAlive')?.toBoolValue() == true;
+  });
+}
+
+bool _isRiverpodAnnotationType(DartType? type, String name) {
+  final element = type?.element;
+  return element?.name == name &&
+      (element?.library?.uri.toString().startsWith('package:riverpod_annotation/') ?? false);
+}
+
+/// Whether [annotation] evaluates to an instance of [className] declared in [package].
+bool isPackageAnnotation(ElementAnnotation? annotation, String package, String className) {
+  final type = annotation?.computeConstantValue()?.type;
+  if (type is! InterfaceType || type.element.name != className) return false;
+  final uri = type.element.library.uri;
+  return uri.scheme == 'package' &&
+      uri.pathSegments.isNotEmpty &&
+      uri.pathSegments.first == package;
+}
+
+/// Recognizes a value annotated by the actual Freezed annotation library,
+/// either `@freezed` or a configured `@Freezed(...)` constructor call.
+bool isFreezedInterfaceType(InterfaceType type) =>
+    type.element.metadata.annotations.any(isFreezedAnnotation);
+
+/// Whether [annotation] resolves to `@freezed` or `@Freezed(...)` from
+/// `package:freezed_annotation`.
+bool isFreezedAnnotation(ElementAnnotation annotation) {
+  final owner = annotation.element;
+  if (owner?.library?.uri.toString() != 'package:freezed_annotation/freezed_annotation.dart') {
+    return false;
+  }
+  final name = owner is ConstructorElement ? owner.enclosingElement.name : owner?.name;
+  return name == 'freezed' || name == 'Freezed';
+}
+
+bool isGeneratedRuleContext(RuleContext context) =>
+    isGeneratedSourcePath(context.definingUnit.file.path);
+
+/// Whether [path] names a generated Dart source that lint rules skip.
+bool isGeneratedSourcePath(String sourcePath) {
+  final path = sourcePath.replaceAll('\\', '/');
   return path.endsWith('.g.dart') ||
       path.endsWith('.freezed.dart') ||
       path.endsWith('.gr.dart') ||
@@ -90,6 +162,53 @@ bool isEnclosedClassAssignableTo(AstNode node, TypeChecker checker) {
 BlockClassBody? classBodyOf(ClassDeclaration node) {
   final body = node.body;
   return body is BlockClassBody ? body : null;
+}
+
+/// Flutter widget preview annotations: `@Preview` and `MultiPreview` subclasses.
+const flutterWidgetPreviewChecker = TypeChecker.any([
+  TypeChecker.fromName('Preview', packageName: 'flutter'),
+  TypeChecker.fromName('MultiPreview', packageName: 'flutter'),
+]);
+
+/// Whether [node] carries a resolved Flutter widget preview annotation.
+bool hasWidgetPreviewAnnotation(AnnotatedNode node) => widgetPreviewAnnotation(node) != null;
+
+/// The resolved Flutter widget preview annotation on [node], if any.
+Annotation? widgetPreviewAnnotation(AnnotatedNode node) {
+  for (final annotation in node.metadata) {
+    final type = switch (annotation.element) {
+      ConstructorElement(:final returnType) => returnType,
+      PropertyAccessorElement(:final returnType) => returnType,
+      _ => null,
+    };
+    if (type != null && flutterWidgetPreviewChecker.isAssignableFromType(type)) return annotation;
+  }
+  return null;
+}
+
+/// The resolved `@Preview` function, method, or constructor enclosing [node].
+AnnotatedNode? enclosingWidgetPreview(AstNode node) {
+  for (AstNode? current = node; current != null; current = current.parent) {
+    if (current is FunctionDeclaration ||
+        current is MethodDeclaration ||
+        current is ConstructorDeclaration) {
+      final declaration = current as AnnotatedNode;
+      if (hasWidgetPreviewAnnotation(declaration)) return declaration;
+    }
+  }
+  return null;
+}
+
+/// Top-level functions and class members annotated with a resolved `@Preview`.
+Iterable<AnnotatedNode> widgetPreviewDeclarations(CompilationUnit unit) sync* {
+  for (final declaration in unit.declarations) {
+    if (declaration is FunctionDeclaration && hasWidgetPreviewAnnotation(declaration)) {
+      yield declaration;
+    } else if (declaration is ClassDeclaration) {
+      final members = classBodyOf(declaration)?.members ?? const <ClassMember>[];
+      yield* members.where(hasWidgetPreviewAnnotation);
+    }
+  }
 }
 
 BlockClassBody? flutterStateBody(ClassDeclaration node) {
@@ -204,6 +323,17 @@ bool isInFreezedClass(AstNode node) {
       false;
 }
 
+/// Riverpod and state_notifier notifier bases. Riverpod 3 codegen notifiers
+/// (`extends _$X`) reach AnyNotifier through `$Notifier`/`$AsyncNotifier`,
+/// never through the hand-written Notifier.
+const riverpodNotifierChecker = TypeChecker.any([
+  TypeChecker.fromName('AnyNotifier', packageName: 'riverpod'),
+  TypeChecker.fromName('Notifier', packageName: 'riverpod'),
+  TypeChecker.fromName('AsyncNotifier', packageName: 'riverpod'),
+  TypeChecker.fromName('StreamNotifier', packageName: 'riverpod'),
+  TypeChecker.fromName('StateNotifier', packageName: 'state_notifier'),
+]);
+
 bool isNotifierClass(ClassDeclaration node) {
   final className = node.namePart.typeName.lexeme;
   final superName = node.extendsClause?.superclass.name.lexeme ?? '';
@@ -212,6 +342,20 @@ bool isNotifierClass(ClassDeclaration node) {
       superName == 'AsyncNotifier' ||
       superName.endsWith('Notifier') ||
       superName.startsWith(r'_$');
+}
+
+/// Whether [node] carries the resolved `@riverpod` / `@Riverpod(...)` codegen annotation.
+bool hasRiverpodCodegenAnnotation(AnnotatedNode node) {
+  return node.metadata.any((annotation) {
+    final element = annotation.element;
+    final isRiverpod = switch (element) {
+      ConstructorElement(:final enclosingElement) => enclosingElement.name == 'Riverpod',
+      PropertyAccessorElement(:final name) => name == 'riverpod',
+      _ => false,
+    };
+    final library = element?.library?.uri.toString() ?? '';
+    return isRiverpod && library.startsWith('package:riverpod_annotation/');
+  });
 }
 
 bool hasAnnotationNamed(AnnotatedNode node, Set<String> names) {
@@ -261,7 +405,11 @@ bool _returnsWhenUnmounted(
   if (condition is PrefixExpression && condition.operator.lexeme == '!') {
     final mounted = condition.operand.unParenthesized;
     return isTargetProperty(mounted, targetName, 'mounted') &&
-        (targetName != 'ref' || isRiverpodRefAccess(mounted));
+        switch (targetName) {
+          'ref' => isRiverpodRefAccess(mounted),
+          'context' => isCapturedContextAccess(mounted),
+          _ => true,
+        };
   }
   if (condition is BinaryExpression && condition.operator.lexeme == '||') {
     return _returnsWhenUnmounted(condition.rightOperand, targetName, additionalCondition) ||
@@ -463,12 +611,17 @@ bool classMemberNameIsDeclaration(SimpleIdentifier node) {
   return false;
 }
 
+/// Tracks whether each statement can run after an unguarded `await`.
+///
+/// The state flows into nested blocks, catch/finally clauses, loop iterations
+/// and inline awaits, so a guard is required wherever execution resumes.
 final class AsyncStatementScanner {
   AsyncStatementScanner({
     required this.guardTarget,
     required this.accessTargets,
     required this.onViolation,
     this.additionalMountedCondition,
+    this.mountedWhenTrue,
   });
 
   final String guardTarget;
@@ -476,200 +629,224 @@ final class AsyncStatementScanner {
   final void Function(AstNode node) onViolation;
   final bool Function(Expression)? additionalMountedCondition;
 
-  void scanBlock(Block block) {
-    var afterAwait = false;
+  /// Whether a condition can only be true while the guard target is mounted.
+  final bool Function(Expression)? mountedWhenTrue;
 
-    for (final statement in block.statements) {
-      if (afterAwait &&
-          statementIsMountedReturnGuard(
-            statement,
-            guardTarget,
-            additionalCondition: additionalMountedCondition,
-          )) {
-        final guard = statement as IfStatement;
-        final access = firstTargetAccess(guard.thenStatement, accessTargets, includeBlocks: true);
-        if (access != null) onViolation(access);
-        guard.elseStatement?.accept(_NestedBlockScanner(this));
-        afterAwait = guard.elseStatement != null && containsAwait(guard.elseStatement!);
-        continue;
+  final _reported = <AstNode>{};
+  var _silent = 0;
+
+  void scanBlock(Block block) => _scanStatements(block.statements, false);
+
+  /// Scans an expression function body such as `() async => state = await f()`.
+  void scanExpression(Expression expression) => _scanInline(expression, false);
+
+  bool _scanStatements(Iterable<Statement> statements, bool afterAwait) {
+    var state = afterAwait;
+    for (final statement in statements) {
+      state = _scanStatement(statement, state);
+    }
+    return state;
+  }
+
+  bool _scanStatement(Statement statement, bool afterAwait) => switch (statement) {
+    Block(:final statements) => _scanStatements(statements, afterAwait),
+    IfStatement() => _scanIf(statement, afterAwait),
+    TryStatement() => _scanTry(statement, afterAwait),
+    WhileStatement(:final condition, :final body) => _scanLoop(
+      afterAwait,
+      before: [condition],
+      body: body,
+    ),
+    DoStatement(:final body, :final condition) => _scanLoop(
+      afterAwait,
+      body: body,
+      after: [condition],
+    ),
+    ForStatement(:final forLoopParts, :final body, :final awaitKeyword) => switch (forLoopParts) {
+      ForParts(:final condition, :final updaters) => _scanLoop(
+        _scanForInitializer(forLoopParts, afterAwait),
+        before: [?condition],
+        body: body,
+        after: updaters,
+      ),
+      ForEachParts(:final iterable) => _scanLoop(
+        _scanInline(iterable, afterAwait),
+        body: body,
+        awaitEachIteration: awaitKeyword != null,
+      ),
+    },
+    SwitchStatement(:final expression, :final members) => _scanSwitch(
+      _scanInline(expression, afterAwait),
+      members,
+    ),
+    LabeledStatement(:final statement) => _scanStatement(statement, afterAwait),
+    FunctionDeclarationStatement() => afterAwait,
+    _ => _scanInline(statement, afterAwait),
+  };
+
+  bool _scanForInitializer(ForParts parts, bool afterAwait) => switch (parts) {
+    ForPartsWithDeclarations(:final variables) => _scanInline(variables, afterAwait),
+    ForPartsWithExpression(:final initialization?) => _scanInline(initialization, afterAwait),
+    ForPartsWithPattern(:final variables) => _scanInline(variables, afterAwait),
+    _ => afterAwait,
+  };
+
+  bool _scanIf(IfStatement statement, bool afterAwait) {
+    if (statementIsMountedReturnGuard(
+      statement,
+      guardTarget,
+      additionalCondition: additionalMountedCondition,
+    )) {
+      return _scanMountedReturnGuard(statement, afterAwait);
+    }
+    final condition = statement.expression;
+    if (mountedWhenTrue?.call(condition) ?? false) {
+      final conditionAwaits = containsAwait(condition);
+      return _scanBranches(
+        statement,
+        thenEntry: conditionAwaits,
+        elseEntry: afterAwait || conditionAwaits,
+        exitWithoutElse: afterAwait,
+      );
+    }
+    final branchEntry = _scanInline(condition, afterAwait);
+    return _scanBranches(
+      statement,
+      thenEntry: branchEntry,
+      elseEntry: branchEntry,
+      exitWithoutElse: branchEntry,
+    );
+  }
+
+  /// The then branch of `if (!mounted) return;` runs only while unmounted.
+  bool _scanMountedReturnGuard(IfStatement statement, bool afterAwait) {
+    if (afterAwait) {
+      final access = firstTargetAccess(statement.thenStatement, accessTargets, includeBlocks: true);
+      if (access != null) _report(access);
+    }
+    final elseStatement = statement.elseStatement;
+    return elseStatement == null ? false : _scanStatement(elseStatement, afterAwait);
+  }
+
+  bool _scanBranches(
+    IfStatement statement, {
+    required bool thenEntry,
+    required bool elseEntry,
+    required bool exitWithoutElse,
+  }) {
+    final elseStatement = statement.elseStatement;
+    final thenExit = _scanStatement(statement.thenStatement, thenEntry);
+    final elseExit = elseStatement == null
+        ? exitWithoutElse
+        : _scanStatement(elseStatement, elseEntry);
+    return _mayContinue(statement.thenStatement, thenExit) || _mayContinue(elseStatement, elseExit);
+  }
+
+  bool _scanTry(TryStatement statement, bool afterAwait) {
+    final bodyExit = _scanStatement(statement.body, afterAwait);
+    final catchEntry = afterAwait || containsAwait(statement.body);
+    var normalExit = _mayContinue(statement.body, bodyExit);
+    var finallyEntry = catchEntry;
+    for (final clause in statement.catchClauses) {
+      final catchExit = _scanStatement(clause.body, catchEntry);
+      normalExit = normalExit || _mayContinue(clause.body, catchExit);
+      finallyEntry = finallyEntry || containsAwait(clause.body);
+    }
+    final finallyBlock = statement.finallyBlock;
+    if (finallyBlock == null) return normalExit;
+    // Every path through finally is checked; only a normal exit continues.
+    _scanStatement(finallyBlock, finallyEntry);
+    return _silently(() => _scanStatement(finallyBlock, normalExit));
+  }
+
+  bool _scanLoop(
+    bool afterAwait, {
+    required Statement body,
+    List<Expression> before = const [],
+    List<Expression> after = const [],
+    bool awaitEachIteration = false,
+  }) {
+    bool iteration({required bool entry}) {
+      var state = entry;
+      for (final expression in before) {
+        state = _scanInline(expression, state);
       }
-
-      if (afterAwait) {
-        final access = firstTargetAccess(statement, accessTargets);
-        if (access != null) {
-          onViolation(access);
-          afterAwait = false;
-          continue;
-        }
+      state = _scanStatement(body, state || awaitEachIteration);
+      for (final expression in after) {
+        state = _scanInline(expression, state);
       }
+      return state;
+    }
 
-      final nested = _NestedBlockScanner(this);
-      statement.accept(nested);
+    final firstExit = iteration(entry: afterAwait);
+    // A later iteration resumes from where the previous one ended.
+    final laterExit = firstExit && !afterAwait ? iteration(entry: true) : firstExit;
+    return afterAwait || firstExit || laterExit;
+  }
 
-      if (containsAwait(statement)) {
-        afterAwait = true;
+  bool _scanSwitch(bool afterAwait, NodeList<SwitchMember> members) {
+    var exit = afterAwait;
+    for (final member in members) {
+      exit = _scanStatements(member.statements, afterAwait) || exit;
+    }
+    return exit;
+  }
+
+  bool _scanInline(AstNode node, bool afterAwait) {
+    if (afterAwait) {
+      final access = firstTargetAccess(node, accessTargets);
+      if (access != null) {
+        _report(access);
+        return false;
       }
+      return true;
+    }
+    final awaitEnd = _firstAwaitEnd(node);
+    if (awaitEnd == null) return false;
+    final access = _accessAfterAwait(node, awaitEnd);
+    if (access != null) {
+      _report(access);
+      return false;
+    }
+    return true;
+  }
+
+  AstNode? _accessAfterAwait(AstNode node, int awaitEnd) {
+    final writes = _AwaitedWriteFinder(accessTargets);
+    node.accept(writes);
+    if (writes.node != null) return writes.node;
+    final finder = _TargetAccessFinder(accessTargets, where: (access) => access.offset >= awaitEnd);
+    node.accept(finder);
+    return finder.node;
+  }
+
+  bool _mayContinue(Statement? statement, bool exit) =>
+      exit && (statement == null || !_alwaysExits(statement));
+
+  T _silently<T>(T Function() scan) {
+    _silent++;
+    try {
+      return scan();
+    } finally {
+      _silent--;
     }
   }
-}
 
-final class _NestedBlockScanner extends RecursiveAstVisitor<void> {
-  _NestedBlockScanner(this.scanner);
-
-  final AsyncStatementScanner scanner;
-
-  @override
-  void visitBlock(Block node) {
-    scanner.scanBlock(node);
-  }
-
-  @override
-  void visitFunctionExpression(FunctionExpression node) {}
-
-  @override
-  void visitFunctionDeclaration(FunctionDeclaration node) {}
-}
-
-final class _ReturnFinder extends RecursiveAstVisitor<void> {
-  bool found = false;
-
-  @override
-  void visitReturnStatement(ReturnStatement node) {
-    found = true;
-  }
-
-  @override
-  void visitFunctionExpression(FunctionExpression node) {}
-
-  @override
-  void visitFunctionDeclaration(FunctionDeclaration node) {}
-}
-
-final class _AwaitFinder extends RecursiveAstVisitor<void> {
-  bool found = false;
-
-  @override
-  void visitAwaitExpression(AwaitExpression node) {
-    found = true;
-  }
-
-  @override
-  void visitFunctionExpression(FunctionExpression node) {}
-
-  @override
-  void visitFunctionDeclaration(FunctionDeclaration node) {}
-}
-
-final class _ThrowFinder extends RecursiveAstVisitor<void> {
-  bool found = false;
-
-  @override
-  void visitThrowExpression(ThrowExpression node) {
-    found = true;
+  void _report(AstNode node) {
+    if (_silent == 0 && _reported.add(node)) onViolation(node);
   }
 }
 
-final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
-  _TargetAccessFinder(this.targetNames, {this.includeBlocks = false});
-
-  final Set<String> targetNames;
-  final bool includeBlocks;
-  AstNode? node;
-
-  @override
-  void visitMethodInvocation(MethodInvocation node) {
-    if (this.node != null) return;
-    final target = node.target;
-    if (target is SimpleIdentifier && targetNames.contains(target.name)) {
-      if (target.name == 'ref' && node.methodName.name == 'mounted') return;
-      this.node = node;
-      return;
-    }
-    super.visitMethodInvocation(node);
-  }
-
-  @override
-  void visitPrefixedIdentifier(PrefixedIdentifier node) {
-    if (this.node != null) return;
-    if (targetNames.contains(node.prefix.name)) {
-      if (node.prefix.name == 'ref' && node.identifier.name == 'mounted') {
-        return;
-      }
-      if (node.prefix.name == 'context' && node.identifier.name == 'mounted') {
-        return;
-      }
-      this.node = node;
-      return;
-    }
-    super.visitPrefixedIdentifier(node);
-  }
-
-  @override
-  void visitPropertyAccess(PropertyAccess node) {
-    if (this.node != null) return;
-    final target = node.target;
-    if (target is SimpleIdentifier && targetNames.contains(target.name)) {
-      if (target.name == 'ref' && node.propertyName.name == 'mounted') {
-        return;
-      }
-      if (target.name == 'context' && node.propertyName.name == 'mounted') {
-        return;
-      }
-      this.node = node;
-      return;
-    }
-    super.visitPropertyAccess(node);
-  }
-
-  @override
-  void visitSimpleIdentifier(SimpleIdentifier node) {
-    if (this.node != null) return;
-    if (!targetNames.contains(node.name)) {
-      super.visitSimpleIdentifier(node);
-      return;
-    }
-    if (isExpressionTargetIdentifier(node)) return;
-    if (classMemberNameIsDeclaration(node)) return;
-    this.node = node;
-  }
-
-  @override
-  void visitBlock(Block node) {
-    if (includeBlocks) super.visitBlock(node);
-  }
-
-  @override
-  void visitFunctionExpression(FunctionExpression node) {}
-
-  @override
-  void visitFunctionDeclaration(FunctionDeclaration node) {}
-}
-
-final class _EnsureCallFinder extends RecursiveAstVisitor<void> {
-  bool found = false;
-
-  @override
-  void visitMethodInvocation(MethodInvocation node) {
-    final name = node.methodName.name;
-    if (name.startsWith('_ensure') || RegExp(r'^ensure[A-Z]\w*').hasMatch(name)) {
-      found = true;
-      return;
-    }
-    super.visitMethodInvocation(node);
-  }
-}
-
-/// Whether a closure executes immediately instead of being stored or scheduled.
-bool isImmediatelyInvoked(FunctionExpression function) {
-  AstNode expression = function;
-  var wrapper = expression.parent;
-  while (wrapper is ParenthesizedExpression) {
-    expression = wrapper;
-    wrapper = expression.parent;
-  }
-  final parent = expression.parent;
-  return parent is FunctionExpressionInvocation && identical(parent.function, expression) ||
-      parent is MethodInvocation &&
-          parent.methodName.name == 'call' &&
-          identical(parent.target, expression);
+/// Whether [node] is the `dynamic` value type of the JSON map shape
+/// `Map<String, dynamic>`: a `Map` type annotation or a map literal's type
+/// arguments (`<String, dynamic>{}`, hive-persistence.md).
+bool isJsonMapDynamicValueType(NamedType node) {
+  final typeArguments = node.parent;
+  if (typeArguments is! TypeArgumentList) return false;
+  final arguments = typeArguments.arguments;
+  if (arguments.length != 2 || arguments.last != node) return false;
+  final keyType = arguments.first;
+  if (keyType is! NamedType || keyType.name.lexeme != 'String') return false;
+  final owner = typeArguments.parent;
+  return owner is NamedType && owner.name.lexeme == 'Map' || owner is SetOrMapLiteral;
 }

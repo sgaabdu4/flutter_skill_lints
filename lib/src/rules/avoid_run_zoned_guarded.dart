@@ -16,6 +16,7 @@ final class AvoidRunZonedGuarded extends GeneratedCompilationUnitCheckRule {
     'avoid_run_zoned_guarded',
     'Avoid `runZonedGuarded` for app startup.',
     correctionMessage: 'Call Crash.init() before runApp instead of wrapping runApp in a zone.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   AvoidRunZonedGuarded()

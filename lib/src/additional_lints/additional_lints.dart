@@ -45,7 +45,6 @@ import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_any_or_eve
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_async_callback_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_center_over_align_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_class_destructuring_fix.dart';
-import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_compute_over_isolate_run_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_const_border_radius_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_constrained_box_over_container_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_container_fix.dart';
@@ -159,7 +158,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_magic_liter
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_map_keys_contains.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missed_calls.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missing_completer_stack_trace.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missing_controller.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missing_image_alt.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missing_interpolation.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missing_test_files.dart';
@@ -244,7 +242,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/incorrect_firebas
 import 'package:flutter_skill_lints/src/additional_lints/rules/keep_state_below_its_widget.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/match_lib_folder_structure.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/missing_test_assertion.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/move_records_to_typedefs.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/no_boolean_literal_compare.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/no_empty_block.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/no_equal_then_else.dart';
@@ -260,7 +257,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_async_call
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_caret_version_syntax.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_center_over_align.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_class_destructuring.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_compute_over_isolate_run.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_const_border_radius.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_constrained_box_over_container.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_container.dart';
@@ -287,7 +283,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_single_set
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_single_widget_per_file.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_sized_box_square.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_spacing.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_test_matchers.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_text_rich.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_transform_over_container.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_unique_test_names.dart';
@@ -375,7 +370,6 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidLongRecords());
     registry.registerWarningRule(AvoidMapKeysContains());
     registry.registerWarningRule(AvoidMissingCompleterStackTrace());
-    registry.registerWarningRule(AvoidMissingController());
     registry.registerWarningRule(AvoidMissingImageAlt());
     registry.registerWarningRule(AvoidMissingInterpolation());
     registry.registerWarningRule(AvoidMissingTestFiles());
@@ -453,7 +447,6 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(UseDedicatedMediaQueryMethods());
     registry.registerWarningRule(PreferSingleWidgetPerFile());
     registry.registerWarningRule(PreferSpacing());
-    registry.registerWarningRule(PreferTestMatchers());
     registry.registerWarningRule(ProperSuperCalls());
     registry.registerWarningRule(PreferClassDestructuring());
     registry.registerWarningRule(UseClosestBuildContext());
@@ -472,7 +465,6 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidStateConstructors());
     registry.registerWarningRule(AvoidStatelessWidgetInitializedFields());
     registry.registerWarningRule(PreferAsyncCallback());
-    registry.registerWarningRule(PreferComputeOverIsolateRun());
     registry.registerWarningRule(PreferConstBorderRadius());
     registry.registerWarningRule(AvoidWrappingInPadding());
     registry.registerWarningRule(CheckForEqualsInRenderObjectSetters());
@@ -505,7 +497,6 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(IncorrectFirebaseEventName());
     registry.registerWarningRule(IncorrectFirebaseParameterName());
     registry.registerWarningRule(MissingTestAssertion());
-    registry.registerWarningRule(MoveRecordsToTypedefs());
     registry.registerWarningRule(PassExistingFutureToFutureBuilder());
     registry.registerWarningRule(PassExistingStreamToStreamBuilder());
     registry.registerWarningRule(PassMockObject());
@@ -639,10 +630,6 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerFixForRule(AvoidRefReadInsideBuild.code, AvoidRefReadInsideBuildFix.new);
     registry.registerFixForRule(AvoidStateConstructors.code, AvoidStateConstructorsFix.new);
     registry.registerFixForRule(PreferAsyncCallback.code, PreferAsyncCallbackFix.new);
-    registry.registerFixForRule(
-      PreferComputeOverIsolateRun.code,
-      PreferComputeOverIsolateRunFix.new,
-    );
     registry.registerFixForRule(PreferConstBorderRadius.code, PreferConstBorderRadiusFix.new);
     registry.registerFixForRule(
       PreferConstrainedBoxOverContainer.code,

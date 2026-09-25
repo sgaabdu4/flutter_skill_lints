@@ -182,6 +182,163 @@ class DemoState extends State<Demo> {
 }
 ''');
   }
+
+  Future<void> test_reportsContextAfterAwaitInAsyncCallback() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+void showDone(BuildContext context) {}
+
+class Tap extends StatelessWidget {
+  const Tap({required this.onTap, required this.onLongPress});
+  final Future<void> Function() onTap;
+  final Future<void> Function() onLongPress;
+  @override
+  Widget build(BuildContext context) => this;
+}
+
+class Demo extends StatelessWidget {
+  const Demo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Tap(
+      onTap: () async {
+        await Future<void>.value();
+        showDone(context);
+      },
+      onLongPress: () async {
+        await Future<void>.value();
+        if (!context.mounted) return;
+        showDone(context);
+      },
+    );
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('context);'), 7)]);
+  }
+
+  Future<void> test_reportsContextAfterAwaitInNestedBlocks() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+void showDone(BuildContext context) {}
+
+Future<void> afterIf(BuildContext context, bool ok) async {
+  await Future<void>.value();
+  if (ok) {
+    showDone(context /* if */);
+  }
+}
+
+Future<void> insideTry(BuildContext context) async {
+  try {
+    await Future<void>.value();
+    showDone(context /* try */);
+  } catch (_) {
+    showDone(context /* catch */);
+  }
+}
+
+Future<void> nextIteration(BuildContext context, List<int> ids) async {
+  for (final _ in ids) {
+    showDone(context /* loop */);
+    await Future<void>.value();
+  }
+}
+
+Future<void> awaitInBranch(BuildContext context, bool ok) async {
+  if (ok) {
+    await Future<void>.value();
+  }
+  showDone(context /* branch */);
+}
+
+class Demo extends StatefulWidget {
+  const Demo();
+}
+
+class DemoState extends State<Demo> {
+  Future<void> load(bool ok) async {
+    await Future<void>.value();
+    if (ok) {
+      if (!context.mounted) return;
+    }
+  }
+
+  Future<void> swapToStateMounted() async {
+    await Future<void>.value();
+    if (!mounted) return;
+    showDone(context /* state */);
+  }
+}
+''';
+    await assertDiagnostics(source, [
+      for (final marker in ['if', 'try', 'catch', 'loop', 'branch'])
+        lint(source.indexOf('context /* $marker */'), 7),
+      lintFor(source, 'context.mounted'),
+      lint(source.indexOf('context /* state */'), 7),
+    ]);
+  }
+
+  Future<void> test_allowsGuardsInNestedBlocksAndSkillExamples() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+void showDone(BuildContext context) {}
+void showSheet({required BuildContext context}) {}
+Future<bool?> confirm() async => true;
+
+enum CreateChoice { exercise, workout }
+
+Future<CreateChoice?> pick() async => null;
+
+Future<void> openCreateSheet(BuildContext context) async {
+  final choice = await pick();
+  if (!context.mounted || choice != CreateChoice.exercise) return;
+  showDone(context);
+}
+
+Future<void> confirmDelete(BuildContext context) async {
+  final confirmed = await confirm();
+  if (confirmed != true || !context.mounted) return;
+  showDone(context);
+}
+
+Future<void> positiveGuard(BuildContext context) async {
+  final ok = await confirm();
+  if (ok == true && context.mounted) {
+    showDone(context);
+  }
+}
+
+Future<void> guardedTry(BuildContext context) async {
+  try {
+    await Future<void>.value();
+    if (!context.mounted) return;
+    showDone(context);
+  } catch (_) {
+    if (!context.mounted) return;
+    showDone(context);
+  }
+}
+
+Future<void> guardedLoop(BuildContext context, List<int> ids) async {
+  for (final _ in ids) {
+    await Future<void>.value();
+    if (!context.mounted) return;
+    showDone(context);
+  }
+}
+
+Future<void> namedArgumentLabel(BuildContext context, BuildContext sheetContext) async {
+  await Future<void>.value();
+  if (!sheetContext.mounted) return;
+  showSheet(context: sheetContext);
+}
+''');
+  }
 }
 
 @reflectiveTest
@@ -207,6 +364,67 @@ import 'package:riverpod/riverpod.dart';
 
 int load(Ref ref) => ref.read(Object());
 ''');
+  }
+
+  Future<void> test_reportsLegacyImportAndStateNotifier() async {
+    const source = r'''
+import 'package:flutter_riverpod/legacy.dart';
+
+class Counter extends StateNotifier<int> {
+  Counter() : super(0);
+}
+''';
+    await assertDiagnostics(source, [
+      lintFor(source, "'package:flutter_riverpod/legacy.dart'"),
+      lintFor(source, 'StateNotifier<int>'),
+    ]);
+  }
+
+  Future<void> test_reportsRiverpodLegacyImport() async {
+    const source = r'''
+import 'package:riverpod/legacy.dart';
+
+StateNotifier<int>? counter;
+''';
+    await assertDiagnostics(source, [
+      lintFor(source, "'package:riverpod/legacy.dart'"),
+      lintFor(source, 'StateNotifier<int>?'),
+    ]);
+  }
+
+  Future<void> test_reportsRefAliasAndLegacyRefTypes() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+typedef GreetingRef = Ref;
+
+String greeting(GreetingRef ref) => 'Hello';
+String legacy(AutoDisposeRef ref) => 'Hello';
+''';
+    await assertDiagnostics(source, [
+      lintForLast(source, 'GreetingRef'),
+      lintFor(source, 'AutoDisposeRef'),
+    ]);
+  }
+
+  Future<void> test_allowsUserTypesNamedLikeRiverpodApis() async {
+    await assertNoDiagnostics(r'''
+class Provider<T> {
+  Provider(T value);
+}
+
+class ImageRef {}
+
+class StateNotifier<T> {}
+
+final provider = Provider<int>(1);
+ImageRef? image;
+StateNotifier<int>? notifier;
+''');
+  }
+
+  Future<void> test_severityIsError() async {
+    expect(AvoidLegacyRiverpodApis.code.severity, DiagnosticSeverity.ERROR);
   }
 }
 
@@ -242,6 +460,30 @@ Map<String, dynamic> emptyPrefs() {
   return const <String, Object?>{}.cast<String, dynamic>();
 }
 ''');
+  }
+
+  // hive-persistence.md:56: `<String, dynamic>{}` is a JSON map literal.
+  Future<void> test_allowsJsonMapLiteralDynamic() async {
+    await assertNoDiagnostics(r'''
+Map<String, dynamic> normalizePersistedMap(Map<Object?, Object?> raw) {
+  final normalized = <String, dynamic>{};
+  for (final entry in raw.entries) {
+    normalized['${entry.key}'] = entry.value;
+  }
+  return normalized;
+}
+''');
+  }
+
+  Future<void> test_reportsNonJsonLiteralDynamic() async {
+    const source = r'''
+final byId = <int, dynamic>{};
+final items = <dynamic>[];
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf('dynamic>{'), 'dynamic'.length),
+      lint(source.indexOf('dynamic>['), 'dynamic'.length),
+    ]);
   }
 
   Future<void> test_reportsUntypedRuntimeBoundaryDynamic() async {
@@ -441,6 +683,10 @@ void reset(Ref ref) {
 }
 ''');
   }
+
+  Future<void> test_severityIsError() async {
+    expect(UseRefInvalidate.code.severity, DiagnosticSeverity.ERROR);
+  }
 }
 
 @reflectiveTest
@@ -467,6 +713,31 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 @freezed
 sealed class User {}
+''');
+  }
+
+  Future<void> test_reportsPlainFreezedClass() async {
+    const source = r'''
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+@Freezed()
+class WorkoutSet {
+  const WorkoutSet();
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, 'class')]);
+  }
+
+  Future<void> test_ignoresSameNamedNonFreezedAnnotation() async {
+    await assertNoDiagnostics(r'''
+class Freezed {
+  const Freezed();
+}
+
+const freezed = Freezed();
+
+@freezed
+class User {}
 ''');
   }
 }
@@ -516,6 +787,78 @@ class Screen extends StatelessWidget {
     );
     return Text(item);
   }
+}
+''');
+  }
+
+  Future<void> test_reportsDirectThrowAndUnguardedFirstWhereInBuild() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class ProductMissingScreen extends StatelessWidget {
+  const ProductMissingScreen({required this.productId, required this.names});
+
+  final String productId;
+  final List<String> names;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!names.contains(productId)) {
+      throw ArgumentError('missing $productId');
+    }
+    final name = names.firstWhere((n) => n == productId);
+    return Text(name);
+  }
+}
+''';
+    await assertDiagnostics(source, [
+      lintFor(source, r"throw ArgumentError('missing $productId')"),
+      lintFor(source, 'firstWhere'),
+    ]);
+  }
+
+  Future<void> test_allowsThrowInsideBuildClosure() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class Screen extends StatelessWidget {
+  const Screen();
+
+  @override
+  Widget build(BuildContext context) {
+    final onUnsupported = () => throw UnsupportedError('tap');
+    return Text('$onUnsupported');
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsThrowInNonWidgetBuild() async {
+    await assertNoDiagnostics(r'''
+class ReportBuilder {
+  String build(List<String> lines) {
+    if (lines.isEmpty) throw ArgumentError('empty');
+    return lines.firstWhere((line) => line.isNotEmpty);
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsSameNamedFirstWhereOnNonIterable() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class Lookup {
+  String firstWhere(bool Function(String) test) => '';
+}
+
+class Screen extends StatelessWidget {
+  const Screen(this.lookup);
+
+  final Lookup lookup;
+
+  @override
+  Widget build(BuildContext context) => Text(lookup.firstWhere((value) => value.isEmpty));
 }
 ''');
   }

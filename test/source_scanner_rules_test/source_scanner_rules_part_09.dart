@@ -240,6 +240,12 @@ void open(context) {
 @reflectiveTest
 final class RouterContextNavigationExtensionTest extends _RouterRuleTest {
   @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'router_context_navigation_extension';
   @override
   String get needle => 'ProductDetailRoute(id: id).go';
@@ -421,6 +427,76 @@ bool popIfCan<T>(BuildContext context, [T? result]) => false;
 void popWithFallback<T>(BuildContext context, GoRouteData fallbackRoute, [T? result]) {
   if (popIfCan<T>(context, result)) return;
   fallbackRoute.go(context);
+}
+''');
+  }
+
+  Future<void> test_reportsStringFallbackThroughGoRouterHelper() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+import 'package:go_router/go_router.dart';
+
+extension PopOrGoPathX on BuildContext {
+  bool popIfCan<T extends Object?>([T? result]) => false;
+  void popOrGoPath<T extends Object?>(String fallbackPath, [T? result]) {
+    if (popIfCan<T>(result)) return;
+    go(fallbackPath);
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'go(fallbackPath);', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsStringPushThroughGoRouterInExtension() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+import 'package:go_router/go_router.dart';
+
+extension OpenPathX on BuildContext {
+  Future<void> openPath(String path) => GoRouter.of(this).push<void>(path);
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'GoRouter.of(this).push<void>(path);', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillGoRouterPopX() async {
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+extension GoRouterPopX on BuildContext {
+  bool popIfCan<T extends Object?>([T? result]) {
+    final rootNavigator = Navigator.maybeOf(this, rootNavigator: true);
+    if (rootNavigator != null && rootNavigator.canPop()) {
+      rootNavigator.pop<T>(result);
+      return true;
+    }
+    if (!canPop()) return false;
+    pop<T>(result);
+    return true;
+  }
+
+  void popOrGo<T extends Object?>(GoRouteData fallbackRoute, [T? result]) {
+    if (popIfCan<T>(result)) return;
+    fallbackRoute.go(this);
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsSameNamedLocalExtensionMethod() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+
+extension LocalGoX on BuildContext {
+  void go(String label) {}
+  void goLabel(String label) => go(label);
 }
 ''');
   }

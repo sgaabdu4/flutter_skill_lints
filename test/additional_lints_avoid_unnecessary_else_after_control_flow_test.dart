@@ -142,10 +142,10 @@ int f(bool success) {
 }
 ''';
 
-    await assertDiagnostics(source, [lint(source.indexOf('else'), 'else'.length)]);
+    await assertNoDiagnostics(source);
   }
 
-  Future<void> test_nestedConditionalReturn_lint() async {
+  Future<void> test_nestedConditionalReturn_noLint() async {
     const source = r'''
 int f(bool outer, bool inner) {
   if (outer) {
@@ -159,10 +159,10 @@ int f(bool outer, bool inner) {
 }
 ''';
 
-    await assertDiagnostics(source, [lint(source.indexOf('else'), 'else'.length)]);
+    await assertNoDiagnostics(source);
   }
 
-  Future<void> test_normalBranching_lint() async {
+  Future<void> test_normalBranching_noLint() async {
     const source = r'''
 void f(bool exists, List<int> items) {
   if (exists) {
@@ -173,15 +173,61 @@ void f(bool exists, List<int> items) {
 }
 ''';
 
-    await assertDiagnostics(source, [lint(source.indexOf('else'), 'else'.length)]);
+    await assertNoDiagnostics(source);
   }
 
-  Future<void> test_collectionIfElse_lint() async {
+  Future<void> test_collectionIfElse_noLint() async {
     const source = r'''
 List<int> f(bool exists) {
   return [
     if (exists) 1 else 2,
   ];
+}
+''';
+
+    await assertNoDiagnostics(source);
+  }
+
+  Future<void> test_skillSafePopFallback_noLint() async {
+    const source = r'''
+bool canPop() => true;
+void pop(Object? result) {}
+void goToList() {}
+
+void f(Object? result) {
+  if (canPop()) {
+    pop(result);
+  } else {
+    goToList();
+  }
+}
+''';
+
+    await assertNoDiagnostics(source);
+  }
+
+  Future<void> test_skillDeltaSyncAssignment_noLint() async {
+    const source = r'''
+Future<int> f(int? lastTableSync, Future<List<int>> Function() all) async {
+  int watermark;
+  if (lastTableSync == null) {
+    final items = await all();
+    watermark = items.length;
+  } else {
+    watermark = lastTableSync;
+  }
+  return watermark;
+}
+''';
+
+    await assertNoDiagnostics(source);
+  }
+
+  Future<void> test_throwExpressionBranchWithoutBlock_lint() async {
+    const source = r'''
+int f(Object? value) {
+  if (value == null) throw ArgumentError('value');
+  else return 1;
 }
 ''';
 

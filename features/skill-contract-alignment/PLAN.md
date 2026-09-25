@@ -63,6 +63,10 @@ After the sweep, an acceptance probe ran the skill's examples against the merged
 
 Integration: `fix/skill-contract-accept` merged after the sweep with no textual conflicts. The sweep left `select_returns_unstable_record_identity` on the non-error allowlist, with the reason "Severity owned by the acceptance branch". That entry is removed. Both dialog codes are now pinned in the error-severity assertion list. Every skill code the accept branch touches is an error. The branch adds no rules, so the counts stay at 229 skill rules, 237 skill codes, 274 additional codes, 509 unique codes and 63 fixes. On the integrated head, `dart format`, `dart analyze` and `dart test` pass, with 2,628 tests and 1 skip. `python3 .hooks/hard-eng.py check --base origin/main --plan-stage Draft` passes every gate, with 79.16% line coverage.
 
+## Final round
+
+- `avoid_unnecessary_else_after_control_flow` reports an `else` only when the then-branch ends in `return`, `throw`, `rethrow`, `break` or `continue` (SKILL.md R17); collection `if`/`else` is no longer reported.
+
 ## Baseline + execution
 
 Result: Passed

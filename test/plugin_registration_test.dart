@@ -441,6 +441,9 @@ const _sweepSkillErrorDiagnostics = [
   'guard_context_pop',
   // common-patterns.md rule 10: "mutation order MUST be: persist write -> targeted parent sync -> navigate".
   'state_broad_invalidation',
+  // modals-navigation.md: "NEVER — dialog hosts mutation + watches mutable record".
+  'dialog_widget_subscribes_to_mutable_provider',
+  'select_returns_unstable_record_identity',
 ];
 
 /// Skill codes that stay below error because no skill MUST/NEVER backs them.
@@ -461,8 +464,6 @@ const _nonErrorSkillDiagnostics = [
   'unguarded_fire_and_forget_platform_command',
   // The skill never mandates this fallback check.
   'implicit_null_fallback',
-  // Severity owned by the acceptance branch; not decided in this sweep.
-  'select_returns_unstable_record_identity',
 ];
 
 Iterable<String> _documentedLintCodes(String text) sync* {

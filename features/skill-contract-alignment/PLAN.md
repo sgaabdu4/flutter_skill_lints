@@ -50,6 +50,19 @@ Authority: The coordinator assigned the builder slices and the final sweep brief
 - [x] Sweep 10 (658993e): every registered skill code appears in the coverage doc, with 28 new per-code rows.
 - [x] Verification repairs: split two test files over the 1,000-line limit (e8b7230) and removed a duplicated reporting loop (038dc53).
 
+## Acceptance fixes
+
+After the sweep, an acceptance probe ran the skill's examples against the merged plugin. It found six more mismatches, fixed on `fix/skill-contract-accept`. The full plan is [skill-contract-accept/PLAN.md](../skill-contract-accept/PLAN.md).
+
+- `prefer_dot_shorthands` reports only enum values, static members and named constructors. It no longer reports unnamed constructor calls.
+- `fire_and_forget_missing_catch` treats three callees as handled: a Riverpod `Mutation.run`, a route or modal future, and a resolved callee that catches internally. This makes the modals-navigation.md DO example clean.
+- `avoid_magic_literals` exempts strings bound to a resolved `routeName` parameter or to Flutter's `RouteSettings(name:)`.
+- `dialog_widget_subscribes_to_mutable_provider` and `select_returns_unstable_record_identity` read the resolved AST, so the multi-line modals-navigation.md:15 NEVER example reports both. Both are errors.
+- `appwrite_blocking_function_execution_in_client` reports a destructive or batch call passed a resolved `waitForCompletion: true` (networking.md:161).
+- `linear_id_lookup_in_hot_path` treats getters as hot paths, following the debounce-gate-batch.md "Collection getters" contract.
+
+Integration: `fix/skill-contract-accept` merged after the sweep with no textual conflicts. The sweep left `select_returns_unstable_record_identity` on the non-error allowlist, with the reason "Severity owned by the acceptance branch". That entry is removed. Both dialog codes are now pinned in the error-severity assertion list. Every skill code the accept branch touches is an error. The branch adds no rules, so the counts stay at 229 skill rules, 237 skill codes, 274 additional codes, 509 unique codes and 63 fixes. On the integrated head, `dart format`, `dart analyze` and `dart test` pass, with 2,628 tests and 1 skip. `python3 .hooks/hard-eng.py check --base origin/main --plan-stage Draft` passes every gate, with 79.16% line coverage.
+
 ## Baseline + execution
 
 Result: Passed

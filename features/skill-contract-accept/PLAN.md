@@ -1,6 +1,6 @@
 # Skill contract acceptance lint fixes
 
-Status: Ready
+Status: Complete
 
 ## Outcome + scope
 
@@ -70,20 +70,16 @@ N/A — analyzer diagnostics have no rendered application UI.
 
 ## Verification
 
-Result: Failed
-Evidence: The hard-eng check fails on two inherited findings (below). The format, analyze and test checks for this branch's scope pass.
+Result: Passed
+Evidence: The branch was verified on the integrated `fix/skill-contract-alignment` head, merged after `fix/skill-contract-sweep`. `dart format --output=none --set-exit-if-changed lib test` changed no files. `dart analyze` found no issues. `dart test` passed 2,628 tests with one intentional skip. `python3 .hooks/hard-eng.py check --base origin/main --plan-stage Draft` passed every gate: lockfile, vulnerabilities, format, types-lint, security, import-boundaries, tests (79.16% line coverage), dead-code-duplicates, performance, secrets, actionlint and zizmor.
 
-`dart format --set-exit-if-changed .` checked 560 files and changed none. `dart analyze --fatal-infos` found no issues. `dart test` passed 2,618 tests with one intentional skip.
+On this branch alone, format, analyze and test passed (2,618 tests), and hard-eng failed on two findings inherited from `fix/skill-contract-alignment`. The first was `source_scanner_rules_part_07.dart` at 1,051 lines. The second was a 5-line dart-decimate clone between `riverpod_source_rules_part_02.dart` and `state_source_rules.dart`. Sweep commits 9088ddf and 038dc53 fixed both, and neither finding remains on the integrated head.
 
-`python3 .hooks/hard-eng.py check --base origin/main --plan-stage Draft` fails on two findings that this branch inherits from `fix/skill-contract-alignment` and does not touch:
-- `test/source_scanner_rules_test/source_scanner_rules_part_07.dart` has 1,051 lines. `fix/skill-contract-sweep` commit 9088ddf splits it.
-- dart-decimate reports a 5-line clone between `riverpod_source_rules_part_02.dart:464` and `state_source_rules.dart:117`. Those rules belong to the sweep branch.
-
-A throwaway worktree of this head with 9088ddf applied passed every other gate: lockfile, vulnerabilities, format, types-lint, security, import-boundaries, tests (79.02% line coverage), performance, secrets, actionlint and zizmor.
+The sweep's test that every skill code is an error, outside a reasoned allowlist, passes. `select_returns_unstable_record_identity` left that allowlist. It and `dialog_widget_subscribes_to_mutable_provider` are now in the error-severity assertion list in `test/plugin_registration_test.dart`.
 E2E: Passed — a copy of the acceptance probe was analyzed with the plugin loaded from this worktree:
 - `create_screen.dart` (the modals-navigation.md DO example) no longer reports `fire_and_forget_missing_catch` or `avoid_magic_literals`.
 - The :15 NEVER dialog reports `dialog_widget_subscribes_to_mutable_provider` and `select_returns_unstable_record_identity` as errors.
 - Both `appwrite_blocking_function_execution_in_client` probes report errors.
 - The build-path `linear_id_lookup_in_hot_path` probe reports.
 Delivery target: Merge
-Delivery: Pending — the coordinator merges this branch with the sweep branch, then runs the scoped PR, required CI and main CI.
+Delivery: Pending — merged into `fix/skill-contract-alignment` after the sweep branch; the combined PR, required CI, merge and main CI remain.

@@ -1,6 +1,7 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'riverpod_source_rules/riverpod_source_rules_part_01.dart';
@@ -374,18 +375,81 @@ int _functionProviderEnd(SourceScannerContext context, int declarationLine) {
   return declarationLine;
 }
 
-Set<String> _watchedProviderNames(
+/// Whether [definition] watches at least one provider and every `watch`
+/// resolves, through its generated `@ProviderFor` variable, to a
+/// `@Riverpod(keepAlive: true)` source, in this file or another. An
+/// unresolved or auto-dispose dependency keeps the provider clean.
+bool _watchesOnlyKeepAliveProviders(
   SourceScannerContext context,
   _RiverpodProviderDefinition definition,
 ) {
-  final body = context.source.masked
-      .sublist(definition.bodyStart, definition.bodyEnd + 1)
-      .join('\n');
-  return RegExp(r'\bref\s*\.\s*watch\s*\(\s*([A-Za-z_]\w*Provider)\b')
-      .allMatches(body)
-      .map((match) => match.group(1) ?? '')
-      .where((name) => name.isNotEmpty)
-      .toSet();
+  final lineInfo = context.unit.lineInfo;
+  final declaration = context.unit.declarations
+      .where(
+        (member) =>
+            lineInfo.getLocation(member.firstTokenAfterCommentAndMetadata.offset).lineNumber - 1 ==
+            definition.bodyStart,
+      )
+      .firstOrNull;
+  if (declaration == null) return false;
+  final watches = _ProviderWatches();
+  declaration.accept(watches);
+  return watches.invocations.isNotEmpty && watches.invocations.every(_watchesKeepAliveProvider);
+}
+
+final class _ProviderWatches extends RecursiveAstVisitor<void> {
+  final invocations = <MethodInvocation>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.methodName.name == 'watch' && node.argumentList.arguments.isNotEmpty) {
+      invocations.add(node);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+bool _watchesKeepAliveProvider(MethodInvocation watch) {
+  Expression? provider = watch.argumentList.arguments.first.argumentExpression.unParenthesized;
+  while (provider != null) {
+    final element = switch (provider) {
+      SimpleIdentifier(:final element) => element,
+      PrefixedIdentifier(:final identifier) => identifier.element,
+      PropertyAccess(:final propertyName) => propertyName.element,
+      _ => null,
+    };
+    final variable = element is PropertyAccessorElement ? element.variable : element;
+    if (variable is TopLevelVariableElement) return _isKeepAliveProviderVariable(variable);
+    provider = switch (provider) {
+      MethodInvocation(:final target, methodName: SimpleIdentifier(name: 'select')) => target,
+      PrefixedIdentifier(:final prefix) => prefix,
+      PropertyAccess(:final target) => target,
+      FunctionExpressionInvocation(:final function) => function,
+      _ => null,
+    };
+  }
+  return false;
+}
+
+bool _isKeepAliveProviderVariable(TopLevelVariableElement variable) {
+  final source = variable.metadata.annotations
+      .map((annotation) => annotation.computeConstantValue())
+      .where((value) => _isRiverpodAnnotationType(value?.type, 'ProviderFor'))
+      .map((value) => value?.getField('value'))
+      .firstOrNull;
+  final declaration = source?.toTypeValue()?.element ?? source?.toFunctionValue();
+  if (declaration == null) return false;
+  return declaration.metadata.annotations.any((annotation) {
+    final value = annotation.computeConstantValue();
+    return _isRiverpodAnnotationType(value?.type, 'Riverpod') &&
+        value?.getField('keepAlive')?.toBoolValue() == true;
+  });
+}
+
+bool _isRiverpodAnnotationType(DartType? type, String name) {
+  final element = type?.element;
+  return element?.name == name &&
+      (element?.library?.uri.toString().startsWith('package:riverpod_annotation/') ?? false);
 }
 
 bool _hasBlockSelectCallback(String invocation) =>

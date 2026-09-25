@@ -241,191 +241,149 @@ final class RiverpodAutoDisposeKeepAliveDependenciesTest extends _RiverpodRuleTe
   @override
   String get needle => '@riverpod';
   @override
+  bool get addIgnorePrefix => false;
+
+  /// performance.md:169: a computed provider over keepAlive providers declared
+  /// in another file (plain and `.select` watches) stays keepAlive.
+  @override
   String get source => r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-const riverpod = Object();
-
-class Ref {
-  Object watch(Object provider) => Object();
-}
-
-@Riverpod(keepAlive: true)
-Object activeItem(Ref ref) => Object();
-
-@Riverpod(keepAlive: true)
-Object exercises(Ref ref) => Object();
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'sources.dart';
 
 @riverpod
-Object itemSummary(Ref ref) {
-  ref.watch(activeItemProvider);
-  ref.watch(exercisesProvider.select((value) => value));
-  return Object();
+int cartTotal(Ref ref) {
+  final items = ref.watch(cartItemsProvider);
+  final rate = ref.watch(taxRateProvider.select((rate) => rate));
+  return items.length * rate;
 }
 ''';
 
-  Future<void> test_reportsClassProvider() async {
-    final analyzedSource = _analyzedSource(r'''
+  @override
+  void setUp() {
+    newPackage('riverpod_annotation').addFile('lib/riverpod_annotation.dart', r'''
 class Riverpod {
-  const Riverpod({bool keepAlive = false});
+  const Riverpod({this.keepAlive = false});
+  final bool keepAlive;
 }
-
-const riverpod = Object();
-
+const riverpod = Riverpod();
+class ProviderFor {
+  const ProviderFor(this.value);
+  final Object value;
+}
 class Ref {
-  Object watch(Object provider) => Object();
+  T watch<T>(ProviderListenable<T> provider) => throw UnimplementedError();
+  T read<T>(ProviderListenable<T> provider) => throw UnimplementedError();
 }
+class ProviderListenable<T> {
+  const ProviderListenable();
+  ProviderListenable<R> select<R>(R Function(T value) selector) => throw UnimplementedError();
+}
+''');
+    super.setUp();
+    newFile('$testPackageLibPath/sources.dart', r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 @Riverpod(keepAlive: true)
-Object activeItem(Ref ref) => Object();
+List<int> cartItems(Ref ref) => const [];
+
+@Riverpod(keepAlive: true)
+int taxRate(Ref ref) => 2;
+
+@riverpod
+int discount(Ref ref) => 0;
+
+@ProviderFor(cartItems)
+const cartItemsProvider = ProviderListenable<List<int>>();
+@ProviderFor(taxRate)
+const taxRateProvider = ProviderListenable<int>();
+@ProviderFor(discount)
+const discountProvider = ProviderListenable<int>();
+const manualProvider = ProviderListenable<int>();
+''');
+  }
+
+  Future<void> test_reportsSameFileClassNotifier() async {
+    const source = r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+@Riverpod(keepAlive: true)
+int activeItem(Ref ref) => 0;
+
+@ProviderFor(activeItem)
+const activeItemProvider = ProviderListenable<int>();
 
 @riverpod
 class ItemSummaryNotifier {
-  Object build() {
-    ref.watch(activeItemProvider);
-    return Object();
-  }
+  ItemSummaryNotifier(this.ref);
+  final Ref ref;
+  int build() => ref.watch(activeItemProvider);
 }
-''', addIgnorePrefix: true);
-
-    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '@riverpod', ruleName)]);
-  }
-
-  Future<void> test_allowsAlreadyKeepAlive() async {
-    await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-class Ref {
-  Object watch(Object provider) => Object();
-}
-
-@Riverpod(keepAlive: true)
-Object activeItem(Ref ref) => Object();
-
-@Riverpod(keepAlive: true)
-Object itemSummary(Ref ref) {
-  ref.watch(activeItemProvider);
-  return Object();
-}
-''');
+''';
+    await assertDiagnostics(source, [compatLint(source, '@riverpod\nclass', ruleName)]);
   }
 
   Future<void> test_allowsMixedKeepAliveAndAutoDisposeDependencies() async {
     await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-const riverpod = Object();
-
-class Ref {
-  Object watch(Object provider) => Object();
-}
-
-@Riverpod(keepAlive: true)
-Object activeItem(Ref ref) => Object();
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'sources.dart';
 
 @riverpod
-Object transientSelection(Ref ref) => Object();
-
-@riverpod
-Object itemSummary(Ref ref) {
-  ref.watch(activeItemProvider);
-  ref.watch(transientSelectionProvider);
-  return Object();
-}
-''');
+int cartTotal(Ref ref) => ref.watch(cartItemsProvider).length - ref.watch(discountProvider);
+''', addIgnorePrefix: false);
   }
 
-  Future<void> test_allowsUnknownExternalDependency() async {
+  Future<void> test_allowsUnresolvedDependency() async {
     await assertAllows(r'''
-const riverpod = Object();
-
-class Ref {
-  Object watch(Object provider) => Object();
-}
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'sources.dart';
 
 @riverpod
-Object itemSummary(Ref ref) {
-  ref.watch(externalProvider);
-  return Object();
-}
-''');
+int cartTotal(Ref ref) => ref.watch(cartItemsProvider).length + ref.watch(manualProvider);
+''', addIgnorePrefix: false);
+  }
+
+  Future<void> test_allowsAlreadyKeepAlive() async {
+    await assertAllows(r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'sources.dart';
+
+@Riverpod(keepAlive: true)
+int cartTotal(Ref ref) => ref.watch(cartItemsProvider).length;
+''', addIgnorePrefix: false);
   }
 
   Future<void> test_allowsFamilyProviderTarget() async {
     await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-const riverpod = Object();
-
-class Ref {
-  Object watch(Object provider) => Object();
-}
-
-@Riverpod(keepAlive: true)
-Object activeItem(Ref ref) => Object();
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'sources.dart';
 
 @riverpod
-Object itemSummary(Ref ref, String itemId) {
-  ref.watch(activeItemProvider);
-  return Object();
-}
-''');
+int cartTotal(Ref ref, int multiplier) => ref.watch(cartItemsProvider).length * multiplier;
+''', addIgnorePrefix: false);
   }
 
   Future<void> test_allowsFamilyNotifierTarget() async {
     await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-const riverpod = Object();
-
-class Ref {
-  Object watch(Object provider) => Object();
-}
-
-@Riverpod(keepAlive: true)
-Object activeItem(Ref ref) => Object();
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'sources.dart';
 
 @riverpod
-class ItemSummaryNotifier {
-  Object build(String itemId) {
-    ref.watch(activeItemProvider);
-    return Object();
-  }
+class CartTotalNotifier {
+  CartTotalNotifier(this.ref);
+  final Ref ref;
+  int build(int multiplier) => ref.watch(cartItemsProvider).length * multiplier;
 }
-''');
+''', addIgnorePrefix: false);
   }
 
   Future<void> test_allowsReadOnlyKeepAliveProviderUse() async {
     await assertAllows(r'''
-class Riverpod {
-  const Riverpod({bool keepAlive = false});
-}
-
-const riverpod = Object();
-
-class Ref {
-  Object read(Object provider) => Object();
-}
-
-@Riverpod(keepAlive: true)
-Object activeItem(Ref ref) => Object();
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'sources.dart';
 
 @riverpod
-Object itemSummary(Ref ref) {
-  ref.read(activeItemProvider);
-  return Object();
-}
-''');
+int cartTotal(Ref ref) => ref.read(cartItemsProvider).length;
+''', addIgnorePrefix: false);
   }
 }
 

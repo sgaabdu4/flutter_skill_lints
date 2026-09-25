@@ -309,23 +309,13 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
       'Use keepAlive when all watched dependencies are keepAlive.',
       correctionMessage:
           'Change @riverpod to @Riverpod(keepAlive: true), unless this provider has parameters.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description:
-        'Flags auto-dispose providers whose same-file watched dependencies are all keepAlive.',
+    description: 'Flags auto-dispose providers without parameters whose watched dependencies all resolve, through their generated `@ProviderFor` variables, to `@Riverpod(keepAlive: true)` sources in any file.',
     scan: (reporter, context) {
-      final definitions = _providerDefinitions(context);
-      final definitionsByName = {
-        for (final definition in definitions) definition.providerName: definition,
-      };
-
-      for (final definition in definitions) {
+      for (final definition in _providerDefinitions(context)) {
         if (definition.keepAlive || definition.hasParameters) continue;
-        final watchedProviders = _watchedProviderNames(context, definition);
-        if (watchedProviders.isEmpty) continue;
-        if (!watchedProviders.every((name) => definitionsByName[name]?.keepAlive ?? false)) {
-          continue;
-        }
+        if (!_watchesOnlyKeepAliveProviders(context, definition)) continue;
         reporter.report(context, definition.annotationLine, 0);
       }
     },

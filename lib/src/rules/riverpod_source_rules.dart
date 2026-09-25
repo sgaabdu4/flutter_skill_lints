@@ -561,12 +561,18 @@ int? _broadRefWatchColumn(
 }
 
 final _eventSignalProviderName = RegExp(
-  r'(?:Signal|Signals|Event|Events|Pulse|Pulses|Serial|Serials)$',
+  r'(?:Signal|Signals|Event|Events|Pulse|Pulses|Serial|Serials)Provider$',
 );
-final _eventSignalFunctionProvider = RegExp(
-  r'^\s*(?:Future\s*<[^>]+>|Stream\s*<[^>]+>|[A-Za-z_]\w*(?:<[^>]+>)?\??)\s+'
-  r'([A-Za-z_]\w*)\s*\(\s*Ref\s+ref\b',
-);
+
+/// `@riverpod` / `@Riverpod(...)`, resolved to the annotation's `Riverpod` type.
+bool _isRiverpodAnnotation(Annotation annotation) {
+  final type = switch (annotation.element) {
+    ConstructorElement(:final returnType) => returnType,
+    PropertyAccessorElement(:final returnType) => returnType,
+    _ => null,
+  };
+  return type?.element?.name == 'Riverpod';
+}
 
 bool _hasRiverpodAnnotation(SourceScannerContext context, ScannerClassSpan classSpan) {
   for (var i = classSpan.start - 1; i >= 0 && i >= classSpan.start - 6; i--) {

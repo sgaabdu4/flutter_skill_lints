@@ -53,6 +53,48 @@ callback variables or references across files, or discover every UI call
 graph. Unknown and dynamically typed values therefore remain diagnostics
 rather than being inferred as recoverable.
 
+## State, async and lifecycle contract
+
+These rules report as `ERROR` and follow `state-management-lifecycle.md`,
+`state-management/async-mutations.md` and `common-patterns.md`:
+
+- `use_ref_mounted_after_await` and `use_context_mounted_after_await` share one
+  flow-sensitive scanner. It tracks guards through nested `if`/`try`/`catch`,
+  loops, expression bodies and async widget callbacks. A captured
+  `context.mounted` guard protects `context`. `State.context` is resolved as a
+  getter, so it still needs `mounted`. Pure `mounted` guard suffixes, including
+  enum `==`/`!=` checks, are accepted.
+- `avoid_mounted_check_in_finally` and `avoid_only_rethrow` report as `ERROR`.
+- `notifier_ensure_deps` accepts a direct resolved `ref.read(...)` for a
+  dependency. `require_atomic_async_updates` accepts a resolved `!ref.mounted`
+  guard.
+- `arch_datasource_try_catch` flags only a trailing datasource catch clause
+  whose body is only `rethrow`. `data_log_rethrow` flags data-layer catches whose
+  body is only reporting calls followed by `rethrow`. A reporting call is a
+  resolved `print` (`dart:core`), `log` (`dart:developer`) or Flutter
+  `debugPrint`, or any call that receives the caught error or stack trace.
+  Translation, rollback and local-first recovery catches stay allowed, and the
+  two rules never report the same catch.
+- `state_raw_error_to_string` flags a String `error:` argument built from a
+  resolved catch exception or stack trace, or from `.toString()` on a
+  non-String. `state_freezed_nullable_error` flags `String`/`String?` fields and
+  redirecting-factory parameters named like `error` in `*State` classes,
+  whether or not they use Freezed. Flutter `State<T>` subclasses are excluded by
+  resolved supertype. The class-name suffix is the only single-file
+  notifier-state classifier.
+- `riverpod_event_counter_signal_forbidden` also resolves `@riverpod` classes and
+  functions by their generated provider name.
+- `notifier_local_dependency_cache` flags notifier fields typed as a
+  repository, service or datasource. It also flags fields that cache a resolved
+  `ref.read(...)` of a dependency type. Constructing a client directly is not a
+  provider-read cache.
+- `notifier_watch_method` flags resolved `ref.watch` and `ref.listen` in any
+  non-static notifier method other than `build`.
+- `widget_calls_notifier_teardown_after_await` also flags `.go(context)` and
+  `context.go(...)` after an awaited notifier mutation in the same widget block.
+  Screens self-navigate from the observed state. Push, `goBranch` and `go` after
+  an awaited modal stay allowed.
+
 ## Existing Coverage
 
 Core skill rules already covered before this pass:
@@ -264,7 +306,9 @@ Modal snapshot / state teardown (0.7.0) — `dialog_source_rules`:
   or `_field = ...` inside build.
 - `widget_calls_notifier_teardown_after_await` — a widget that awaits a
   notifier mutation then calls `reset` / `clear` / `dispose` on the same
-  notifier may already be unmounted; let the notifier own success teardown.
+  notifier, or navigates with `.go(context)` / `context.go(...)`, may already
+  be unmounted; let the notifier own success teardown and the screen
+  self-navigate from observed state.
 - `popscope_bypass_uses_go_not_pop` — pop navigation after an awaited modal
   triggers `PopScope.onPopInvoked`; use a typed `<Route>().go`.
 - `modal_helper_requires_route_settings` — `showDialog` / `showModalBottomSheet`
@@ -296,7 +340,8 @@ Runtime-bug surface (0.7.0) — `runtime_bug_source_rules`:
   use `ref.listen` in `build` for widget UI side effects, or move durable
   subscriptions to provider/notifier/service lifecycle.
 - `riverpod_event_counter_signal_forbidden` — standalone `*Signal` / `*Event`
-  / `*Pulse` / `*Serial` Riverpod providers are forbidden; fold the event
+  / `*Pulse` / `*Serial` Riverpod providers (manual or `@riverpod` by generated
+  provider name) are forbidden; fold the event
   serial/payload into the owning notifier state and listen to a concrete
   `.select((state) => state.successSerial)` field, or rename durable status
   state to a concrete `*StatusNotifier` / `*Lifecycle` provider.

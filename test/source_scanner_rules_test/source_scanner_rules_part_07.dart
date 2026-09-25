@@ -538,6 +538,68 @@ void fail(state, String message) {
 }
 ''');
   }
+
+  /// state-management-lifecycle.md:92: never store the raw exception text.
+  Future<void> test_reportsCaughtExceptionText() async {
+    final analyzedSource = _analyzedSource(r'''
+class SearchState {
+  SearchState copyWith({String? error}) => this;
+}
+
+class SearchFailure implements Exception {
+  String get message => 'offline';
+}
+
+class SearchNotifier {
+  SearchState state = SearchState();
+
+  Future<void> search() async {
+    try {
+      await Future<void>.value();
+    } on SearchFailure catch (failure) {
+      state = state.copyWith(
+        error: failure.message);
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Failed: $e');
+    }
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile('$testPackageLibPath/search_notifier.dart', analyzedSource);
+    await assertDiagnosticsInFile('$testPackageLibPath/search_notifier.dart', [
+      compatLint(analyzedSource, 'error: failure.message', ruleName),
+      compatLint(analyzedSource, r"error: 'Failed: $e'", ruleName),
+    ]);
+  }
+
+  /// The skill's AppError.from wraps the caught error without storing its text.
+  Future<void> test_allowsTypedAppError() async {
+    await assertAllows(r'''
+class AppError {
+  const AppError(this.message);
+  final String message;
+
+  static AppError from(Object e) => AppError(e.toString());
+}
+
+class SearchState {
+  SearchState copyWith({AppError? error}) => this;
+}
+
+class SearchNotifier {
+  SearchState state = SearchState();
+
+  Future<void> search() async {
+    try {
+      await Future<void>.value();
+    } on Exception catch (e) {
+      state = state.copyWith(error: AppError.from(e));
+    }
+  }
+}
+''');
+  }
 }
 
 @reflectiveTest
@@ -571,12 +633,54 @@ class LoginState {
 ''');
   }
 
-  Future<void> test_allowsNullableErrorOutsideFreezedState() async {
-    await assertAllows(r'''
-class PlainState {
-  const PlainState({this.error});
+  /// state-management-lifecycle.md:108: AppError is the sole error type in state.
+  Future<void> test_reportsStringErrorsInAnyNotifierState() async {
+    final analyzedSource = _analyzedSource(r'''
+class SearchState {
+  const SearchState({this.error, this.errorMessage = ''});
 
   final String? error;
+  final String errorMessage;
+}
+
+class ProfileState {
+  const ProfileState();
+
+  const factory ProfileState.failure({String? error}) = ProfileFailure;
+}
+
+class ProfileFailure extends ProfileState {
+  const ProfileFailure({this.error});
+
+  final String? error;
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile('$testPackageLibPath/search_state.dart', analyzedSource);
+    await assertDiagnosticsInFile('$testPackageLibPath/search_state.dart', [
+      compatLint(analyzedSource, 'String? error;', ruleName),
+      compatLint(analyzedSource, 'String errorMessage;', ruleName),
+      compatLint(analyzedSource, 'String? error}) = ProfileFailure;', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsNonStringErrorsAndWidgetState() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+
+class AppError {}
+
+class SearchState {
+  const SearchState({this.error, this.hasError = false, this.errorCount = 0});
+
+  final AppError? error;
+  final bool hasError;
+  final int errorCount;
+}
+
+class SearchScreen extends StatefulWidget {}
+
+class SearchScreenState extends State<SearchScreen> {
+  String? error;
 }
 ''');
   }

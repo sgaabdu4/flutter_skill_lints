@@ -390,7 +390,7 @@ final itemsNotifierProvider = NotifierProvider<ItemsController>();
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_reportsAnotherProviderReadAfterCapturedOperation() async {
+  Future<void> test_allowsAnotherProviderReadAfterCapturedOperation() async {
     final source = _source(r'''
   Future<void> saveItem() async {
     final save = ref.read(repositoryProvider).save;
@@ -400,10 +400,10 @@ final itemsNotifierProvider = NotifierProvider<ItemsController>();
   }
 ''');
 
-    await _expectNotifierDiagnostic(source);
+    await assertNoDiagnostics(source);
   }
 
-  Future<void> test_reportsDependencyReadAfterStateMutation() async {
+  Future<void> test_allowsSkillSaveReadAfterStateWrite() async {
     final source = _source(r'''
   Future<void> saveItem() async {
     state = Object();
@@ -411,10 +411,29 @@ final itemsNotifierProvider = NotifierProvider<ItemsController>();
   }
 ''');
 
-    await _expectNotifierDiagnostic(source);
+    await assertNoDiagnostics(source);
   }
 
-  Future<void> test_reportsExplicitThisStateWriteBeforeCapture() async {
+  Future<void> test_allowsSkillOptimisticUpdateAndGuardedReads() async {
+    final source = _source(r'''
+  Future<void> markRead() async {
+    final previous = state;
+    state = Object();
+    try {
+      await ref.read(repositoryProvider).save();
+      if (!ref.mounted) return;
+      await ref.read(otherRepositoryProvider).save();
+    } catch (error) {
+      if (!ref.mounted) return;
+      state = previous;
+    }
+  }
+''');
+
+    await assertNoDiagnostics(source);
+  }
+
+  Future<void> test_allowsExplicitThisStateWriteBeforeDirectRead() async {
     final source = _source(r'''
   Future<void> saveItem() async {
     this.state = Object();
@@ -423,7 +442,7 @@ final itemsNotifierProvider = NotifierProvider<ItemsController>();
   }
 ''');
 
-    await _expectNotifierDiagnostic(source);
+    await assertNoDiagnostics(source);
   }
 
   Future<void> test_reportsNullableUninitializedRepository() async {

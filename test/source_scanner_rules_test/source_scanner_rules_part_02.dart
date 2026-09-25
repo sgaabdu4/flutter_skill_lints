@@ -103,6 +103,52 @@ Stream<String> notificationTapEvents(Ref ref) => Stream<String>.fromIterable(con
     ]);
   }
 
+  /// riverpod_generator drops the `Notifier` suffix: this is `snackbarEventProvider`.
+  Future<void> test_reportsNotifierSuffixedEventClassAndNestedGenericFunction() async {
+    final analyzedSource = _analyzedSource(r'''
+class Riverpod {
+  const Riverpod();
+}
+
+const riverpod = Riverpod();
+
+class _$SnackbarEventNotifier {
+  String? state;
+  String? build() => null;
+}
+
+@riverpod
+class SnackbarEventNotifier extends _$SnackbarEventNotifier {
+  @override
+  String? build() => null;
+}
+
+@riverpod
+Future<List<int>> orderEvents(Ref ref) async => const <int>[];
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'class SnackbarEventNotifier', ruleName),
+      compatLint(analyzedSource, 'orderEvents', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsEventNamesWithoutRiverpodAnnotation() async {
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod();
+}
+
+const riverpod = Riverpod();
+
+class SnackbarEventNotifier {
+  String? build() => null;
+}
+
+Future<List<int>> orderEvents(Object ref) async => const <int>[];
+''');
+  }
+
   Future<void> test_allowsPayloadStreamName() async {
     await assertAllows(r'''
 class Riverpod {

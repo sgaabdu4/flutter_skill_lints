@@ -166,7 +166,7 @@ final class ArchDatasourceTryCatchTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'arch_datasource_try_catch';
   @override
-  String get needle => 'try {';
+  String get needle => 'catch (_) {';
   @override
   String get path => '$testPackageLibPath/features/users/data/datasources/user_datasource.dart';
   @override
@@ -181,6 +181,73 @@ class UserDatasource {
   }
 }
 ''';
+
+  Future<void> test_reportsRethrowOnlyCatchBeforeFinally() async {
+    final analyzedSource = _analyzedSource(r'''
+class UserDatasource {
+  Future<void> load() async {
+    try {
+      await Future<void>.value();
+    } on Exception {
+      rethrow;
+    } finally {
+      await Future<void>.value();
+    }
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'on Exception {', ruleName)]);
+  }
+
+  /// networking.md:30-43, hive-persistence.md:72 and state-management-lifecycle.md:69-72.
+  Future<void> test_allowsSkillDataLayerCatches() async {
+    await assertAllows(r'''
+class AppException implements Exception {
+  const AppException(this.code);
+  final String code;
+}
+
+class UserDatasource {
+  Future<Object?> fetch() async {
+    try {
+      return await Future<Object?>.value();
+    } on Exception {
+      throw const AppException('network');
+    }
+  }
+
+  Map<String, Object?> read() {
+    try {
+      return <String, Object?>{};
+    } on FormatException {
+      return <String, Object?>{};
+    }
+  }
+
+  Future<void> remove(String id) async {
+    try {
+      await Future<void>.value();
+    } catch (_) {
+      await restore(id);
+      rethrow;
+    }
+  }
+
+  Future<Object?> readOrNull() async {
+    try {
+      return await Future<Object?>.value();
+    } on FormatException {
+      rethrow;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> restore(String id) async {}
+}
+''', path: path);
+  }
 }
 
 @reflectiveTest

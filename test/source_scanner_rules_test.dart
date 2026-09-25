@@ -339,6 +339,11 @@ base class Preview {
 abstract base class MultiPreview {
   const MultiPreview();
 }
+''')
+      // Flutter declares debugPrint as a function-typed top-level variable.
+      ..addFile('lib/foundation.dart', r'''
+typedef DebugPrintCallback = void Function(String? message, {int? wrapWidth});
+DebugPrintCallback debugPrint = (String? message, {int? wrapWidth}) {};
 ''');
   }
 

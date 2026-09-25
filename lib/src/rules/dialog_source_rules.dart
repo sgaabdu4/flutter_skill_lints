@@ -166,15 +166,17 @@ final List<ScannerRule> dialogSourceRules = [
   /// the same mutation may have triggered a parent rebuild that unmounted the
   /// widget. context.mounted goes false, the teardown is skipped, and the
   /// screen never sees the cleared state. Make the notifier method own its
-  /// own teardown on the success path.
+  /// own teardown on the success path. Screens self-navigate from the cleared
+  /// state (`onMissing*` hooks), so a widget-side `.go(context)` chained off
+  /// the awaited mutation is reported too.
   scannerRule(
     code: const LintCode(
       'widget_calls_notifier_teardown_after_await',
-      'Widget calls notifier.reset/clear/dispose after awaiting a notifier mutation.',
-      correctionMessage: 'Move the teardown into the notifier method on its success path. Widgets dispatch and observe state; they do not orchestrate notifier lifecycle.',
-      severity: DiagnosticSeverity.WARNING,
+      'Widget calls notifier.reset/clear/dispose or navigates with .go(context) after awaiting a notifier mutation.',
+      correctionMessage: 'Move the teardown into the notifier method on its success path and let the screen self-navigate from observed state (onMissing* hooks). Widgets dispatch and observe state; they do not orchestrate notifier lifecycle.',
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags reset/clear/dispose calls that follow an awaited notifier mutation in non-notifier files so the notifier owns its own teardown.',
+    description: 'Flags reset/clear/dispose calls and .go(context)/context.go(...) navigation that follow an awaited notifier mutation in widget classes so the notifier owns its own teardown.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       _reportNotifierTeardownCalls(reporter, context);
@@ -409,6 +411,9 @@ void _reportTeardownMatches(
       reporter.report(context, lineIndex, match.start);
     }
   }
+  for (final match in _goNavigationCall.allMatches(line)) {
+    reporter.report(context, lineIndex, match.start);
+  }
 }
 
 bool _isFlutterModalLauncherWithoutRouteSettings(MethodInvocation call) {
@@ -546,6 +551,8 @@ final _awaitedNotifierMethod = RegExp(
 final _notifierTeardown = RegExp(
   r'\bref\s*\.\s*read\s*\(\s*([A-Za-z_]\w*)\b[^)]*\.\s*notifier\s*\)\s*\.\s*(?:reset|clear|dispose)\s*\(',
 );
+
+final _goNavigationCall = RegExp(r'\.\s*go\s*\(');
 
 final _awaitModalCall = RegExp(
   r'\bawait\s+(?:\w+\s*\.\s*)?'

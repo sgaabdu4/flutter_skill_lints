@@ -398,3 +398,144 @@ void build(WidgetRef ref) {
 ''', path: '$testPackageLibPath/features/content/presentation/screens/content_screen.dart');
   }
 }
+
+@reflectiveTest
+final class NotifierLocalDependencyCacheTest extends _NotifierRuleTest {
+  @override
+  void setUp() {
+    newPackage('riverpod').addFile('lib/riverpod.dart', r'''
+abstract class ProviderListenable<T extends Object> {}
+
+class Provider<T extends Object> extends ProviderListenable<T> {
+  Provider(this.value);
+  final T value;
+}
+
+class Ref {
+  T read<T extends Object>(ProviderListenable<T> provider) => throw UnimplementedError();
+}
+
+class Notifier<T> {
+  Ref get ref => Ref();
+  T? state;
+}
+''');
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'notifier_local_dependency_cache';
+  @override
+  String get needle => '_repository';
+  @override
+  String get source => r'''
+class Notifier<T> {}
+
+abstract interface class IThingRepository {}
+
+class ThingNotifier extends Notifier<int> {
+  IThingRepository? _repository;
+
+  int build() => 0;
+}
+''';
+
+  Future<void> test_reportsServiceCache() async {
+    const source = r'''
+class Notifier<T> {}
+
+abstract interface class IThingService {}
+
+class ThingNotifier extends Notifier<int> {
+  late final IThingService _service;
+
+  int build() => 0;
+}
+''';
+
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '_service', ruleName)]);
+  }
+
+  Future<void> test_allowsStatelessProviderHelper() async {
+    await assertAllows(r'''
+class Ref {
+  T read<T>(Object provider) => throw UnimplementedError();
+}
+
+abstract interface class IThingRepository {}
+final thingRepositoryProvider = Object();
+
+IThingRepository readThingRepository(Ref ref) => ref.read(thingRepositoryProvider);
+
+class ThingNotifier {
+  int build() => 0;
+}
+''');
+  }
+
+  /// async-mutations.md:45: an inferred or lazily assigned provider read is a cache too.
+  Future<void> test_reportsInferredAndAssignedProviderReads() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+class ProductRepository {}
+class BackendHttpClient {}
+
+final productRepositoryProvider = Provider<ProductRepository>(ProductRepository());
+final httpClientProvider = Provider<BackendHttpClient>(BackendHttpClient());
+
+class ProductNotifier extends Notifier<int> {
+  late final _repo = ref.read(productRepositoryProvider);
+  BackendHttpClient? _client;
+
+  int build() => 0;
+
+  void connect() {
+    _client ??= ref.read(httpClientProvider);
+  }
+}
+''';
+
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '_repo =', ruleName),
+      compatLint(analyzedSource, '_client;', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsValueReadsConstructedClientsAndRefFields() async {
+    await assertAllows(r'''
+import 'package:riverpod/riverpod.dart';
+
+class BackendHttpClient {}
+
+final limitProvider = Provider<int>(20);
+
+class ProductNotifier extends Notifier<int> {
+  late final int _limit = ref.read(limitProvider);
+  late final Ref _savedRef = ref;
+  BackendHttpClient? _client;
+
+  int build() => _limit;
+
+  void connect() {
+    _client ??= BackendHttpClient();
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsLifecycleResourceField() async {
+    await assertAllows(r'''
+class Notifier<T> {}
+class Timer {}
+
+class ThingNotifier extends Notifier<int> {
+  Timer? _timer;
+
+  int build() => 0;
+}
+''');
+  }
+}

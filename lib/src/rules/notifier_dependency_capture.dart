@@ -25,10 +25,50 @@ bool notifierNeedsDependencyEnsure(
   if (!context.isMutationMethod(method.name) || (!hasDependency && !hasNullRepositoryReturn)) {
     return false;
   }
+  // A direct `ref.read(provider)` is ready wherever the skill uses it (after a
+  // state write, or after an await once `ref.mounted` is checked); guarding the
+  // await itself belongs to use_ref_mounted_after_await.
+  if (!hasNullRepositoryReturn && _readsDependenciesOnlyFromRef(context, classSpan, method)) {
+    return false;
+  }
   final missingCapture =
       hasNullRepositoryReturn ||
       !_hasResolvedDependencyCaptureBeforeMutation(context, classSpan, method);
   return missingCapture && !_usesConstructorInjectedDependencies(context, classSpan, method);
+}
+
+/// Notifier fields that hold a repository or service, or cache a resolved
+/// `ref.read` of a non-value dependency in their initializer or an assignment.
+Iterable<VariableDeclaration> notifierDependencyCacheFields(ClassDeclaration declaration) sync* {
+  final members = classBodyOf(declaration)?.members ?? const <ClassMember>[];
+  final assigned = _FieldProviderReadAssignments();
+  declaration.accept(assigned);
+  for (final member in members.whereType<FieldDeclaration>()) {
+    if (member.isStatic) continue;
+    for (final variable in member.fields.variables) {
+      final field = variable.declaredFragment?.element;
+      if (field == null) continue;
+      final cachesRead =
+          _isResolvedDependencyRead(variable.initializer) || assigned.fields.contains(field);
+      if (_isRepositoryOrServiceType(field.type) ||
+          cachesRead && _containsDependencyType(field.type, <InterfaceElement>{})) {
+        yield variable;
+      }
+    }
+  }
+}
+
+final class _FieldProviderReadAssignments extends RecursiveAstVisitor<void> {
+  final fields = <Element>{};
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    final setter = node.writeElement;
+    if (setter is PropertyAccessorElement && _isResolvedDependencyRead(node.rightHandSide)) {
+      fields.add(setter.variable);
+    }
+    super.visitAssignmentExpression(node);
+  }
 }
 
 bool _hasResolvedDependencyCaptureBeforeMutation(
@@ -379,6 +419,18 @@ bool _hasResolvedMutationDependencyRead(
   return visitor.hasDependency;
 }
 
+bool _readsDependenciesOnlyFromRef(
+  SourceScannerContext context,
+  ScannerClassSpan classSpan,
+  ScannerMethodSpan method,
+) {
+  final resolved = _resolvedNotifierMethod(context, classSpan, method);
+  if (resolved == null) return false;
+  final visitor = _DependencySourceVisitor();
+  resolved.block.accept(visitor);
+  return visitor.readsFromRef && !visitor.usesHeldDependency;
+}
+
 bool _isRiverpodElement(InterfaceElement element) {
   final uri = element.library.uri;
   return uri.scheme == 'package' &&
@@ -423,6 +475,57 @@ final class _TryBodyCollector extends RecursiveAstVisitor<void> {
 
   @override
   void visitFunctionDeclarationStatement(FunctionDeclarationStatement node) {}
+}
+
+/// Separates direct provider reads from dependencies held or produced by members.
+final class _DependencySourceVisitor extends RecursiveAstVisitor<void> {
+  bool readsFromRef = false;
+  bool usesHeldDependency = false;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (_isResolvedDependencyRead(node)) readsFromRef = true;
+    super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitVariableDeclarationList(VariableDeclarationList node) {
+    // A late capture may be read before any path assigned it.
+    if (node.lateKeyword != null) usesHeldDependency = true;
+    super.visitVariableDeclarationList(node);
+  }
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    final element = node.element;
+    final type = switch (element) {
+      PropertyAccessorElement(:final returnType, isStatic: false) => returnType,
+      MethodElement(:final returnType, isStatic: false) => returnType,
+      _ => null,
+    };
+    final owner = element?.enclosingElement;
+    if (type != null &&
+        owner is InterfaceElement &&
+        !_isRiverpodElement(owner) &&
+        _isRepositoryOrServiceType(_futureValueType(type))) {
+      usesHeldDependency = true;
+    }
+  }
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {}
+
+  @override
+  void visitFunctionDeclarationStatement(FunctionDeclarationStatement node) {}
+}
+
+DartType _futureValueType(DartType type) {
+  if (type is InterfaceType &&
+      (type.isDartAsyncFuture || type.isDartAsyncFutureOr) &&
+      type.typeArguments.length == 1) {
+    return type.typeArguments.single;
+  }
+  return type;
 }
 
 final class _MutationDependencyReadVisitor extends RecursiveAstVisitor<void> {

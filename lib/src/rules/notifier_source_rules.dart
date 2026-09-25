@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/riverpod_type_checkers.dart';
@@ -24,19 +25,10 @@ final List<ScannerRule> notifierSourceRules = [
     description: 'Flags notifier-local repository/service fields so Riverpod provider caching remains the dependency source of truth.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
-
-      for (final classSpan in context.classes.where((span) => span.isNotifier)) {
-        final classMethods = context.methods
-            .where((method) => classSpan.contains(method.start))
-            .toList();
-        for (var i = classSpan.start + 1; i < classSpan.end; i++) {
-          if (_isInsideMethod(classMethods, i)) continue;
-          final line = context.source.masked[i];
-          final match = _notifierLocalDependencyField.firstMatch(line);
-          if (match == null) continue;
-          final fieldName = match.group(1);
-          final column = fieldName == null ? match.start : line.indexOf(fieldName, match.start);
-          reporter.report(context, i, column);
+      for (final declaration in _notifierDeclarations(context)) {
+        for (final field in notifierDependencyCacheFields(declaration)) {
+          final location = context.unit.lineInfo.getLocation(field.name.offset);
+          reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
         }
       }
     },
@@ -90,29 +82,31 @@ final List<ScannerRule> notifierSourceRules = [
     },
   ),
 
-  /// Avoid ref.watch inside notifier methods.
+  /// Keep ref.watch and ref.listen in a notifier's build().
   ///
-  /// Why: Flags ref.watch calls inside Notifier methods. Use ref.read in notifier methods.
+  /// Why: Notifier methods read dependencies with ref.read. ref.watch belongs in
+  /// build() when the notifier rebuilds from another provider, and ref.listen
+  /// belongs in build() for side effects tied to provider changes.
   scannerRule(
     code: const LintCode(
       'notifier_watch_method',
-      'Avoid ref.watch inside notifier methods.',
-      correctionMessage: 'Use ref.read in notifier methods.',
+      'Avoid ref.watch or ref.listen inside notifier methods other than build().',
+      correctionMessage:
+          'Use ref.read in notifier methods; watch or listen to providers in build().',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags ref.watch calls inside Notifier methods so the Flutter skill violation is shown during analysis.',
+    description:
+        'Flags resolved ref.watch and ref.listen calls in Notifier methods other than build().',
     scan: (reporter, context) {
-      for (final classSpan in context.classes.where((span) => span.isNotifier)) {
-        final classMethods = context.methods.where((method) => classSpan.contains(method.start));
-        for (final method in classMethods) {
-          if (method.name == 'build') continue;
-
-          for (var i = method.start; i <= method.end; i++) {
-            if (context.source.masked[i].contains('ref.watch(')) {
-              reporter.report(context, method.start, 0);
-              break;
-            }
-          }
+      for (final declaration in _notifierDeclarations(context)) {
+        final members = classBodyOf(declaration)?.members ?? const <ClassMember>[];
+        for (final method in members.whereType<MethodDeclaration>()) {
+          if (method.isStatic || method.name.lexeme == 'build') continue;
+          final finder = _RefSubscriptionFinder();
+          method.body.accept(finder);
+          if (!finder.found) continue;
+          final start = method.firstTokenAfterCommentAndMetadata.offset;
+          reporter.report(context, context.unit.lineInfo.getLocation(start).lineNumber - 1, 0);
         }
       }
     },
@@ -172,13 +166,6 @@ bool _isRefOnDispose(MethodInvocation call) {
       _refChecker.isAssignableFromType(refType);
 }
 
-final _notifierLocalDependencyField = RegExp(
-  r'^\s+(?:(?:late|final)\s+)*(?:I?[A-Z][A-Za-z0-9_]*(?:Repository|Service|Datasource|DataSource))\??\s+(_[A-Za-z0-9_]*(?:repo|repository|service|datasource|dataSource)[A-Za-z0-9_]*)\s*(?:[=;])',
-);
-
-bool _isInsideMethod(List<ScannerMethodSpan> methods, int lineIndex) =>
-    methods.any((method) => lineIndex >= method.start && lineIndex <= method.end);
-
 bool _isRiverpodNotifierClass(ClassDeclaration declaration) {
   final element = declaration.declaredFragment?.element;
   if (element == null) return false;
@@ -201,3 +188,32 @@ const _riverpodNotifier = TypeChecker.any([
   TypeChecker.fromName('AnyNotifier', packageName: 'riverpod'),
   TypeChecker.fromName('Notifier', packageName: 'riverpod'),
 ]);
+
+Iterable<ClassDeclaration> _notifierDeclarations(SourceScannerContext context) {
+  final notifierNames = {
+    for (final span in context.classes)
+      if (span.isNotifier) span.name,
+  };
+  return context.unit.declarations.whereType<ClassDeclaration>().where(
+    (declaration) => notifierNames.contains(declaration.namePart.typeName.lexeme),
+  );
+}
+
+/// A `ref.watch(...)` or `ref.listen(...)` call on a resolved Riverpod `Ref`.
+final class _RefSubscriptionFinder extends RecursiveAstVisitor<void> {
+  bool found = false;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final target = node.target;
+    final type = target?.staticType;
+    if (const {'watch', 'listen'}.contains(node.methodName.name) &&
+        target is SimpleIdentifier &&
+        type is InterfaceType &&
+        [type, ...type.allSupertypes].any((candidate) => candidate.element.name == 'Ref')) {
+      found = true;
+      return;
+    }
+    super.visitMethodInvocation(node);
+  }
+}

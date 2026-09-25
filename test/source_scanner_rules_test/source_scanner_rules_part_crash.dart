@@ -14,8 +14,6 @@ final class DataLogRethrowTest extends _DataCrashRuleTest {
   @override
   String get needle => 'log(error);';
   @override
-  bool get lineStart => true;
-  @override
   String get path => '$testPackageLibPath/features/todos/data/repositories/todo_repository.dart';
   @override
   String get source => r'''
@@ -30,6 +28,119 @@ void load() {
   }
 }
 ''';
+
+  /// The state-management-lifecycle.md:74-84 WRONG example.
+  Future<void> test_reportsReportingCallsBeforeRethrow() async {
+    final analyzedSource = _analyzedSource(r'''
+class Crash {
+  static void error(Object error, StackTrace stackTrace, {String? reason}) {}
+}
+
+class TodoRepository {
+  Future<void> remove(String id) async {
+    try {
+      await Future<void>.value();
+    } on Exception catch (e, s) {
+      Crash.error(e, s, reason: 'remove');
+      rethrow;
+    }
+  }
+
+  Future<void> save() async {
+    try {
+      await Future<void>.value();
+    } catch (_) {
+      print('save failed');
+      rethrow;
+    }
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, "Crash.error(e, s, reason: 'remove');", ruleName),
+      compatLint(analyzedSource, "print('save failed');", ruleName),
+    ]);
+  }
+
+  /// Flutter's debugPrint is a function-typed variable, so the call resolves
+  /// as a FunctionExpressionInvocation rather than a MethodInvocation.
+  Future<void> test_reportsFlutterDebugPrintBeforeRethrow() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/foundation.dart';
+
+class ProductRemoteDataSource {
+  Future<List<String>> fetchAll() async {
+    try {
+      return await Future.value(const <String>[]);
+    } on Exception catch (e) {
+      debugPrint('fetch failed $e');
+      rethrow;
+    }
+  }
+
+  Future<void> remove() async {
+    try {
+      await Future<void>.value();
+    } catch (_) {
+      debugPrint('remove failed');
+      rethrow;
+    }
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, r"debugPrint('fetch failed $e');", ruleName),
+      compatLint(analyzedSource, "debugPrint('remove failed');", ruleName),
+    ]);
+  }
+
+  /// Translation, rollback and local-first swallow + log (state-management-lifecycle.md:69-72).
+  Future<void> test_allowsSkillDataLayerCatches() async {
+    await assertAllows(r'''
+class Crash {
+  static void error(Object error, StackTrace stackTrace, {String? reason}) {}
+}
+
+class TodoFailure implements Exception {
+  const TodoFailure(this.cause);
+  final Object cause;
+}
+
+class TodoRepository {
+  Future<void> translate() async {
+    try {
+      await Future<void>.value();
+    } on Exception catch (e, s) {
+      Crash.error(e, s);
+      Error.throwWithStackTrace(TodoFailure(e), s);
+    }
+  }
+
+  Future<void> rollback(String id) async {
+    try {
+      await Future<void>.value();
+    } catch (e, s) {
+      await restore(id);
+      Crash.error(e, s, reason: 'rollback');
+      rethrow;
+    }
+  }
+
+  Future<void> mirror() async {
+    try {
+      await Future<void>.value();
+    } catch (e, s) {
+      Crash.error(e, s, reason: 'remote mirror');
+    }
+  }
+
+  Future<void> restore(String id) async {}
+}
+''', path: path);
+  }
+
   Future<void> test_reportsCrashReportThenRethrow() async {
     const source = r'''
 abstract final class Crash {

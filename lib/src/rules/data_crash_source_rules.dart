@@ -10,33 +10,33 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 final List<ScannerRule> dataCrashSourceRules = [
   /// Avoid log-and-rethrow in data layers.
   ///
-  /// Why: Flags log-and-rethrow patterns in data layers, including a Crash/Sentry/
-  /// Crashlytics report followed by `rethrow` in the same catch. One failed operation
-  /// has one incident owner.
+  /// Why: A catch that only reports the error and rethrows adds nothing: the
+  /// notifier catches and reports it again. Delete the try/catch, or translate,
+  /// recover, roll back, or swallow + log a local-first remote mirror instead.
+  /// A Crash/Sentry/Crashlytics report followed by `rethrow` in the same catch
+  /// reports the failure twice. One failed operation has one incident owner.
   scannerRule(
     code: const LintCode(
       'data_log_rethrow',
       'Avoid log-and-rethrow in data layers.',
-      correctionMessage: 'Report once in the owning layer: rethrow typed context without reporting, or report and throw a mapped typed error.',
+      correctionMessage: 'Delete the try/catch and let the notifier catch and report once, or report and throw a mapped typed domain error.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags log-and-rethrow patterns in data layers so the Flutter skill violation is shown during analysis.',
+    description: 'Flags data-layer catch clauses that only log or report the caught error before rethrowing, and crash reports followed by a rethrow in the same catch.',
     scan: (reporter, context) {
       if (!context.isDataPath) return;
-      final reportedLines = <int>{};
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(r'\b(?:print|debugPrint|log)\s*\(').hasMatch(line) &&
-            context.near(i, 'rethrow', 6)) {
-          reporter.report(context, i, 0);
-          reportedLines.add(i);
-        }
+      final finder = _LogRethrowFinder();
+      context.unit.accept(finder);
+      final flaggedCatches = <CatchClause?>{};
+      for (final statement in finder.statements) {
+        flaggedCatches.add(statement.thisOrAncestorOfType<CatchClause>());
+        _reportOffset(reporter, context, statement.offset);
       }
       final visitor = _CrashReportThenRethrowVisitor();
       context.unit.accept(visitor);
       for (final call in visitor.reports) {
-        final line = context.unit.lineInfo.getLocation(call.offset).lineNumber - 1;
-        if (reportedLines.add(line)) reporter.report(context, line, 0);
+        if (flaggedCatches.contains(call.thisOrAncestorOfType<CatchClause>())) continue;
+        _reportOffset(reporter, context, call.offset);
       }
     },
   ),
@@ -892,4 +892,76 @@ final class _RawHttpFailureVisitor extends RecursiveAstVisitor<void> {
       );
     }
   }
+}
+
+/// Catch clauses whose body is only reporting calls followed by `rethrow`.
+final class _LogRethrowFinder extends RecursiveAstVisitor<void> {
+  final statements = <Statement>[];
+
+  @override
+  void visitCatchClause(CatchClause node) {
+    final body = node.body.statements;
+    if (body.length > 1 &&
+        _isRethrow(body.last) &&
+        body.take(body.length - 1).every((statement) => _isReportingCall(statement, node))) {
+      statements.add(body.first);
+    }
+    super.visitCatchClause(node);
+  }
+}
+
+bool _isRethrow(Statement statement) =>
+    statement is ExpressionStatement && statement.expression is RethrowExpression;
+
+bool _isReportingCall(Statement statement, CatchClause clause) {
+  if (statement is! ExpressionStatement) return false;
+  final expression = statement.expression;
+  final call = expression is AwaitExpression ? expression.expression : expression;
+  final callee = switch (call) {
+    MethodInvocation(:final methodName) => methodName.element,
+    // Function-typed variables such as Flutter's debugPrint resolve here.
+    FunctionExpressionInvocation(:final function) =>
+      function is Identifier ? function.element : null,
+    _ => null,
+  };
+  if (call is! InvocationExpression) return false;
+  return _isLogFunction(callee) || _receivesCaughtError(call, clause);
+}
+
+bool _isLogFunction(Element? element) {
+  if (element == null || element.enclosingElement is! LibraryElement) return false;
+  final library = element.library?.uri.toString() ?? '';
+  return switch (element.name) {
+    'print' => library == 'dart:core',
+    'log' => library == 'dart:developer',
+    'debugPrint' => library.startsWith('package:flutter/'),
+    _ => false,
+  };
+}
+
+/// Passing the caught error or stack trace on makes the call a report.
+bool _receivesCaughtError(InvocationExpression call, CatchClause clause) {
+  final caught = {
+    clause.exceptionParameter?.declaredFragment?.element,
+    clause.stackTraceParameter?.declaredFragment?.element,
+  }..remove(null);
+  if (caught.isEmpty) return false;
+  final finder = _ElementReferenceFinder(caught);
+  call.argumentList.accept(finder);
+  return finder.found;
+}
+
+final class _ElementReferenceFinder extends RecursiveAstVisitor<void> {
+  _ElementReferenceFinder(this.elements);
+
+  final Set<Element?> elements;
+  bool found = false;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (elements.contains(node.element)) found = true;
+  }
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {}
 }

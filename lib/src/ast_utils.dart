@@ -337,7 +337,11 @@ bool _returnsWhenUnmounted(
   if (condition is PrefixExpression && condition.operator.lexeme == '!') {
     final mounted = condition.operand.unParenthesized;
     return isTargetProperty(mounted, targetName, 'mounted') &&
-        (targetName != 'ref' || isRiverpodRefAccess(mounted));
+        switch (targetName) {
+          'ref' => isRiverpodRefAccess(mounted),
+          'context' => isCapturedContextAccess(mounted),
+          _ => true,
+        };
   }
   if (condition is BinaryExpression && condition.operator.lexeme == '||') {
     return _returnsWhenUnmounted(condition.rightOperand, targetName, additionalCondition) ||
@@ -539,12 +543,17 @@ bool classMemberNameIsDeclaration(SimpleIdentifier node) {
   return false;
 }
 
+/// Tracks whether each statement can run after an unguarded `await`.
+///
+/// The state flows into nested blocks, catch/finally clauses, loop iterations
+/// and inline awaits, so a guard is required wherever execution resumes.
 final class AsyncStatementScanner {
   AsyncStatementScanner({
     required this.guardTarget,
     required this.accessTargets,
     required this.onViolation,
     this.additionalMountedCondition,
+    this.mountedWhenTrue,
   });
 
   final String guardTarget;
@@ -552,51 +561,255 @@ final class AsyncStatementScanner {
   final void Function(AstNode node) onViolation;
   final bool Function(Expression)? additionalMountedCondition;
 
-  void scanBlock(Block block) {
-    var afterAwait = false;
+  /// Whether a condition can only be true while the guard target is mounted.
+  final bool Function(Expression)? mountedWhenTrue;
 
-    for (final statement in block.statements) {
-      if (afterAwait &&
-          statementIsMountedReturnGuard(
-            statement,
-            guardTarget,
-            additionalCondition: additionalMountedCondition,
-          )) {
-        final guard = statement as IfStatement;
-        final access = firstTargetAccess(guard.thenStatement, accessTargets, includeBlocks: true);
-        if (access != null) onViolation(access);
-        guard.elseStatement?.accept(_NestedBlockScanner(this));
-        afterAwait = guard.elseStatement != null && containsAwait(guard.elseStatement!);
-        continue;
-      }
+  final _reported = <AstNode>{};
+  var _silent = 0;
 
-      if (afterAwait) {
-        final access = firstTargetAccess(statement, accessTargets);
-        if (access != null) {
-          onViolation(access);
-          afterAwait = false;
-          continue;
-        }
-      }
+  void scanBlock(Block block) => _scanStatements(block.statements, false);
 
-      final nested = _NestedBlockScanner(this);
-      statement.accept(nested);
+  /// Scans an expression function body such as `() async => state = await f()`.
+  void scanExpression(Expression expression) => _scanInline(expression, false);
 
-      if (containsAwait(statement)) {
-        afterAwait = true;
-      }
+  bool _scanStatements(Iterable<Statement> statements, bool afterAwait) {
+    var state = afterAwait;
+    for (final statement in statements) {
+      state = _scanStatement(statement, state);
     }
+    return state;
+  }
+
+  bool _scanStatement(Statement statement, bool afterAwait) => switch (statement) {
+    Block(:final statements) => _scanStatements(statements, afterAwait),
+    IfStatement() => _scanIf(statement, afterAwait),
+    TryStatement() => _scanTry(statement, afterAwait),
+    WhileStatement(:final condition, :final body) => _scanLoop(
+      afterAwait,
+      before: [condition],
+      body: body,
+    ),
+    DoStatement(:final body, :final condition) => _scanLoop(
+      afterAwait,
+      body: body,
+      after: [condition],
+    ),
+    ForStatement(:final forLoopParts, :final body, :final awaitKeyword) => switch (forLoopParts) {
+      ForParts(:final condition, :final updaters) => _scanLoop(
+        _scanForInitializer(forLoopParts, afterAwait),
+        before: [?condition],
+        body: body,
+        after: updaters,
+      ),
+      ForEachParts(:final iterable) => _scanLoop(
+        _scanInline(iterable, afterAwait),
+        body: body,
+        awaitEachIteration: awaitKeyword != null,
+      ),
+    },
+    SwitchStatement(:final expression, :final members) => _scanSwitch(
+      _scanInline(expression, afterAwait),
+      members,
+    ),
+    LabeledStatement(:final statement) => _scanStatement(statement, afterAwait),
+    FunctionDeclarationStatement() => afterAwait,
+    _ => _scanInline(statement, afterAwait),
+  };
+
+  bool _scanForInitializer(ForParts parts, bool afterAwait) => switch (parts) {
+    ForPartsWithDeclarations(:final variables) => _scanInline(variables, afterAwait),
+    ForPartsWithExpression(:final initialization?) => _scanInline(initialization, afterAwait),
+    ForPartsWithPattern(:final variables) => _scanInline(variables, afterAwait),
+    _ => afterAwait,
+  };
+
+  bool _scanIf(IfStatement statement, bool afterAwait) {
+    if (statementIsMountedReturnGuard(
+      statement,
+      guardTarget,
+      additionalCondition: additionalMountedCondition,
+    )) {
+      return _scanMountedReturnGuard(statement, afterAwait);
+    }
+    final condition = statement.expression;
+    if (mountedWhenTrue?.call(condition) ?? false) {
+      final conditionAwaits = containsAwait(condition);
+      return _scanBranches(
+        statement,
+        thenEntry: conditionAwaits,
+        elseEntry: afterAwait || conditionAwaits,
+        exitWithoutElse: afterAwait,
+      );
+    }
+    final branchEntry = _scanInline(condition, afterAwait);
+    return _scanBranches(
+      statement,
+      thenEntry: branchEntry,
+      elseEntry: branchEntry,
+      exitWithoutElse: branchEntry,
+    );
+  }
+
+  /// The then branch of `if (!mounted) return;` runs only while unmounted.
+  bool _scanMountedReturnGuard(IfStatement statement, bool afterAwait) {
+    if (afterAwait) {
+      final access = firstTargetAccess(statement.thenStatement, accessTargets, includeBlocks: true);
+      if (access != null) _report(access);
+    }
+    final elseStatement = statement.elseStatement;
+    return elseStatement == null ? false : _scanStatement(elseStatement, afterAwait);
+  }
+
+  bool _scanBranches(
+    IfStatement statement, {
+    required bool thenEntry,
+    required bool elseEntry,
+    required bool exitWithoutElse,
+  }) {
+    final elseStatement = statement.elseStatement;
+    final thenExit = _scanStatement(statement.thenStatement, thenEntry);
+    final elseExit = elseStatement == null
+        ? exitWithoutElse
+        : _scanStatement(elseStatement, elseEntry);
+    return _mayContinue(statement.thenStatement, thenExit) || _mayContinue(elseStatement, elseExit);
+  }
+
+  bool _scanTry(TryStatement statement, bool afterAwait) {
+    final bodyExit = _scanStatement(statement.body, afterAwait);
+    final catchEntry = afterAwait || containsAwait(statement.body);
+    var normalExit = _mayContinue(statement.body, bodyExit);
+    var finallyEntry = catchEntry;
+    for (final clause in statement.catchClauses) {
+      final catchExit = _scanStatement(clause.body, catchEntry);
+      normalExit = normalExit || _mayContinue(clause.body, catchExit);
+      finallyEntry = finallyEntry || containsAwait(clause.body);
+    }
+    final finallyBlock = statement.finallyBlock;
+    if (finallyBlock == null) return normalExit;
+    // Every path through finally is checked; only a normal exit continues.
+    _scanStatement(finallyBlock, finallyEntry);
+    return _silently(() => _scanStatement(finallyBlock, normalExit));
+  }
+
+  bool _scanLoop(
+    bool afterAwait, {
+    required Statement body,
+    List<Expression> before = const [],
+    List<Expression> after = const [],
+    bool awaitEachIteration = false,
+  }) {
+    bool iteration({required bool entry}) {
+      var state = entry;
+      for (final expression in before) {
+        state = _scanInline(expression, state);
+      }
+      state = _scanStatement(body, state || awaitEachIteration);
+      for (final expression in after) {
+        state = _scanInline(expression, state);
+      }
+      return state;
+    }
+
+    final firstExit = iteration(entry: afterAwait);
+    // A later iteration resumes from where the previous one ended.
+    final laterExit = firstExit && !afterAwait ? iteration(entry: true) : firstExit;
+    return afterAwait || firstExit || laterExit;
+  }
+
+  bool _scanSwitch(bool afterAwait, NodeList<SwitchMember> members) {
+    var exit = afterAwait;
+    for (final member in members) {
+      exit = _scanStatements(member.statements, afterAwait) || exit;
+    }
+    return exit;
+  }
+
+  bool _scanInline(AstNode node, bool afterAwait) {
+    if (afterAwait) {
+      final access = firstTargetAccess(node, accessTargets);
+      if (access != null) {
+        _report(access);
+        return false;
+      }
+      return true;
+    }
+    final awaitEnd = _firstAwaitEnd(node);
+    if (awaitEnd == null) return false;
+    final access = _accessAfterAwait(node, awaitEnd);
+    if (access != null) {
+      _report(access);
+      return false;
+    }
+    return true;
+  }
+
+  AstNode? _accessAfterAwait(AstNode node, int awaitEnd) {
+    final writes = _AwaitedWriteFinder(accessTargets);
+    node.accept(writes);
+    if (writes.node != null) return writes.node;
+    final finder = _TargetAccessFinder(accessTargets, where: (access) => access.offset >= awaitEnd);
+    node.accept(finder);
+    return finder.node;
+  }
+
+  bool _mayContinue(Statement? statement, bool exit) =>
+      exit && (statement == null || !_alwaysExits(statement));
+
+  T _silently<T>(T Function() scan) {
+    _silent++;
+    try {
+      return scan();
+    } finally {
+      _silent--;
+    }
+  }
+
+  void _report(AstNode node) {
+    if (_silent == 0 && _reported.add(node)) onViolation(node);
   }
 }
 
-final class _NestedBlockScanner extends RecursiveAstVisitor<void> {
-  _NestedBlockScanner(this.scanner);
+int? _firstAwaitEnd(AstNode node) {
+  final visitor = _AwaitEndFinder();
+  node.accept(visitor);
+  return visitor.end;
+}
 
-  final AsyncStatementScanner scanner;
+final class _AwaitEndFinder extends RecursiveAstVisitor<void> {
+  int? end;
 
   @override
-  void visitBlock(Block node) {
-    scanner.scanBlock(node);
+  void visitAwaitExpression(AwaitExpression node) {
+    final current = end;
+    if (current == null || node.end < current) end = node.end;
+    super.visitAwaitExpression(node);
+  }
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {}
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {}
+}
+
+/// An assignment to a tracked target whose value waits on an `await` first.
+final class _AwaitedWriteFinder extends RecursiveAstVisitor<void> {
+  _AwaitedWriteFinder(this.targetNames);
+
+  final Set<String> targetNames;
+  AstNode? node;
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    final target = node.leftHandSide;
+    if (this.node == null &&
+        target is SimpleIdentifier &&
+        targetNames.contains(target.name) &&
+        containsAwait(node.rightHandSide)) {
+      this.node = target;
+      return;
+    }
+    super.visitAssignmentExpression(node);
   }
 
   @override
@@ -646,11 +859,14 @@ final class _ThrowFinder extends RecursiveAstVisitor<void> {
 }
 
 final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
-  _TargetAccessFinder(this.targetNames, {this.includeBlocks = false});
+  _TargetAccessFinder(this.targetNames, {this.includeBlocks = false, this.where});
 
   final Set<String> targetNames;
   final bool includeBlocks;
+  final bool Function(AstNode access)? where;
   AstNode? node;
+
+  bool _accepts(AstNode access) => where?.call(access) ?? true;
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
@@ -658,8 +874,10 @@ final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
     final target = node.target;
     if (target is SimpleIdentifier && targetNames.contains(target.name)) {
       if (target.name == 'ref' && node.methodName.name == 'mounted') return;
-      this.node = node;
-      return;
+      if (_accepts(node)) {
+        this.node = node;
+        return;
+      }
     }
     super.visitMethodInvocation(node);
   }
@@ -671,11 +889,15 @@ final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
       if (node.prefix.name == 'ref' && node.identifier.name == 'mounted') {
         return;
       }
-      if (node.prefix.name == 'context' && node.identifier.name == 'mounted') {
+      if (node.prefix.name == 'context' &&
+          node.identifier.name == 'mounted' &&
+          isCapturedContextAccess(node)) {
         return;
       }
-      this.node = node;
-      return;
+      if (_accepts(node)) {
+        this.node = node;
+        return;
+      }
     }
     super.visitPrefixedIdentifier(node);
   }
@@ -684,15 +906,34 @@ final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
   void visitPropertyAccess(PropertyAccess node) {
     if (this.node != null) return;
     final target = node.target;
+    // `this.context.mounted` reads the State getter as a whole.
+    if (target is PropertyAccess &&
+        target.target is ThisExpression &&
+        targetNames.contains(target.propertyName.name) &&
+        node.propertyName.name == 'mounted' &&
+        _accepts(node)) {
+      this.node = node;
+      return;
+    }
+    if (target is ThisExpression &&
+        targetNames.contains(node.propertyName.name) &&
+        _accepts(node)) {
+      this.node = node;
+      return;
+    }
     if (target is SimpleIdentifier && targetNames.contains(target.name)) {
       if (target.name == 'ref' && node.propertyName.name == 'mounted') {
         return;
       }
-      if (target.name == 'context' && node.propertyName.name == 'mounted') {
+      if (target.name == 'context' &&
+          node.propertyName.name == 'mounted' &&
+          isCapturedContextAccess(node)) {
         return;
       }
-      this.node = node;
-      return;
+      if (_accepts(node)) {
+        this.node = node;
+        return;
+      }
     }
     super.visitPropertyAccess(node);
   }
@@ -706,7 +947,7 @@ final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
     }
     if (isExpressionTargetIdentifier(node)) return;
     if (classMemberNameIsDeclaration(node)) return;
-    this.node = node;
+    if (_accepts(node)) this.node = node;
   }
 
   @override

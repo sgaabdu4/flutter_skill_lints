@@ -3,73 +3,6 @@
 part of '../source_scanner_rules_test.dart';
 
 @reflectiveTest
-final class NotifierLocalDependencyCacheTest extends _NotifierRuleTest {
-  @override
-  String get ruleName => 'notifier_local_dependency_cache';
-  @override
-  String get needle => '_repository';
-  @override
-  String get source => r'''
-class Notifier<T> {}
-
-abstract interface class IThingRepository {}
-
-class ThingNotifier extends Notifier<int> {
-  IThingRepository? _repository;
-
-  int build() => 0;
-}
-''';
-
-  Future<void> test_reportsServiceCache() async {
-    const source = r'''
-class Notifier<T> {}
-
-abstract interface class IThingService {}
-
-class ThingNotifier extends Notifier<int> {
-  late final IThingService _service;
-
-  int build() => 0;
-}
-''';
-
-    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
-    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '_service', ruleName)]);
-  }
-
-  Future<void> test_allowsStatelessProviderHelper() async {
-    await assertAllows(r'''
-class Ref {
-  T read<T>(Object provider) => throw UnimplementedError();
-}
-
-abstract interface class IThingRepository {}
-final thingRepositoryProvider = Object();
-
-IThingRepository readThingRepository(Ref ref) => ref.read(thingRepositoryProvider);
-
-class ThingNotifier {
-  int build() => 0;
-}
-''');
-  }
-
-  Future<void> test_allowsLifecycleResourceField() async {
-    await assertAllows(r'''
-class Notifier<T> {}
-class Timer {}
-
-class ThingNotifier extends Notifier<int> {
-  Timer? _timer;
-
-  int build() => 0;
-}
-''');
-  }
-}
-
-@reflectiveTest
 final class NotifierEnsureDepsTest extends _NotifierFixtureTest {
   @override
   String get ruleName => 'notifier_ensure_deps';
@@ -138,6 +71,49 @@ class TestableItemsNotifier {
 final class NotifierWatchMethodTest extends _NotifierFixtureTest {
   @override
   String get ruleName => 'notifier_watch_method';
+
+  static const _prelude = r'''
+class Notifier<T> {
+  Ref get ref => Ref();
+}
+
+class Ref {
+  Object watch(Object provider) => Object();
+  void listen(Object provider, void Function(Object? previous, Object next) listener) {}
+}
+
+final authProvider = Object();
+''';
+
+  /// async-mutations.md:61: use ref.listen in build() for side effects.
+  Future<void> test_reportsListenOutsideBuild() async {
+    final analyzedSource = _analyzedSource('''$_prelude
+class SessionNotifier extends Notifier<int> {
+  int build() => 0;
+
+  void startListening() {
+    ref.listen(authProvider, (previous, next) {});
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'void startListening', ruleName, lineStart: true),
+    ]);
+  }
+
+  Future<void> test_allowsWatchAndListenInBuild() async {
+    await assertAllows('''$_prelude
+class SessionNotifier extends Notifier<int> {
+  int build() {
+    ref.watch(authProvider);
+    ref.listen(authProvider, (previous, next) {});
+    return 0;
+  }
+
+  void listen() {}
+}
+''');
+  }
 }
 
 abstract class _ServicesMixinsRuleTest extends _SourceRuleTest {

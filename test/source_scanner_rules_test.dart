@@ -88,7 +88,6 @@ void main() {
     defineReflectiveTests(ArchInterfaceContractTest);
     defineReflectiveTests(ArchRepositoryGeneratedExtendsTest);
     defineReflectiveTests(ArchConcreteDependencyTest);
-    defineReflectiveTests(ArchDatasourceTryCatchTest);
     defineReflectiveTests(ArchWidgetPathTest);
     defineReflectiveTests(AtomicProviderAccessTest);
     defineReflectiveTests(AtomicPageConsumerWidgetTest);

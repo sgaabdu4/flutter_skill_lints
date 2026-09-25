@@ -1,5 +1,4 @@
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
@@ -165,30 +164,6 @@ final List<ScannerRule> architectureSourceRules = [
         if (_isConcreteImplementationOfInterface(_unwrapFuture(element.returnType))) {
           reporter.reportOffset(context, returnType.offset);
         }
-      }
-    },
-  ),
-
-  /// Don't catch in a datasource only to rethrow.
-  ///
-  /// Why: A trailing catch clause that only rethrows adds nothing. Datasources may
-  /// catch to translate, classify, recover or roll back; otherwise let errors
-  /// propagate to the notifier boundary.
-  scannerRule(
-    code: const LintCode(
-      'arch_datasource_try_catch',
-      "Don't catch in a datasource only to rethrow.",
-      correctionMessage: 'Delete the catch and let errors propagate to the notifier boundary, or translate, recover or roll back in it.',
-      severity: DiagnosticSeverity.ERROR,
-    ),
-    description: 'Flags datasource catch clauses that only rethrow, while allowing translation, recovery and rollback catches.',
-    scan: (reporter, context) {
-      if (!context.isDatasourcePath) return;
-      final finder = _RethrowOnlyCatchFinder();
-      context.unit.accept(finder);
-      for (final clause in finder.clauses) {
-        final location = context.unit.lineInfo.getLocation(clause.offset);
-        reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
       }
     },
   ),
@@ -432,24 +407,6 @@ const _consumerPageChecker = TypeChecker.any([
   consumerWidgetChecker,
   consumerStatefulWidgetChecker,
 ]);
-
-/// A trailing catch clause whose body is only `rethrow`. An earlier one can
-/// still matter: it keeps its error type out of a later catch.
-final class _RethrowOnlyCatchFinder extends RecursiveAstVisitor<void> {
-  final clauses = <CatchClause>[];
-
-  @override
-  void visitTryStatement(TryStatement node) {
-    final clause = node.catchClauses.lastOrNull;
-    final statement = clause?.body.statements.singleOrNull;
-    if (clause != null &&
-        statement is ExpressionStatement &&
-        statement.expression is RethrowExpression) {
-      clauses.add(clause);
-    }
-    super.visitTryStatement(node);
-  }
-}
 
 /// Offsets of `final String/int xId` fields and redirecting-factory parameters.
 List<int> _rawIdOffsets(CompilationUnit unit) => unit.declarations

@@ -384,8 +384,8 @@ void main() {
   });
 }
 
-const _enabledFlutterSkillRuleCount = 230;
-const _enabledFlutterSkillDiagnosticCount = 238;
+const _enabledFlutterSkillRuleCount = 229;
+const _enabledFlutterSkillDiagnosticCount = 237;
 const _enabledAdditionalRuleCount = 274;
 
 const _modelSkillErrorDiagnostics = [

@@ -4,6 +4,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_identical_exception_handling_blocks.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_try_statements.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_only_rethrow.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_throw.dart';
 import 'package:test/test.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
@@ -13,6 +14,7 @@ void main() {
     defineReflectiveTests(AvoidNestedTryStatementsTest);
     defineReflectiveTests(AvoidIdenticalExceptionHandlingBlocksTest);
     defineReflectiveTests(AvoidThrowTest);
+    defineReflectiveTests(AvoidOnlyRethrowTest);
   });
 }
 
@@ -898,5 +900,87 @@ void f() {
     newFile(filePath, "Never lookup() => throw 'missing';");
 
     await assertNoDiagnosticsInFile(filePath);
+  }
+}
+
+@reflectiveTest
+final class AvoidOnlyRethrowTest extends AnalysisRuleTest {
+  @override
+  void setUp() {
+    rule = AvoidOnlyRethrow();
+    super.setUp();
+  }
+
+  Future<void> test_trailingRethrowOnlyCatch_lint() async {
+    const source = r'''
+Future<void> load() async {
+  try {
+    await Future<void>.value();
+  } catch (_) {
+    rethrow;
+  }
+}
+''';
+    const clause = 'catch (_) {\n    rethrow;\n  }';
+    await assertDiagnostics(source, [lint(source.indexOf(clause), clause.length)]);
+  }
+
+  Future<void> test_rethrowOnlyCatchBeforeFinally_lint() async {
+    const source = r'''
+Future<void> load() async {
+  try {
+    await Future<void>.value();
+  } on Exception {
+    rethrow;
+  } finally {
+    await Future<void>.value();
+  }
+}
+''';
+    const clause = 'on Exception {\n    rethrow;\n  }';
+    await assertDiagnostics(source, [lint(source.indexOf(clause), clause.length)]);
+  }
+
+  /// Datasource catches the skill allows (networking.md:30-43,
+  /// hive-persistence.md:72, state-management-lifecycle.md:69-72). An earlier
+  /// rethrow-only clause keeps its error type out of a later catch.
+  Future<void> test_skillDataLayerCatches_noLint() async {
+    await assertNoDiagnostics(r'''
+class AppException implements Exception {
+  const AppException(this.code);
+  final String code;
+}
+
+class UserDatasource {
+  Future<Object?> fetch() async {
+    try {
+      return await Future<Object?>.value();
+    } on Exception {
+      throw const AppException('network');
+    }
+  }
+
+  Future<void> remove(String id) async {
+    try {
+      await Future<void>.value();
+    } catch (_) {
+      await restore(id);
+      rethrow;
+    }
+  }
+
+  Future<Object?> readOrNull() async {
+    try {
+      return await Future<Object?>.value();
+    } on FormatException {
+      rethrow;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> restore(String id) async {}
+}
+''');
   }
 }

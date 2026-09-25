@@ -11,7 +11,6 @@ ad_hoc_intl_format
 app_shell_bootstrap_side_effects
 appwrite_blocking_function_execution_in_client
 arch_concrete_dependency
-arch_datasource_try_catch
 arch_domain_import
 arch_domain_json_annotation
 arch_domain_serialization

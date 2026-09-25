@@ -47,7 +47,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       'collection_getter_allocates_each_access',
       'Collection getter allocates a fresh Map/List/Set on every access.',
       correctionMessage: 'Use a generated computed provider/service/repository cache; for non-const classes, an instance `late final` derived field is also valid.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags Map/List/Set getters that build collection values in the getter body without an obvious cache.',
     scan: _scanCollectionGetterAllocations,
@@ -324,10 +324,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'keepalive_watches_unbounded_collection',
       'keepAlive notifier watches an unbounded collection getter.',
-      correctionMessage: 'Return a bounded projection (e.g. `s.lastNDays` / `s.count`) instead of deriving and retaining a new collection from the full source list.',
-      severity: DiagnosticSeverity.WARNING,
+      correctionMessage: 'Return a bounded projection (e.g. `s.count`) instead of returning or deriving from the full source collection.',
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags `@Riverpod(keepAlive: true)` notifiers whose build() derives retained state from `s.<unboundedCollectionName>`.',
+    description: 'Flags `@Riverpod(keepAlive: true)` providers whose build() returns or derives from `s.<unboundedCollectionName>` of a provider that is not resolved as `@Riverpod(keepAlive: true)`.',
     scan: _scanKeepAliveUnboundedCollections,
   ),
 

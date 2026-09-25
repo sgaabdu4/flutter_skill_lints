@@ -375,10 +375,13 @@ Runtime-bug surface (0.7.0) — `runtime_bug_source_rules`:
   as `clock`, `delay`, `generator`, `authenticator`, or `createExecution` must
   be required and wired at the provider/composition root, not optional/defaulted.
 - `keepalive_watches_unbounded_collection` — `@Riverpod(keepAlive: true)`
-  whose `build()` derives and retains a new collection from `s.logs` /
-  `s.items` / `s.entries` / `s.posts` etc. keeps that derived collection for
-  the session. A pure projection provider that returns the source list
-  reference is allowed.
+  whose `build()` returns or derives from `s.logs` / `s.items` /
+  `s.entries` / `s.posts` etc. retains every entry for the session, including
+  a pure projection that returns the source list reference (the skill's
+  NEVER example); derive a bounded projection such as `s.count` instead. A
+  provider whose watched source resolves (across files, via the generated
+  `@ProviderFor`) to a `@Riverpod(keepAlive: true)` declaration is allowed,
+  matching the performance guide's all-keepAlive lifecycle rule.
 - `datasource_missing_batch_loader` — abstract `*LocalDatasource` /
   `*RemoteDatasource` with 5+ single-value async getters and no
   `loadAll` / `getAll` / `readAll` / `loadSettings` / `getSnapshot` forces
@@ -393,12 +396,16 @@ Runtime-bug surface (0.7.0) — `runtime_bug_source_rules`:
   a notifier `save*` call should be wrapped at the widget→notifier boundary
   in a domain Value Object.
 - `text_field_on_changed_no_debounce` — `TextField` /  `TextFormField` /
-  `CupertinoTextField` / `SearchBar` `onChanged` doing async or notifier work
-  without a `Timer` / `Debouncer` / `Future.delayed` in the file fires per
-  keystroke.
+  `CupertinoTextField` / `SearchBar` `onChanged` (lambda or tear-off) that
+  reaches async or remote work (an `await`, a Future/Stream-typed call, an
+  async callee, or an unresolved call) without a `Timer` / `Debouncer` /
+  `Future.delayed` in the file fires per keystroke. Project callees in other
+  files are followed too, and a callee file that owns such a debounce counts
+  as debounced. Synchronous state-only form updates (`copyWith` plus local
+  validation) are allowed.
 - `slider_on_changed_no_debounce` — `Slider` / `RangeSlider` / `CupertinoSlider`
-  `onChanged` doing notifier or async work fires continuously during drag;
-  move to `onChangeEnd` or debounce.
+  `onChanged` (lambda or tear-off) that reaches async or remote work fires
+  continuously during drag; move to `onChangeEnd` or debounce.
 - `scroll_listener_no_throttle` — `_scrollController.addListener(...)` doing
   notifier or async work without a `Timer` / `Debouncer` in the file fires
   on every scroll tick.

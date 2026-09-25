@@ -3,6 +3,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
@@ -134,7 +135,7 @@ final _userVisibleDelaySignal = RegExp(
 );
 
 final _backgroundDurationExemption = RegExp(
-  r'retry|backoff|timeout|poll|ceiling|sync|backfill|rest|reminder|notification|alarm|snooze|cleanup|temp|expiry|expiration|ttl|ticker|periodic|interval|dismiss|snack|toast|overlay|banner',
+  r'retry|backoff|timeout|poll|ceiling|(?<!a)sync|backfill|rest|reminder|notification|alarm|snooze|cleanup|temp|expiry|expiration|ttl|ticker|periodic|interval|dismiss|snack|toast|overlay|banner',
   caseSensitive: false,
 );
 
@@ -181,24 +182,6 @@ final _keepAliveAnnotation = RegExp(r'@Riverpod\s*\(\s*keepAlive\s*:\s*true\s*\)
 final _watchUnboundedCollection = RegExp(
   r'\bref\s*\.\s*watch\s*\([\s\S]*?\.\s*select\s*\(\s*\(\w+\)\s*=>\s*\w+\s*\.\s*'
   r'(?:logs|items|entries|history|records|events|messages|notifications|posts|comments|rows|results|all)\b',
-);
-
-final _directCollectionProjection = RegExp(
-  r'\breturn\s+ref\s*\.\s*watch\s*\([\s\S]*?\.select\s*\([\s\S]*?=>\s*\w+\s*\.\s*'
-  r'(?:logs|items|entries|history|records|events|messages|notifications|posts|comments|rows|results|all)'
-  r'\s*\)\s*\)\s*;',
-);
-
-final _expressionCollectionProjection = RegExp(
-  r'=>\s*ref\s*\.\s*watch\s*\([\s\S]*?\.select\s*\([\s\S]*?=>\s*\w+\s*\.\s*'
-  r'(?:logs|items|entries|history|records|events|messages|notifications|posts|comments|rows|results|all)'
-  r'\s*\)\s*\)\s*;',
-);
-
-final _localCollectionProjection = RegExp(
-  r'\bfinal\s+(\w+)\s*=\s*ref\s*\.\s*watch\s*\([\s\S]*?\.select\s*\([\s\S]*?=>\s*\w+\s*\.\s*'
-  r'(?:logs|items|entries|history|records|events|messages|notifications|posts|comments|rows|results|all)'
-  r'\s*\)\s*\)\s*;\s*return\s+\1\s*;',
 );
 
 final _datasourceInterfaceSignature = RegExp(
@@ -715,10 +698,13 @@ int? _findFunctionDeclarationAfter(SourceScannerContext context, int annotationL
   return null;
 }
 
+/// Last line of the top-level function declared on [fnLine], for block and
+/// `=>` expression bodies alike.
 int? _findFunctionBodyEnd(SourceScannerContext context, int fnLine) {
-  final state = _BraceScanState();
-  for (var i = fnLine; i < context.source.length && i < fnLine + 200; i++) {
-    if (_scanBraceLine(state, context.source.masked[i])) return i;
+  final lineInfo = context.unit.lineInfo;
+  for (final declaration in context.unit.declarations.whereType<FunctionDeclaration>()) {
+    if (lineInfo.getLocation(declaration.name.offset).lineNumber - 1 != fnLine) continue;
+    return lineInfo.getLocation(declaration.end - 1).lineNumber - 1;
   }
   return null;
 }
@@ -758,14 +744,22 @@ int? _unboundedCollectionWatchColumn(SourceScannerContext context, int startLine
   if (watchStart < 0) return null;
   final window = sourceLineWindow(context, startLine, endLine, 8);
   if (!_watchUnboundedCollection.hasMatch(window)) return null;
-  if (_isPureCollectionProjection(window)) return null;
+  if (_watchesKeepAliveProvider(context, startLine, watchStart)) return null;
   return watchStart;
 }
 
-bool _isPureCollectionProjection(String window) {
-  return _directCollectionProjection.hasMatch(window) ||
-      _expressionCollectionProjection.hasMatch(window) ||
-      _localCollectionProjection.hasMatch(window);
+/// Whether the `ref.watch(...)` at [column] reads a generated provider whose
+/// source declaration is `@Riverpod(keepAlive: true)`. A keepAlive source
+/// already retains the collection for the session, so a keepAlive derived
+/// provider over it follows the performance guide's lifecycle-matching rule.
+bool _watchesKeepAliveProvider(SourceScannerContext context, int lineIndex, int column) {
+  AstNode? node = context.unit.nodeCovering(offset: context.source.lineOffsets[lineIndex] + column);
+  while (node != null && !(node is MethodInvocation && node.methodName.name == 'watch')) {
+    node = node.parent;
+  }
+  if (node is! MethodInvocation) return false;
+  final arguments = node.argumentList.arguments;
+  return arguments.isNotEmpty && isKeepAliveProviderExpression(arguments.first.argumentExpression);
 }
 
 final _textInputConstructor = RegExp(

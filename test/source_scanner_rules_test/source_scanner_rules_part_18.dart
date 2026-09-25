@@ -62,6 +62,34 @@ class SearchNotifier {
   static const _searchDebounceDuration = Duration(milliseconds: 500);
 }
 ''';
+
+  Future<void> test_reportsHardWaitInAsyncMethod() async {
+    final analyzedSource = _analyzedSource(r'''
+class SaveNotifier extends AsyncNotifier<void> {
+  Future<void> save() async {
+    state = AsyncLoading();
+    await Future<void>.delayed(const Duration(milliseconds: 51));
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path!, analyzedSource);
+
+    await assertDiagnosticsInFile(path!, [
+      compatLint(analyzedSource, 'Duration(milliseconds: 51)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSyncSettleTimerInAsyncMethod() async {
+    await assertAllows(r'''
+class SaveNotifier {
+  static const _syncSettleDelay = Duration(seconds: 2);
+
+  Future<void> save() async {
+    await Future<void>.delayed(_syncSettleDelay);
+  }
+}
+''', path: path);
+  }
 }
 
 @reflectiveTest

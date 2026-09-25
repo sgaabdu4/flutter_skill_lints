@@ -474,7 +474,36 @@ final class PerfListviewChildrenTest extends _UiRuleTest {
   @override
   String get needle => 'ListView(children';
   @override
-  String get source => 'final list = ListView(children: []);';
+  String get source => r'''
+class ListView {
+  ListView({List<Object> children = const []});
+}
+ListView list(List<String> items) => ListView(children: items.map((item) => item).toList());
+''';
+
+  Future<void> test_reportsWrappedDynamicChildren() async {
+    final analyzedSource = _analyzedSource(r'''
+class ListView {
+  ListView({List<Object> children = const []});
+}
+ListView list(List<String> items) => ListView(
+  children: [for (final item in items) item],
+);
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'ListView(\n', ruleName)]);
+  }
+
+  Future<void> test_allowsStaticChildren() async {
+    await assertAllows(r'''
+class ListView {
+  ListView({List<Object> children = const []});
+}
+const header = 'header';
+ListView list() => ListView(children: const ['a', 'b']);
+ListView other() => ListView(children: [header, if (header.isEmpty) 'empty']);
+''');
+  }
 }
 
 abstract class _StateRuleTest extends _SourceRuleTest {
@@ -719,6 +748,91 @@ void f(state) {
   state = state.copyWith(response: Object());
 }
 ''';
+
+  Future<void> test_reportsFormattedMultilineCopyWith() async {
+    final analyzedSource = _analyzedSource(r'''
+void f(state, Map<String, Object?> hugeJsonMap) {
+  state = state.copyWith(
+    total: 1,
+    rawJson: hugeJsonMap,
+  );
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'state = state.copyWith', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsFreezedCallableCopyWith() async {
+    final analyzedSource = _analyzedSource(r'''
+class RawStateCopyWith {
+  RawState call({int? total, Map<String, Object?>? rawJson}) => RawState();
+}
+class RawState {
+  RawStateCopyWith get copyWith => RawStateCopyWith();
+}
+class RawNotifier {
+  RawState state = RawState();
+  void store(Map<String, Object?> hugeJsonMap) {
+    state = state.copyWith(
+      total: 1,
+      rawJson: hugeJsonMap,
+    );
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'state = state.copyWith', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsDirectlyStoredResponseValue() async {
+    final analyzedSource = _analyzedSource(r'''
+void f(state, Object response) {
+  state = state.copyWith(
+    data: response,
+  );
+}
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'state = state.copyWith', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsExtractedFields() async {
+    await assertAllows(r'''
+void f(state, Map<String, Object?> json) {
+  state = state.copyWith(items: parseItems(json), total: json['total'] as int);
+  state = state.copyWith(
+    items: parseItems(json),
+    total: json['total'] as int,
+  );
+}
+''');
+  }
+
+  Future<void> test_allowsFreezedCallableCopyWithExtractedFields() async {
+    await assertAllows(r'''
+class RawStateCopyWith {
+  RawState call({int? total, String? status}) => RawState();
+}
+class RawState {
+  RawStateCopyWith get copyWith => RawStateCopyWith();
+}
+class RawNotifier {
+  RawState state = RawState();
+  void store(Map<String, Object?> json) {
+    state = state.copyWith(
+      total: json['total'] as int? ?? 0,
+      status: json['status'] as String? ?? '',
+    );
+  }
+}
+''');
+  }
 }
 
 @reflectiveTest

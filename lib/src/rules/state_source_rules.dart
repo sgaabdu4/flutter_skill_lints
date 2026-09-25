@@ -90,17 +90,11 @@ final List<ScannerRule> stateSourceRules = [
       'state_raw_response',
       'Do not store raw API responses in state.',
       correctionMessage: 'Extract the fields needed by the UI.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags raw JSON or response values stored in UI state so the Flutter skill violation is shown during analysis.',
+    description: 'Flags `state = state.copyWith(...)` arguments that store raw JSON or response values (named rawJson/response/json, or passed through untransformed) so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(r'\bstate\s*=\s*state\.copyWith\s*\([^)]*(?:rawJson|response|json)')
-            .hasMatch(line)) {
-          reporter.report(context, i, line.indexOf('state'));
-        }
-      }
+      context.unit.accept(_RawResponseStateVisitor(reporter, context));
     },
   ),
 
@@ -349,4 +343,52 @@ final class _RawErrorTextFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitFunctionExpression(FunctionExpression node) {}
+}
+
+final _rawResponseName = RegExp('rawJson|response|json');
+
+final class _RawResponseStateVisitor extends RecursiveAstVisitor<void> {
+  _RawResponseStateVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    final arguments = _stateCopyWithArguments(node.rightHandSide);
+    if (node.leftHandSide case SimpleIdentifier(name: 'state')
+        when arguments != null &&
+            arguments.arguments.whereType<NamedArgument>().any(_storesRawResponse)) {
+      final location = context.unit.lineInfo.getLocation(node.offset);
+      reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+    }
+    super.visitAssignmentExpression(node);
+  }
+}
+
+/// Arguments of `state.copyWith(...)`, whether `copyWith` is a method or a
+/// Freezed callable getter (resolved as a function expression invocation).
+ArgumentList? _stateCopyWithArguments(Expression expression) => switch (expression) {
+  MethodInvocation(
+    methodName: SimpleIdentifier(name: 'copyWith'),
+    target: SimpleIdentifier(name: 'state'),
+    :final argumentList,
+  ) =>
+    argumentList,
+  FunctionExpressionInvocation(
+    function: PropertyAccess(
+      target: SimpleIdentifier(name: 'state'),
+      propertyName: SimpleIdentifier(name: 'copyWith'),
+    ),
+    :final argumentList,
+  ) =>
+    argumentList,
+  _ => null,
+};
+
+bool _storesRawResponse(NamedArgument argument) {
+  if (_rawResponseName.hasMatch(argument.name.lexeme)) return true;
+  final value = argument.argumentExpression.unParenthesized;
+  return (value is Identifier || value is PropertyAccess) &&
+      _rawResponseName.hasMatch(value.toSource());
 }

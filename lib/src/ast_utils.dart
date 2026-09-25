@@ -9,6 +9,53 @@ import 'package:flutter_skill_lints/src/mounted_guard_utils.dart';
 
 part 'ast_utils/ast_utils_part_01.dart';
 
+/// Whether [provider], a `ref.watch` argument, resolves through its generated
+/// `@ProviderFor` variable to a `@Riverpod(keepAlive: true)` source, in any
+/// file. `.select(...)`, `.notifier`/`.future` and family calls are stripped
+/// down to the provider variable.
+bool isKeepAliveProviderExpression(Expression provider) {
+  Expression? current = provider.unParenthesized;
+  while (current != null) {
+    final element = switch (current) {
+      SimpleIdentifier(:final element) => element,
+      PrefixedIdentifier(:final identifier) => identifier.element,
+      PropertyAccess(:final propertyName) => propertyName.element,
+      _ => null,
+    };
+    final variable = element is PropertyAccessorElement ? element.variable : element;
+    if (variable is TopLevelVariableElement) return _isKeepAliveProviderVariable(variable);
+    current = switch (current) {
+      MethodInvocation(:final target, methodName: SimpleIdentifier(name: 'select')) => target,
+      PrefixedIdentifier(:final prefix) => prefix,
+      PropertyAccess(:final target) => target,
+      FunctionExpressionInvocation(:final function) => function,
+      _ => null,
+    };
+  }
+  return false;
+}
+
+bool _isKeepAliveProviderVariable(TopLevelVariableElement variable) {
+  final source = variable.metadata.annotations
+      .map((annotation) => annotation.computeConstantValue())
+      .where((value) => _isRiverpodAnnotationType(value?.type, 'ProviderFor'))
+      .map((value) => value?.getField('value'))
+      .firstOrNull;
+  final declaration = source?.toTypeValue()?.element ?? source?.toFunctionValue();
+  if (declaration == null) return false;
+  return declaration.metadata.annotations.any((annotation) {
+    final value = annotation.computeConstantValue();
+    return _isRiverpodAnnotationType(value?.type, 'Riverpod') &&
+        value?.getField('keepAlive')?.toBoolValue() == true;
+  });
+}
+
+bool _isRiverpodAnnotationType(DartType? type, String name) {
+  final element = type?.element;
+  return element?.name == name &&
+      (element?.library?.uri.toString().startsWith('package:riverpod_annotation/') ?? false);
+}
+
 /// Whether [annotation] evaluates to an instance of [className] declared in [package].
 bool isPackageAnnotation(ElementAnnotation? annotation, String package, String className) {
   final type = annotation?.computeConstantValue()?.type;

@@ -5,6 +5,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'riverpod_source_rules/riverpod_source_rules_part_01.dart';
 part 'riverpod_source_rules/riverpod_source_rules_part_02.dart';
@@ -377,18 +378,42 @@ int _functionProviderEnd(SourceScannerContext context, int declarationLine) {
   return declarationLine;
 }
 
-Set<String> _watchedProviderNames(
+/// Whether [definition] watches at least one provider and every `watch`
+/// resolves, through its generated `@ProviderFor` variable, to a
+/// `@Riverpod(keepAlive: true)` source, in this file or another. An
+/// unresolved or auto-dispose dependency keeps the provider clean.
+bool _watchesOnlyKeepAliveProviders(
   SourceScannerContext context,
   _RiverpodProviderDefinition definition,
 ) {
-  final body = context.source.masked
-      .sublist(definition.bodyStart, definition.bodyEnd + 1)
-      .join('\n');
-  return RegExp(r'\bref\s*\.\s*watch\s*\(\s*([A-Za-z_]\w*Provider)\b')
-      .allMatches(body)
-      .map((match) => match.group(1) ?? '')
-      .where((name) => name.isNotEmpty)
-      .toSet();
+  final lineInfo = context.unit.lineInfo;
+  final declaration = context.unit.declarations
+      .where(
+        (member) =>
+            lineInfo.getLocation(member.firstTokenAfterCommentAndMetadata.offset).lineNumber - 1 ==
+            definition.bodyStart,
+      )
+      .firstOrNull;
+  if (declaration == null) return false;
+  final watches = _ProviderWatches();
+  declaration.accept(watches);
+  return watches.invocations.isNotEmpty &&
+      watches.invocations.every(
+        (watch) =>
+            isKeepAliveProviderExpression(watch.argumentList.arguments.first.argumentExpression),
+      );
+}
+
+final class _ProviderWatches extends RecursiveAstVisitor<void> {
+  final invocations = <MethodInvocation>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.methodName.name == 'watch' && node.argumentList.arguments.isNotEmpty) {
+      invocations.add(node);
+    }
+    super.visitMethodInvocation(node);
+  }
 }
 
 bool _hasBlockSelectCallback(String invocation) =>

@@ -3,6 +3,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/constant_expression.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
@@ -490,3 +491,38 @@ final class _InlineNumClampVisitor extends RecursiveAstVisitor<void> {
     super.visitMethodInvocation(node);
   }
 }
+
+final class _DynamicListViewChildrenVisitor extends RecursiveAstVisitor<void> {
+  _DynamicListViewChildrenVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final constructor = node.constructorName;
+    if (constructor.type.name.lexeme == 'ListView' && constructor.name == null) {
+      final children = namedArgumentExpression(node.argumentList, 'children');
+      if (children != null && _isDynamicChildren(children)) {
+        final location = context.unit.lineInfo.getLocation(constructor.offset);
+        reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+      }
+    }
+    super.visitInstanceCreationExpression(node);
+  }
+}
+
+bool _isDynamicChildren(Expression children) {
+  final expression = unparenthesizedExpression(children);
+  if (expression is! ListLiteral) return !isConstantExpression(expression);
+  return expression.elements.any(_isDynamicCollectionElement);
+}
+
+bool _isDynamicCollectionElement(CollectionElement element) => switch (element) {
+  ForElement() => true,
+  SpreadElement(:final expression) => !isConstantExpression(expression),
+  IfElement(:final thenElement, :final elseElement) =>
+    _isDynamicCollectionElement(thenElement) ||
+        (elseElement != null && _isDynamicCollectionElement(elseElement)),
+  _ => false,
+};

@@ -664,7 +664,8 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
             (line) =>
                 line.trimLeft().startsWith('error -') &&
                 !line.contains('riverpod_read_init_state') &&
-                !line.contains('avoid_flexible_outside_flex'),
+                !line.contains('avoid_flexible_outside_flex') &&
+                !line.contains('text_field_on_changed_no_debounce'),
           ),
           isEmpty,
         );

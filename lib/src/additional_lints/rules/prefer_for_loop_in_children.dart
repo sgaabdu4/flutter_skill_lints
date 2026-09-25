@@ -16,6 +16,7 @@ class PreferForLoopInChildren extends AnalysisRule {
     'prefer_for_loop_in_children',
     'Prefer using a for-loop instead of functional list building.',
     correctionMessage: 'Use collection-for syntax: [for (final item in items) Widget(item)].',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   PreferForLoopInChildren()

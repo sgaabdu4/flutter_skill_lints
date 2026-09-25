@@ -209,6 +209,7 @@ void main() {
     defineReflectiveTests(WebViewInitInBuildNoGateTest);
     defineReflectiveTests(ServiceStorageReadNoMemoTest);
     defineReflectiveTests(KeepAliveWatchesUnboundedCollectionTest);
+    defineReflectiveTests(KeepAliveWatchesResolvedProviderLifecycleTest);
     defineReflectiveTests(DatasourceMissingBatchLoaderTest);
     defineReflectiveTests(NotifierZeroValueSaveNoGuardTest);
     defineReflectiveTests(NotifierParamRequiresValueObjectTest);

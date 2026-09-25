@@ -119,6 +119,82 @@ class ContentRepository {
 }
 
 @reflectiveTest
+final class KeepAliveWatchesResolvedProviderLifecycleTest extends _RuntimeBugRuleTest {
+  @override
+  String get ruleName => 'keepalive_watches_unbounded_collection';
+  @override
+  String get needle => 'ref.watch(productProvider.select((s) => s.items))';
+  @override
+  String get path => '$testPackageLibPath/features/products/presentation/notifiers/sorted.dart';
+  @override
+  String get source => _sortedProducts;
+
+  @override
+  void setUp() {
+    newPackage('riverpod_annotation').addFile('lib/riverpod_annotation.dart', r'''
+class Riverpod {
+  const Riverpod({this.keepAlive = false});
+  final bool keepAlive;
+}
+const riverpod = Riverpod();
+class ProviderFor {
+  const ProviderFor(this.value);
+  final Object value;
+}
+class Ref {
+  T watch<T>(ProviderListenable<T> provider) => throw UnimplementedError();
+}
+class ProviderListenable<T> {
+  const ProviderListenable();
+  ProviderListenable<R> select<R>(R Function(T value) selector) => throw UnimplementedError();
+}
+''');
+    super.setUp();
+  }
+
+  @override
+  Future<void> test_reportsDiagnostic() async {
+    _addProductNotifier(keepAlive: false);
+    await super.test_reportsDiagnostic();
+  }
+
+  Future<void> test_allowsKeepAliveSourceFromAnotherFile() async {
+    _addProductNotifier(keepAlive: true);
+    await assertAllows(_sortedProducts, path: path, addIgnorePrefix: false);
+  }
+
+  void _addProductNotifier({required bool keepAlive}) {
+    newFile('$testPackageLibPath/features/products/presentation/notifiers/product.dart', '''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+class ProductState {
+  const ProductState();
+  List<int> get items => const [];
+}
+
+${keepAlive ? '@Riverpod(keepAlive: true)' : '@riverpod'}
+class ProductNotifier {
+  ProductState build() => const ProductState();
+}
+
+@ProviderFor(ProductNotifier)
+const productProvider = ProviderListenable<ProductState>();
+''');
+  }
+
+  static const _sortedProducts = r'''
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'product.dart';
+
+@Riverpod(keepAlive: true)
+List<int> sortedProducts(Ref ref) {
+  final items = ref.watch(productProvider.select((s) => s.items));
+  return [...items];
+}
+''';
+}
+
+@reflectiveTest
 final class KeepAliveWatchesUnboundedCollectionTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'keepalive_watches_unbounded_collection';
@@ -140,8 +216,8 @@ class ProgressNotifier {
 }
 ''';
 
-  Future<void> test_allowsPureProjection() async {
-    await assertAllows(r'''
+  Future<void> test_reportsLocalPureProjection() async {
+    final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
 }
@@ -154,30 +230,62 @@ class ProgressNotifier {
     return logs;
   }
 }
-''');
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'ref.watch(', ruleName)]);
   }
 
-  Future<void> test_allowsDirectPureProjection() async {
-    await assertAllows(r'''
+  Future<void> test_reportsDirectPureProjection() async {
+    final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
 }
+class Ref {}
 
 @Riverpod(keepAlive: true)
-Object historyLogs(Object ref) {
+Object historyLogs(Ref ref) {
   return ref.watch(historyProvider.select((s) => s.logs));
 }
-''');
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'ref.watch(', ruleName)]);
   }
 
-  Future<void> test_allowsExpressionBodyPureProjection() async {
+  /// The skill's NEVER example (common-patterns/debounce-gate-batch.md).
+  Future<void> test_reportsSkillNeverExpressionBodyProjection() async {
+    final analyzedSource = _analyzedSource(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+class Ref {}
+class Log {}
+
+@Riverpod(keepAlive: true)
+List<Log> session(Ref ref) => ref.watch(provider.select((s) => s.logs));
+''', addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'ref.watch(', ruleName)]);
+  }
+
+  /// The skill's DO counterpart (common-patterns/debounce-gate-batch.md).
+  Future<void> test_allowsSkillDoBoundedProjection() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
 }
+class Ref {}
 
 @Riverpod(keepAlive: true)
-Object historyLogs(Object ref) => ref.watch(historyProvider.select((s) => s.logs));
+int sessionCount(Ref ref) => ref.watch(provider.select((s) => s.count));
+''');
+    await assertAllows(r'''
+class Riverpod {
+  const Riverpod({bool keepAlive = false});
+}
+class Ref {}
+
+@Riverpod(keepAlive: true)
+Object sessionCount(Ref ref) => ref.watch(provider.select((s) => s.count));
 ''');
   }
 

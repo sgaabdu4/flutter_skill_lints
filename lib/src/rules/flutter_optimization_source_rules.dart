@@ -175,7 +175,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
       'flutter_widget_operator_equals',
       'Do not override operator == on Widget classes.',
       correctionMessage: 'Use const constructors, stable inputs, and caching instead.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags operator == overrides on Widget classes so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {

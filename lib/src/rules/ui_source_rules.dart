@@ -31,18 +31,6 @@ final _currentTimeBoundary = RegExp(
   r'\b(?:DateTimeX\s*\.\s*)?now(?:Local|Utc)\s*\(\s*\)\s*\.\s*(?:startOfDay|endOfDay)\b',
 );
 
-bool _hasRawStyleToken(String line) {
-  final visualConstructor = RegExp(
-    r'\b(?:EdgeInsets|BorderRadius|Radius|SizedBox)(?:\.\w+)?\s*\([^)]*',
-  );
-  for (final match in visualConstructor.allMatches(line)) {
-    if (_hasMeaningfulNumericLiteral(line.substring(match.start))) {
-      return true;
-    }
-  }
-  return false;
-}
-
 const _dartUiColorChecker = TypeChecker.fromUrl('dart:ui#Color');
 const _rawColorPaletteChecker = TypeChecker.any([
   TypeChecker.fromName('Colors', packageName: 'flutter'),
@@ -52,8 +40,9 @@ const _iconChecker = TypeChecker.fromName('Icon', packageName: 'flutter');
 const _borderSideChecker = TypeChecker.fromName('BorderSide', packageName: 'flutter');
 const _textStyleChecker = TypeChecker.fromName('TextStyle', packageName: 'flutter');
 
-/// Lines holding resolved raw colors, icon sizes, font sizes, or border widths.
-Set<int> _resolvedRawStyleTokenLines(SourceScannerContext context) {
+/// Lines holding raw spacing, radius, or size literals, or resolved raw
+/// colors, icon sizes, font sizes, or border widths.
+Set<int> _rawStyleTokenLines(SourceScannerContext context) {
   final visitor = _RawStyleTokenVisitor();
   context.unit.accept(visitor);
   return {
@@ -66,6 +55,7 @@ final class _RawStyleTokenVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    _addGeometryLiterals(node.constructorName.type.name.lexeme, node.argumentList);
     final owner = node.constructorName.element?.enclosingElement;
     if (owner != null) {
       final rawArgument = switch (owner) {
@@ -88,6 +78,13 @@ final class _RawStyleTokenVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
+    // Unresolved `EdgeInsets.all(8)` and `SizedBox(height: 8)` stay invocations.
+    final typeName = switch (node.realTarget) {
+      null => node.methodName.name,
+      SimpleIdentifier(:final name) => name,
+      _ => null,
+    };
+    if (typeName != null) _addGeometryLiterals(typeName, node.argumentList);
     final targetType = node.realTarget?.staticType;
     if (node.methodName.name == 'copyWith' &&
         targetType != null &&
@@ -107,7 +104,50 @@ final class _RawStyleTokenVisitor extends RecursiveAstVisitor<void> {
     }
     super.visitSimpleIdentifier(node);
   }
+
+  /// Non-zero numeric literals that flow into a spacing, radius, or size
+  /// constructor's arguments.
+  void _addGeometryLiterals(String typeName, ArgumentList arguments) {
+    if (!_geometryTypeNames.contains(typeName)) return;
+    for (final argument in arguments.arguments) {
+      if (argument is NamedArgument) {
+        _addStyleValueLiterals(argument.argumentExpression);
+      } else if (argument is Expression) {
+        _addStyleValueLiterals(argument);
+      }
+    }
+  }
+
+  /// Walks only the parts of [expression] that become the style value: not
+  /// conditions, arithmetic right operands (`height / 2`), nested calls, or
+  /// closures.
+  void _addStyleValueLiterals(Expression expression) {
+    switch (expression) {
+      case ParenthesizedExpression(:final expression):
+        _addStyleValueLiterals(expression);
+      case PrefixExpression(:final operator, :final operand) when operator.lexeme == '-':
+        _addStyleValueLiterals(operand);
+      case ConditionalExpression(:final thenExpression, :final elseExpression):
+        _addStyleValueLiterals(thenExpression);
+        _addStyleValueLiterals(elseExpression);
+      case BinaryExpression(:final operator, :final leftOperand, :final rightOperand):
+        if (_arithmeticOperators.contains(operator.lexeme)) {
+          _addStyleValueLiterals(leftOperand);
+        } else if (operator.lexeme == '??') {
+          _addStyleValueLiterals(leftOperand);
+          _addStyleValueLiterals(rightOperand);
+        }
+      case IntegerLiteral(:final value) when value != null && value != 0:
+      case DoubleLiteral(:final value) when value != 0:
+        offsets.add(expression.offset);
+      default:
+        break;
+    }
+  }
 }
+
+const _geometryTypeNames = {'EdgeInsets', 'BorderRadius', 'Radius', 'SizedBox'};
+const _arithmeticOperators = {'+', '-', '*', '/', '~/', '%'};
 
 /// A non-zero numeric literal passed as [name], optionally negated.
 Expression? _rawNumericArgument(ArgumentList arguments, String name) {
@@ -121,23 +161,6 @@ Expression? _rawNumericArgument(ArgumentList arguments, String name) {
     _ => null,
   };
   return value == null || value == 0 ? null : argument;
-}
-
-bool _hasMeaningfulNumericLiteral(String line) {
-  final numericLiteral = RegExp(r'(?<![A-Za-z_])(?:\d+(?:\.\d+)?|\.\d+)');
-  for (final match in numericLiteral.allMatches(line)) {
-    final literal = match.group(0);
-    if (literal == null) continue;
-
-    final value = double.tryParse(literal);
-    if (value == null || value == 0) continue;
-
-    final previous = _previousNonWhitespace(line, match.start);
-    if (previous != null && '+-*/'.contains(previous)) continue;
-
-    return true;
-  }
-  return false;
 }
 
 ({int lineIndex, int column}) _lineColumnForOffset(SourceScannerSource source, int offset) {
@@ -206,14 +229,6 @@ bool _isRawStringLiteralText(SourceScannerContext context, int offset) {
     return prefixIndex >= 0 && (line[prefixIndex] == 'r' || line[prefixIndex] == 'R');
   }
   return false;
-}
-
-String? _previousNonWhitespace(String text, int beforeIndex) {
-  for (var i = beforeIndex - 1; i >= 0; i--) {
-    final char = text[i];
-    if (char.trim().isNotEmpty) return char;
-  }
-  return null;
 }
 
 final _widgetSurface = RegExp(

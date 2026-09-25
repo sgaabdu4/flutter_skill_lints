@@ -454,6 +454,52 @@ class EdgeInsets {
 final padding = EdgeInsets.only(right: i < labels.length - 1 ? DesignTokens.spacingLg : 0);
 ''');
   }
+
+  Future<void> test_allowsTokenNamesEndingInDigits() async {
+    await assertAllows('''
+abstract final class Spacing {
+  static const s8 = 8.0;
+  static const s24 = 24.0;
+}
+
+class EdgeInsets {
+  const EdgeInsets.all(double value);
+}
+
+EdgeInsets padding(bool isExpanded) => EdgeInsets.all(isExpanded ? Spacing.s24 : Spacing.s8);
+''');
+  }
+
+  Future<void> test_allowsLiteralsOutsideTheStyleValue() async {
+    await assertAllows('''
+abstract final class Spacing {
+  static const s8 = 8.0;
+  static const s24 = 24.0;
+}
+
+class EdgeInsets {
+  const EdgeInsets.all(double value);
+}
+
+EdgeInsets padding(int count) => EdgeInsets.all(count > 1 ? Spacing.s24 : Spacing.s8);
+final spacer = SizedBox(height: Spacing.s8, child: Text('x', maxLines: 2));
+''');
+  }
+
+  Future<void> test_reportsRawLiteralOnWrappedArgumentLine() async {
+    final analyzedSource = _analyzedSource('''
+class EdgeInsets {
+  const EdgeInsets.symmetric({double? horizontal});
+}
+
+final padding = EdgeInsets.symmetric(
+  horizontal: 16,
+);
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'horizontal: 16', ruleName, lineStart: true),
+    ]);
+  }
 }
 
 @reflectiveTest

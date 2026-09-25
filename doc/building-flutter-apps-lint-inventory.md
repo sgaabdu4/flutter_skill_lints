@@ -119,6 +119,7 @@ notifier_local_dependency_cache
 notifier_param_requires_value_object
 notifier_persistence_no_debounce
 notifier_stored_ref_field
+notifier_timer_without_on_dispose
 notifier_watch_method
 notifier_zero_value_save_no_guard
 nullable_collection_type
@@ -190,12 +191,15 @@ style_raw_text_style
 style_raw_token
 sync_save_all_no_dirty_guard
 test_create_container
+test_e2e_blind_sleep
 test_first_match_finder
 test_inline_value_key
 test_mock_concrete
+test_notifier_override
 test_provider_container
 test_pump_and_settle
 test_tap_at
+test_text_label_selector
 test_uncontrolled_scope
 text_field_on_changed_no_debounce
 typed_id_raw_id

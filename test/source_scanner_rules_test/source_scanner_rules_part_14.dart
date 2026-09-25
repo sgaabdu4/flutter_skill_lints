@@ -168,6 +168,12 @@ class TimerControls extends ConsumerWidget {
 @reflectiveTest
 final class DialogButtonPopThenStateMutationTest extends _DialogRuleTest {
   @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'dialog_button_pop_then_state_mutation';
   @override
   String get needle => 'ref.read(formProvider.notifier).reset()';
@@ -222,6 +228,61 @@ class DetailScreen extends ConsumerWidget {
     Navigator.of(context).pop();
     ref.read(formProvider.notifier).reset();
   }
+}
+''');
+  }
+
+  Future<void> test_reportsSecondPopAfterRootNavigatorPop() async {
+    const source = r'''
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class ConfirmDialog extends Widget {
+  Future<void> onConfirm(BuildContext context, Future<bool> save) async {
+    final ok = await save;
+    Navigator.of(context, rootNavigator: true).pop();
+    if (ok) context.pop();
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'context.pop();', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsTypedRoutePushAfterSheetPop() async {
+    const source = r'''
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class CreateExerciseRoute extends GoRouteData {
+  const CreateExerciseRoute();
+}
+
+class MenuSheet extends Widget {
+  Future<void> onCreateTapped(BuildContext context) async {
+    Navigator.of(context).pop();
+    await const CreateExerciseRoute().push<String>(context);
+  }
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: true);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'const CreateExerciseRoute().push', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSeparateButtonPopsWithResults() async {
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+
+enum CreateChoice { exercise }
+
+class ChoiceSheet extends Widget {
+  void Function() cancel(BuildContext context) => () => Navigator.of(context).pop();
+  void Function() confirm(BuildContext context) =>
+      () => Navigator.of(context).pop(CreateChoice.exercise);
 }
 ''');
   }
@@ -610,34 +671,70 @@ abstract class _RuntimeBugRuleTest extends _SourceRuleTest {
 @reflectiveTest
 final class ModalHelperRequiresRouteSettingsTest extends _DialogRuleTest {
   @override
+  void setUp() {
+    _addTestingNavigationPackages();
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'modal_helper_requires_route_settings';
   @override
   String get needle => 'showDialog<T>(';
   @override
   String get source => r'''
-Future<T?> openConfirm<T>(Object context) => showDialog<T>(
+import 'package:flutter/material.dart';
+
+Future<T?> openConfirm<T>(BuildContext context) => showDialog<T>(
   context: context,
-  builder: (_) => Object(),
+  builder: (_) => Widget(),
 );
 ''';
 
   Future<void> test_allowsWithRouteSettings() async {
     await assertAllows(r'''
-Future<T?> openConfirm<T>(Object context) => showDialog<T>(
+import 'package:flutter/material.dart';
+
+Future<T?> openConfirm<T>(BuildContext context) => showDialog<T>(
   context: context,
-  routeSettings: const Object(),
-  builder: (_) => Object(),
+  routeSettings: const RouteSettings(name: 'confirm'),
+  builder: (_) => Widget(),
 );
 ''');
   }
 
   Future<void> test_allowsSheetWithRouteSettings() async {
     await assertAllows(r'''
-Future<T?> openSheet<T>(Object context) => showModalBottomSheet<T>(
+import 'package:flutter/material.dart';
+
+Future<T?> openSheet<T>(BuildContext context) => showModalBottomSheet<T>(
   context: context,
-  routeSettings: const Object(),
-  builder: (_) => Object(),
+  routeSettings: const RouteSettings(name: 'confirm'),
+  builder: (_) => Widget(),
 );
+''');
+  }
+
+  Future<void> test_allowsSkillShowAppSheetHelperAndCallers() async {
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+
+Future<T?> showAppSheet<T>({
+  required BuildContext context,
+  required String routeName,
+  required WidgetBuilder builder,
+}) {
+  return showModalBottomSheet<T>(
+    context: context,
+    routeSettings: RouteSettings(name: routeName),
+    builder: builder,
+  );
+}
+
+typedef WidgetBuilder = Widget Function(BuildContext context);
+
+Future<void> openMenu(BuildContext context) async {
+  await showAppSheet<void>(context: context, routeName: 'menu', builder: (_) => Widget());
+}
 ''');
   }
 }

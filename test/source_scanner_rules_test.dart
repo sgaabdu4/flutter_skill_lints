@@ -151,6 +151,10 @@ void main() {
     defineReflectiveTests(TestTapAtTest);
     defineReflectiveTests(TestInlineValueKeyTest);
     defineReflectiveTests(TestFirstMatchFinderTest);
+    defineReflectiveTests(TestNotifierOverrideTest);
+    defineReflectiveTests(TestE2eBlindSleepTest);
+    defineReflectiveTests(TestTextLabelSelectorTest);
+    defineReflectiveTests(NotifierTimerWithoutOnDisposeTest);
     defineReflectiveTests(DomainEmptyStringSentinelTest);
     defineReflectiveTests(VoPublicRawConstructorTest);
     defineReflectiveTests(DomainEntityPrimitiveFactoryTest);
@@ -318,6 +322,148 @@ base class Preview {
 
 abstract base class MultiPreview {
   const MultiPreview();
+}
+''');
+  }
+
+  /// Opt-in stubs for rules that resolve Flutter, flutter_test, mocktail,
+  /// riverpod and go_router elements.
+  void _addTestingNavigationPackages() {
+    newPackage('flutter')
+      ..addFile('lib/foundation.dart', r'''
+abstract class Key {
+  const factory Key(String value) = ValueKey<String>;
+  const Key.empty();
+}
+class ValueKey<T> extends Key {
+  const ValueKey(this.value) : super.empty();
+  final T value;
+}
+''')
+      ..addFile('lib/material.dart', r'''
+export 'foundation.dart';
+export 'widgets.dart';
+import 'widgets.dart';
+class RouteSettings {
+  const RouteSettings({this.name});
+  final String? name;
+}
+class NavigatorState {
+  bool canPop() => true;
+  void pop<T extends Object?>([T? result]) {}
+  Future<bool> maybePop<T extends Object?>([T? result]) async => true;
+  Future<T?> push<T extends Object?>(Object route) async => null;
+}
+class Navigator {
+  static NavigatorState of(BuildContext context, {bool rootNavigator = false}) => NavigatorState();
+  static NavigatorState? maybeOf(BuildContext context, {bool rootNavigator = false}) => null;
+  static void pop<T extends Object?>(BuildContext context, [T? result]) {}
+}
+class GlobalKey<T extends Object> {
+  GlobalKey();
+  BuildContext? get currentContext => null;
+  T? get currentState => null;
+}
+Future<T?> showDialog<T>({
+  required BuildContext context,
+  required Widget Function(BuildContext) builder,
+  bool barrierDismissible = true,
+  RouteSettings? routeSettings,
+}) async => null;
+Future<T?> showModalBottomSheet<T>({
+  required BuildContext context,
+  required Widget Function(BuildContext) builder,
+  RouteSettings? routeSettings,
+}) async => null;
+''');
+    newPackage('flutter_test').addFile('lib/flutter_test.dart', r'''
+import 'package:flutter/foundation.dart';
+class FinderBase<T> {
+  FinderBase<T> get first => this;
+}
+class Finder extends FinderBase<Object> {}
+class CommonFinders {
+  const CommonFinders();
+  Finder text(String text) => Finder();
+  Finder textContaining(Pattern pattern) => Finder();
+  Finder widgetWithText(Type widgetType, String text) => Finder();
+  Finder byType(Type type) => Finder();
+  Finder byKey(Key key) => Finder();
+  Finder descendant({required Finder of, required Finder matching}) => Finder();
+}
+const find = CommonFinders();
+class WidgetController {
+  Future<void> tap(FinderBase<Object> finder) async {}
+  Future<void> longPress(FinderBase<Object> finder) async {}
+  Future<void> drag(FinderBase<Object> finder, Object offset) async {}
+  Future<void> enterText(FinderBase<Object> finder, String text) async {}
+}
+class WidgetTester extends WidgetController {
+  Future<void> pump([Duration? duration]) async {}
+}
+const Object findsOneWidget = Object();
+void expect(Object? actual, Object? matcher) {}
+void test(String description, Object? Function() body) {}
+void testWidgets(String description, Future<void> Function(WidgetTester) callback) {}
+''');
+    newPackage('test_api').addFile('lib/fake.dart', 'abstract class Fake {}');
+    newPackage('mocktail').addFile('lib/mocktail.dart', r'''
+export 'package:test_api/fake.dart' show Fake;
+class Mock {
+  dynamic noSuchMethod(Invocation invocation) => null;
+}
+''');
+    newPackage('riverpod').addFile('lib/riverpod.dart', r'''
+class Ref {
+  void onDispose(void Function() callback) {}
+}
+class Override {}
+abstract class AnyNotifier<StateT, ValueT> {
+  Ref get ref => Ref();
+}
+abstract class Notifier<StateT> extends AnyNotifier<StateT, StateT> {
+  StateT build();
+}
+abstract class AsyncNotifier<ValueT> extends AnyNotifier<Object?, ValueT> {
+  Future<ValueT> build();
+}
+class NotifierProvider<NotifierT extends AnyNotifier<StateT, StateT>, StateT> {
+  NotifierProvider(NotifierT Function() create);
+  Override overrideWith(NotifierT Function() create) => Override();
+  Override overrideWithBuild(StateT Function(Ref ref, NotifierT notifier) build) => Override();
+  Override overrideWithValue(StateT value) => Override();
+}
+class NotifierProviderFamily<NotifierT extends AnyNotifier<StateT, StateT>, StateT, ArgT> {
+  Override overrideWith2(NotifierT Function(ArgT arg) create) => Override();
+}
+class Provider<ValueT> {
+  Provider(ValueT Function(Ref ref) create);
+  Override overrideWith(ValueT Function(Ref ref) create) => Override();
+  Override overrideWithValue(ValueT value) => Override();
+}
+''');
+    newPackage('go_router').addFile('lib/go_router.dart', r'''
+import 'package:flutter/widgets.dart';
+class GoRouter {
+  static GoRouter of(BuildContext context) => GoRouter();
+  void go(String location, {Object? extra}) {}
+  Future<T?> push<T extends Object?>(String location, {Object? extra}) async => null;
+}
+abstract class GoRouteData {
+  const GoRouteData();
+  String get location => '';
+  void go(BuildContext context) {}
+  Future<T?> push<T>(BuildContext context) async => null;
+}
+class StatefulNavigationShell {
+  int get currentIndex => 0;
+  void goBranch(int index, {bool initialLocation = false}) {}
+}
+extension GoRouterHelper on BuildContext {
+  bool canPop() => true;
+  void pop<T extends Object?>([T? result]) {}
+  void go(String location, {Object? extra}) {}
+  Future<T?> push<T extends Object?>(String location, {Object? extra}) async => null;
 }
 ''');
   }

@@ -68,6 +68,11 @@ final class ScannerRuleReporter {
     final lineIndex = context.source.lineOffsets.lastIndexWhere((start) => start <= offset);
     report(context, lineIndex, offset - context.source.lineOffsets[lineIndex]);
   }
+
+  void reportNode(SourceScannerContext context, AstNode node) {
+    final location = context.unit.lineInfo.getLocation(node.offset);
+    report(context, location.lineNumber - 1, location.columnNumber - 1);
+  }
 }
 
 String sourceClassSignature(SourceScannerContext context, ScannerClassSpan classSpan) {
@@ -239,14 +244,6 @@ final class SourceScannerContext {
 
   bool isRedirectWatch(int lineIndex) =>
       source.masked[lineIndex].contains('ref.watch(') && near(lineIndex, 'redirect:', 12);
-
-  bool isRedirectLoadingBounce(int lineIndex, String code) {
-    if (!near(lineIndex, 'redirect:', 12)) return false;
-    if (!RegExp(r'''return\s+['"][^'"]*(?:splash|loading|home|/)''').hasMatch(code)) {
-      return false;
-    }
-    return near(lineIndex, 'isLoading', 8) || near(lineIndex, 'loading', 8);
-  }
 
   int? initStateReadColumn(int lineIndex) => _immediateInitStateReadColumn(this, lineIndex);
 

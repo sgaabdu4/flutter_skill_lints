@@ -15,6 +15,7 @@ final class MissingTestAssertion extends MethodInvocationRule {
     'missing_test_assertion',
     'Add an assertion to this test.',
     correctionMessage: 'Call expect(), expectLater(), or fail() so the test verifies behavior.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   MissingTestAssertion()

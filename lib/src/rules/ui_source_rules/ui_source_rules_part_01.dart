@@ -15,9 +15,9 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     scan: (reporter, context) {
       if (context.isThemeDefFile || context.isTestFile) return;
 
-      final rawLines = _resolvedRawStyleTokenLines(context);
+      final rawLines = _rawStyleTokenLines(context);
       for (var i = 0; i < context.source.length; i++) {
-        if (rawLines.contains(i) || _hasRawStyleToken(context.source.masked[i])) {
+        if (rawLines.contains(i)) {
           reporter.report(context, i, 0);
         }
       }

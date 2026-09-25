@@ -2,10 +2,10 @@
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 230 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 238 `building-flutter-apps` diagnostic codes.
-- `lib/src/additional_lints/rules/**`: 276 additional diagnostics.
-- Total unique diagnostics: 512.
+- `lib/src/rules/**`: 229 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 237 `building-flutter-apps` diagnostic codes.
+- `lib/src/additional_lints/rules/**`: 274 additional diagnostics.
+- Total unique diagnostics: 509.
 
 ## Full Rule Inventory
 
@@ -77,9 +77,11 @@ These rules report as `ERROR` and follow `state-management-lifecycle.md`,
 - `notifier_ensure_deps` accepts a direct resolved `ref.read(...)` for a
   dependency. `require_atomic_async_updates` accepts a resolved `!ref.mounted`
   guard.
-- `arch_datasource_try_catch` flags only a trailing datasource catch clause
-  whose body is only `rethrow`. `data_log_rethrow` flags data-layer catches whose
-  body is only reporting calls followed by `rethrow`. A reporting call is a
+- `avoid_only_rethrow` owns rethrow-only catches, datasources included: it
+  flags only the last catch clause whose body is only `rethrow`, because an
+  earlier one keeps its error type out of a later catch. `data_log_rethrow`
+  flags data-layer catches whose body is only reporting calls followed by
+  `rethrow`. A reporting call is a
   resolved `print` (`dart:core`), `log` (`dart:developer`) or Flutter
   `debugPrint`, or any call that receives the caught error or stack trace.
   Translation, rollback and local-first recovery catches stay allowed, and the
@@ -130,7 +132,7 @@ Core skill rules already covered before this pass:
 - Architecture: `arch_domain_import`, `arch_storage_sdk_import`, `arch_domain_serialization`,
   `arch_interface_contract`, `arch_concrete_dependency`,
   `arch_repository_inline_entity_mapping`,
-  `arch_datasource_try_catch`, `arch_widget_path`, `atomic_provider_access`,
+  `arch_widget_path`, `atomic_provider_access`,
   `atomic_page_consumer_widget`, `typed_id_raw_id`, `records_map_return`, `avoid_object_map_cast`,
   `vo_public_raw_constructor`, `domain_entity_primitive_factory`,
   `domain_raw_required_string`, `domain_unit_primitive`,
@@ -203,7 +205,7 @@ hover description and correction text.
 | --- | --- |
 | `analysis-options.md` | `cfg_analysis_options_canonical`, `cfg_strict_analysis`, `cfg_required_lints`, `cfg_generated_exclude`, `cfg_prohibited_lint_plugins`, `avoid_flutter_skill_lint_suppression` |
 | `analysis_options.yaml` | Canonical include/plugins/analyzer/linter block; duplicate checks leave `flutter_lints` and `riverpod_lint` owned rules to those packages |
-| `architecture.md` | `arch_domain_import`, `arch_storage_sdk_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_repository_generated_extends`, `arch_concrete_dependency`, `arch_datasource_try_catch`, `arch_widget_path`, `arch_model_missing_to_entity`, `arch_repository_inline_entity_mapping`, `arch_model_extends_entity`, `atomic_provider_access`, `avoid_object_map_cast`, `avoid_inline_error_codes`, `avoid_local_contract_key_constants`, runtime boundary for dual persistence owners |
+| `architecture.md` | `arch_domain_import`, `arch_storage_sdk_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_repository_generated_extends`, `arch_concrete_dependency`, `arch_widget_path`, `arch_model_missing_to_entity`, `arch_repository_inline_entity_mapping`, `arch_model_extends_entity`, `atomic_provider_access`, `avoid_object_map_cast`, `avoid_inline_error_codes`, `avoid_local_contract_key_constants`, runtime boundary for dual persistence owners |
 | `atomic-design.md` | `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`, `atomic_provider_access`, `atomic_page_consumer_widget`, `arch_widget_path`, `widget_material_boundary`, runtime boundary for cross-feature widget promotion |
 | `common-patterns.md` | `router_string_nav`, `router_gorouter_of`, `router_untyped_navigator_push`, `router_direct_route_call`, `router_raw_route_definition`, `router_modal_local_helpers`, `router_container_navigation_escape`, `router_context_navigation_extension`, `router_navigation_wrapper_api`, `router_pop_then_push`, `pop_fallback_helper_must_check_navigator_stack` (mounted + root/local Navigator fallback), `router_redirect_watch`, `router_redirect_loading_bounce`, `router_splash_waits_for_initial_sync`, `router_complex_extra`, `router_impure_redirect`, `router_shell_tab_push`, `guard_context_pop`, `use_context_is_current_modal_route`, `avoid_route_param_throw_in_build`, `state_broad_invalidation`, `widget_local_mutation_flag`, `storage_clear_preserves_migration_state`, runtime boundary for UX-specific debounce duration |
 | `dart-mcp-e2e-testing.md` | `cfg_e2e_entrypoint`, `avoid_flutter_host_driver_imports`, `test_inline_value_key`, `test_tap_at`, `test_first_match_finder`, `riverpod_notifier_override_with_value`, `test_e2e_blind_sleep`, runtime boundary for real device, logs, source-of-truth, cleanup, and multi-actor proof |
@@ -224,6 +226,44 @@ hover description and correction text.
 | `state-management.md` | `use_ref_mounted_after_await`, `use_context_mounted_after_await`, `async_context_mounted_style`, `avoid_mounted_check_in_finally`, `avoid_sync_notifier_state_read`, `avoid_silent_repository_null_return`, `notifier_ensure_deps`, `notifier_watch_method`, `notifier_stored_ref_field`, `service_provider_watch_dependency`, `riverpod_event_counter_signal_forbidden`, `widget_awaits_notifier_result`, `widget_local_mutation_flag`, `state_empty_string_sentinel`, `state_bool_string_sentinel`, `state_broad_invalidation`, `state_freezed_nullable_error`, runtime boundary for source-of-truth freshness |
 | `testing.md` | `cfg_e2e_entrypoint`, `test_provider_container`, `test_uncontrolled_scope`, `test_create_container`, `test_mock_concrete`, `test_pump_and_settle`, `test_tap_at`, `test_inline_value_key`, `test_first_match_finder`, `test_notifier_override`, `test_text_label_selector`, runtime boundary for event-contract and cross-runtime drift proof |
 | `widget-previews.md` | `widget_preview_import_leak`, `widget_preview_platform_dependency` (dart:io, platform channels, Hive, Firebase, Dio, http; arbitrary native plugins are a runtime boundary), `widget_preview_screen` |
+
+## Per-Code Skill Mapping
+
+These registered skill codes were missing from this document before the final
+sweep. Each row cites the skill reference that backs the rule, or records that
+the skill has no backing sentence. Codes below error severity are listed in
+`_nonErrorSkillDiagnostics` in `test/plugin_registration_test.dart`.
+
+| Code | Skill reference | Backing text |
+| --- | --- | --- |
+| `ad_hoc_id_index_lookup` | `extensions/collections-helpers.md` | Named in the collection-helpers lint list |
+| `app_shell_bootstrap_side_effects` | `common-patterns.md` | Rule 13: MUST keep the app shell declarative |
+| `atom_widget_layer_dependency` | `atomic-design.md` | Hierarchy: atoms are the lowest widget layer |
+| `avoid_any_version` | `core-stack.md` | Package table pins caret versions; project-config drift check |
+| `avoid_dynamic_except_json_maps` | `analysis-options.md` | Type-safety profile; no MUST/NEVER, stays INFO |
+| `bare_state_mounted_forbidden` | `common-patterns.md`, `SKILL.md` | Rule 11: never swap to `mounted`; T0 checklist: no bare `mounted` |
+| `build_calls_mutating_instance_method` | `performance.md`, `common-patterns/modals-navigation.md` | Named in both lint lists |
+| `collection_getter_allocates_each_access` | `performance.md`, `common-patterns/debounce-gate-batch.md` | Rule 14: NEVER allocate collections in getters used from `build()` |
+| `domain_empty_string_sentinel` | `value-objects.md` | Do not use `''` as a missing-value sentinel in domain code |
+| `expando_derived_cache_forbidden` | `performance.md` | Rules 6 and 14: no top-level/global `Expando` side tables |
+| `freezed_required_value_class` | `freezed-sealed.md`, `hive-persistence.md` | Critical rule R7: immutable state/entities use sealed Freezed |
+| `full_collection_load_in_loop` | `common-patterns/debounce-gate-batch.md` | Expose a batch loader; no MUST/NEVER, stays WARNING |
+| `implicit_null_fallback` | `value-objects.md` | Nullability section; the skill never mandates this check, stays WARNING |
+| `linear_id_lookup_in_hot_path` | `performance.md`, `common-patterns/debounce-gate-batch.md` | Rule 15: NEVER repeat id lookups in hot paths |
+| `modal_high_frequency_watch_not_leaf` | `performance.md`, `common-patterns/modals-navigation.md` | Rule 13: NEVER watch ticking fields in a broad modal parent |
+| `nested_linear_lookup_by_id` | `performance.md`, `extensions/collections-helpers.md` | Rule 15: pre-index by id with `Map` |
+| `notifier_async_init_stale_state_write` | `SKILL.md` | T1 checklist: long-running sync/auth/import guards stale writes |
+| `nullable_collection_type` | `value-objects.md`, `SKILL.md` | No items: non-null collection default; critical rule R5 |
+| `prefer_publish_to_none` | none | Project-config drift check; the skill has no `publish_to` sentence |
+| `riverpod_select_identity_forbidden` | `performance.md` | Read-first 1: never use `.select((value) => value)` |
+| `riverpod_widget_provider_arg_wrapper` | `performance.md` | Rule 9: no provider-family arg wrappers in widget state |
+| `save_all_full_collection_after_subset_mutation` | `performance.md`, `common-patterns/debounce-gate-batch.md` | Rule 16: NEVER persist full collections after a subset change |
+| `unguarded_fire_and_forget_platform_command` | `services-and-singletons.md` | Fire-and-forget rule 3: catch internally; no MUST/NEVER, stays WARNING |
+| `widget_actions_namespace_boundary` | `common-patterns.md` | Rule 14: NEVER put controller logic in widgets |
+| `widget_derived_collection_logic` | `performance.md`, `common-patterns.md` | Performance rule 8 and common-patterns rule 14 |
+| `widget_infra_dependency_boundary` | `presentation-widgets.md`, `SKILL.md` | Critical rule R8: screens/routes/notifiers own infrastructure |
+| `widget_top_level_function_boundary` | `performance.md`, `common-patterns.md` | Performance rule 7: NEVER declare top-level widget helpers |
+| `widget_try_catch_boundary` | `common-patterns.md` | Rule 14: no widget `try/catch` |
 
 ## Added In This Pass
 

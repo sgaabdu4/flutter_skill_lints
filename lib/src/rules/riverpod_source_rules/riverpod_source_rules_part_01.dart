@@ -275,23 +275,11 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     ),
     description: 'Flags broad ref.watch calls that do not use select so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      // Scalar values already form an atomic rebuild boundary.
-      final scalarWatches = _ScalarWatchVisitor();
-      context.unit.accept(scalarWatches);
-      // Generated providers legitimately watch dependencies in build().
-      for (final method in context.methods.where((m) => m.name == 'build')) {
-        if (context.classes.any(
-          (span) =>
-              span.start <= method.start &&
-              span.end >= method.end &&
-              _hasRiverpodAnnotation(context, span),
-        )) {
-          continue;
-        }
-        for (var i = method.start; i <= method.end; i++) {
-          final column = _broadRefWatchColumn(context, i, method.end, scalarWatches.offsets);
-          if (column != null) reporter.report(context, i, column);
-        }
+      final watches = _BroadBuildWatchVisitor();
+      context.unit.accept(watches);
+      for (final offset in watches.offsets) {
+        final location = context.unit.lineInfo.getLocation(offset);
+        reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
       }
     },
   ),

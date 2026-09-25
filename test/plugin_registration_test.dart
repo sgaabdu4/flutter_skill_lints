@@ -342,6 +342,10 @@ void main() {
       // signatures (dart-patterns-records.md:61-80) contradict them.
       'avoid_declaring_call_method',
       'move_records_to_typedefs',
+      // Duplicates use_dedicated_media_query_methods: one read reported twice.
+      'prefer_dedicated_media_query_methods',
+      // Duplicates avoid_null_bang, which core-stack.md:60 names.
+      'avoid_non_null_assertion',
     ]) {
       expect(paths, isNot(contains(forbidden)));
     }
@@ -362,6 +366,27 @@ void main() {
     }
   });
 
+  test('skill MUST and NEVER sweep diagnostics report at error severity', () {
+    for (final name in _sweepSkillErrorDiagnostics) {
+      final rule = flutterSkillRules.singleWhere((rule) => rule.name == name);
+      expect(
+        rule.diagnosticCodes.map((code) => code.severity),
+        everyElement(DiagnosticSeverity.ERROR),
+        reason: name,
+      );
+    }
+  });
+
+  test('every skill diagnostic outside the non-error allowlist is an error', () {
+    final nonError = <String>[
+      for (final rule in flutterSkillRules)
+        for (final code in rule.diagnosticCodes)
+          if (code.severity != DiagnosticSeverity.ERROR) code.lowerCaseName,
+    ];
+
+    expect(nonError.where((name) => !_nonErrorSkillDiagnostics.contains(name)), isEmpty);
+  });
+
   test('appends Flutter skill rules after additional analyzer rules', () {
     final registry = _RecordingPluginRegistry('flutter_skill_lints');
     final plugin = FlutterSkillLintsPlugin();
@@ -380,9 +405,9 @@ void main() {
   });
 }
 
-const _enabledFlutterSkillRuleCount = 230;
-const _enabledFlutterSkillDiagnosticCount = 238;
-const _enabledAdditionalRuleCount = 276;
+const _enabledFlutterSkillRuleCount = 229;
+const _enabledFlutterSkillDiagnosticCount = 237;
+const _enabledAdditionalRuleCount = 274;
 
 const _modelSkillErrorDiagnostics = [
   'use_sealed_freezed_classes',
@@ -406,6 +431,38 @@ const _modelSkillErrorDiagnostics = [
   'ad_hoc_intl_format',
   'inline_num_clamp',
   'record_use_outside_ffi',
+];
+
+/// Skill codes whose MUST/NEVER text was confirmed in the final severity sweep.
+const _sweepSkillErrorDiagnostics = [
+  // performance.md: "Never override `operator ==` on Widget".
+  'flutter_widget_operator_equals',
+  // common-patterns.md rule 7: "MUST guard page back with a typed fallback route".
+  'guard_context_pop',
+  // common-patterns.md rule 10: "mutation order MUST be: persist write -> targeted parent sync -> navigate".
+  'state_broad_invalidation',
+];
+
+/// Skill codes that stay below error because no skill MUST/NEVER backs them.
+const _nonErrorSkillDiagnostics = [
+  // No skill text bans `dynamic`; the profile only enables no_dynamic_casts and avoid_dynamic_calls.
+  'avoid_dynamic_except_json_maps',
+  // `_ensureRepository` is only a trigger signal; no MUST/NEVER covers null repository returns.
+  'avoid_silent_repository_null_return',
+  // flutter-optimizations.md: "Use `CustomScrollView`, not `ListView` in `SingleChildScrollView`" (no MUST/NEVER).
+  'avoid_list_in_single_child_scroll_view',
+  // layout-diagnostics.md: "Adapt via LayoutBuilder/MediaQuery.sizeOf, not device type/orientation" (no MUST/NEVER).
+  'avoid_orientation_layout',
+  // flutter-optimizations.md: "Use `borderRadius` on `Container`, not `ClipRRect` wrap" (no MUST/NEVER).
+  'avoid_clip_rrect_container',
+  // Not named by the skill; performance.md rules 15/16 belong to the id-lookup and save-all lints.
+  'full_collection_load_in_loop',
+  // services-and-singletons.md: "The callee catches internally" (no MUST/NEVER); platform commands are unnamed.
+  'unguarded_fire_and_forget_platform_command',
+  // The skill never mandates this fallback check.
+  'implicit_null_fallback',
+  // Severity owned by the acceptance branch; not decided in this sweep.
+  'select_returns_unstable_record_identity',
 ];
 
 Iterable<String> _documentedLintCodes(String text) sync* {

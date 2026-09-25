@@ -814,4 +814,30 @@ Future<void> openMenu(BuildContext context) async {
 }
 ''');
   }
+
+  // context-ui.md:40-52: the skill's BuildContext extension helper and caller.
+  Future<void> test_allowsSkillModalContextExtension() async {
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+
+typedef WidgetBuilder = Widget Function(BuildContext context);
+
+extension ModalContextX on BuildContext {
+  Future<T?> showAppSheet<T>({
+    required String routeName,
+    required WidgetBuilder builder,
+  }) {
+    return showModalBottomSheet<T>(
+      context: this,
+      routeSettings: RouteSettings(name: routeName),
+      builder: builder,
+    );
+  }
+}
+
+Future<void> openMenu(BuildContext context) async {
+  await context.showAppSheet<void>(routeName: 'menu', builder: (_) => Widget());
+}
+''', path: '$testPackageLibPath/core/extensions/context_extensions.dart');
+  }
 }

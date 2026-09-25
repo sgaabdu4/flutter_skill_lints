@@ -565,26 +565,6 @@ bool _registersDisposeCleanup(
   return RegExp(r'\bref\s*\.\s*onDispose\s*\(').hasMatch(body);
 }
 
-int? _broadRefWatchColumn(
-  SourceScannerContext context,
-  int lineIndex,
-  int methodEnd,
-  Set<int> scalarOffsets,
-) {
-  final line = context.source.masked[lineIndex];
-  for (final match in RegExp(r'\bref\s*\.\s*watch\s*\(').allMatches(line)) {
-    final offset = context.source.lineOffsets[lineIndex] + match.start;
-    if (scalarOffsets.contains(offset)) continue;
-    final invocation = _refWatchInvocation(context, lineIndex, methodEnd, match.start);
-    if (!RegExp(r'\.\s*select\s*\(').hasMatch(invocation) &&
-        !RegExp(r'\.\s*notifier\b').hasMatch(invocation) &&
-        !_isProjectionProviderWatch(invocation)) {
-      return match.start;
-    }
-  }
-  return null;
-}
-
 final _eventSignalProviderName = RegExp(
   r'(?:Signal|Signals|Event|Events|Pulse|Pulses|Serial|Serials)Provider$',
 );
@@ -599,73 +579,17 @@ bool _isRiverpodAnnotation(Annotation annotation) {
   return type?.element?.name == 'Riverpod';
 }
 
-bool _hasRiverpodAnnotation(SourceScannerContext context, ScannerClassSpan classSpan) {
-  for (var i = classSpan.start - 1; i >= 0 && i >= classSpan.start - 6; i--) {
-    final line = context.source.masked[i].trim();
-    if (line.isEmpty) continue;
-    if (line.startsWith('@riverpod') || line.startsWith('@Riverpod')) return true;
-    if (!line.startsWith('//')) return false;
-  }
-  return false;
-}
+const _functionalProviderType = TypeChecker.fromName(
+  r'$FunctionalProvider',
+  packageName: 'riverpod',
+);
 
-bool _isProjectionProviderWatch(String invocation) {
-  final providerName = _watchedProviderName(invocation);
-  if (providerName == null) return false;
-  return _isProjectionProviderName(providerName);
-}
-
-String? _watchedProviderName(String invocation) {
-  final match = RegExp(r'\bref\s*\.\s*watch\s*\(\s*([A-Za-z_]\w*Provider)\b')
-      .firstMatch(invocation);
-  return match?.group(1);
-}
-
-bool _isProjectionProviderName(String providerName) {
-  final base = providerName.endsWith('Provider')
-      ? providerName.substring(0, providerName.length - 'Provider'.length)
-      : providerName;
-  final normalized = base.toLowerCase();
-
-  if (normalized.endsWith('byid') ||
-      normalized.endsWith('category') ||
-      normalized.endsWith('categories') ||
-      normalized.endsWith('count') ||
-      normalized.endsWith('data') ||
-      normalized.endsWith('date') ||
-      normalized.endsWith('dates') ||
-      normalized.endsWith('days') ||
-      normalized.endsWith('direction') ||
-      normalized.endsWith('enabled') ||
-      normalized.endsWith('entries') ||
-      normalized.endsWith('entry') ||
-      normalized.endsWith('ids') ||
-      normalized.endsWith('indices') ||
-      normalized.endsWith('map') ||
-      normalized.endsWith('mode') ||
-      normalized.endsWith('name') ||
-      normalized.endsWith('reminder') ||
-      normalized.endsWith('router') ||
-      normalized.endsWith('session') ||
-      normalized.endsWith('sessions') ||
-      normalized.endsWith('share') ||
-      normalized.endsWith('sound') ||
-      normalized.endsWith('summary') ||
-      normalized.endsWith('timer') ||
-      normalized.endsWith('unit') ||
-      normalized.endsWith('value') ||
-      normalized.endsWith('vibration') ||
-      normalized.endsWith('version')) {
-    return true;
-  }
-
-  if (RegExp(
-    r'(?:count|data|dates|days|entries|entry|ids|indices|list|map|sets|summary|value)for[a-z0-9]+$',
-  ).hasMatch(normalized)) {
-    return true;
-  }
-
-  return false;
+/// A watch of a computed (functional) provider, whose whole value is already
+/// the render projection (performance.md:6). Notifier providers hold mutable
+/// state and need `select`.
+bool _isProjectionProviderWatch(Expression argument) {
+  final type = argument.staticType;
+  return type is InterfaceType && _functionalProviderType.isAssignableFromType(type);
 }
 
 List<String> _refWatchInvocations(SourceScannerContext context, int lineIndex, int methodEnd) {

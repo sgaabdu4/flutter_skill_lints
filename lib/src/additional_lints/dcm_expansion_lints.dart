@@ -14,7 +14,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_misused_set
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_misused_wildcard_pattern.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_switch_expressions.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_switches.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_non_null_assertion.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_parameter_aliases.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_single_child_column_or_row.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_slow_collection_methods.dart';
@@ -31,7 +30,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unused_assi
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unused_local_variable.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/consistent_update_render_object.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_correct_static_icon_provider.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_dedicated_media_query_methods.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_extracting_callbacks.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_number_format.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_providing_intl_description.dart';
@@ -57,7 +55,6 @@ void registerDcmExpansionLints(PluginRegistry registry) {
   registry.registerWarningRule(AvoidMisusedWildcardPattern());
   registry.registerWarningRule(AvoidNestedSwitchExpressions());
   registry.registerWarningRule(AvoidNestedSwitches());
-  registry.registerWarningRule(AvoidNonNullAssertion());
   registry.registerWarningRule(AvoidParameterAliases());
   registry.registerWarningRule(AvoidSingleChildColumnOrRow());
   registry.registerWarningRule(AvoidSlowCollectionMethods());
@@ -74,7 +71,6 @@ void registerDcmExpansionLints(PluginRegistry registry) {
   registry.registerWarningRule(AvoidUnusedLocalVariable());
   registry.registerWarningRule(ConsistentUpdateRenderObject());
   registry.registerWarningRule(PreferCorrectStaticIconProvider());
-  registry.registerWarningRule(PreferDedicatedMediaQueryMethods());
   registry.registerWarningRule(PreferExtractingCallbacks());
   registry.registerWarningRule(PreferNumberFormat());
   registry.registerWarningRule(PreferProvidingIntlDescription());

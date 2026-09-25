@@ -11,7 +11,6 @@ ad_hoc_intl_format
 app_shell_bootstrap_side_effects
 appwrite_blocking_function_execution_in_client
 arch_concrete_dependency
-arch_datasource_try_catch
 arch_domain_import
 arch_domain_json_annotation
 arch_domain_serialization
@@ -253,7 +252,6 @@ always_remove_listener
 avoid_accessing_collections_by_constant_index
 avoid_accessing_other_classes_private_members
 avoid_adjacent_strings
-avoid_any_version
 avoid_assigning_notifiers
 avoid_assigning_to_static_field
 avoid_assignments_as_conditions
@@ -364,7 +362,6 @@ avoid_nested_switch_expressions
 avoid_nested_switches
 avoid_nested_try_statements
 avoid_non_empty_constructor_bodies
-avoid_non_null_assertion
 avoid_notifier_constructors
 avoid_nullable_async_or_collection_return_type
 avoid_nullable_async_value_pattern
@@ -471,7 +468,6 @@ prefer_correct_json_casts
 prefer_correct_static_icon_provider
 prefer_correct_test_file_name
 prefer_date_format
-prefer_dedicated_media_query_methods
 prefer_define_hero_tag
 prefer_dot_shorthands
 prefer_enums_by_name
@@ -488,7 +484,6 @@ prefer_padding_over_container
 prefer_private_extension_type_field
 prefer_providing_intl_description
 prefer_providing_intl_examples
-prefer_publish_to_none
 prefer_return_await
 prefer_simpler_patterns_null_check
 prefer_single_setstate

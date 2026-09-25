@@ -40,14 +40,6 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     ),
     description: 'Flags synchronous context.pop followed by push navigation so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      final reportedLines = <int>{};
-      for (var i = 0; i < context.source.length; i++) {
-        final line = context.source.masked[i];
-        if (RegExp(r'\bcontext\s*\.\s*pop\s*\(').hasMatch(line) && context.near(i, '.push', 4)) {
-          reporter.report(context, i, line.indexOf('context'));
-          reportedLines.add(i);
-        }
-      }
       for (final pop in collectNodes<MethodInvocation>(context.unit)) {
         if (!isResolvedNavigationPop(pop)) continue;
         final pushesAfterPop = followingBlockStatements(pop).any(
@@ -55,9 +47,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
             (call) => call.methodName.name.startsWith('push') && isResolvedForwardNavigation(call),
           ),
         );
-        if (!pushesAfterPop) continue;
-        final line = context.unit.lineInfo.getLocation(pop.offset).lineNumber - 1;
-        if (reportedLines.add(line)) reporter.reportNode(context, pop);
+        if (pushesAfterPop) reporter.reportNode(context, pop);
       }
     },
   ),

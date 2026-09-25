@@ -161,7 +161,7 @@ final List<ScannerRule> stateSourceRules = [
       'state_broad_invalidation',
       'Avoid broad invalidation before navigation-critical route changes.',
       correctionMessage: 'Persist, targeted-sync state, then navigate.',
-      severity: DiagnosticSeverity.WARNING,
+      severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags broad invalidation before navigation-critical route changes so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {

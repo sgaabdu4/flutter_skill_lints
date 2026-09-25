@@ -140,10 +140,10 @@ class ProductHomeLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth >= Breakpoints.expanded) {
+        if (constraints.maxWidth >= 840) {
           return const ProductExpandedLayout();
         }
-        if (constraints.maxWidth >= Breakpoints.medium) {
+        if (constraints.maxWidth >= 600) {
           return const ProductMediumLayout();
         }
         return const ProductCompactLayout();

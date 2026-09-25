@@ -126,6 +126,7 @@ part 'hive_adapters.g.dart';
   AdapterSpec<UserModel>(),
   AdapterSpec<OrderModel>(),
   AdapterSpec<OrderItemModel>(),
+  AdapterSpec<OrderStatus>(), // enums work too
 ], firstTypeId: 1, reservedTypeIds: {0})
 void _hiveAdapters() {}
 ```
@@ -196,7 +197,7 @@ hot path. Standard `Hive` fine for typical key/value.
 
 ```dart
 final box = await IsolatedHive.openBox<OrderModel>('orders');
-await box.put(order.id, .fromDomain(order));
+await box.put(order.id, OrderModel.fromDomain(order));
 final all = await box.values; // async — crosses isolate boundary
 ```
 
@@ -229,6 +230,7 @@ sealed class Order with _$Order {
 @GenerateAdapters([
   AdapterSpec<OrderModel>(),
   AdapterSpec<OrderItemModel>(),
+  AdapterSpec<OrderStatus>(),
 ], firstTypeId: 20)
 @freezed
 sealed class OrderModel with _$OrderModel {
@@ -236,20 +238,16 @@ sealed class OrderModel with _$OrderModel {
   const factory OrderModel({
     required String id,
     required List<OrderItemModel> items,
-    required String status, // OrderStatus.name — domain enum stays Hive-free
+    required OrderStatus status,
   }) = _OrderModel;
 
   factory OrderModel.fromDomain(Order o) => OrderModel(
         id: o.id.value,
         items: o.items.map(OrderItemModel.fromDomain).toList(),
-        status: o.status.name,
+        status: o.status,
       );
 
-  Order toDomain() => Order(
-        id: OrderId(id),
-        items: items.map((m) => m.toDomain()).toList(),
-        status: .values.byName(status),
-      );
+  Order toDomain() => Order(id: OrderId(id), items: items.map((m) => m.toDomain()).toList(), status: status);
 }
 ```
 
@@ -302,7 +300,7 @@ class HiveOrderRepository implements IOrderRepository {
 
   @override
   Future<void> save(Order order) =>
-      _datasource.save(.fromDomain(order));
+      _datasource.save(OrderModel.fromDomain(order));
 
   @override
   Order? get(String id) => _datasource.get(id)?.toDomain();
@@ -317,7 +315,7 @@ class HiveOrderRepository implements IOrderRepository {
 
 @Riverpod(keepAlive: true)
 Future<IOrderRepository> orderRepository(Ref ref) async {
-  final datasource = await ref.read(orderLocalDatasourceProvider.future);
+  final datasource = await ref.watch(orderLocalDatasourceProvider.future);
   return HiveOrderRepository(datasource);
 }
 ```
@@ -330,7 +328,7 @@ See [architecture.md](architecture.md) for layer chain, [testing.md](testing.md)
 
 ```dart
 // test/shared/hive_test_helper.dart
-abstract final class HiveTestHelper {
+class HiveTestHelper {
   static Future<Directory> initialize(String testName) async {
     final tempDir = Directory('${Directory.current.path}/test_hive_$testName');
     if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
@@ -400,7 +398,7 @@ sealed class WorkoutSet with _$WorkoutSet {
 
 // /data/mappers/workout_set_mapper.dart
 extension WorkoutSetMapper on WorkoutSetModel {
-  WorkoutSet toEntity() => WorkoutSet(id: WorkoutSetId(id), distance: .fromMeters(distanceMeters), duration: Duration(seconds: durationSeconds));
+  WorkoutSet toEntity() => WorkoutSet(id: WorkoutSetId(id), distance: Distance.fromMeters(distanceMeters), duration: Duration(seconds: durationSeconds));
 }
 extension WorkoutSetToModel on WorkoutSet {
   WorkoutSetModel toModel() => WorkoutSetModel(id: id.value, distanceMeters: distance.inMeters, durationSeconds: duration.inSeconds);

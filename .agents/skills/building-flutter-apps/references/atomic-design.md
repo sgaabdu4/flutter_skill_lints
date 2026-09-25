@@ -63,10 +63,10 @@ abstract final class Radii {
   static const double r16 = 16;
   static const double full = 999;
 
-  static const rounded8 = BorderRadius.all(.circular(r8));
-  static const rounded12 = BorderRadius.all(.circular(r12));
-  static const rounded16 = BorderRadius.all(.circular(r16));
-  static const roundedFull = BorderRadius.all(.circular(full));
+  static const rounded8 = BorderRadius.all(Radius.circular(r8));
+  static const rounded12 = BorderRadius.all(Radius.circular(r12));
+  static const rounded16 = BorderRadius.all(Radius.circular(r16));
+  static const roundedFull = BorderRadius.all(Radius.circular(full));
 }
 ```
 
@@ -91,10 +91,10 @@ Extend Material `TextTheme`:
 // core/theme/app_theme.dart
 ThemeData buildAppTheme() {
   return ThemeData(
-    colorScheme: .fromSeed(seedColor: Colors.indigo),
+    colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
     textTheme: const TextTheme(
-      headlineLarge: TextStyle(fontSize: 32, fontWeight: .bold),
-      titleMedium: TextStyle(fontSize: 16, fontWeight: .w600),
+      headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+      titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       bodyMedium: TextStyle(fontSize: 14),
       labelSmall: TextStyle(fontSize: 11, letterSpacing: 0.5),
     ),
@@ -110,13 +110,9 @@ Use `ColorScheme` from Material 3 via `context.colors`:
 
 ```dart
 final colors = context.colors;
-final l10n = context.l10n;
 Container(
   color: colors.primaryContainer,
-  child: Text(
-    l10n.productsTitle,
-    style: context.textTheme.bodyMedium?.copyWith(color: colors.onPrimaryContainer),
-  ),
+  child: Text('Title', style: TextStyle(color: colors.onPrimaryContainer)),
 )
 ```
 
@@ -236,12 +232,11 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final l10n = context.l10n;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(Spacing.s16),
         child: Column(
-          crossAxisAlignment: .start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
@@ -257,7 +252,7 @@ class StatCard extends StatelessWidget {
             if (trend case final trendValue?) ...[
               const SizedBox(height: Spacing.s4),
               AppBadge(
-                label: trendValue.asSignedPercent(l10n),
+                label: '${trendValue >= 0 ? '+' : ''}${trendValue.toStringAsFixed(1)}%',
                 color: trendValue >= 0 ? SemanticColors.success : SemanticColors.error,
               ),
             ],
@@ -287,22 +282,21 @@ class StatCard extends StatelessWidget {
 class StatsRow extends StatelessWidget {
   const StatsRow({super.key, required this.stats});
 
-  final List<StatViewData> stats;
+  final List<({String label, String value, IconData? icon, double? trend})> stats;
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: [
-        for (final stat in stats)
-          Expanded(
-            child: StatCard(
-              label: stat.label,
-              value: stat.value,
-              icon: stat.icon,
-              trend: stat.trend,
-            ),
-          ),
-      ],
+      children: stats
+          .map((s) => Expanded(
+                child: StatCard(
+                  label: s.label,
+                  value: s.value,
+                  icon: s.icon,
+                  trend: s.trend,
+                ),
+              ))
+          .toList(),
     );
   }
 }
@@ -500,9 +494,9 @@ Every widget MUST read from theme. NEVER raw constants:
 
 ```dart
 // WRONG
-Text('Title', style: TextStyle(fontSize: 16, fontWeight: .bold))
+Text('Title', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
 // RIGHT
-Text(l10n.productsTitle, style: context.textTheme.titleMedium)
+Text('Title', style: context.textTheme.titleMedium)
 
 // WRONG
 Container(color: Color(0xFF1565C0))

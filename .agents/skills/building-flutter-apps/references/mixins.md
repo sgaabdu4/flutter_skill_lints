@@ -63,7 +63,7 @@ mixin ConnectivityMixin {
 class ProductNotifier extends _$ProductNotifier with ConnectivityMixin {
   @override
   ProductState build() {
-    unawaited(.microtask(_load)); // Defer — see notifier-structure.md "Sync notifier init trap"
+    Future.microtask(_load); // Defer — see "Sync Notifier Initialization Trap"
     return const ProductState();
   }
 
@@ -120,11 +120,8 @@ class SaveAllRowsException implements Exception {
   const SaveAllRowsException(this.failures);
   final List<SaveRowResult<Object?>> failures;
   @override
-  String toString() => switch (failures) {
-        [SaveRowResult(:final error?), ...] =>
-          'SaveAllRowsException: ${failures.length} item(s) failed; first=$error',
-        _ => 'SaveAllRowsException: ${failures.length} item(s) failed',
-      };
+  String toString() =>
+      'SaveAllRowsException: ${failures.length} item(s) failed; first=${failures.first.error}';
 }
 
 /// Retries [fn] on transient failures: Appwrite 429/503, [SocketException],

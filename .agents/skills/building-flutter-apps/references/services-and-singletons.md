@@ -36,10 +36,8 @@ Default: boring code. Do not build indirection before the product needs it.
 ```dart
 // Pure helper — no I/O, no SDK ref.
 abstract final class StringCasing {
-  static String snake(String input) =>
-      input.trim().toLowerCase().replaceAll(' ', '_');
-  static String kebab(String input) =>
-      input.trim().toLowerCase().replaceAll(' ', '-');
+  static String camel(String input) => /* ... */;
+  static String snake(String input) => /* ... */;
 }
 ```
 
@@ -48,7 +46,7 @@ small, purpose-specific, and fire-and-forget (`void` / `Future<void>` only).
 
 ```dart
 abstract final class AnalyticsLog {
-  static FirebaseAnalytics get _analytics => .instance;
+  static FirebaseAnalytics get _analytics => FirebaseAnalytics.instance;
 
   static Future<void> event(String name, {Map<String, Object> params = const {}}) async {
     try {
@@ -95,7 +93,7 @@ caller never reads state/data back. Keep the shape boring:
 final class PushTokenRefresh {
   PushTokenRefresh._();
 
-  static final PushTokenRefresh instance = ._();
+  static final PushTokenRefresh instance = PushTokenRefresh._();
 
   Future<void> refresh() async {
     try {
@@ -116,7 +114,7 @@ Allowed alternate shape when a getter reads better:
 final class PushTokenRefresh {
   PushTokenRefresh._();
 
-  static final PushTokenRefresh _instance = ._();
+  static final PushTokenRefresh _instance = PushTokenRefresh._();
   static PushTokenRefresh get instance => _instance;
 
   Future<void> refresh() async { /* fire-and-forget work */ }
@@ -136,13 +134,12 @@ final class PushTokenRefresh {
 ### Testing
 
 Prefer testing callers through a repository/datasource/provider boundary. Tests
-may assert the fire-and-forget method directly with `expectLater(..., completes)`
-to verify it does not throw.
+may `await` the fire-and-forget method directly to verify it does not throw.
 
 ```dart
 void main() {
   test('refresh does not throw', () async {
-    await expectLater(PushTokenRefresh.instance.refresh(), completes);
+    await PushTokenRefresh.instance.refresh();
   });
 }
 ```
@@ -191,11 +188,11 @@ UI await, toast surface, caller reads return value.
 
 ### Testing
 
-Tests assert the future directly with `expectLater(..., completes)`. Do not
-assert against a real Firebase backend in unit/widget tests.
+Tests `await` the future directly. Do not assert against a real Firebase backend
+in unit/widget tests.
 
 ```dart
-await expectLater(trackEvent('sign_in'), completes);
+await trackEvent('sign_in');
 ```
 
 ## Checklist

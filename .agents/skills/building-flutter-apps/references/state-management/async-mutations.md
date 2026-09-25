@@ -22,8 +22,7 @@ Future<void> save() async {
     state = state.copyWith(isSaving: false, successSerial: state.successSerial + 1);
   } catch (error, stackTrace) {
     if (!ref.mounted) return;
-    state = state.copyWith(isSaving: false, error: AppErrorMapper.from(error));
-    Crash.error(error, stackTrace, reason: 'save');
+    state = state.copyWith(isSaving: false, error: AppError.from(error, stackTrace));
   }
 }
 ```
@@ -75,8 +74,7 @@ Future<void> markRead(NotificationId id) async {
     await _reloadFromSourceOfTruth();
   } catch (error, stackTrace) {
     if (!ref.mounted) return;
-    state = previous.copyWith(error: AppErrorMapper.from(error));
-    Crash.error(error, stackTrace, reason: 'markRead');
+    state = previous.copyWith(error: AppError.from(error, stackTrace));
   }
 }
 ```

@@ -25,25 +25,15 @@ TextField(onChanged: (v) {
 
 // DO — Timer cancel-and-restart
 Timer? _debounce;
-
-@override
-void dispose() {
-  _debounce?.cancel();
-  super.dispose();
-}
-
-void _onQueryChanged(String query) {
+TextField(onChanged: (v) {
   _debounce?.cancel();
   _debounce = Timer(const Duration(milliseconds: 150), () {
-    unawaited(ref.read(searchProvider.notifier).search(query));
+    ref.read(searchProvider.notifier).search(v);
   });
-}
-
-TextField(onChanged: _onQueryChanged);
+});
 
 // Slider/RangeSlider — defer terminal effects
 Slider(
-  value: _local,
   onChanged: (v) => setState(() => _local = v),       // local UI only
   onChangeEnd: (v) => ref.read(p.notifier).set(v),    // one notifier call
 );
@@ -56,16 +46,8 @@ Lints: `text_field_on_changed_no_debounce`, `slider_on_changed_no_debounce`, `sc
 Use a cancel-and-restart `Timer` / `Future.delayed` / `Debouncer` to coalesce bursts. Keep foreground persistence debounce <=50ms. A queue or generation token only prevents stale/overlapping writes; it does **not** debounce.
 
 ```dart
-@Riverpod(keepAlive: true)
-class DraftNotifier extends _$DraftNotifier {
+class DraftNotifier extends Notifier {
   Timer? _debounce;
-
-  @override
-  DraftState build() {
-    ref.onDispose(() => _debounce?.cancel());
-    return const DraftState();
-  }
-
   void _persistDraft() {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 50), _save);
@@ -78,14 +60,14 @@ Lints: `notifier_persistence_no_debounce`, `user_visible_duration_too_long`.
 ### Sync push — guard with a dirty list
 
 ```dart
-Future<void> pushItems(String userId, List<Entity> items) async {
+void pushItems(String userId, List<Entity> items) {
   if (items.isEmpty) return;                                // early return
-  await remote.saveAll(userId, items.map(Model.fromEntity).toList());
+  remote.saveAll(userId, items.map(Model.fromEntity).toList());
 }
 
 // or outer dirty check
 if (isDirty) {
-  await remote.saveAll(userId, items.map(Model.fromEntity).toList());
+  remote.saveAll(userId, items.map(Model.fromEntity).toList());
 }
 ```
 
@@ -153,11 +135,11 @@ Map<String, List<Item>> get itemsByGroup {
   }
   return map;
 }
-Item get selectedItem => items.firstWhere((item) => item.id == selectedId);
+final item = items.firstWhere((item) => item.id == itemId);
 
 // DO — cache immutable indexes and use O(1) lookup.
 final itemsById = {for (final item in items) item.id: item};
-Item? get selectedItem => itemsById[selectedId];
+final item = itemsById[itemId];
 ```
 
 Lints: `collection_getter_allocates_each_access`, `linear_id_lookup_in_hot_path`, `nested_linear_lookup_by_id`.
@@ -292,21 +274,11 @@ Lint: `notifier_param_requires_value_object`. See [value-objects.md](../value-ob
 ### Modal helpers — always pass `routeSettings`
 
 ```dart
-// Private method on the calling screen — no top-level UI helpers.
-class OrderScreen extends ConsumerWidget {
-  const OrderScreen({super.key});
-
-  Future<T?> _openConfirm<T>(BuildContext context) => showDialog<T>(
-    context: context,
-    routeSettings: const RouteSettings(name: 'confirm-dialog'),
-    builder: (_) => const ConfirmDialog(),
-  );
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return DeleteButton(onPressed: () => unawaited(_openConfirm<bool>(context)));
-  }
-}
+Future<T?> openConfirm<T>(BuildContext context) => showDialog<T>(
+  context: context,
+  routeSettings: const RouteSettings(name: 'confirm-dialog'),
+  builder: (_) => const ConfirmDialog(),
+);
 ```
 
 Lint: `modal_helper_requires_route_settings`.

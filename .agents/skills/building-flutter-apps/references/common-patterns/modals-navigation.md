@@ -69,10 +69,8 @@ class ConfirmScreenBoundary extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    return AppTextButton(onPressed: () => _onPressed(context, ref), label: l10n.confirmAction);
-  }
+  Widget build(BuildContext context, WidgetRef ref) =>
+      AppTextButton(onPressed: () => _onPressed(context, ref), label: 'Confirm');
 }
 
 class ConfirmDialog extends StatelessWidget {
@@ -80,13 +78,10 @@ class ConfirmDialog extends StatelessWidget {
   final ConfirmSummary summary;
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return AppPrimaryButton(
+  Widget build(BuildContext context) => AppPrimaryButton(
       onPressed: () => Navigator.of(context).pop(true),
-      label: summary.confirmed ? l10n.confirmAction : l10n.exitAction,
+      label: summary.confirmed ? 'Confirm' : 'Exit',
     );
-  }
 }
 ```
 
@@ -96,7 +91,6 @@ class ConfirmDialog extends StatelessWidget {
 testWidgets('confirm dialog renders from summary', (tester) async {
   await tester.pumpWidget(
     MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
       home: ConfirmDialog(
         summary: const ConfirmSummary(entity: e, confirmed: true),
       ),
@@ -112,7 +106,7 @@ See also: [State Teardown Belongs in the Notifier](../state-management-lifecycle
 
 ## Dismiss Modal → Push Route (Bottom Sheet Navigation)
 
-**Rule.** Sheet pops with a result; the screen that opened it awaits the result, then pushes the route.
+**Rule.** Pop sheet with result; caller awaits result, then pushes route.
 
 **NEVER:**
 ```dart
@@ -120,67 +114,22 @@ Navigator.of(context).pop();
 await const CreateExerciseRoute().push<String>(context);
 ```
 
-**DO — sheet pops a result; the screen awaits it, then navigates:**
-
-The sheet and the button are presentation widgets: the sheet only pops its
-result, and the button emits a callback. The screen that opens the sheet owns
-the page navigation ([presentation-widgets.md](../presentation-widgets.md)).
-
+**DO — await pop future, then navigate:**
 ```dart
-// features/create/presentation/widgets/create_sheet.dart
-class CreateSheet extends StatelessWidget {
-  const CreateSheet({super.key});
+// Sheet widget:
+Future<void> _onCreateTapped(BuildContext context) async {
+  Navigator.of(context).pop(CreateChoice.exercise);
+}
 
-  void _onCreateTapped(BuildContext context) {
-    Navigator.of(context).pop(CreateChoice.exercise);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return AppPrimaryButton(onPressed: () => _onCreateTapped(context), label: l10n.createExercise);
-  }
+// Caller that opened the sheet:
+Future<void> openCreateSheet(BuildContext context) async {
+  final choice = await context.showScrollableBottomSheet<CreateChoice>(
+    builder: (_) => const CreateSheet(),
+  );
+  if (!context.mounted || choice != CreateChoice.exercise) return;
+  await const CreateExerciseRoute().push<String>(context);
 }
 ```
-
-```dart
-// features/create/presentation/widgets/create_button.dart
-class CreateButton extends StatelessWidget {
-  const CreateButton({required this.onPressed, super.key});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return AppTextButton(onPressed: onPressed, label: l10n.createAction);
-  }
-}
-```
-
-```dart
-// features/create/presentation/screens/create_screen.dart
-class CreateScreen extends ConsumerWidget {
-  const CreateScreen({super.key});
-
-  Future<void> _openCreateSheet(BuildContext context) async {
-    final choice = await context.showAppSheet<CreateChoice>(
-      routeName: 'create-sheet',
-      builder: (_) => const CreateSheet(),
-    );
-    if (!context.mounted) return;
-    if (choice != .exercise) return;
-    await const CreateExerciseRoute().push<String>(context);
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return CreateButton(onPressed: () => unawaited(_openCreateSheet(context)));
-  }
-}
-```
-
-`context.showAppSheet` = [Dialog helpers](../extensions/context-ui.md#dialog-helpers).
 
 ## Pop Fallback Helpers Check Navigator Stacks
 

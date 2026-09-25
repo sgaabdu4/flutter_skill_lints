@@ -22,6 +22,7 @@ arch_repository_inline_entity_mapping
 arch_storage_sdk_import
 arch_widget_path
 async_context_mounted_style
+async_value_switch_over_when
 atom_widget_layer_dependency
 atomic_page_consumer_widget
 atomic_provider_access

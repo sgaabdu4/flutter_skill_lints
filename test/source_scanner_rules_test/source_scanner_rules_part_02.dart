@@ -431,6 +431,144 @@ class View {
 ''');
   }
 
+  // performance.md:26-27: reusable widgets get minimal view data, so a whole
+  // multi-field state passed into an app widget reports (#36).
+  static const _productStateWidget = r'''
+import 'package:flutter/widgets.dart';
+class Source<T> {}
+class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+class ProductState {
+  const ProductState(this.title, this.items, this.isLoading);
+  final String title;
+  final List<String> items;
+  final bool isLoading;
+}
+class ProductSummary extends Widget {
+  ProductSummary({required this.state});
+  final ProductState state;
+}
+final productProvider = Source<ProductState>();
+''';
+
+  Future<void> test_reportsWholeMultiFieldStateIntoAppWidget() async {
+    final analyzedSource = _analyzedSource('''$_productStateWidget
+class ProductScreen {
+  Widget build(WidgetRef ref) => ProductSummary(state: ref.watch(productProvider));
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(productProvider)', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsWholeMultiFieldStateLocalIntoAppWidget() async {
+    final analyzedSource = _analyzedSource('''$_productStateWidget
+class ProductScreen {
+  Widget build(WidgetRef ref) {
+    final state = ref.watch(productProvider);
+    return ProductSummary(state: state);
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(productProvider)', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsFreezedStateIntoAppWidget() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/widgets.dart';
+class Source<T> {}
+class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+mixin _$ProductState {
+  String get title;
+  bool get isLoading;
+  Object get copyWith => Object();
+}
+sealed class ProductState with _$ProductState {}
+class ProductSummary extends Widget {
+  ProductSummary({required this.state});
+  final ProductState state;
+}
+final productProvider = Source<ProductState>();
+class ProductScreen {
+  Widget build(WidgetRef ref) => ProductSummary(state: ref.watch(productProvider));
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(productProvider)', ruleName),
+    ]);
+  }
+
+  // riverpod-codegen.md:181 HistoryScreen and other whole view values stay clean.
+  Future<void> test_allowsWholeViewValuesIntoAppWidget() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+class Source<T> {}
+class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+class Workout { const Workout(this.id, this.name); final String id; final String name; }
+abstract class WorkoutPage implements Iterable<Workout> {
+  List<Workout> get items;
+  int get total;
+}
+mixin _$Label { String get text; Object get copyWith => Object(); }
+sealed class Label with _$Label {}
+class HistoryList extends Widget {
+  HistoryList({required Object items});
+}
+final visibleHistoryProvider = Source<List<Workout>>();
+final pagedHistoryProvider = Source<WorkoutPage>();
+final totalsProvider = Source<({int count, double volume})>();
+final labelProvider = Source<Label>();
+final shareLinkProvider = Source<Uri>();
+class HistoryScreen {
+  Widget build(WidgetRef ref) {
+    final visible = ref.watch(visibleHistoryProvider);
+    final paged = ref.watch(pagedHistoryProvider);
+    final totals = ref.watch(totalsProvider);
+    final label = ref.watch(labelProvider);
+    final shareLink = ref.watch(shareLinkProvider);
+    return HistoryList(items: [
+      HistoryList(items: visible),
+      HistoryList(items: paged),
+      HistoryList(items: totals),
+      HistoryList(items: label),
+      HistoryList(items: shareLink),
+    ]);
+  }
+}
+''');
+  }
+
+  // routing-app-shell.md:381: framework widgets take framework config, not
+  // reusable-widget view data.
+  Future<void> test_allowsWholeValueIntoFrameworkWidget() async {
+    newFile(convertPath('/package/flutter/lib/material.dart'), r'''
+import 'widgets.dart';
+class MaterialApp extends Widget {
+  MaterialApp.router({Object? routerConfig});
+}
+''');
+    await assertAllows(r'''
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+class Source<T> {}
+class WidgetRef { T watch<T>(Source<T> source) => throw 'synthetic'; }
+class ShellConfig {
+  const ShellConfig(this.initialLocation, this.debugLogDiagnostics);
+  final String initialLocation;
+  final bool debugLogDiagnostics;
+}
+final shellConfigProvider = Source<ShellConfig>();
+class MyApp {
+  Widget build(WidgetRef ref) {
+    final config = ref.watch(shellConfigProvider);
+    return MaterialApp.router(routerConfig: config);
+  }
+}
+''');
+  }
+
   Future<void> test_allowsWholeListIteration() async {
     await assertAllows(r'''
 class Source<T> {}
@@ -470,8 +608,9 @@ class ItemView {
     ]);
   }
 
-  Future<void> test_allowsWholeAsyncValueWhenDispatch() async {
-    await assertAllows(r'''
+  // freezed-sealed.md:9 bans .when(); only the sealed switch is a whole-value use.
+  Future<void> test_reportsWholeAsyncValueWhenDispatch() async {
+    const source = r'''
 import 'package:riverpod/riverpod.dart';
 class Source<T> {}
 class WidgetRef {
@@ -489,7 +628,11 @@ class AsyncView {
     );
   }
 }
-''');
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'ref.watch(imageProvider)', ruleName),
+    ]);
   }
 
   Future<void> test_reportsWholeDispatchOnSameNamedLocalAsyncValue() async {
@@ -692,207 +835,5 @@ class View {
 }
 ''';
     await assertDiagnostics(source, [compatLint(source, 'ref.watch(stateProvider)', ruleName)]);
-  }
-}
-
-@reflectiveTest
-final class RiverpodSelectArrowSyntaxTest extends _RiverpodRuleTest {
-  @override
-  String get ruleName => 'riverpod_select_arrow_syntax';
-  @override
-  String get needle => '.select((todo)';
-  @override
-  String get source => r'''
-class ProviderArg<T> {
-  Object select(Object Function(T value) selector) => Object();
-}
-
-class Todo {
-  const Todo(this.title);
-
-  final String title;
-}
-
-class WidgetRef {
-  Object watch(Object provider) => Object();
-}
-
-final provider = ProviderArg<Todo>();
-
-class TodoTitle {
-  Object build() {
-    final ref = WidgetRef();
-    return ref.watch(provider.select((todo) {
-      return todo.title;
-    }));
-  }
-}
-''';
-
-  Future<void> test_allowsArrowSelect() async {
-    await assertAllows(r'''
-class ProviderArg<T> {
-  Object select(Object Function(T value) selector) => Object();
-}
-
-class Todo {
-  const Todo(this.title);
-
-  final String title;
-}
-
-class WidgetRef {
-  Object watch(Object provider) => Object();
-}
-
-final provider = ProviderArg<Todo>();
-
-class TodoTitle {
-  Object build() {
-    final ref = WidgetRef();
-    return ref.watch(provider.select((todo) => todo.title));
-  }
-}
-''');
-  }
-
-  Future<void> test_allowsNonRiverpodSelectApi() async {
-    await assertAllows(r'''
-class Query<T> {
-  Object select(Object Function(T value) selector) => Object();
-}
-
-final query = Query<int>();
-
-final selected = query.select((value) {
-  return value.isEven;
-});
-''');
-  }
-
-  Future<void> test_allowsUnrelatedSelectNearRefWatch() async {
-    await assertAllows(r'''
-class Query<T> {
-  Object select(Object Function(T value) selector) => Object();
-}
-
-class WidgetRef {
-  Object watch(Object provider) => Object();
-}
-
-final provider = Object();
-final query = Query<int>();
-
-class TodoTitle {
-  Object build() {
-    final ref = WidgetRef();
-    ref.watch(provider);
-    return query.select((value) {
-      return value.isEven;
-    });
-  }
-}
-''');
-  }
-
-  Future<void> test_reportsTypedBlockSelect() async {
-    final analyzedSource = _analyzedSource(r'''
-class ProviderArg<T> {
-  Object select(Object Function(T value) selector) => Object();
-}
-
-class Todo {
-  const Todo(this.title);
-
-  final String title;
-}
-
-class WidgetRef {
-  Object watch(Object provider) => Object();
-}
-
-final provider = ProviderArg<Todo>();
-
-class TodoTitle {
-  Object build() {
-    final ref = WidgetRef();
-    return ref.watch(provider.select((Todo todo) {
-      return todo.title;
-    }));
-  }
-}
-''', addIgnorePrefix: addIgnorePrefix);
-
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, '.select((Todo todo)', ruleName),
-    ]);
-  }
-
-  Future<void> test_reportsTrailingCommaBlockSelect() async {
-    final analyzedSource = _analyzedSource(r'''
-class ProviderArg<T> {
-  Object select(Object Function(T value) selector) => Object();
-}
-
-class Todo {
-  const Todo(this.title);
-
-  final String title;
-}
-
-class WidgetRef {
-  Object watch(Object provider) => Object();
-}
-
-final provider = ProviderArg<Todo>();
-
-class TodoTitle {
-  Object build() {
-    final ref = WidgetRef();
-    return ref.watch(provider.select((todo,) {
-      return todo.title;
-    }));
-  }
-}
-''', addIgnorePrefix: addIgnorePrefix);
-
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, '.select((todo,)', ruleName),
-    ]);
-  }
-
-  Future<void> test_reportsMultilineBlockSelect() async {
-    final analyzedSource = _analyzedSource(r'''
-class ProviderArg<T> {
-  Object select(Object Function(T value) selector) => Object();
-}
-
-class Todo {
-  const Todo(this.title);
-
-  final String title;
-}
-
-class WidgetRef {
-  Object watch(Object provider) => Object();
-}
-
-final provider = ProviderArg<Todo>();
-
-class TodoTitle {
-  Object build() {
-    final ref = WidgetRef();
-    return ref.watch(
-      provider.select(
-        (todo) {
-          return todo.title;
-        },
-      ),
-    );
-  }
-}
-''', addIgnorePrefix: addIgnorePrefix);
-
-    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.select', ruleName)]);
   }
 }

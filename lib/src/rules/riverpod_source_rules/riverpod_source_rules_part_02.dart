@@ -70,16 +70,11 @@ final class _VariableUses extends RecursiveAstVisitor<void> {
 bool _isWholeValueUse(Expression value) {
   final parent = value.parent;
   if (parent is ForEachParts && parent.iterable == value) return true;
-  if (parent is MethodInvocation &&
-      parent.target == value &&
-      parent.methodName.name == 'when' &&
-      _hasCompleteAsyncValueDispatch(parent)) {
-    return true;
-  }
   if (parent is NamedArgument || parent is ArgumentList) {
     final arguments = parent is NamedArgument ? parent.parent : parent;
-    if (arguments is ArgumentList && arguments.parent is InstanceCreationExpression) {
-      return true;
+    final creation = arguments?.parent;
+    if (arguments is ArgumentList && creation is InstanceCreationExpression) {
+      return !_isWholeStateIntoAppWidget(value, creation);
     }
   }
   if (parent is SwitchExpression && parent.expression == value) {
@@ -95,21 +90,54 @@ bool _isWholeValueUse(Expression value) {
   return false;
 }
 
-bool _hasCompleteAsyncValueDispatch(MethodInvocation invocation) {
-  final method = invocation.methodName.element;
-  final owner = method?.enclosingElement;
-  final ownerLibrary = owner?.library?.uri.toString() ?? '';
-  if (method?.name != 'when' ||
-      (owner?.name != 'AsyncValue' && owner?.name != 'AsyncValueExtensions') ||
-      !(ownerLibrary.startsWith('package:riverpod/') ||
-          ownerLibrary.startsWith('package:flutter_riverpod/'))) {
-    return false;
+/// performance.md:26-27: reusable widgets receive minimal immutable view data,
+/// and binding boundaries select specific fields. A watched class with more
+/// than one field passed whole into an app widget hands it the whole state.
+/// Records, collections and SDK values stay whole-value inputs (primitives and
+/// enums are exempt earlier). Framework widgets take framework config such as
+/// a RouterConfig, not reusable-widget view data.
+bool _isWholeStateIntoAppWidget(Expression value, InstanceCreationExpression creation) {
+  final type = value.staticType;
+  final widget = creation.constructorName.type.element;
+  return type is InterfaceType &&
+      widget is InterfaceElement &&
+      _isAppWidget(widget) &&
+      !type.allSupertypes.any(
+        (supertype) => supertype.isDartCoreIterable || supertype.isDartCoreMap,
+      ) &&
+      _publicFieldCount(type) > 1;
+}
+
+bool _isAppWidget(InterfaceElement element) =>
+    !_isFlutterLibrary(element.library) &&
+    element.allSupertypes.any(
+      (type) => type.element.name == 'Widget' && _isFlutterLibrary(type.element.library),
+    );
+
+bool _isFlutterLibrary(LibraryElement library) =>
+    library.uri.toString().startsWith('package:flutter/');
+
+/// Counts public instance fields plus public abstract getters, because Freezed
+/// declares a class's fields as abstract getters on its generated mixin. SDK
+/// types (DateTime, Duration, Uri) count as single values.
+int _publicFieldCount(InterfaceType type) {
+  final names = <String?>{};
+  for (final element in [
+    type.element,
+    for (final supertype in type.allSupertypes) supertype.element,
+  ]) {
+    if (element.library.uri.isScheme('dart')) continue;
+    names
+      ..addAll([
+        for (final field in element.fields)
+          if (!field.isStatic && !field.isOriginGetterSetter && field.isPublic) field.name,
+      ])
+      ..addAll([
+        for (final getter in element.getters)
+          if (!getter.isStatic && getter.isAbstract && getter.isPublic) getter.name,
+      ]);
   }
-  final branches = invocation.argumentList.arguments
-      .whereType<NamedArgument>()
-      .map((argument) => argument.name.lexeme)
-      .toSet();
-  return branches.containsAll(const {'data', 'loading', 'error'});
+  return names.length;
 }
 
 bool _isRiverpodMutationElement(Element? element, String name) =>
@@ -158,6 +186,31 @@ bool _isMutationRunCallback(AstNode node) {
       invocation.methodName.name == 'run' &&
       _isRiverpodMutationElement(invocation.methodName.element?.enclosingElement, 'Mutation');
 }
+
+/// Collects Riverpod AsyncValue when/map dispatch calls; `whenData` is a
+/// transform, not a union match, so it is not collected.
+final class _AsyncValueWhenMapCalls extends RecursiveAstVisitor<void> {
+  final nodes = <MethodInvocation>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (_asyncValueWhenMapNames.contains(node.methodName.name) &&
+        _isRiverpodLibrary(node.methodName.element?.library) &&
+        _isRiverpodAsyncValue(node.realTarget?.staticType)) {
+      nodes.add(node);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+const _asyncValueWhenMapNames = {'when', 'maybeWhen', 'whenOrNull', 'map', 'maybeMap', 'mapOrNull'};
+
+bool _isRiverpodAsyncValue(DartType? type) =>
+    type is InterfaceType &&
+    [type, ...type.allSupertypes].any(
+      (candidate) =>
+          candidate.element.name == 'AsyncValue' && _isRiverpodLibrary(candidate.element.library),
+    );
 
 bool _isRiverpodLibrary(LibraryElement? library) {
   final uri = library?.uri.toString() ?? '';

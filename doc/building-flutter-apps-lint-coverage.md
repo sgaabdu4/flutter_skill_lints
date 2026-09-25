@@ -2,10 +2,10 @@
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 226 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 234 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 227 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 235 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 279 additional diagnostics.
-- Total unique diagnostics: 511.
+- Total unique diagnostics: 512.
 
 ## Full Rule Inventory
 
@@ -63,6 +63,7 @@ Core skill rules already covered before this pass:
   `riverpod_consumer_state_derived_cache`, `riverpod_watch_no_select`,
   `riverpod_select_arrow_syntax`, `riverpod_mutation_experimental_warning`,
   `riverpod_mutation_top_level`, `riverpod_mutation_ref_read`,
+  `async_value_switch_over_when`,
   `riverpod_auto_dispose_keepalive_dependencies`,
   `riverpod_keepalive_family`, `use_ref_invalidate`.
 - Async safety: `use_ref_mounted_after_await`,
@@ -158,7 +159,7 @@ hover description and correction text.
 | `error-reporting.md` | `crash_direct_firebase_call`, `crash_direct_sentry_call`, `crash_init_before_run_app`, `crash_custom_global_error_handler`, `avoid_run_zoned_guarded`, `crash_facade_public_api`, `crash_error_recursion`, `crash_sentry_send_default_pii`, `crash_sentry_capture_opt_in`, `crash_sentry_auth_token_in_source`, `crash_possible_pii` (keyword heuristic), `data_log_rethrow`, `destructive_failure_logged_before_reconcile` (name heuristic), runtime boundary for CI symbol upload, replay, performance/profile sampling, request bodies/headers, and user identity |
 | `extensions-utilities.md` | `ui_snackbar_boundary`, `datetime_now_requires_timezone_intent`, `avoid_magic_literals`, `use_context_is_current_modal_route`, `dart_static_namespace`, `service_static_side_effect`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures` |
 | `flutter-optimizations.md` | `avoid_shrink_wrap`, `perf_listview_children`, `perf_build_work`, `a11y_text_scale_clamp`, `flutter_key_created_in_build`, `flutter_unique_or_global_key`, `flutter_opacity_widget`, `flutter_save_layer_filter`, `flutter_clip_save_layer`, `flutter_intrinsic_layout`, `flutter_animated_builder_child`, `flutter_widget_operator_equals`, `avoid_list_in_single_child_scroll_view`, `avoid_clip_rrect_container`, `use_dedicated_media_query_methods`, `dispose_fields` |
-| `freezed-sealed.md` | `use_sealed_freezed_classes`, `use_freezed_instead_of_immutable`, `freezed_one_class_per_file`, `freezed_missing_private_constructor`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map`, `arch_domain_json_annotation`, `cfg_explicit_to_json` |
+| `freezed-sealed.md` | `use_sealed_freezed_classes`, `use_freezed_instead_of_immutable`, `freezed_one_class_per_file`, `freezed_missing_private_constructor`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map`, `async_value_switch_over_when`, `arch_domain_json_annotation`, `cfg_explicit_to_json` |
 | `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_type_on_freezed_class`, `hive_adapter_spec_domain_type`, `notifier_hive_access`, `hive_test_close_missing`, `avoid_unvalidated_persisted_map_cast`, runtime boundary for historical TypeId permanence |
 | `layout-diagnostics.md` | `avoid_shrink_wrap`, `avoid_shrink_wrap_in_lists`, `avoid_flexible_outside_flex`, `avoid_positioned_outside_stack`, `avoid_unbounded_list_in_column`, `avoid_unbounded_text_field_in_row`, `avoid_orientation_layout`, `use_dedicated_media_query_methods`, `prefer_spacing` limited to repeated uniform gaps, runtime boundary for device-type layout checks |
 | `localization.md` | `strings_hardcoded`, `avoid_hardcoded_strings`, `l10n_context_direct_access`, `l10n_string_concatenation`, `l10n_notifier_localized_copy` |
@@ -183,6 +184,7 @@ Dart-source drift parity:
 - `riverpod_mutation_experimental_warning`
 - `riverpod_mutation_top_level`
 - `riverpod_mutation_ref_read`
+- `async_value_switch_over_when`
 - `state_freezed_nullable_error`
 
 Architecture/Freezed:

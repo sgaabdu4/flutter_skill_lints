@@ -35,6 +35,7 @@ Authority: Autonomous package repair authorized by the user. Coordinator decisio
 - [x] New `ad_hoc_intl_format` (primitive-formatting.md:33, :60): resolved `package:intl` `DateFormat` construction is allowed only in an extension on dart:core `DateTime`, and `NumberFormat` only in one on `num`/`int`/`double`.
 - [x] New `inline_num_clamp` (primitive-formatting.md:60): resolved dart:core `num.clamp` is allowed only inside an extension on `num`/`int`/`double`. Other types' `clamp` methods (for example `TextScaler`) are ignored.
 - [x] New `record_use_outside_ffi` (dart-patterns-records.md:56-57): package:meta `@RecordUse` reports in libraries that don't import `dart:ffi`.
+- [x] Hard-eng repairs: one shared `riverpodNotifierChecker`; `_rawIdOffsets` and `_scanDomainEntityParameters` split into iterable helpers with no behavior change.
 - [x] Counts updated: 190 skill rules, 198 skill codes, 278 additional codes (237 rules), 472 total. The inventory, coverage matrix and README are updated.
 
 ## Baseline + execution
@@ -55,7 +56,7 @@ N/A — analyzer lint rule; no app surface.
 ## Verification
 
 Result: Passed
-Evidence: Focused tests pass in each rule's existing test file, and the full suite passes (2,188 passed, 1 skipped). `dart format` and `dart analyze` are clean. Hard-eng Draft gate: see the branch report.
+Evidence: Focused tests pass in each rule's existing test file, and the full suite passes (2,188 passed, 1 skipped). `dart format` and `dart analyze` are clean. The first hard-eng Draft run failed dead-code-duplicates. It found the notifier TypeChecker duplicated between `avoid_throw` and `ui_snackbar_boundary`, and cognitive complexity in `_rawIdOffsets` and `_scanDomainEntityParameters`. After sharing `riverpodNotifierChecker` in `ast_utils.dart` and splitting both scans, every gate passes, and the probe output is unchanged.
 E2E: Passed — the probe app uses this worktree as a path dependency. `lib/features/ex/presentation/providers/ex_notifier.dart` (codegen `SnackBarUtils.showError`) and `lib/features/ex/data/repositories/ex_repository.dart` report `ui_snackbar_boundary`. `lib/core/utils/ex_snack_bars.dart` is clean. In `ex_panel.dart`, `DateFormat('yyyy-MM-dd')` and `NumberFormat.currency` report `ad_hoc_intl_format` and `n.clamp(0, 10)` reports `inline_num_clamp`, while the skill's `DateTimeX`/`NumX` extensions and `count.clamped(0, 10)` are clean. `@RecordUse` in `lib/features/ru/application/tracked.dart` reports; the `dart:ffi` binding in `lib/core/native/square_bindings.dart` is clean. Closed-issue files copied in: #50 `AsyncValue.when` clean, Freezed `when`/`map` report. #64 redirecting cases clean, `fromPrimitives` reports. #38 `probe_b_failure.dart` clean. #75 `probe_b_records.dart` clean. #86: codegen notifier typed throw reports, datasource `FormatException` and repository typed failure clean, `Exception`/`StateError` report. Also clean: `date_time_extensions.dart`, `widget_list_extensions.dart`, `debouncer.dart`, the records files, and the redirecting union cases in `vx/shape.dart`. All findings are at error severity.
 Delivery target: Merge
 Delivery: Pending — scoped PR, required CI, merge and main CI.

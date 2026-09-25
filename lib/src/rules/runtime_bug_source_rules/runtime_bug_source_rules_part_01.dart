@@ -192,26 +192,9 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       final tries = collectNodes<TryStatement>(context.unit);
       for (final method in context.methods) {
         if (!_methodLooksDestructive(method.name)) continue;
-        for (var i = method.start; i <= method.end && i < context.source.length; i++) {
-          final line = context.source.masked[i];
-          final match = _failureTelemetryCall.firstMatch(line);
-          if (match == null) continue;
-          if (!_hasLaterReconcileCall(context, i + 1, method.end)) continue;
-          reporter.report(context, i, match.start);
-        }
+        _reportTelemetryBeforeReconcile(reporter, context, method);
         if (_hasLaterReconcileCall(context, method.start, method.end)) continue;
-        for (final statement in tries) {
-          final line = _lineOf(context, statement.offset);
-          if (line < method.start || line > method.end) continue;
-          if (!_startsLongRunningWork(statement.body)) continue;
-          for (final clause in statement.catchClauses) {
-            final end = _lineOf(context, clause.body.end);
-            for (var i = _lineOf(context, clause.body.offset); i <= end; i++) {
-              final match = _failureTelemetryCall.firstMatch(context.source.masked[i]);
-              if (match != null) reporter.report(context, i, match.start);
-            }
-          }
-        }
+        _reportUnreconciledLongRunningCatches(reporter, context, method, tries);
       }
     },
   ),

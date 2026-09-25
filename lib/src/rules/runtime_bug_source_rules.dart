@@ -277,6 +277,45 @@ bool _startsLongRunningWork(Block block) => collectNodes<MethodInvocation>(block
       );
 });
 
+void _reportTelemetryBeforeReconcile(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+) {
+  for (var i = method.start; i <= method.end && i < context.source.length; i++) {
+    final match = _failureTelemetryCall.firstMatch(context.source.masked[i]);
+    if (match == null) continue;
+    if (!_hasLaterReconcileCall(context, i + 1, method.end)) continue;
+    reporter.report(context, i, match.start);
+  }
+}
+
+/// Reports telemetry in the catch of a try that async-starts long-running
+/// work inside [method]; callers skip methods that reconcile.
+void _reportUnreconciledLongRunningCatches(
+  ScannerRuleReporter reporter,
+  SourceScannerContext context,
+  ScannerMethodSpan method,
+  List<TryStatement> tries,
+) {
+  for (final statement in tries) {
+    final line = _lineOf(context, statement.offset);
+    if (line < method.start || line > method.end) continue;
+    if (!_startsLongRunningWork(statement.body)) continue;
+    for (final clause in statement.catchClauses) {
+      _reportTelemetryLines(reporter, context, clause.body);
+    }
+  }
+}
+
+void _reportTelemetryLines(ScannerRuleReporter reporter, SourceScannerContext context, Block body) {
+  final end = _lineOf(context, body.end);
+  for (var i = _lineOf(context, body.offset); i <= end; i++) {
+    final match = _failureTelemetryCall.firstMatch(context.source.masked[i]);
+    if (match != null) reporter.report(context, i, match.start);
+  }
+}
+
 bool _hasLaterReconcileCall(SourceScannerContext context, int startLine, int endLine) {
   for (var i = startLine; i <= endLine && i < context.source.length; i++) {
     if (_reconcileCall.hasMatch(context.source.masked[i])) return true;

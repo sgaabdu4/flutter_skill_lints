@@ -11,6 +11,8 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 ///
 /// Deterministic sample data inside resolved Flutter `@Preview` functions,
 /// methods, and constructors is exempt; look-alike annotations still report.
+/// Route names passed to a resolved `routeName` parameter or Flutter's
+/// `RouteSettings(name:)` are exempt (modals-navigation.md).
 class AvoidMagicLiterals extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_magic_literals',
@@ -113,13 +115,13 @@ bool _isExcludedContext(RuleContext context) {
 
 bool _shouldReportString(StringLiteral node, String value) {
   if (value.trim().isEmpty) return false;
-  if (_isAllowedLiteralContext(node)) return false;
+  if (_isAllowedLiteralContext(node) || _isRouteNameArgument(node)) return false;
 
   return _isStringKeyContext(node) || _isStringBoundaryArgument(node);
 }
 
 bool _shouldReportInterpolation(StringInterpolation node) {
-  if (_isAllowedLiteralContext(node)) return false;
+  if (_isAllowedLiteralContext(node) || _isRouteNameArgument(node)) return false;
 
   final hasRawText = node.elements.whereType<InterpolationString>().any(
     (element) => element.value.trim().isNotEmpty,
@@ -207,6 +209,21 @@ bool _hasUnaryMinus(AstNode node) {
 }
 
 bool _isAllowedNumber(num value) => value == -1 || value == 0 || value == 1;
+
+/// A route name recorded for modal/route observers (modals-navigation.md): a string bound to
+/// a resolved `routeName` parameter or to Flutter's `RouteSettings(name:)`.
+bool _isRouteNameArgument(AstNode node) {
+  final argument = node.parent;
+  if (argument is! NamedArgument || !identical(argument.argumentExpression, node)) return false;
+  final parameter = argument.correspondingParameter;
+  if (parameter == null) return false;
+  if (parameter.name == 'routeName') return true;
+  final creation = argument.parent?.parent;
+  if (parameter.name != 'name' || creation is! InstanceCreationExpression) return false;
+  final owner = creation.constructorName.element?.enclosingElement;
+  return owner?.name == 'RouteSettings' &&
+      owner!.library.uri.toString().startsWith('package:flutter/');
+}
 
 bool _isStringKeyContext(AstNode node) {
   final parent = node.parent;

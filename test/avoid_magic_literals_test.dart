@@ -22,7 +22,8 @@ final class AvoidMagicLiteralsTest extends AnalysisRuleTest {
   }
 
   void _addFlutterPreviewPackage() {
-    newPackage('flutter').addFile('lib/widget_previews.dart', r'''
+    newPackage('flutter')
+      ..addFile('lib/widget_previews.dart', r'''
 base class Preview {
   const Preview({String? name, double? textScaleFactor});
 }
@@ -30,6 +31,11 @@ base class Preview {
 abstract base class MultiPreview {
   const MultiPreview();
   List<Preview> get previews;
+}
+''')
+      ..addFile('lib/widgets.dart', r'''
+class RouteSettings {
+  const RouteSettings({String? name, Object? arguments});
 }
 ''');
   }
@@ -401,6 +407,45 @@ final maxRecentSessions = 60;
 ''');
 
     await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_allowsResolvedRouteNameAndFlutterRouteSettingsName() async {
+    final filePath = '$testPackageLibPath/features/create/presentation/screens/create_screen.dart';
+    newFile(filePath, r'''
+import 'package:flutter/widgets.dart';
+
+Future<T?> showAppSheet<T>({required String routeName}) async => null;
+
+Future<void> openCreateSheet(String id) async {
+  await showAppSheet<int>(routeName: 'create-sheet');
+  await showAppSheet<int>(routeName: 'create-sheet-$id');
+  const RouteSettings(name: 'create-sheet');
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
+  Future<void> test_reportsKeyAndLookalikeRouteSettingsName() async {
+    final filePath = '$testPackageLibPath/features/create/presentation/screens/create_screen.dart';
+    const source = r'''
+class RouteSettings {
+  const RouteSettings({String? name});
+}
+
+Object? lookup({required String key}) => null;
+
+void openCreateSheet() {
+  lookup(key: 'create-sheet');
+  const RouteSettings(name: 'create-route');
+}
+''';
+    newFile(filePath, source);
+
+    await assertDiagnosticsInFile(filePath, [
+      lint(source.indexOf("'create-sheet'"), "'create-sheet'".length),
+      lint(source.indexOf("'create-route'"), "'create-route'".length),
+    ]);
   }
 
   Future<void> test_allowsTestFiles() async {

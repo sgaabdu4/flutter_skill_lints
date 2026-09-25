@@ -51,6 +51,7 @@ Execution: One builder worked red-first, one row at a time, in each rule's exist
 - `state_freezed_nullable_error` classifies notifier state by the `*State` class-name suffix, which is the only single-file signal. A differently named state class is not checked.
 - `widget_calls_notifier_teardown_after_await` stays line-scanned like its teardown check. A widget that awaits a notifier, then awaits a confirm dialog, then calls `.go(context)` in the same block is flagged. No skill DO example does this: `modals-navigation.md:68` ends at the notifier await.
 - `data_log_rethrow` treats a call as reporting when it receives the caught error, so a rollback call that passes the error and is the only non-rethrow statement would be flagged. A catch with any other statement stays legal.
+- `data_log_rethrow` accepts both `MethodInvocation` and `FunctionExpressionInvocation`, because Flutter's `debugPrint` is a function-typed variable. The probe found this after the unit mock had declared it as a function.
 - Recovery: each row is a separate commit and can be reverted alone.
 
 ## ux_reference
@@ -60,7 +61,7 @@ N/A — analyzer plugin rules and docs; no app surface.
 ## Verification
 
 Result: Passed
-Evidence: `dart format lib test` clean, `dart analyze` no issues, `dart test` 2,162 passed and 1 skipped. Hard Eng Draft check: see the E2E line and the builder report.
+Evidence: `dart format lib test` clean, `dart analyze` no issues, `dart test` 2,162 passed and 1 skipped. `python3 .hooks/hard-eng.py check --base origin/main --plan-stage Draft` passed every gate: lockfile, vulnerabilities, format, types-lint, security, import boundaries, tests with 75.56% line coverage, dead-code-duplicates, performance, secrets, actionlint and zizmor. It first flagged the 1000-line test-part limit and two cognitive-complexity findings. The fixes: move `NotifierLocalDependencyCacheTest` from part_11 to part_20 in the same test library, and split `_scanIf` and `_stringErrorDeclarations` into helpers with no behaviour change. `git diff origin/main -- CHANGELOG.md pubspec.yaml` is empty.
 E2E: Passed — the real Flutter/Riverpod probe app analyzed with this worktree reports exactly the violation probes and keeps the controls clean. Covered: nested-if and catch `context` uses; the `go` chained off a save (`order_form_screen.dart:46`, with push, go-after-modal and sibling-callback controls clean); the rethrow-only datasource catch; four log-and-rethrow catches (debugPrint, developer.log, Crash.error); raw error strings and String error fields; four event providers; two dependency-cache fields; and `ref.watch`/`ref.listen` in methods.
 Delivery target: Merge
 Delivery: Pending — scoped PR, required CI, merge and main CI.

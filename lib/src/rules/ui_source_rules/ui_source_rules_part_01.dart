@@ -381,6 +381,47 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     scan: _scanDateTimeNowIntent,
   ),
 
+  /// Keep intl formatting in primitive extensions.
+  ///
+  /// Why: Primitive formatting lives in `core/extensions/`; call sites use
+  /// semantic getters such as `date.formatShortDate(l10n)` and
+  /// `price.asCurrency(l10n)`. Resolved intl `DateFormat` construction is
+  /// allowed only in an extension on dart:core `DateTime`, and `NumberFormat`
+  /// only in one on `num`/`int`/`double` (primitive-formatting.md).
+  scannerRule(
+    code: const LintCode(
+      'ad_hoc_intl_format',
+      'Do not build DateFormat or NumberFormat at call sites.',
+      correctionMessage:
+          'Move the formatting into a DateTimeX or NumX extension method and call it here.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags intl DateFormat/NumberFormat construction outside the DateTime and num extensions that own primitive formatting.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+      context.unit.accept(_AdHocIntlFormatVisitor(reporter, context));
+    },
+  ),
+
+  /// Keep numeric clamping in the num extension.
+  ///
+  /// Why: Inline `.clamp(...)` is forbidden at call sites; `NumX.clamped`
+  /// owns it (primitive-formatting.md). Resolved dart:core `num.clamp` calls
+  /// are allowed only inside an extension on `num`/`int`/`double`.
+  scannerRule(
+    code: const LintCode(
+      'inline_num_clamp',
+      'Do not call num.clamp inline at call sites.',
+      correctionMessage: 'Call a NumX extension helper such as clamped(min, max).',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description: 'Flags dart:core num.clamp calls outside an extension on num so clamping stays behind NumX helpers.',
+    scan: (reporter, context) {
+      if (context.isTestFile) return;
+      context.unit.accept(_InlineNumClampVisitor(reporter, context));
+    },
+  ),
+
   /// Avoid expensive work in build().
   ///
   /// Why: Flags expensive collection or formatting work inside build methods. Move sorting,

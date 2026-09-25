@@ -90,13 +90,28 @@ bool _isInsideDateTimeExtension(SourceScannerContext context, int offset) {
 }
 
 Iterable<ExtensionDeclaration> _dateTimeExtensions(SourceScannerContext context) {
-  return context.unit.declarations.whereType<ExtensionDeclaration>().where((extension) {
-    final type = extension.declaredFragment?.element.extendedType;
-    return type is InterfaceType &&
-        type.element.name == 'DateTime' &&
-        type.element.library.isDartCore;
-  });
+  return context.unit.declarations.whereType<ExtensionDeclaration>().where(
+    (extension) => _extendsCoreType(extension, const {'DateTime'}),
+  );
 }
+
+/// Whether [extension] is on one of the dart:core [typeNames], the skill's
+/// primitive owners in `core/extensions/` (primitive-formatting.md).
+bool _extendsCoreType(ExtensionDeclaration? extension, Set<String> typeNames) {
+  final type = extension?.declaredFragment?.element.extendedType;
+  return type is InterfaceType &&
+      type.element.library.isDartCore &&
+      typeNames.contains(type.element.name);
+}
+
+const _coreNumTypes = {'num', 'int', 'double'};
+
+/// intl formatters and the dart:core types whose extensions own them:
+/// `DateTimeX.formatShortDate` and `NumX.asCurrency` (primitive-formatting.md).
+const _intlFormatterOwners = {
+  'DateFormat': {'DateTime'},
+  'NumberFormat': _coreNumTypes,
+};
 
 bool _isRawStringLiteralText(SourceScannerContext context, int offset) {
   final (:lineIndex, :column) = _lineColumnForOffset(context.source, offset);
@@ -324,8 +339,7 @@ final class _WidgetCatchVisitor extends RecursiveAstVisitor<void> {
   @override
   void visitTryStatement(TryStatement node) {
     if (node.catchClauses.isNotEmpty) {
-      final location = context.unit.lineInfo.getLocation(node.tryKeyword.offset);
-      reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+      _reportAtOffset(reporter, context, node.tryKeyword.offset);
     }
     super.visitTryStatement(node);
   }
@@ -357,8 +371,55 @@ final class _SnackBarUtilsDispatchVisitor extends RecursiveAstVisitor<void> {
         target.name == 'SnackBarUtils' &&
         node.methodName.name.startsWith('show') &&
         (context.isDataPath || isEnclosedClassAssignableTo(node, _notifierChecker))) {
-      final location = context.unit.lineInfo.getLocation(node.offset);
-      reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+      _reportAtOffset(reporter, context, node.offset);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+void _reportAtOffset(ScannerRuleReporter reporter, SourceScannerContext context, int offset) {
+  final location = context.unit.lineInfo.getLocation(offset);
+  reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+}
+
+/// Reports intl `DateFormat`/`NumberFormat` construction outside the
+/// dart:core primitive extension that owns it.
+final class _AdHocIntlFormatVisitor extends RecursiveAstVisitor<void> {
+  _AdHocIntlFormatVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final formatter = node.constructorName.element?.enclosingElement;
+    final owners = _intlFormatterOwners[formatter?.name];
+    if (formatter != null &&
+        owners != null &&
+        formatter.library.uri.toString().startsWith('package:intl/') &&
+        !_extendsCoreType(node.thisOrAncestorOfType<ExtensionDeclaration>(), owners)) {
+      _reportAtOffset(reporter, context, node.offset);
+    }
+    super.visitInstanceCreationExpression(node);
+  }
+}
+
+/// Reports dart:core `num.clamp` calls outside an extension on num.
+final class _InlineNumClampVisitor extends RecursiveAstVisitor<void> {
+  _InlineNumClampVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final owner = node.methodName.element?.enclosingElement;
+    if (node.methodName.name == 'clamp' &&
+        owner is InterfaceElement &&
+        owner.library.isDartCore &&
+        _coreNumTypes.contains(owner.name) &&
+        !_extendsCoreType(node.thisOrAncestorOfType<ExtensionDeclaration>(), _coreNumTypes)) {
+      _reportAtOffset(reporter, context, node.methodName.offset);
     }
     super.visitMethodInvocation(node);
   }

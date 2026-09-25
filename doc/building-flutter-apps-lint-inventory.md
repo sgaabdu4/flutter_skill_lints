@@ -7,6 +7,7 @@
 ```text
 a11y_text_scale_clamp
 ad_hoc_id_index_lookup
+ad_hoc_intl_format
 app_shell_bootstrap_side_effects
 appwrite_blocking_function_execution_in_client
 arch_concrete_dependency
@@ -89,6 +90,7 @@ hive_field_no_vo_type
 hive_reserved_type_ids_missing
 hive_test_close_missing
 implicit_null_fallback
+inline_num_clamp
 keepalive_watches_unbounded_collection
 l10n_context_direct_access
 linear_id_lookup_in_hot_path
@@ -113,6 +115,7 @@ prefer_publish_to_none
 presentation_widget_controller_state
 presentation_widget_infrastructure_dependency
 presentation_widget_navigation_forbidden
+record_use_outside_ffi
 records_map_return
 riverpod_auto_dispose_keepalive_dependencies
 riverpod_consumer_state_derived_cache

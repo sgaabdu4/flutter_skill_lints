@@ -355,8 +355,8 @@ void main() {
   });
 }
 
-const _enabledFlutterSkillRuleCount = 187;
-const _enabledFlutterSkillDiagnosticCount = 195;
+const _enabledFlutterSkillRuleCount = 190;
+const _enabledFlutterSkillDiagnosticCount = 198;
 const _enabledAdditionalRuleCount = 278;
 
 const _modelSkillErrorDiagnostics = [
@@ -378,6 +378,9 @@ const _modelSkillErrorDiagnostics = [
   'prefer_class_destructuring',
   'ad_hoc_id_index_lookup',
   'ui_snackbar_boundary',
+  'ad_hoc_intl_format',
+  'inline_num_clamp',
+  'record_use_outside_ffi',
 ];
 
 Iterable<String> _documentedLintCodes(String text) sync* {

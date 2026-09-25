@@ -2,10 +2,10 @@
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 187 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 195 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 190 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 198 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 278 additional diagnostics.
-- Total unique diagnostics: 469.
+- Total unique diagnostics: 472.
 
 ## Full Rule Inventory
 
@@ -109,6 +109,7 @@ Core skill rules already covered before this pass:
   `l10n_context_direct_access`, `ui_snackbar_boundary`,
   `widget_material_boundary` (raw `Material` / `Ink` / `InkWell` outside owners),
   `a11y_text_scale_clamp`, `datetime_now_requires_timezone_intent`,
+  `ad_hoc_intl_format`, `inline_num_clamp`, `record_use_outside_ffi`,
   `avoid_private_widget_classes`, `perf_build_work`, `perf_listview_children`,
   `state_empty_string_sentinel`, `state_bool_string_sentinel`,
   `state_raw_response`, `state_raw_error_to_string`,
@@ -159,8 +160,8 @@ hover description and correction text.
 | `common-patterns.md` | `router_string_nav`, `router_gorouter_of`, `router_untyped_navigator_push`, `router_direct_route_call`, `router_raw_route_definition`, `router_modal_local_helpers`, `router_container_navigation_escape`, `router_context_navigation_extension`, `router_navigation_wrapper_api`, `router_pop_then_push`, `pop_fallback_helper_must_check_navigator_stack` (mounted + root/local Navigator fallback), `router_redirect_watch`, `router_redirect_loading_bounce`, `router_splash_waits_for_initial_sync`, `router_complex_extra`, `router_impure_redirect`, `router_shell_tab_push`, `guard_context_pop`, `use_context_is_current_modal_route`, `avoid_route_param_throw_in_build`, `state_broad_invalidation`, `widget_local_mutation_flag`, `storage_clear_preserves_migration_state`, runtime boundary for UX-specific debounce duration |
 | `crashlytics.md` | `crash_direct_firebase_call`, `crash_init_before_run_app`, `crash_possible_pii`, `destructive_failure_logged_before_reconcile`, runtime boundary for CI symbol upload |
 | `dart-mcp-e2e-testing.md` | `cfg_e2e_entrypoint`, `avoid_flutter_host_driver_imports`, `test_inline_value_key`, `test_tap_at`, `test_first_match_finder`, runtime boundary for real device, logs, source-of-truth, cleanup, and multi-actor proof |
-| `dart-patterns-records.md` | `records_map_return`, `typed_id_raw_id`, `avoid_null_bang`, `prefer_wildcard_pattern`, `prefer_class_destructuring`, `use_existing_destructuring` |
-| `extensions-utilities.md` | `ui_snackbar_boundary`, `datetime_now_requires_timezone_intent`, `avoid_magic_literals`, `use_context_is_current_modal_route`, `dart_static_namespace`, `service_static_side_effect`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures` |
+| `dart-patterns-records.md` | `record_use_outside_ffi`, `records_map_return`, `typed_id_raw_id`, `avoid_null_bang`, `prefer_wildcard_pattern`, `prefer_class_destructuring`, `use_existing_destructuring` |
+| `extensions-utilities.md` | `ui_snackbar_boundary`, `datetime_now_requires_timezone_intent`, `ad_hoc_intl_format`, `inline_num_clamp`, `avoid_magic_literals`, `use_context_is_current_modal_route`, `dart_static_namespace`, `service_static_side_effect`, `fire_and_forget_missing_catch`, `use_unawaited_for_fire_and_forget_futures` |
 | `flutter-optimizations.md` | `avoid_shrink_wrap`, `perf_listview_children`, `perf_build_work`, `a11y_text_scale_clamp`, `flutter_key_created_in_build`, `flutter_unique_or_global_key`, `flutter_opacity_widget`, `flutter_save_layer_filter`, `flutter_clip_save_layer`, `flutter_intrinsic_layout`, `flutter_animated_builder_child`, `flutter_widget_operator_equals`, `use_dedicated_media_query_methods`, `prefer_compute_over_isolate_run` |
 | `freezed-sealed.md` | `use_sealed_freezed_classes`, `use_freezed_instead_of_immutable`, `freezed_one_class_per_file`, `freezed_missing_private_constructor`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map`, `arch_domain_json_annotation`, `cfg_explicit_to_json` |
 | `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_test_close_missing`, `avoid_unvalidated_persisted_map_cast`, runtime boundary for historical TypeId permanence |

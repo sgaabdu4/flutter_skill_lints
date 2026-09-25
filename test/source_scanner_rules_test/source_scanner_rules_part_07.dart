@@ -283,6 +283,170 @@ extension DateTimeExtensions on DateTime {
   }
 }
 
+// primitive-formatting.md:33/:60: ad-hoc DateFormat/NumberFormat is forbidden
+// at call sites; the DateTimeX/NumX extensions own intl formatting.
+@reflectiveTest
+final class AdHocIntlFormatTest extends _UiRuleTest {
+  @override
+  void setUp() {
+    newPackage('intl').addFile('lib/intl.dart', r'''
+class DateFormat {
+  DateFormat([String? pattern, String? locale]);
+  DateFormat.yMMMd([String? locale]);
+  String format(DateTime date) => '';
+}
+class NumberFormat {
+  NumberFormat([String? pattern, String? locale]);
+  factory NumberFormat.currency({String? locale, String? symbol}) => NumberFormat();
+  String format(Object number) => '';
+}
+''');
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'ad_hoc_intl_format';
+  @override
+  String get needle => "DateFormat('yyyy-MM-dd')";
+  @override
+  String get path => '$testPackageLibPath/features/orders/presentation/widgets/order_row.dart';
+  @override
+  String get source => r'''
+import 'package:intl/intl.dart';
+
+String placedLabel(DateTime placedAt) => DateFormat('yyyy-MM-dd').format(placedAt);
+''';
+
+  Future<void> test_reportsNumberFormatInWidgetMethod() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:intl/intl.dart';
+
+final class OrderRow {
+  String priceLabel(double price) => NumberFormat.currency(locale: 'en', symbol: r'$').format(price);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, 'NumberFormat.currency(', ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsDateFormatInNonPrimitiveExtension() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:intl/intl.dart';
+
+final class Order {
+  const Order(this.placedAt);
+  final DateTime placedAt;
+}
+
+extension OrderX on Order {
+  String get placedLabel => DateFormat.yMMMd().format(placedAt);
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    newFile(path, analyzedSource);
+
+    await assertDiagnosticsInFile(path, [
+      compatLint(analyzedSource, 'DateFormat.yMMMd()', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillPrimitiveExtensions() async {
+    await assertAllows(r'''
+import 'package:intl/intl.dart';
+
+extension DateTimeX on DateTime {
+  String formatShortDate(AppLocalizations l10n) {
+    return DateFormat.yMMMd(l10n.localeName).format(toLocal());
+  }
+}
+
+extension NumX on num {
+  String asCurrency(AppLocalizations l10n, {String? symbol}) {
+    return NumberFormat.currency(locale: l10n.localeName, symbol: symbol).format(this);
+  }
+}
+''', path: '$testPackageLibPath/core/extensions/primitive_extensions.dart');
+  }
+
+  Future<void> test_allowsNonIntlFormatter() async {
+    await assertAllows(r'''
+final class DateFormat {
+  const DateFormat(String pattern);
+}
+
+const isoDate = DateFormat('yyyy-MM-dd');
+''', path: path);
+  }
+
+  Future<void> test_allowsTests() async {
+    await assertAllows(r'''
+import 'package:intl/intl.dart';
+
+String expectedLabel(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
+''', path: '$testPackageRootPath/test/features/orders/order_row_test.dart');
+  }
+}
+
+// primitive-formatting.md:60: inline `.clamp(...)` is forbidden at call sites;
+// NumX.clamped owns it.
+@reflectiveTest
+final class InlineNumClampTest extends _UiRuleTest {
+  @override
+  String get ruleName => 'inline_num_clamp';
+  @override
+  String get needle => 'clamp(0, 10)';
+  @override
+  String get path => '$testPackageLibPath/features/cart/presentation/widgets/cart_badge.dart';
+  @override
+  String get source => 'int visibleCount(int count) => count.clamp(0, 10);';
+
+  // lists-forms-workflows.md:258 shows this batch bound; :60 forbids it.
+  Future<void> test_reportsBatchBoundClamp() async {
+    final analyzedSource = _analyzedSource(r'''
+Iterable<List<T>> batches<T>(List<T> items, int batchSize) sync* {
+  for (var i = 0; i < items.length; i += batchSize) {
+    final end = (i + batchSize).clamp(0, items.length);
+    yield items.sublist(i, end);
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    final filePath = '$testPackageLibPath/core/utils/batch_utils.dart';
+    newFile(filePath, analyzedSource);
+
+    await assertDiagnosticsInFile(filePath, [
+      compatLint(analyzedSource, 'clamp(0, items.length)', ruleName),
+    ]);
+  }
+
+  Future<void> test_allowsSkillNumExtension() async {
+    await assertAllows(r'''
+extension NumX on num {
+  num clamped(num min, num max) => clamp(min, max);
+}
+''', path: '$testPackageLibPath/core/extensions/num_extensions.dart');
+  }
+
+  Future<void> test_allowsNonNumClamp() async {
+    await assertAllows(r'''
+final class TextScaler {
+  const TextScaler();
+  TextScaler clamp({double maxScaleFactor = 1}) => this;
+}
+
+TextScaler bounded(TextScaler scaler) => scaler.clamp(maxScaleFactor: 2);
+''', path: path);
+  }
+
+  Future<void> test_allowsTests() async {
+    await assertAllows(
+      'final bounded = 12.clamp(0, 10);',
+      path: '$testPackageRootPath/test/features/cart/cart_badge_test.dart',
+    );
+  }
+}
+
 @reflectiveTest
 final class PerfBuildWorkTest extends _UiRuleTest {
   @override

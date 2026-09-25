@@ -29,6 +29,32 @@ final List<ScannerRule> freezedSourceRules = [
     },
   ),
 
+  /// Keep `@RecordUse` on dart:ffi bindings.
+  ///
+  /// Why: `@RecordUse` is only for dart:ffi/Code Assets bindings whose native
+  /// linker uses `package:record_use`; normal Flutter application code does
+  /// not add it (dart-patterns-records.md). The annotation must resolve to
+  /// package:meta `RecordUse`, and the library must import `dart:ffi`.
+  scannerRule(
+    code: const LintCode(
+      'record_use_outside_ffi',
+      'Use @RecordUse only on dart:ffi bindings.',
+      correctionMessage: 'Remove @RecordUse from application code; keep it on dart:ffi/Code Assets bindings whose link hook reads package:record_use.',
+      severity: DiagnosticSeverity.ERROR,
+    ),
+    description:
+        'Flags package:meta @RecordUse annotations in libraries that do not import dart:ffi.',
+    scan: (reporter, context) {
+      final library = context.unit.declaredFragment?.element;
+      final importsFfi =
+          library?.fragments
+              .expand((fragment) => fragment.libraryImports)
+              .any((import) => import.importedLibrary?.uri.toString() == 'dart:ffi') ??
+          false;
+      if (!importsFfi) context.unit.accept(_RecordUseVisitor(reporter, context));
+    },
+  ),
+
   /// Do not set explicitToJson per JsonSerializable class.
   ///
   /// Why: Flags per-class JsonSerializable explicitToJson settings. Set explicit_to_json:
@@ -220,3 +246,22 @@ bool _isGeneratedFreezedMethod(MethodInvocation node) {
 
 DartType? _enclosingThisType(AstNode node) =>
     node.thisOrAncestorOfType<ClassDeclaration>()?.declaredFragment?.element.thisType;
+
+final class _RecordUseVisitor extends RecursiveAstVisitor<void> {
+  _RecordUseVisitor(this.reporter, this.context);
+
+  final ScannerRuleReporter reporter;
+  final SourceScannerContext context;
+
+  @override
+  void visitAnnotation(Annotation node) {
+    final annotationClass = node.element?.enclosingElement;
+    if (annotationClass is InterfaceElement &&
+        annotationClass.name == 'RecordUse' &&
+        annotationClass.library.uri.toString().startsWith('package:meta/')) {
+      final location = context.unit.lineInfo.getLocation(node.offset);
+      reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
+    }
+    super.visitAnnotation(node);
+  }
+}

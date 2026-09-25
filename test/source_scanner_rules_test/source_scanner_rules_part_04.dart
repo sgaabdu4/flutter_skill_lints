@@ -186,6 +186,58 @@ class SharedCache {
   }
 }
 
+// dart-patterns-records.md:56-57: `@RecordUse` is only for dart:ffi/Code
+// Assets bindings; normal Flutter application code does not add it.
+@reflectiveTest
+final class RecordUseOutsideFfiTest extends _FreezedRuleTest {
+  @override
+  void setUp() {
+    newPackage('meta').addFile('lib/meta.dart', r'''
+class RecordUse {
+  const RecordUse();
+}
+''');
+    super.setUp();
+  }
+
+  @override
+  String get ruleName => 'record_use_outside_ffi';
+  @override
+  String get needle => '@RecordUse()';
+  @override
+  String get path => '$testPackageLibPath/core/utils/greeting.dart';
+  @override
+  String get source => r'''
+import 'package:meta/meta.dart';
+
+@RecordUse()
+String greeting(String name) => 'Hello $name';
+''';
+
+  Future<void> test_allowsFfiBinding() async {
+    await assertAllows(r'''
+import 'dart:ffi';
+import 'package:meta/meta.dart';
+
+abstract final class SquareBindings {
+  @RecordUse()
+  static int square(int value) => value * value;
+}
+''', path: '$testPackageLibPath/src/square_bindings.dart');
+  }
+
+  Future<void> test_allowsNonMetaRecordUse() async {
+    await assertAllows(r'''
+class RecordUse {
+  const RecordUse();
+}
+
+@RecordUse()
+String greeting(String name) => 'Hello $name';
+''', path: path);
+  }
+}
+
 @reflectiveTest
 final class FreezedPerClassExplicitToJsonTest extends _FreezedRuleTest {
   @override

@@ -32,13 +32,37 @@ class Repository {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'List<Item>?>', ruleName)]);
   }
 
-  Future<void> test_reportsNullableMapDefaultParam() async {
-    final analyzedSource = _analyzedSource(r'''
+  // dart-patterns-records.md:193 spreads a nullable `conditionalItems`; only
+  // stored state and return types model "no items" (value-objects.md:45).
+  Future<void> test_allowsNullableCollectionParametersAndLocals() async {
+    await assertAllows(r'''
 void track({Map<String, Object>? params}) {}
+List<Object> children(List<Object>? conditionalItems) {
+  final List<Object>? extra = null;
+  return [...?conditionalItems, ...?extra];
+}
+''');
+  }
+
+  Future<void> test_reportsFreezedFactoryParameterAndGetter() async {
+    final analyzedSource = _analyzedSource(r'''
+abstract class ProductState {
+  const factory ProductState({List<Item>? items}) = _ProductState;
+
+  List<Item>? get cached;
+}
+
+class _ProductState implements ProductState {
+  const _ProductState({List<Item>? items});
+
+  @override
+  List<Item> get cached => const [];
+}
 ''', addIgnorePrefix: addIgnorePrefix);
 
     await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'Map<String, Object>? params', ruleName),
+      compatLint(analyzedSource, 'List<Item>? items}) = _ProductState', ruleName),
+      compatLint(analyzedSource, 'List<Item>? get cached', ruleName),
     ]);
   }
 

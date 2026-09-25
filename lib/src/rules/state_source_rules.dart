@@ -6,7 +6,8 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> stateSourceRules = [
-  /// Avoid nullable collection types outside wire DTOs.
+  /// Avoid nullable collection types in fields, top-level variables, Freezed
+  /// factory parameters, and return types outside wire DTOs.
   ///
   /// Why: Empty collections represent "no items" better than nullable collection
   /// types. If "not loaded" or "not applicable" is a distinct state, model that
@@ -236,12 +237,46 @@ final class _NullableCollectionVisitor extends RecursiveAstVisitor<void> {
   void visitNamedType(NamedType node) {
     if (node.question != null &&
         node.typeArguments != null &&
-        const {'List', 'Set', 'Map', 'Iterable'}.contains(node.name.lexeme)) {
+        const {'List', 'Set', 'Map', 'Iterable'}.contains(node.name.lexeme) &&
+        _isStoredOrReturnedType(node)) {
       final location = context.unit.lineInfo.getLocation(node.offset);
       reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
     }
     super.visitNamedType(node);
   }
+}
+
+/// Whether [type] sits in a field, top-level variable, Freezed
+/// redirecting-factory parameter, or function/method return type: the places
+/// that model "no items" (value-objects.md:45). Locals and ordinary parameters
+/// may be nullable, as in the skill's `...?conditionalItems` spread.
+bool _isStoredOrReturnedType(NamedType type) {
+  AstNode annotation = type;
+  for (var parent = annotation.parent; parent != null; parent = parent.parent) {
+    if (parent is! NamedType &&
+        parent is! TypeArgumentList &&
+        parent is! RecordTypeAnnotation &&
+        parent is! RecordTypeAnnotationField &&
+        parent is! RecordTypeAnnotationNamedFields) {
+      break;
+    }
+    annotation = parent;
+  }
+  return switch (annotation.parent) {
+    VariableDeclarationList(:final parent) =>
+      parent is FieldDeclaration || parent is TopLevelVariableDeclaration,
+    MethodDeclaration(:final returnType) ||
+    FunctionDeclaration(:final returnType) => returnType == annotation,
+    final RegularFormalParameter parameter => _isRedirectingFactoryParameter(parameter),
+    _ => false,
+  };
+}
+
+bool _isRedirectingFactoryParameter(FormalParameter parameter) {
+  final constructor = parameter.thisOrAncestorOfType<FormalParameterList>()?.parent;
+  return constructor is ConstructorDeclaration &&
+      constructor.factoryKeyword != null &&
+      constructor.redirectedConstructor != null;
 }
 
 final _emptyStringDefault = RegExp(

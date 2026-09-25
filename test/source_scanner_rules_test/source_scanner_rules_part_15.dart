@@ -441,6 +441,32 @@ void apply(List<Item> items, List<String> ids, bool active) {
     ]);
   }
 
+  Future<void> test_reportsLookupInGetters() async {
+    const source =
+        '''
+$_item
+class ItemsState {
+  const ItemsState(this.items, this.itemId);
+  final List<Item> items;
+  final String itemId;
+
+  Item get item => items.firstWhere((item) => item.id == itemId);
+}
+
+List<Item> currentItems = const [];
+
+int get selectedIndex {
+  return currentItems.indexWhere((item) => item.id == 'selected');
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, '.firstWhere(', ruleName),
+      compatLint(analyzedSource, '.indexWhere(', ruleName),
+    ]);
+  }
+
   Future<void> test_allowsOneOffRepositoryMutation() async {
     await assertAllows('''
 final class StoredValue {

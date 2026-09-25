@@ -334,7 +334,9 @@ Runtime-bug surface (0.7.0) — `runtime_bug_source_rules`:
 - `appwrite_blocking_function_execution_in_client` — Appwrite
   `createExecution(...)` calls inside destructive/sync/import/export/migration
   client methods must pass `xasync: true` and reconcile source-of-truth state
-  instead of waiting synchronously for a potentially long-running Function.
+  instead of waiting synchronously for a potentially long-running Function. A
+  destructive/batch remote call passed a resolved `waitForCompletion: true`
+  reports the same way (networking.md "Long-Running Remote Work").
 - `destructive_failure_logged_before_reconcile` — delete/remove/deactivate
   catch blocks should call a reconcile/verify/wait-for source-of-truth check
   before Crash/Sentry/Firebase error reporting.

@@ -111,9 +111,10 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ///
   /// Why: `firstWhere`, `indexWhere`, or a hand-written `for` scan by `.id`
   /// inside a loop, a collection-for, an iteration callback such as `map` or
-  /// `forEach`, or a widget build path repeats a full scan per element or per
-  /// frame. Pre-index by id with a Map and reuse that lookup. A single lookup in
-  /// a one-off method is not repeated and is not reported.
+  /// `forEach`, a widget build path, or a getter repeats a full scan per
+  /// element, per frame, or per access. Pre-index by id with a Map and reuse
+  /// that lookup. A single lookup in a one-off method is not repeated and is not
+  /// reported.
   scannerRule(
     code: const LintCode(
       'linear_id_lookup_in_hot_path',
@@ -121,7 +122,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       correctionMessage: 'Build/reuse a `Map<Id, Item>` index for id lookups instead of firstWhere/indexWhere/manual loops.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags firstWhere/indexWhere/manual `.id ==` loops that repeat inside a loop, collection-for, iteration callback, or widget build path.',
+    description: 'Flags firstWhere/indexWhere/manual `.id ==` loops that repeat inside a loop, collection-for, iteration callback, widget build path, or getter.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       _reportRepeatedIdLookups(reporter, context);

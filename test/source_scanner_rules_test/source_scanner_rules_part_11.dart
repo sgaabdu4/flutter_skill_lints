@@ -676,58 +676,6 @@ mixin RouteAwareMixin<T extends StatefulWidget> on State<T> {
   }
 }
 
-abstract class _DataCrashRuleTest extends _SourceRuleTest {
-  @override
-  List<ScannerRule> get rules => dataCrashSourceRules;
-}
-
-@reflectiveTest
-final class DataLogRethrowTest extends _DataCrashRuleTest {
-  @override
-  String get ruleName => 'data_log_rethrow';
-  @override
-  String get needle => 'log(error);';
-  @override
-  bool get lineStart => true;
-  @override
-  String get path => '$testPackageLibPath/features/todos/data/repositories/todo_repository.dart';
-  @override
-  String get source => r'''
-void log(Object value) {}
-
-void load() {
-  try {
-    throw Object();
-  } catch (error) {
-    log(error);
-    rethrow;
-  }
-}
-''';
-}
-
-@reflectiveTest
-final class CrashPossiblePiiTest extends _DataCrashRuleTest {
-  @override
-  String get ruleName => 'crash_possible_pii';
-  @override
-  String get needle => 'Crash.error(email)';
-  @override
-  bool get lineStart => true;
-  @override
-  String get source => r'''
-class Crash {
-  static void error(Object value) {}
-}
-
-final email = Object();
-
-void recordCrash() {
-  Crash.error(email);
-}
-''';
-}
-
 abstract class _TestRuleTest extends _SourceRuleTest {
   @override
   List<ScannerRule> get rules => testSourceRules;

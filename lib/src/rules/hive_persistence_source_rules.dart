@@ -1,3 +1,7 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -29,30 +33,16 @@ final List<ScannerRule> hivePersistenceSourceRules = [
       correctionMessage: 'Check the value is a map, validate every key is a String, and create a typed map before decoding it.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags direct Map<String, dynamic> casts at local persistence boundaries so malformed stored values are rejected safely.',
+    description: 'Flags direct Map<String, dynamic> casts in libraries that use Hive, unless the cast value comes from JSON decoding.',
     scan: (reporter, context) {
       if (context.isTestFile || !context.path.startsWith('lib/')) return;
-      final path = context.path.toLowerCase();
-      final remotePath =
-          path.contains('/remote/') ||
-          path.contains('/network/') ||
-          path.contains('/api/') ||
-          path.contains('remote_') ||
-          path.contains('_remote');
-      final persistencePath =
-          !remotePath &&
-          (path.contains('hive') ||
-              path.contains('storage') ||
-              path.contains('persistence') ||
-              path.contains('cache') ||
-              path.contains('local') ||
-              path.contains('datasource'));
-      if (!persistencePath) return;
-
-      final cast = RegExp(r'\bas\s+Map\s*<\s*String\s*,\s*dynamic\s*>');
-      for (var i = 0; i < context.source.length; i++) {
-        final match = cast.firstMatch(context.source.masked[i]);
-        if (match != null) reporter.report(context, i, match.start);
+      final visitor = _PersistedMapCastVisitor();
+      context.unit.accept(visitor);
+      if (!visitor.usesHive) return;
+      for (final cast in visitor.casts) {
+        if (_comesFromJsonDecode(context.unit, cast.expression, 0)) continue;
+        final location = context.unit.lineInfo.getLocation(cast.asOperator.offset);
+        reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
       }
     },
   ),
@@ -207,4 +197,105 @@ void _reportValueObjectLine(
 ) {
   final match = voPattern.firstMatch(line);
   if (match != null) reporter.report(context, lineIndex, match.start);
+}
+
+const _hivePackages = {'hive', 'hive_ce', 'hive_flutter', 'hive_ce_flutter'};
+
+final class _PersistedMapCastVisitor extends RecursiveAstVisitor<void> {
+  final List<AsExpression> casts = [];
+  bool usesHive = false;
+
+  @override
+  void visitAsExpression(AsExpression node) {
+    if (_isStringDynamicMap(node.type.type)) casts.add(node);
+    super.visitAsExpression(node);
+  }
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (!usesHive && _isFromPackages(node.element, _hivePackages)) usesHive = true;
+    super.visitSimpleIdentifier(node);
+  }
+
+  @override
+  void visitNamedType(NamedType node) {
+    if (!usesHive && _isFromPackages(node.element, _hivePackages)) usesHive = true;
+    super.visitNamedType(node);
+  }
+}
+
+bool _isStringDynamicMap(DartType? type) {
+  if (type is! InterfaceType || !type.isDartCoreMap || type.typeArguments.length != 2) {
+    return false;
+  }
+  return type.typeArguments[0].isDartCoreString && type.typeArguments[1] is DynamicType;
+}
+
+bool _isFromPackages(Element? element, Set<String> packages) {
+  final uri = element?.library?.uri;
+  return uri != null &&
+      uri.scheme == 'package' &&
+      uri.pathSegments.isNotEmpty &&
+      packages.contains(uri.pathSegments.first);
+}
+
+/// Whether [expression] is, or is read from, the result of `dart:convert` JSON decoding.
+bool _comesFromJsonDecode(CompilationUnit unit, Expression expression, int depth) {
+  if (depth > 8) return false;
+  final value = expression.unParenthesized;
+  switch (value) {
+    case AwaitExpression(:final expression):
+      return _comesFromJsonDecode(unit, expression, depth + 1);
+    case IndexExpression(:final realTarget):
+      return _comesFromJsonDecode(unit, realTarget, depth + 1);
+    case MethodInvocation(:final methodName):
+      return _isJsonDecodeElement(methodName.element);
+    case SimpleIdentifier(:final element):
+      final source = _localValueSource(unit, element);
+      return source != null && _comesFromJsonDecode(unit, source, depth + 1);
+    default:
+      return false;
+  }
+}
+
+bool _isJsonDecodeElement(Element? element) {
+  if (element?.library?.uri.toString() != 'dart:convert') return false;
+  final name = element?.name;
+  if (element is TopLevelFunctionElement) return name == 'jsonDecode';
+  if (element is MethodElement) {
+    final owner = element.enclosingElement?.name;
+    return (owner == 'JsonCodec' && name == 'decode') ||
+        (owner == 'JsonDecoder' && name == 'convert');
+  }
+  return false;
+}
+
+/// The expression a local variable or pattern variable takes its value from.
+Expression? _localValueSource(CompilationUnit unit, Element? element) {
+  if (element is! LocalVariableElement && element is! PatternVariableElement) return null;
+  final offset = element?.firstFragment.nameOffset;
+  if (offset == null) return null;
+  AstNode? node = unit.nodeCovering(offset: offset);
+  while (node != null) {
+    switch (node) {
+      case VariableDeclaration(:final initializer?):
+        return initializer;
+      case ForEachPartsWithDeclaration(:final iterable):
+        return iterable;
+      case PatternVariableDeclaration(:final expression):
+        return expression;
+      case SwitchExpression(:final expression):
+        return expression;
+      case SwitchStatement(:final expression):
+        return expression;
+      case IfStatement(:final expression, caseClause: _?):
+        return expression;
+      case IfElement(:final expression, caseClause: _?):
+        return expression;
+      case FunctionBody():
+        return null;
+    }
+    node = node.parent;
+  }
+  return null;
 }

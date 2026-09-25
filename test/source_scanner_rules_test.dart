@@ -45,6 +45,8 @@ part 'source_scanner_rules_test/source_scanner_rules_part_19.dart';
 part 'source_scanner_rules_test/source_scanner_rules_part_20.dart';
 part 'source_scanner_rules_test/source_scanner_rules_part_21.dart';
 part 'source_scanner_rules_test/source_scanner_rules_part_22.dart';
+part 'source_scanner_rules_test/source_scanner_rules_part_crash.dart';
+part 'source_scanner_rules_test/source_scanner_rules_part_network.dart';
 
 void main() {
   defineReflectiveSuite(() {
@@ -143,6 +145,18 @@ void main() {
     defineReflectiveTests(MixinMutableStateTest);
     defineReflectiveTests(DataLogRethrowTest);
     defineReflectiveTests(CrashPossiblePiiTest);
+    defineReflectiveTests(CrashDirectSentryCallTest);
+    defineReflectiveTests(CrashCustomGlobalErrorHandlerTest);
+    defineReflectiveTests(CrashSentrySendDefaultPiiTest);
+    defineReflectiveTests(CrashSentryCaptureOptInTest);
+    defineReflectiveTests(CrashFacadePublicApiTest);
+    defineReflectiveTests(CrashErrorRecursionTest);
+    defineReflectiveTests(CrashSentryAuthTokenInSourceTest);
+    defineReflectiveTests(NetworkHttpCallInWidgetOrNotifierTest);
+    defineReflectiveTests(DatasourceConcreteHttpClientTest);
+    defineReflectiveTests(NetworkFailureNullFallbackTest);
+    defineReflectiveTests(NetworkSecretInWidgetTest);
+    defineReflectiveTests(NetworkRawHttpFailureInWidgetOrNotifierTest);
     defineReflectiveTests(TestProviderContainerTest);
     defineReflectiveTests(TestUncontrolledScopeTest);
     defineReflectiveTests(TestCreateContainerTest);

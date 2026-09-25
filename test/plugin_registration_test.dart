@@ -346,6 +346,9 @@ void main() {
       'prefer_dedicated_media_query_methods',
       // Duplicates avoid_null_bang, which core-stack.md:60 names.
       'avoid_non_null_assertion',
+      // No skill basis; testing.md compares with bare expected values, and
+      // expect() already wraps them in equals().
+      'prefer_test_matchers',
     ]) {
       expect(paths, isNot(contains(forbidden)));
     }
@@ -407,7 +410,7 @@ void main() {
 
 const _enabledFlutterSkillRuleCount = 229;
 const _enabledFlutterSkillDiagnosticCount = 237;
-const _enabledAdditionalRuleCount = 274;
+const _enabledAdditionalRuleCount = 273;
 
 const _modelSkillErrorDiagnostics = [
   'use_sealed_freezed_classes',

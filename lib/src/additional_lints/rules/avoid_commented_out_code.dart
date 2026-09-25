@@ -190,7 +190,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
 
     // Lines starting with common Dart keywords followed by code patterns.
-    if (_startsWithCodeKeyword(line)) return true;
+    if (_startsWithCodeKeyword(line) && _opensOrParsesAsStatement(line)) return true;
 
     // Lines that are just a closing brace.
     if (line == '}' || line == '};' || line == '},') return true;
@@ -202,7 +202,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (_annotationPattern.hasMatch(line)) return true;
 
     // Lines that look like assignments: word = ...
-    if (_assignmentPattern.hasMatch(line)) return true;
+    if (_assignmentPattern.hasMatch(line) && _opensOrParsesAsStatement(line)) return true;
 
     // Lines that look like return statements
     if (_returnPattern.hasMatch(line)) return true;
@@ -299,12 +299,17 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   /// Checks if a line looks like a function or method call.
+  bool _looksLikeFunctionCall(String line) {
+    return _functionCallPattern.hasMatch(line) && _opensOrParsesAsStatement(line);
+  }
+
+  /// Confirms a keyword, assignment or call candidate is really code.
   ///
   /// A line that opens more parentheses than it closes starts a multi-line
-  /// call. A complete line must parse as a Dart statement, so descriptive text
-  /// such as `Glucose(GOD-POD Method)` is not treated as a call.
-  bool _looksLikeFunctionCall(String line) {
-    if (!_functionCallPattern.hasMatch(line)) return false;
+  /// statement. A complete line must parse as a Dart statement, so descriptive
+  /// text such as `Glucose(GOD-POD Method)` or `Reorder = UI flicker (stale
+  /// parent)` is not treated as code.
+  static bool _opensOrParsesAsStatement(String line) {
     if (_countOf(line, '(') > _countOf(line, ')')) return true;
     return _parsesAsStatement(line);
   }

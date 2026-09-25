@@ -12,7 +12,11 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 /// Deterministic sample data inside resolved Flutter `@Preview` functions,
 /// methods, and constructors is exempt; look-alike annotations still report.
 /// Route names passed to a resolved `routeName` parameter or Flutter's
-/// `RouteSettings(name:)` are exempt (modals-navigation.md).
+/// `RouteSettings(name:)` are exempt (modals-navigation.md). JSON and
+/// request-body keys inside a `*Model` class or a `data/models/` file are
+/// exempt: data-layer models are the codec owners (architecture.md). Files under
+/// `core/constants/` such as `storage_keys.dart` and `api_paths.dart` are key
+/// owners and are not checked.
 class AvoidMagicLiterals extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_magic_literals',
@@ -116,12 +120,14 @@ bool _isExcludedContext(RuleContext context) {
 bool _shouldReportString(StringLiteral node, String value) {
   if (value.trim().isEmpty) return false;
   if (_isAllowedLiteralContext(node) || _isRouteNameArgument(node)) return false;
+  if (_isCodecOwnedKey(node)) return false;
 
   return _isStringKeyContext(node) || _isStringBoundaryArgument(node);
 }
 
 bool _shouldReportInterpolation(StringInterpolation node) {
   if (_isAllowedLiteralContext(node) || _isRouteNameArgument(node)) return false;
+  if (_isCodecOwnedKey(node)) return false;
 
   final hasRawText = node.elements.whereType<InterpolationString>().any(
     (element) => element.value.trim().isNotEmpty,
@@ -223,6 +229,22 @@ bool _isRouteNameArgument(AstNode node) {
   final owner = creation.constructorName.element?.enclosingElement;
   return owner?.name == 'RouteSettings' &&
       owner!.library.uri.toString().startsWith('package:flutter/');
+}
+
+bool _isCodecOwnedKey(AstNode node) {
+  return _isStringKeyContext(node) && _isInModelCodecOwner(node);
+}
+
+/// Data-layer models own JSON/request-body keys (architecture.md): a class
+/// named `*Model`, or any code in a `data/models/` file.
+bool _isInModelCodecOwner(AstNode node) {
+  final className = node.thisOrAncestorOfType<ClassDeclaration>()?.namePart.typeName.lexeme;
+  if (className != null && className.endsWith('Model')) return true;
+
+  final root = node.root;
+  if (root is! CompilationUnit) return false;
+  final path = root.declaredFragment?.source.fullName.replaceAll('\\', '/') ?? '';
+  return path.contains('/data/models/');
 }
 
 bool _isStringKeyContext(AstNode node) {

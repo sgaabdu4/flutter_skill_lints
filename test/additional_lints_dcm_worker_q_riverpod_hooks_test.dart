@@ -317,7 +317,57 @@ final class AvoidHooksOutsideBuildTest extends _RiverpodHooksRuleTest {
   @override
   void setUp() {
     rule = AvoidHooksOutsideBuild();
+    newPackage('flutter_web_plugins').addFile('lib/url_strategy.dart', r'''
+void usePathUrlStrategy() {}
+''');
     super.setUp();
+  }
+
+  Future<void> test_nonHookUsePrefixedPackageFunction_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter_web_plugins/url_strategy.dart';
+
+Future<void> main() async {
+  usePathUrlStrategy();
+}
+''');
+  }
+
+  Future<void> test_localUsePrefixedFunctionWithoutHooks_noLint() async {
+    await assertNoDiagnostics(r'''
+int useDefaultPageSize() => 20;
+
+int pageSize() => useDefaultPageSize();
+''');
+  }
+
+  Future<void> test_localCustomHookInPlainFunction_lint() async {
+    const source = r'''
+import 'package:flutter_hooks/flutter_hooks.dart';
+
+int useCounter() => useState(0).value;
+
+int counter() => useCounter();
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.lastIndexOf('useCounter()'), 'useCounter()'.length),
+    ]);
+  }
+
+  Future<void> test_importedCustomHookInPlainFunction_lint() async {
+    newFile('$testPackageLibPath/hooks.dart', r'''
+import 'package:flutter_hooks/flutter_hooks.dart';
+
+int useCounter() => useState(0).value;
+''');
+    const source = r'''
+import 'hooks.dart';
+
+int counter() => useCounter();
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('useCounter()'), 'useCounter()'.length)]);
   }
 
   Future<void> test_hookWidgetBuild_noLint() async {

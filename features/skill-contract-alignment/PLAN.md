@@ -71,6 +71,16 @@ Integration: `fix/skill-contract-accept` merged after the sweep with no textual 
 - `perf_build_work` scans only Widget/State `build` (widget/State class, `Widget build(` or `BuildContext` signature, or UI file) and skips Riverpod Notifier `build`.
 - `avoid_dynamic_except_json_maps` and `avoid_banned_types` share `isJsonMapDynamicValueType`, which also accepts `<String, dynamic>{}` map literals (hive-persistence.md:56).
 - `destructive_failure_logged_before_reconcile` also reports telemetry in the catch of async-started long-running work (`start*` long-running call or `xasync: true`) in a destructive method with no reconcile call.
+- `avoid_unnecessary_else_after_control_flow` reports an `else` only when the then-branch ends in `return`, `throw`, `rethrow`, `break` or `continue` (SKILL.md R17); collection `if`/`else` is no longer reported.
+- `avoid_late_keyword` allows instance `late final` fields with an initializer, the lazy derived value performance.md prescribes; static, local, mutable and uninitialized `late` still report.
+- `avoid_conditions_with_boolean_literals` allows a bare `true` as a `while`/`do` loop condition (the mixins.md `retryWithBackoff` loop); `x && true`, `if (true)` and `while (false)` still report.
+- `avoid_hooks_outside_build` reports only calls that resolve to `flutter_hooks`/`hooks_riverpod` or to a `use` function that itself calls hooks, so deep-linking.md's `usePathUrlStrategy()` in `main` is clean.
+- `avoid_long_parameter_list` counts positional and `required` parameters only, so error-reporting.md's `Crash.error(error, stackTrace, {reason, fatal, extras})` is clean. The skill sets no parameter limit; the rule keeps its limit of four.
+- `avoid_commented_out_code` requires keyword and assignment candidate lines to parse as a Dart statement (or open a multi-line one), as call lines already did, so prose such as `// Widget — use .select()` and `// Reorder = UI flicker (...)` is clean.
+- `avoid_magic_literals` exempts map-literal and index keys inside `*Model` classes and `data/models/` files (architecture.md `ProductModel.toNameOnlyRequestBody`). Tests prove `core/constants/storage_keys.dart` (`StorageKeys`) and `core/constants/api_paths.dart` (`ApiPaths`) are accepted owners for `avoid_magic_literals` and `avoid_local_contract_key_constants`.
+- `avoid_unsafe_collection_methods` skips test files, where testing.md reads `.first`/`.single` in expectations; production behaviour is unchanged.
+- `prefer_private_extension_type_field` allows a public representation field named `value`, the typed-ID form in dart-patterns-records.md and collections-helpers.md; any other public name still reports.
+- `prefer_test_matchers` is removed. The skill gives no matcher guidance, testing.md and hive-persistence.md compare with bare literals and identifiers, and `expect()` already wraps a value in `equals()`, so a narrowed rule would only flag non-matcher calls on a false rationale. Counts: 235 additional warning-rule calls, 273 additional codes, 508 unique codes.
 
 ## Baseline + execution
 

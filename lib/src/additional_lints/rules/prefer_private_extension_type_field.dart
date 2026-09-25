@@ -3,19 +3,26 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when an extension type exposes its representation field publicly.
+/// Warns when an extension type exposes its representation field publicly
+/// under any name other than `value`.
+///
+/// The skill's typed IDs expose `value` (dart-patterns-records.md,
+/// collections-helpers.md, value-objects.md "`value` getter"), so a public
+/// `value` field is allowed; other public names must be private.
 class PreferPrivateExtensionTypeField extends GeneratedExtensionTypeDeclarationCheckRule {
   static const LintCode code = LintCode(
     'prefer_private_extension_type_field',
-    'Prefer private extension type representation fields.',
+    'Extension type representation fields must be private or named value.',
     correctionMessage:
-        'Prefix the representation field name with _ and expose intentional API through members.',
+        'Rename the representation field to value (the typed-ID convention), or prefix it with _ '
+        'and expose intentional API through members.',
   );
 
   PreferPrivateExtensionTypeField()
     : super(
         name: 'prefer_private_extension_type_field',
-        description: 'Warns when extension type representation fields are public.',
+        description:
+            'Warns when an extension type representation field is public and not named value.',
         code: code,
       );
 
@@ -25,7 +32,7 @@ class PreferPrivateExtensionTypeField extends GeneratedExtensionTypeDeclarationC
     if (parameter == null) return;
 
     final name = parameter.name;
-    if (name == null || name.lexeme.startsWith('_')) return;
+    if (name == null || name.lexeme.startsWith('_') || name.lexeme == 'value') return;
 
     reportAtToken(name);
   }

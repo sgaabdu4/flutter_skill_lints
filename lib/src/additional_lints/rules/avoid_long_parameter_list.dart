@@ -8,20 +8,26 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when a parameter list has more than four parameters.
+/// Warns when a parameter list has more than four positional or required
+/// parameters.
+///
+/// Optional named parameters are not counted: they are self-describing at the
+/// call site (for example `Crash.error(e, s, reason: ...)`).
 class AvoidLongParameterList extends AnalysisRule {
   static const int maxParameters = 4;
 
   static const LintCode code = LintCode(
     'avoid_long_parameter_list',
-    'Avoid parameter lists with more than four parameters.',
+    'Avoid parameter lists with more than four positional or required parameters.',
     correctionMessage: 'Group related inputs into a named type or split the API.',
   );
 
   AvoidLongParameterList()
     : super(
         name: 'avoid_long_parameter_list',
-        description: 'Warns when a function, method, or constructor has more than four parameters.',
+        description:
+            'Warns when a function, method, or constructor has more than four positional or '
+            'required parameters.',
       );
 
   @override
@@ -45,7 +51,8 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (_isOverrideMethodParameterList(node)) return;
     if (_isZoneSpecificationHandleUncaughtErrorCallback(node)) return;
 
-    if (node.parameters.length > AvoidLongParameterList.maxParameters) {
+    final counted = node.parameters.where((parameter) => !parameter.isOptionalNamed);
+    if (counted.length > AvoidLongParameterList.maxParameters) {
       rule.reportAtNode(node);
     }
   }

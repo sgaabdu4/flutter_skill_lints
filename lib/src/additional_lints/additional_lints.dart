@@ -283,7 +283,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_single_set
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_single_widget_per_file.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_sized_box_square.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_spacing.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_test_matchers.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_text_rich.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_transform_over_container.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_unique_test_names.dart';
@@ -448,7 +447,6 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(UseDedicatedMediaQueryMethods());
     registry.registerWarningRule(PreferSingleWidgetPerFile());
     registry.registerWarningRule(PreferSpacing());
-    registry.registerWarningRule(PreferTestMatchers());
     registry.registerWarningRule(ProperSuperCalls());
     registry.registerWarningRule(PreferClassDestructuring());
     registry.registerWarningRule(UseClosestBuildContext());

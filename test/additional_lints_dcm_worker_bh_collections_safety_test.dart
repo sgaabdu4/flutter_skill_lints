@@ -212,6 +212,44 @@ int f(List<int> values) {
     );
   }
 
+  Future<void> test_testFileFirstAndSingle_noLint() async {
+    final path = '$testPackageRootPath/test/products_test.dart';
+    newFile(
+      path,
+      r'''
+import 'package:flutter_test/flutter_test.dart';
+''' +
+          _iterableCore +
+          r'''
+void main() {
+  final items = <String>['New'];
+  expect(items.first, 'New');
+  expect(items.single, 'New');
+}
+''',
+    );
+
+    await assertDiagnosticsInFile(path, []);
+  }
+
+  Future<void> test_productionToStringFirst_lint() async {
+    const source =
+        _iterableCore +
+        r'''
+class SaveAllRowsException {
+  const SaveAllRowsException(this.failures);
+  final List<Object> failures;
+
+  @override
+  String toString() => 'SaveAllRowsException: first=${failures.first}';
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('failures.first'), 'failures.first'.length),
+    ]);
+  }
+
   Future<void> test_iterableFirstWithoutGuard_lint() async {
     const source =
         _iterableCore +

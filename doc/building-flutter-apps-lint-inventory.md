@@ -491,7 +491,6 @@ prefer_single_widget_per_file
 prefer_sized_box_square
 prefer_sliver_prefix
 prefer_spacing
-prefer_test_matchers
 prefer_text_rich
 prefer_transform_over_container
 prefer_type_over_var

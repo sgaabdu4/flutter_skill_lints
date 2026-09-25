@@ -155,7 +155,8 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   /// the app wait on the function response and often surfaces a timeout even
   /// when the backend operation succeeds. Async-start the Function, then
   /// reconcile against the source of truth with bounded polling or a realtime
-  /// observer.
+  /// observer. A destructive/batch remote call passed `waitForCompletion: true`
+  /// blocks the client the same way.
   scannerRule(
     code: const LintCode(
       'appwrite_blocking_function_execution_in_client',
@@ -163,7 +164,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
       correctionMessage: 'Pass `xasync: true`, treat the response as an async-start acknowledgement, then reconcile the source of truth with bounded polling/realtime.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags Appwrite `createExecution(...)` calls in likely long-running/destructive client methods unless the call explicitly passes `xasync: true`.',
+    description: 'Flags Appwrite `createExecution(...)` calls in likely long-running/destructive client methods unless the call explicitly passes `xasync: true`, and long-running remote calls that pass a resolved `waitForCompletion: true`.',
     scan: _scanBlockingFunctionExecutions,
   ),
 
@@ -485,6 +486,43 @@ void _scanBlockingFunctionExecutions(ScannerRuleReporter reporter, SourceScanner
   for (final method in context.methods) {
     _reportBlockingFunctionExecutionsInMethod(reporter, context, method);
   }
+  final completionWaits = _CompletionWaitVisitor();
+  context.unit.accept(completionWaits);
+  for (final call in completionWaits.calls) {
+    reporter.reportOffset(context, call.methodName.offset);
+  }
+}
+
+/// Long-running remote calls that make the client wait for backend completion
+/// (networking.md "Long-Running Remote Work"): a resolved `bool waitForCompletion`
+/// parameter passed `true` on a destructive/batch call or inside such a method.
+final class _CompletionWaitVisitor extends RecursiveAstVisitor<void> {
+  final calls = <MethodInvocation>[];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (_waitsForBackendCompletion(node) && _isLongRunningCall(node)) calls.add(node);
+    super.visitMethodInvocation(node);
+  }
+}
+
+bool _waitsForBackendCompletion(MethodInvocation node) {
+  return node.argumentList.arguments.any((argument) {
+    final parameter = argument.correspondingParameter;
+    final value = argument.argumentExpression;
+    return argument is NamedArgument &&
+        parameter != null &&
+        parameter.name == 'waitForCompletion' &&
+        parameter.type.isDartCoreBool &&
+        value is BooleanLiteral &&
+        value.value;
+  });
+}
+
+bool _isLongRunningCall(MethodInvocation node) {
+  if (_longRunningOperationName.hasMatch(node.methodName.name)) return true;
+  final enclosing = node.thisOrAncestorOfType<MethodDeclaration>()?.name.lexeme;
+  return enclosing != null && _longRunningOperationName.hasMatch(enclosing);
 }
 
 void _reportBlockingFunctionExecutionsInMethod(

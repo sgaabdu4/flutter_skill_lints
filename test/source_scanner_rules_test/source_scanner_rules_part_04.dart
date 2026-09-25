@@ -498,6 +498,22 @@ class CacheEntry {
     await assertNoDiagnosticsInFile(filePath);
   }
 
+  // riverpod-codegen.md persistence preview: a static-only codec in data/models
+  // cannot be instantiated, so it is not a value class.
+  Future<void> test_allowsStaticCodecNamespaceInDataModels() async {
+    final filePath = '$testPackageLibPath/features/todos/data/models/todo_list_codec.dart';
+    newFile(filePath, r'''
+abstract final class TodoListCodec {
+  static List<String> decode(Object? payload) => switch (payload) {
+    final List<Object?> items => [for (final item in items) '$item'],
+    _ => const <String>[],
+  };
+}
+''');
+
+    await assertNoDiagnosticsInFile(filePath);
+  }
+
   Future<void> test_reportsDataModelWithUnresolvedHiveTypeLookalike() async {
     final filePath = '$testPackageLibPath/features/cache/data/models/cache_entry.dart';
     const source = r'''

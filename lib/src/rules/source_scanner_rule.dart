@@ -376,7 +376,7 @@ final class SourceScannerContext {
   bool requiresFreezedValueClass(ScannerClassSpan classSpan) {
     if (isTestFile) return false;
     if (classSpan.name.startsWith('_') || classSpan.isNotifier) return false;
-    if (_isAbstractInterfaceClass(classSpan)) return false;
+    if (_isNeverInstantiatedClass(classSpan)) return false;
     if (_isGeneratedOrPartOfFile) return false;
     if (isDomainPath) return true;
     return isDataModelPath || (isDataPath && classSpan.name.endsWith('Model'));
@@ -521,9 +521,11 @@ final class SourceScannerContext {
     return source.masked.any((line) => RegExp(r'^\s*part\s+of\b').hasMatch(line));
   }
 
-  bool _isAbstractInterfaceClass(ScannerClassSpan classSpan) {
+  /// An `abstract interface class` contract or an `abstract final class` static
+  /// namespace (keys, codecs, mappers): neither is ever instantiated as a value.
+  bool _isNeverInstantiatedClass(ScannerClassSpan classSpan) {
     final line = source.masked[classSpan.start];
-    return RegExp(r'\babstract\s+interface\s+class\b').hasMatch(line);
+    return RegExp(r'\babstract\s+(?:interface|final)\s+class\b').hasMatch(line);
   }
 
   static List<ScannerClassSpan> _classes(SourceScannerSource source) {

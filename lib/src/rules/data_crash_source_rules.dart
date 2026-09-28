@@ -5,6 +5,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/riverpod_type_checkers.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
+import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> dataCrashSourceRules = [
@@ -84,17 +85,18 @@ final List<ScannerRule> dataCrashSourceRules = [
     code: const LintCode(
       'crash_custom_global_error_handler',
       'Avoid hand-wired FlutterError.onError or PlatformDispatcher.onError handlers.',
-      correctionMessage: 'Let the crash SDK integration own framework and dispatcher errors; wire Crashlytics handlers only inside the Crash facade.',
+      correctionMessage: 'Use SDK-managed handlers, or keep Crash.init forwarding to terminal local diagnostics only.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags assignments to FlutterError.onError or PlatformDispatcher.onError unless the Crash facade assigns a FirebaseCrashlytics handler.',
+    description: 'Flags custom global handlers except Crashlytics wiring or terminal local diagnostics inside Crash.init.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
       final visitor = _GlobalErrorHandlerVisitor();
       context.unit.accept(visitor);
       for (final assignment in visitor.assignments) {
-        if (_isInsideCrashFacade(assignment) &&
-            _referencesPackage(assignment.rightHandSide, 'firebase_crashlytics')) {
+        if ((_isInsideCrashFacade(assignment) &&
+                _referencesPackage(assignment.rightHandSide, 'firebase_crashlytics')) ||
+            _isLocalCrashForwarding(assignment)) {
           continue;
         }
         _reportOffset(reporter, context, assignment.offset);
@@ -166,12 +168,13 @@ final List<ScannerRule> dataCrashSourceRules = [
   scannerRule(
     code: const LintCode(
       'crash_error_recursion',
-      'Crash must not call Crash.error from inside the facade.',
+      'Crash must not report its own failures through Crash.error.',
       correctionMessage:
           'Contain send failures with a local diagnostic instead of calling Crash.error.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags resolved Crash.error calls inside the Crash facade class.',
+    description:
+        'Flags resolved Crash.error calls inside the facade, except startup error forwarding.',
     scan: (reporter, context) {
       for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
         final crash = declaration.declaredFragment?.element;
@@ -628,20 +631,21 @@ final class _SentryUseVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
+bool _isGlobalErrorHandlerAssignment(AssignmentExpression node) {
+  final setter = node.writeElement;
+  if (setter is! PropertyAccessorElement || setter.variable.name != 'onError') return false;
+  final owner = setter.enclosingElement;
+  final library = owner.library?.uri.toString() ?? '';
+  return (owner.name == 'FlutterError' && library.startsWith('package:flutter/')) ||
+      (owner.name == 'PlatformDispatcher' && library == 'dart:ui');
+}
+
 final class _GlobalErrorHandlerVisitor extends RecursiveAstVisitor<void> {
   final List<AssignmentExpression> assignments = [];
 
   @override
   void visitAssignmentExpression(AssignmentExpression node) {
-    final setter = node.writeElement;
-    if (setter is PropertyAccessorElement && setter.variable.name == 'onError') {
-      final owner = setter.enclosingElement;
-      final library = owner.library?.uri.toString() ?? '';
-      if ((owner.name == 'FlutterError' && library.startsWith('package:flutter/')) ||
-          (owner.name == 'PlatformDispatcher' && library == 'dart:ui')) {
-        assignments.add(node);
-      }
-    }
+    if (_isGlobalErrorHandlerAssignment(node)) assignments.add(node);
     super.visitAssignmentExpression(node);
   }
 }
@@ -674,9 +678,62 @@ final class _CrashErrorCallVisitor extends RecursiveAstVisitor<void> {
   @override
   void visitMethodInvocation(MethodInvocation node) {
     final element = node.methodName.element;
-    if (_isCrashFacadeError(element) && element?.enclosingElement == crash) calls.add(node);
+    if (_isCrashFacadeError(element) &&
+        element?.enclosingElement == crash &&
+        !_isStartupErrorForwarder(node)) {
+      calls.add(node);
+    }
     super.visitMethodInvocation(node);
   }
+}
+
+bool _isStartupErrorForwarder(MethodInvocation node) {
+  final method = node.thisOrAncestorOfType<MethodDeclaration>();
+  if (method == null || !method.isStatic || method.name.lexeme != 'init') return false;
+  final callback = node.thisOrAncestorOfType<FunctionExpression>();
+  final assignment = callback?.parent;
+  final caught = node.thisOrAncestorOfType<CatchClause>();
+  return callback != null &&
+      (caught == null || caught.offset < callback.offset) &&
+      assignment is AssignmentExpression &&
+      assignment.rightHandSide == callback &&
+      _isGlobalErrorHandlerAssignment(assignment);
+}
+
+bool _isLocalCrashForwarding(AssignmentExpression assignment) {
+  final calls = collectNodes<InvocationExpression>(assignment.rightHandSide);
+  final call = calls.singleOrNull;
+  if (call is! MethodInvocation ||
+      !_isCrashFacadeError(call.methodName.element) ||
+      !_isStartupErrorForwarder(call)) {
+    return false;
+  }
+  final declaration = call.thisOrAncestorOfType<ClassDeclaration>();
+  if (declaration == null ||
+      const {
+        'sentry',
+        'sentry_flutter',
+        'firebase_crashlytics',
+      }.any((package) => _referencesPackage(declaration, package))) {
+    return false;
+  }
+  final error = declaration.body.members
+      .whereType<MethodDeclaration>()
+      .where((member) => member.declaredFragment?.element == call.methodName.element)
+      .firstOrNull;
+  final body = error?.body;
+  if (body == null || body.isAsynchronous || body.isGenerator) return false;
+  final diagnostics = collectNodes<InvocationExpression>(body);
+  return diagnostics.isNotEmpty &&
+      diagnostics.every(_isLogInvocation) &&
+      ![...collectNodes<AstNode>(body), ...collectNodes<AstNode>(assignment.rightHandSide)].any(
+        (node) =>
+            node is AssignmentExpression ||
+            node is InstanceCreationExpression ||
+            node is ThrowExpression ||
+            node is RethrowExpression ||
+            node is AwaitExpression,
+      );
 }
 
 final class _SentryAuthTokenVisitor extends RecursiveAstVisitor<void> {
@@ -863,16 +920,16 @@ bool _isReportingCall(Statement statement, CatchClause clause) {
   if (statement is! ExpressionStatement) return false;
   final expression = statement.expression;
   final call = expression is AwaitExpression ? expression.expression : expression;
-  final callee = switch (call) {
-    MethodInvocation(:final methodName) => methodName.element,
-    // Function-typed variables such as Flutter's debugPrint resolve here.
-    FunctionExpressionInvocation(:final function) =>
-      function is Identifier ? function.element : null,
-    _ => null,
-  };
   if (call is! InvocationExpression) return false;
-  return _isLogFunction(callee) || _receivesCaughtError(call, clause);
+  return _isLogInvocation(call) || _receivesCaughtError(call, clause);
 }
+
+bool _isLogInvocation(InvocationExpression call) => _isLogFunction(switch (call) {
+  MethodInvocation(:final methodName) => methodName.element,
+  // Function-typed variables such as Flutter's debugPrint resolve here.
+  FunctionExpressionInvocation(:final function) => function is Identifier ? function.element : null,
+  _ => null,
+});
 
 bool _isLogFunction(Element? element) {
   if (element == null || element.enclosingElement is! LibraryElement) return false;

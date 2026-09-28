@@ -41,13 +41,14 @@ final List<ScannerRule> architectureSourceRules = [
           'through the <X>Repository interface.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags storage SDK and dart:io imports in presentation, notifier, service, and repository files.',
+    description: 'Flags storage-capable SDK and dart:io imports in presentation, notifier, service, and repository files.',
     scan: (reporter, context) {
       if (context.isTestFile || context.isPresentationWidgetFile) return;
       if (!_isStorageSdkForbiddenFile(context.path)) return;
       for (final directive in context.unit.directives.whereType<ImportDirective>()) {
         final uri = _resolvedImportUri(context, directive);
         if (uri == null || !_isStorageSdkImport(uri)) continue;
+        if (_isNonIoBoundaryImport(directive)) continue;
         reporter.reportOffset(context, directive.offset);
       }
     },
@@ -337,6 +338,25 @@ bool _isStorageSdkImport(Uri uri) {
   return uri.isScheme('package') &&
       uri.pathSegments.isNotEmpty &&
       _storageSdkPackages.contains(uri.pathSegments.first);
+}
+
+bool _isNonIoBoundaryImport(ImportDirective directive) {
+  final library = directive.libraryImport?.importedLibrary;
+  final show = directive.combinators.singleOrNull;
+  if (directive.uri.stringValue != 'dart:io' ||
+      library?.uri.toString() != 'dart:io' ||
+      directive.configurations.isNotEmpty ||
+      show is! ShowCombinator ||
+      show.shownNames.isEmpty) {
+    return false;
+  }
+  const allowed = {'HttpHeaders', 'HttpStatus', 'SocketException', 'FileSystemException'};
+  return show.shownNames.every(
+    (name) =>
+        allowed.contains(name.name) &&
+        name.element is ClassElement &&
+        name.element == library?.exportNamespace.get2(name.name),
+  );
 }
 
 bool _isStorageSdkForbiddenFile(String path) {

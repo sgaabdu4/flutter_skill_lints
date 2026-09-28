@@ -39,7 +39,7 @@ Designed for Riverpod + codegen Flutter apps.
 
    plugins:
      riverpod_lint: ^3.1.9
-     flutter_skill_lints: ^0.13.0
+     flutter_skill_lints: ^0.13.1
 
    analyzer:
      exclude:
@@ -160,6 +160,9 @@ calling generated typed route helpers:
 ProductDetailRoute(id: id).go(context);
 await ProductCreateRoute(parentId: id).push<void>(context);
 ```
+
+Above the Router, an explicit `GoRouter.go(route.location)` is also accepted
+when `route` resolves to `GoRouteData`; raw String locations remain flagged.
 
 ```dart
 import 'dart:async';

@@ -47,6 +47,32 @@ void open(context) {
 ''');
   }
 
+  Future<void> test_allowsTypedLocationOnExplicitRouter() async {
+    await assertAllows(r'''
+import 'package:go_router/go_router.dart';
+
+class ItemRoute extends GoRouteData {
+  const ItemRoute();
+}
+void open(GoRouter router, GoRouteData route) {
+  router.go(route.location);
+  router.go(const ItemRoute().location);
+}
+''');
+  }
+
+  Future<void> test_reportsRawLocationOnExplicitRouter() async {
+    const source = r'''
+import 'package:go_router/go_router.dart';
+
+void open(GoRouter router, String location) {
+  router.go(location);
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'router.go', ruleName)]);
+  }
+
   Future<void> test_reportsContextGoWithTypedLocation() async {
     final analyzedSource = _analyzedSource(r'''
 void open(context, String id) {

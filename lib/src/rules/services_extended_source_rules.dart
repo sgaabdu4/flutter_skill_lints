@@ -1,6 +1,7 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
@@ -181,16 +182,25 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       correctionMessage: 'Use a required value, explicit nullable branch, pattern match, or typed domain value instead of empty string/collection, toString, callback, or chained ?? fallbacks.',
       severity: DiagnosticSeverity.WARNING,
     ),
-    description: 'Flags empty collection/string, callback, toString, and chained null-coalescing fallbacks in production code.',
+    description: 'Flags empty collection/string, callback, toString, and chained null-coalescing fallbacks outside resolved boundary normalization.',
     scan: (reporter, context) {
       if (context.isTestFile) return;
 
       for (var i = 0; i < context.source.length; i++) {
-        final column = _implicitNullFallbackColumn(
-          context.source.masked[i],
-          context.source.code[i],
-        );
-        if (column != null) reporter.report(context, i, column);
+        var start = 0;
+        while (start < context.source.masked[i].length) {
+          final found = _implicitNullFallbackColumn(
+            context.source.masked[i].substring(start),
+            context.source.code[i].substring(start),
+          );
+          if (found == null) break;
+          final column = start + found;
+          if (!_isNullableStringBoundary(context, i, column)) {
+            reporter.report(context, i, column);
+            break;
+          }
+          start = column + 2;
+        }
       }
     },
   ),
@@ -308,10 +318,53 @@ int? _implicitNullFallbackColumn(String masked, String code) {
   return null;
 }
 
-/// Returns the `ref.watch` invocation at [column] when it sits inside a
-/// `@riverpod` factory whose resolved return type is stable infrastructure,
-/// or when a Riverpod notifier member watches a resolved stable
-/// infrastructure value.
+bool _isNullableStringBoundary(SourceScannerContext context, int line, int column) {
+  final node = context.unit.nodeCovering(offset: context.source.lineOffsets[line] + column);
+  final fallback = node?.thisOrAncestorOfType<BinaryExpression>();
+  if (fallback == null ||
+      fallback.operator.lexeme != '??' ||
+      fallback.rightOperand is! SimpleStringLiteral ||
+      (fallback.rightOperand as SimpleStringLiteral).value.isNotEmpty ||
+      fallback.leftOperand.staticType?.isDartCoreString != true ||
+      fallback.leftOperand.staticType?.nullabilitySuffix != NullabilitySuffix.question) {
+    return false;
+  }
+  final parent = fallback.parent;
+  if (parent is AssignmentExpression && parent.rightHandSide == fallback) {
+    final setter = parent.writeElement;
+    if (setter is SetterElement &&
+        setter.name == 'text' &&
+        setter.enclosingElement.name == 'TextEditingController' &&
+        setter.library.uri.toString().startsWith('package:flutter/')) {
+      return true;
+    }
+  }
+  if (parent case ArgumentList(parent: final MethodInvocation call)) {
+    final method = call.methodName.element;
+    if (method is MethodElement &&
+        method.name == 'tryParse' &&
+        method.library.uri.toString() == 'dart:core' &&
+        const {'int', 'double'}.contains(method.enclosingElement?.name) &&
+        call.argumentList.arguments.firstOrNull == fallback) {
+      return true;
+    }
+  }
+  if (!context.isDataModelPath) return false;
+  final factory = fallback.thisOrAncestorOfType<ConstructorDeclaration>();
+  final parameter = parent is NamedArgument
+      ? parent.correspondingParameter
+      : fallback.correspondingParameter;
+  final constructor = parameter?.enclosingElement;
+  return factory?.factoryKeyword != null &&
+      factory?.name?.lexeme == 'fromEntity' &&
+      constructor is ConstructorElement &&
+      constructor.enclosingElement == factory?.declaredFragment?.element.enclosingElement &&
+      parameter?.type.isDartCoreString == true &&
+      parameter?.type.nullabilitySuffix == NullabilitySuffix.none &&
+      (parameter?.isRequiredNamed == true || parameter?.isRequiredPositional == true);
+}
+
+/// Find resolved stable-infrastructure watches in factories and notifier members.
 MethodInvocation? _stableInfrastructureFactoryWatch(
   SourceScannerContext context,
   int lineIndex,

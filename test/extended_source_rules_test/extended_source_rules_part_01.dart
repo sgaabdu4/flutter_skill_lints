@@ -220,6 +220,16 @@ void main() {
 @reflectiveTest
 final class ImplicitNullFallbackTest extends _ServicesExtendedRuleTest {
   @override
+  void setUp() {
+    newPackage('flutter').addFile('lib/widgets.dart', r'''
+class TextEditingController {
+  String text = '';
+}
+''');
+    super.setUp();
+  }
+
+  @override
   String get ruleName => 'implicit_null_fallback';
   @override
   String get source => '''
@@ -324,6 +334,107 @@ void main() {
   final granted = overrideGranted ?? false;
 }
 ''', path: '$testPackageRootPath/test/permission_test.dart');
+  }
+
+  Future<void> test_allowsNativeParseAndEditorBoundaries() async {
+    await assertAllows(r'''
+import 'package:flutter/widgets.dart';
+
+void edit(TextEditingController controller, String? value) {
+  controller.text = value ?? '';
+}
+int? parseCount(String? value) => int.tryParse(value ?? '');
+double? parseAmount(String? value) => double.tryParse(value ?? '');
+''');
+  }
+
+  Future<void> test_allowsRequiredStringWireFieldFromNullableEntity() async {
+    await assertAllows(r'''
+class Item {
+  const Item(this.note);
+  final String? note;
+}
+class ItemModel {
+  const ItemModel({required this.note});
+  final String note;
+  factory ItemModel.fromEntity(Item item) => ItemModel(note: item.note ?? '');
+  Item toEntity() => Item(note.isEmpty ? null : note);
+}
+''', path: '$testPackageLibPath/features/items/data/models/item_model.dart');
+    await assertAllows(r'''
+class Item {
+  const Item(this.note);
+  final String? note;
+}
+abstract class ItemModel {
+  const ItemModel._();
+  const factory ItemModel({required String note}) = _ItemModel;
+  String get note;
+  factory ItemModel.fromEntity(Item item) => ItemModel(note: item.note ?? '');
+  Item toEntity() => Item(note.isEmpty ? null : note);
+}
+class _ItemModel extends ItemModel {
+  const _ItemModel({required this.note}) : super._();
+  @override
+  final String note;
+}
+''', path: '$testPackageLibPath/features/items/data/models/item_model.dart');
+  }
+
+  Future<void> test_reportsLookalikeNativeBoundaries() async {
+    const source = r'''
+class TextEditingController {
+  String text = '';
+}
+class Parser {
+  static int? tryParse(String input) => 0;
+}
+void edit(TextEditingController controller, String? value) {
+  controller.text = value ?? '';
+}
+int? parse(String? value) => Parser.tryParse(value ?? '');
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, "?? '';", ruleName),
+      compatLint(analyzedSource, "?? '');", ruleName),
+    ]);
+  }
+
+  Future<void> test_reportsMappingOutsideTheWireFactory() async {
+    const source = r'''
+class Item {
+  const Item(this.note);
+  final String? note;
+}
+class ItemModel {
+  const ItemModel({required this.note});
+  final String note;
+  factory ItemModel.fromEntity(Item item) => ItemModel(note: item.note ?? '');
+}
+''';
+    for (final path in [
+      '$testPackageLibPath/features/items/domain/item.dart',
+      '$testPackageLibPath/features/items/repositories/item_repository.dart',
+    ]) {
+      newFile(path, source);
+      await assertDiagnosticsInFile(path, [compatLint(source, "?? ''", ruleName)]);
+    }
+    final path = '$testPackageLibPath/features/items/data/models/item_model.dart';
+    final otherFactory = source.replaceFirst('fromEntity', 'fromInput');
+    newFile(path, otherFactory);
+    await assertDiagnosticsInFile(path, [compatLint(otherFactory, "?? ''", ruleName)]);
+    final optionalWireField = source.replaceFirst('required this.note', "this.note = ''");
+    newFile(path, optionalWireField);
+    await assertDiagnosticsInFile(path, [compatLint(optionalWireField, "?? ''", ruleName)]);
+  }
+
+  Future<void> test_reportsFallbackAfterAnAllowedBoundaryOnTheSameLine() async {
+    const source = r'''
+String label(String? value, String? name) { int.tryParse(value ?? ''); return name ?? ''; }
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, "?? '';", ruleName)]);
   }
 }
 

@@ -230,17 +230,23 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
         'Flags raw page navigation so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       final reportedLines = <int>{};
+      final calls = collectNodes<MethodInvocation>(context.unit);
       for (var i = 0; i < context.source.length; i++) {
         final column = _directRouteNavigationColumn(context, i);
-        if (column != null) {
-          reporter.report(context, i, column);
-          reportedLines.add(i);
-        }
+        if (column == null) continue;
+        final navigation = calls.where(
+          (call) =>
+              context.unit.lineInfo.getLocation(call.offset).lineNumber == i + 1 &&
+              RegExp(r'^(?:go|push|replace|restorablePush)').hasMatch(call.methodName.name),
+        );
+        if (navigation.isNotEmpty && navigation.every(_isTypedRouterGo)) continue;
+        reporter.report(context, i, column);
+        reportedLines.add(i);
       }
-      for (final call in collectNodes<MethodInvocation>(context.unit)) {
+      for (final call in calls) {
         final targetType = call.realTarget?.staticType;
         if (targetType == null || !goRouterChecker.isAssignableFromType(targetType)) continue;
-        if (!isResolvedForwardNavigation(call)) continue;
+        if (!isResolvedForwardNavigation(call) || _isTypedRouterGo(call)) continue;
         if (!reportedLines.add(context.unit.lineInfo.getLocation(call.offset).lineNumber - 1)) {
           continue;
         }
@@ -456,6 +462,19 @@ bool _isRouteLocation(Expression? expression) {
   if (value is ConditionalExpression) {
     return _isRouteLocation(value.thenExpression) || _isRouteLocation(value.elseExpression);
   }
+  return _isTypedRouteLocation(value);
+}
+
+bool _isTypedRouterGo(MethodInvocation call) {
+  final type = call.realTarget?.staticType;
+  return call.methodName.name == 'go' &&
+      type != null &&
+      goRouterChecker.isAssignableFromType(type) &&
+      _isTypedRouteLocation(call.argumentList.arguments.firstOrNull?.argumentExpression);
+}
+
+bool _isTypedRouteLocation(Expression? expression) {
+  final value = expression?.unParenthesized;
   final (target, name) = switch (value) {
     PropertyAccess(:final realTarget, :final propertyName) => (realTarget, propertyName.name),
     PrefixedIdentifier(:final prefix, :final identifier) => (prefix, identifier.name),

@@ -1,6 +1,6 @@
 # Published analyzer regression boundaries
 
-Status: Draft
+Status: Complete
 
 ## Outcome + scope
 
@@ -12,7 +12,7 @@ Owners: `avoid_unused_assignment`, the existing router/services/Crash source rul
 
 ## Decisions + authorization
 
-Blockers: Supported scaffold adoption, full native gates and analyzer-server smoke remain pending. Independent semantic review and focused proof are complete; authorized integrated delivery follows those remaining checks.
+Blockers: None
 Handoff: Clarification
 Authority: The user requires enforcement of documented best practices; runtime-valid code alone does not justify a lint allowance. On 2026-09-29 the coordinator authorized withdrawing the unpublished async exception and broad assertion reset, restoring the entire pre-0.13.1 direct-router and null-fallback policy, and preparing inline-capture and unit-scoped SDK detection repairs. Local closure identity tracking and synchronous execution guesses were removed as unnecessary for the actual awaited-callback requirement. The canonical no-provider Crash applicability remains supported. Integrated delivery is authorized after final independent review and passing native proof.
 
@@ -28,12 +28,12 @@ Authority: The user requires enforcement of documented best practices; runtime-v
 - [x] SDK initialization in a helper outside Crash in the same resolved unit prevents a local-handler exemption; resolved local lookalikes and no-provider terminal diagnostics remain allowed, while recursion and unsafe continuations retain their existing diagnostics.
 - [x] Reproduce the assignment and policy failures against 0.13.1, retain unsafe controls, and pass focused native rule suites plus strict affected analysis.
 - [x] Independent review confirms the final diagnostic behavior follows the existing policy and does not replace meaningful strict checks with runtime-valid allowances.
-- [ ] Supported adoption installs the verified scaffold revision; all integrated native gates and existing coverage and performance requirements pass before delivery.
+- [x] Supported adoption installs the verified scaffold revision; all integrated native gates and existing coverage and performance requirements pass before delivery.
 
 ## Baseline + execution
 
-Result: Failed
-Evidence: A real consumer candidate resolved published 0.13.1 and reported assignments whose values a registered callback actually reads during awaited recovery phases. Its other eleven gate owners passed. The producer starts at clean main `a5c37f1`; registry metadata confirmed 0.13.1. The final focused suite reproduced eight failures with the exact published rule bytes; edited bytes were restored in `finally` before green verification. Fresh-checkout integrated proof remains pending. Earlier mounted-guard, expression and SDK-mock corrections remain unchanged.
+Result: Passed
+Evidence: The original failed baseline was a consumer candidate resolving published 0.13.1 and reporting assignments whose values a registered callback actually reads during awaited recovery phases; its other eleven gate owners passed. The producer started at clean main `a5c37f1`, and registry metadata confirmed 0.13.1. The final focused suite reproduced eight failures with the exact published rule bytes; edited bytes were restored in `finally` before the green run. After the repairs and supported scaffold update, all integrated gates passed. Earlier mounted-guard, expression and SDK-mock corrections remain unchanged.
 Execution: One builder owns the existing rule and test files. Independent review of the final diff found no remaining semantic defect. The coordinator granted integrated verification and delivery through the existing native owners.
 
 ## Risks + recovery
@@ -46,8 +46,8 @@ N/A — analyzer diagnostics have no visual interface.
 
 ## Verification
 
-Result: Pending
-Evidence: Final focused native run passed 62 cases in 3.35 seconds: `AvoidUnusedAssignmentTest`, `ImplicitNullFallbackTest`, `RouterDirectRouteCallTest`, `CrashCustomGlobalErrorHandlerTest` and `CrashErrorRecursionTest`. The same suites against exact published rule bytes failed eight cases in 3.20 seconds. `dart analyze --fatal-infos` passed all nine changed Dart files; the final narrowed assignment owner and suite were checked again. Formatting and diff-whitespace checks passed. Both withdrawn async/duplicate rule-test pairs match exact `HEAD` bytes. Independent review of the final diff found no remaining semantic defect. Earlier receipts exercised broader proposals now removed and do not certify this final scope. Full native gates, analyzer-server smoke and adoption remain pending; these receipts do not establish integrated readiness.
-E2E: Required — the native analyzer harness must prove inline captures across awaits, retained declaration/unrelated-call/overwrite/shadowing controls, restored policy diagnostics and the SDK-helper/local-only Crash boundary after independent review. The existing analyzer-server smoke remains required during delivery.
+Result: Passed
+Evidence: Final focused native run passed 62 cases in 3.35 seconds: `AvoidUnusedAssignmentTest`, `ImplicitNullFallbackTest`, `RouterDirectRouteCallTest`, `CrashCustomGlobalErrorHandlerTest` and `CrashErrorRecursionTest`. The same suites against exact published rule bytes failed eight cases in 3.20 seconds. `dart analyze --fatal-infos` passed all nine changed Dart files; the final narrowed assignment owner and suite were checked again. Formatting and diff-whitespace checks passed. Both withdrawn async/duplicate rule-test pairs match the published baseline. Independent review of the final diff found no remaining semantic defect. Supported installation of Hard Eng `97cc783afd75c81b08a28f0ce392414aa50cef7e` passed its scaffold checks in 37.17 seconds. The subsequent complete native gate passed in 88.79 seconds with 2,704 tests, 79.43% line coverage against the retained 70% minimum, and all strict analysis, security, duplicate-code and performance checks. Earlier receipts for removed proposals do not certify this final scope.
+E2E: Passed — the native analyzer harness proved inline captures across awaits, retained declaration/unrelated-call/overwrite/shadowing controls, restored policy diagnostics and the SDK-helper/local-only Crash boundary. The existing opt-in `RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart --reporter expanded` also passed in 101.85 seconds, loading the canonical configuration alongside `riverpod_lint` in a real Flutter analysis-server run.
 Delivery target: Merge
 Delivery: Pending — coordinated review, exact-head CI, merged-main verification, trusted 0.13.2 publication and archive verification remain required. Consumer adoption and its full strict-profile verification follow publication in that consumer's own effort.

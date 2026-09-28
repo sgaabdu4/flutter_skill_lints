@@ -53,6 +53,107 @@ void f() {
 ''');
   }
 
+  Future<void> test_registeredInlineCallbackReadsAcrossAwaits_noLint() async {
+    await assertNoDiagnostics(r'''
+void Function()? listener;
+void register(void Function() callback) { listener = callback; }
+Future<void> flush() async { listener!(); }
+
+Future<void> f() async {
+  var ready = false;
+  register(() { print(ready); });
+  await flush();
+  ready = true;
+  await flush();
+  ready = false;
+  await flush();
+}
+''');
+  }
+
+  Future<void> test_callbackCaptureStillRequiresExecution_lint() async {
+    const source = r'''
+Future<void> unrelated() async {}
+
+Future<void> f() async {
+  var value = 1;
+  final read = () => value;
+  await unrelated();
+  value = 2;
+  print(value);
+  value = 3;
+  await unrelated();
+  value = 4;
+  print(value);
+  print(read);
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('value = 2'), 'value'.length),
+      lint(source.indexOf('value = 4'), 'value'.length),
+    ]);
+  }
+
+  Future<void> test_storedClosureReadsValue_noLint() async {
+    await assertNoDiagnostics(r'''
+void Function()? listener;
+Future<void> flush() async { listener!(); }
+
+Future<void> f() async {
+  var ready = false;
+  listener = () { print(ready); };
+  await flush();
+  ready = true;
+  await flush();
+}
+''');
+  }
+
+  Future<void> test_escapedClosureDoesNotHideAdjacentOverwrite_lint() async {
+    const source = r'''
+void Function()? listener;
+void register(void Function() callback) { listener = callback; }
+Future<void> flush() async { listener!(); }
+
+Future<void> f() async {
+  var value = 1;
+  register(() { print(value); });
+  await flush();
+  value = 2;
+  value = 3;
+  await flush();
+  value = 4;
+  final token = const Object();
+  final same = identical(1, 1);
+  value = 5;
+  await flush();
+  print(token);
+  print(same);
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('value = 3'), 'value'.length),
+      lint(source.indexOf('value = 5'), 'value'.length),
+    ]);
+  }
+
+  Future<void> test_shadowedCallbackReadDoesNotConsumeOuter_lint() async {
+    const source = r'''
+void register(void Function(int) callback) { callback(0); }
+
+void f() {
+  var value = 1;
+  register((value) { print(value); });
+  value = 2;
+  print(value);
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('value = 2'), 'value'.length)]);
+  }
+
   Future<void> test_shadowedVariable_noLint() async {
     await assertNoDiagnostics(r'''
 void f() {

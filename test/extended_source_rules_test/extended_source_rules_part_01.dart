@@ -336,20 +336,27 @@ void main() {
 ''', path: '$testPackageRootPath/test/permission_test.dart');
   }
 
-  Future<void> test_allowsNativeParseAndEditorBoundaries() async {
-    await assertAllows(r'''
+  Future<void> test_reportsNativeParseAndEditorFallbacks() async {
+    const source = r'''
 import 'package:flutter/widgets.dart';
 
 void edit(TextEditingController controller, String? value) {
   controller.text = value ?? '';
 }
 int? parseCount(String? value) => int.tryParse(value ?? '');
-double? parseAmount(String? value) => double.tryParse(value ?? '');
-''');
+double? parseAmount(String? value) => double.tryParse(value ?? "");
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, "?? '';", ruleName),
+      compatLint(analyzedSource, "?? '');", ruleName),
+      compatLint(analyzedSource, '?? "");', ruleName),
+    ]);
   }
 
-  Future<void> test_allowsRequiredStringWireFieldFromNullableEntity() async {
-    await assertAllows(r'''
+  Future<void> test_reportsRequiredStringWireFieldFromNullableEntity() async {
+    for (final (index, source) in [
+      r'''
 class Item {
   const Item(this.note);
   final String? note;
@@ -360,8 +367,8 @@ class ItemModel {
   factory ItemModel.fromEntity(Item item) => ItemModel(note: item.note ?? '');
   Item toEntity() => Item(note.isEmpty ? null : note);
 }
-''', path: '$testPackageLibPath/features/items/data/models/item_model.dart');
-    await assertAllows(r'''
+''',
+      r'''
 class Item {
   const Item(this.note);
   final String? note;
@@ -378,7 +385,12 @@ class _ItemModel extends ItemModel {
   @override
   final String note;
 }
-''', path: '$testPackageLibPath/features/items/data/models/item_model.dart');
+''',
+    ].indexed) {
+      final path = '$testPackageLibPath/features/items/data/models/item_model_$index.dart';
+      newFile(path, source);
+      await assertDiagnosticsInFile(path, [compatLint(source, "?? ''", ruleName)]);
+    }
   }
 
   Future<void> test_reportsLookalikeNativeBoundaries() async {
@@ -429,12 +441,12 @@ class ItemModel {
     await assertDiagnosticsInFile(path, [compatLint(optionalWireField, "?? ''", ruleName)]);
   }
 
-  Future<void> test_reportsFallbackAfterAnAllowedBoundaryOnTheSameLine() async {
+  Future<void> test_reportsFirstFallbackWhenSeveralShareALine() async {
     const source = r'''
 String label(String? value, String? name) { int.tryParse(value ?? ''); return name ?? ''; }
 ''';
     final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, "?? '';", ruleName)]);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, "?? '');", ruleName)]);
   }
 }
 

@@ -161,9 +161,6 @@ ProductDetailRoute(id: id).go(context);
 await ProductCreateRoute(parentId: id).push<void>(context);
 ```
 
-Above the Router, an explicit `GoRouter.go(route.location)` is also accepted
-when `route` resolves to `GoRouteData`; raw String locations remain flagged.
-
 ```dart
 import 'dart:async';
 import 'package:flutter/widgets.dart';

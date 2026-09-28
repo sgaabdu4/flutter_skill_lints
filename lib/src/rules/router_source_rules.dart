@@ -164,10 +164,7 @@ String _routerWindow(
   return context.source.masked.sublist(start, end + 1).join('\n');
 }
 
-({RegExpMatch match, int column})? _directRouteNavigationMatch(
-  SourceScannerContext context,
-  int lineIndex,
-) {
+int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
   final publicCoordinatorStaticCallPattern = RegExp(
     r'\b[A-Z]\w*NavigationCoordinator\s*\.\s*\w+\s*(?:<[^>]+>)?\s*\(',
   );
@@ -177,7 +174,7 @@ String _routerWindow(
     publicCoordinatorStaticCallPattern,
     maxLines: 4,
   );
-  if (publicCoordinatorStaticCall != null) return publicCoordinatorStaticCall;
+  if (publicCoordinatorStaticCall != null) return publicCoordinatorStaticCall.column;
 
   final contextNavigation = RegExp(
     r'\bcontext\s*\.\s*(?:go|push|replace|pushReplacement|goNamed|pushNamed|replaceNamed)\s*'
@@ -189,7 +186,7 @@ String _routerWindow(
     contextNavigation,
     maxLines: 4,
   );
-  if (contextNavigationCall != null) return contextNavigationCall;
+  if (contextNavigationCall != null) return contextNavigationCall.column;
 
   final contextConvenienceNavigation = RegExp(
     r'\bcontext\s*\.\s*(?:go|push|replace|pushReplacement)[A-Z]\w*\s*'
@@ -202,7 +199,7 @@ String _routerWindow(
     maxLines: 4,
   );
   if (contextConvenienceNavigationCall != null) {
-    return contextConvenienceNavigationCall;
+    return contextConvenienceNavigationCall.column;
   }
 
   final routerVariableNavigation = RegExp(
@@ -216,7 +213,7 @@ String _routerWindow(
     routerVariableNavigation,
     maxLines: 4,
   );
-  if (routerVariableNavigationCall != null) return routerVariableNavigationCall;
+  if (routerVariableNavigationCall != null) return routerVariableNavigationCall.column;
 
   final routerConvenienceNavigation = RegExp(
     r'\b(?:_?router|[A-Za-z_]\w*Router\w*)\s*\.\s*'
@@ -230,7 +227,7 @@ String _routerWindow(
     maxLines: 4,
   );
   if (routerConvenienceNavigationCall != null) {
-    return routerConvenienceNavigationCall;
+    return routerConvenienceNavigationCall.column;
   }
 
   final navigatorNavigation = RegExp(
@@ -245,7 +242,7 @@ String _routerWindow(
     navigatorNavigation,
     maxLines: 4,
   );
-  if (navigatorNavigationCall != null) return navigatorNavigationCall;
+  if (navigatorNavigationCall != null) return navigatorNavigationCall.column;
 
   return null;
 }

@@ -47,23 +47,29 @@ void open(context) {
 ''');
   }
 
-  Future<void> test_allowsTypedLocationOnExplicitRouter() async {
-    await assertAllows(r'''
+  Future<void> test_reportsTypedLocationOnExplicitRouter() async {
+    const source = r'''
 import 'package:go_router/go_router.dart';
 
 class ItemRoute extends GoRouteData {
   const ItemRoute();
 }
 class RouterHolder {
-  RouterHolder(this.router);
-  final GoRouter router;
+  RouterHolder(this.rootRouter);
+  final GoRouter rootRouter;
 }
 void open(GoRouter router, GoRouteData route, RouterHolder holder) {
   router.go(route.location);
   router.go(const ItemRoute().location);
-  holder.router.go(route.location);
+  holder.rootRouter.go(route.location);
 }
-''');
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'router.go(route.location)', ruleName),
+      compatLint(analyzedSource, 'router.go(const ItemRoute()', ruleName),
+      compatLint(analyzedSource, 'rootRouter.go', ruleName),
+    ]);
   }
 
   Future<void> test_reportsRawLocationOnExplicitRouter() async {

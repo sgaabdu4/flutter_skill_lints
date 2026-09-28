@@ -230,27 +230,16 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
         'Flags raw page navigation so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       final reportedLines = <int>{};
-      final calls = collectNodes<MethodInvocation>(context.unit);
       for (var i = 0; i < context.source.length; i++) {
-        final match = _directRouteNavigationMatch(context, i);
-        if (match == null) continue;
-        final argumentOffset = context.source.lineOffsets[i] + match.match.end - 1;
-        final navigation = calls.where(
-          (call) =>
-              context.unit.lineInfo.getLocation(call.offset).lineNumber == i + 1 &&
-              RegExp(r'^(?:go|push|replace|restorablePush)').hasMatch(call.methodName.name),
-        );
-        if (navigation.any((call) => call.argumentList.offset == argumentOffset) &&
-            navigation.every(_isTypedRouterGo)) {
-          continue;
-        }
-        reporter.report(context, i, match.column);
+        final column = _directRouteNavigationColumn(context, i);
+        if (column == null) continue;
+        reporter.report(context, i, column);
         reportedLines.add(i);
       }
-      for (final call in calls) {
+      for (final call in collectNodes<MethodInvocation>(context.unit)) {
         final targetType = call.realTarget?.staticType;
         if (targetType == null || !goRouterChecker.isAssignableFromType(targetType)) continue;
-        if (!isResolvedForwardNavigation(call) || _isTypedRouterGo(call)) continue;
+        if (!isResolvedForwardNavigation(call)) continue;
         if (!reportedLines.add(context.unit.lineInfo.getLocation(call.offset).lineNumber - 1)) {
           continue;
         }
@@ -466,19 +455,6 @@ bool _isRouteLocation(Expression? expression) {
   if (value is ConditionalExpression) {
     return _isRouteLocation(value.thenExpression) || _isRouteLocation(value.elseExpression);
   }
-  return _isTypedRouteLocation(value);
-}
-
-bool _isTypedRouterGo(MethodInvocation call) {
-  final type = call.realTarget?.staticType;
-  return call.methodName.name == 'go' &&
-      type != null &&
-      goRouterChecker.isAssignableFromType(type) &&
-      _isTypedRouteLocation(call.argumentList.arguments.firstOrNull?.argumentExpression);
-}
-
-bool _isTypedRouteLocation(Expression? expression) {
-  final value = expression?.unParenthesized;
   final (target, name) = switch (value) {
     PropertyAccess(:final realTarget, :final propertyName) => (realTarget, propertyName.name),
     PrefixedIdentifier(:final prefix, :final identifier) => (prefix, identifier.name),

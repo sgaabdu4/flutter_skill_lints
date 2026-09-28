@@ -552,8 +552,12 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 
+abstract final class SentryFlutter {
+  static void init() {}
+}
 abstract final class Crash {
   static Future<void> init(StackTrace stack, {required FutureOr<void> Function() appRunner}) async {
+    SentryFlutter.init();
     FlutterError.onError = (details) => error(details, stack);
     PlatformDispatcher.instance.onError = (exception, stack) {
       error(exception, stack);
@@ -567,6 +571,37 @@ abstract final class Crash {
   }
 }
 ''', path: crashServicePath);
+  }
+
+  Future<void> test_reportsLocalHandlerOverwritingSdkFromExternalHelper() async {
+    const source = r'''
+import 'dart:ui';
+import 'package:flutter/foundation.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+Future<void> bootstrap(StackTrace stack) => SentryFlutter.init(
+  (options) {},
+  appRunner: () => Crash.init(stack),
+);
+
+abstract final class Crash {
+  static void init(StackTrace stack) {
+    FlutterError.onError = (details) => error(details, stack);
+    PlatformDispatcher.instance.onError = (exception, stack) {
+      error(exception, stack);
+      return true;
+    };
+  }
+  static void error(Object error, StackTrace stack) {
+    debugPrint('Uncaught ${error.runtimeType}');
+  }
+}
+''';
+    newFile(crashServicePath, source);
+    await assertDiagnosticsInFile(crashServicePath, [
+      compatLint(source, 'FlutterError.onError =', ruleName),
+      compatLint(source, 'PlatformDispatcher.instance.onError =', ruleName),
+    ]);
   }
 
   Future<void> test_reportsRemoteArbitraryAndRecursiveFacadeHandlers() async {

@@ -93,18 +93,52 @@ final class _VariableWriteState {
   _VariableWriteState({required this.hasUnreadValue});
 
   bool hasUnreadValue;
+  bool hasEscapedRead = false;
 }
 
 final class _ReadVisitor extends GetterReadVisitor {
-  const _ReadVisitor(this.variables);
+  const _ReadVisitor(this.variables, {this.capture = false});
 
   final Map<Object, _VariableWriteState> variables;
+  final bool capture;
 
   @override
   void checkGetterRead(SimpleIdentifier node, Object key) {
     final variable = variables[key];
     if (variable != null) {
-      variable.hasUnreadValue = false;
+      if (capture) {
+        variable.hasEscapedRead = true;
+      } else {
+        variable.hasUnreadValue = false;
+      }
+    }
+  }
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {
+    if (capture) return;
+    AstNode expression = node;
+    AstNode? parent = expression.parent;
+    while (parent is ParenthesizedExpression) {
+      expression = parent;
+      parent = parent.parent;
+    }
+    if (parent is NamedArgument) parent = parent.parent;
+    final storedOutsideBlock =
+        parent is AssignmentExpression &&
+        parent.rightHandSide == expression &&
+        !variables.containsKey(_targetKey(parent.leftHandSide));
+    if (parent is ArgumentList || storedOutsideBlock) {
+      node.body.accept(_ReadVisitor(variables, capture: true));
+    }
+  }
+
+  @override
+  void visitAwaitExpression(AwaitExpression node) {
+    super.visitAwaitExpression(node);
+    if (capture) return;
+    for (final variable in variables.values) {
+      if (variable.hasEscapedRead) variable.hasUnreadValue = false;
     }
   }
 }

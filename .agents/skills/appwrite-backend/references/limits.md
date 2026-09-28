@@ -136,13 +136,13 @@ Cursor pagination for >1,000 rows. See [pagination-performance.md](pagination-pe
 
 | Limit | Source of truth |
 |-------|-----------------|
-| Timeout | `timeout` in `appwrite.config.json` / Console |
+| Timeout | Function `timeout` setting |
 | Memory + CPU | `runtimeSpecification` (build: `buildSpecification`) |
 | Concurrent executions | Deployed plan/server config |
-| Environment vars | `.env` in the function `path`; some resolve at build only |
+| Environment vars | Function variables; some resolve at build only |
 
 Bind the deployed value before sizing a function path; never assume a ceiling.
-Config fields = [appwrite-cli.md](appwrite-cli.md).
+Settings/deployment preservation = [production-migrations.md](production-migrations.md).
 
 ---
 

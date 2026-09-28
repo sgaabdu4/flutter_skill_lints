@@ -37,93 +37,94 @@ jobs:
 
   format:
     name: Check Formatting
+    needs: test
+    if: always()
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1
-
-      - name: Install dependencies
-        run: dart pub get
-
-      - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed .
+      - name: Verify native checks succeeded
+        env:
+          RESULT: ${{ needs.test.result }}
+        run: test "$RESULT" = success
 
   analyze:
     name: Analyze Code
+    needs: test
+    if: always()
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1
-
-      - name: Install dependencies
-        run: dart pub get
-
-      - name: Analyze code
-        run: dart analyze --fatal-infos
-
-  universal-gates:
-    name: Scan Secrets and Privacy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Scan committed history for secrets
-        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3
+      - name: Verify native checks succeeded
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_VERSION: "8.30.1"
-          GITLEAKS_ENABLE_COMMENTS: "false"
-          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
-
-      - name: Scan the current tree for secrets
-        run: gitleaks dir --redact --no-banner --exit-code 1 .
-
-  dart-decimate:
-    name: Check Dart Quality
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Run Dart Decimate
-        run: npx --yes dart-decimate@latest json .
+          RESULT: ${{ needs.test.result }}
+        run: test "$RESULT" = success
 
   test:
     name: Run Dart Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      checks: read # Verify the installed source release.
+    env:
+      EXTRA_SDK_TOOLS: dart@latest
+      MISE_FETCH_REMOTE_VERSIONS_CACHE: 0s
+      MISE_PREFER_OFFLINE: 'false'
+      MISE_USE_VERSIONS_HOST: 'false'
+      MISE_MINIMUM_RELEASE_AGE: 0s
     steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
+          submodules: recursive
           persist-credentials: false
-
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1
-
-      - name: Install dependencies
-        run: dart pub get
-
-      - name: Checkout Flutter skill docs
-        run: git clone --depth 1 --branch main https://github.com/sgaabdu4/building-flutter-apps.git ../building-flutter-apps
-
-      - name: Run tests
-        run: dart test --reporter expanded
+      - name: Find whether only docs changed
+        id: impact
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          {
+            echo "MISE_DATA_DIR=$RUNNER_TEMP/hard-eng-tools/mise/data"
+            echo "MISE_CACHE_DIR=$RUNNER_TEMP/hard-eng-tools/mise/cache"
+            echo "MISE_STATE_DIR=$RUNNER_TEMP/hard-eng-tools/mise/state"
+            echo "PNPM_CONFIG_STORE_DIR=$RUNNER_TEMP/hard-eng-tools/pnpm/store"
+            echo "PNPM_CONFIG_CACHE_DIR=$RUNNER_TEMP/hard-eng-tools/pnpm/cache"
+          } >> "$GITHUB_ENV"
+          python3 .hooks/hard-eng.py impact --base "$BASE_SHA" >> "$GITHUB_OUTPUT" || echo docs_only=false >> "$GITHUB_OUTPUT"
+      - name: Cache native tool downloads
+        if: steps.impact.outputs.docs_only != 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ runner.temp }}/hard-eng-tools/mise/data/installs
+            ${{ runner.temp }}/hard-eng-tools/mise-launcher
+            ${{ runner.temp }}/hard-eng-tools/pnpm/store
+          key: ${{ runner.os }}-${{ runner.arch }}-hard-eng-tools-v2-${{ steps.impact.outputs.tools || 'all' }}-${{ env.EXTRA_SDK_TOOLS }}-${{ hashFiles('.github/workflows/dart.yml', '.hooks/tool_setup.py', 'hard-eng.gates.json', '**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-${{ runner.arch }}-hard-eng-tools-v2-${{ steps.impact.outputs.tools || 'all' }}-${{ env.EXTRA_SDK_TOOLS }}-
+      - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        with:
+          version: latest
+          runtime: node@latest
+          install: false
+      - name: Run the secret scan for docs-only changes
+        if: steps.impact.outputs.docs_only == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          pnpm dlx --config.ignore-scripts=false --allow-build=@jdxcode/mise --package=@jdxcode/mise@latest mise --no-config install uv@latest &&
+          pnpm dlx --config.ignore-scripts=false --allow-build=@jdxcode/mise --package=@jdxcode/mise@latest mise --no-config exec uv@latest -- uv run --no-project --with pyyaml python .hooks/hard-eng.py check --base "$BASE_SHA"
+      - name: Run required checks
+        if: steps.impact.outputs.docs_only != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          SDK_TOOLS: ${{ steps.impact.outputs.tools || 'uv@latest python@3.12 node@latest' }}
+        run: |
+          read -r -a tools <<< "$SDK_TOOLS ${EXTRA_SDK_TOOLS:-}"
+          pnpm dlx --config.ignore-scripts=false --allow-build=@jdxcode/mise --package=@jdxcode/mise@latest mise --no-config install "${tools[@]}" &&
+          MISE_FETCH_REMOTE_VERSIONS_CACHE=1h pnpm dlx --config.ignore-scripts=false --allow-build=@jdxcode/mise --package=@jdxcode/mise@latest mise --no-config exec "${tools[@]}" -- uv run --no-project --with pyyaml python .hooks/hard-eng.py check
 
   flutter-smoke:
     name: Run Flutter Plugin Smoke
@@ -149,7 +150,7 @@ jobs:
   publish-dry-run:
     name: Publish Dry Run
     runs-on: ubuntu-latest
-    needs: [version-check, format, analyze, universal-gates, dart-decimate, test, flutter-smoke]
+    needs: [version-check, format, analyze, test, flutter-smoke]
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -168,7 +169,7 @@ jobs:
   pana:
     name: Package Analysis
     runs-on: ubuntu-latest
-    needs: [version-check, format, analyze, universal-gates, dart-decimate, test, flutter-smoke]
+    needs: [version-check, format, analyze, test, flutter-smoke]
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -201,7 +202,7 @@ jobs:
   release-tag:
     name: Auto-Tag Release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [version-check, format, analyze, universal-gates, dart-decimate, test, flutter-smoke, publish-dry-run, pana]
+    needs: [version-check, format, analyze, test, flutter-smoke, publish-dry-run, pana]
     runs-on: ubuntu-latest
     permissions:
       contents: write # Required to create and push the release tag.

@@ -12,7 +12,6 @@ release.sh
 .git/
 __pycache__/
 .hard-eng/
-.codebase-memory/
-.context-mode/
 .coverage
 .coverage.*
+.claude/worktrees/

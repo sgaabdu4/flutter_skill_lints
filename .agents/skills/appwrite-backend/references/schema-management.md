@@ -252,10 +252,9 @@ Python `upsert_row()`, TypeScript `upsertRow()` — same params.
 
 Import CSV rows, no custom scripts.
 
-```dart
-// Via Appwrite Console or CLI
-// Supports: column mapping, type validation
-```
+Discover the deployed import tool through [mcp-servers.md](mcp-servers.md) and
+verify its column-mapping, validation, and upload contract. Missing import or
+safe upload support = report the capability gap.
 
 **Use for:**
 - Data migration

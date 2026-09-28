@@ -230,11 +230,11 @@ Shows:
 
 ---
 
-## CLI Management
+## Agent Management
 
-Webhooks are a pushed resource type in `appwrite.config.json` — commands and
-reconciliation semantics live in [appwrite-cli.md](appwrite-cli.md). A webhook
-absent from the manifest is deleted on push.
+Discover webhook operations through [mcp-servers.md](mcp-servers.md). Verify
+the exact endpoint/project + webhook ID before changes; absence from a local
+list never authorizes deletion. Missing control-plane access = capability gap.
 
 Keep webhook secrets out of tracked config. Store them in the deployment
 environment or secret manager.
@@ -245,4 +245,4 @@ environment or secret manager.
 
 - [realtime.md](realtime.md) — client-side updates
 - [functions-advanced.md](functions-advanced.md) — server-side event processing
-- [appwrite-cli.md](appwrite-cli.md) — manifest + push semantics
+- [mcp-servers.md](mcp-servers.md) — agent operations + capability boundaries

@@ -1,166 +1,56 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { copyFile, mkdtemp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { readdir, readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const root = new URL('../', import.meta.url);
 const text = (path) => readFile(new URL(path, root), 'utf8');
 
-test('every Appwrite CLI path routes to the CLI safety owner before action', async () => {
-  const [skill, cli] = await Promise.all([text('SKILL.md'), text('references/appwrite-cli.md')]);
-  assert.match(skill, /Any Appwrite CLI\/wrapper command[\s\S]*appwrite-cli\.md/u);
-  assert.match(cli, /Load this reference before any Appwrite CLI\/wrapper command/u);
-  assert.match(cli, /inspect exact pinned command help/u);
-  assert.match(cli, /unknown flags can execute a default deployment path/u);
-  assert.match(cli, /Init\/pull\/push\/deploy\/generate[\s\S]*pinned CLI\/wrapper/u);
-  assert.match(cli, /Durable automation, exact response fields, pagination\/retry[\s\S]*official Server SDK/u);
-  assert.match(cli, /CLI presentation omits\/transforms a required field[\s\S]*official Server SDK; raw HTTP forbidden/u);
-  assert.match(cli, /Do not alternate CLI\/SDK variants after a\s+failure/u);
-  assert.match(skill, /before installing, binding,[\s\S]*probing, diagnosing, or mutating/u);
-  assert.match(cli, /script PASS alone ≠ production gate PASS/u);
+test('agent operations route exclusively through MCP while application SDK guidance remains', async () => {
+  const [skill, mcp] = await Promise.all([text('SKILL.md'), text('references/mcp-servers.md')]);
+  assert.match(skill, /Any agent operation against Appwrite[\s\S]*mcp-servers\.md/u);
+  assert.match(skill, /MCP for agent operations; official SDKs for application code/u);
+  assert.match(skill, /no direct SDK, HTTP, or command-line fallback for agent operations/u);
+  assert.match(mcp, /appwrite_get_context[\s\S]*appwrite_search_tools[\s\S]*appwrite_call_tool/u);
+  assert.match(mcp, /Context mismatch or unknown target = stop/u);
+  assert.match(mcp, /top-level `project_id` or `organization_id`/u);
+  assert.match(mcp, /flag acknowledges a write; it grants no authorization/u);
+  assert.match(mcp, /read the exact resource\/transaction\/deployment state before any retry/u);
 });
 
 test('function deploys preserve every live setting or fail before mutation', async () => {
-  const cli = await text('references/appwrite-cli.md');
-  assert.match(cli, /partial `functions update` is forbidden/u);
-  assert.match(cli, /raw full function model before any settings mutation/u);
-  assert.match(cli, /official Server SDK\s+`Functions\.update`/u);
-  assert.match(cli, /pass every protected field explicitly/u);
+  const migration = await text('references/production-migrations.md');
+  assert.match(migration, /capture the full live function model \+ prior active deployment/u);
+  assert.match(migration, /pass every protected field explicitly/u);
   assert.match(
-    cli,
+    migration,
     /`execute` \+ `events` \+ `schedule` \+ `scopes` \+ provider fields \+ build\/runtime specifications \+ deployment retention/u,
   );
-  assert.match(cli, /snapshot before the push \+ exact protected-field read-back after it/u);
-  assert.match(cli, /missing protected field = fail before push/u);
-  assert.match(cli, /rollback restores the full settings snapshot\s+before the prior deployment/u);
-  assert.match(cli, /forced\s+push requires complete intended function settings in the manifest/u);
+  assert.match(migration, /partial snapshot, or unrepresentable setting = stop before mutation/u);
+  assert.match(migration, /read back every protected field exactly/u);
+  assert.match(migration, /Rollback restores the full settings snapshot before the prior deployment/u);
 });
 
-test('each Appwrite CLI caller preserves immutable committed config bytes', async () => {
-  const cli = await text('references/appwrite-cli.md');
-  const steps = [
-    'require the full tracked checkout clean',
-    'Before its first CLI invocation',
-    'Fail before invoking the CLI',
-    'Run every CLI invocation for that caller',
-    'On success or failure, restore every protected file byte-for-byte',
-    'Verify the full tracked checkout equals the committed revision',
-    'Remove the caller-owned snapshot',
-  ];
-  let previous = -1;
-  for (const step of steps) {
-    const current = cli.indexOf(step);
-    assert.ok(current > previous, `missing or out-of-order CLI integrity step: ${step}`);
-    previous = current;
-  }
-  assert.match(cli, /`appwrite\.config\.json` \+ every tracked[\s\S]*named by `includes`/u);
-  assert.match(cli, /dirty input is not an acceptable snapshot/u);
-  assert.match(cli, /Fresh job\/caller = fresh capture before its first CLI invocation/u);
-  assert.match(cli, /One earlier job's snapshot or restore[\s\S]*never covers a later[\s\S]*finalizer/u);
-  assert.match(cli, /Newline-only repair, parsed-JSON equivalence, formatting normalization/u);
-  assert.match(cli, /checking only[\s\S]*`appwrite\.config\.json` is insufficient/u);
+test('schema contraction binds complete destructive and access state', async () => {
+  const migration = await text('references/production-migrations.md');
+  assert.match(migration, /full models for every affected database \+ table, complete columns \+ indexes/u);
+  assert.match(migration, /row security, permissions, constraints, and relationships/u);
+  assert.match(migration, /previews do not prove completeness/u);
+  assert.match(migration, /Pagination requires progress \+ stable totals \+ bounded pages\/items\/deadline/u);
+  assert.match(migration, /unknown material schema\/access field[\s\S]*fail closed/u);
+  assert.match(migration, /exact resource IDs \+ before\/after definitions \+ backup \+ tested recovery \+ explicit authorized scope/u);
+  assert.match(migration, /Omission from a local list never authorizes deletion/u);
 });
 
-test('schema guard binds complete destructive and access state', async () => {
-  const cli = await text('references/appwrite-cli.md');
-  assert.match(cli, /raw full-model capture for every database \+ table/u);
-  assert.match(cli, /complete columns \+ indexes/u);
-  assert.match(cli, /row-security \+ permission \+ column constraint \+ relationship \+ index definitions/u);
-  assert.match(cli, /optional non-relationship column additions \+ new indexes are the only automatic safe additions/u);
-  assert.match(cli, /unknown material schema\/access fields fail closed/u);
-  assert.match(cli, /pagination has progress, stable-total, page, and item ceilings/u);
-  assert.match(cli, /capture output is new private `0600`/u);
-});
-
-test('CLI version, exact output, and API-key safety contracts stay explicit', async () => {
-  const [cli, selfHosting] = await Promise.all([text('references/appwrite-cli.md'), text('references/self-hosting.md')]);
-  assert.match(selfHosting, /Appwrite 1\.9\.6[\s\S]*`appwrite-cli` \| `23\.0\.0`/u);
-  assert.match(cli, /npm install -g appwrite-cli@25\.0\.0/u);
-  assert.match(cli, /Registry latest observed on 2026-07-31 =\s+CLI `25\.0\.0`/u);
-  assert.match(cli, /Never float automation/u);
-  assert.match(cli, /`--json`\/`-j` = filtered presentation[\s\S]*drops null\/blank values and nested object\/array fields/u);
-  assert.match(cli, /omitted field ≠ empty\/missing server value/u);
-  assert.match(cli, /exact field evidence \(`labels`, `\$permissions`, preferences, status, nested arrays\) = `--raw`\/`-R`/u);
-  assert.match(cli, /whole-response parse \+ required-field presence assertion/u);
-  assert.match(cli, /filtered JSON = `-j`[\s\S]*full redacted response = `-R`[\s\S]*`-J` is unsupported/u);
-  assert.match(cli, /key-management caller = `keys\.read` \+ `keys\.write`/u);
-  assert.match(cli, /configured API key wins over any saved cookie\/account session/u);
-  assert.match(cli, /scope union must come from every real consumer call/u);
-  assert.match(cli, /enumerate exact consumer variable \+ secret-store names first/u);
-  assert.match(cli, /create the first key in the Appwrite Console/u);
-  assert.match(cli, /one bounded non-logging process/u);
-  assert.match(cli, /Probe the actual consumer with the candidate key/u);
-  assert.match(cli, /metadata output never proves the actual consumer received the secret/u);
-});
-
-test('Schema Safety Gate accepts the loaded skill directory in canonical and Hard Eng layouts', async (t) => {
-  const cli = await text('references/appwrite-cli.md');
-  const guard = new URL('appwrite-schema-guard.mjs', import.meta.url);
-  const documented = cli.match(
-    /node "\$APPWRITE_SKILL_DIR\/scripts\/appwrite-schema-guard\.mjs" check[\s\S]*?--baseline <BASELINE_APPWRITE_CONFIG>/u,
-  );
-  assert.ok(documented, 'Schema Safety Gate must document the variable-based check command');
-  const command = `${documented[0].replace(/\\\n\s*/gu, ' ').replace('<BASELINE_APPWRITE_CONFIG>', '"$3"')} --config "$1" --inventory "$2" --baseline "$3"`;
-
-  const inventory = {
-    capturedAt: new Date().toISOString(),
-    endpoint: 'https://example.invalid/v1',
-    projectId: 'project',
-    tablesDB: [{ $id: 'primary', enabled: true }],
-    tables: [{ $id: 'users', databaseId: 'primary', enabled: true, rowSecurity: false, $permissions: [], columns: [], indexes: [] }],
-  };
-  const valid = { ...inventory, tablesDB: [{ $id: 'primary' }], tables: [{ $id: 'users', databaseId: 'primary' }] };
-  const invalid = { ...valid, tables: [] };
-
-  for (const layout of ['skills/appwrite-backend', '.agents/skills/appwrite-backend']) {
-    const project = await mkdtemp(join(process.cwd(), '.appwrite skill path '));
-    t.after(() => rm(project, { recursive: true, force: true }));
-    const directory = join(project, layout);
-    const script = join(directory, 'scripts', 'appwrite-schema-guard.mjs');
-    await mkdir(join(directory, 'scripts'), { recursive: true });
-    await copyFile(guard, script);
-    const config = join(project, `${layout.replaceAll('/', '-')}.json`);
-    const broken = join(project, `${layout.replaceAll('/', '-')}-broken.json`);
-    const live = join(project, `${layout.replaceAll('/', '-')}-inventory.json`);
-    const baseline = join(project, `${layout.replaceAll('/', '-')}-baseline.json`);
-    await Promise.all([
-      writeFile(config, JSON.stringify(valid)),
-      writeFile(broken, JSON.stringify(invalid)),
-      writeFile(live, JSON.stringify(inventory)),
-      writeFile(baseline, JSON.stringify(valid)),
-    ]);
-    const environment = { ...process.env, APPWRITE_SKILL_DIR: directory };
-    const pass = spawnSync('sh', ['-c', command, 'schema-guard', config, live, baseline], {
-      cwd: project,
-      encoding: 'utf8',
-      env: environment,
-    });
-    assert.equal(pass.status, 0, pass.stderr);
-    assert.match(pass.stdout, /"result":"PASS"/u);
-    const fail = spawnSync('sh', ['-c', command, 'schema-guard', broken, live, baseline], {
-      cwd: project,
-      encoding: 'utf8',
-      env: environment,
-    });
-    assert.notEqual(fail.status, 0);
-    assert.match(fail.stderr, /destructive removal/u);
-    if (layout.startsWith('.agents/')) {
-      const oldPath = spawnSync(
-        'sh',
-        [
-          '-c',
-          'node skills/appwrite-backend/scripts/appwrite-schema-guard.mjs check --config "$1" --inventory "$2" --baseline "$3"',
-          'schema-guard',
-          config,
-          live,
-          baseline,
-        ],
-        { cwd: project, encoding: 'utf8', env: environment },
-      );
-      assert.notEqual(oldPath.status, 0);
-    }
-  }
+test('MCP credentials preserve least scopes and protected consumer transfer', async () => {
+  const mcp = await text('references/mcp-servers.md');
+  assert.match(mcp, /API-key scopes come from every real consumer call, never a full-scope default/u);
+  assert.match(mcp, /Self-hosted initial key creation requires the user's Appwrite Console action/u);
+  assert.match(mcp, /exact consumer variable \+ secret-store names/u);
+  assert.match(mcp, /actual consumer proof with the candidate key/u);
+  assert.match(mcp, /returns the new key into the transcript is not a protected transfer path/u);
+  assert.match(mcp, /Metadata alone never proves consumer secret delivery/u);
+  assert.match(mcp, /retire the old key only after authorized cutover \+ new-key acceptance proof/u);
+  assert.match(mcp, /Secret values never enter tool arguments visible in the transcript/u);
 });
 
 test('release-matched SDK pins require call-shape migration proof', async () => {
@@ -263,7 +153,6 @@ test('SDK routing lives in the always-loaded router', async () => {
   assert.match(skill, /`node-appwrite`/u);
   assert.match(skill, /`dart_appwrite`/u);
   assert.match(skill, /https:\/\/<REGION>\.cloud\.appwrite\.io\/v1/u);
-  assert.match(skill, /CLI account login endpoint stays/u);
   assert.doesNotMatch(skill, /React Native|react-native/iu);
 });
 
@@ -387,7 +276,7 @@ test('recurring production failure contracts stay with canonical owners', async 
 
 test('MCP wiring binds the server choice to the deployed endpoint', async () => {
   const [skill, mcp] = await Promise.all([text('SKILL.md'), text('references/mcp-servers.md')]);
-  assert.match(skill, /Appwrite MCP server setup[\s\S]*mcp-servers\.md/u);
+  assert.match(skill, /MCP server setup[\s\S]*mcp-servers\.md/u);
   assert.match(mcp, /Server choice = deployed endpoint, never preference/u);
   assert.match(mcp, /hosted server authenticates against Appwrite Cloud only and can never reach a self-hosted instance/u);
   assert.match(mcp, /uvx mcp-server-appwrite/u);
@@ -395,6 +284,11 @@ test('MCP wiring binds the server choice to the deployed endpoint', async () => 
   assert.match(mcp, /Read `uvx mcp-server-appwrite --help` before adding arguments/u);
   assert.match(mcp, /\.codex\/config\.toml/u);
   assert.match(mcp, /`confirm_write=true`/u);
+  assert.match(mcp, /Self-hosted API-key stdio exposes project-key-compatible operations only/u);
+  assert.match(mcp, /Projects\/key management and other console administration are unavailable/u);
+  assert.match(mcp, /Read any returned MCP result resource in full/u);
+  assert.match(mcp, /Hosted uploads cannot read local paths/u);
+  assert.match(mcp, /Never publish private source or secrets merely to obtain an upload URL/u);
 });
 
 test('Codex wiring prefers the project file over the global one', async () => {

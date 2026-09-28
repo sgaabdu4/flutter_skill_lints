@@ -116,8 +116,9 @@ Failure pattern:
 
 - SQL rows present + API `table not found` → metadata/registry/cache mismatch,
   not missing business rows → restore coherent component state before retry.
-- Partial desired-state manifest caused loss → remove that deployment path +
-  install the schema guard before resuming feature delivery.
+- Partial desired-state reconciliation caused loss → retire that deployment
+  path + prove complete inventory and exact destructive scope through
+  [production-migrations.md](production-migrations.md) before resuming delivery.
 
 ---
 

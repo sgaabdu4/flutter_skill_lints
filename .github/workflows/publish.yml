@@ -59,14 +59,18 @@ jobs:
       - name: Scan the current tree for secrets
         run: gitleaks dir --redact --no-banner --exit-code 1 .
 
+      - name: Set up pnpm
+        uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        with:
+          version: latest
+          runtime: node@latest
+          install: false
+
       - name: Run Dart Decimate
-        run: npx --yes dart-decimate@latest json .
+        run: pnpm dlx --config.ignore-scripts=false --allow-build=dart-decimate dart-decimate@latest json .
 
       - name: Publish dry run
         run: dart pub publish --dry-run
-
-      - name: Checkout Flutter skill docs
-        run: git clone --depth 1 --branch main https://github.com/sgaabdu4/building-flutter-apps.git ../building-flutter-apps
 
       - name: Run tests
         run: dart test --reporter expanded

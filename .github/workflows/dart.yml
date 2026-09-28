@@ -124,7 +124,7 @@ jobs:
         run: |
           read -r -a tools <<< "$SDK_TOOLS ${EXTRA_SDK_TOOLS:-}"
           pnpm dlx --config.ignore-scripts=false --allow-build=@jdxcode/mise --package=@jdxcode/mise@latest mise --no-config install "${tools[@]}" &&
-          MISE_FETCH_REMOTE_VERSIONS_CACHE=1h pnpm dlx --config.ignore-scripts=false --allow-build=@jdxcode/mise --package=@jdxcode/mise@latest mise --no-config exec "${tools[@]}" -- uv run --no-project --with pyyaml python .hooks/hard-eng.py check --base "$BASE_SHA"
+          MISE_FETCH_REMOTE_VERSIONS_CACHE=1h pnpm dlx --config.ignore-scripts=false --allow-build=@jdxcode/mise --package=@jdxcode/mise@latest mise --no-config exec "${tools[@]}" -- uv run --no-project --with pyyaml python .hooks/hard-eng.py check
 
   flutter-smoke:
     name: Run Flutter Plugin Smoke

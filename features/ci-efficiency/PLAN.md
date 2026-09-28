@@ -1,6 +1,6 @@
 # Flutter Skill Lints CI and native agent migration
 
-Status: Draft
+Status: Complete
 
 ## Outcome + scope
 
@@ -18,16 +18,16 @@ Authority: Autonomous — the user authorized released-source migration, pnpm wh
 
 ## Acceptance + steps
 
-- [ ] Released scaffold at `d2085f745de39214aaaf6b34192378c9d1094a3d` → supported updater succeeds; repeat changes nothing; repository CLAUDE aliases and retired tooling are absent while unique guidance remains.
-- [ ] One Run Dart Tests owner performs the full Hard Eng suite; existing protected check names report its actual result. → native gates and workflow checks pass with the original assertions.
-- [ ] The real Flutter analyzer-server smoke, package publish dry run and existing PANA analyzer compatibility allowance remain. → existing native tests and configured checks pass.
-- [ ] Actual verification and runner timing → retain measured commands/results; make no unsupported percentage claim.
+- [x] Released scaffold at `d2085f745de39214aaaf6b34192378c9d1094a3d` → supported updater succeeds; repeat changes nothing; repository CLAUDE aliases and retired tooling are absent while unique guidance remains.
+- [x] One Run Dart Tests owner performs the full Hard Eng suite; existing protected check names report its actual result. → native gates and workflow checks pass with the original assertions.
+- [x] The real Flutter analyzer-server smoke, package publish dry run and existing PANA analyzer compatibility allowance remain. → existing native tests and configured checks pass.
+- [x] Actual verification and runner timing → retain measured commands/results; make no unsupported percentage claim.
 
 ## Baseline + execution
 
 Result: Passed
-Evidence: Starting `9e94a75715b02f518dc07252f54bab6c5c328663` completed [native CI](https://github.com/sgaabdu4/flutter_skill_lints/actions/runs/36106840823) successfully before migration; local updater candidate verification is pending the shared test slot.
-Execution: One builder at existing owners, followed by diff review and the native candidate, Ready and shipping checks. Heavy suites run only in the coordinated slot.
+Evidence: Starting `9e94a75715b02f518dc07252f54bab6c5c328663` completed [native CI](https://github.com/sgaabdu4/flutter_skill_lints/actions/runs/36106840823) successfully before migration; the released updater also passed all 12 native candidate gates; see Verification.
+Execution: One builder at existing owners, followed by independent diff review, native candidate and shipping checks. Heavy suites run only in the coordinated slot.
 
 ## Risks + recovery
 
@@ -39,8 +39,8 @@ N/A — agent configuration and CI only; no app interface or appearance changes.
 
 ## Verification
 
-Result: Pending
-Evidence: Native candidate and final verification have not run yet.
+Result: Passed
+Evidence: Fresh released setup.sh/native updater completed at d2085f745de39214aaaf6b34192378c9d1094a3d and created the isolated update commit. All 12 native candidate checks passed, including 2,682 tests with branch coverage (31.356s), the whole-package fatal-info analyzer (4.386s), unfiltered Dart Decimate (2.662s), performance (0.879s), security and workflow checks. One opt-in real Flutter analyzer smoke is retained in its separate required hosted job. Repeat updater exited 0 with no changed files or duplicate commit. Independent review found the required installed-skill lint-name compatibility assertion needs the full non-docs native check even for scaffold-only updates; that owner intentionally omits --base while docs-only secret checks remain. Actionlint and workflow structure checks passed after this correction. The final native pre-push checks and exact hosted results remain delivery proof. Starting Dart CI used 556 runner seconds plus 245 seconds for the duplicate Hard Eng workflow; no new hosted speedup claim is made before delivery.
 E2E: N/A — no product journey changes; supported updater behavior and actual hosted workflow results are the relevant proof.
 
 Delivery target: Merge

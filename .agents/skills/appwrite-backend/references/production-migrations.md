@@ -6,15 +6,15 @@
 - Order = bind → preflight → expand → backfill → verify → deploy-compatible → contract → activate → final read-back.
 - Each phase = idempotent owner + exact target + bounded deadline + machine-readable receipt.
 - Any mutation failure → stop → inventory current state → resume from proof; blind retry = forbidden.
-- CLI participates → load [appwrite-cli.md](appwrite-cli.md) before command construction or diagnosis.
+- Agent operations use [mcp-servers.md](mcp-servers.md); application migration code keeps its official SDK contracts.
 
 ## Sequence
 
 | Phase | Required completion |
 |---|---|
-| Bind | Exact endpoint + project + server + SDK/CLI versions verified; secrets masked. |
+| Bind | Exact endpoint + project + server + MCP capability/auth profile verified; application SDK versions bound where relevant; secrets masked. |
 | Preflight | Fresh schema inventory + backup/recovery proof + row counts + uniqueness + tenant + ACL invariants pass. |
-| Expand | Add only backward-compatible tables/columns/indexes; poll each object to ready/available; additive guard only. |
+| Expand | Add only backward-compatible tables/columns/indexes; poll each object to ready/available. |
 | Backfill | Stable cursor/chunks + target-type check + exact no-op detection + deterministic accounting + bounded workers. |
 | Verify | Zero failures + exact row/file ACL reads + semantic counts + no missing required data. |
 | Deploy | Candidate variables validated → metadata read back → compatible/inert deployment ready → runtime smoke. |
@@ -24,6 +24,10 @@
 
 ## Expand + Contract
 
+- Before schema/access contraction, capture fresh full models for every affected database + table, complete columns + indexes, enabled state, row security, permissions, constraints, and relationships. Read any returned MCP result resource; previews do not prove completeness.
+- Pagination requires progress + stable totals + bounded pages/items/deadline; duplicate identity, unknown material schema/access field, missing protected field, or incomplete inventory = fail closed.
+- Destructive plan = exact resource IDs + before/after definitions + backup + tested recovery + explicit authorized scope. Omission from a local list never authorizes deletion. Changed row security is an ACL migration affecting existing rows.
+- Optional non-relationship columns + new indexes may be additive; required/constraint/relationship/access changes require compatibility proof. Archive existence alone does not prove recovery.
 - Schema operations ∉ TablesDB transactions → expand/contract sequence owns compatibility.
 - Old writer needs nullable/legacy field → keep it through expand + backfill + deployment.
 - Required constraint or deletion before writer replacement → outage/data-loss risk → FAIL.
@@ -40,7 +44,7 @@
 - Optional/new field = omitted OR explicit `null`; skip only when live value has required target type + exact target value.
 - Verification = `missing + explicit-null + wrong-type + wrong-value` counts; any nonzero count = FAIL.
 - Idempotent ≠ resumable unless completed work is detected and skipped.
-- Per-row CLI process = N+1 startup + timeout risk → official SDK/client pool + bounded chunks.
+- Application migration code uses an official SDK/client pool + bounded chunks; agent-operated backfills require supported MCP bulk/transaction tools within the same limits.
 - Concurrency = independent resources only + deterministic result order + reduced on throttling/transient failure.
 - Failure report = every selected row accounted once; silent skip/truncation/partial aggregate PASS = forbidden.
 - Logs/reports = IDs pseudonymized + counts/status only; row/file payloads may contain PII.
@@ -63,10 +67,14 @@
 
 ## Function + Variable Cutover
 
+- Before a function settings mutation or deployment, capture the full live function model + prior active deployment. Protected fields = `execute` + `events` + `schedule` + `scopes` + provider fields + build/runtime specifications + deployment retention + name + runtime + timeout + enabled + logging + entrypoint + commands + installation ID; preserve any additional live settings too.
+- Code-only deployment leaves settings untouched; a separate settings update requires its own intended change.
+- Use the discovered MCP update schema; pass every protected field explicitly when the operation replaces it. Missing field, partial snapshot, or unrepresentable setting = stop before mutation.
+- After mutation, read back every protected field exactly. Rollback restores the full settings snapshot before the prior deployment; neither deployment readiness nor one field match proves preservation.
 - Validate candidate secret/config values before writing; never depend on secret-value API read-back.
-- Active variable read-back = exact key/ID/count + `secret` metadata; wrapper response may be `{total, variables}`.
+- Active variable read-back = exact key/ID/count + `secret` metadata; list response may be `{total, variables}`.
 - Secret status = one-way. Secret → non-secret requires delete + recreate; value replacement may update or recreate per target contract.
-- Variable changes apply on next deployment → deployment + runtime smoke required.
+- Variable activation timing = [functions.md](functions.md#environment-variables); key add/remove requires deployment, and every change requires runtime smoke.
 - Capture prior active deployment before mutation; new deployment failure → prior remains/returns active.
 - Function-only deployment against missing schema/backfill = forbidden; schema-only contract against old function = forbidden.
 - Deployment ready + execution `completed` = transport proof only.
@@ -77,9 +85,9 @@
 
 | Evidence | Action |
 |---|---|
-| Failure before mutation | Fix command/contract owner → focused proof → restart phase. |
+| Failure before mutation | Fix tool/contract owner → focused proof → restart phase. |
 | Failure after partial mutation | Freeze writers → read current state → resume exact incomplete work. |
-| CLI/parser/serialization mismatch | Read pinned command help + official source → regression fixture → SDK fallback only for unsupported shape. |
+| MCP tool/schema/serialization mismatch | Inspect connected tool schema + official source → report unsupported capability; no alternate operational interface. |
 | SQL/backup rows exist but Appwrite API cannot see them | Treat metadata/cache/runtime as inconsistent → self-host incident route. |
 | ACL list disagrees with exact GET | Exact GET wins for proof; repair verifier, not correct backend behavior. |
 | Same root recurs | Stop retries → durable regression + owner correction. |
@@ -92,4 +100,4 @@
 - Function variables: <https://appwrite.io/docs/advanced/security/environment-variables>
 - Function execution model: <https://appwrite.io/docs/references/cloud/models/execution>
 - Synchronous execution: <https://appwrite.io/docs/products/functions/execute>
-- Tables CLI: <https://appwrite.io/docs/tooling/command-line/tables>
+- MCP operations: <https://appwrite.io/docs/tooling/ai/mcp-servers>

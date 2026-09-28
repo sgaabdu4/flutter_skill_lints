@@ -1,17 +1,8 @@
 {
   "mcpServers": {
-    "codebase-memory-mcp": {
-      "command": "pnpm",
-      "args": [
-        "dlx",
-        "codebase-memory-mcp@latest"
-      ]
-    },
     "dart": {
       "command": "dart",
-      "args": [
-        "mcp-server"
-      ]
+      "args": ["mcp-server"]
     }
   }
 }

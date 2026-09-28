@@ -193,9 +193,10 @@ await functions.createExecution(
 
 **Git (recommended):** Console → Functions → Settings → Connect Git Repository. Push branch → auto deploy.
 
-**CLI:** staged rollout, variables, config fields, local run, and deployment
-commands are owned by [appwrite-cli.md](appwrite-cli.md). Load it before any
-deploy; do not reconstruct command shapes here.
+**Agent operations:** discover deployment, variable, and settings tools through
+[mcp-servers.md](mcp-servers.md). Preserve complete live settings + rollback
+evidence through [production-migrations.md](production-migrations.md); an
+unsupported deployment/upload shape is a capability gap.
 
 Deployment ordering when a release also changes schema or data:
 [production-migrations.md](production-migrations.md).

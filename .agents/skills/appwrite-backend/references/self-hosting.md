@@ -46,7 +46,6 @@ Appwrite `1.9.x` self-hosted supports MariaDB or MongoDB during setup. Pin image
 | Node.js Functions/server | `node-appwrite` | `27.0.0` |
 | Browser/Web client | `appwrite` | `26.2.0` |
 | Python Functions/server | `appwrite` | `22.1.0` |
-| CLI | `appwrite-cli` | `23.0.0` |
 
 - Table = release-matched versions; floating `latest` forbidden.
 - Older SDK declaring `1.9.x` compatibility ≠ `1.9.6` release-match.

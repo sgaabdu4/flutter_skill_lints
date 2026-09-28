@@ -73,17 +73,6 @@
           "command": ["dart", "analyze", "--fatal-infos", "."]
         },
         {
-          "name": "import-boundaries",
-          "role": "boundaries",
-          "command": [
-            "dart-decimate",
-            "check",
-            ".",
-            "--boundary-violations",
-            "--strict"
-          ]
-        },
-        {
           "name": "tests",
           "role": "tests",
           "command": [

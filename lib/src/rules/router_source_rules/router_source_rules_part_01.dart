@@ -241,8 +241,9 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
               RegExp(r'^(?:go|push|replace|restorablePush)').hasMatch(call.methodName.name),
         );
         if (navigation.any((call) => call.argumentList.offset == argumentOffset) &&
-            navigation.every(_isTypedRouterGo))
+            navigation.every(_isTypedRouterGo)) {
           continue;
+        }
         reporter.report(context, i, match.column);
         reportedLines.add(i);
       }

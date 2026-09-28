@@ -111,8 +111,8 @@ If you use Claude Code or another agent runtime that consumes
 [skills.sh](https://skills.sh) skills, install the matching agent guidance:
 
 ```bash
-npx skills add https://github.com/sgaabdu4/building-flutter-apps \
-  --skill building-flutter-apps
+pnpm dlx skills@latest add https://github.com/sgaabdu4/building-flutter-apps \
+  --skill building-flutter-apps --agent claude-code codex
 ```
 
 ## Rules

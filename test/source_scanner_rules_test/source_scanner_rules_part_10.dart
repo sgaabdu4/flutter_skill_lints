@@ -47,6 +47,37 @@ void open(context) {
 ''');
   }
 
+  Future<void> test_allowsTypedLocationOnExplicitRouter() async {
+    await assertAllows(r'''
+import 'package:go_router/go_router.dart';
+
+class ItemRoute extends GoRouteData {
+  const ItemRoute();
+}
+class RouterHolder {
+  RouterHolder(this.router);
+  final GoRouter router;
+}
+void open(GoRouter router, GoRouteData route, RouterHolder holder) {
+  router.go(route.location);
+  router.go(const ItemRoute().location);
+  holder.router.go(route.location);
+}
+''');
+  }
+
+  Future<void> test_reportsRawLocationOnExplicitRouter() async {
+    const source = r'''
+import 'package:go_router/go_router.dart';
+
+void open(GoRouter router, String location) {
+  router.go(location);
+}
+''';
+    final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'router.go', ruleName)]);
+  }
+
   Future<void> test_reportsContextGoWithTypedLocation() async {
     final analyzedSource = _analyzedSource(r'''
 void open(context, String id) {
@@ -59,12 +90,18 @@ void open(context, String id) {
 
   Future<void> test_reportsInjectedRouterGo() async {
     final analyzedSource = _analyzedSource(r'''
-void open(router, String id) {
+import 'package:go_router/go_router.dart';
+
+void open(router, String id, GoRouter goodRouter, GoRouteData route, bool ok) {
   router.go(ProductDetailRoute(id: id).location);
+  ok ? goodRouter.go(route.location) : router.go('/raw');
 }
 ''', addIgnorePrefix: addIgnorePrefix);
 
-    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'router.go', ruleName)]);
+    await assertDiagnostics(analyzedSource, [
+      compatLint(analyzedSource, 'router.go', ruleName),
+      compatLint(analyzedSource, 'goodRouter.go', ruleName),
+    ]);
   }
 
   Future<void> test_reportsCamelCaseInjectedRouterGo() async {
@@ -177,15 +214,29 @@ void confirm(context) {
   }
 
   Future<void> test_reportsPublicStaticCoordinatorCallOutsideCoreNavigation() async {
-    final analyzedSource = _analyzedSource(r'''
-void close(context) {
-  FeatureNavigationCoordinator.popIfCan(context);
+    for (final (index, body) in [
+      'FeatureNavigationCoordinator.popIfCan(context);',
+      'ok ? router.go(route.location) : FeatureNavigationCoordinator.popIfCan(context);',
+      'FeatureNavigationCoordinator.open(router).go(route.location);',
+    ].indexed) {
+      final analyzedSource = _analyzedSource('''
+import 'package:go_router/go_router.dart';
+
+class FeatureNavigationCoordinator {
+  static void popIfCan(Object context) {}
+  static GoRouter open(GoRouter router) => router;
+}
+void close(Object context, bool ok, GoRouter router, GoRouteData route) {
+  $body
 }
 ''', addIgnorePrefix: addIgnorePrefix);
 
-    await assertDiagnostics(analyzedSource, [
-      compatLint(analyzedSource, 'FeatureNavigationCoordinator.popIfCan', ruleName),
-    ]);
+      final filePath = '$testPackageLibPath/features/coordinator_case_$index.dart';
+      newFile(filePath, analyzedSource);
+      await assertDiagnosticsInFile(filePath, [
+        compatLint(analyzedSource, 'FeatureNavigationCoordinator.', ruleName),
+      ]);
+    }
   }
 
   Future<void> test_reportsRouterGoEvenInCoreRouter() async {

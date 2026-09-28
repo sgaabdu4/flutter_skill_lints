@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.13.1] - 2026-09-28
+
+- Allow nonrecursive startup error forwarding and terminal local diagnostics
+  without requiring a remote reporting provider. Recursive, remote and arbitrary
+  custom handlers retain their diagnostics.
+- Recognize direct calls through synchronous notifier helpers containing only a
+  resolved provider read; keep held, mutable and nullable dependency checks.
+- Recognize nullable-string normalization at native numeric parsers, text editor
+  setters and required wire fields in a data model's `fromEntity` factory.
+  Domain, repository and unrelated fallback diagnostics remain.
+- Allow explicit `GoRouter.go` with a typed `GoRouteData.location`, including
+  bootstrap contexts above the Router. Raw strings and context-based direct
+  navigation retain their diagnostics.
+- Permit `dart:io` show-only imports of HTTP constants and exception types;
+  broad, hidden and storage-capable imports retain their diagnostics.
+
 ## [0.13.0] - 2026-09-25
 
 Aligns every rule with building-flutter-apps 5.12.0. Skill MUST/NEVER rules

@@ -171,6 +171,23 @@ final class Run {}
 @reflectiveTest
 final class ArchStorageSdkImportTest extends _ArchitectureRuleTest {
   @override
+  void setUp() {
+    super.setUp();
+    final io = sdkRoot.getFile('lib/io/io.dart');
+    io.writeAsStringSync('''
+${io.readAsStringSync()}
+abstract final class HttpHeaders {
+  static const authorizationHeader = 'authorization';
+}
+abstract final class HttpStatus {
+  static const ok = 200;
+}
+class SocketException implements Exception {}
+class FileSystemException implements Exception {}
+''');
+  }
+
+  @override
   String get ruleName => 'arch_storage_sdk_import';
   @override
   String get needle => "import 'dart:io';";
@@ -212,6 +229,42 @@ import 'package:path_provider/path_provider.dart';
     await assertAllows(r'''
 import 'dart:io';
 ''', path: '$testPackageLibPath/core/services/appwrite_pagination_mixin.dart');
+  }
+
+  Future<void> test_allowsOnlyHttpConstantsAndExceptions() async {
+    for (final path in [
+      '$testPackageLibPath/core/services/api_service.dart',
+      '$testPackageLibPath/features/settings/data/settings_repository.dart',
+    ]) {
+      newFile(path, r'''
+import 'dart:io' show HttpHeaders, HttpStatus, SocketException, FileSystemException;
+
+String authorizationHeader() => HttpHeaders.authorizationHeader;
+int successStatus() => HttpStatus.ok;
+bool isIoFailure(Object error) => error is SocketException || error is FileSystemException;
+''');
+      await assertNoDiagnosticsInFile(path);
+    }
+  }
+
+  Future<void> test_reportsBroadHiddenAndMixedIoImports() async {
+    for (final combinator in [
+      '',
+      ' hide File',
+      ' show HttpStatus hide File',
+      ' show HttpStatus, File',
+      ' show HttpHeaders, Directory',
+      ' show SocketException, Process',
+      ' show HttpStatus, Missing',
+    ]) {
+      final source =
+          '''
+// ignore_for_file: unused_import, undefined_shown_name, multiple_combinators
+import 'dart:io'$combinator;
+''';
+      newFile(path, source);
+      await assertDiagnosticsInFile(path, [compatLint(source, "import 'dart:io'", ruleName)]);
+    }
   }
 }
 

@@ -63,8 +63,7 @@ class TodoRepository {
     ]);
   }
 
-  /// Flutter's debugPrint is a function-typed variable, so the call resolves
-  /// as a FunctionExpressionInvocation rather than a MethodInvocation.
+  /// Flutter debugPrint resolves as a FunctionExpressionInvocation.
   Future<void> test_reportsFlutterDebugPrintBeforeRethrow() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:flutter/foundation.dart';
@@ -140,8 +139,7 @@ class TodoRepository {
 ''', path: path);
   }
 
-  /// A rollback may rethrow, but reporting too gives the notifier a second
-  /// incident for the same failure (error-reporting.md: one incident owner).
+  /// Rollback rethrows must not report a second incident.
   Future<void> test_reportsRollbackThatReportsBeforeRethrow() async {
     const source = r'''
 abstract final class Crash {
@@ -547,6 +545,84 @@ import 'package:flutter/foundation.dart';
 final previous = FlutterError.onError;
 ''', path: path);
   }
+
+  Future<void> test_allowsStartupForwardingToLocalDiagnosticsOnly() async {
+    await assertAllows(r'''
+import 'dart:async';
+import 'dart:ui';
+import 'package:flutter/foundation.dart';
+
+abstract final class Crash {
+  static Future<void> init(StackTrace stack, {required FutureOr<void> Function() appRunner}) async {
+    FlutterError.onError = (details) => error(details, stack);
+    PlatformDispatcher.instance.onError = (exception, stack) {
+      error(exception, stack);
+      return true;
+    };
+    await appRunner();
+  }
+  static void error(Object error, StackTrace stack) {
+    debugPrint('Uncaught ${error.runtimeType}');
+    debugPrint('$stack');
+  }
+}
+''', path: crashServicePath);
+  }
+
+  Future<void> test_reportsRemoteArbitraryAndRecursiveFacadeHandlers() async {
+    for (final body in [
+      'Sentry.captureException(error);',
+      'relay(error);',
+      'Crash.error(error, stack);',
+    ]) {
+      final source =
+          '''
+import 'package:flutter/foundation.dart';
+${body.startsWith('Sentry.') ? "import 'package:sentry_flutter/sentry_flutter.dart';" : ''}
+
+void relay(Object error) {}
+abstract final class Crash {
+  static void init(StackTrace stack) {
+    FlutterError.onError = (details) => error(details, stack);
+  }
+  static void error(Object error, StackTrace stack) { $body }
+}
+''';
+      newFile(crashServicePath, source);
+      await assertDiagnosticsInFile(crashServicePath, [
+        compatLint(source, 'FlutterError.onError =', ruleName),
+      ]);
+    }
+  }
+
+  Future<void> test_reportsThrowAfterLocalForwarding() async {
+    for (final callback in [
+      'error(exception, stack); throw exception;',
+      'try { error(exception, stack); return true; } catch (_) { rethrow; }',
+    ]) {
+      final source =
+          r'''
+import 'dart:ui';
+import 'package:flutter/foundation.dart';
+
+abstract final class Crash {
+  static void init() {
+    PlatformDispatcher.instance.onError = (exception, stack) {
+      FORWARD
+    };
+  }
+  static void error(Object error, StackTrace stack) {
+    debugPrint('Uncaught ${error.runtimeType}');
+  }
+}
+'''
+              .replaceFirst('FORWARD', callback);
+      newFile(crashServicePath, source);
+      await assertDiagnosticsInFile(crashServicePath, [
+        compatLint(source, 'PlatformDispatcher.instance.onError =', ruleName),
+      ]);
+    }
+  }
 }
 
 @reflectiveTest
@@ -679,7 +755,7 @@ abstract final class Crash {
 }
 
 @reflectiveTest
-final class CrashErrorRecursionTest extends _DataCrashRuleTest {
+final class CrashErrorRecursionTest extends _CrashSdkRuleTest {
   @override
   String get ruleName => 'crash_error_recursion';
   @override
@@ -715,6 +791,50 @@ abstract final class Crash {
   static void _send(Object value) {}
 }
 ''', path: path);
+  }
+
+  Future<void> test_allowsStartupCallbacksForwardingToTerminalError() async {
+    await assertAllows(r'''
+import 'dart:async';
+import 'dart:ui';
+import 'package:flutter/foundation.dart';
+
+abstract final class Crash {
+  static Future<void> init(StackTrace stack, {required FutureOr<void> Function() appRunner}) async {
+    FlutterError.onError = (details) => error(details, stack);
+    PlatformDispatcher.instance.onError = (exception, stack) {
+      error(exception, stack);
+      return true;
+    };
+    await appRunner();
+  }
+
+  static void error(Object error, StackTrace stackTrace) {}
+}
+''', path: path);
+  }
+
+  Future<void> test_reportsSendFailureFromStartupCallback() async {
+    const source = r'''
+import 'dart:ui';
+
+abstract final class Crash {
+  static void init() {
+    PlatformDispatcher.instance.onError = (exception, stack) {
+      try {
+        send(exception);
+      } catch (failure, trace) {
+        error(failure, trace);
+      }
+      return true;
+    };
+  }
+  static void send(Object error) {}
+  static void error(Object error, StackTrace stack) {}
+}
+''';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [compatLint(source, 'error(failure, trace);', ruleName)]);
   }
 
   Future<void> test_allowsFeatureCallsToCrashError() async {

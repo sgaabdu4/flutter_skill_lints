@@ -75,7 +75,9 @@ These rules report as `ERROR` and follow `state-management-lifecycle.md`,
   enum `==`/`!=` checks, are accepted.
 - `avoid_mounted_check_in_finally` and `avoid_only_rethrow` report as `ERROR`.
 - `notifier_ensure_deps` accepts a direct resolved `ref.read(...)` for a
-  dependency. `require_atomic_async_updates` accepts a resolved `!ref.mounted`
+  dependency or a direct call through a synchronous same-class helper whose
+  expression body is that read. Helper calls after suspension still require a
+  mounted guard. `require_atomic_async_updates` accepts a resolved `!ref.mounted`
   guard.
 - `avoid_only_rethrow` owns rethrow-only catches, datasources included: it
   flags only the last catch clause whose body is only `rethrow`, because an

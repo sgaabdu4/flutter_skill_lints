@@ -25,9 +25,7 @@ bool notifierNeedsDependencyEnsure(
   if (!context.isMutationMethod(method.name) || (!hasDependency && !hasNullRepositoryReturn)) {
     return false;
   }
-  // A direct `ref.read(provider)` is ready wherever the skill uses it (after a
-  // state write, or after an await once `ref.mounted` is checked); guarding the
-  // await itself belongs to use_ref_mounted_after_await.
+  // Direct reads are ready; mounted lifetime checks belong to the await guard.
   if (!hasNullRepositoryReturn && _readsDependenciesOnlyFromRef(context, classSpan, method)) {
     return false;
   }
@@ -37,8 +35,7 @@ bool notifierNeedsDependencyEnsure(
   return missingCapture && !_usesConstructorInjectedDependencies(context, classSpan, method);
 }
 
-/// Notifier fields that hold a repository or service, or cache a resolved
-/// `ref.read` of a non-value dependency in their initializer or an assignment.
+/// Find fields holding or caching resolved repository/service dependencies.
 Iterable<VariableDeclaration> notifierDependencyCacheFields(ClassDeclaration declaration) sync* {
   final members = classBodyOf(declaration)?.members ?? const <ClassMember>[];
   final assigned = _FieldProviderReadAssignments();
@@ -426,8 +423,17 @@ bool _readsDependenciesOnlyFromRef(
 ) {
   final resolved = _resolvedNotifierMethod(context, classSpan, method);
   if (resolved == null) return false;
-  final visitor = _DependencySourceVisitor();
+  final visitor = _DependencySourceVisitor(resolved.declaration);
   resolved.block.accept(visitor);
+  if (visitor.providerHelpers.isNotEmpty) {
+    var unguardedHelper = false;
+    AsyncStatementScanner(
+      guardTarget: 'ref',
+      accessTargets: visitor.providerHelpers,
+      onViolation: (_) => unguardedHelper = true,
+    ).scanBlock(resolved.block);
+    if (unguardedHelper) return false;
+  }
   return visitor.readsFromRef && !visitor.usesHeldDependency;
 }
 
@@ -479,13 +485,46 @@ final class _TryBodyCollector extends RecursiveAstVisitor<void> {
 
 /// Separates direct provider reads from dependencies held or produced by members.
 final class _DependencySourceVisitor extends RecursiveAstVisitor<void> {
+  _DependencySourceVisitor(this.declaration);
+
+  final ClassDeclaration declaration;
+  final providerHelpers = <String>{};
   bool readsFromRef = false;
   bool usesHeldDependency = false;
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
     if (_isResolvedDependencyRead(node)) readsFromRef = true;
+    if (_isDirectProviderHelper(node)) {
+      readsFromRef = true;
+      providerHelpers.add(node.methodName.name);
+    }
     super.visitMethodInvocation(node);
+  }
+
+  bool _isDirectProviderHelper(MethodInvocation node) {
+    final operation = node.parent;
+    if (operation is! MethodInvocation ||
+        operation.target != node ||
+        (node.target != null && node.target is! ThisExpression) ||
+        node.argumentList.arguments.isNotEmpty ||
+        !_isNonNullableInterfaceType(node.staticType) ||
+        !_isRepositoryOrServiceType(node.staticType)) {
+      return false;
+    }
+    final method = node.methodName.element;
+    if (method is! MethodElement ||
+        method.isStatic ||
+        method.enclosingElement != declaration.declaredFragment?.element) {
+      return false;
+    }
+    final helper = _findMethodDeclaration(declaration, node.methodName.name);
+    final body = helper?.body;
+    return body is ExpressionFunctionBody &&
+        !body.isAsynchronous &&
+        !body.isGenerator &&
+        helper?.parameters?.parameters.isEmpty == true &&
+        _isResolvedDependencyRead(body.expression);
   }
 
   @override
@@ -497,6 +536,12 @@ final class _DependencySourceVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
+    final invocation = node.parent;
+    if (invocation is MethodInvocation &&
+        invocation.methodName == node &&
+        _isDirectProviderHelper(invocation)) {
+      return;
+    }
     final element = node.element;
     final type = switch (element) {
       PropertyAccessorElement(:final returnType, isStatic: false) => returnType,

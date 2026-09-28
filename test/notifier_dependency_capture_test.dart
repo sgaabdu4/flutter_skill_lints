@@ -94,6 +94,37 @@ class Notifier<T> {
     await assertNoDiagnostics(source);
   }
 
+  Future<void> test_allowsProviderReadHelperAtAwaitAndAfterMountedGuard() async {
+    final source = _source(r'''
+  ItemsRepository _captureRepository() => ref.read(repositoryProvider);
+
+  Future<void> saveItem() async {
+    state = Object();
+    await _captureRepository().save();
+    if (!ref.mounted) return;
+    await this._captureRepository().save();
+    if (!ref.mounted) return;
+    state = Object();
+  }
+''');
+
+    await assertNoDiagnostics(source);
+  }
+
+  Future<void> test_reportsProviderReadHelperAfterUnguardedAwait() async {
+    final source = _source(r'''
+  ItemsRepository _captureRepository() => ref.read(repositoryProvider);
+
+  Future<void> saveItem() async {
+    state = Object();
+    await _captureRepository().save();
+    await _captureRepository().save();
+  }
+''');
+
+    await _expectNotifierDiagnostic(source);
+  }
+
   Future<void> test_allowsNullableRepositoryReturnedByAwaitedHelperWhenPromoted() async {
     final source = _source(r'''
   Future<ItemsRepository?> _captureRepository() async {

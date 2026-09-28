@@ -9,13 +9,6 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> architectureSourceRules = [
   /// Domain code must stay pure Dart.
-  ///
-  /// Why: Flags Flutter or package imports from domain files. Domain may only
-  /// import freezed_annotation and other /domain/ paths (other entities or Value
-  /// Objects). For shared primitive logic, create a Value Object (sealed Freezed
-  /// class) in /domain/values/. For one-off derivation, add an entity
-  /// getter. Never import core/extensions/ — that violates the Clean Architecture
-  /// Dependency Rule (inner layer must not depend on outer).
   scannerRule(
     code: const LintCode(
       'arch_domain_import',
@@ -38,13 +31,7 @@ final List<ScannerRule> architectureSourceRules = [
     },
   ),
 
-  /// Storage SDKs live in local datasources only.
-  ///
-  /// Why: architecture.md forbids `dart:io`, Hive CE, SharedPreferences, secure storage, and
-  /// path_provider imports in `presentation/`, `*_notifier.dart`, `*_service.dart`, and
-  /// `*_repository.dart` files. Storage lives in `Local<X>Datasource`, exposed via
-  /// `<X>Repository`. Reusable presentation widgets report the same imports through
-  /// `presentation_widget_infrastructure_dependency`.
+  /// HTTP constants and exception-only imports expose no I/O; widgets retain stricter ownership.
   scannerRule(
     code: const LintCode(
       'arch_storage_sdk_import',
@@ -54,22 +41,20 @@ final List<ScannerRule> architectureSourceRules = [
           'through the <X>Repository interface.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags storage SDK and dart:io imports in presentation, notifier, service, and repository files.',
+    description: 'Flags storage-capable SDK and dart:io imports in presentation, notifier, service, and repository files.',
     scan: (reporter, context) {
       if (context.isTestFile || context.isPresentationWidgetFile) return;
       if (!_isStorageSdkForbiddenFile(context.path)) return;
       for (final directive in context.unit.directives.whereType<ImportDirective>()) {
         final uri = _resolvedImportUri(context, directive);
         if (uri == null || !_isStorageSdkImport(uri)) continue;
+        if (_isNonIoBoundaryImport(directive)) continue;
         reporter.reportOffset(context, directive.offset);
       }
     },
   ),
 
   /// Domain code must not own JSON serialization.
-  ///
-  /// Why: Flags JSON serialization members in domain files. Move fromJson/toJson code to data
-  /// models.
   scannerRule(
     code: const LintCode(
       'arch_domain_serialization',
@@ -90,9 +75,6 @@ final List<ScannerRule> architectureSourceRules = [
   ),
 
   /// Repositories and datasources need interface contracts.
-  ///
-  /// Why: Flags repository or datasource files without I* contracts. Add an abstract
-  /// interface class for this layer.
   scannerRule(
     code: const LintCode(
       'arch_interface_contract',
@@ -111,9 +93,6 @@ final List<ScannerRule> architectureSourceRules = [
   ),
 
   /// Repositories should implement contracts, not generated bases.
-  ///
-  /// Why: Flags repository classes extending generated _$Repository bases. Keep
-  /// generated Riverpod classes on notifiers; concrete repositories implement I* contracts.
   scannerRule(
     code: const LintCode(
       'arch_repository_generated_extends',
@@ -135,10 +114,6 @@ final List<ScannerRule> architectureSourceRules = [
   ),
 
   /// Layer constructors and providers should use interfaces.
-  ///
-  /// Why: Flags concrete repository or datasource constructor dependencies, and repository or
-  /// datasource providers whose declared return type is a concrete class implementing an
-  /// abstract interface class. Take and return I*Repository/I*Datasource interfaces instead.
   scannerRule(
     code: const LintCode(
       'arch_concrete_dependency',
@@ -169,9 +144,6 @@ final List<ScannerRule> architectureSourceRules = [
   ),
 
   /// Feature widgets belong under presentation/widgets.
-  ///
-  /// Why: Flags feature widgets outside presentation/widgets. Move feature widgets into the
-  /// presentation layer.
   scannerRule(
     code: const LintCode(
       'arch_widget_path',
@@ -189,9 +161,6 @@ final List<ScannerRule> architectureSourceRules = [
   ),
 
   /// Atomic design widgets should not access providers directly.
-  ///
-  /// Why: Flags provider access from atomic design widgets. Move provider access to the
-  /// presentation boundary.
   scannerRule(
     code: const LintCode(
       'atomic_provider_access',
@@ -212,9 +181,6 @@ final List<ScannerRule> architectureSourceRules = [
   ),
 
   /// Pages must be Riverpod consumer widgets.
-  ///
-  /// Why: atomic-design pages connect state to layout, so every public screen
-  /// widget extends ConsumerWidget or ConsumerStatefulWidget.
   scannerRule(
     code: const LintCode(
       'atomic_page_consumer_widget',
@@ -243,10 +209,6 @@ final List<ScannerRule> architectureSourceRules = [
   ),
 
   /// Use typed IDs for entities with multiple String IDs.
-  ///
-  /// Why: The skill forbids raw `String`/`int` IDs once a feature has several ID types.
-  /// Flags domain files with two or more resolved `String`/`int` `...Id` fields or Freezed
-  /// redirect parameters. Use extension types or value objects for IDs.
   scannerRule(
     code: const LintCode(
       'typed_id_raw_id',
@@ -269,9 +231,6 @@ final List<ScannerRule> architectureSourceRules = [
   ),
 
   /// Avoid Map<String, dynamic> for non-data multi-value returns.
-  ///
-  /// Why: Flags non-data helpers returning Map<String, dynamic> tuples. Use records or typed
-  /// objects.
   scannerRule(
     code: const LintCode(
       'records_map_return',
@@ -291,9 +250,6 @@ final List<ScannerRule> architectureSourceRules = [
   ),
 
   /// Cast untyped map boundaries to Map<String, dynamic>.
-  ///
-  /// Why: Flags `as Map<String, Object?>` casts. JSON/runtime map casts need
-  /// `dynamic` values so downstream JSON access stays explicit and consistent.
   scannerRule(
     code: const LintCode(
       'avoid_object_map_cast',
@@ -382,6 +338,25 @@ bool _isStorageSdkImport(Uri uri) {
   return uri.isScheme('package') &&
       uri.pathSegments.isNotEmpty &&
       _storageSdkPackages.contains(uri.pathSegments.first);
+}
+
+bool _isNonIoBoundaryImport(ImportDirective directive) {
+  final library = directive.libraryImport?.importedLibrary;
+  final show = directive.combinators.singleOrNull;
+  if (directive.uri.stringValue != 'dart:io' ||
+      library?.uri.toString() != 'dart:io' ||
+      directive.configurations.isNotEmpty ||
+      show is! ShowCombinator ||
+      show.shownNames.isEmpty) {
+    return false;
+  }
+  const allowed = {'HttpHeaders', 'HttpStatus', 'SocketException', 'FileSystemException'};
+  return show.shownNames.every(
+    (name) =>
+        allowed.contains(name.name) &&
+        name.element is ClassElement &&
+        name.element == library?.exportNamespace.get2(name.name),
+  );
 }
 
 bool _isStorageSdkForbiddenFile(String path) {

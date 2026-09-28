@@ -164,7 +164,10 @@ String _routerWindow(
   return context.source.masked.sublist(start, end + 1).join('\n');
 }
 
-int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
+({RegExpMatch match, int column})? _directRouteNavigationMatch(
+  SourceScannerContext context,
+  int lineIndex,
+) {
   final publicCoordinatorStaticCallPattern = RegExp(
     r'\b[A-Z]\w*NavigationCoordinator\s*\.\s*\w+\s*(?:<[^>]+>)?\s*\(',
   );
@@ -174,7 +177,7 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
     publicCoordinatorStaticCallPattern,
     maxLines: 4,
   );
-  if (publicCoordinatorStaticCall != null) return publicCoordinatorStaticCall.column;
+  if (publicCoordinatorStaticCall != null) return publicCoordinatorStaticCall;
 
   final contextNavigation = RegExp(
     r'\bcontext\s*\.\s*(?:go|push|replace|pushReplacement|goNamed|pushNamed|replaceNamed)\s*'
@@ -186,7 +189,7 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
     contextNavigation,
     maxLines: 4,
   );
-  if (contextNavigationCall != null) return contextNavigationCall.column;
+  if (contextNavigationCall != null) return contextNavigationCall;
 
   final contextConvenienceNavigation = RegExp(
     r'\bcontext\s*\.\s*(?:go|push|replace|pushReplacement)[A-Z]\w*\s*'
@@ -199,7 +202,7 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
     maxLines: 4,
   );
   if (contextConvenienceNavigationCall != null) {
-    return contextConvenienceNavigationCall.column;
+    return contextConvenienceNavigationCall;
   }
 
   final routerVariableNavigation = RegExp(
@@ -213,7 +216,7 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
     routerVariableNavigation,
     maxLines: 4,
   );
-  if (routerVariableNavigationCall != null) return routerVariableNavigationCall.column;
+  if (routerVariableNavigationCall != null) return routerVariableNavigationCall;
 
   final routerConvenienceNavigation = RegExp(
     r'\b(?:_?router|[A-Za-z_]\w*Router\w*)\s*\.\s*'
@@ -227,7 +230,7 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
     maxLines: 4,
   );
   if (routerConvenienceNavigationCall != null) {
-    return routerConvenienceNavigationCall.column;
+    return routerConvenienceNavigationCall;
   }
 
   final navigatorNavigation = RegExp(
@@ -242,7 +245,7 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
     navigatorNavigation,
     maxLines: 4,
   );
-  if (navigatorNavigationCall != null) return navigatorNavigationCall.column;
+  if (navigatorNavigationCall != null) return navigatorNavigationCall;
 
   return null;
 }

@@ -232,15 +232,18 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
       final reportedLines = <int>{};
       final calls = collectNodes<MethodInvocation>(context.unit);
       for (var i = 0; i < context.source.length; i++) {
-        final column = _directRouteNavigationColumn(context, i);
-        if (column == null) continue;
+        final match = _directRouteNavigationMatch(context, i);
+        if (match == null) continue;
+        final argumentOffset = context.source.lineOffsets[i] + match.match.end - 1;
         final navigation = calls.where(
           (call) =>
               context.unit.lineInfo.getLocation(call.offset).lineNumber == i + 1 &&
               RegExp(r'^(?:go|push|replace|restorablePush)').hasMatch(call.methodName.name),
         );
-        if (navigation.isNotEmpty && navigation.every(_isTypedRouterGo)) continue;
-        reporter.report(context, i, column);
+        if (navigation.any((call) => call.argumentList.offset == argumentOffset) &&
+            navigation.every(_isTypedRouterGo))
+          continue;
+        reporter.report(context, i, match.column);
         reportedLines.add(i);
       }
       for (final call in calls) {

@@ -2,8 +2,6 @@ part of '../router_source_rules.dart';
 
 final List<ScannerRule> _routerSourceRulesPart1 = [
   /// Avoid string route navigation.
-  ///
-  /// Why: Flags string-based GoRouter navigation. Use typed GoRouter routes.
   scannerRule(
     code: const LintCode(
       'router_string_nav',
@@ -28,9 +26,6 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 
   /// Do not pop and push in the same synchronous flow.
-  ///
-  /// Why: Flags synchronous context.pop followed by push navigation. Wait for modal dismissal
-  /// before pushing the next route.
   scannerRule(
     code: const LintCode(
       'router_pop_then_push',
@@ -52,14 +47,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     },
   ),
 
-  /// BuildContext pop fallback helpers must check Navigator stacks.
-  ///
-  /// Why: GoRouter `context.canPop()` can disagree with the active root/local
-  /// Navigator stack when dialogs, sheets, shell routes, or nested navigators
-  /// are involved. A generic `popIfCan` / `popOr...` helper that checks only
-  /// GoRouter may fall through to its route fallback while a Navigator route is
-  /// still poppable. Check `mounted`, the root Navigator, and the local
-  /// Navigator before falling back to typed route navigation.
+  /// GoRouter canPop can disagree with root/local Navigator stacks.
   scannerRule(
     code: const LintCode(
       'pop_fallback_helper_must_check_navigator_stack',
@@ -72,9 +60,6 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 
   /// Avoid ref.watch in router redirects.
-  ///
-  /// Why: Flags ref.watch calls inside router redirects. Use a read/listenable bridge for
-  /// redirect state.
   scannerRule(
     code: const LintCode(
       'router_redirect_watch',
@@ -94,9 +79,6 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 
   /// Do not redirect to loading routes while auth/router state is loading.
-  ///
-  /// Why: Flags redirects to loading routes while auth/router state is loading. Return null
-  /// while loading to stay on the current route.
   scannerRule(
     code: const LintCode(
       'router_redirect_loading_bounce',
@@ -109,10 +91,6 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 
   /// Do not hold splash while initial sync runs.
-  ///
-  /// Why: Initial data sync is a background/domain concern. Once auth and setup
-  /// state are known, route to the authenticated shell and let local data hydrate
-  /// instead of keeping the user on the cover screen.
   scannerRule(
     code: const LintCode(
       'router_splash_waits_for_initial_sync',
@@ -132,11 +110,6 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 
   /// Avoid GoRouter.of(context).* navigation.
-  ///
-  /// Why: Flags `GoRouter.of(context).{go,push,replace,pushReplacement,goNamed,
-  /// pushNamed,replaceNamed}` calls. App code should call the generated typed
-  /// route helpers (`SomeRoute(...).go(context)` / `.push(context)`) so the
-  /// route class stays the navigation SSOT.
   scannerRule(
     code: const LintCode(
       'router_gorouter_of',
@@ -161,10 +134,6 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 
   /// Avoid Navigator push with untyped page routes.
-  ///
-  /// Why: Flags `Navigator.{push,pushReplacement,pushAndRemoveUntil}` with
-  /// `MaterialPageRoute` / `CupertinoPageRoute` / `PageRouteBuilder`. Define a
-  /// typed GoRouter route and navigate through the generated route helper.
   scannerRule(
     code: const LintCode(
       'router_untyped_navigator_push',
@@ -205,10 +174,6 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 
   /// Do not add route-specific BuildContext navigation extensions.
-  ///
-  /// Why: Flags `extension ... on BuildContext` methods that wrap generated
-  /// typed routes. Route-specific helpers hide the typed route call site and
-  /// create a second route API.
   scannerRule(
     code: const LintCode(
       'router_context_navigation_extension',
@@ -221,9 +186,6 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 
   /// Use typed route helpers as the navigation API.
-  ///
-  /// Why: Flags wrapper classes/functions around navigation. Generated typed route
-  /// classes are the navigation SSOT.
   scannerRule(
     code: const LintCode(
       'router_navigation_wrapper_api',
@@ -257,10 +219,6 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 
   /// Use generated typed routes for page navigation.
-  ///
-  /// Why: Flags raw context/router/Navigator page navigation. Page navigation
-  /// should call generated typed route helpers directly so route params stay
-  /// compile-time checked.
   scannerRule(
     code: const LintCode(
       'router_direct_route_call',
@@ -292,10 +250,6 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 
   /// Keep route definitions in the router boundary.
-  ///
-  /// Why: Flags raw `GoRoute`/shell route definitions outside the router
-  /// boundary. App routes should be defined once with typed GoRouter route
-  /// classes, and tests should use a shared router fixture helper.
   scannerRule(
     code: const LintCode(
       'router_raw_route_definition',
@@ -321,10 +275,6 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 
   /// Use local modal helpers for dialogs and sheets.
-  ///
-  /// Why: Flags wrapper APIs around modal presentation. Local dialog and sheet
-  /// helpers keep presentation close to the modal and typed page routes keep
-  /// page navigation as the SSOT.
   scannerRule(
     code: const LintCode(
       'router_modal_local_helpers',
@@ -346,9 +296,6 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 
   /// Keep navigation out of context escape hatches.
-  ///
-  /// Why: Navigation should stay at the UI event boundary through generated
-  /// route helpers or local modal helpers.
   scannerRule(
     code: const LintCode(
       'router_container_navigation_escape',
@@ -395,11 +342,6 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 
   /// Avoid GoRouter extra for route state.
-  ///
-  /// Why: Flags typed route `$extra`, GoRouterState.extra reads, and direct navigation
-  /// `extra:` payloads. Route state must survive serialization, redirects, reloads, and
-  /// modal pops; pass stable IDs or path/query params through typed routes instead.
-  /// An extraCodec does not make `extra` acceptable: the skill never uses it.
   scannerRule(
     code: const LintCode(
       'router_complex_extra',
@@ -422,8 +364,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
   ),
 ];
 
-/// Reports a route location returned from a branch taken while an enum
-/// status is `loading` (or an `isLoading` flag is true).
+/// Detect route returns in loading enum or isLoading branches.
 void _reportRedirectLoadingBounces(ScannerRuleReporter reporter, SourceScannerContext context) {
   for (final node in collectNodes<AstNode>(context.unit)) {
     switch (node) {
@@ -442,8 +383,7 @@ void _reportRedirectLoadingBounces(ScannerRuleReporter reporter, SourceScannerCo
   }
 }
 
-/// Statements run by each loading case, following fallthrough to the next
-/// member with a body.
+/// A loading case inherits the next case body when it falls through.
 Iterable<Statement> _loadingSwitchStatements(List<SwitchMember> members) sync* {
   for (final (index, member) in members.indexed) {
     if (!_isLoadingSwitchMember(member)) continue;
@@ -547,8 +487,7 @@ void _reportContextNavigationExtensions(
 
 const _buildContextChecker = TypeChecker.fromName('BuildContext', packageName: 'flutter');
 
-/// Forward navigation that takes a raw location: go_router's `BuildContext`
-/// helpers or a `GoRouter` instance, as opposed to a typed `GoRouteData`.
+/// Raw-location forward calls use BuildContext or GoRouter, not GoRouteData.
 bool _isStringRouteNavigation(MethodInvocation node) {
   if (!isResolvedForwardNavigation(node)) return false;
   final targetType = node.realTarget?.staticType;

@@ -36,8 +36,7 @@ abstract final class AnalyticsLog {
 ''');
   }
 
-  // hive-persistence.md "Testing with TypeAdapters": test helpers are not
-  // production service facades.
+  // Test helpers are not production service facades (hive-persistence.md).
   Future<void> test_allowsStaticTestHelperInTests() async {
     await assertAllows('''
 import 'dart:io';
@@ -231,8 +230,7 @@ class ProfileState {
   @override
   String get needle => "?? ''";
 
-  // context-ui.md:22, routing-app-shell.md:198 and lists-forms-workflows.md:218
-  // use primitive bool/num fallbacks in canonical code.
+  // Canonical UI examples use primitive bool/num fallbacks.
   Future<void> test_allowsSkillPrimitiveBoolAndNumFallbacks() async {
     await assertAllows('''
 extension BuildContextX on BuildContext {

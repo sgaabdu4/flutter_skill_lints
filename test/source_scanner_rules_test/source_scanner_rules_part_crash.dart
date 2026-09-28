@@ -63,8 +63,7 @@ class TodoRepository {
     ]);
   }
 
-  /// Flutter's debugPrint is a function-typed variable, so the call resolves
-  /// as a FunctionExpressionInvocation rather than a MethodInvocation.
+  /// Flutter debugPrint resolves as a FunctionExpressionInvocation.
   Future<void> test_reportsFlutterDebugPrintBeforeRethrow() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:flutter/foundation.dart';
@@ -140,8 +139,7 @@ class TodoRepository {
 ''', path: path);
   }
 
-  /// A rollback may rethrow, but reporting too gives the notifier a second
-  /// incident for the same failure (error-reporting.md: one incident owner).
+  /// Rollback rethrows must not report a second incident.
   Future<void> test_reportsRollbackThatReportsBeforeRethrow() async {
     const source = r'''
 abstract final class Crash {

@@ -8,13 +8,7 @@ import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> dataCrashSourceRules = [
-  /// Avoid log-and-rethrow in data layers.
-  ///
-  /// Why: A catch that only reports the error and rethrows adds nothing: the
-  /// notifier catches and reports it again. Delete the try/catch, or translate,
-  /// recover, roll back, or swallow + log a local-first remote mirror instead.
-  /// A Crash/Sentry/Crashlytics report followed by `rethrow` in the same catch
-  /// reports the failure twice. One failed operation has one incident owner.
+  /// Reporting then rethrowing gives one failure two incident owners.
   scannerRule(
     code: const LintCode(
       'data_log_rethrow',
@@ -41,10 +35,7 @@ final List<ScannerRule> dataCrashSourceRules = [
     },
   ),
 
-  /// Crash reporting may include PII.
-  ///
-  /// Why: Flags possible PII values sent to crash reporting. Do not send email, name, phone,
-  /// token, password, address, or user IDs.
+  /// Keep possible PII out of crash reports.
   scannerRule(
     code: const LintCode(
       'crash_possible_pii',
@@ -67,10 +58,7 @@ final List<ScannerRule> dataCrashSourceRules = [
     },
   ),
 
-  /// Sentry SDK imports and calls belong only in crash_service.dart.
-  ///
-  /// Why: error-reporting.md makes `crash_service.dart` the only SDK owner; feature
-  /// code calls the `Crash` facade.
+  /// Sentry SDK calls belong only to crash_service.dart.
   scannerRule(
     code: const LintCode(
       'crash_direct_sentry_call',
@@ -91,12 +79,7 @@ final List<ScannerRule> dataCrashSourceRules = [
     },
   ),
 
-  /// Do not hand-wire FlutterError.onError or PlatformDispatcher.onError.
-  ///
-  /// Why: error-reporting.md makes startup one owner and lets SDK-managed error
-  /// integration replace hand-wired framework and dispatcher handlers. Only the
-  /// Crashlytics branch inside the resolved `Crash` facade assigns them, to the SDK
-  /// handler.
+  /// Keep remote SDK integration and local-only startup diagnostics separate.
   scannerRule(
     code: const LintCode(
       'crash_custom_global_error_handler',
@@ -119,10 +102,7 @@ final List<ScannerRule> dataCrashSourceRules = [
     },
   ),
 
-  /// Sentry sendDefaultPii must stay false.
-  ///
-  /// Why: error-reporting.md requires `sendDefaultPii = false`; the option attaches
-  /// user identity and request data by default.
+  /// Keep Sentry sendDefaultPii false: it attaches identity and request data.
   scannerRule(
     code: const LintCode(
       'crash_sentry_send_default_pii',
@@ -142,10 +122,6 @@ final List<ScannerRule> dataCrashSourceRules = [
   ),
 
   /// Sentry screenshots and view hierarchy stay disabled until accepted.
-  ///
-  /// Why: error-reporting.md keeps screenshots and view hierarchy disabled until each
-  /// is accepted. Record an accepted capture surface by disabling this rule in
-  /// analysis_options.yaml.
   scannerRule(
     code: const LintCode(
       'crash_sentry_capture_opt_in',
@@ -163,10 +139,7 @@ final List<ScannerRule> dataCrashSourceRules = [
     },
   ),
 
-  /// The Crash facade exposes only init, log and error.
-  ///
-  /// Why: error-reporting.md keeps `Crash` a tiny provider-neutral facade whose public
-  /// API is `init`, `log` and `error`, with no runtime backend setters or extras.
+  /// Keep the Crash facade API limited to init, log and error.
   scannerRule(
     code: const LintCode(
       'crash_facade_public_api',
@@ -189,10 +162,7 @@ final List<ScannerRule> dataCrashSourceRules = [
     },
   ),
 
-  /// Crash must not report its own send failures through Crash.error.
-  ///
-  /// Why: error-reporting.md makes a send failure a contained diagnostic that never
-  /// recurses into `Crash.error`.
+  /// A send failure must not re-enter Crash.error.
   scannerRule(
     code: const LintCode(
       'crash_error_recursion',
@@ -216,9 +186,6 @@ final List<ScannerRule> dataCrashSourceRules = [
   ),
 
   /// The Sentry auth token is a build-only secret.
-  ///
-  /// Why: error-reporting.md keeps `SENTRY_AUTH_TOKEN` out of source, app config and
-  /// the runtime bundle.
   scannerRule(
     code: const LintCode(
       'crash_sentry_auth_token_in_source',
@@ -237,9 +204,6 @@ final List<ScannerRule> dataCrashSourceRules = [
   ),
 
   /// Widgets and notifiers never call HTTP clients.
-  ///
-  /// Why: networking.md keeps every HTTP call in datasources or infrastructure
-  /// services; widgets and notifiers reach data through repositories.
   scannerRule(
     code: const LintCode(
       'network_http_call_in_widget_or_notifier',
@@ -263,9 +227,6 @@ final List<ScannerRule> dataCrashSourceRules = [
   ),
 
   /// Datasources take HTTP interfaces, not concrete clients.
-  ///
-  /// Why: networking.md injects `IHttpService`-style interfaces into datasources;
-  /// constructors take interfaces, not concrete clients.
   scannerRule(
     code: const LintCode(
       'datasource_concrete_http_client',
@@ -288,9 +249,6 @@ final List<ScannerRule> dataCrashSourceRules = [
   ),
 
   /// Failed network operations throw typed errors, never null or empty fallbacks.
-  ///
-  /// Why: networking.md makes failures throw typed errors or `AppException`; a
-  /// silent `null` or empty collection hides the failure from the owning layer.
   scannerRule(
     code: const LintCode(
       'network_failure_null_fallback',
@@ -310,9 +268,6 @@ final List<ScannerRule> dataCrashSourceRules = [
   ),
 
   /// Widget code holds no auth tokens, auth headers or client base URLs.
-  ///
-  /// Why: networking.md keeps auth tokens, base URLs and secrets out of widget
-  /// code; infrastructure services own them.
   scannerRule(
     code: const LintCode(
       'network_secret_in_widget',
@@ -337,9 +292,6 @@ final List<ScannerRule> dataCrashSourceRules = [
   ),
 
   /// Widgets and notifiers render typed results, not raw HTTP failures.
-  ///
-  /// Why: networking.md classifies response status once at the infrastructure
-  /// boundary and forbids catching raw HTTP failures in widgets or notifiers.
   scannerRule(
     code: const LintCode(
       'network_raw_http_failure_in_widget_or_notifier',
@@ -393,8 +345,7 @@ bool _isCrashReportCall(MethodInvocation node) {
       (element?.name == 'recordError' || element?.name == 'recordFlutterError');
 }
 
-/// Whether [node] sits inside the `Crash` facade class that declares a static
-/// `init`, resolved through the enclosing class element rather than the file path.
+/// Resolve the Crash facade through its class and static init, never its path.
 bool _isInsideCrashFacade(AstNode node) {
   final crash = node.thisOrAncestorOfType<ClassDeclaration>()?.declaredFragment?.element;
   return crash != null &&
@@ -439,8 +390,7 @@ bool _holdsHttpClient(InterfaceElement element) =>
       ),
     );
 
-/// Classes in [element]'s library that implement it, such as HttpService for
-/// IHttpService.
+/// Include same-library implementors when tracing interface dependencies.
 Iterable<InterfaceElement> _libraryImplementors(InterfaceElement element) =>
     element.library.classes.where(
       (candidate) =>
@@ -448,15 +398,13 @@ Iterable<InterfaceElement> _libraryImplementors(InterfaceElement element) =>
           candidate.allSupertypes.any((supertype) => supertype.element == element),
     );
 
-/// One hop: a root-package class, or an interface implemented in its library,
-/// that directly holds an HTTP client.
+/// Trace one HTTP-client hop through a project class or its local implementors.
 bool _wrapsHttpClient(InterfaceElement element, String? root) =>
     root != null &&
     _packageOf(element) == root &&
     (_holdsHttpClient(element) || _libraryImplementors(element).any(_holdsHttpClient));
 
-/// Whether [element] reaches an HTTP client through root-package fields,
-/// constructor parameters or same-library implementors, within four hops.
+/// Trace at most four dependency hops through root-package classes.
 bool _reachesHttpClient(
   InterfaceElement element,
   String? root, [
@@ -485,8 +433,7 @@ bool _isDatasource(InterfaceElement element) =>
     _isDatasourceName(element.name) ||
     element.allSupertypes.any((supertype) => _isDatasourceName(supertype.element.name));
 
-/// A dependency type that is an HTTP client, or a concrete project class that
-/// reaches one.
+/// Recognize HTTP clients and concrete project dependencies that reach them.
 bool _isConcreteHttpDependency(DartType? type, String? root) {
   if (type == null) return false;
   if (_httpClientChecker.isAssignableFromType(type)) return true;
@@ -795,8 +742,7 @@ final class _NetworkFallbackVisitor extends RecursiveAstVisitor<void> {
     if (calls.found) {
       for (final clause in node.catchClauses) {
         if (!_catchesGenericOrRawHttpFailure(clause)) continue;
-        // Only unconditional returns: a return guarded by a status check is a
-        // classified absence, not a fallback.
+        // Status-guarded absence is classified; only unconditional returns are fallbacks.
         for (final statement in clause.body.statements) {
           if (statement is ReturnStatement && _isEmptyFallback(statement.expression)) {
             fallbacks.add(statement);

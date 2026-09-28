@@ -25,9 +25,7 @@ bool notifierNeedsDependencyEnsure(
   if (!context.isMutationMethod(method.name) || (!hasDependency && !hasNullRepositoryReturn)) {
     return false;
   }
-  // A direct `ref.read(provider)` is ready wherever the skill uses it (after a
-  // state write, or after an await once `ref.mounted` is checked); guarding the
-  // await itself belongs to use_ref_mounted_after_await.
+  // Direct reads are ready; mounted lifetime checks belong to the await guard.
   if (!hasNullRepositoryReturn && _readsDependenciesOnlyFromRef(context, classSpan, method)) {
     return false;
   }
@@ -37,8 +35,7 @@ bool notifierNeedsDependencyEnsure(
   return missingCapture && !_usesConstructorInjectedDependencies(context, classSpan, method);
 }
 
-/// Notifier fields that hold a repository or service, or cache a resolved
-/// `ref.read` of a non-value dependency in their initializer or an assignment.
+/// Find fields holding or caching resolved repository/service dependencies.
 Iterable<VariableDeclaration> notifierDependencyCacheFields(ClassDeclaration declaration) sync* {
   final members = classBodyOf(declaration)?.members ?? const <ClassMember>[];
   final assigned = _FieldProviderReadAssignments();

@@ -7,10 +7,6 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> servicesExtendedSourceRules = [
   /// Keep static service facades tiny and direct.
-  ///
-  /// Why: Pure helper namespaces should not hide clock/random work. SDK facades are allowed
-  /// only when they stay Crash-style boring: tiny fire-and-forget public API, direct SDK calls,
-  /// no returned data/state, and no backend/fake/debug injection seams.
   scannerRule(
     code: const LintCode(
       'service_static_side_effect',
@@ -45,9 +41,6 @@ final List<ScannerRule> servicesExtendedSourceRules = [
   ),
 
   /// Do not allocate Random per call.
-  ///
-  /// Why: Flags dart:math Random construction inside any function, method or closure body.
-  /// Hoist Random to a module-level final and reuse it.
   scannerRule(
     code: const LintCode(
       'service_random_per_call',
@@ -66,10 +59,6 @@ final List<ScannerRule> servicesExtendedSourceRules = [
   ),
 
   /// Do not hide dependency construction behind null-coalescing fallbacks.
-  ///
-  /// Why: `dependency ?? ConcreteDependency()` makes production wiring implicit and bypasses
-  /// the provider/repository/datasource boundary. Require the dependency and wire the concrete
-  /// implementation at the composition root instead.
   scannerRule(
     code: const LintCode(
       'hidden_dependency_fallback',
@@ -94,11 +83,6 @@ final List<ScannerRule> servicesExtendedSourceRules = [
   ),
 
   /// Do not make dependency/function seams optional or defaulted.
-  ///
-  /// Why: Optional callback dependencies such as `clock`, `delay`,
-  /// `generator`, `authenticator`, or `createExecution` recreate production
-  /// fallbacks inside constructors. Require the dependency and wire the
-  /// production implementation at the provider/composition root.
   scannerRule(
     code: const LintCode(
       'hidden_dependency_default_param',
@@ -120,10 +104,6 @@ final List<ScannerRule> servicesExtendedSourceRules = [
   ),
 
   /// Do not inline concrete dependency constructors inside service wiring.
-  ///
-  /// Why: `Service(plugin: ConcretePlugin())` hides a dependency inside another
-  /// constructor call. Give the dependency one provider/composition-root owner,
-  /// then pass `ref.read(dependencyProvider)` into the service.
   scannerRule(
     code: const LintCode(
       'service_inline_concrete_dependency',
@@ -145,15 +125,6 @@ final List<ScannerRule> servicesExtendedSourceRules = [
   ),
 
   /// Do not watch stable provider dependencies inside service/repository wiring.
-  ///
-  /// Why: Service, repository, datasource, client, plugin, queue, and manager
-  /// factories wire stable infrastructure dependencies. Watching those deps
-  /// makes the factory reactive for no product reason and can recreate services
-  /// unexpectedly. Notifier members, including `build()`, read stable
-  /// infrastructure the same way and watch only reactive state. Use ref.read
-  /// for composition-root wiring; reserve ref.watch for the provider that
-  /// intentionally owns reactivity, such as rebuilding a client from live
-  /// config or credential state.
   scannerRule(
     code: const LintCode(
       'service_provider_watch_dependency',
@@ -181,12 +152,6 @@ final List<ScannerRule> servicesExtendedSourceRules = [
   ),
 
   /// Destructure config values read from providers.
-  ///
-  /// Why: The config -> client -> services chain reads config through an
-  /// object pattern, `final BackendConfig(:endpoint, :apiKey) =
-  /// ref.watch(backendConfigProvider);`, so the fields a client needs are
-  /// named where the provider is read. A config local that is only read
-  /// through its properties should be destructured instead.
   scannerRule(
     code: const LintCode(
       'riverpod_config_destructuring',
@@ -208,13 +173,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
     },
   ),
 
-  /// Do not hide nullable values behind empty string/collection fallbacks.
-  ///
-  /// Why: `value ?? ''`, `value ?? const []`, chained fallbacks, and
-  /// `labelBuilder?.call(item) ?? item.toString()` erase the domain meaning of
-  /// null. Use required inputs, explicit nullable branches, pattern matching, or
-  /// typed value objects instead. Plain bool/num fallbacks such as
-  /// `ModalRoute.of(this)?.isCurrent ?? false` (context-ui.md) stay allowed.
+  /// Preserve domain null meaning; resolved wire/parser/editor boundaries can normalize.
   scannerRule(
     code: const LintCode(
       'implicit_null_fallback',
@@ -237,9 +196,6 @@ final List<ScannerRule> servicesExtendedSourceRules = [
   ),
 
   /// Avoid fire-and-forget calls in tests.
-  ///
-  /// Why: Flags unawaited calls from test files. Await the Future directly in tests and
-  /// assert on the fake service.
   scannerRule(
     code: const LintCode(
       'fire_forget_in_tests',
@@ -381,9 +337,7 @@ MethodInvocation? _stableInfrastructureFactoryWatch(
   return _isStableInfrastructureType(function.returnType) ? watch : null;
 }
 
-/// Whether [watch] sits in a class whose resolved supertypes include
-/// Riverpod's `AnyNotifier`, the base of `Notifier`, `AsyncNotifier`,
-/// `StreamNotifier` and the generated `_$X` classes.
+/// Resolve all notifier kinds through Riverpod's AnyNotifier supertype.
 bool _isRiverpodNotifierMember(MethodInvocation watch) {
   final element = watch.thisOrAncestorOfType<ClassDeclaration>()?.declaredFragment?.element;
   if (element == null) return false;
@@ -392,8 +346,7 @@ bool _isRiverpodNotifierMember(MethodInvocation watch) {
   );
 }
 
-/// Whether [watch] is the storage argument of Riverpod's notifier
-/// `persist(...)`, which the skill watches inside `build()`.
+/// Riverpod persist intentionally watches its storage provider.
 bool _isPersistStorage(MethodInvocation watch) {
   final arguments = watch.parent;
   final persist = arguments?.parent;
@@ -408,10 +361,7 @@ bool _isPersistStorage(MethodInvocation watch) {
 bool _isRiverpodLibrary(Element element) =>
     element.library?.uri.toString().startsWith('package:riverpod/') ?? false;
 
-/// A watched provider whose resolved value is not stable infrastructure is
-/// reactive state or config (Notifier/AsyncNotifier state or a plain value
-/// provider), so the factory intentionally rebuilds when it changes.
-/// Unresolved or `Object`/`dynamic` values stay reported.
+/// Only resolved non-infrastructure values justify reactive factories.
 bool _watchesReactiveValue(MethodInvocation watch) {
   final value = watch.staticType;
   if (value is! InterfaceType || value.isDartCoreObject) return false;
@@ -432,8 +382,7 @@ bool _isStableInfrastructureType(DartType type) {
   });
 }
 
-/// Whether the `ref.watch`/`ref.read` at [column] initializes a local whose
-/// resolved type is a `*Config` class and whose every use is a property read.
+/// Find Config locals read only through properties for destructuring.
 bool _isPropertyOnlyConfigLocal(SourceScannerContext context, int lineIndex, int column) {
   final offset = context.source.lineOffsets[lineIndex] + column;
   final read = context.unit.nodeCovering(offset: offset)?.thisOrAncestorOfType<MethodInvocation>();

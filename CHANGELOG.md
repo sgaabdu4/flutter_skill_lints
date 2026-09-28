@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.13.2] - 2026-09-29
+
+- Recognize inline callback captures across awaited operations without hiding
+  consecutive unread assignments or shadowed-variable mistakes.
+- Restore direct-router and null-fallback diagnostics at typed locations,
+  parsers, editors and wire factories; use the existing explicit APIs and branches.
+- Detect remote error SDK integration elsewhere in the same unit before allowing
+  a terminal local global handler; retain the no-provider diagnostics boundary.
+
 ## [0.13.1] - 2026-09-28
 
 - Allow nonrecursive startup error forwarding and terminal local diagnostics

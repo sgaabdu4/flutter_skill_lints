@@ -96,7 +96,7 @@ final List<ScannerRule> dataCrashSourceRules = [
       for (final assignment in visitor.assignments) {
         if ((_isInsideCrashFacade(assignment) &&
                 _referencesPackage(assignment.rightHandSide, 'firebase_crashlytics')) ||
-            _isLocalCrashForwarding(assignment)) {
+            _isLocalCrashForwarding(assignment, context.unit)) {
           continue;
         }
         _reportOffset(reporter, context, assignment.offset);
@@ -700,7 +700,7 @@ bool _isStartupErrorForwarder(MethodInvocation node) {
       _isGlobalErrorHandlerAssignment(assignment);
 }
 
-bool _isLocalCrashForwarding(AssignmentExpression assignment) {
+bool _isLocalCrashForwarding(AssignmentExpression assignment, CompilationUnit unit) {
   final calls = collectNodes<InvocationExpression>(assignment.rightHandSide);
   final call = calls.singleOrNull;
   if (call is! MethodInvocation ||
@@ -714,7 +714,7 @@ bool _isLocalCrashForwarding(AssignmentExpression assignment) {
         'sentry',
         'sentry_flutter',
         'firebase_crashlytics',
-      }.any((package) => _referencesPackage(declaration, package))) {
+      }.any((package) => _referencesPackage(unit, package))) {
     return false;
   }
   final error = declaration.body.members

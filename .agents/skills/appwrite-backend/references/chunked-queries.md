@@ -1,38 +1,39 @@
 # Chunked ID Queries
 
-`Query.equal()` max 100 IDs per call. Chunk bigger lists.
+`Query.equal()` value cap = deployed target's ([limits.md](limits.md#query-limits)). Chunk bigger lists:
+
+- `idChunkSize` = min(that cap, IDs whose serialized `Query.equal` fits `4096` chars) → `100` on MariaDB/PostgreSQL ([limits.md](limits.md#chunking-large-id-lists)); pass it as `chunkSize`.
+- `Query.limit(chunk.length)` per chunk — default page `25` silently truncates.
+- Chunks run sequentially. Client SDK → every call through the [shared coordinator](error-handling.md#client-request-coordination); unbounded `Future.wait`/`Promise.all`/`asyncio.gather` = forbidden.
 
 ## Dart
 
 ```dart
-/// Fetch rows by ID list, chunking to avoid 100-value limit.
-Future<List<Map<String, dynamic>>> fetchByIds(
+import 'package:dart_appwrite/models.dart';
+
+Future<List<Row>> fetchByIds(
     String dbId, String tableId, List<String> ids,
-    {List<String> select = const []}) async {
-    if (ids.isEmpty) return [];
-
-    final chunks = <List<String>>[];
-    for (var i = 0; i < ids.length; i += 100) {
-        chunks.add(ids.skip(i).take(100).toList());
-    }
-
-    final results = await Future.wait(
-        chunks.map((chunk) => tablesDB.listRows(
+    {required int chunkSize, List<String> select = const []}) async {
+    final rows = <Row>[];
+    for (var i = 0; i < ids.length; i += chunkSize) {
+        final chunk = ids.skip(i).take(chunkSize).toList();
+        final result = await tablesDB.listRows(
             databaseId: dbId, tableId: tableId,
             queries: [
                 Query.equal('\$id', chunk),
+                Query.limit(chunk.length),
                 if (select.isNotEmpty) Query.select(select),
             ],
             total: false,
-        )),
-    );
-
-    return results.expand((r) => r.rows).toList();
+        );
+        rows.addAll(result.rows);
+    }
+    return rows;
 }
 
 // Usage
 final patients = await fetchByIds('db', 'patients', patientIds,
-    select: ['name', 'email', 'phone']);
+    chunkSize: idChunkSize, select: ['name', 'email', 'phone']);
 ```
 
 ---
@@ -40,46 +41,24 @@ final patients = await fetchByIds('db', 'patients', patientIds,
 ## Python
 
 ```python
-import asyncio
-from typing import List
+from typing import List, Optional
+from appwrite.models import Row
 
-async def fetch_by_ids(
-    db_id: str, table_id: str, ids: List[str],
-    select: List[str] = None,
-) -> List[dict]:
-    """Fetch rows by ID list, chunking to avoid 100-value limit."""
-    if not ids:
-        return []
-
-    chunks = [ids[i:i + 100] for i in range(0, len(ids), 100)]
-
-    async def fetch_chunk(chunk):
-        queries = [Query.equal('$id', chunk)]
-        if select:
-            queries.append(Query.select(select))
-        return tables_db.list_rows(
-            database_id=db_id, table_id=table_id,
-            queries=queries, total=False,
-        )
-
-    results = await asyncio.gather(*[fetch_chunk(c) for c in chunks])
-    return [row for result in results for row in result['rows']]
-
-# Sync version
-def fetch_by_ids_sync(db_id, table_id, ids, select=None):
-    if not ids:
-        return []
-    chunks = [ids[i:i + 100] for i in range(0, len(ids), 100)]
-    rows = []
-    for chunk in chunks:
-        queries = [Query.equal('$id', chunk)]
+def fetch_by_ids(
+    db_id: str, table_id: str, ids: List[str], chunk_size: int,
+    select: Optional[List[str]] = None,
+) -> List[Row]:
+    rows: List[Row] = []
+    for i in range(0, len(ids), chunk_size):
+        chunk = ids[i:i + chunk_size]
+        queries = [Query.equal('$id', chunk), Query.limit(len(chunk))]
         if select:
             queries.append(Query.select(select))
         result = tables_db.list_rows(
             database_id=db_id, table_id=table_id,
             queries=queries, total=False,
         )
-        rows.extend(result['rows'])
+        rows.extend(result.rows)
     return rows
 ```
 
@@ -88,34 +67,30 @@ def fetch_by_ids_sync(db_id, table_id, ids, select=None):
 ## TypeScript
 
 ```typescript
-async function fetchByIds<T>(
-    dbId: string, tableId: string, ids: string[],
+async function fetchByIds<T extends Models.Row>(
+    dbId: string, tableId: string, ids: string[], chunkSize: number,
     select?: string[],
 ): Promise<T[]> {
-    if (ids.length === 0) return [];
-
-    const chunks: string[][] = [];
-    for (let i = 0; i < ids.length; i += 100) {
-        chunks.push(ids.slice(i, i + 100));
-    }
-
-    const results = await Promise.all(
-        chunks.map(chunk => tablesDB.listRows<T>({
+    const rows: T[] = [];
+    for (let i = 0; i < ids.length; i += chunkSize) {
+        const chunk = ids.slice(i, i + chunkSize);
+        const result = await tablesDB.listRows<T>({
             databaseId: dbId, tableId: tableId,
             queries: [
                 Query.equal('$id', chunk),
+                Query.limit(chunk.length),
                 ...(select ? [Query.select(select)] : []),
             ],
             total: false,
-        })),
-    );
-
-    return results.flatMap(r => r.rows);
+        });
+        rows.push(...result.rows);
+    }
+    return rows;
 }
 
 // Usage
 const patients = await fetchByIds<Patient>('db', 'patients', patientIds,
-    ['name', 'email', 'phone']);
+    idChunkSize, ['name', 'email', 'phone']);
 ```
 
 ---

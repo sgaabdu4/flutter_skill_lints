@@ -7,13 +7,19 @@ File tokens provide temporary, shareable URLs without exposing API keys.
 ### Generate Token
 
 ```dart
-final token = await storage.createFileToken(
-    bucketId: 'uploads', fileId: 'file_123', expire: 3600);
+final token = await Tokens(client).createFileToken(
+    bucketId: 'uploads',
+    fileId: 'file_123',
+    expire: DateTime.now().toUtc().add(const Duration(hours: 1)).toIso8601String(),
+);
 
-final downloadUrl = '${client.endPoint}/storage/buckets/uploads/files/file_123/download?token=${token.token}';
+final downloadUrl = '${client.endPoint}/storage/buckets/uploads/files/file_123/download'
+    '?project=$projectId&token=${token.secret}';
 ```
 
-Python and TypeScript follow the same pattern with `create_file_token()` / `createFileToken()`.
+- Server SDK `Tokens` service + API key scope `tokens.write`; Python `Tokens(client).create_file_token()`, TypeScript `new Tokens(client).createFileToken()`.
+- `expire` = optional future ISO-8601 datetime; omitted = no expiry.
+- Token value = `token.secret`; works on the view, preview, and download URLs.
 
 ### Use Cases
 
@@ -63,7 +69,7 @@ result = storage.create_file(
 
 ```typescript
 // TypeScript - Large file upload
-import { InputFile } from 'node-appwrite';
+import { InputFile } from 'node-appwrite/file';
 
 const result = await storage.createFile({
     bucketId: 'uploads',
@@ -113,13 +119,15 @@ Generate image transformations server-side.
 
 ```dart
 // Dart - Thumbnail
-final preview = storage.getFilePreview(
+import 'package:dart_appwrite/enums.dart';
+
+final preview = await storage.getFilePreview(
     bucketId: 'images',
     fileId: 'img_123',
     width: 200,
     height: 200,
     quality: 80,
-    output: 'webp',
+    output: ImageFormat.webp,
 );
 ```
 
@@ -137,7 +145,7 @@ final preview = storage.getFilePreview(
 | `opacity` | Transparency (0-1) |
 | `rotation` | Rotation degrees |
 | `background` | Background color (hex) |
-| `output` | Format (jpeg, png, webp, gif, avif, heic) |
+| `output` | `ImageFormat`: jpg, jpeg, png, webp, heic, avif, gif |
 
 ### Image Format Support
 
@@ -152,8 +160,8 @@ Appwrite supports HEIC, AVIF, and modern formats.
 #### Convert HEIC to WebP
 
 ```dart
-final preview = storage.getFilePreview(
-    bucketId: 'photos', fileId: 'heic_photo', output: 'webp', quality: 85);
+final preview = await storage.getFilePreview(
+    bucketId: 'photos', fileId: 'heic_photo', output: ImageFormat.webp, quality: 85);
 ```
 
 #### AVIF (Best Compression)
@@ -162,11 +170,11 @@ AVIF produces 50% smaller files than JPEG at similar quality.
 
 ```dart
 // Dart - Generate AVIF thumbnail
-final avifThumb = storage.getFilePreview(
+final avifThumb = await storage.getFilePreview(
     bucketId: 'images',
     fileId: 'img_123',
     width: 400,
-    output: 'avif',
+    output: ImageFormat.avif,
     quality: 75,
 );
 ```
@@ -188,7 +196,7 @@ final bucket = await storage.createBucket(
     fileSecurity: true,
     maximumFileSize: 10 * 1024 * 1024, // 10 MB
     allowedFileExtensions: ['jpg', 'png', 'pdf'],
-    compression: 'gzip',
+    compression: Compression.gzip,
     encryption: true,
     antivirus: true,
 );
@@ -256,8 +264,10 @@ final bytes = await storage.getFileDownload(
 
 ### View in Browser
 
+Dart/Flutter `getFileView` = file bytes (e.g. `Image.memory`); Web SDK `getFileView` = URL string. Shareable URL without a session → [Generate Token](#generate-token).
+
 ```dart
-final viewUrl = storage.getFileView(
+final viewBytes = await storage.getFileView(
     bucketId: 'uploads',
     fileId: 'file_123',
 );
@@ -265,14 +275,7 @@ final viewUrl = storage.getFileView(
 
 ### With Token (Public)
 
-```dart
-final token = await storage.createFileToken(
-    bucketId: 'uploads',
-    fileId: 'file_123',
-    expire: 86400, // 24 hours
-);
-// Share token URL without auth
-```
+→ [Generate Token](#generate-token).
 
 ---
 
@@ -281,8 +284,7 @@ final token = await storage.createFileToken(
 1. **Use WebP** — Smaller than JPEG with better quality
 2. **Generate thumbnails** — Use previews, not full images
 3. **Enable compression** — gzip for text, zstd for binaries (Appwrite skips files >20 MB)
-4. **Batch uploads** — Upload multiple files per request
-5. **Put a CDN in front** — Cloudflare, Bunny, or CloudFront cache files at the edge and cut origin load
+4. **Put a CDN in front** — Cloudflare, Bunny, or CloudFront cache files at the edge and cut origin load
 
 ### CDN Setup (Self-Hosted)
 

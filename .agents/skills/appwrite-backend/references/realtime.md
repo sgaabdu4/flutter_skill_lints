@@ -2,10 +2,10 @@
 
 ## Connection
 
-Subscribe changes via WebSocket.
+Subscribe changes via WebSocket. Realtime = client SDKs only; server SDKs (Node, Python, Dart server) have no `Realtime` service.
 
 ```dart
-// Dart
+// Dart (Flutter client SDK)
 final realtime = Realtime(client);
 
 final subscription = realtime.subscribe([
@@ -18,28 +18,13 @@ subscription.stream.listen((event) {
 });
 ```
 
-```python
-# Python (async)
-from appwrite.realtime import Realtime
-import asyncio
-
-realtime = Realtime(client)
-
-async def listen():
-    async for event in realtime.subscribe(['tablesdb.products.tables.items.rows']):
-        print(f'Event: {event.events}')
-        print(f'Payload: {event.payload}')
-
-asyncio.run(listen())
-```
-
 ```typescript
-// TypeScript (Node/Deno)
-import { Client, Realtime } from 'node-appwrite';
+// TypeScript (Web client SDK)
+import { Client, Realtime } from 'appwrite';
 
 const realtime = new Realtime(client);
 
-realtime.subscribe(['tablesdb.products.tables.items.rows'], (event) => {
+const subscription = await realtime.subscribe(['tablesdb.products.tables.items.rows'], (event) => {
     console.log('Event:', event.events);
     console.log('Payload:', event.payload);
 });
@@ -137,10 +122,10 @@ import 'package:appwrite/appwrite.dart';
 
 final realtime = Realtime(client);
 
-final sub = await realtime.subscribe(
+final sub = realtime.subscribe([
     Channel.tablesdb('<DATABASE_ID>').table('<TABLE_ID>').row('<ROW_ID>'),
-    (response) => print(response),
-);
+]);
+sub.stream.listen((response) => print(response.payload));
 ```
 
 ### Event Filtering with Helpers
@@ -151,8 +136,8 @@ Chain `.create()`, `.update()`, `.delete()` to filter by event type:
 // Only row updates in a table
 Channel.tablesdb('<DB>').table('<TABLE>').row().update()
 
-// Only new files
-Channel.files().create()
+// Only new files in a bucket
+Channel.bucket('<BUCKET_ID>').file().create()
 ```
 
 ### Multiple Channels with Helpers
@@ -275,7 +260,7 @@ Realtime fires for bulk ops too.
 
 ```dart
 // Bulk update triggers events for each affected row
-await tablesdb.updateRows(
+await tablesDB.updateRows(
     databaseId: 'main',
     tableId: 'products',
     queries: [Query.equal('category', 'electronics')],
@@ -288,13 +273,7 @@ await tablesdb.updateRows(
 
 ## Permissions
 
-Users get events only for resources they can read.
-
-```dart
-// User A subscribes to orders
-// User B creates order with permissions for User B only
-// User A receives nothing - no permission
-```
+Users get events only for resources they can read: when User B creates an order readable only by User B, User A's subscription to orders receives nothing.
 
 ---
 
@@ -308,8 +287,8 @@ SDKs auto-reconnect on disconnect.
 
 ```typescript
 // TypeScript - Monitor connection
-realtime.on('connected', () => console.log('Connected'));
-realtime.on('disconnected', () => console.log('Disconnected'));
+realtime.onOpen(() => console.log('Connected'));
+realtime.onClose(() => console.log('Disconnected'));
 ```
 
 ---
@@ -329,7 +308,7 @@ Make version row, subscribe to it instead of poll. Re-fetch on version update.
 
 ```dart
 // 1. Create a version row (one per table/resource group)
-await tablesdb.createRow(
+await tablesDB.createRow(
     databaseId: 'main',
     tableId: 'versions',
     rowId: 'products-version',
@@ -350,7 +329,7 @@ subscription.stream.listen((event) {
 });
 
 // 4. Bump version when products change (server-side function)
-await tablesdb.updateRow(
+await tablesDB.updateRow(
     databaseId: 'main',
     tableId: 'versions',
     rowId: 'products-version',
@@ -380,7 +359,10 @@ Realtime needs WebSocket. For SSR:
 ```typescript
 // TypeScript - Check for browser
 if (typeof window !== 'undefined') {
-    const subscription = realtime.subscribe(['tablesdb.main.tables.data.rows']);
+    const subscription = await realtime.subscribe(
+        ['tablesdb.main.tables.data.rows'],
+        (event) => console.log(event.payload),
+    );
 }
 ```
 

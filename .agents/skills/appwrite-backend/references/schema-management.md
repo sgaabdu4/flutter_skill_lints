@@ -19,15 +19,15 @@ await tablesDB.createTable(
     tableId: 'posts',
     name: 'Posts',
     columns: [
-        ColumnVarchar(key: 'title', size: 255, required: true),
-        ColumnText(key: 'content'),
-        ColumnVarchar(key: 'status', size: 20, default: 'draft'),
-        ColumnInteger(key: 'views', default: 0),
-        ColumnDatetime(key: 'publishedAt'),
+        {'key': 'title', 'type': 'varchar', 'size': 255, 'required': true},
+        {'key': 'content', 'type': 'text'},
+        {'key': 'status', 'type': 'varchar', 'size': 20, 'default': 'draft'},
+        {'key': 'views', 'type': 'integer', 'default': 0},
+        {'key': 'publishedAt', 'type': 'datetime'},
     ],
     indexes: [
-        Index(key: 'status_idx', type: IndexType.key, columns: ['status']),
-        Index(key: 'published_idx', type: IndexType.key, columns: ['publishedAt']),
+        {'key': 'status_idx', 'type': 'key', 'attributes': ['status']},
+        {'key': 'published_idx', 'type': 'key', 'attributes': ['publishedAt']},
     ],
 );
 ```
@@ -36,16 +36,20 @@ await tablesDB.createTable(
 # Python — same structure with snake_case
 tables_db.create_table(
     database_id='db', table_id='posts', name='Posts',
-    columns=[ColumnVarchar(key='title', size=255, required=True),
-             ColumnText(key='content'),
-             ColumnVarchar(key='status', size=20, default='draft'),
-             ColumnInteger(key='views', default=0),
-             ColumnDatetime(key='published_at')],
-    indexes=[Index(key='status_idx', type=IndexType.KEY, columns=['status'])]
+    columns=[{'key': 'title', 'type': 'varchar', 'size': 255, 'required': True},
+             {'key': 'content', 'type': 'text'},
+             {'key': 'status', 'type': 'varchar', 'size': 20, 'default': 'draft'},
+             {'key': 'views', 'type': 'integer', 'default': 0},
+             {'key': 'published_at', 'type': 'datetime'}],
+    indexes=[{'key': 'status_idx', 'type': 'key', 'attributes': ['status']}]
 )
 ```
 
 TypeScript same pattern, camelCase.
+
+- Column/index definitions = plain maps; index maps list columns in `attributes`.
+- Inline `type`: `1.9.x` = `string` (+`size`), `integer`, `bigint`, `double`, `boolean`, `datetime`, `point`/`linestring`/`polygon`; `2.x` adds `varchar`/`text`/`mediumtext`/`longtext`/`email`/`enum`/`ip`/`url`. Example = `2.x`; `1.9.x` → `string` + `size`.
+- Relationship columns cannot be inline → `createRelationshipColumn` ([relationships.md](relationships.md)).
 
 ---
 
@@ -134,12 +138,14 @@ await tablesDB.createVarcharColumn(
 
 ```dart
 // Dart - Composite index (order by selectivity)
+import 'package:dart_appwrite/enums.dart';
+
 await tablesDB.createIndex(
     databaseId: 'db',
     tableId: 'posts',
     key: 'status_created_idx',
-    type: IndexType.key,
-    columns: ['status', '$createdAt'],  // Most selective first
+    type: TablesDBIndexType.key,
+    columns: ['status', r'$createdAt'],  // Most selective first
     orders: [OrderBy.asc, OrderBy.desc],
 );
 ```
@@ -157,7 +163,7 @@ await tablesDB.createIndex(
 
 ## Auto-Increment
 
-Auto `$sequence` column, bumps each insert. Use for:
+Every row gets a `$sequence` column automatically; it increments with each insert. No table flag. Use for:
 
 - Invoice numbers
 - Activity logs
@@ -165,21 +171,12 @@ Auto `$sequence` column, bumps each insert. Use for:
 - Paginated datasets
 
 ```dart
-// Dart - Enable auto-increment on table
-await tablesDB.createTable(
-    databaseId: 'db',
-    tableId: 'invoices',
-    name: 'Invoices',
-    autoIncrement: true,  // Adds $sequence column
-    columns: [...],
-);
-
-// Query by sequence
+// Dart - Query by insertion sequence
 final invoices = await tablesDB.listRows(
     databaseId: 'db',
     tableId: 'invoices',
     queries: [
-        Query.orderAsc('$sequence'),
+        Query.orderAsc(r'$sequence'),
     ],
 );
 ```
@@ -198,8 +195,8 @@ await tablesDB.createRow(
     rowId: ID.unique(),
     data: {
         'product': 'Widget',
-        '$createdAt': '2024-01-15T10:30:00.000Z',  // Original date
-        '$updatedAt': '2024-01-15T10:30:00.000Z',
+        r'$createdAt': '2024-01-15T10:30:00.000Z',  // Original date
+        r'$updatedAt': '2024-01-15T10:30:00.000Z',
     },
 );
 ```
@@ -222,7 +219,7 @@ tables_db.create_row(
 
 ## Upsert
 
-Create or update one call. Exist → update. Else → create.
+Create or update one call. Exist → update. Else → create. Use only when create-on-missing is valid; update-only work never upserts ([bulk-operations.md](bulk-operations.md#update-only-guard)).
 
 ```dart
 // Dart - Upsert row
@@ -238,11 +235,6 @@ await tablesDB.upsertRow(
 ```
 
 Python `upsert_row()`, TypeScript `upsertRow()` — same params.
-
-**Benefits:**
-- One network call
-- No race
-- Cleaner (no if-exists)
 
 ---
 

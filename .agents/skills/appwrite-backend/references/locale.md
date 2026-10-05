@@ -18,8 +18,8 @@ for (final country in countries.countries) {
 ```python
 # Python
 countries = locale.list_countries()
-for country in countries['countries']:
-    print(f"{country['name']}: {country['code']}")
+for country in countries.countries:
+    print(f"{country.name}: {country.code}")
 ```
 
 ```typescript

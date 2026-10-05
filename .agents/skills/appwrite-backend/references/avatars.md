@@ -6,7 +6,7 @@ Capture screenshot of any URL.
 
 ```dart
 // Dart
-final screenshot = avatars.getScreenshot(
+final screenshot = await avatars.getScreenshot(
     url: 'https://example.com',
     width: 1280,
     height: 720,
@@ -54,7 +54,7 @@ Gen avatars from user names.
 
 ```dart
 // Dart
-final avatar = avatars.getInitials(
+final avatar = await avatars.getInitials(
     name: 'John Doe',
     width: 100,
     height: 100,
@@ -90,7 +90,9 @@ Country flag images by ISO code.
 
 ```dart
 // Dart - US flag
-final flag = avatars.getFlag(code: 'us', width: 100);
+import 'package:dart_appwrite/enums.dart';
+
+final flag = await avatars.getFlag(code: Flag.unitedStates, width: 100);
 ```
 
 ---
@@ -99,10 +101,10 @@ final flag = avatars.getFlag(code: 'us', width: 100);
 
 ```dart
 // Dart - Visa icon
-final icon = avatars.getCreditCard(code: 'visa', width: 100);
+final icon = await avatars.getCreditCard(code: CreditCard.visa, width: 100);
 ```
 
-Codes: `visa`, `mastercard`, `amex`, `discover`, `jcb`, `unionpay`, `diners`
+`CreditCard`: `americanExpress`, `argencard`, `cabal`, `cencosud`, `dinersClub`, `discover`, `elo`, `hipercard`, `jCB`, `mastercard`, `naranja`, `tarjetaShopping`, `unionPay`, `visa`, `mIR`, `maestro`, `rupay`
 
 ---
 
@@ -110,10 +112,10 @@ Codes: `visa`, `mastercard`, `amex`, `discover`, `jcb`, `unionpay`, `diners`
 
 ```dart
 // Dart
-final icon = avatars.getBrowser(code: 'chrome', width: 50);
+final icon = await avatars.getBrowser(code: Browser.googleChrome, width: 50);
 ```
 
-Supported: `chrome`, `firefox`, `safari`, `edge`, `opera`, `brave`
+`Browser`: `avantBrowser`, `androidWebViewBeta`, `googleChrome`, `googleChromeIOS`, `googleChromeMobile`, `chromium`, `mozillaFirefox`, `safari`, `mobileSafari`, `microsoftEdge`, `microsoftEdgeIOS`, `operaMini`, `opera`, `operaNext`
 
 ---
 
@@ -123,7 +125,7 @@ Get favicon from any domain.
 
 ```dart
 // Dart
-final favicon = avatars.getFavicon(url: 'https://github.com');
+final favicon = await avatars.getFavicon(url: 'https://github.com');
 ```
 
 ---
@@ -134,7 +136,7 @@ Gen QR from text/URL.
 
 ```dart
 // Dart
-final qr = avatars.getQR(
+final qr = await avatars.getQR(
     text: 'https://example.com/link',
     size: 300,
     margin: 2,
@@ -167,7 +169,7 @@ Gen placeholder images.
 
 ```dart
 // Dart - Placeholder
-final image = avatars.getImage(
+final image = await avatars.getImage(
     url: 'https://picsum.photos/200',
     width: 200,
     height: 200,

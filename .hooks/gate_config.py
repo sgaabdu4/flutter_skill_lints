@@ -4,14 +4,14 @@ import json
 import os
 import re
 import subprocess
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import NotRequired, TypedDict, cast
 
 from dependency_graph import (
     dependency_review_guidance,
     expand_dependents,
     impact_inputs,
-    secrets_only,
+    shared_only,
 )
 
 type JsonValue = (
@@ -190,7 +190,8 @@ def repository_files(root: Path) -> list[Path]:
 
 def nonproduction_source(relative: Path) -> bool:
     return bool(
-        {"test", "tests", "__tests__", "node_modules", "vendor"} & set(relative.parts)
+        {"test", "tests", "integration_test", "__tests__", "node_modules", "vendor"}
+        & set(relative.parts)
         or relative.name.startswith("test_")
         or relative.stem.endswith(("_test", ".test", ".spec"))
         or relative.name.endswith((".d.ts", ".d.mts", ".d.cts"))
@@ -511,53 +512,117 @@ def changed_files(root: Path, base: str) -> set[str] | None:
 
 
 def changed_packages(
-    root: Path, by_path: dict[str, Group], base: str
-) -> set[str] | None:
+    root: Path,
+    by_path: dict[str, Group],
+    base: str,
+    names: set[str],
+    *,
+    prove_update: bool = False,
+) -> set[str] | str:
+    """Selected package paths, or why every package must be checked."""
+    selected = packages_for(root, base, names, by_path)
+    if isinstance(selected, set) or not prove_update:
+        return selected
+    from update import SOURCE_FILE, installed_update_paths, maybe_installed
+
+    other = {name for name in names if not maybe_installed(name)}
+    narrowed = (
+        packages_for(root, base, other, by_path) if SOURCE_FILE in names else selected
+    )
+    if isinstance(narrowed, str):
+        return narrowed
+    if narrowed == set(by_path) or names - other != installed_update_paths(root, base):
+        return selected
+    print(
+        "Hard Eng update in this change matches its verified release; checking the "
+        "packages the other changes affect.",
+        flush=True,
+    )
+    return narrowed
+
+
+def runs_checks(root: Path, base: str, name: str) -> bool:
+    """Hard Eng's runner, rules and gate list, or CI that runs or ran them."""
+    if name == "hard-eng.gates.json" or name.startswith(
+        (".hooks/", ".agents/skills/he/")
+    ):
+        return True
+    if not name.startswith(".github/"):
+        return False
+    blob = f"{base}:{name}"
+    text = subprocess.run(
+        ["git", "show", blob],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        errors="replace",
+        check=False,
+    ).stdout
+    if (root / name).is_file():
+        text += (root / name).read_text(errors="replace")
+    return not text or "hard-eng.py" in text
+
+
+def is_workflow(name: str) -> bool:
+    path = PurePosixPath(name)
+    return path.parent == PurePosixPath(".github/workflows") and path.suffix in {
+        ".yml",
+        ".yaml",
+    }
+
+
+def packages_for(
+    root: Path, base: str, names: set[str], by_path: dict[str, Group]
+) -> set[str] | str:
     from plans import is_documentation
 
     inputs = {path: impact_inputs(group) for path, group in by_path.items()}
-    names = changed_files(root, base)
-    if names is None:
-        return None
     selected: set[str] = set()
-    for name in names:
-        if name.startswith((".hooks/", ".agents/", ".github/")) or name in {
-            "hard-eng.gates.json",
-            "AGENTS.md",
-        }:
-            return None
+    for name in sorted(names):
+        if runs_checks(root, base, name):
+            return f"{name} changes how every package is checked."
         consumers = {
             path
             for path, prefixes in inputs.items()
             if any(Path(name).is_relative_to(prefix) for prefix in prefixes)
         }
-        if not consumers and is_documentation(Path(name)):
+        if not consumers and (
+            is_documentation(Path(name))
+            or name.startswith(".agents/")
+            or is_workflow(name)
+            or name in {"AGENTS.md", "CLAUDE.md", "AGENTS.override.md"}
+        ):
             continue
         matches = [path for path in by_path if Path(name).is_relative_to(path)]
         if not matches and not consumers:
-            return None
+            return f"no package owns {name}."
         selected.update(consumers)
         if matches:
             selected.add(max(matches, key=len))
     return selected
 
 
-def affected_groups(root: Path, groups: list[Group], base: str | None) -> list[Group]:
+def affected_groups(
+    root: Path, groups: list[Group], base: str | None, *, prove_update: bool = False
+) -> list[Group]:
     packages = groups[:-1]
+    if guidance := dependency_review_guidance(packages):
+        raise ValueError(guidance)
     if base is None or not packages:
         return groups
     by_path = {group["path"]: group for group in packages}
     if len(by_path) != len(packages):
         return groups
-    selected = changed_packages(root, by_path, base)
-    if selected is None:
+    names = changed_files(root, base)
+    if names is None:
+        return groups
+    selected = changed_packages(root, by_path, base, names, prove_update=prove_update)
+    if isinstance(selected, str):
+        print("Checking every package: " + selected)
         return groups
     if not selected:
-        return [secrets_only(groups[-1])]
-    guidance = dependency_review_guidance(packages)
+        return [shared_only(groups[-1], names)]
     if any("depends_on" not in group for group in packages):
-        if guidance is not None:
-            print("Package impact is unknown; checking all packages. " + guidance)
         return groups
     selected = expand_dependents(packages, by_path, selected)
     print("Affected packages and dependents: " + ", ".join(sorted(selected)))
@@ -713,6 +778,44 @@ def has_workflows(root: Path, files: list[Path]) -> bool:
     )
 
 
+def unlisted_shell_scripts(
+    root: Path, files: list[Path], shared: list[Gate]
+) -> list[str]:
+    """Scripts absent from explicit shellcheck lists; custom shell gates own inputs."""
+    from project_setup import is_shell_script
+
+    gates = [
+        gate
+        for gate in shared
+        if gate.get("role") == "shell" or Path(gate["command"][0]).name == "shellcheck"
+    ]
+    if not gates or any(
+        Path(gate["command"][0]).name != "shellcheck" or "--" not in gate["command"]
+        for gate in gates
+    ):
+        return []
+    listed = {
+        argument
+        for gate in gates
+        for argument in gate["command"][gate["command"].index("--") + 1 :]
+    }
+    return sorted(
+        str(path.relative_to(root))
+        for path in files
+        if is_shell_script(path) and str(path.relative_to(root)) not in listed
+    )
+
+
+def require_listed_shell_scripts(
+    root: Path, files: list[Path], shared: list[Gate]
+) -> None:
+    if unlisted := unlisted_shell_scripts(root, files, shared):
+        raise ValueError(
+            f"shared: shellcheck omits {', '.join(unlisted)}; rerun setup or list "
+            "them after `--`"
+        )
+
+
 def validate_required_checks(root: Path, config: GateConfig) -> None:
     from project_setup import is_deployment_file, is_shell_script
 
@@ -743,6 +846,7 @@ def validate_required_checks(root: Path, config: GateConfig) -> None:
         if Path(command[0]).name == "trivy" and "config" in command[1:]:
             shared_roles.add("deployment")
     require_roles("shared", required, shared_roles)
+    require_listed_shell_scripts(root, files, config["shared"])
     workspace_languages = dict(manifests)
     by_directory = {
         (
@@ -833,7 +937,7 @@ def validate_package_services(
         require_roles(group["path"], required, roles)
 
 
-def parse_config(content: str) -> GateConfig:
+def parse_config(content: str, *, require_impact_review: bool = True) -> GateConfig:
     config = cast(GateConfig, json.loads(content))
     if (
         not isinstance(config, dict)
@@ -843,6 +947,10 @@ def parse_config(content: str) -> GateConfig:
         raise TypeError(
             "Gate configuration must contain packages and shared lists; rerun the Hard Eng installer to regenerate a retired families configuration from the current templates"
         )
+    if require_impact_review and (
+        guidance := dependency_review_guidance(config["packages"])
+    ):
+        raise ValueError(guidance)
     return config
 
 
@@ -874,4 +982,4 @@ def load_groups(root: Path, base: str | None = None) -> list[Group]:
     for gate in config["shared"]:
         if gate.get("role") == "secrets-history":
             gate["command"] = new_commits_command(gate["command"], root, base)
-    return affected_groups(root, groups, base)
+    return affected_groups(root, groups, base, prove_update=True)

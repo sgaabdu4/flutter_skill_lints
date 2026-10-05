@@ -72,41 +72,43 @@ final posts = await tablesDB.listRows(
 ### One-to-One
 
 ```dart
-await tablesDB.createRelationship(
+import 'package:dart_appwrite/enums.dart';
+
+await tablesDB.createRelationshipColumn(
     databaseId: 'db',
     tableId: 'users',
     relatedTableId: 'profiles',
-    type: 'oneToOne',
+    type: RelationshipType.oneToOne,
     twoWay: true,
     key: 'profile',
     twoWayKey: 'user',
-    onDelete: 'cascade',
+    onDelete: RelationMutate.cascade,
 );
 ```
 
 ### One-to-Many
 
 ```dart
-await tablesDB.createRelationship(
+await tablesDB.createRelationshipColumn(
     databaseId: 'db',
     tableId: 'posts',
     relatedTableId: 'comments',
-    type: 'oneToMany',
+    type: RelationshipType.oneToMany,
     twoWay: true,
     key: 'comments',
     twoWayKey: 'post',
-    onDelete: 'cascade',
+    onDelete: RelationMutate.cascade,
 );
 ```
 
 ### Many-to-Many
 
 ```dart
-await tablesDB.createRelationship(
+await tablesDB.createRelationshipColumn(
     databaseId: 'db',
     tableId: 'posts',
     relatedTableId: 'tags',
-    type: 'manyToMany',
+    type: RelationshipType.manyToMany,
     twoWay: true,
     key: 'tags',
     twoWayKey: 'posts',
@@ -232,21 +234,21 @@ await tablesDB.createTable(
 );
 
 // Author relationship (many posts to one user)
-await tablesDB.createRelationship(
+await tablesDB.createRelationshipColumn(
     databaseId: 'blog',
     tableId: 'posts',
     relatedTableId: 'users',
-    type: 'manyToOne',
+    type: RelationshipType.manyToOne,
     key: 'author',
-    onDelete: 'setNull',
+    onDelete: RelationMutate.setNull,
 );
 
 // Tags relationship (many to many)
-await tablesDB.createRelationship(
+await tablesDB.createRelationshipColumn(
     databaseId: 'blog',
     tableId: 'posts',
     relatedTableId: 'tags',
-    type: 'manyToMany',
+    type: RelationshipType.manyToMany,
     twoWay: true,
     key: 'tags',
     twoWayKey: 'posts',
@@ -265,7 +267,7 @@ final posts = await tablesDB.listRows(
             'tags.name',
             'tags.color',
         ]),
-        Query.orderDesc('$createdAt'),
+        Query.orderDesc(r'$createdAt'),
         Query.limit(10),
     ],
 );

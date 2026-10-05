@@ -3,7 +3,7 @@
 ## Architecture
 
 **Group functions by domain.** Each function own one domain — not one operation, not everything.
-Use official SDK packages only. For self-hosted Appwrite `1.9.x`, use the release-matched Dart Functions/server pin in [self-hosting.md](self-hosting.md); for Appwrite Cloud, use the latest stable SDK supported by the runtime.
+Use official SDK packages only, pinned per [SKILL.md](../SKILL.md) invariant 2 and resolvable on the function runtime ([Language Choice](#language-choice)).
 
 ```
 ✅ api-users          — all user endpoints (CRUD, profile, settings)
@@ -108,7 +108,7 @@ def main(context):
     rows = tables_db.list_rows(
         database_id='db', table_id='items',
         queries=[Query.limit(10)], total=False)
-    return context.res.json({'items': rows['rows']})
+    return context.res.json({'items': [row.to_dict() for row in rows.rows]})
 ```
 
 ### TypeScript
@@ -262,7 +262,7 @@ Use variables for configuration + secrets; never track values in source/manifest
 - scope precedence = project → function/site → Appwrite-injected
 - secret value = unreadable from Console/API after creation
 - secret status = one-way; secret → non-secret requires delete + recreate
-- value change on an existing key = next execution (Cloud `1.9.5`, no redeploy); key add/remove = redeploy; runtime smoke required either way
+- variable create/update/delete = active from the next deployment → redeploy + runtime smoke ([docs](https://appwrite.io/docs/products/functions/environment-variables))
 - read-back = exact key/ID/count + secret metadata, never secret value
 - deployment workflow = validate candidate → upsert metadata → deploy → smoke
 - multi-resource bootstrap → [dependency-aware bounded waves](performance.md#dependency-aware-bootstrap)

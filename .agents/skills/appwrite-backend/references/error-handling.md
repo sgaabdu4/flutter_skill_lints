@@ -110,17 +110,20 @@ const result = await withRetry(() => tablesDB.createRow({...}));
 
 ## Dev Keys
 
-Bypass rate limits in dev.
+Self-hosted `1.9.x` only = bypass client rate limits in development.
+
+- `2.0.0`–`2.2.0` reject new dev keys; existing keys work until the `2.3.0` `migrate`.
+- `2.3.0`+ (Cloud included) removed dev keys + `X-Appwrite-Dev-Key` + `devKey`; Flutter `27.0.0` + Web `28.0.0` removed `setDevKey`.
 
 1. Console → Project Settings → Dev keys → Add key
-2. Add header to req:
+2. Set it on the client SDK:
 
 ```dart
-// Dart - Client SDK only
+// Flutter appwrite 25.3.0, self-hosted 1.9.x only
 final client = Client()
-    .setEndpoint('https://cloud.appwrite.io/v1')
-    .setProject('PROJECT_ID')
-    .addHeader('X-Appwrite-Dev-Key', 'your-dev-key');
+    .setEndpoint('https://<YOUR_APPWRITE_DOMAIN>/v1')
+    .setProject('<PROJECT_ID>')
+    .setDevKey('<DEV_KEY>');
 ```
 
 **Never in prod.** Dev keys expose app to abuse.
@@ -137,7 +140,7 @@ final client = Client()
 | 404 | Not found | Verify resource exists |
 | 409 | Conflict | ID collision **or** unique-index violation — see below |
 | 429 | Rate limited | Backoff |
-| 500 | Server error | Retry, contact support |
+| 500 | Server error | Idempotent read → retry via [coordinator](#client-request-coordination); write → reconcile before any repeat |
 
 ### 409 `row_already_exists`
 
@@ -152,15 +155,12 @@ One type + message covers two causes, and the message always names the
 Named ID absent everywhere = unique-index violation, not an impossible error.
 Diagnosis:
 
-1. `tablesdb list-indexes` on the target table → every `unique` index.
+1. List the target table's indexes through the MCP catalog ([mcp-servers.md](mcp-servers.md)) → every `unique` index.
 2. Query by that index's exact column tuple → the retained conflicting row.
 3. Read its owner + counter values before any retry; a fresh `ID.unique()`
    never clears a unique-index conflict.
 
-Cloud `1.9.5` case: unique `(installationId, installationGeneration)`; the
-generation counter was derived from the caller's own row, that row had been
-purged, the counter reset to `1`, and it collided with a retained row owned by
-a deleted user. Counter design rule →
+Counter design rule →
 [schema-management.md](schema-management.md#index-rules).
 
 ---
@@ -182,22 +182,20 @@ Python fields are available as `e.message`, `e.code`, `e.type`, and
 - TypeScript boundary classification = numeric `code` + present `type` or `response`.
 - `constructor.name === 'AppwriteException'` is forbidden; production bundling can rename the class and misroute Appwrite `4xx` errors to generic `500`.
 
+Classify at the owning boundary → rethrow. `409` → [409 diagnosis](#409-row_already_exists) before any repeat; create → `updateRow` = forbidden. `429` → [shared coordinator](#client-request-coordination); local sleep + continue = forbidden.
+
 ```dart
 // Dart
 try {
-    await tablesDB.createRow(...);
+    await tablesDB.createRow(
+        databaseId: 'db', tableId: 'orders', rowId: orderId, data: order);
 } on AppwriteException catch (e) {
     switch (e.code) {
         case 409:
-            // Row already exists - update instead
-            await tablesDB.updateRow(...);
-            break;
+            throw RowConflictError(e);
         case 429:
-            // Rate limited - back off
-            await Future.delayed(Duration(seconds: 2));
-            break;
+            throw RateLimitedError(e);
         case 404:
-            // Resource not found
             throw RowNotFoundError(e.message);
         default:
             rethrow;
@@ -210,32 +208,29 @@ try {
 from appwrite.exception import AppwriteException
 
 try:
-    tables_db.create_row(...)
+    tables_db.create_row(
+        database_id='db', table_id='orders', row_id=order_id, data=order)
 except AppwriteException as e:
     if e.code == 409:
-        tables_db.update_row(...)
-    elif e.code == 429:
-        time.sleep(2)
-    elif e.code == 404:
-        raise RowNotFoundError(e.message)
-    else:
-        raise
+        raise RowConflictError(e) from e
+    if e.code == 429:
+        raise RateLimitedError(e) from e
+    if e.code == 404:
+        raise RowNotFoundError(e.message) from e
+    raise
 ```
 
 ```typescript
 // TypeScript
 try {
-    await tablesDB.createRow({...});
+    await tablesDB.createRow({ databaseId: 'db', tableId: 'orders', rowId: orderId, data: order });
 } catch (e) {
-    if (e.code === 409) {
-        await tablesDB.updateRow({...});
-    } else if (e.code === 429) {
-        await new Promise(r => setTimeout(r, 2000));
-    } else if (e.code === 404) {
-        throw new RowNotFoundError(e.message);
-    } else {
-        throw e;
-    }
+    const err = e as Partial<AppwriteException>;
+    if (typeof err.code !== 'number' || (err.type === undefined && err.response === undefined)) throw e;
+    if (err.code === 409) throw new RowConflictError(e);
+    if (err.code === 429) throw new RateLimitedError(e);
+    if (err.code === 404) throw new RowNotFoundError(err.message);
+    throw e;
 }
 ```
 

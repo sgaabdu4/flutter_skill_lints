@@ -68,7 +68,7 @@ response = tables_db.list_rows(
     total=False
 )
 
-next_cursor = response['rows'][-1]['$id']
+next_cursor = response.rows[-1].id
 ```
 
 ```typescript
@@ -98,7 +98,7 @@ final response = await tablesDB.listRows(
     queries: [
         Query.cursorAfter(lastId),
         Query.limit(100),
-        Query.orderDesc('$createdAt'),
+        Query.orderDesc(r'$createdAt'),
     ],
     total: false,  // response.total = 0, but rows returned normally
 );
@@ -115,7 +115,9 @@ Small lookup tables <1,000 rows:
 
 ```typescript
 // TypeScript - Async generator for all rows
-async function* fetchAllRows<T>(
+import { Models } from 'node-appwrite';
+
+async function* fetchAllRows<T extends Models.Row>(
     dbId: string,
     tableId: string,
     baseQueries: string[] = []
@@ -157,7 +159,9 @@ for await (const batch of fetchAllRows('db', 'users')) {
 
 ```dart
 // Dart - Stream-based pagination
-Stream<List<Map<String, dynamic>>> fetchAllRows(
+import 'package:dart_appwrite/models.dart';
+
+Stream<List<Row>> fetchAllRows(
     String dbId,
     String tableId,
     List<String> baseQueries,
@@ -208,13 +212,13 @@ def fetch_all_rows(db_id: str, table_id: str, base_queries: list = []):
             total=False
         )
 
-        rows = response['rows']
+        rows = response.rows
         if not rows:
             break
 
         yield rows
 
-        cursor = rows[-1]['$id']
+        cursor = rows[-1].id
 
         if len(rows) < 100:
             break
@@ -225,46 +229,41 @@ def fetch_all_rows(db_id: str, table_id: str, base_queries: list = []):
 Multiple datasources repeat same cursor loop. Mixin extracts once.
 
 ```dart
+import 'package:appwrite/models.dart';
+
 mixin AppwritePaginationMixin {
   TablesDB get tablesDB;
 
   static const _pageSize = 100;
 
-  /// Fetches all rows from [tableId] matching [queries] via cursor pagination.
-  /// Do not include Query.cursorAfter or Query.limit in [queries].
-  /// Returns empty list on 404.
+  /// [queries] must omit Query.cursorAfter and Query.limit; the mixin adds both.
   Future<List<T>> fetchAllRows<T>({
     required String tableId,
     required List<String> queries,
     required T Function(Row row) mapRow,
   }) async {
-    try {
-      final results = <T>[];
-      String? cursor;
+    final results = <T>[];
+    String? cursor;
 
-      while (true) {
-        final response = await tablesDB.listRows(
-          databaseId: AppwriteConfig.databaseId,
-          tableId: tableId,
-          queries: [
-            ...queries,
-            if (cursor != null) Query.cursorAfter(cursor),
-            Query.limit(_pageSize),
-          ],
-          total: false,
-        );
+    while (true) {
+      final response = await tablesDB.listRows(
+        databaseId: AppwriteConfig.databaseId,
+        tableId: tableId,
+        queries: [
+          ...queries,
+          if (cursor != null) Query.cursorAfter(cursor),
+          Query.limit(_pageSize),
+        ],
+        total: false,
+      );
 
-        results.addAll(response.rows.map(mapRow));
+      results.addAll(response.rows.map(mapRow));
 
-        if (response.rows.length < _pageSize) break;
-        cursor = response.rows.last.$id;
-      }
-
-      return results;
-    } on AppwriteException catch (e) {
-      if (e.code == 404) return [];
-      rethrow;
+      if (response.rows.length < _pageSize) break;
+      cursor = response.rows.last.$id;
     }
+
+    return results;
   }
 
   /// Fetches all row IDs from [tableId] matching [queries].
@@ -307,7 +306,7 @@ class ExerciseRemoteDatasource with AppwritePaginationMixin {
 
 - **Mixin over inheritance** — datasources may extend other class; mixins no conflict
 - **Generic `mapRow` callback** — each datasource maps own types; mixin handles pagination only
-- **404 → empty list** — table/rows may not exist yet for new user
+- **Errors propagate** — `404` on a required table ≠ empty inventory → [required table failure](error-handling.md#client-request-coordination). Empty-on-`404` only where the caller declares that table optional.
 - **`total: false` always** — skips COUNT query (see above)
 - **Centralized `databaseId`** — reads from `AppwriteConfig` not param
 

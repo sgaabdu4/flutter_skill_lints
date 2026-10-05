@@ -34,33 +34,33 @@ query {
 
 ## Query Tables (TablesDB)
 
+- Operations = `tablesDB<Method>` (`tablesDBListRows`, `tablesDBGetRow`, …); every row operation takes `databaseId` + `tableId`.
+- Row fields = `_id`, `_databaseId`, `_tableId`, `_permissions`, `data`; `data` = JSON string of the columns → parse it.
+- `queries` = SDK `Query.*` output strings (JSON), passed as variables.
+
 ```graphql
-# List rows with filters
-query {
-  tablesdbListRows(
-    tableId: "products"
-    queries: ["category.equal('electronics')", "price.lessThan(500)"]
-  ) {
+query ListRows($databaseId: String!, $tableId: String!, $queries: [String!]) {
+  tablesDBListRows(databaseId: $databaseId, tableId: $tableId, queries: $queries) {
     total
-    rows {
-      id
-      name
-      price
-    }
+    rows { _id _databaseId _tableId _permissions data }
   }
 }
 
-# Get single row
-query {
-  tablesdbGetRow(
-    tableId: "products"
-    rowId: "product_123"
-  ) {
-    id
-    name
-    price
-    inventory
+query GetRow($databaseId: String!, $tableId: String!, $rowId: String!) {
+  tablesDBGetRow(databaseId: $databaseId, tableId: $tableId, rowId: $rowId) {
+    _id _tableId _permissions data
   }
+}
+```
+
+```json
+{
+  "databaseId": "main",
+  "tableId": "products",
+  "queries": [
+    "{\"method\":\"equal\",\"attribute\":\"category\",\"values\":[\"electronics\"]}",
+    "{\"method\":\"lessThan\",\"attribute\":\"price\",\"values\":[500]}"
+  ]
 }
 ```
 
@@ -68,40 +68,24 @@ query {
 
 ## Mutations (TablesDB)
 
+`data` variable = `Json!` object; delete returns `status`.
+
 ```graphql
-# Create row
-mutation {
-  tablesdbCreateRow(
-    tableId: "products"
-    data: {
-      name: "Widget"
-      price: 29.99
-      category: "gadgets"
-    }
-  ) {
-    id
+mutation CreateRow($databaseId: String!, $tableId: String!, $rowId: String!, $data: Json!, $permissions: [String!]) {
+  tablesDBCreateRow(databaseId: $databaseId, tableId: $tableId, rowId: $rowId, data: $data, permissions: $permissions) {
+    _id data
   }
 }
 
-# Update row
-mutation {
-  tablesdbUpdateRow(
-    tableId: "products"
-    rowId: "product_123"
-    data: { price: 24.99 }
-  ) {
-    id
-    price
+mutation UpdateRow($databaseId: String!, $tableId: String!, $rowId: String!, $data: Json!) {
+  tablesDBUpdateRow(databaseId: $databaseId, tableId: $tableId, rowId: $rowId, data: $data) {
+    _id data
   }
 }
 
-# Delete row
-mutation {
-  tablesdbDeleteRow(
-    tableId: "products"
-    rowId: "product_123"
-  ) {
-    id
+mutation DeleteRow($databaseId: String!, $tableId: String!, $rowId: String!) {
+  tablesDBDeleteRow(databaseId: $databaseId, tableId: $tableId, rowId: $rowId) {
+    status
   }
 }
 ```
@@ -110,23 +94,20 @@ mutation {
 
 ## Batching
 
-Combine ops in one request.
+Combine ops in one request with aliases.
 
 ```graphql
-query BatchedQueries {
-  products: tablesdbListRows(tableId: "products", queries: ["limit(10)"]) {
-    rows { id name }
+query BatchedQueries($databaseId: String!, $firstTen: [String!]) {
+  products: tablesDBListRows(databaseId: $databaseId, tableId: "products", queries: $firstTen) {
+    rows { _id data }
   }
-
-  categories: tablesdbListRows(tableId: "categories") {
-    rows { id title }
-  }
-
-  stats: tablesdbListRows(tableId: "stats", queries: ["limit(1)"]) {
-    rows { totalSales }
+  categories: tablesDBListRows(databaseId: $databaseId, tableId: "categories") {
+    rows { _id data }
   }
 }
 ```
+
+Source: `2.3.0` [GraphQL TablesDB e2e queries](https://github.com/appwrite/appwrite/blob/2.3.0/tests/e2e/Services/GraphQL/Base.php#L1246-L1419) (same shape in `1.9.6`).
 
 ---
 
@@ -144,15 +125,14 @@ Appwrite API limits apply.
 
 ## SDK Usage
 
-Use official SDK service clients. Do not hand-roll Appwrite HTTP calls in TypeScript, Dart, Flutter, Python, or shell.
+Send GraphQL through the official SDK `Graphql` service. Raw Appwrite HTTP follows [SKILL.md](../SKILL.md) invariant 1.
 
 ---
 
 ## When to Use GraphQL
 
-✅ **Allowed only with explicit approval:**
-- SDK has no supported equivalent
-- One-off admin/debug task, not app code
+- Agent admin/debug work → MCP ([mcp-servers.md](mcp-servers.md)). Approval never supplies a missing MCP capability → report the gap.
+- App code → GraphQL only where the official SDK lacks the endpoint.
 
 ❌ **Use SDK instead:**
 - File up/download

@@ -221,7 +221,7 @@ test('bulk owner matches current Appwrite atomicity and budgeting contracts', as
   assert.match(bulk, /Empty queries = all rows/u);
   assert.match(bulk, /without relationship columns/u);
   assert.match(bulk, /One bulk call with `transactionId` \| `1`/u);
-  assert.match(bulk, /chunkSize = min\(deployedBulkRowLimit, deployedQueryEqualValueLimit\)/u);
+  assert.match(bulk, /chunkSize = min\(deployedBulkRowLimit, deployedQueryEqualValueLimit, idsPer4096CharQuery\)/u);
   assert.match(bulk, /transactionOps = ceil\(targetRows \/ chunkSize\) \+ otherStagedOperations/u);
   assert.match(bulk, /first page avoids cursoring after a row/u);
   assert.match(bulk, /both `Query\.equal\('\$id', chunkIds\)` \+ the original source predicate/u);

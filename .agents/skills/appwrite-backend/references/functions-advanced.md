@@ -112,7 +112,7 @@ These are workload budgets; synchronous executions have a 30-second hard limit. 
 
 ```dart
 final execution = await functions.createExecution(
-    functionId: 'heavy-report', async: true,
+    functionId: 'heavy-report', xasync: true,
     body: jsonEncode({'reportId': 'abc'}));
 
 // Check execution status; the response body is not retained.
@@ -124,13 +124,13 @@ final status = await functions.getExecution(
 
 | Mode | Status and result source |
 |------|------------------------|
-| Sync (async flag false/omitted; Dart client `xasync`) | the `createExecution` response itself — `status` + `responseStatusCode` + `responseBody` |
+| Sync (async flag false/omitted; Dart `xasync`) | the `createExecution` response itself — `status` + `responseStatusCode` + `responseBody` |
 | Async | Status only through realtime `functions.<FUNCTION>.executions` or bounded `getExecution`; read application results from the authorized durable resource |
 
 - Appwrite does not store response bodies or headers; only synchronous calls return them. Switching a data-returning call to async + polling cannot recover its JSON response, even when execution status is `completed`. [Execution modes](https://appwrite.io/docs/products/functions/execute#execution-modes).
 - Before changing execution mode, prove the caller receives its required result through the selected path. Test doubles must preserve the absent async body; a mocked completed execution containing response JSON is not valid integration proof.
 
-- Sync execution + follow-up `getExecution` from a client (user session) context = `404`; the execution row is not readable by the session that created it. Symptom = a function that succeeded reported as failed by the poller. Cloud `1.9.5` proof.
+- Sync execution + follow-up `getExecution` can `404` after success; `2.x` writes the execution row asynchronously ([enqueue](https://github.com/appwrite/appwrite/blob/2.3.0/src/Appwrite/Bus/Listeners/Log.php#L36-L49) → [executions worker upsert](https://github.com/appwrite/appwrite/blob/2.3.0/src/Appwrite/Platform/Workers/Executions.php#L92)). Symptom = a successful function reported as failed by the poller.
 - Polling a sync execution is forbidden; the create response is already terminal.
 - Unavoidable status poll (resume after app restart) → treat `getExecution` `404` as terminal-unknown, reconcile source-of-truth state, never surface it as an execution error.
 
@@ -165,9 +165,7 @@ await functions.createExecution(
 
 ### Cron (Recurring)
 
-```dart
-await functions.update(functionId: 'daily-cleanup', schedule: '0 0 * * *');
-```
+Cron = the function's `schedule` setting. `functions.update` requires `name` + replaces every setting → change `schedule` only through the [full-settings procedure](production-migrations.md#function--variable-cutover).
 
 | Pattern | Description |
 |---------|-------------|
@@ -224,7 +222,7 @@ Console → Functions → Settings → Domains.
 | Process same event twice | Idempotency check | Duplicates |
 | Long single function | Break into async tasks | Timeout risk |
 | Poll for changes | Event triggers / Realtime | Wasted executions |
-| Poll `getExecution` after a sync execution | Read the `createExecution` response | Session cannot read the execution row → `404` on a success |
+| Poll `getExecution` after a sync execution | Read the `createExecution` response | Row may not exist yet → `404` on a success |
 | Import unused deps | Minimal imports | Slower cold starts |
 
 ---

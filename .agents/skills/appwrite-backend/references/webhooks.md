@@ -22,9 +22,12 @@ final webhook = await webhooks.create(
         'databases.*.tables.orders.rows.*',
         'users.*.create',
     ],
-    security: true,  // Enable signature verification
+    tls: true,  // verify the endpoint's TLS certificate
 );
 ```
+
+- `webhook.secret` = signature key; returned only by `create` + `updateSecret` → store it in the secret manager immediately ([Agent Management](#agent-management)).
+- Optional `secret` (8–256 chars) sets the key; omitted → generated.
 
 ---
 
@@ -49,72 +52,77 @@ final webhook = await webhooks.create(
 
 ## Signature Verification
 
-When `security: true`, requests include HMAC signature.
+Every delivery is signed: `X-Appwrite-Webhook-Signature` = `base64(HMAC-SHA1(secret, webhookUrl + rawBody))`.
+
+- `webhookUrl` = the webhook's configured `url`, byte-for-byte; not the proxied request URL.
+- `rawBody` = unparsed request bytes; re-serialized JSON breaks the signature.
+- Compare in constant time; mismatch → `401` before any processing.
+- No timestamp/nonce header → replay protection = idempotent processing keyed by events + resource `$id` + `$updatedAt`; `$id` alone merges distinct updates to one resource. Ordering: create/update applies only when its `$updatedAt` is newer than the stored one; a `.delete` event carries the deleted resource's last `$updatedAt` → apply it at an equal or newer revision and keep a tombstone so a delayed update cannot resurrect the resource.
+- Signature covers URL + body only → `X-Appwrite-Webhook-*` headers are unsigned hints. Before a destructive downstream action, confirm with Appwrite (the resource `get` returns `404`); a replayed body with an edited events header must not delete a live resource.
 
 ### Headers
 
 | Header | Description |
 |--------|-------------|
 | `X-Appwrite-Webhook-Id` | Webhook ID |
-| `X-Appwrite-Webhook-Events` | Triggering events |
+| `X-Appwrite-Webhook-Events` | Comma-separated triggering events |
 | `X-Appwrite-Webhook-Name` | Webhook name |
-| `X-Appwrite-Webhook-Timestamp` | Unix timestamp |
-| `X-Appwrite-Webhook-Signature` | HMAC-SHA-256 signature |
+| `X-Appwrite-Webhook-User-Id` | Triggering user; empty for API key + guest events |
+| `X-Appwrite-Webhook-Project-Id` | Project ID |
+| `X-Appwrite-Webhook-Signature` | Base64 HMAC-SHA1 signature |
 
 ### Verify Signature
 
 ```typescript
 // TypeScript - Express handler
-import crypto from 'crypto';
+import crypto from 'node:crypto';
+import express from 'express';
 
-app.post('/webhooks/appwrite', (req, res) => {
-    const signature = req.headers['x-appwrite-webhook-signature'];
-    const timestamp = req.headers['x-appwrite-webhook-timestamp'];
+const WEBHOOK_URL = 'https://api.example.com/webhooks/appwrite';
 
-    // Recreate signature
-    const payload = `${timestamp}.${JSON.stringify(req.body)}`;
-    const expected = crypto
-        .createHmac('sha256', process.env.WEBHOOK_SECRET)
-        .update(payload)
-        .digest('hex');
-
-    if (signature !== expected) {
+app.post('/webhooks/appwrite', express.raw({ type: 'application/json' }), (req, res) => {
+    const received = Buffer.from(req.get('x-appwrite-webhook-signature') ?? '');
+    const expected = Buffer.from(
+        crypto
+            .createHmac('sha1', process.env.APPWRITE_WEBHOOK_SECRET!)
+            .update(Buffer.concat([Buffer.from(WEBHOOK_URL), req.body]))
+            .digest('base64'),
+    );
+    if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) {
         return res.status(401).send('Invalid signature');
     }
 
-    // Process webhook
-    const event = req.body;
-    console.log('Event:', event.event);
-    console.log('Payload:', event.payload);
-
-    res.status(200).send('OK');
+    const events = (req.get('x-appwrite-webhook-events') ?? '').split(',');
+    const resource = JSON.parse(req.body.toString('utf8'));
+    // Queue durable work keyed by events + resource.$id + resource.$updatedAt; confirm deletes with Appwrite first.
+    return res.sendStatus(200);
 });
 ```
 
 ```python
 # Python - Flask handler
-import hmac
+import base64
 import hashlib
+import hmac
+import os
+
 from flask import request
 
-@app.route('/webhooks/appwrite', methods=['POST'])
+WEBHOOK_URL = 'https://api.example.com/webhooks/appwrite'
+
+@app.post('/webhooks/appwrite')
 def handle_webhook():
-    signature = request.headers.get('X-Appwrite-Webhook-Signature')
-    timestamp = request.headers.get('X-Appwrite-Webhook-Timestamp')
-
-    payload = f"{timestamp}.{request.data.decode()}"
-    expected = hmac.new(
-        WEBHOOK_SECRET.encode(),
-        payload.encode(),
-        hashlib.sha256
-    ).hexdigest()
-
-    if not hmac.compare_digest(signature, expected):
+    received = request.headers.get('X-Appwrite-Webhook-Signature', '').encode()
+    expected = base64.b64encode(hmac.new(
+        os.environ['APPWRITE_WEBHOOK_SECRET'].encode(),
+        WEBHOOK_URL.encode() + request.get_data(),
+        hashlib.sha1,
+    ).digest())
+    if not hmac.compare_digest(received, expected):
         return 'Invalid signature', 401
 
-    event = request.json
-    print(f"Event: {event['event']}")
-
+    events = request.headers.get('X-Appwrite-Webhook-Events', '').split(',')
+    resource = request.get_json()
     return 'OK', 200
 ```
 
@@ -122,28 +130,26 @@ def handle_webhook():
 
 ## Webhook Payload
 
+Body = the event's resource, same shape as its API response; no envelope. Event names → `X-Appwrite-Webhook-Events`.
+
 ```json
 {
-  "$id": "event_123",
-  "event": "databases.main.tables.orders.rows.order_456.create",
-  "timestamp": "2025-01-15T10:30:00.000Z",
-  "payload": {
-    "$id": "order_456",
-    "$tableId": "orders",
-    "$databaseId": "main",
-    "$createdAt": "2025-01-15T10:30:00.000Z",
-    "$updatedAt": "2025-01-15T10:30:00.000Z",
-    "customer": "John Doe",
-    "total": 99.99
-  }
+  "$id": "order_456",
+  "$tableId": "orders",
+  "$databaseId": "main",
+  "$createdAt": "2025-01-15T10:30:00.000+00:00",
+  "$updatedAt": "2025-01-15T10:30:00.000+00:00",
+  "$permissions": [],
+  "customer": "John Doe",
+  "total": 99.99
 }
 ```
 
 ---
 
-## Custom Headers
+## HTTP Basic Auth
 
-Add custom headers to webhook requests.
+Sent only when both `authUsername` + `authPassword` are set.
 
 ```dart
 await webhooks.create(
@@ -151,8 +157,9 @@ await webhooks.create(
     name: 'External API',
     url: 'https://api.example.com/webhook',
     events: ['databases.*.tables.*.rows.*'],
-    httpUser: 'api_user',        // Basic auth username
-    httpPass: 'api_password',    // Basic auth password
+    tls: true,
+    authUsername: 'api_user',
+    authPassword: basicAuthPassword,  // from the secret manager
 );
 ```
 
@@ -160,34 +167,29 @@ await webhooks.create(
 
 ## Update Webhook
 
+`update` replaces every setting: omitted `enabled` → `true`, `tls` → `false`, auth → empty. Read current → change the target field → pass every field. Done = `get` returns the intended settings.
+
 ```dart
+final current = await webhooks.get(webhookId: 'webhook_123');
 await webhooks.update(
-    webhookId: 'webhook_123',
-    name: 'Updated Name',
+    webhookId: current.$id,
+    name: current.name,
+    url: current.url,
     events: ['databases.*.tables.orders.rows.*'],
-    url: 'https://new-url.example.com/webhook',
-    security: true,
-    enabled: true,
+    enabled: current.enabled,
+    tls: current.tls,
+    authUsername: current.authUsername,
+    authPassword: current.authPassword,
 );
 ```
+
+Secret rotation → `updateSecret`; `update` never changes the key.
 
 ---
 
 ## Disable/Enable
 
-```dart
-// Pause webhook temporarily
-await webhooks.update(
-    webhookId: 'webhook_123',
-    enabled: false,
-);
-
-// Re-enable
-await webhooks.update(
-    webhookId: 'webhook_123',
-    enabled: true,
-);
-```
+Same full-settings `update` with `enabled: false` / `enabled: true`.
 
 ---
 
@@ -202,19 +204,23 @@ await webhooks.delete(webhookId: 'webhook_123');
 ## Best Practices
 
 1. **Always verify signatures** — Prevent spoofed requests
-2. **Respond quickly** — Return 200 within 30 seconds
+2. **Respond quickly** — Return 2xx within 15 seconds
 3. **Process async** — Queue heavy work, respond immediately
-4. **Handle duplicates** — Webhooks may retry on failure
+4. **Handle duplicates** — Dedupe by event + resource `$id` + `$updatedAt` ([replay protection](#signature-verification))
 5. **Use specific events** — Avoid wildcard spam
 
 ---
 
 ## Retry Behavior
 
-Appwrite retries failed webhooks:
-- 3 retry attempts
-- Exponential backoff
-- Failed = non-2xx response
+Per worker source ([`2.3.0`](https://github.com/appwrite/appwrite/blob/2.3.0/src/Appwrite/Platform/Workers/Webhooks.php#L123-L220)):
+
+- One POST per event; 15 s connect + total timeout.
+- Failure = transport error or HTTP `>= 400` → `attempts` +1 + `logs` updated. Success resets `attempts` to `0`.
+- `attempts` ≥ `_APP_WEBHOOK_MAX_FAILED_ATTEMPTS` (default `10`) → webhook disabled + alert. Fix the endpoint → re-enable via [full-settings update](#update-webhook).
+- Automatic redelivery of a failed event = undocumented → reconcile missed events from the source of truth.
+
+Source: [webhooks docs](https://appwrite.io/docs/apis/webhooks)
 
 ---
 

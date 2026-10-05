@@ -1,6 +1,6 @@
 ---
 name: appwrite-backend
-description: Appwrite SDK development and MCP-only agent operations, including production migrations, destructive account/data erasure, and MCP server wiring for Claude and Codex.
+description: Appwrite SDK development, self-hosting, and MCP-only agent operations, including production migrations, destructive account/data erasure, and MCP server wiring for Claude and Codex.
 license: MIT
 metadata:
   author: sgaabdu4
@@ -17,8 +17,8 @@ Load the owner before acting. Unlisted detail = read the owner, never infer.
 | Trigger | Owner |
 |---|---|
 | Any agent operation against Appwrite, MCP server setup, or Appwrite documentation lookup | [mcp-servers](references/mcp-servers.md) |
-| Production schema/data/ACL/function cutover | [production-migrations](references/production-migrations.md) |
-| TablesDB transaction or cross-service consistency | [transactions](references/transactions.md) + [permissions](references/permissions.md) |
+| Production schema/data/ACL/function cutover | [production-migrations](references/production-migrations.md) + [transactions](references/transactions.md) when writes share a transaction |
+| TablesDB transaction or cross-service consistency | [transactions](references/transactions.md) + [permissions](references/permissions.md) when ACLs change |
 | Permanent account/subject-data erasure across TablesDB, Auth, Storage, provider data, or retained audit evidence | [destructive-erasure](references/destructive-erasure.md) + [transactions](references/transactions.md) |
 | Mass row create/update/upsert/delete, transaction-limit pressure, per-row write loop | [bulk-operations](references/bulk-operations.md) + [transactions](references/transactions.md) when atomic scope spans requests/tables |
 | Filter by more IDs than the deployed `Query.equal()` value cap | [chunked-queries](references/chunked-queries.md) |
@@ -30,7 +30,7 @@ Load the owner before acting. Unlisted detail = read the owner, never infer.
 | Slow path, caching, delta sync, bootstrap ordering | [performance](references/performance.md) |
 | Bandwidth, execution, or storage cost | [cost-optimization](references/cost-optimization.md) |
 | Sessions, MFA, SSR auth, JWT, user labels, security settings | [authentication](references/authentication.md) |
-| OAuth, magic link, email OTP, phone, anonymous, custom token | [auth-methods](references/auth-methods.md) |
+| OAuth, magic link, email OTP, phone, anonymous, custom token, email verification, password recovery, session list/delete, user preferences | [auth-methods](references/auth-methods.md) |
 | ACL design, lockout, public-leak suspicion | [permissions](references/permissions.md) |
 | Team, membership, or multi-tenancy | [teams](references/teams.md) |
 | Upload, download, preview, transform, bucket config | [storage-files](references/storage-files.md) |
@@ -41,7 +41,7 @@ Load the owner before acting. Unlisted detail = read the owner, never infer.
 | Push, email, or SMS delivery | [messaging](references/messaging.md) |
 | Outbound event delivery to an external system | [webhooks](references/webhooks.md) |
 | Avatar, initials, QR, flag, favicon | [avatars](references/avatars.md) |
-| `429`, retry, typed error, timeout, code-zero transport failure, client request burst, partial-sync report | [error-handling](references/error-handling.md) + [performance](references/performance.md) |
+| `429`, retry, typed error, timeout, code-zero transport failure, client request burst, partial-sync report | [error-handling](references/error-handling.md) + [performance](references/performance.md) for startup/bootstrap request bursts |
 | Platform ceiling or limit error | [limits](references/limits.md) |
 | Country, currency, language, or geo lookup | [locale](references/locale.md) |
 | GraphQL endpoint | [graphql](references/graphql.md) |
@@ -52,8 +52,8 @@ Load the owner before acting. Unlisted detail = read the owner, never infer.
 ## Invariants
 
 1. **MCP for agent operations; official SDKs for application code** — agent reads, mutations, deployments, and diagnosis use [mcp-servers](references/mcp-servers.md). Missing MCP capability → report the gap; no direct SDK, HTTP, or command-line fallback for agent operations. Application code uses official SDKs; raw Appwrite HTTP (`fetch`, `requests`, `dio`, `package:http`, `curl`) requires a missing SDK endpoint or an isolated, tested `Client.call` model-parsing workaround.
-2. **Pin SDKs by target and call shape** — Cloud: latest stable official SDK. Self-hosted `1.9.x`: exact release-matched pins in [self-hosting](references/self-hosting.md). “Compatible with `1.9.x`” does not mean release-matched. Before changing a pin, audit every intervening breaking change and prove the repository's real SDK calls against the candidate; version resolution alone is insufficient. A verified repository SDK pin outranks a skill pin.
-3. **TablesDB, not Collections** — Collections/Documents API deprecated 1.8.0.
+2. **Pin SDKs by target and call shape** — Cloud: latest stable official SDK. Self-hosted: exact release-matched pins for the deployed server version (`2.x` or `1.9.x`) in [self-hosting](references/self-hosting.md). “Compatible with `1.9.x`” does not mean release-matched. Before changing a pin, audit every intervening breaking change and prove the repository's real SDK calls against the candidate; version resolution alone is insufficient. A verified repository SDK pin outranks a skill pin.
+3. **TablesDB, not the legacy `Databases` service** — its Collections/Documents API is deprecated since `1.8.0`. DocumentsDB and VectorsDB are separate services, not that legacy API.
 4. **Allocate Appwrite IDs once with `ID.unique()`** — retryable create: call `ID.unique()` before the first attempt → persist the returned ID in the durable draft/intent → reuse that exact ID for every retry/reconciliation. A fresh `ID.unique()` on retry creates a second resource. Business/natural identity remains in indexed columns; never derive resource IDs from names, timestamps, slugs, hashes, or custom generators.
 5. **Explicit ACL** — server SDK/Console create = empty resource ACL; client SDK create = creator read/update/delete. Pass explicit `Permission`/`Role` whenever ACL correctness matters.
 6. **Bind limits to the deployed target** — page size, bulk rows/request, transaction operations, and `Query.equal()` value cap come from the deployed server source/config, never from memory.
@@ -82,4 +82,4 @@ Load the owner before acting. Unlisted detail = read the owner, never infer.
 
 ## Resources
 
-Docs <https://appwrite.io/docs> · API <https://appwrite.io/docs/references> · SDKs <https://github.com/appwrite>
+Docs <https://appwrite.io/docs> · API <https://appwrite.io/docs/apis/rest> · SDKs <https://github.com/appwrite>

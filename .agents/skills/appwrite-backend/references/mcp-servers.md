@@ -2,9 +2,9 @@
 
 ## Contract
 
-- MCP is the sole interface for agent operations against Appwrite. SDK examples elsewhere describe application implementation, not an alternate operational path.
+- Agent operations = MCP only ([SKILL.md](../SKILL.md) invariant 1). SDK examples elsewhere describe application implementation, not an alternate operational path.
 - Server choice = deployed endpoint, never preference; wrong choice authenticates against the wrong instance and reads nothing.
-- Cloud project (`*.cloud.appwrite.io`) = hosted remote server `https://mcp.appwrite.io/`, HTTP transport + OAuth, no key stored.
+- Cloud project (`cloud.appwrite.io` or `*.cloud.appwrite.io`) = hosted remote server `https://mcp.appwrite.io/`, HTTP transport + OAuth, no key stored.
 - Self-hosted instance (any other domain) = local stdio server `uvx mcp-server-appwrite` + API key. The hosted server authenticates against Appwrite Cloud only and can never reach a self-hosted instance.
 - API key never appears in a committed harness config; one repository launcher owns secret loading.
 - MCP access stays within the authenticated OAuth grant or API-key scopes; live mutations follow [production-migrations](production-migrations.md), and subject erasure follows [destructive-erasure](destructive-erasure.md).
@@ -35,7 +35,7 @@ flowchart TD
 ## Capability + Credential Boundaries
 
 - Hosted OAuth includes console/organization/project operations permitted by its grant. Self-hosted API-key stdio exposes project-key-compatible operations only; Projects/key management and other console administration are unavailable there.
-- Missing tool, unsupported field, insufficient scope, unavailable full result, or incompatible deployed API → report the exact blocker. No Appwrite command-line, direct SDK, or raw HTTP fallback for agent operations.
+- Missing tool, unsupported field, insufficient scope, unavailable full result, or incompatible deployed API → report the exact blocker; [SKILL.md](../SKILL.md) invariant 1 allows no fallback.
 - Hosted uploads cannot read local paths; use only a supported bounded inline input or already-authorized URL. Stdio can read local files. Never publish private source or secrets merely to obtain an upload URL; unavailable safe transfer = capability gap.
 - API-key scopes come from every real consumer call, never a full-scope default. `401` → verify endpoint/project/credential; `403` → compare required scopes with the authorized operation before widening access.
 - Self-hosted initial key creation requires the user's Appwrite Console action; do not bypass the missing MCP control-plane capability.
@@ -104,7 +104,7 @@ Claude and Codex each point to the launcher; on Cloud each carries the remote UR
 | Fact | Value |
 |---|---|
 | Feed | `https://appwrite.io/llms-full.txt` (index-only variant `llms.txt`; single page = append `.md` to its URL) |
-| Page split | line `## <Title>` immediately followed by a line starting `https://appwrite.io/` |
+| Page split | line `## <Title>` → blank line → line `URL: https://appwrite.io/...` |
 | Blocked default | Python `urllib` default User-Agent returns `403`; send an identifying User-Agent |
 | Cache | gitignored repository folder, re-download when older than 7 days |
 | Ranking | weight title + URL path segments above body; demote `blog/` below guides |
@@ -113,12 +113,12 @@ Claude and Codex each point to the launcher; on Cloud each carries the remote UR
 ## Proof
 
 1. Name the branch first: print the deployed endpoint and state Cloud or self-hosted before writing any config.
-2. Drive the launcher over stdio by hand: send `initialize`, confirm `serverInfo` returns and the startup log names the deployed endpoint.
-3. Send `tools/list` and report the actual tool names.
+2. Self-hosted: drive the launcher over stdio by hand: send `initialize`, confirm `serverInfo` returns and the startup log names the deployed endpoint. Send `tools/list` and report the actual tool names.
+3. Cloud: authenticate the hosted server (Claude Code `/mcp` → appwrite → **Authenticate**, or `claude mcp login appwrite --no-browser`; Codex `codex mcp login appwrite`) → call read-only `appwrite_get_context` → it lists the target project ID, and that project's `region` = the endpoint's `<REGION>` in `https://<REGION>.cloud.appwrite.io/v1`. Report the actual tool names.
 4. Confirm registration per harness (`claude mcp list`, `codex mcp list` from inside the repository); declare which harnesses were verified live and which were configured from documentation only.
 5. Prove Codex isolation: the server resolves inside the repository and `codex mcp get appwrite` fails in an unrelated repository.
 6. Scan every new file for secrets before commit.
-7. `PASS` = branch proven + handshake against the deployed endpoint + per-harness registration stated + no secret in a committed file.
+7. `PASS` = branch proven + stdio handshake (self-hosted) or authenticated context read (Cloud) against the deployed endpoint + per-harness registration stated + no secret in a committed file.
 
 ## Sources
 

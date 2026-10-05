@@ -19,42 +19,47 @@ Prod setup, scaling, security.
 
 ### Quick Install
 
+Installer wizard = `http://localhost:20080`; remote host → open port `20080` during install.
+
 ```bash
 docker run -it --rm \
+    --publish 20080:20080 \
     --volume /var/run/docker.sock:/var/run/docker.sock \
     --volume "$(pwd)"/appwrite:/usr/src/code/appwrite:rw \
     --entrypoint="install" \
-    appwrite/appwrite:1.9.6
+    appwrite/appwrite:2.3.0
 ```
+
+No wizard → append `--database=postgresql|mariadb|mongodb` after the image tag.
 
 ### Manual Install
 
-1. Grab [docker-compose.yml](https://appwrite.io/install/compose) + [.env](https://appwrite.io/install/env)
-2. Put both in `appwrite/` dir
+1. Generate `docker-compose.yml` + `.env` on the [installation page](https://appwrite.io/docs/advanced/self-hosting/installation); MongoDB also needs `mongo-init.js` + `mongo-entrypoint.sh`.
+2. Put them in `appwrite/`; set unique `_APP_OPENSSL_KEY_V1` + `_APP_EXECUTOR_SECRET` in `.env`.
 3. Run: `docker compose up -d --remove-orphans`
 
 After `.env` change: `docker compose up -d` then `docker compose exec appwrite vars` to verify.
 
-Appwrite `1.9.x` self-hosted supports MariaDB or MongoDB during setup. Pin image + SDK versions; never use `latest` tags in prod.
+Database = PostgreSQL (new `2.x` default), MariaDB, or MongoDB; fixed at install; upgrades keep the existing engine. Pin image + SDK versions; never use `latest` tags in prod.
 
-### Release-Matched Pins for Appwrite 1.9.6
+### Release-Matched SDK Pins
 
-| Target | Package | Version |
-|--------|---------|---------|
-| Dart Functions/server | `dart_appwrite` | `26.0.0` |
-| Flutter client app | `appwrite` | `25.3.0` |
-| Node.js Functions/server | `node-appwrite` | `27.0.0` |
-| Browser/Web client | `appwrite` | `26.2.0` |
-| Python Functions/server | `appwrite` | `22.1.0` |
+| Target | Package | Appwrite `2.0.0`–`2.3.0` | Appwrite `1.9.6` (existing installs) |
+|--------|---------|---------|---------|
+| Dart Functions/server | `dart_appwrite` | `29.0.0` | `26.0.0` |
+| Flutter client app | `appwrite` | `26.2.0` | `25.3.0` |
+| Node.js Functions/server | `node-appwrite` | `29.0.0` | `27.0.0` |
+| Browser/Web client | `appwrite` | `27.0.0` | `26.2.0` |
+| Python Functions/server | `appwrite` | `24.0.0` | `22.1.0` |
 
-- Table = release-matched versions; floating `latest` forbidden.
+- Table = release-matched versions; floating `latest` forbidden. Other server versions → read the official table; never infer.
 - Older SDK declaring `1.9.x` compatibility ≠ `1.9.6` release-match.
 - Repository pin wins only after server line + real call shapes are proven.
 - Pin change = every intervening changelog → service-call/result-access inventory → breaking signature/model migration → exact isolated dependency resolution → owned tests → read-only target probe.
 - Python `16.0.0+` = typed Pydantic models, not dictionaries; requirements-only upgrade leaves `result["total"]` + `result["$id"]` callers broken.
-- Raw HTTP to Appwrite APIs = violation.
+- Raw Appwrite HTTP instead of migrating SDK call shapes = violation unless [SKILL.md](../SKILL.md) invariant 1 allows it.
 
-Source: <https://github.com/appwrite/website/blob/0c28c9a3f7a3b866c38d7762904981de45760c07/src/routes/docs/advanced/self-hosting/installation/%2Bpage.markdoc>
+Source: [installation + SDK version compatibility](https://appwrite.io/docs/advanced/self-hosting/installation) · [databases](https://appwrite.io/docs/advanced/self-hosting/configuration/databases)
 
 ---
 
@@ -109,10 +114,10 @@ _APP_SYSTEM_EMAIL_NAME=YourApp
 
 ```bash
 _APP_ENV=production
-_APP_LOGGING_CONFIG=sentry://PUBLIC_KEY@HOST:PORT/PROJECT_ID
+_APP_LOGGING_CONFIG=sentry://PROJECT_ID:KEY@HOST/
 ```
 
-Others: Raygun, AppSignal, LogOwl.
+`2.1.0`+ = Sentry only; LogOwl/Raygun/AppSignal DSNs rejected at boot; `_APP_LOGGING_PROVIDER` ignored.
 
 ---
 

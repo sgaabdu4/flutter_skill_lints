@@ -26,7 +26,7 @@ Pre-deploy:
 - [ ] `total: false` for infinite scroll
 - [ ] Counters use `Operator.increment()`
 - [ ] Bulk creates use `createRows()` not loops
-- [ ] ID queries chunked when >100 IDs
+- [ ] ID lists chunked to the deployed cap ([chunked-queries.md](chunked-queries.md))
 - [ ] Realtime replaces polling
 - [ ] Images use WebP/AVIF at quality 80
 

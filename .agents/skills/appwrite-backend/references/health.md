@@ -4,103 +4,33 @@ Health checks self-hosted Appwrite.
 
 ---
 
-## Overall Health
+## Agent Diagnosis
 
-```dart
-// Dart (Server SDK with admin privileges)
-final health = await health.get();
-
-print(health.status);  // 'pass' or 'fail'
-```
+Agent health reads → [mcp-servers.md](mcp-servers.md) catalog search. No health operation (current catalog has no Health service) = capability gap; report it.
 
 ---
 
-## Service Checks
+## Application Code
 
-### Database
+| SDK | `Health` service |
+|-----|------------------|
+| `dart_appwrite` | through `25.1.0`; removed in `26.0.0` |
+| `node-appwrite` | through `26.2.0`; removed in `27.0.0` |
+| Python `appwrite` | through `21.0.0`; removed in `22.0.0` |
 
-```dart
-final dbHealth = await health.getDB();
-print(dbHealth.status);  // 'pass'
-print(dbHealth.ping);    // Response time in ms
-```
+Release-matched `1.9.6` + `2.x` pins ([self-hosting.md](self-hosting.md)) lack `Health` → missing SDK endpoint under [SKILL.md](../SKILL.md) invariant 1; never downgrade a pin to regain it.
 
-### Cache (Redis)
-
-```dart
-final cacheHealth = await health.getCache();
-print(cacheHealth.status);
-print(cacheHealth.ping);
-```
-
-### Storage
-
-```dart
-final storageHealth = await health.getStorage();
-print(storageHealth.status);
-```
-
-### Antivirus
-
-```dart
-final avHealth = await health.getAntivirus();
-print(avHealth.status);  // 'pass' if ClamAV running
-```
-
----
-
-## Queue Monitoring
-
-Check bg job queues.
-
-```dart
-// All queues
-final queuesHealth = await health.getQueues();
-
-for (final queue in queuesHealth.queues) {
-    print('${queue.name}: ${queue.size} jobs');
-}
-```
-
-### Specific Queues
-
-```dart
-final webhooks = await health.getQueueWebhooks();
-final functions = await health.getQueueFunctions();
-final builds = await health.getQueueBuilds();
-final messaging = await health.getQueueMessaging();
-final migrations = await health.getQueueMigrations();
-```
-
----
-
-## Certificate Check
-
-Verify SSL cert valid.
-
-```dart
-final certHealth = await health.getCertificate(domain: 'cloud.appwrite.io');
-
-print(certHealth.valid);        // true
-print(certHealth.domain);       // cloud.appwrite.io
-print(certHealth.signatureType); // RSA
-print(certHealth.validFrom);    // ISO date
-print(certHealth.validTo);      // ISO date
-```
-
----
-
-## Time Sync
-
-Check server time accuracy.
-
-```dart
-final timeHealth = await health.getTime();
-
-print(timeHealth.remoteTime);      // NTP server time
-print(timeHealth.localTime);       // Server time
-print(timeHealth.diff);            // Difference in ms
-```
+| Check | Route | Scope |
+|-------|-------|-------|
+| Liveness | `GET /v1/health/version` | public |
+| Overall | `GET /v1/health` | `health.read` |
+| Database, cache, pub/sub | `GET /v1/health/db`, `/cache`, `/pubsub` | `health.read` |
+| Storage | `GET /v1/health/storage`, `/storage/local` | `health.read` |
+| Antivirus | `GET /v1/health/anti-virus` | `health.read` |
+| Certificate | `GET /v1/health/certificate?domain=<DOMAIN>` | `health.read` |
+| Time | `GET /v1/health/time` | `health.read` |
+| Failed jobs | `GET /v1/health/queue/failed/:name` | `health.read` |
+| Queue depth | `GET /v1/health/queue/<queue>` — `1.9.x` only; removed in `2.x` | `health.read` |
 
 Time diff >30s break auth.
 
@@ -108,7 +38,7 @@ Time diff >30s break auth.
 
 ## Public Cloud Note
 
-Health endpoints need admin API key. Cloud managed internally — endpoints self-hosted only.
+Cloud managed internally — endpoints self-hosted only.
 
 ---
 
@@ -121,26 +51,6 @@ Health check uses:
 - **Alerting:** PagerDuty, Slack notifications
 - **Dashboards:** Grafana, Datadog
 
-### Example Endpoint
-
-```typescript
-// TypeScript - Express health endpoint
-app.get('/health', async (req, res) => {
-    try {
-        const db = await health.getDB();
-        const cache = await health.getCache();
-
-        if (db.status === 'pass' && cache.status === 'pass') {
-            res.status(200).json({ status: 'healthy' });
-        } else {
-            res.status(503).json({ status: 'degraded', db, cache });
-        }
-    } catch (e) {
-        res.status(503).json({ status: 'unhealthy', error: e.message });
-    }
-});
-```
-
 ---
 
 ## Scaled Deployments
@@ -150,8 +60,8 @@ Scaling topology, container types, and tuning variables are owned by
 
 - Probe each container instance, not only the load-balancer VIP — a single
   healthy node masks failed replicas behind round-robin.
-- Route load-balancer health checks at `/v1/health` so bad nodes drain
-  automatically.
+- Route unauthenticated load-balancer health checks at `/v1/health/version`
+  so bad nodes drain automatically.
 - Queue depth is cluster-wide; rising depth with healthy nodes = worker
   starvation, not a node failure.
 

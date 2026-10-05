@@ -6,7 +6,7 @@
 - Atomic scope = supported row/bulk/operator operations across tables/databases.
 - Excluded = schema + Auth + Storage + Functions + external providers.
 - Read-own-writes = every dependent read/write carries the same `transactionId`.
-- Client context = one authenticated client/transaction owner; independent helper client = stale-read risk.
+- Client context = one authenticated client/transaction owner; helper/store with an independent TablesDB client reads pre-transaction state → forbidden inside one invariant.
 - Operation cap = deployed server contract. Appwrite `1.9.0` self-hosted fallback = `100`; verify target source/config before transaction creation.
 - Budget unit = staged operation/log, not HTTP request count or affected-row count.
 - TTL unit = seconds. Appwrite `1.9.6` accepts `60..3600`; use `60` for one-row commit + `300` for multi-step commands.
@@ -130,10 +130,10 @@ if (rows.rows.length > 64) {
 
 ## Sources
 
-- <https://appwrite.io/docs/products/databases/transactions>
-- <https://appwrite.io/docs/products/databases/bulk-operations>
+- <https://appwrite.io/docs/products/databases/tablesdb/transactions>
+- <https://appwrite.io/docs/products/databases/tablesdb/bulk-operations>
 - <https://appwrite.io/docs/references/cloud/server-nodejs/tablesDB>
-- Appwrite `1.9.6` constants: <https://github.com/appwrite/appwrite/blob/1.9.6/app/init/constants.php#L69-L71>
+- Appwrite `1.9.6` constants: <https://github.com/appwrite/appwrite/blob/1.9.6/app/init/constants.php#L73-L75>
 - Appwrite `1.9.6` TablesDB create validation: <https://github.com/appwrite/appwrite/blob/1.9.6/src/Appwrite/Platform/Modules/Databases/Http/TablesDB/Transactions/Create.php#L46>
 - Appwrite `1.9.0` source: <https://github.com/appwrite/appwrite/blob/1.9.0/src/Appwrite/Platform/Modules/Databases/Http/Databases/Transactions/Operations/Create.php#L99-L104>
 - Transaction-scoped `total` excluding staged rows = measured against Cloud `fra` TablesDB; absent from the transactions doc, which states only read-own-writes + uncommitted target table.

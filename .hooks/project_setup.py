@@ -12,6 +12,7 @@ from pathlib import Path
 
 from fallow_report import fallow_report_path, validate_scanner_command
 from gate_config import (
+    Gate,
     GateConfig,
     Group,
     JsonObject,
@@ -203,6 +204,24 @@ def package_script_invocation(
         if not arguments:
             raise ValueError("Configured package test script is empty")
     return arguments, directory
+
+
+def native_typecheck(scripts: JsonObject, checks: list[Gate]) -> bool:
+    """A plain `tsc --noEmit` script repeats the native strict check on the same tsconfig."""
+    selects = {"-p", "--project", "-b", "--build"}
+    plain = str(scripts.get("typecheck", "")).split() == ["tsc", "--noEmit"]
+    return (
+        plain
+        and not {"pretypecheck", "posttypecheck"} & scripts.keys()
+        and any(
+            gate.get("role") == "types"
+            and gate["command"][0] == "tsc"
+            and not any(
+                argument.split("=")[0] in selects for argument in gate["command"]
+            )
+            for gate in checks
+        )
+    )
 
 
 def javascript_manager(directory: Path) -> tuple[str, list[str], str]:
@@ -493,14 +512,7 @@ def adapt_package(directory: Path, package: Group) -> None:
         }:
             gate["command"] = python_gate_command(gate["command"], manager)
         elif language == "dart" and manager == "dart" and gate.get("role") == "tests":
-            gate["command"] = [
-                "dart",
-                "run",
-                "coverage:test_with_coverage",
-                "--branch-coverage",
-                "--",
-                "--file-reporter=json:coverage/tests.jsonl",
-            ]
+            gate["command"] = list(DART_TESTS)
             gate["report"]["stdout"] = False
     if language == "javascript":
         adapt_javascript(directory, package, manager)
@@ -552,6 +564,7 @@ def python_gate_command(command: list[str], manager: str) -> list[str]:
         "pytest": ["pytest", "pytest-cov"],
         "deptry": ["deptry"],
         "lint-imports": ["import-linter"],
+        "mutmut": ["pytest", "mutmut"],
     }[command[0]]
     prefix = ["uv", "run", "--no-sync"]
     if manager == "poetry":
@@ -590,6 +603,14 @@ FLUTTER_TESTS = [
     "--coverage",
     "--coverage-path=coverage/lcov.info",
 ]
+DART_TESTS = [
+    "dart",
+    "run",
+    "coverage:test_with_coverage",
+    "--branch-coverage",
+    "--",
+    "--file-reporter=json:coverage/tests.jsonl",
+]
 BROWSER_IMPORT = re.compile(
     r"""^\s*import\s+['"](?:dart:(?:html|js|js_util|js_interop|js_interop_unsafe"""
     r"""|indexed_db|svg|web_audio|web_gl)|package:web/)""",
@@ -613,7 +634,7 @@ def run_browser_tests(options: str) -> str:
     )
 
 
-def browser_tests(options: str) -> list[str]:
+def browser_tests(options: str, vm_tests: str = "") -> list[str]:
     return [
         "sh",
         "-c",
@@ -622,6 +643,7 @@ def browser_tests(options: str) -> list[str]:
         + 'if find test -name "*_test.dart" | grep -qvxF -e "$tests"; then '
         + shlex.join(FLUTTER_TESTS)
         + "; fi; "
+        + vm_tests
         + run_browser_tests(options),
     ]
 
@@ -639,7 +661,8 @@ PREVIOUS_BROWSER_TESTS = [
     browser_tests(""),
 ]
 # dart2js inlining leaves one-line forwarders without source-map coverage lines.
-BROWSER_TESTS = browser_tests(" --dart2js-args=--disable-inlining")
+BROWSER_OPTIONS = " --dart2js-args=--disable-inlining"
+BROWSER_TESTS = browser_tests(BROWSER_OPTIONS)
 
 
 def browser_test_coverage(directory: Path, package: Group) -> None:
@@ -661,6 +684,74 @@ def browser_test_coverage(directory: Path, package: Group) -> None:
             *PREVIOUS_BROWSER_TESTS,
         ):
             gate["command"] = list(BROWSER_TESTS)
+
+
+def run_vm_tests(sources: list[str]) -> str:
+    targets = "|".join(
+        re.sub(r"([.\[\]()*+?{}|^$\\])", r"\\\1", source)
+        + ("['\"]" if source.endswith(".dart") else "/")
+        for source in sources
+    )
+    return (
+        "rm -rf coverage/vm coverage/vm.lcov; vm_tests=$(grep -rlE --include='*_test.dart' "
+        + shlex.quote(f"^import +['\"](\\.\\./)+({targets})")
+        + ' test || true); if [ -n "$vm_tests" ]; then'
+        + " dart test --coverage=coverage/vm --reporter=json $vm_tests; "
+        + "dart run coverage:format_coverage --lcov --check-ignore --in=coverage/vm"
+        + " --out=coverage/vm.lcov --base-directory=. "
+        + shlex.join(f"--report-on={source}" for source in sources)
+        + "; cat coverage/vm.lcov >> coverage/lcov.info; fi; "
+    )
+
+
+VM_TESTS = re.compile(
+    r"rm -rf coverage/vm coverage/vm\.lcov; vm_tests=.*?"
+    r"cat coverage/vm\.lcov >> coverage/lcov\.info; fi; ",
+    re.DOTALL,
+)
+
+
+def generated_tests(command: list[str]) -> list[str]:
+    """The generated tests command without an earlier Dart VM coverage step."""
+    if len(command) != 3 or command[:2] != ["sh", "-c"]:
+        return command
+    script = VM_TESTS.sub("", command[2], count=1)
+    for plain in (FLUTTER_TESTS, DART_TESTS):
+        if script == f"set -e; {shlex.join(plain)}; ":
+            return list(plain)
+    return ["sh", "-c", script] if ["sh", "-c", script] == BROWSER_TESTS else command
+
+
+def outside_lib_coverage(package: Group) -> None:
+    """Flutter and test_with_coverage keep only package: URIs; Dart outside lib/ uses dart test."""
+    for gate in package["checks"]:
+        if gate.get("role") == "tests":
+            gate["command"] = generated_tests(gate["command"])
+    sources = sorted(
+        source
+        for source in package.get("sources", [])
+        if Path(source).parts[0] != "lib"
+    )
+    if not sources:
+        return
+    vm_tests = run_vm_tests(sources)
+    rewrites = {
+        tuple(FLUTTER_TESTS): [
+            "sh",
+            "-c",
+            f"set -e; {shlex.join(FLUTTER_TESTS)}; {vm_tests}",
+        ],
+        tuple(BROWSER_TESTS): browser_tests(BROWSER_OPTIONS, vm_tests),
+        tuple(DART_TESTS): [
+            "sh",
+            "-c",
+            f"set -e; {shlex.join(DART_TESTS)}; {vm_tests}",
+        ],
+    }
+    for gate in package["checks"]:
+        command = tuple(gate["command"])
+        if gate.get("role") == "tests" and command in rewrites:
+            gate["command"] = rewrites[command]
 
 
 def parallel_pytest(package: Group) -> None:

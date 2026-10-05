@@ -61,6 +61,6 @@ Cross-service order has no universal default. Choose from the protected invarian
 
 ## Sources
 
-- Transactions + read-own-writes: <https://appwrite.io/docs/products/databases/transactions>
-- Bulk operations + transaction staging: <https://appwrite.io/docs/products/databases/bulk-operations>
+- Transactions + read-own-writes: <https://appwrite.io/docs/products/databases/tablesdb/transactions>
+- Bulk operations + transaction staging: <https://appwrite.io/docs/products/databases/tablesdb/bulk-operations>
 - Dart `deleteRows` response shape = Rows List; shape does not guarantee affected-row cardinality for staged work: <https://appwrite.io/docs/references/cloud/server-dart/tablesDB#delete-rows>

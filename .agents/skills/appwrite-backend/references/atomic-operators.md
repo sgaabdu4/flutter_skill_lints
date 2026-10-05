@@ -43,9 +43,9 @@ await tablesDB.updateRow(
 | Operator | Dart | Python | TypeScript |
 |----------|------|--------|------------|
 | Add | `Operator.increment(n)` | `Operator.increment(n)` | `Operator.increment(n)` |
-| Add with max | `Operator.increment(n, max)` | `Operator.increment(n, max_value=x)` | `Operator.increment(n, max)` |
+| Add with max | `Operator.increment(n, max)` | `Operator.increment(n, max=x)` | `Operator.increment(n, max)` |
 | Subtract | `Operator.decrement(n)` | `Operator.decrement(n)` | `Operator.decrement(n)` |
-| Subtract with min | `Operator.decrement(n, min)` | `Operator.decrement(n, min_value=x)` | `Operator.decrement(n, min)` |
+| Subtract with min | `Operator.decrement(n, min)` | `Operator.decrement(n, min=x)` | `Operator.decrement(n, min)` |
 | Multiply | `Operator.multiply(f)` | `Operator.multiply(f)` | `Operator.multiply(f)` |
 | Divide | `Operator.divide(d)` | `Operator.divide(d)` | `Operator.divide(d)` |
 | Modulo | `Operator.modulo(d)` | `Operator.modulo(d)` | `Operator.modulo(d)` |
@@ -100,7 +100,7 @@ tables_db.update_row(
     database_id='db',
     table_id='posts',
     row_id='post_123',
-    data={'likes': Operator.decrement(1, min_value=0)}
+    data={'likes': Operator.decrement(1, min=0)}
 )
 ```
 

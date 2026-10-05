@@ -18,14 +18,20 @@ final topic = await messaging.createTopic(
 );
 ```
 
+Persist `topic.$id`; every later call uses that ID, never `name`.
+
 ### Subscribe Users
 
+`targetId` = the user's messaging target ID (push target), not the user ID. Messaging one user without a topic → [Direct Targeting](#direct-targeting).
+
 ```dart
-// Dart - Subscribe user to topic
+// Dart - Subscribe a user's push target to the topic
+final targets = await users.listTargets(userId: userId);
+final pushTarget = targets.targets.firstWhere((t) => t.providerType == 'push');
 await messaging.createSubscriber(
-    topicId: 'product-updates',
+    topicId: productUpdatesTopicId,
     subscriberId: ID.unique(),
-    targetId: userId,
+    targetId: pushTarget.$id,
 );
 ```
 
@@ -37,7 +43,7 @@ await messaging.createPush(
     messageId: ID.unique(),
     title: 'New Feature!',
     body: 'Check out our latest update.',
-    topics: ['product-updates'],
+    topics: [productUpdatesTopicId],
 );
 ```
 
@@ -47,7 +53,7 @@ messaging.create_push(
     message_id=ID.unique(),
     title='New Feature!',
     body='Check out our latest update.',
-    topics=['product-updates'],
+    topics=[product_updates_topic_id],
 )
 ```
 
@@ -57,7 +63,7 @@ await messaging.createPush({
     messageId: ID.unique(),
     title: 'New Feature!',
     body: 'Check out our latest update.',
-    topics: ['product-updates'],
+    topics: [productUpdatesTopicId],
 });
 ```
 
@@ -69,7 +75,7 @@ await messaging.createPush(
     messageId: ID.unique(),
     title: 'Order Shipped!',
     body: 'Your package is on its way.',
-    topics: ['order-updates'],
+    topics: [orderUpdatesTopicId],
     image: 'https://yourcdn.com/shipment-banner.webp', // rich notification image
     sound: 'notification_chime',                        // custom sound file name
     badge: 1,                                            // iOS badge count
@@ -94,7 +100,7 @@ Data-only push, triggers background refresh:
 // Dart — silent push (data only, omit title/body)
 await messaging.createPush(
     messageId: ID.unique(),
-    topics: ['sync'],
+    topics: [syncTopicId],
     data: {'action': 'refresh_cache', 'version': '42'},
 );
 ```

@@ -205,9 +205,9 @@ for (final team in userTeams.teams) {
 
 ```dart
 await teams.delete(teamId: 'team_123');
-// Removes all memberships
-// Doesn't delete team-permissioned data
 ```
+
+Removes every membership; rows/files permissioned to the team are not deleted.
 
 ---
 

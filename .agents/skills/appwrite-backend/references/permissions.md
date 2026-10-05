@@ -105,7 +105,7 @@ row/file permissions empty.
 
 ## Common Mistakes
 
-- Forgetting perms. Resource becomes inaccessible to all users, including creator.
+- Forgetting perms on a server SDK/Console create with no table/bucket grant. Resource becomes inaccessible to all users, including creator.
 - `Role.any()` with `write`/`update`/`delete`. Guests can mutate or delete.
 - `Permission.read(Role.any())` on sensitive rows/files. Data becomes public.
 - Repeating row/file perms everywhere when table/bucket perms already fit. Harder ACL maintenance.

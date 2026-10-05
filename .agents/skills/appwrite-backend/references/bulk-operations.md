@@ -86,11 +86,11 @@ await tablesDB.updateRows({
 Resolve limits from the deployed Appwrite version/config before work:
 
 ```text
-chunkSize = min(deployedBulkRowLimit, deployedQueryEqualValueLimit)
+chunkSize = min(deployedBulkRowLimit, deployedQueryEqualValueLimit, idsPer4096CharQuery)
 transactionOps = ceil(targetRows / chunkSize) + otherStagedOperations
 ```
 
-For Appwrite `1.9.0` self-hosted fallbacks, both values are `100`, so the safe ID-scoped chunk is at most `100`. Do not copy a larger Cloud/custom limit into self-hosted code.
+Appwrite `1.9.0` self-hosted fallback = bulk rows `100` + `Query.equal()` values `500` + `4096`-char query strings (`103` IDs of 36 chars; [limits.md](limits.md#chunking-large-id-lists)) → ID-scoped chunk ≤ `100` on MariaDB/PostgreSQL. Do not copy a larger Cloud/custom limit into self-hosted code.
 
 ### Create + Upsert
 
@@ -220,9 +220,9 @@ Do not keep row-loop + bulk implementations as parallel owners. Migrate callers 
 
 ## Primary Sources
 
-- <https://appwrite.io/docs/products/databases/bulk-operations>
-- <https://appwrite.io/docs/products/databases/transactions>
+- <https://appwrite.io/docs/products/databases/tablesdb/bulk-operations>
+- <https://appwrite.io/docs/products/databases/tablesdb/transactions>
 - <https://appwrite.io/docs/references/cloud/server-nodejs/tablesDB>
-- Appwrite `1.9.0` source: [self-hosted fallback limits](https://github.com/appwrite/appwrite/blob/1.9.0/app/init/constants.php#L41-L42)
+- Appwrite `1.9.0` source: [bulk + transaction fallback limits](https://github.com/appwrite/appwrite/blob/1.9.0/app/init/constants.php#L41-L42) · [`Query.equal()` value cap](https://github.com/appwrite/appwrite/blob/1.9.0/app/init/constants.php#L65)
 - Appwrite `1.9.0` source: [bulk create stages one operation](https://github.com/appwrite/appwrite/blob/1.9.0/src/Appwrite/Platform/Modules/Databases/Http/Databases/Collections/Documents/Create.php#L400-L424)
 - Appwrite `1.9.0` source: [`createOperations` charges top-level operation count](https://github.com/appwrite/appwrite/blob/1.9.0/src/Appwrite/Platform/Modules/Databases/Http/Databases/Transactions/Operations/Create.php#L99-L104)

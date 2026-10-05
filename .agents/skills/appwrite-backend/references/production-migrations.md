@@ -60,10 +60,7 @@
 
 ## Transaction Boundary
 
-- All staged reads/writes that must observe each other carry the same `transactionId` and client context.
-- Helper/store with an independent TablesDB client can read pre-transaction state → forbidden inside one invariant.
-- Commit conflict → re-read source state + rebuild operations; replaying stale decisions = forbidden.
-- Schema + Auth + Storage + Functions stay outside TablesDB transaction → name compensation and reconciliation owners.
+Shared `transactionId` + client context, commit-conflict rebuild, and the owners for schema/Auth/Storage/Functions outside the transaction = [transactions.md](transactions.md).
 
 ## Function + Variable Cutover
 
@@ -74,7 +71,7 @@
 - Validate candidate secret/config values before writing; never depend on secret-value API read-back.
 - Active variable read-back = exact key/ID/count + `secret` metadata; list response may be `{total, variables}`.
 - Secret status = one-way. Secret → non-secret requires delete + recreate; value replacement may update or recreate per target contract.
-- Variable activation timing = [functions.md](functions.md#environment-variables); key add/remove requires deployment, and every change requires runtime smoke.
+- Variable activation timing = [functions.md](functions.md#environment-variables).
 - Capture prior active deployment before mutation; new deployment failure → prior remains/returns active.
 - Function-only deployment against missing schema/backfill = forbidden; schema-only contract against old function = forbidden.
 - Deployment ready + execution `completed` = transport proof only.
@@ -94,10 +91,10 @@
 
 ## Sources
 
-- Transactions: <https://appwrite.io/docs/products/databases/transactions>
-- Rows/cache: <https://appwrite.io/docs/products/databases/rows>
+- Transactions: <https://appwrite.io/docs/products/databases/tablesdb/transactions>
+- Rows/cache: <https://appwrite.io/docs/products/databases/tablesdb/rows>
 - Permissions: <https://appwrite.io/docs/advanced/security/permissions>
-- Function variables: <https://appwrite.io/docs/advanced/security/environment-variables>
+- Function variables: <https://appwrite.io/docs/products/functions/environment-variables>
 - Function execution model: <https://appwrite.io/docs/references/cloud/models/execution>
 - Synchronous execution: <https://appwrite.io/docs/products/functions/execute>
 - MCP operations: <https://appwrite.io/docs/tooling/ai/mcp-servers>

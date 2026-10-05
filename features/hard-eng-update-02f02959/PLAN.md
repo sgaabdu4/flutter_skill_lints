@@ -4,11 +4,11 @@ Status: Complete
 
 ## Outcome + scope
 
-The repo runs Hard Eng `02f02959` installed by the supported updater, with every repository check passing. Out of scope: lint rules and their behavior, package version, CI workflow changes, dependency updates.
+The repo runs Hard Eng `02f02959` installed by the supported updater, with every repository check passing. Out of scope: lint rules and their behavior, package version, dependency updates.
 
 ## Repository context
 
-Owners: `.hooks/hard-eng-source.json` and the updater commit (installed revision); `.hooks/`, `.agents/skills/` and the Hard Eng block of `AGENTS.md` (scaffold). The JavaScript/TypeScript untrusted-input and type-assertion gates added in `02f02959` do not apply: the only gated package is the Dart package at the repository root. The installed revision predates the `update` subcommand, so the documented `setup.sh` updater performed the update.
+Owners: `.hooks/hard-eng-source.json` and the updater commit (installed revision); `.hooks/`, `.agents/skills/` and the Hard Eng block of `AGENTS.md` (scaffold); `.github/workflows/dart.yml` (CI invocation of the check). The JavaScript/TypeScript untrusted-input and type-assertion gates added in `02f02959` do not apply: the only gated package is the Dart package at the repository root. The installed revision predates the `update` subcommand, so the documented `setup.sh` updater performed the update.
 
 ## Decisions + authorization
 
@@ -20,11 +20,12 @@ Authority: Agent-loop under the owner's Hard Eng update request: update to `02f0
 
 - [x] Installed revision is `02f02959` → `.hooks/hard-eng-source.json` shows `02f0295910c5a6b88f23e8c8c008a5de1865bf2c` after the supported updater, which verified the candidate and committed locally.
 - [x] Repository checks pass on the updated scaffold → `python3 .hooks/hard-eng.py check` exits 0.
+- [x] CI passes the comparison commit to the full check → `dart.yml` runs `check --base "$BASE_SHA"`, as `02f02959` requires for GitHub push and pull-request runs.
 
 ## Baseline + execution
 
 Result: Passed
-Evidence: Starting revision `b44bd7c` (Hard Eng `97cc783`); the updater verified and committed on the first run.
+Evidence: Starting revision `b44bd7c` (Hard Eng `97cc783`); the updater verified and committed on the first run. The first CI run failed because `dart.yml` ran the full check without `--base`, which `02f02959` rejects for GitHub push and pull-request events; the workflow now passes `--base "$BASE_SHA"`.
 Execution: Single builder; scaffold-only update, no migration needed.
 
 ## Risks + recovery

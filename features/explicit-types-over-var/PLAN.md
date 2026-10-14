@@ -1,6 +1,6 @@
 # Explicit types over var
 
-Status: Ready
+Status: Complete
 
 ## Outcome + scope
 
@@ -18,10 +18,10 @@ Authority: Owner's correction: ban `var` only, keep inferred `final`, restore th
 
 ## Acceptance + steps
 
-- [ ] `prefer_type_over_var` is registered by default and absent from the off-profile list.
-- [ ] Local, top-level, field, `for` loop, `for`-in, `await for`, pattern declaration, `for`-in pattern and `case var` declarations report at `var`.
-- [ ] Inferred `final` locals, top-level values, loop variables and patterns, and explicit types, do not report.
-- [ ] Version 0.13.4 in `pubspec.yaml` and the first CHANGELOG entry; full `python3 .hooks/hard-eng.py check` passes.
+- [x] `prefer_type_over_var` is registered by default and absent from the off-profile list.
+- [x] Local, top-level, field, `for` loop, `for`-in, `await for`, pattern declaration, `for`-in pattern and `case var` declarations report at `var`.
+- [x] Inferred `final` locals, top-level values, loop variables and patterns, and explicit types, do not report.
+- [x] Version 0.13.4 in `pubspec.yaml` and the first CHANGELOG entry; full `python3 .hooks/hard-eng.py check` passes.
 
 ## Baseline + execution
 
@@ -39,9 +39,9 @@ N/A — analyzer diagnostics have no visual interface.
 
 ## Verification
 
-Result: Pending
-Evidence: Pending focused runs, review and the full check.
-E2E: Pending — `RUN_FLUTTER_PLUGIN_SMOKE=1` smoke must report `prefer_type_over_var` in a real analysis-server run.
+Result: Passed
+Evidence: Red first: with the rule absent, the restored test file failed to load and 4 registration cases failed; with the 0.13.3 rule restored, `for`-in, `await for` and `for`-in pattern cases failed. Green: registration + local-variable suites 65 passed; `dart analyze --fatal-infos` on changed Dart files clean. Codex adversarial review round 1 approved with no findings. Full `python3 .hooks/hard-eng.py check` passed 12 of 12 (2,714 tests, 79.44% line coverage against the 70% minimum).
+E2E: Passed — `RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart` passed in a real Flutter analysis-server run and reports `prefer_type_over_var`.
 
 Delivery target: Merge
 Delivery: Pending — PR merged into main with required checks passing, main CI green, 0.13.4 published.

@@ -548,7 +548,7 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
         expect(output, contains('avoid_ref_read_inside_build'));
         expect(output, contains('missing_provider_scope'));
         expect(output, contains('prefer_single_widget_per_file'));
-        expect(output, isNot(contains('prefer_type_over_var')));
+        expect(output, contains('prefer_type_over_var'));
         expect(output, contains('riverpod_feature_notifier_keepalive'));
         expect(output, contains('presentation_widget_navigation_forbidden'));
         expect(output, contains('presentation_widget_controller_state'));

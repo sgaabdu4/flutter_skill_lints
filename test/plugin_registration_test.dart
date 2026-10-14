@@ -292,7 +292,7 @@ void main() {
     expect(registry.warningRules, isNot(contains('prefer_contains')));
     expect(registry.warningRules, containsPair('avoid_public_notifier_properties', isNotNull));
     expect(registry.warningRules, containsPair('avoid_ref_inside_state_dispose', isNotNull));
-    expect(registry.warningRules, isNot(contains('prefer_type_over_var')));
+    expect(registry.warningRules, containsPair('prefer_type_over_var', isNotNull));
     expect(registry.warningRules, isNot(contains('prefer_switch_expression')));
   });
 
@@ -347,8 +347,6 @@ void main() {
       'avoid_non_null_assertion',
       // No skill basis; testing.md uses bare expected values, which expect() wraps in equals().
       'prefer_test_matchers',
-      // analysis-options.md forbids it: Effective Dart prefers inferred locals.
-      'prefer_type_over_var',
     ]) {
       expect(paths, isNot(contains(forbidden)));
     }
@@ -410,7 +408,7 @@ void main() {
 
 const _enabledFlutterSkillRuleCount = 229;
 const _enabledFlutterSkillDiagnosticCount = 237;
-const _enabledAdditionalRuleCount = 272;
+const _enabledAdditionalRuleCount = 273;
 
 const _modelSkillErrorDiagnostics = [
   'use_sealed_freezed_classes',

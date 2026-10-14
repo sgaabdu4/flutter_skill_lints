@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.13.3] - 2026-10-14
+
+- Report `crash_init_before_run_app` only when the entrypoint's app has error
+  reporting: a `Crash` facade or a Crashlytics or Sentry import reachable from
+  it. Apps with no provider need no `Crash.init`, as building-flutter-apps
+  5.12.1 requires.
+- Remove `prefer_type_over_var`. The building-flutter-apps profile forbids it
+  because Effective Dart prefers inferred initialized local variables.
+
 ## [0.13.2] - 2026-09-29
 
 - Recognize inline callback captures across awaited operations without hiding

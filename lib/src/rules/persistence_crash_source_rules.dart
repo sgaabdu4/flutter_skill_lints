@@ -257,6 +257,7 @@ bool _reachesErrorReporting(SourceScannerContext context) {
   var found = false;
   _walkPackageLibraries([entrypoint], _packageRoot(context), (library) {
     found =
+        found ||
         library.classes.any(_isCrashFacade) ||
         _libraryDependencies(library).any(_isErrorReportingProvider);
     return !found;

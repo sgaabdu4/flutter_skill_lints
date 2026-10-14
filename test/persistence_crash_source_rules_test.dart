@@ -188,6 +188,29 @@ Future<void> main() async {
     );
   }
 
+  Future<void> test_crashFacadeBeforeUnrelatedSiblingImport_reports() async {
+    newFile('$testPackageLibPath/app.dart', r'''
+class App {}
+''');
+    newFile('$testPackageLibPath/crash.dart', r'''
+abstract final class Crash {
+  static Future<void> init() async {}
+}
+''');
+    await assertRuleDiagnostic(
+      r'''
+import 'app.dart';
+import 'crash.dart';
+void runApp(Object app) {}
+Future<void> main() async {
+  runApp(App());
+}
+''',
+      'runApp(App())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
   Future<void> test_sentryProviderWithoutCrashInit_reports() async {
     await assertRuleDiagnostic(
       r'''

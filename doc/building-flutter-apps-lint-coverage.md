@@ -4,8 +4,8 @@ This audit covers both plugin surfaces:
 
 - `lib/src/rules/**`: 229 registered `building-flutter-apps` warning rules.
 - `lib/src/rules/**`: 237 `building-flutter-apps` diagnostic codes.
-- `lib/src/additional_lints/rules/**`: 272 additional diagnostics.
-- Total unique diagnostics: 507.
+- `lib/src/additional_lints/rules/**`: 273 additional diagnostics.
+- Total unique diagnostics: 508.
 
 ## Full Rule Inventory
 
@@ -177,8 +177,8 @@ Core skill rules already covered before this pass:
    `avoid_positional_boolean_parameters`,
    `avoid_equals_and_hash_code_on_mutable_classes`, `avoid_returning_this`,
    `avoid_setters_without_getters`, `prefer_mixin`, and
-  `use_to_and_as_if_applicable`. `prefer_type_over_var` was removed because it
-  conflicts with Effective Dart's local-variable inference guidance.
+  `use_to_and_as_if_applicable`. `prefer_type_over_var` (default-enabled)
+  requires an explicit type instead of `var`; inferred `final` stays allowed.
 - Effective Dart Design API safety not covered by upstream lints:
   `avoid_futureor_return_type`,
   `avoid_nullable_async_or_collection_return_type`, and

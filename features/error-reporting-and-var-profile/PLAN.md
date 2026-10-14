@@ -1,6 +1,6 @@
 # Error-reporting applicability and var profile
 
-Status: Ready
+Status: Complete
 
 ## Outcome + scope
 
@@ -18,10 +18,10 @@ Authority: Owner's request: fix both rules to match the skill text, failing test
 
 ## Acceptance + steps
 
-- [ ] An entrypoint whose same-package import graph has no `Crash` facade (class `Crash` with static `init`) and no provider import (`firebase_crashlytics`, `sentry`, `sentry_*`) → no `crash_init_before_run_app`.
-- [ ] A reachable `Crash` facade or a provider import without an awaited `Crash.init` before `runApp` → still reports; existing awaited/app-runner cases unchanged.
-- [ ] `prefer_type_over_var` is not registered, its source file is gone, and the off-profile file test forbids it.
-- [ ] Version 0.13.3 in `pubspec.yaml` and the first CHANGELOG entry; full `python3 .hooks/hard-eng.py check` passes.
+- [x] An entrypoint whose same-package import graph has no `Crash` facade (class `Crash` with static `init`) and no provider import (`firebase_crashlytics`, `sentry`, `sentry_*`) → no `crash_init_before_run_app`.
+- [x] A reachable `Crash` facade or a provider import without an awaited `Crash.init` before `runApp` → still reports; existing awaited/app-runner cases unchanged.
+- [x] `prefer_type_over_var` is not registered, its source file is gone, and the off-profile file test forbids it.
+- [x] Version 0.13.3 in `pubspec.yaml` and the first CHANGELOG entry; full `python3 .hooks/hard-eng.py check` passes.
 
 ## Baseline + execution
 
@@ -39,9 +39,9 @@ N/A — analyzer diagnostics have no visual interface.
 
 ## Verification
 
-Result: Pending
-Evidence: Pending focused red/green runs and the full check.
-E2E: Pending — the native analyzer harness proves diagnostics; `RUN_FLUTTER_PLUGIN_SMOKE=1` smoke covers the real analysis server.
+Result: Passed
+Evidence: Red first: `CrashInitBeforeRunAppTest` failed only `test_noErrorReporting_noDiagnostic`; `plugin_registration_test.dart` failed 5 registration cases. Green: crash suite 67 passed; registration + local-variable suites 54 passed; `dart analyze --fatal-infos` on changed Dart files clean. Codex adversarial review round 1 found sibling imports could reset detection; red test `test_crashFacadeBeforeUnrelatedSiblingImport_reports` failed, then passed after the fix. Round 2 approved with no findings. Full `python3 .hooks/hard-eng.py check` run on the final tree before push.
+E2E: Passed — `RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart` passed in a real Flutter analysis-server run and no longer reports `prefer_type_over_var`.
 
 Delivery target: Merge
 Delivery: Pending — PR merged into main with required checks passing, main CI green, 0.13.3 published.

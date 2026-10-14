@@ -564,8 +564,7 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
             .split('\n')
             .where((line) => line.contains('riverpod_watch_no_select'));
         expect(broadWatches, hasLength(1));
-        // performance.md:76: a field read of a whole watch reports; a computed
-        // collection watched whole (routing-app-shell.md) and a scalar stay clean.
+        // performance.md:76: whole-watch field reads report; computed collections and scalars do not.
         expect(broadWatches.single, contains('watch_boundaries.dart:20:'));
         final atomicUpdates = output
             .split('\n')
@@ -618,8 +617,7 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
         final callbacks = contexts.where((line) => line.contains('avoid_ref_watch_outside_build'));
         expect(callbacks, hasLength(1));
         expect(callbacks.single, contains('resolved_contexts.dart:8:'));
-        // Rules report at error severity; the fixture's own lint findings are
-        // expected, so only other errors (the fixture must compile) fail here.
+        // Fixture lint findings are expected errors; only other errors (compile failures) fail here.
         const contextLints = {
           'avoid_magic_literals',
           'avoid_returning_widgets',

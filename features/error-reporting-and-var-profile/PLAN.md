@@ -40,7 +40,7 @@ N/A — analyzer diagnostics have no visual interface.
 ## Verification
 
 Result: Passed
-Evidence: Red first: `CrashInitBeforeRunAppTest` failed only `test_noErrorReporting_noDiagnostic`; `plugin_registration_test.dart` failed 5 registration cases. Green: crash suite 67 passed; registration + local-variable suites 54 passed; `dart analyze --fatal-infos` on changed Dart files clean. Codex adversarial review round 1 found sibling imports could reset detection; red test `test_crashFacadeBeforeUnrelatedSiblingImport_reports` failed, then passed after the fix. Round 2 approved with no findings. Full `python3 .hooks/hard-eng.py check` run on the final tree before push.
+Evidence: Red first: `CrashInitBeforeRunAppTest` failed only `test_noErrorReporting_noDiagnostic`; `plugin_registration_test.dart` failed 5 registration cases. Green: crash suite 67 passed; registration + local-variable suites 54 passed; `dart analyze --fatal-infos` on changed Dart files clean. Codex adversarial review round 1 found sibling imports could reset detection; red test `test_crashFacadeBeforeUnrelatedSiblingImport_reports` failed, then passed after the fix. Round 2 approved with no findings. The full check then flagged multi-line comment blocks in changed files and a test file over 1,000 lines; blocks were cut to one line and the fire-and-forget tests moved to the existing part file. Final full `python3 .hooks/hard-eng.py check` passed 12 of 12 (2,703 tests, 79.42% line coverage against the 70% minimum).
 E2E: Passed — `RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart` passed in a real Flutter analysis-server run and no longer reports `prefer_type_over_var`.
 
 Delivery target: Merge

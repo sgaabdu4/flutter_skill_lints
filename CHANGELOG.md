@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.13.5] - 2026-10-14
+
+- Report `prefer_type_over_var` at error severity, so `var` fails plain
+  `dart analyze` as well as `--fatal-infos`. building-flutter-apps 5.12.2
+  requires explicit types instead of `var`.
+
 ## [0.13.4] - 2026-10-14
 
 - Restore `prefer_type_over_var` as a default-enabled rule: declarations use an

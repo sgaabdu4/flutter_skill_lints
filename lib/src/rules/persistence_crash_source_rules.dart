@@ -202,10 +202,12 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     },
   ),
 
-  /// Initialize Crash before runApp.
+  /// Initialize Crash before runApp when the app has error reporting.
   ///
-  /// Why: Flags main entrypoints that call runApp before Crash.init(). Call and await
-  /// Crash.init() before runApp in the app entrypoint.
+  /// Why: error-reporting.md: with no accepted or present provider, add no SDK or
+  /// facade. The rule applies only when the entrypoint's same-package import graph
+  /// declares the `Crash` facade or imports a Crashlytics or Sentry package. Then call
+  /// and await Crash.init() before runApp in the app entrypoint.
   scannerRule(
     code: const LintCode(
       'crash_init_before_run_app',
@@ -213,11 +215,11 @@ final List<ScannerRule> persistenceCrashSourceRules = [
       correctionMessage: 'Call and await Crash.init() before runApp in the app entrypoint.',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags main entrypoints that call runApp before Crash.init() so the Flutter skill violation is shown during analysis.',
+    description: 'Flags main entrypoints that reach a Crash facade or Crashlytics/Sentry import and call runApp before Crash.init().',
     scan: (reporter, context) {
       if (!_isMainEntrypoint(context)) return;
       final runApp = _firstRunAppInvocation(context);
-      if (runApp == null) return;
+      if (runApp == null || !_reachesErrorReporting(context)) return;
       if (!_awaitsResolvedCrashInitializer(context, runApp.offset)) {
         reporter.report(context, runApp.line, runApp.column);
       }
@@ -248,6 +250,30 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     },
   ),
 ];
+
+bool _reachesErrorReporting(SourceScannerContext context) {
+  final entrypoint = context.unit.declaredFragment?.element;
+  if (entrypoint == null) return false;
+  var found = false;
+  _walkPackageLibraries([entrypoint], _packageRoot(context), (library) {
+    found =
+        library.classes.any(_isCrashFacade) ||
+        _libraryDependencies(library).any(_isErrorReportingProvider);
+    return !found;
+  });
+  return found;
+}
+
+bool _isCrashFacade(ClassElement element) =>
+    element.name == 'Crash' &&
+    element.methods.any((method) => method.isStatic && method.name == 'init');
+
+bool _isErrorReportingProvider(LibraryElement library) {
+  final uri = library.uri;
+  if (uri.scheme != 'package' || uri.pathSegments.isEmpty) return false;
+  final package = uri.pathSegments.first;
+  return package == 'firebase_crashlytics' || package == 'sentry' || package.startsWith('sentry_');
+}
 
 bool _awaitsResolvedCrashInitializer(SourceScannerContext context, int runAppOffset) {
   for (final main in context.unit.declarations.whereType<FunctionDeclaration>()) {

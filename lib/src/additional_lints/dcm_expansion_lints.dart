@@ -36,7 +36,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_providing_
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_providing_intl_examples.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_publish_to_none.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_sliver_prefix.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_type_over_var.dart';
 
 /// Registers additional clean-room DCM-inspired lint rules.
 void registerDcmExpansionLints(PluginRegistry registry) {
@@ -77,5 +76,4 @@ void registerDcmExpansionLints(PluginRegistry registry) {
   registry.registerWarningRule(PreferProvidingIntlExamples());
   registry.registerWarningRule(PreferPublishToNone());
   registry.registerWarningRule(PreferSliverPrefix());
-  registry.registerWarningRule(PreferTypeOverVar());
 }

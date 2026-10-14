@@ -493,7 +493,6 @@ prefer_sliver_prefix
 prefer_spacing
 prefer_text_rich
 prefer_transform_over_container
-prefer_type_over_var
 prefer_unique_test_names
 prefer_use_callback
 prefer_use_prefix

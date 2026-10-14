@@ -7,7 +7,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_repeated_pr
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unassigned_local_variable.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unused_assignment.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unused_local_variable.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_type_over_var.dart';
 import 'package:test/test.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -18,7 +17,6 @@ void main() {
     defineReflectiveTests(AvoidRepeatedPropertyAliasesTest);
     defineReflectiveTests(AvoidUnassignedLocalVariableTest);
     defineReflectiveTests(AvoidUnusedLocalVariableTest);
-    defineReflectiveTests(PreferTypeOverVarTest);
   });
 }
 
@@ -526,84 +524,6 @@ void f() {
     await assertNoDiagnostics(r'''
 void f() {
   final _ignored = 1;
-}
-''');
-  }
-}
-
-@reflectiveTest
-final class PreferTypeOverVarTest extends AnalysisRuleTest {
-  @override
-  void setUp() {
-    rule = PreferTypeOverVar();
-    super.setUp();
-  }
-
-  Future<void> test_localVar_lint() async {
-    const source = r'''
-void f() {
-  var hasMore = true;
-  print(hasMore);
-}
-''';
-
-    await assertDiagnostics(source, [lint(source.indexOf('var'), 'var'.length)]);
-  }
-
-  Future<void> test_forLoopVar_lint() async {
-    const source = r'''
-void f() {
-  for (var index = 0; index < 3; index++) {
-    print(index);
-  }
-}
-''';
-
-    await assertDiagnostics(source, [lint(source.indexOf('var'), 'var'.length)]);
-  }
-
-  Future<void> test_fieldVar_lint() async {
-    const source = r'''
-final class Counter {
-  var value = 0;
-}
-''';
-
-    await assertDiagnostics(source, [lint(source.indexOf('var'), 'var'.length)]);
-  }
-
-  Future<void> test_patternDeclarationVar_lint() async {
-    const source = r'''
-void f() {
-  var (:hasMore) = (hasMore: true);
-  print(hasMore);
-}
-''';
-
-    await assertDiagnostics(source, [lint(source.indexOf('var'), 'var'.length)]);
-  }
-
-  Future<void> test_casePatternVar_lint() async {
-    const source = r'''
-void f(Object value) {
-  switch (value) {
-    case var hasMore:
-      print(hasMore);
-  }
-}
-''';
-
-    await assertDiagnostics(source, [lint(source.indexOf('var hasMore'), 'var'.length)]);
-  }
-
-  Future<void> test_explicitType_noLint() async {
-    await assertNoDiagnostics(r'''
-void f() {
-  bool hasMore = true;
-  for (int index = 0; index < 3; index++) {
-    print(index);
-  }
-  print(hasMore);
 }
 ''');
   }

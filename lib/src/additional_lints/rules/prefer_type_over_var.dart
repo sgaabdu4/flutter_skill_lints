@@ -12,6 +12,7 @@ final class PreferTypeOverVar extends AnalysisRule {
     'prefer_type_over_var',
     "Prefer an explicit type annotation over 'var'.",
     correctionMessage: 'Replace var with the inferred type so the declaration stays explicit.',
+    severity: DiagnosticSeverity.ERROR,
   );
 
   PreferTypeOverVar()

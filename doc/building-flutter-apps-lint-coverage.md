@@ -177,7 +177,7 @@ Core skill rules already covered before this pass:
    `avoid_positional_boolean_parameters`,
    `avoid_equals_and_hash_code_on_mutable_classes`, `avoid_returning_this`,
    `avoid_setters_without_getters`, `prefer_mixin`, and
-  `use_to_and_as_if_applicable`. `prefer_type_over_var` (default-enabled)
+  `use_to_and_as_if_applicable`. `prefer_type_over_var` (default-enabled, error)
   requires an explicit type instead of `var`; inferred `final` stays allowed.
 - Effective Dart Design API safety not covered by upstream lints:
   `avoid_futureor_return_type`,

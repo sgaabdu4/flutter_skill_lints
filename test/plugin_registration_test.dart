@@ -432,6 +432,7 @@ const _modelSkillErrorDiagnostics = [
   'ad_hoc_intl_format',
   'inline_num_clamp',
   'record_use_outside_ffi',
+  'prefer_type_over_var',
 ];
 
 /// Skill codes whose MUST/NEVER text was confirmed in the final severity sweep.

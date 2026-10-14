@@ -14,13 +14,7 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 part 'persistence_crash_source_rules/persistence_crash_source_rules_part_01.dart';
 
 final List<ScannerRule> persistenceCrashSourceRules = [
-  /// Hive generated adapters must reserve every @HiveType id.
-  ///
-  /// Why: @GenerateAdapters assigns ids to its specs. A @HiveType class in the same
-  /// registration scope keeps its hand-written id, so every such id must appear in
-  /// reservedTypeIds or a generated adapter can claim it. The check resolves the
-  /// annotations and follows the analyzer's import graph, so it also sees @HiveType
-  /// classes that live in another file of the registration scope.
+  /// A generated adapter can claim any @HiveType id in its scope missing from reservedTypeIds.
   scannerRule(
     code: const LintCode(
       'hive_reserved_type_ids_missing',
@@ -33,10 +27,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     scan: _reportUnreservedHiveTypeIds,
   ),
 
-  /// Hive tests should close boxes.
-  ///
-  /// Why: Flags test files that use Hive without Hive.close(). Call Hive.close() from
-  /// tearDown or cleanup.
+  /// Open Hive boxes leak between tests unless tearDown calls Hive.close().
   scannerRule(
     code: const LintCode(
       'hive_test_close_missing',
@@ -54,13 +45,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     },
   ),
 
-  /// Hive typeId values must be unique across a registration scope.
-  ///
-  /// Why: Hive registers one adapter per typeId. Two @HiveType classes that share an
-  /// id break registration or read each other's bytes. The check resolves @HiveType
-  /// ids in this library and in every library the analyzer's import graph reaches, and
-  /// reports where the two ids first meet. Assign a fresh permanent typeId and retire
-  /// the old id.
+  /// Two @HiveType classes sharing an id break registration or read each other's bytes.
   scannerRule(
     code: const LintCode(
       'hive_duplicate_type_id',
@@ -72,11 +57,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     scan: _reportDuplicateHiveTypeIds,
   ),
 
-  /// HiveField indices must be unique within one class.
-  ///
-  /// Why: HiveField indexes are per @HiveType class. Two fields of the same class with
-  /// the same index overwrite each other on disk; separate classes may each use 0, 1.
-  /// Append with a new HiveField index; never reuse a retired index.
+  /// HiveField indexes are per class; a reused index overwrites another field on disk.
   scannerRule(
     code: const LintCode(
       'hive_duplicate_field_id',
@@ -88,11 +69,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     scan: _reportDuplicateHiveFieldIds,
   ),
 
-  /// Freezed classes use @GenerateAdapters, not @HiveType.
-  ///
-  /// Why: hive-persistence.md: "@HiveType for non-Freezed. @GenerateAdapters for
-  /// Freezed." Freezed owns the constructor, so its Hive slots come from the
-  /// AdapterSpec schema instead of hand-written annotations.
+  /// hive-persistence.md: Freezed owns the constructor, so Hive slots come from AdapterSpec.
   scannerRule(
     code: const LintCode(
       'hive_type_on_freezed_class',
@@ -120,11 +97,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     },
   ),
 
-  /// AdapterSpec names a persistence Model, never a domain type.
-  ///
-  /// Why: hive-persistence.md: "AdapterSpec<T>() always names a persistence-layer Model
-  /// from /data/models/, never a /domain/entities/ class. Domain entities stay
-  /// Hive-free." The resolved type argument's declaring library decides the layer.
+  /// hive-persistence.md: domain entities stay Hive-free; T's declaring library decides the layer.
   scannerRule(
     code: const LintCode(
       'hive_adapter_spec_domain_type',
@@ -151,11 +124,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     },
   ),
 
-  /// Notifiers never touch Hive.
-  ///
-  /// Why: hive-persistence.md: "Notifier consumes IOrderRepository only — never
-  /// touches Hive." Storage calls stay in local datasources behind the repository, so
-  /// tests override the repository without Hive setup.
+  /// hive-persistence.md: storage stays in local datasources behind the repository.
   scannerRule(
     code: const LintCode(
       'notifier_hive_access',
@@ -178,10 +147,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     },
   ),
 
-  /// Avoid direct FirebaseCrashlytics calls outside crash_service.dart.
-  ///
-  /// Why: Flags FirebaseCrashlytics.instance usage outside the Crash facade. Route feature
-  /// code through Crash.init/error/log.
+  /// error-reporting.md: SDK calls stay in crash_service.dart; feature code calls Crash.
   scannerRule(
     code: const LintCode(
       'crash_direct_firebase_call',
@@ -202,12 +168,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     },
   ),
 
-  /// Initialize Crash before runApp when the app has error reporting.
-  ///
-  /// Why: error-reporting.md: with no accepted or present provider, add no SDK or
-  /// facade. The rule applies only when the entrypoint's same-package import graph
-  /// declares the `Crash` facade or imports a Crashlytics or Sentry package. Then call
-  /// and await Crash.init() before runApp in the app entrypoint.
+  /// error-reporting.md: with no accepted or present provider, add no SDK or facade.
   scannerRule(
     code: const LintCode(
       'crash_init_before_run_app',
@@ -226,12 +187,7 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     },
   ),
 
-  /// Fire-and-forget futures need local error handling.
-  ///
-  /// Why: Flags feasible unawaited fire-and-forget calls without catch handling. Catch inside
-  /// the fire-and-forget future or attach catchError. A resolved callee whose futures are
-  /// all Riverpod `Mutation.run` calls, Flutter/go_router route or modal futures, or
-  /// callees that catch internally already captures its failures and is not reported.
+  /// Mutation.run, route/modal futures and internally caught callees already capture failures.
   scannerRule(
     code: const LintCode(
       'fire_and_forget_missing_catch',
@@ -627,10 +583,7 @@ final class _UnawaitedVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
-/// Whether the future passed to `unawaited` handles its own errors: a `catchError`/`onError`
-/// chain, an inline closure or resolved callee whose failures are captured (see
-/// [_FailureCapture]). Callees without an available body (SDK, abstract, external) keep the
-/// keyword heuristic.
+/// Callees without an available body (SDK, abstract, external) keep the keyword heuristic.
 bool _isFireAndForgetGuarded(SourceScannerContext context, MethodInvocation invocation) {
   final arguments = invocation.argumentList.arguments;
   if (arguments.isEmpty) return true;
@@ -694,16 +647,7 @@ bool _catchesInternally(FunctionBody body) {
   return visitor.catches;
 }
 
-/// Decides whether a fire-and-forget callee's failures are captured by a mechanism the
-/// building-flutter-apps skill prescribes, following resolved callees a few levels deep:
-///
-/// - the body catches internally (services-and-singletons.md "Catch internally"), or
-/// - it throws nothing and every future it awaits or returns is captured: a Riverpod
-///   `Mutation.run` (failures land in the mutation's `MutationError` state), a route or
-///   modal future (it completes with the popped result, not an error), or a resolved
-///   callee that is itself captured (including same-class calls such as
-///   lists-forms-workflows.md `loadMore` awaiting `_loadPage`), or
-/// - it has no future and makes no call at all (for example `async => null`).
+/// services-and-singletons.md: a callee catches internally or awaits only captured futures.
 final class _FailureCapture {
   _FailureCapture(this.context);
 
@@ -712,8 +656,7 @@ final class _FailureCapture {
   final SourceScannerContext context;
   final Set<ExecutableElement> _visiting = {};
 
-  /// Whether [element]'s declared body captures its failures; null when no body is
-  /// available (SDK, abstract or external callee).
+  /// Null when no body is available (SDK, abstract or external callee).
   bool? handlesCallee(Element? element, int depth) {
     if (element is! ExecutableElement) return null;
     final declared = element.baseElement;
@@ -733,8 +676,7 @@ final class _FailureCapture {
     }
   }
 
-  /// [scope] and [owner] resolve top-level and same-class calls when [body] comes from
-  /// another library, whose declaration is only available as a parsed (unresolved) AST.
+  /// [scope] and [owner] resolve calls when [body] is an unresolved AST from another library.
   bool handlesBody(FunctionBody body, int depth, Scope? scope, {InterfaceElement? owner}) {
     if (_catchesInternally(body)) return true;
     final sources = _FutureSourceCollector();
@@ -774,9 +716,7 @@ Element? _unresolvedSameClassCall(Expression expression, InterfaceElement? owner
       _ => null,
     };
 
-/// A Riverpod `Mutation.run`, or a Flutter / go_router navigation call (including a
-/// go_router_builder route's generated `push`, and `maybePop`) whose future completes with
-/// the route result.
+/// Mutation.run records failures in state; route and modal futures complete with the result.
 bool _isFailureRecordingCall(Element? element) {
   if (element is! ExecutableElement) return false;
   final declared = element.baseElement;
@@ -825,8 +765,7 @@ const _routePushMethods = {
   'replaceNamed',
 };
 
-/// Collects the futures a body awaits or returns, whether it throws, and whether it calls
-/// anything. Nested closures run on their own schedule and are skipped.
+/// Nested closures run on their own schedule and are skipped.
 final class _FutureSourceCollector extends RecursiveAstVisitor<void> {
   final futures = <Expression>[];
   bool throws = false;

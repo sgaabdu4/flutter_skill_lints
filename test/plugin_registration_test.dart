@@ -338,16 +338,14 @@ void main() {
       'prefer_equatable_mixin',
       'prefer_compute_over_isolate_run',
       'avoid_missing_controller',
-      // No skill basis; the skill's own Debouncer.call and inline record
-      // signatures (dart-patterns-records.md:61-80) contradict them.
+      // No skill basis; dart-patterns-records.md:61-80 Debouncer.call and records contradict them.
       'avoid_declaring_call_method',
       'move_records_to_typedefs',
       // Duplicates use_dedicated_media_query_methods: one read reported twice.
       'prefer_dedicated_media_query_methods',
       // Duplicates avoid_null_bang, which core-stack.md:60 names.
       'avoid_non_null_assertion',
-      // No skill basis; testing.md compares with bare expected values, and
-      // expect() already wraps them in equals().
+      // No skill basis; testing.md uses bare expected values, which expect() wraps in equals().
       'prefer_test_matchers',
       // analysis-options.md forbids it: Effective Dart prefers inferred locals.
       'prefer_type_over_var',

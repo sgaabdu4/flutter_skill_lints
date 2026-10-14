@@ -274,8 +274,7 @@ void onPressed(Object ref) {
 ''', 'unawaited(_addTodo');
   }
 
-  // modals-navigation.md Dismiss Modal -> Push Route: route futures complete with
-  // the popped result, so a callee that only awaits navigation has nothing to catch.
+  // modals-navigation.md: route futures complete with the popped result, not an error.
   Future<void> test_navigationCallee_noDiagnostic() async {
     newFile('$testPackageLibPath/core/extensions/context_extensions.dart', r'''
 import 'package:flutter/material.dart';
@@ -341,8 +340,7 @@ class CreateScreen {
 ''');
   }
 
-  // routing-app-shell.md Bento sheet: `maybePop` completes with whether a route
-  // was popped, so a callee that only awaits it has nothing to catch.
+  // routing-app-shell.md: `maybePop` completes with whether a route was popped, not an error.
   Future<void> test_maybePopCallee_noDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
 import 'dart:async';
@@ -387,8 +385,7 @@ class SyncScreen {
 ''', 'unawaited(_confirmAndSync');
   }
 
-  // lists-forms-workflows.md pagination: `loadMore` delegates to `_loadPage`,
-  // which catches and writes error state.
+  // lists-forms-workflows.md: `loadMore` delegates to `_loadPage`, which catches.
   Future<void> test_calleeDelegatingToCatchingMethod_noDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
 import 'dart:async';
@@ -423,9 +420,7 @@ void onScroll(PaginatedNotifier notifier) {
 ''');
   }
 
-  // lists-forms-workflows.md:40-84: the screen calls
-  // `unawaited(notifier.loadMore())` on a notifier in another library, whose
-  // loadMore/refresh await or return `_loadPage`, which catches.
+  // lists-forms-workflows.md:40-84: an imported notifier's loadMore awaits `_loadPage`, which catches.
   Future<void> test_importedNotifierDelegatingToCatchingMethod_noDiagnostic() async {
     newFile('$testPackageLibPath/paginated_notifier.dart', _paginatedNotifier);
     await assertRuleNoDiagnostics(r'''

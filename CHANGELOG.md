@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.4] - 2026-10-14
+
+- Restore `prefer_type_over_var` as a default-enabled rule: declarations use an
+  explicit type instead of `var`. It now also reports `var` in `for`-in and
+  `await for` loop variables and `for`-in patterns. Inferred `final` stays
+  allowed.
+
 ## [0.13.3] - 2026-10-14
 
 - Report `crash_init_before_run_app` only when the entrypoint's app has error

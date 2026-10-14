@@ -118,15 +118,105 @@ final class CrashInitBeforeRunAppTest extends _PersistenceCrashRuleTest {
   @override
   String get ruleName => 'crash_init_before_run_app';
 
+  @override
+  void setUp() {
+    newPackage('sentry_flutter').addFile('lib/sentry_flutter.dart', r'''
+abstract final class SentryFlutter {
+  static Future<void> init(void Function(Object options) configure) async {}
+}
+''');
+    newPackage('firebase_crashlytics').addFile('lib/firebase_crashlytics.dart', r'''
+class FirebaseCrashlytics {
+  static final instance = FirebaseCrashlytics();
+}
+''');
+    super.setUp();
+  }
+
   Future<void> test_reportsMissingInit() async {
     await assertRuleDiagnostic(
       r'''
+abstract final class Crash {
+  static Future<void> init() async {}
+}
 void runApp(Object app) {}
 Future<void> main() async {
   runApp(Object());
 }
 ''',
       'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_noErrorReporting_noDiagnostic() async {
+    newFile('$testPackageLibPath/app.dart', r'''
+class App {}
+''');
+    await assertRuleNoDiagnostics(r'''
+import 'app.dart';
+void runApp(Object app) {}
+Future<void> main() async {
+  runApp(App());
+}
+''', path: '$testPackageLibPath/main.dart');
+  }
+
+  Future<void> test_reachableCrashFacadeWithoutInit_reports() async {
+    newFile('$testPackageLibPath/core/crash_service.dart', r'''
+abstract final class Crash {
+  static Future<void> init() async {}
+  static void error(Object error, StackTrace stackTrace) {}
+}
+''');
+    newFile('$testPackageLibPath/app.dart', r'''
+import 'core/crash_service.dart';
+class App {
+  void fail(Object error) => Crash.error(error, StackTrace.current);
+}
+''');
+    await assertRuleDiagnostic(
+      r'''
+import 'app.dart';
+void runApp(Object app) {}
+Future<void> main() async {
+  runApp(App());
+}
+''',
+      'runApp(App())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_sentryProviderWithoutCrashInit_reports() async {
+    await assertRuleDiagnostic(
+      r'''
+import 'package:sentry_flutter/sentry_flutter.dart';
+void runApp(Object app) {}
+Future<void> main() async {
+  await SentryFlutter.init((options) {});
+  runApp(Object());
+}
+''',
+      'runApp(Object())',
+      path: '$testPackageLibPath/main.dart',
+    );
+  }
+
+  Future<void> test_crashlyticsProviderInImportedFileWithoutCrashInit_reports() async {
+    newFile('$testPackageLibPath/core/reporting.dart', r'''
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+final reporter = FirebaseCrashlytics.instance;
+''');
+    await assertRuleDiagnostic(
+      r'''
+import 'core/reporting.dart';
+void runApp(Object app) {}
+Future<void> main() async {
+  runApp(reporter);
+}
+''',
+      'runApp(reporter)',
       path: '$testPackageLibPath/main.dart',
     );
   }
@@ -415,6 +505,7 @@ Future<void> main() async {
 
   Future<void> test_unrelatedAwaitedInitializer_stillReports() async {
     newFile('$testPackageLibPath/crash.dart', r'''
+abstract final class Crash { static Future<void> init() async {} }
 class CrashReporter {
   Future<void> initialize() async {}
 }

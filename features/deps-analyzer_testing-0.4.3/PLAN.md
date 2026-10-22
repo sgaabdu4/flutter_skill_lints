@@ -8,7 +8,8 @@ The package resolves `analyzer_testing` 0.4.3 instead of 0.4.2, with every repos
 
 ## Repository context
 
-Owners: `pubspec.lock` (dependency lock); `lib/src/rules/state_source_rules.dart` (`_stateCopyWithArguments`). Dependabot opened PR #111 with the bump; this plan records it for the Hard Eng plan gate.
+Owners: `pubspec.lock` (dependency lock); `lib/src/rules/state_source_rules.dart` (`_stateCopyWithArguments`).
+The Hard Eng comment gate applies to that changed file, so its multi-line rule doc comments are removed; each restated the rule's problem and correction messages. Dependabot opened PR #111 with the bump; this plan records it for the Hard Eng plan gate.
 
 ## Decisions + authorization
 

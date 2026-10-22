@@ -6,6 +6,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> stateSourceRules = [
+  /// Avoid nullable collection types in fields, top-level variables, Freezed
   scannerRule(
     code: const LintCode(
       'nullable_collection_type',
@@ -20,6 +21,7 @@ final List<ScannerRule> stateSourceRules = [
     },
   ),
 
+  /// Freezed state should not use empty strings as sentinels.
   scannerRule(
     code: const LintCode(
       'state_empty_string_sentinel',
@@ -47,6 +49,7 @@ final List<ScannerRule> stateSourceRules = [
     },
   ),
 
+  /// Do not encode boolean state as "1"/"0" string sentinels.
   scannerRule(
     code: const LintCode(
       'state_bool_string_sentinel',
@@ -65,6 +68,7 @@ final List<ScannerRule> stateSourceRules = [
     },
   ),
 
+  /// Do not store raw API responses in state.
   scannerRule(
     code: const LintCode(
       'state_raw_response',
@@ -78,6 +82,7 @@ final List<ScannerRule> stateSourceRules = [
     },
   ),
 
+  /// Do not surface raw exception strings in state.
   scannerRule(
     code: const LintCode(
       'state_raw_error_to_string',
@@ -95,6 +100,7 @@ final List<ScannerRule> stateSourceRules = [
     },
   ),
 
+  /// Notifier state should not carry raw error strings.
   scannerRule(
     code: const LintCode(
       'state_freezed_nullable_error',
@@ -119,6 +125,7 @@ final List<ScannerRule> stateSourceRules = [
     },
   ),
 
+  /// Avoid broad invalidation before navigation-critical route changes.
   scannerRule(
     code: const LintCode(
       'state_broad_invalidation',
@@ -141,6 +148,7 @@ final List<ScannerRule> stateSourceRules = [
     },
   ),
 
+  /// Use context.mounted after async gaps in widgets.
   scannerRule(
     code: const LintCode(
       'async_context_mounted_style',
@@ -161,6 +169,7 @@ final List<ScannerRule> stateSourceRules = [
     },
   ),
 
+  /// Do not use State.mounted directly.
   scannerRule(
     code: const LintCode(
       'bare_state_mounted_forbidden',

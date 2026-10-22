@@ -400,7 +400,8 @@ final class _RawResponseStateVisitor extends RecursiveAstVisitor<void> {
 }
 
 /// Arguments of `state.copyWith(...)`, whether `copyWith` is a method or a
-/// Freezed callable getter (resolved as a function expression invocation).
+/// Freezed callable getter (resolved as a function expression invocation whose
+/// function is a property access or, since analyzer 14.5, a prefixed identifier).
 ArgumentList? _stateCopyWithArguments(Expression expression) => switch (expression) {
   MethodInvocation(
     methodName: SimpleIdentifier(name: 'copyWith'),
@@ -410,9 +411,13 @@ ArgumentList? _stateCopyWithArguments(Expression expression) => switch (expressi
     argumentList,
   FunctionExpressionInvocation(
     function: PropertyAccess(
-      target: SimpleIdentifier(name: 'state'),
-      propertyName: SimpleIdentifier(name: 'copyWith'),
-    ),
+          target: SimpleIdentifier(name: 'state'),
+          propertyName: SimpleIdentifier(name: 'copyWith'),
+        ) ||
+        PrefixedIdentifier(
+          prefix: SimpleIdentifier(name: 'state'),
+          identifier: SimpleIdentifier(name: 'copyWith'),
+        ),
     :final argumentList,
   ) =>
     argumentList,

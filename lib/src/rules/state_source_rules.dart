@@ -7,11 +7,6 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> stateSourceRules = [
   /// Avoid nullable collection types in fields, top-level variables, Freezed
-  /// factory parameters, and return types outside wire DTOs.
-  ///
-  /// Why: Empty collections represent "no items" better than nullable collection
-  /// types. If "not loaded" or "not applicable" is a distinct state, model that
-  /// as AsyncValue or a sealed union instead of `List<T>?` / `Map<K, V>?`.
   scannerRule(
     code: const LintCode(
       'nullable_collection_type',
@@ -27,11 +22,6 @@ final List<ScannerRule> stateSourceRules = [
   ),
 
   /// Freezed state should not use empty strings as sentinels.
-  ///
-  /// Why: Empty string is valid transient input text, but it is a bad "missing"
-  /// value for state. Use nullable optional strings for absence, Value Objects
-  /// for required domain strings, or explicit draft/search/input field names for
-  /// editable text.
   scannerRule(
     code: const LintCode(
       'state_empty_string_sentinel',
@@ -60,10 +50,6 @@ final List<ScannerRule> stateSourceRules = [
   ),
 
   /// Do not encode boolean state as "1"/"0" string sentinels.
-  ///
-  /// Why: Boolean selectors, signatures, and state should carry boolean meaning
-  /// directly. String sentinels hide the contract, make accidental wire-format
-  /// coupling easy, and bypass type checking.
   scannerRule(
     code: const LintCode(
       'state_bool_string_sentinel',
@@ -83,9 +69,6 @@ final List<ScannerRule> stateSourceRules = [
   ),
 
   /// Do not store raw API responses in state.
-  ///
-  /// Why: Flags raw JSON or response values stored in UI state. Extract the fields needed by
-  /// the UI.
   scannerRule(
     code: const LintCode(
       'state_raw_response',
@@ -100,10 +83,6 @@ final List<ScannerRule> stateSourceRules = [
   ),
 
   /// Do not surface raw exception strings in state.
-  ///
-  /// Why: Flags String `error:` arguments built from the caught exception, such as
-  /// `e.toString()`, `'Failed: $e'` or `e.message`. Translate failures to a typed
-  /// AppError before they enter UI state.
   scannerRule(
     code: const LintCode(
       'state_raw_error_to_string',
@@ -122,10 +101,6 @@ final List<ScannerRule> stateSourceRules = [
   ),
 
   /// Notifier state should not carry raw error strings.
-  ///
-  /// Why: AppError is the sole error type in notifier state. Flags String error
-  /// fields and Freezed factory parameters in `*State` classes; a Flutter
-  /// widget State is not notifier state.
   scannerRule(
     code: const LintCode(
       'state_freezed_nullable_error',
@@ -151,9 +126,6 @@ final List<ScannerRule> stateSourceRules = [
   ),
 
   /// Avoid broad invalidation before navigation-critical route changes.
-  ///
-  /// Why: Flags broad invalidation before navigation-critical route changes. Persist,
-  /// targeted-sync state, then navigate.
   scannerRule(
     code: const LintCode(
       'state_broad_invalidation',
@@ -177,9 +149,6 @@ final List<ScannerRule> stateSourceRules = [
   ),
 
   /// Use context.mounted after async gaps in widgets.
-  ///
-  /// Why: Flags widget mounted checks after async gaps instead of context.mounted. Replace
-  /// mounted checks with context.mounted for BuildContext safety.
   scannerRule(
     code: const LintCode(
       'async_context_mounted_style',
@@ -201,10 +170,6 @@ final List<ScannerRule> stateSourceRules = [
   ),
 
   /// Do not use State.mounted directly.
-  ///
-  /// Why: The Flutter skill requires BuildContext safety to be expressed as
-  /// `context.mounted`, even inside `State`. Capture `final context =
-  /// this.context;` before async/post-frame work and guard that context.
   scannerRule(
     code: const LintCode(
       'bare_state_mounted_forbidden',
@@ -244,10 +209,7 @@ final class _NullableCollectionVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
-/// Whether [type] sits in a field, top-level variable, Freezed
-/// redirecting-factory parameter, or function/method return type: the places
-/// that model "no items" (value-objects.md:45). Locals and ordinary parameters
-/// may be nullable, as in the skill's `...?conditionalItems` spread.
+/// Fields, top-level variables, Freezed factory parameters and returns model "no items" (value-objects.md:45).
 bool _isStoredOrReturnedType(NamedType type) {
   AstNode annotation = type;
   for (var parent = annotation.parent; parent != null; parent = parent.parent) {
@@ -399,8 +361,7 @@ final class _RawResponseStateVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
-/// Arguments of `state.copyWith(...)`, whether `copyWith` is a method or a
-/// Freezed callable getter (resolved as a function expression invocation).
+/// A Freezed callable copyWith resolves as PropertyAccess, or PrefixedIdentifier since analyzer 14.5.
 ArgumentList? _stateCopyWithArguments(Expression expression) => switch (expression) {
   MethodInvocation(
     methodName: SimpleIdentifier(name: 'copyWith'),
@@ -410,9 +371,13 @@ ArgumentList? _stateCopyWithArguments(Expression expression) => switch (expressi
     argumentList,
   FunctionExpressionInvocation(
     function: PropertyAccess(
-      target: SimpleIdentifier(name: 'state'),
-      propertyName: SimpleIdentifier(name: 'copyWith'),
-    ),
+          target: SimpleIdentifier(name: 'state'),
+          propertyName: SimpleIdentifier(name: 'copyWith'),
+        ) ||
+        PrefixedIdentifier(
+          prefix: SimpleIdentifier(name: 'state'),
+          identifier: SimpleIdentifier(name: 'copyWith'),
+        ),
     :final argumentList,
   ) =>
     argumentList,

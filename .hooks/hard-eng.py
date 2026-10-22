@@ -18,9 +18,10 @@ from collections.abc import Generator
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from contextlib import AbstractContextManager, contextmanager, nullcontext
 from pathlib import Path
-from typing import TYPE_CHECKING, TypedDict, cast
+from typing import IO, TYPE_CHECKING, TypedDict, cast
 from urllib.parse import unquote, urljoin, urlparse
 
+import swift_setup
 from gate_config import (
     Gate,
     Group,
@@ -30,11 +31,17 @@ from gate_config import (
     generated_sources,
     nonproduction_source,
     validate_dart_boundaries,
-    validate_dart_exclusions,
 )
 from project_setup import package_script_arguments as test_arguments
+from project_setup import validate_dart_exclusions
 from tool_setup import managed_command, provision_tools
-from untrusted_input import DECLARATIONS, reject_jsdoc_casts
+from untrusted_input import (
+    next_route_types,
+    project_command,
+    reject_jsdoc_casts,
+    typescript_projects,
+    validate_typescript,
+)
 
 if TYPE_CHECKING:
     from argparse import Namespace
@@ -55,6 +62,7 @@ DartOptions = TypedDict(
 
 
 ROOT = Path(__file__).resolve().parents[1]
+TEST_REPORTS = {"python-tests", "lcov-tests", "dart-tests", "xcode-tests"}
 DART_TYPING: dict[str, dict[str, dict[str, bool] | list[str]]] = {
     "analyzer": {
         "exclude": [],
@@ -202,6 +210,8 @@ def validate_dart_typing(
 def reject_test_filters(
     command: list[str], directory: Path, language: str | None
 ) -> None:
+    if language == "swift":
+        return swift_setup.reject_test_filters(command)
     arguments = test_arguments(command, directory)
     if language == "python":
         short_flags = ()
@@ -304,6 +314,7 @@ def production_files(
         "python": {".py"},
         "javascript": {".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".mts", ".cts"},
         "dart": {".dart"},
+        "swift": {".swift"},
     }
     language, sources = group.get("language"), group.get("sources")
     if language not in extensions or not isinstance(sources, list) or not sources:
@@ -336,7 +347,9 @@ def production_files(
         directory,
         [] if include_tests else [str(file.relative_to(directory)) for file in files],
     )
-    files -= {directory / name for name in excluded}
+    files -= {directory / name for name in excluded} | swift_setup.unchanged_starters(
+        files
+    )
     if not files:
         raise ValueError("Production sources contain no supported source files")
     return files
@@ -408,52 +421,11 @@ def prepare_command(
                 ),
             ]
         elif language == "javascript":
-            validate_typescript(command, directory, group, timeout)
+            next_route_types(directory, timeout)
+            expected = production_files(directory, group)
+            validate_typescript(ROOT, command, directory, expected, timeout)
     validate_dart_boundaries(command, ROOT / group["path"], timeout)
     return command
-
-
-def validate_typescript(
-    command: list[str], directory: Path, group: Group, timeout: float
-) -> None:
-    result = subprocess.run(
-        [*command, "--showConfig"],
-        cwd=directory,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        check=True,
-    )
-    actual = json.loads(result.stdout)
-    options = actual.get("compilerOptions", {})
-    strict = (
-        "noImplicitAny",
-        "noImplicitThis",
-        "strictNullChecks",
-        "strictFunctionTypes",
-        "strictBindCallApply",
-        "strictPropertyInitialization",
-        "strictBuiltinIteratorReturn",
-        "useUnknownInCatchVariables",
-        "alwaysStrict",
-    )
-    if (
-        options.get("strict") is not True
-        or any(options.get(name, True) is not True for name in strict)
-        or options.get("checkJs") is not True
-        or options.get("noCheck", False) is not False
-    ):
-        raise ValueError(
-            "TypeScript requires all strict checks and JavaScript checking without noCheck"
-        )
-    files = {(directory / name).resolve() for name in actual.get("files", [])}
-    expected = production_files(directory, group)
-    if not {(directory / name).resolve() for name in expected} <= files:
-        raise ValueError("TypeScript configuration omits declared production files")
-    if (ROOT / DECLARATIONS).resolve() not in files:
-        raise ValueError(
-            f"TypeScript configuration omits {DECLARATIONS}; rerun the Hard Eng installer"
-        )
 
 
 def prepare_reports(
@@ -466,7 +438,7 @@ def prepare_reports(
 ) -> tuple[Path, Path | None, Path, set[Path]]:
     coverage_path = None
     expected_sources = set()
-    supported = {"python-tests", "lcov-tests", "dart-tests"} if tests else {scanner}
+    supported = TEST_REPORTS if tests else {scanner}
     names = ("tests", "coverage") if tests else ("path",)
     if kind not in supported or any(
         not isinstance(report.get(name), str) or not report[name] for name in names
@@ -515,6 +487,35 @@ def run_gate(
     return failed
 
 
+def run_projects(
+    group: Group,
+    gate: Gate,
+    command: list[str],
+    directory: Path,
+    timeout: float,
+    stdout: IO[str] | None,
+    stderr: IO[str],
+) -> subprocess.CompletedProcess[bytes]:
+    """Run the gate once, or a TypeScript types gate once per referenced config."""
+    from gitleaks_scan import run_gate_command
+
+    projects: list[list[str]] = [[]]
+    if gate.get("role") == "types" and group.get("language") == "javascript":
+        projects = typescript_projects(ROOT, command, directory)
+    results = [
+        run_gate_command(
+            gate.get("role"),
+            project_command(command, project),
+            directory,
+            timeout,
+            stdout,
+            stderr,
+        )
+        for project in projects
+    ]
+    return next((result for result in results if result.returncode), results[-1])
+
+
 def run_limited_gate(
     group: Group,
     gate: Gate,
@@ -558,6 +559,7 @@ def run_limited_gate(
             ("python", "imports"): "import-linter",
             ("python", "dependencies"): "deptry",
             ("python", "duplicates"): "jscpd",
+            ("swift", "duplicates"): "jscpd",
             ("dart", "dead-code-duplicates"): "dart-decimate",
             ("javascript", "dead-code-duplicates"): "fallow",
         }.get((group.get("language", ""), gate.get("role", "")), scanner)
@@ -581,10 +583,9 @@ def run_limited_gate(
                     if capture and report_path is not None
                     else nullcontext()
                 ) as output:
-                    from gitleaks_scan import run_gate_command
-
-                    result = run_gate_command(
-                        gate.get("role"),
+                    result = run_projects(
+                        group,
+                        gate,
                         command,
                         directory,
                         timeout,
@@ -811,7 +812,7 @@ def impact(base: str) -> int:
     """Tell CI whether the check will run only the secret scan, before tools."""
     from contextlib import redirect_stdout, suppress
 
-    from ci_setup import impact_tools, require_ci_base
+    from ci_setup import impact_runner, impact_tools, require_ci_base
     from gate_config import affected_groups, parse_config
 
     require_ci_base(base)
@@ -819,7 +820,7 @@ def impact(base: str) -> int:
     with redirect_stdout(sys.stderr), suppress(OSError, subprocess.SubprocessError):
         proven = proven_elsewhere(base)
     if proven:
-        print("docs_only=true")
+        print("docs_only=true\nrunner=" + impact_runner([]))
         return 0
     config = parse_config((ROOT / "hard-eng.gates.json").read_text())
     groups: list[Group] = [
@@ -831,6 +832,7 @@ def impact(base: str) -> int:
     docs_only = bool(config["packages"]) and len(selected) == 1
     print(f"docs_only={str(docs_only).lower()}")
     print("tools=" + " ".join(impact_tools(ROOT, selected)))
+    print("runner=" + impact_runner(selected))
     return 0
 
 
@@ -880,7 +882,7 @@ def main() -> int:
     checks.add_argument(
         "--quick",
         action="store_true",
-        help="Run only format, lint, types, tests and the file secret scan, with related JavaScript tests; the Stop hook uses it",
+        help="Run only format, lint, types and the file secret scan; the Stop hook uses it",
     )
     impacts = commands.add_parser(
         "impact", help="Print docs_only=true when only the secret scan applies"
@@ -953,7 +955,7 @@ def main() -> int:
             base=args.base,
             plan_stage=args.plan_stage,
             dependents=not args.without_dependents,
-            related_tests=args.related_tests or args.quick,
+            related_tests=args.related_tests,
             quick=args.quick,
         )
     if args.command == "impact":

@@ -29,9 +29,9 @@ team = teams.create(
 ```typescript
 // TypeScript
 const team = await teams.create({
-    teamId: ID.unique(),
-    name: 'Acme Corp',
-    roles: ['owner', 'admin', 'member'],
+  teamId: ID.unique(),
+  name: 'Acme Corp',
+  roles: ['owner', 'admin', 'member'],
 });
 ```
 
@@ -62,10 +62,10 @@ teams.create_membership(
 ```typescript
 // TypeScript
 await teams.createMembership({
-    teamId: 'team_123',
-    roles: ['member'],
-    email: 'new@example.com',
-    url: 'https://your-app.example.com/accept-invite',  // Your app's invite handler
+  teamId: 'team_123',
+  roles: ['member'],
+  email: 'new@example.com',
+  url: 'https://your-app.example.com/accept-invite', // Your app's invite handler
 });
 ```
 

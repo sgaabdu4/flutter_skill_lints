@@ -77,12 +77,12 @@ Console → Functions → Settings → Logging
 
 **Prefer over polling.** One trigger replace thousands of requests.
 
-| Event | Use Case |
-|-------|----------|
+| Event                                     | Use Case           |
+| ----------------------------------------- | ------------------ |
 | `databases.*.tables.orders.rows.*.create` | Process new orders |
-| `users.*.create` | Send welcome email |
-| `storage.*.files.*.create` | Process uploads |
-| `users.*.sessions.*.create` | Log new sign-ins |
+| `users.*.create`                          | Send welcome email |
+| `storage.*.files.*.create`                | Process uploads    |
+| `users.*.sessions.*.create`               | Log new sign-ins   |
 
 ```dart
 Future<Object?> main(Object rawContext) async {
@@ -101,12 +101,12 @@ Future<Object?> main(Object rawContext) async {
 
 ## Timeout Strategy
 
-| Workload | Timeout |
-|----------|---------|
-| API response (CRUD) | 15s |
-| Image processing | 30s |
-| Report generation | 60s |
-| Data migration | 300s |
+| Workload            | Timeout |
+| ------------------- | ------- |
+| API response (CRUD) | 15s     |
+| Image processing    | 30s     |
+| Report generation   | 60s     |
+| Data migration      | 300s    |
 
 These are workload budgets; synchronous executions have a 30-second hard limit. Long-running work uses async execution and stores any required result in an authorized durable resource:
 
@@ -122,11 +122,10 @@ final status = await functions.getExecution(
 
 ### Execution Result Read
 
-| Mode | Status and result source |
-|------|------------------------|
-| Sync (async flag false/omitted; Dart `xasync`) | the `createExecution` response itself — `status` + `responseStatusCode` + `responseBody` |
-| Async | Status only through realtime `functions.<FUNCTION>.executions` or bounded `getExecution`; read application results from the authorized durable resource |
-
+| Mode                                           | Status and result source                                                                                                                                |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sync (async flag false/omitted; Dart `xasync`) | the `createExecution` response itself — `status` + `responseStatusCode` + `responseBody`                                                                |
+| Async                                          | Status only through realtime `functions.<FUNCTION>.executions` or bounded `getExecution`; read application results from the authorized durable resource |
 - Appwrite does not store response bodies or headers; only synchronous calls return them. Switching a data-returning call to async + polling cannot recover its JSON response, even when execution status is `completed`. [Execution modes](https://appwrite.io/docs/products/functions/execute#execution-modes).
 - Before changing execution mode, prove the caller receives its required result through the selected path. Test doubles must preserve the absent async body; a mocked completed execution containing response JSON is not valid integration proof.
 
@@ -137,14 +136,12 @@ final status = await functions.getExecution(
 ### SDK Response-Format Drift
 
 Symptom = Appwrite records the Function execution or its durable effect, but `createExecution` throws while decoding the SDK `Execution` model. The execution may already have completed → reconcile the source-of-truth state before any retry.
-
 1. Inspect the exact installed SDK tag → default `X-Appwrite-Response-Format` + required model fields + deployed Appwrite compatibility filter.
 2. Proven mismatch → use public `Client.addHeader` at the shared client owner + choose a response format the deployed Appwrite target supports.
 3. Add a client configuration regression + run one execution against the real deployed target → model parse + durable effect PASS.
 4. Do not start with an SDK downgrade, private SDK imports, parser-error suppression, or raw HTTP. Official SDK release aligns its response header and model → remove the override.
 
 Known version-bound case:
-
 - Flutter `appwrite` `26.1.0` defaults to `1.9.6`; its `Execution.fromMap` requires `Execution.resourceType`.
 - Appwrite removes `resourceType` for response formats before `2.0.0`.
 - Version-bound workaround for that exact pair = public `Client.addHeader` with `X-Appwrite-Response-Format: 2.0.0`, after target support proof. Re-check every SDK or Appwrite upgrade.
@@ -167,12 +164,12 @@ await functions.createExecution(
 
 Cron = the function's `schedule` setting. `functions.update` requires `name` + replaces every setting → change `schedule` only through the [full-settings procedure](production-migrations.md#function--variable-cutover).
 
-| Pattern | Description |
-|---------|-------------|
-| `0 * * * *` | Every hour |
+| Pattern     | Description       |
+| ----------- | ----------------- |
+| `0 * * * *` | Every hour        |
 | `0 0 * * *` | Daily at midnight |
-| `0 0 * * 0` | Weekly on Sunday |
-| `0 0 1 * *` | Monthly on 1st |
+| `0 0 * * 0` | Weekly on Sunday  |
+| `0 0 1 * *` | Monthly on 1st    |
 
 ---
 
@@ -211,19 +208,19 @@ Console → Functions → Settings → Domains.
 
 ## Anti-Patterns
 
-| Wrong | Right | Why |
-|-------|-------|-----|
-| Init SDK inside handler | Init outside | Repeated setup |
-| One function does everything | Domain grouping | Hard to scale/debug |
-| Full admin API key | Minimal scope key | Blast radius |
-| Trust client auth only | Validate in function | Easily bypassed |
-| No error handling | Try-catch + structured errors | Silent failures |
-| Log everything in prod | Disable, enable for debug | Performance |
-| Process same event twice | Idempotency check | Duplicates |
-| Long single function | Break into async tasks | Timeout risk |
-| Poll for changes | Event triggers / Realtime | Wasted executions |
+| Wrong                                      | Right                               | Why                                        |
+| ------------------------------------------ | ----------------------------------- | ------------------------------------------ |
+| Init SDK inside handler                    | Init outside                        | Repeated setup                             |
+| One function does everything               | Domain grouping                     | Hard to scale/debug                        |
+| Full admin API key                         | Minimal scope key                   | Blast radius                               |
+| Trust client auth only                     | Validate in function                | Easily bypassed                            |
+| No error handling                          | Try-catch + structured errors       | Silent failures                            |
+| Log everything in prod                     | Disable, enable for debug           | Performance                                |
+| Process same event twice                   | Idempotency check                   | Duplicates                                 |
+| Long single function                       | Break into async tasks              | Timeout risk                               |
+| Poll for changes                           | Event triggers / Realtime           | Wasted executions                          |
 | Poll `getExecution` after a sync execution | Read the `createExecution` response | Row may not exist yet → `404` on a success |
-| Import unused deps | Minimal imports | Slower cold starts |
+| Import unused deps                         | Minimal imports                     | Slower cold starts                         |
 
 ---
 

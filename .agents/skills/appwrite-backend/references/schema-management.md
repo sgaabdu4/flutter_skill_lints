@@ -46,7 +46,6 @@ tables_db.create_table(
 ```
 
 TypeScript same pattern, camelCase.
-
 - Column/index definitions = plain maps; index maps list columns in `attributes`.
 - Inline `type`: `1.9.x` = `string` (+`size`), `integer`, `bigint`, `double`, `boolean`, `datetime`, `point`/`linestring`/`polygon`; `2.x` adds `varchar`/`text`/`mediumtext`/`longtext`/`email`/`enum`/`ip`/`url`. Example = `2.x`; `1.9.x` → `string` + `size`.
 - Relationship columns cannot be inline → `createRelationshipColumn` ([relationships.md](relationships.md)).
@@ -57,12 +56,12 @@ TypeScript same pattern, camelCase.
 
 ### Text
 
-| Type | Max Chars | Storage | Indexing | Use Case |
-|------|-----------|---------|----------|----------|
-| `varchar` | 16,383 | Inline (counts toward 64KB row size) | Fully indexable if size < 768 | Names, slugs, identifiers — query/sort/filter |
-| `text` | 16,383 | Off-page (20-byte pointer in row) | Prefix indexing only | Descriptions, notes — no full indexing |
-| `mediumtext` | 4,194,303 | Off-page | Prefix indexing only | Articles, blog posts |
-| `longtext` | 1,073,741,823 | Off-page | Prefix indexing only | Large documents |
+| Type         | Max Chars     | Storage                              | Indexing                      | Use Case                                      |
+| ------------ | ------------- | ------------------------------------ | ----------------------------- | --------------------------------------------- |
+| `varchar`    | 16,383        | Inline (counts toward 64KB row size) | Fully indexable if size < 768 | Names, slugs, identifiers — query/sort/filter |
+| `text`       | 16,383        | Off-page (20-byte pointer in row)    | Prefix indexing only          | Descriptions, notes — no full indexing        |
+| `mediumtext` | 4,194,303     | Off-page                             | Prefix indexing only          | Articles, blog posts                          |
+| `longtext`   | 1,073,741,823 | Off-page                             | Prefix indexing only          | Large documents                               |
 
 > **`string` deprecated.** Abstracted 4 storage types by size. Use explicit types.
 
@@ -74,11 +73,11 @@ Same max, different storage:
 
 ### Numeric
 
-| Type | Range | Parameters |
-|------|-------|------------|
+| Type      | Range         | Parameters              |
+| --------- | ------------- | ----------------------- |
 | `integer` | signed 32-bit | `min`, `max`, `default` |
-| `bigint` | signed 64-bit | `min`, `max`, `default` |
-| `float` | 64-bit | `min`, `max`, `default` |
+| `bigint`  | signed 64-bit | `min`, `max`, `default` |
+| `float`   | 64-bit        | `min`, `max`, `default` |
 
 JavaScript cannot represent every 64-bit `bigint` exactly. For JS/TS schema
 automation, any supplied integer `min`, `max`, or `default` must satisfy
@@ -87,21 +86,21 @@ forbidden. Use a different exact SDK representation only after target proof.
 
 ### Other
 
-| Type | Description |
-|------|-------------|
-| `boolean` | true/false |
-| `datetime` | ISO 8601 timestamp |
-| `email` | Validated email format |
-| `url` | Validated URL format |
-| `ip` | IPv4 or IPv6 address |
-| `enum` | Predefined values (max 100 elements) |
+| Type       | Description                          |
+| ---------- | ------------------------------------ |
+| `boolean`  | true/false                           |
+| `datetime` | ISO 8601 timestamp                   |
+| `email`    | Validated email format               |
+| `url`      | Validated URL format                 |
+| `ip`       | IPv4 or IPv6 address                 |
+| `enum`     | Predefined values (max 100 elements) |
 
 ### Spatial (Geo)
 
-| Type | Format |
-|------|--------|
-| `point` | `[longitude, latitude]` |
-| `line` | `[[lon1,lat1], [lon2,lat2], ...]` |
+| Type      | Format                             |
+| --------- | ---------------------------------- |
+| `point`   | `[longitude, latitude]`            |
+| `line`    | `[[lon1,lat1], [lon2,lat2], ...]`  |
 | `polygon` | `[[[lon,lat], ...]]` (closed ring) |
 
 ### Encrypted String
@@ -127,12 +126,12 @@ await tablesDB.createVarcharColumn(
 
 ## Index Types
 
-| Type | Use Case |
-|------|----------|
-| `key` | WHERE, ORDER BY queries |
-| `fulltext` | `Query.search()` text search |
-| `unique` | Enforce uniqueness constraint |
-| `spatial` | Geo queries on Point/Line/Polygon |
+| Type       | Use Case                          |
+| ---------- | --------------------------------- |
+| `key`      | WHERE, ORDER BY queries           |
+| `fulltext` | `Query.search()` text search      |
+| `unique`   | Enforce uniqueness constraint     |
+| `spatial`  | Geo queries on Point/Line/Polygon |
 
 ### Create Index
 
@@ -164,7 +163,6 @@ await tablesDB.createIndex(
 ## Auto-Increment
 
 Every row gets a `$sequence` column automatically; it increments with each insert. No table flag. Use for:
-
 - Invoice numbers
 - Activity logs
 - Ordered timelines

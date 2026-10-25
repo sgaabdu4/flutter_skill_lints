@@ -42,18 +42,17 @@ Split when domain function has ops w/ vastly different resource needs, exceeds t
 Cloud runtime note: Appwrite Cloud supports Dart `3.12` for Functions. Self-hosted runtimes depend on the installed Appwrite image and `_APP_FUNCTIONS_RUNTIMES`.
 
 Runtime SDK floor binds the whole pubspec, dev dependencies included:
-
 - runtime `dart-3.5` builds with Dart SDK `3.5.4`
 - the remote build resolves `dev_dependencies` → any dev-only package demanding a higher SDK fails the build in `dart pub get` with `version solving failed`
 - `lints: ^6.1.0` requires SDK `^3.8.0` → pin `lints: ^5.0.0` while the configured runtime is `dart-3.5`
 - a newer local toolchain resolves the lower pin unchanged, so the pin costs nothing locally
 - lower every function-local constraint to the runtime floor before deploying, not after the build fails
 
-| Language | Cold Start | Use When |
-|----------|-----------|----------|
-| Dart | Fastest | User-facing (compiled, native SDK) |
-| Node.js + ESBuild | Fast | npm ecosystem needed |
-| Python | Slowest | Data processing, ML |
+| Language          | Cold Start | Use When                           |
+| ----------------- | ---------- | ---------------------------------- |
+| Dart              | Fastest    | User-facing (compiled, native SDK) |
+| Node.js + ESBuild | Fast       | npm ecosystem needed               |
+| Python            | Slowest    | Data processing, ML                |
 
 **Bundle interpreted languages** to single file:
 
@@ -65,11 +64,11 @@ pnpm dlx esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js
 
 ### Specifications
 
-| Workload | CPU | Memory |
-|----------|-----|--------|
-| Text processing, CRUD | Low | 128MB |
-| Image processing | High | 512MB+ |
-| ML inference | High | 1GB+ |
+| Workload              | CPU  | Memory |
+| --------------------- | ---- | ------ |
+| Text processing, CRUD | Low  | 128MB  |
+| Image processing      | High | 512MB+ |
+| ML inference          | High | 1GB+   |
 
 ---
 
@@ -118,26 +117,29 @@ let client: Client | null = null;
 let tablesDB: TablesDB | null = null;
 
 function ensureInit(context: any) {
-    const apiKey = context.req.headers['x-appwrite-key'] ?? '';
+  const apiKey = context.req.headers['x-appwrite-key'] ?? '';
 
-    if (client) {
-        client.setKey(apiKey);
-        return;
-    }
+  if (client) {
+    client.setKey(apiKey);
+    return;
+  }
 
-    client = new Client()
-        .setEndpoint(process.env.APPWRITE_FUNCTION_API_ENDPOINT!)
-        .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
-        .setKey(apiKey);
-    tablesDB = new TablesDB(client);
+  client = new Client()
+    .setEndpoint(process.env.APPWRITE_FUNCTION_API_ENDPOINT!)
+    .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
+    .setKey(apiKey);
+  tablesDB = new TablesDB(client);
 }
 
 export default async ({ req, res }: any) => {
-    ensureInit({ req });
-    const rows = await tablesDB!.listRows({
-        databaseId: 'db', tableId: 'items',
-        queries: [Query.limit(10)], total: false});
-    return res.json({ items: rows.rows });
+  ensureInit({ req });
+  const rows = await tablesDB!.listRows({
+    databaseId: 'db',
+    tableId: 'items',
+    queries: [Query.limit(10)],
+    total: false,
+  });
+  return res.json({ items: rows.rows });
 };
 ```
 
@@ -148,18 +150,18 @@ export default async ({ req, res }: any) => {
 Appwrite Function handlers expose the same concepts across Dart, Python, and
 TypeScript:
 
-| Concept | Dart | Python | TypeScript |
-|---------|------|--------|------------|
-| Raw body | `context.req.body` | `context.req.body` | `req.body` |
-| JSON body | `context.req.bodyJson` | `context.req.body_json` | `req.bodyJson` |
-| Headers | `context.req.headers` | `context.req.headers` | `req.headers` |
-| Method | `context.req.method` | `context.req.method` | `req.method` |
-| Path | `context.req.path` | `context.req.path` | `req.path` |
-| Query | `context.req.query` | `context.req.query` | `req.query` |
-| JSON response | `context.res.json(...)` | `context.res.json(...)` | `res.json(...)` |
-| Text response | `context.res.text(...)` | `context.res.text(...)` | `res.text(...)` |
-| Empty response | `context.res.empty()` | `context.res.empty()` | `res.empty()` |
-| Redirect | `context.res.redirect(...)` | `context.res.redirect(...)` | `res.redirect(...)` |
+| Concept        | Dart                        | Python                      | TypeScript          |
+| -------------- | --------------------------- | --------------------------- | ------------------- |
+| Raw body       | `context.req.body`          | `context.req.body`          | `req.body`          |
+| JSON body      | `context.req.bodyJson`      | `context.req.body_json`     | `req.bodyJson`      |
+| Headers        | `context.req.headers`       | `context.req.headers`       | `req.headers`       |
+| Method         | `context.req.method`        | `context.req.method`        | `req.method`        |
+| Path           | `context.req.path`          | `context.req.path`          | `req.path`          |
+| Query          | `context.req.query`         | `context.req.query`         | `req.query`         |
+| JSON response  | `context.res.json(...)`     | `context.res.json(...)`     | `res.json(...)`     |
+| Text response  | `context.res.text(...)`     | `context.res.text(...)`     | `res.text(...)`     |
+| Empty response | `context.res.empty()`       | `context.res.empty()`       | `res.empty()`       |
+| Redirect       | `context.res.redirect(...)` | `context.res.redirect(...)` | `res.redirect(...)` |
 
 Validate every body/query/header value before using it.
 
@@ -258,7 +260,6 @@ Future<Object?> main(Object rawContext) async {
 ## Environment Variables
 
 Use variables for configuration + secrets; never track values in source/manifests.
-
 - scope precedence = project → function/site → Appwrite-injected
 - secret value = unreadable from Console/API after creation
 - secret status = one-way; secret → non-secret requires delete + recreate
@@ -276,13 +277,13 @@ final stripeKey = Platform.environment['STRIPE_SECRET_KEY']!;
 
 ### Built-In Variables & Headers
 
-| Name | Source | Description |
-|------|--------|-------------|
-| `APPWRITE_FUNCTION_API_ENDPOINT` | Env var | API endpoint (auto-injected) |
-| `APPWRITE_FUNCTION_PROJECT_ID` | Env var | Project ID (auto-injected) |
-| `x-appwrite-key` | `req.headers` | Dynamic API key (scoped, short-lived) |
-| `x-appwrite-user-id` | `req.headers` | Caller's user ID (empty for server calls) |
-| `x-appwrite-user-jwt` | `req.headers` | Caller's JWT (client-SDK executions) |
+| Name                             | Source        | Description                               |
+| -------------------------------- | ------------- | ----------------------------------------- |
+| `APPWRITE_FUNCTION_API_ENDPOINT` | Env var       | API endpoint (auto-injected)              |
+| `APPWRITE_FUNCTION_PROJECT_ID`   | Env var       | Project ID (auto-injected)                |
+| `x-appwrite-key`                 | `req.headers` | Dynamic API key (scoped, short-lived)     |
+| `x-appwrite-user-id`             | `req.headers` | Caller's user ID (empty for server calls) |
+| `x-appwrite-user-jwt`            | `req.headers` | Caller's JWT (client-SDK executions)      |
 
 Injected-JWT claim/validation contract → [authentication.md](authentication.md#function-injected-user-jwt).
 

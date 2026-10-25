@@ -32,7 +32,6 @@
 11. Commit response lost/throws → read the deterministic completed audit + exact postcondition. Audit completed + postcondition proven = success; audit alone or residual data = failed/unknown + retryable reconciliation.
 
 Cross-service order has no universal default. Choose from the protected invariant:
-
 - Prevent login first → revoke/delete Auth before local data commit; keep retries service-authenticated.
 - Preserve local retry evidence first → pending audit + complete plan before Auth/Storage deletion.
 - Provider data legally retained → do not call provider deletion; delete only local payment-linked rows + state the boundary.

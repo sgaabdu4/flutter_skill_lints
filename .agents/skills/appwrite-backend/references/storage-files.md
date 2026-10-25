@@ -72,9 +72,9 @@ result = storage.create_file(
 import { InputFile } from 'node-appwrite/file';
 
 const result = await storage.createFile({
-    bucketId: 'uploads',
-    fileId: ID.unique(),
-    file: InputFile.fromPath('/path/to/large-file.zip', 'large-file.zip'),
+  bucketId: 'uploads',
+  fileId: ID.unique(),
+  file: InputFile.fromPath('/path/to/large-file.zip', 'large-file.zip'),
 });
 ```
 
@@ -98,10 +98,10 @@ InputFile.from_string('hello', filename='file.txt')
 ```typescript
 import { InputFile } from 'node-appwrite/file';
 
-InputFile.fromPath('/path/to/file.png', 'file.png')
-InputFile.fromBuffer(buffer, 'file.png')
-InputFile.fromStream(readable, 'file.png', sizeInBytes)   // size required
-InputFile.fromPlainText('hello', 'hello.txt')
+InputFile.fromPath('/path/to/file.png', 'file.png');
+InputFile.fromBuffer(buffer, 'file.png');
+InputFile.fromStream(readable, 'file.png', sizeInBytes); // size required
+InputFile.fromPlainText('hello', 'hello.txt');
 ```
 
 `fromStream` avoids buffering the whole file in memory — use it for any upload
@@ -133,19 +133,19 @@ final preview = await storage.getFilePreview(
 
 ### Preview Parameters
 
-| Parameter | Description |
-|-----------|-------------|
-| `width` | Output width (max 4000) |
-| `height` | Output height (max 4000) |
-| `gravity` | Crop focus (center, top-left, etc.) |
-| `quality` | JPEG/WebP quality (0-100) |
-| `borderWidth` | Border width in pixels |
-| `borderColor` | Border color (hex) |
-| `borderRadius` | Corner radius |
-| `opacity` | Transparency (0-1) |
-| `rotation` | Rotation degrees |
-| `background` | Background color (hex) |
-| `output` | `ImageFormat`: jpg, jpeg, png, webp, heic, avif, gif |
+| Parameter      | Description                                          |
+| -------------- | ---------------------------------------------------- |
+| `width`        | Output width (max 4000)                              |
+| `height`       | Output height (max 4000)                             |
+| `gravity`      | Crop focus (center, top-left, etc.)                  |
+| `quality`      | JPEG/WebP quality (0-100)                            |
+| `borderWidth`  | Border width in pixels                               |
+| `borderColor`  | Border color (hex)                                   |
+| `borderRadius` | Corner radius                                        |
+| `opacity`      | Transparency (0-1)                                   |
+| `rotation`     | Rotation degrees                                     |
+| `background`   | Background color (hex)                               |
+| `output`       | `ImageFormat`: jpg, jpeg, png, webp, heic, avif, gif |
 
 ### Image Format Support
 
@@ -204,14 +204,14 @@ final bucket = await storage.createBucket(
 
 ### Bucket Settings
 
-| Setting | Description |
-|---------|-------------|
-| `fileSecurity` | Individual file permissions |
-| `maximumFileSize` | Max bytes per file |
-| `allowedFileExtensions` | Whitelist extensions |
-| `compression` | gzip, zstd, or none. Files >20 MB skip compression automatically. |
-| `encryption` | AES-256 at rest |
-| `antivirus` | Scan uploads |
+| Setting                 | Description                                                       |
+| ----------------------- | ----------------------------------------------------------------- |
+| `fileSecurity`          | Individual file permissions                                       |
+| `maximumFileSize`       | Max bytes per file                                                |
+| `allowedFileExtensions` | Whitelist extensions                                              |
+| `compression`           | gzip, zstd, or none. Files >20 MB skip compression automatically. |
+| `encryption`            | AES-256 at rest                                                   |
+| `antivirus`             | Scan uploads                                                      |
 
 ---
 

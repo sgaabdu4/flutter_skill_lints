@@ -25,19 +25,19 @@ screenshot = avatars.get_screenshot(
 ```typescript
 // TypeScript
 const screenshot = await avatars.getScreenshot({
-    url: 'https://example.com',
-    width: 1280,
-    height: 720,
+  url: 'https://example.com',
+  width: 1280,
+  height: 720,
 });
 ```
 
 ### Parameters
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `url` | Target URL (required) | - |
-| `width` | Screenshot width | 1920 |
-| `height` | Screenshot height | 1080 |
+| Parameter | Description           | Default |
+| --------- | --------------------- | ------- |
+| `url`     | Target URL (required) | -       |
+| `width`   | Screenshot width      | 1920    |
+| `height`  | Screenshot height     | 1080    |
 
 ### Use Cases
 
@@ -75,10 +75,10 @@ avatar = avatars.get_initials(
 ```typescript
 // TypeScript
 const avatar = await avatars.getInitials({
-    name: 'John Doe',
-    width: 100,
-    height: 100,
-    background: 'ff5733',
+  name: 'John Doe',
+  width: 100,
+  height: 100,
+  background: 'ff5733',
 });
 ```
 
@@ -155,9 +155,9 @@ qr = avatars.get_qr(
 ```typescript
 // TypeScript
 const qr = await avatars.getQR({
-    text: 'https://example.com/link',
-    size: 300,
-    margin: 2,
+  text: 'https://example.com/link',
+  size: 300,
+  margin: 2,
 });
 ```
 

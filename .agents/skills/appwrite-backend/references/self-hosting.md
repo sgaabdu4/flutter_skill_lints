@@ -6,12 +6,12 @@ Prod setup, scaling, security.
 
 ## System Requirements
 
-| Resource | Minimum |
-|----------|---------|
-| CPU | 2 cores |
-| RAM | 4 GB |
-| Swap | 2 GB |
-| Docker Compose | v2+ |
+| Resource       | Minimum |
+| -------------- | ------- |
+| CPU            | 2 cores |
+| RAM            | 4 GB    |
+| Swap           | 2 GB    |
+| Docker Compose | v2+     |
 
 ---
 
@@ -44,14 +44,13 @@ Database = PostgreSQL (new `2.x` default), MariaDB, or MongoDB; fixed at install
 
 ### Release-Matched SDK Pins
 
-| Target | Package | Appwrite `2.0.0`–`2.3.0` | Appwrite `1.9.6` (existing installs) |
-|--------|---------|---------|---------|
-| Dart Functions/server | `dart_appwrite` | `29.0.0` | `26.0.0` |
-| Flutter client app | `appwrite` | `26.2.0` | `25.3.0` |
-| Node.js Functions/server | `node-appwrite` | `29.0.0` | `27.0.0` |
-| Browser/Web client | `appwrite` | `27.0.0` | `26.2.0` |
-| Python Functions/server | `appwrite` | `24.0.0` | `22.1.0` |
-
+| Target                   | Package         | Appwrite `2.0.0`–`2.3.0` | Appwrite `1.9.6` (existing installs) |
+| ------------------------ | --------------- | ------------------------ | ------------------------------------ |
+| Dart Functions/server    | `dart_appwrite` | `29.0.0`                 | `26.0.0`                             |
+| Flutter client app       | `appwrite`      | `26.2.0`                 | `25.3.0`                             |
+| Node.js Functions/server | `node-appwrite` | `29.0.0`                 | `27.0.0`                             |
+| Browser/Web client       | `appwrite`      | `27.0.0`                 | `26.2.0`                             |
+| Python Functions/server  | `appwrite`      | `24.0.0`                 | `22.1.0`                             |
 - Table = release-matched versions; floating `latest` forbidden. Other server versions → read the official table; never infer.
 - Older SDK declaring `1.9.x` compatibility ≠ `1.9.6` release-match.
 - Repository pin wins only after server line + real call shapes are proven.
@@ -77,11 +76,11 @@ _APP_OPTIONS_ROUTER_FORCE_HTTPS=enabled
 
 ### Console Access
 
-| Variable | Effect |
-|----------|--------|
-| `_APP_CONSOLE_WHITELIST_ROOT` | First user signs up; rest by invite |
-| `_APP_CONSOLE_WHITELIST_EMAILS` | Comma-sep allowed emails |
-| `_APP_CONSOLE_WHITELIST_IPS` | Comma-sep allowed IPs |
+| Variable                        | Effect                              |
+| ------------------------------- | ----------------------------------- |
+| `_APP_CONSOLE_WHITELIST_ROOT`   | First user signs up; rest by invite |
+| `_APP_CONSOLE_WHITELIST_EMAILS` | Comma-sep allowed emails            |
+| `_APP_CONSOLE_WHITELIST_IPS`    | Comma-sep allowed IPs               |
 
 ### Rate Limiting
 
@@ -125,13 +124,13 @@ _APP_LOGGING_CONFIG=sentry://PROJECT_ID:KEY@HOST/
 
 ### Container Types
 
-| Container | Stateless? | How to Scale |
-|-----------|-----------|--------------|
-| API (appwrite) | Yes | Replicate + load balancer |
-| Realtime/Function/Other workers | Yes | Replicate freely |
-| MariaDB | No | Primary-replica |
-| Redis | No | Sentinel or Cluster |
-| Storage volumes | No | NFS or S3-compatible |
+| Container                       | Stateless? | How to Scale              |
+| ------------------------------- | ---------- | ------------------------- |
+| API (appwrite)                  | Yes        | Replicate + load balancer |
+| Realtime/Function/Other workers | Yes        | Replicate freely          |
+| MariaDB                         | No         | Primary-replica           |
+| Redis                           | No         | Sentinel or Cluster       |
+| Storage volumes                 | No         | NFS or S3-compatible      |
 
 ### Scale Stateless Containers
 
@@ -150,10 +149,10 @@ _APP_WORKER_PER_CORE=6  # default; raise for I/O, drop for CPU
 ```yaml
 x-logging: &x-logging
   logging:
-    driver: 'json-file'
+    driver: "json-file"
     options:
-      max-file: '5'
-      max-size: '10m'
+      max-file: "5"
+      max-size: "10m"
 ```
 
 ### Redis Memory

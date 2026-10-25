@@ -10,11 +10,11 @@ Offset pagination degrades linear. DB reads N rows before return. At offset 10,0
 
 Cursor jumps direct to target row via index. Constant perf regardless of position.
 
-| Records | Offset 10,000 | Cursor |
-|---------|---------------|--------|
-| 10,000 | ~100ms | ~5ms |
-| 100,000 | ~1,000ms | ~5ms |
-| 1,000,000 | ~10,000ms | ~5ms |
+| Records   | Offset 10,000 | Cursor |
+| --------- | ------------- | ------ |
+| 10,000    | ~100ms        | ~5ms   |
+| 100,000   | ~1,000ms      | ~5ms   |
+| 1,000,000 | ~10,000ms     | ~5ms   |
 
 ## The Pattern
 
@@ -34,8 +34,8 @@ Query.limit(25)
 
 ```typescript
 // Slow - performance degrades with position
-Query.offset(10000)
-Query.limit(25)
+Query.offset(10000);
+Query.limit(25);
 ```
 
 ### Correct (O(1))
@@ -74,13 +74,10 @@ next_cursor = response.rows[-1].id
 ```typescript
 // TypeScript - Constant performance
 const response = await tablesDB.listRows({
-    databaseId: 'db',
-    tableId: 'items',
-    queries: [
-        Query.cursorAfter(lastRowId),
-        Query.limit(25),
-    ],
-    total: false,
+  databaseId: 'db',
+  tableId: 'items',
+  queries: [Query.cursorAfter(lastRowId), Query.limit(25)],
+  total: false,
 });
 
 const nextCursor = response.rows[response.rows.length - 1].$id;
@@ -117,43 +114,36 @@ Small lookup tables <1,000 rows:
 // TypeScript - Async generator for all rows
 import { Models } from 'node-appwrite';
 
-async function* fetchAllRows<T extends Models.Row>(
-    dbId: string,
-    tableId: string,
-    baseQueries: string[] = []
-): AsyncGenerator<T[]> {
-    let cursor: string | undefined;
+async function* fetchAllRows<T extends Models.Row>(dbId: string, tableId: string, baseQueries: string[] = []): AsyncGenerator<T[]> {
+  let cursor: string | undefined;
 
-    while (true) {
-        const queries = [
-            ...baseQueries,
-            Query.limit(100),
-        ];
+  while (true) {
+    const queries = [...baseQueries, Query.limit(100)];
 
-        if (cursor) {
-            queries.push(Query.cursorAfter(cursor));
-        }
-
-        const response = await tablesDB.listRows<T>({
-            databaseId: dbId,
-            tableId: tableId,
-            queries,
-            total: false,
-        });
-
-        if (response.rows.length === 0) break;
-
-        yield response.rows;
-
-        cursor = response.rows[response.rows.length - 1].$id;
-
-        if (response.rows.length < 100) break;
+    if (cursor) {
+      queries.push(Query.cursorAfter(cursor));
     }
+
+    const response = await tablesDB.listRows<T>({
+      databaseId: dbId,
+      tableId: tableId,
+      queries,
+      total: false,
+    });
+
+    if (response.rows.length === 0) break;
+
+    yield response.rows;
+
+    cursor = response.rows[response.rows.length - 1].$id;
+
+    if (response.rows.length < 100) break;
+  }
 }
 
 // Usage
 for await (const batch of fetchAllRows('db', 'users')) {
-    await processBatch(batch);
+  await processBatch(batch);
 }
 ```
 

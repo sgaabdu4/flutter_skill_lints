@@ -4,14 +4,14 @@
 
 Default local disk. External storage for multi-node.
 
-| Adapter | Variable | Use When |
-|---------|----------|----------|
-| Local | `_APP_STORAGE_DEVICE=local` | Single server (default) |
-| AWS S3 | `_APP_STORAGE_DEVICE=s3` | Multi-node, large files |
-| DigitalOcean Spaces | `_APP_STORAGE_DEVICE=dospaces` | DO infrastructure |
-| Backblaze B2 | `_APP_STORAGE_DEVICE=backblaze` | Cost-effective backup |
-| Akamai (Linode) | `_APP_STORAGE_DEVICE=linode` | Akamai infrastructure |
-| Wasabi | `_APP_STORAGE_DEVICE=wasabi` | S3-compatible, cheap storage |
+| Adapter             | Variable                        | Use When                     |
+| ------------------- | ------------------------------- | ---------------------------- |
+| Local               | `_APP_STORAGE_DEVICE=local`     | Single server (default)      |
+| AWS S3              | `_APP_STORAGE_DEVICE=s3`        | Multi-node, large files      |
+| DigitalOcean Spaces | `_APP_STORAGE_DEVICE=dospaces`  | DO infrastructure            |
+| Backblaze B2        | `_APP_STORAGE_DEVICE=backblaze` | Cost-effective backup        |
+| Akamai (Linode)     | `_APP_STORAGE_DEVICE=linode`    | Akamai infrastructure        |
+| Wasabi              | `_APP_STORAGE_DEVICE=wasabi`    | S3-compatible, cheap storage |
 
 Each adapter needs access key, secret, region, bucket env vars. Local = single node only.
 
@@ -29,11 +29,11 @@ Use only runtimes available in your installed Appwrite image. Appwrite Cloud sup
 
 ### Resource Limits
 
-| Variable | Effect |
-|----------|--------|
-| `_APP_COMPUTE_CPUS` | Max CPU cores per function |
-| `_APP_COMPUTE_MEMORY` | Max memory in MB per function |
-| `_APP_FUNCTIONS_TIMEOUT` | Max timeout in seconds (default: 900) |
+| Variable                          | Effect                                |
+| --------------------------------- | ------------------------------------- |
+| `_APP_COMPUTE_CPUS`               | Max CPU cores per function            |
+| `_APP_COMPUTE_MEMORY`             | Max memory in MB per function         |
+| `_APP_FUNCTIONS_TIMEOUT`          | Max timeout in seconds (default: 900) |
 | `_APP_COMPUTE_INACTIVE_THRESHOLD` | Idle container cleanup (default: 60s) |
 
 ### Function Domain SSL
@@ -50,11 +50,11 @@ Wildcard SSL certs for function domains:
 
 ### What to Back Up
 
-| Component | Tool |
-|-----------|------|
-| Database | MariaDB `mysqldump` · MongoDB `mongodump` · PostgreSQL (`2.x` default) = no official procedure → infrastructure owner supplies one + tested restore |
-| Storage volumes | tar / Docker volume |
-| `.env` file | `cp .env .env.backup.$(date +"%Y%m%d")` |
+| Component       | Tool                                                                                                                                                |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Database        | MariaDB `mysqldump` · MongoDB `mongodump` · PostgreSQL (`2.x` default) = no official procedure → infrastructure owner supplies one + tested restore |
+| Storage volumes | tar / Docker volume                                                                                                                                 |
+| `.env` file     | `cp .env .env.backup.$(date +"%Y%m%d")`                                                                                                             |
 
 ### Database Backup
 
@@ -113,7 +113,6 @@ recovery requires an isolated rehearsal + exact infrastructure approval; never
 improvise against the live metadata database.
 
 Failure pattern:
-
 - SQL rows present + API `table not found` → metadata/registry/cache mismatch,
   not missing business rows → restore coherent component state before retry.
 - Partial desired-state reconciliation caused loss → retire that deployment
@@ -157,13 +156,13 @@ Patch upgrade → `migrate` only when its release notes require it; `2.3.0` requ
 
 ## Maintenance
 
-| Variable | Default | Effect |
-|----------|---------|--------|
-| `_APP_MAINTENANCE_INTERVAL` | 86400s | Cleanup cycle |
-| `_APP_MAINTENANCE_RETENTION_CACHE` | 2592000s (30d) | Max cache age |
+| Variable                               | Default        | Effect                |
+| -------------------------------------- | -------------- | --------------------- |
+| `_APP_MAINTENANCE_INTERVAL`            | 86400s         | Cleanup cycle         |
+| `_APP_MAINTENANCE_RETENTION_CACHE`     | 2592000s (30d) | Max cache age         |
 | `_APP_MAINTENANCE_RETENTION_EXECUTION` | 1209600s (14d) | Max execution log age |
-| `_APP_MAINTENANCE_RETENTION_AUDIT` | 1209600s (14d) | Max audit log age |
-| `_APP_MAINTENANCE_RETENTION_ABUSE` | 86400s (1d) | Max abuse log age |
+| `_APP_MAINTENANCE_RETENTION_AUDIT`     | 1209600s (14d) | Max audit log age     |
+| `_APP_MAINTENANCE_RETENTION_ABUSE`     | 86400s (1d)    | Max abuse log age     |
 
 Health checks → [health.md](health.md).
 

@@ -60,10 +60,10 @@ messaging.create_push(
 ```typescript
 // TypeScript
 await messaging.createPush({
-    messageId: ID.unique(),
-    title: 'New Feature!',
-    body: 'Check out our latest update.',
-    topics: [productUpdatesTopicId],
+  messageId: ID.unique(),
+  title: 'New Feature!',
+  body: 'Check out our latest update.',
+  topics: [productUpdatesTopicId],
 });
 ```
 
@@ -84,13 +84,13 @@ await messaging.createPush(
 );
 ```
 
-| Parameter | Effect |
-|-----------|--------|
-| `image` | Image in expanded notification (URL) |
-| `sound` | Custom sound (file in app bundle) |
-| `badge` | iOS badge count |
-| `action` | URL/deep link on tap |
-| `data` | Key-value payload for app logic (user-invisible) |
+| Parameter | Effect                                           |
+| --------- | ------------------------------------------------ |
+| `image`   | Image in expanded notification (URL)             |
+| `sound`   | Custom sound (file in app bundle)                |
+| `badge`   | iOS badge count                                  |
+| `action`  | URL/deep link on tap                             |
+| `data`    | Key-value payload for app logic (user-invisible) |
 
 ### Silent / Background Push
 
@@ -140,11 +140,11 @@ messaging.create_email(
 ```typescript
 // TypeScript
 await messaging.createEmail({
-    messageId: ID.unique(),
-    subject: 'Welcome!',
-    content: '<h1>Hello</h1><p>Welcome to our app.</p>',
-    topics: ['onboarding'],
-    html: true,
+  messageId: ID.unique(),
+  subject: 'Welcome!',
+  content: '<h1>Hello</h1><p>Welcome to our app.</p>',
+  topics: ['onboarding'],
+  html: true,
 });
 ```
 

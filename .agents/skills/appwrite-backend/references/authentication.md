@@ -74,9 +74,9 @@ await account.deleteSession(sessionId: 'current');
 
 ```typescript
 await account.create({
-    userId: ID.unique(),
-    email: 'user@example.com',
-    password: 'password',
+  userId: ID.unique(),
+  email: 'user@example.com',
+  password: 'password',
 });
 
 await account.createEmailPasswordSession({ email, password });
@@ -94,20 +94,18 @@ Server-side session for Next.js, SvelteKit, Nuxt, etc.
 
 ```typescript
 export async function POST({ request }) {
-    const { email, password } = await request.json();
+  const { email, password } = await request.json();
 
-    const client = new Client()
-        .setEndpoint('https://<REGION>.cloud.appwrite.io/v1')
-        .setProject('PROJECT_ID');
+  const client = new Client().setEndpoint('https://<REGION>.cloud.appwrite.io/v1').setProject('PROJECT_ID');
 
-    const account = new Account(client);
-    const session = await account.createEmailPasswordSession({ email, password });
+  const account = new Account(client);
+  const session = await account.createEmailPasswordSession({ email, password });
 
-    return new Response(JSON.stringify({ success: true }), {
-        headers: {
-            'Set-Cookie': `a_session_[PROJECT_ID]=${session.secret}; Path=/; HttpOnly; Secure; SameSite=Strict`,
-        },
-    });
+  return new Response(JSON.stringify({ success: true }), {
+    headers: {
+      'Set-Cookie': `a_session_[PROJECT_ID]=${session.secret}; Path=/; HttpOnly; Secure; SameSite=Strict`,
+    },
+  });
 }
 ```
 
@@ -115,20 +113,17 @@ export async function POST({ request }) {
 
 ```typescript
 export async function GET({ cookies }) {
-    const session = cookies.get('a_session_[PROJECT_ID]');
-    const client = new Client()
-        .setEndpoint('https://<REGION>.cloud.appwrite.io/v1')
-        .setProject('PROJECT_ID')
-        .setSession(session);
+  const session = cookies.get('a_session_[PROJECT_ID]');
+  const client = new Client().setEndpoint('https://<REGION>.cloud.appwrite.io/v1').setProject('PROJECT_ID').setSession(session);
 
-    const account = new Account(client);
+  const account = new Account(client);
 
-    try {
-        const user = await account.get();
-        return { user };
-    } catch {
-        return { user: null };
-    }
+  try {
+    const user = await account.get();
+    return { user };
+  } catch {
+    return { user: null };
+  }
 }
 ```
 
@@ -226,19 +221,14 @@ if session:
 ```
 
 ```typescript
-const adminClient = new Client()
-    .setEndpoint('https://<REGION>.cloud.appwrite.io/v1')
-    .setProject('PROJECT_ID')
-    .setKey('API_KEY');
+const adminClient = new Client().setEndpoint('https://<REGION>.cloud.appwrite.io/v1').setProject('PROJECT_ID').setKey('API_KEY');
 
 const session = req.cookies['a_session_[PROJECT_ID]'];
-const sessionClient = new Client()
-    .setEndpoint('https://<REGION>.cloud.appwrite.io/v1')
-    .setProject('PROJECT_ID');
+const sessionClient = new Client().setEndpoint('https://<REGION>.cloud.appwrite.io/v1').setProject('PROJECT_ID');
 
 if (session) {
-    sessionClient.setSession(session);
-    sessionClient.setForwardedUserAgent(req.headers['user-agent']);
+  sessionClient.setSession(session);
+  sessionClient.setForwardedUserAgent(req.headers['user-agent']);
 }
 ```
 
@@ -298,7 +288,6 @@ final client = Client()
 `x-appwrite-user-jwt` = the caller's JWT injected into the function runtime on
 client-SDK executions. Its payload carries exactly `userId` + `sessionId` +
 `exp`.
-
 - `Account(client).getSession(sessionId: 'current')` under that JWT fails → never resolve the session through it
 - decode the payload segment yourself for `userId`/`sessionId`
 - payload claims alone = untrusted identity → validate the token with `Account(client).get()` and assert `user.$id == claims.userId` before authorizing anything
@@ -374,14 +363,14 @@ Future<Object?> main(Object rawContext) async {
 
 Console → Auth → Policies (`1.9.x`: Auth → Security):
 
-| Setting | Description |
-|---------|-------------|
-| Password dictionary | Block common passwords |
-| Password history | Prevent password reuse |
-| Personal data | Block name/email in password |
-| Session limits | Max sessions per user |
-| Session length | Default session duration |
-| Session alerts | Email the user when a new session is created |
+| Setting             | Description                                  |
+| ------------------- | -------------------------------------------- |
+| Password dictionary | Block common passwords                       |
+| Password history    | Prevent password reuse                       |
+| Personal data       | Block name/email in password                 |
+| Session limits      | Max sessions per user                        |
+| Session length      | Default session duration                     |
+| Session alerts      | Email the user when a new session is created |
 
 ---
 
@@ -389,11 +378,11 @@ Console → Auth → Policies (`1.9.x`: Auth → Security):
 
 Use Auth email policies to block signup/update emails by category:
 
-| Policy | Blocks |
-|--------|--------|
-| Free providers | Gmail, Yahoo, Outlook, similar consumer inboxes |
-| Aliased addresses | Plus-tags/subaddresses/provider aliases |
-| Disposable providers | Temporary/throwaway inboxes |
+| Policy               | Blocks                                          |
+| -------------------- | ----------------------------------------------- |
+| Free providers       | Gmail, Yahoo, Outlook, similar consumer inboxes |
+| Aliased addresses    | Plus-tags/subaddresses/provider aliases         |
+| Disposable providers | Temporary/throwaway inboxes                     |
 
 Requires Appwrite Cloud or self-hosted `2.2.0`+; earlier self-hosted releases have no email-policy endpoints. Configure in Console → Auth → Policies → Emails or via server SDK Project service. Policies apply to user creation and email updates; existing users keep sessions and can still log in.
 

@@ -33,14 +33,14 @@ final webhook = await webhooks.create(
 
 ## Event Patterns
 
-| Pattern | Description |
-|---------|-------------|
-| `users.*` | All user events |
-| `users.*.create` | User creation only |
-| `databases.*` | All database events |
+| Pattern                                      | Description                  |
+| -------------------------------------------- | ---------------------------- |
+| `users.*`                                    | All user events              |
+| `users.*.create`                             | User creation only           |
+| `databases.*`                                | All database events          |
 | `databases.main.tables.orders.rows.*.create` | New orders in specific table |
-| `storage.*.files.*.create` | New file uploads |
-| `functions.*.executions.*` | Function executions |
+| `storage.*.files.*.create`                   | New file uploads             |
+| `functions.*.executions.*`                   | Function executions          |
 
 ### Wildcard Rules
 
@@ -53,7 +53,6 @@ final webhook = await webhooks.create(
 ## Signature Verification
 
 Every delivery is signed: `X-Appwrite-Webhook-Signature` = `base64(HMAC-SHA1(secret, webhookUrl + rawBody))`.
-
 - `webhookUrl` = the webhook's configured `url`, byte-for-byte; not the proxied request URL.
 - `rawBody` = unparsed request bytes; re-serialized JSON breaks the signature.
 - Compare in constant time; mismatch → `401` before any processing.
@@ -62,14 +61,14 @@ Every delivery is signed: `X-Appwrite-Webhook-Signature` = `base64(HMAC-SHA1(sec
 
 ### Headers
 
-| Header | Description |
-|--------|-------------|
-| `X-Appwrite-Webhook-Id` | Webhook ID |
-| `X-Appwrite-Webhook-Events` | Comma-separated triggering events |
-| `X-Appwrite-Webhook-Name` | Webhook name |
-| `X-Appwrite-Webhook-User-Id` | Triggering user; empty for API key + guest events |
-| `X-Appwrite-Webhook-Project-Id` | Project ID |
-| `X-Appwrite-Webhook-Signature` | Base64 HMAC-SHA1 signature |
+| Header                          | Description                                       |
+| ------------------------------- | ------------------------------------------------- |
+| `X-Appwrite-Webhook-Id`         | Webhook ID                                        |
+| `X-Appwrite-Webhook-Events`     | Comma-separated triggering events                 |
+| `X-Appwrite-Webhook-Name`       | Webhook name                                      |
+| `X-Appwrite-Webhook-User-Id`    | Triggering user; empty for API key + guest events |
+| `X-Appwrite-Webhook-Project-Id` | Project ID                                        |
+| `X-Appwrite-Webhook-Signature`  | Base64 HMAC-SHA1 signature                        |
 
 ### Verify Signature
 
@@ -81,21 +80,21 @@ import express from 'express';
 const WEBHOOK_URL = 'https://api.example.com/webhooks/appwrite';
 
 app.post('/webhooks/appwrite', express.raw({ type: 'application/json' }), (req, res) => {
-    const received = Buffer.from(req.get('x-appwrite-webhook-signature') ?? '');
-    const expected = Buffer.from(
-        crypto
-            .createHmac('sha1', process.env.APPWRITE_WEBHOOK_SECRET!)
-            .update(Buffer.concat([Buffer.from(WEBHOOK_URL), req.body]))
-            .digest('base64'),
-    );
-    if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) {
-        return res.status(401).send('Invalid signature');
-    }
+  const received = Buffer.from(req.get('x-appwrite-webhook-signature') ?? '');
+  const expected = Buffer.from(
+    crypto
+      .createHmac('sha1', process.env.APPWRITE_WEBHOOK_SECRET!)
+      .update(Buffer.concat([Buffer.from(WEBHOOK_URL), req.body]))
+      .digest('base64'),
+  );
+  if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) {
+    return res.status(401).send('Invalid signature');
+  }
 
-    const events = (req.get('x-appwrite-webhook-events') ?? '').split(',');
-    const resource = JSON.parse(req.body.toString('utf8'));
-    // Queue durable work keyed by events + resource.$id + resource.$updatedAt; confirm deletes with Appwrite first.
-    return res.sendStatus(200);
+  const events = (req.get('x-appwrite-webhook-events') ?? '').split(',');
+  const resource = JSON.parse(req.body.toString('utf8'));
+  // Queue durable work keyed by events + resource.$id + resource.$updatedAt; confirm deletes with Appwrite first.
+  return res.sendStatus(200);
 });
 ```
 
@@ -214,7 +213,6 @@ await webhooks.delete(webhookId: 'webhook_123');
 ## Retry Behavior
 
 Per worker source ([`2.3.0`](https://github.com/appwrite/appwrite/blob/2.3.0/src/Appwrite/Platform/Workers/Webhooks.php#L123-L220)):
-
 - One POST per event; 15 s connect + total timeout.
 - Failure = transport error or HTTP `>= 400` → `attempts` +1 + `logs` updated. Success resets `attempts` to `0`.
 - `attempts` ≥ `_APP_WEBHOOK_MAX_FAILED_ATTEMPTS` (default `10`) → webhook disabled + alert. Fix the endpoint → re-enable via [full-settings update](#update-webhook).

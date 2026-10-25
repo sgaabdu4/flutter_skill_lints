@@ -3,7 +3,6 @@
 ## Query.select() Rule
 
 **Always use Query.select(). Controls payload size, expands relationships.**
-
 - Select fields = ordered + non-empty + unique; duplicate attribute = local contract FAIL before Appwrite.
 - Reusable oracle = [`appwrite-query-contract.mjs`](../scripts/appwrite-query-contract.mjs); project test owns its adapter/query decoding.
 
@@ -47,13 +46,13 @@ final posts = await tablesDB.listRows(
 Filter by exclusion. No client-side fetch+filter.
 Use `contains/notContains` only on real string/array/spatial fields. For JSON/text identity/dedupe, query indexed scalars. Dart Row: avoid user column `data`; legacy schemas need scalar selects or isolated SDK `Client.call`.
 
-| Query | Description |
-|-------|-------------|
-| `Query.notSearch(attr, value)` | Text no match search |
-| `Query.notContains(attr, value)` | Array/string no contain |
-| `Query.notBetween(attr, start, end)` | Value outside range |
-| `Query.notStartsWith(attr, value)` | No start with prefix |
-| `Query.notEndsWith(attr, value)` | No end with suffix |
+| Query                                | Description             |
+| ------------------------------------ | ----------------------- |
+| `Query.notSearch(attr, value)`       | Text no match search    |
+| `Query.notContains(attr, value)`     | Array/string no contain |
+| `Query.notBetween(attr, start, end)` | Value outside range     |
+| `Query.notStartsWith(attr, value)`   | No start with prefix    |
+| `Query.notEndsWith(attr, value)`     | No end with suffix      |
 
 ### Example
 
@@ -87,12 +86,12 @@ free_content = tables_db.list_rows(
 
 Cleaner time filter.
 
-| Query | Description |
-|-------|-------------|
+| Query                           | Description              |
+| ------------------------------- | ------------------------ |
 | `Query.createdBefore(datetime)` | Created before timestamp |
-| `Query.createdAfter(datetime)` | Created after timestamp |
+| `Query.createdAfter(datetime)`  | Created after timestamp  |
 | `Query.updatedBefore(datetime)` | Updated before timestamp |
-| `Query.updatedAfter(datetime)` | Updated after timestamp |
+| `Query.updatedAfter(datetime)`  | Updated after timestamp  |
 
 Combine `createdAfter` + `createdBefore` for range.
 
@@ -131,25 +130,25 @@ Geo filter via spatial index.
 
 ### Distance Queries
 
-| Query | Description |
-|-------|-------------|
-| `Query.distanceLessThan(attr, [lon,lat], meters)` | Within radius |
-| `Query.distanceGreaterThan(attr, [lon,lat], meters)` | Outside radius |
-| `Query.distanceEqual(attr, [lon,lat], meters)` | At exact distance |
-| `Query.distanceNotEqual(attr, [lon,lat], meters)` | Not at distance |
+| Query                                                | Description       |
+| ---------------------------------------------------- | ----------------- |
+| `Query.distanceLessThan(attr, [lon,lat], meters)`    | Within radius     |
+| `Query.distanceGreaterThan(attr, [lon,lat], meters)` | Outside radius    |
+| `Query.distanceEqual(attr, [lon,lat], meters)`       | At exact distance |
+| `Query.distanceNotEqual(attr, [lon,lat], meters)`    | Not at distance   |
 
 ### Geometry Queries
 
-| Query | Description |
-|-------|-------------|
-| `Query.intersects(attr, geometry)` | Share space |
-| `Query.notIntersects(attr, geometry)` | No shared space |
-| `Query.overlaps(attr, geometry)` | Partial overlap |
-| `Query.notOverlaps(attr, geometry)` | No partial overlap |
-| `Query.touches(attr, geometry)` | Boundaries touch |
-| `Query.notTouches(attr, geometry)` | Boundaries no touch |
-| `Query.crosses(attr, geometry)` | Line crosses geometry |
-| `Query.notCrosses(attr, geometry)` | Line no cross |
+| Query                                 | Description           |
+| ------------------------------------- | --------------------- |
+| `Query.intersects(attr, geometry)`    | Share space           |
+| `Query.notIntersects(attr, geometry)` | No shared space       |
+| `Query.overlaps(attr, geometry)`      | Partial overlap       |
+| `Query.notOverlaps(attr, geometry)`   | No partial overlap    |
+| `Query.touches(attr, geometry)`       | Boundaries touch      |
+| `Query.notTouches(attr, geometry)`    | Boundaries no touch   |
+| `Query.crosses(attr, geometry)`       | Line crosses geometry |
+| `Query.notCrosses(attr, geometry)`    | Line no cross         |
 
 Spatial columns also support: `Query.equal`, `Query.notEqual`, `Query.contains`, `Query.notContains`.
 
@@ -188,11 +187,9 @@ final adjacentZones = await tablesDB.listRows(
 ```typescript
 // TypeScript - Routes crossing restricted area
 const violations = await tablesDB.listRows({
-    databaseId: 'db',
-    tableId: 'routes',
-    queries: [
-        Query.crosses('path', restrictedArea),
-    ],
+  databaseId: 'db',
+  tableId: 'routes',
+  queries: [Query.crosses('path', restrictedArea)],
 });
 ```
 
@@ -206,15 +203,15 @@ const violations = await tablesDB.listRows({
 
 The concepts are shared, but method casing differs by SDK.
 
-| Concept | Dart / TypeScript | Python |
-|---------|-------------------|--------|
-| Not equal | `Query.notEqual()` | `Query.not_equal()` |
-| Less than/equal | `Query.lessThanEqual()` | `Query.less_than_equal()` |
+| Concept            | Dart / TypeScript          | Python                       |
+| ------------------ | -------------------------- | ---------------------------- |
+| Not equal          | `Query.notEqual()`         | `Query.not_equal()`          |
+| Less than/equal    | `Query.lessThanEqual()`    | `Query.less_than_equal()`    |
 | Greater than/equal | `Query.greaterThanEqual()` | `Query.greater_than_equal()` |
-| Cursor after | `Query.cursorAfter()` | `Query.cursor_after()` |
-| Cursor before | `Query.cursorBefore()` | `Query.cursor_before()` |
-| OR | `Query.or()` | `Query.or_queries()` |
-| AND | `Query.and()` | `Query.and_queries()` |
+| Cursor after       | `Query.cursorAfter()`      | `Query.cursor_after()`       |
+| Cursor before      | `Query.cursorBefore()`     | `Query.cursor_before()`      |
+| OR                 | `Query.or()`               | `Query.or_queries()`         |
+| AND                | `Query.and()`              | `Query.and_queries()`        |
 
 Python SDK calls should use keyword arguments:
 
@@ -265,13 +262,13 @@ Owned by [limits.md](limits.md).
 
 ## Index Requirements
 
-| Query Type | Index Required |
-|------------|----------------|
-| `Query.equal()` | key |
-| `Query.search()` | fulltext |
-| `Query.orderAsc/Desc()` | key |
-| `Query.distanceLessThan()` | spatial |
-| `Query.intersects()` | spatial |
+| Query Type                 | Index Required |
+| -------------------------- | -------------- |
+| `Query.equal()`            | key            |
+| `Query.search()`           | fulltext       |
+| `Query.orderAsc/Desc()`    | key            |
+| `Query.distanceLessThan()` | spatial        |
+| `Query.intersects()`       | spatial        |
 
 No index → scan whole table.
 

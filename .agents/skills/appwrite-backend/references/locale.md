@@ -25,7 +25,7 @@ for country in countries.countries:
 ```typescript
 // TypeScript
 const countries = await locale.listCountries();
-countries.countries.forEach(c => console.log(`${c.name}: ${c.code}`));
+countries.countries.forEach((c) => console.log(`${c.name}: ${c.code}`));
 ```
 
 ---

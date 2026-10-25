@@ -25,8 +25,8 @@ import { Client, Realtime } from 'appwrite';
 const realtime = new Realtime(client);
 
 const subscription = await realtime.subscribe(['tablesdb.products.tables.items.rows'], (event) => {
-    console.log('Event:', event.events);
-    console.log('Payload:', event.payload);
+  console.log('Event:', event.events);
+  console.log('Payload:', event.payload);
 });
 ```
 
@@ -90,30 +90,29 @@ Use `Channel` class, not raw strings. Gives IDE autocomplete, compile-time valid
 
 ```typescript
 // TypeScript (Client SDK)
-import { Client, Realtime, Channel } from "appwrite";
+import { Client, Realtime, Channel } from 'appwrite';
 
 const realtime = new Realtime(client);
 
 // Specific row
-const sub = await realtime.subscribe(
-    Channel.tablesdb('<DATABASE_ID>').table('<TABLE_ID>').row('<ROW_ID>'),
-    response => console.log(response)
+const sub = await realtime.subscribe(Channel.tablesdb('<DATABASE_ID>').table('<TABLE_ID>').row('<ROW_ID>'), (response) =>
+  console.log(response),
 );
 
 // All rows in a table
-Channel.tablesdb('<DATABASE_ID>').table('<TABLE_ID>').row()
+Channel.tablesdb('<DATABASE_ID>').table('<TABLE_ID>').row();
 
 // Only row updates (not creates/deletes)
-Channel.tablesdb('<DATABASE_ID>').table('<TABLE_ID>').row().update()
+Channel.tablesdb('<DATABASE_ID>').table('<TABLE_ID>').row().update();
 
 // Account events
-Channel.account()
+Channel.account();
 
 // Storage files
-Channel.files()
+Channel.files();
 
 // Presences, when SDK supports it
-Channel.presences()
+Channel.presences();
 ```
 
 ```dart
@@ -134,19 +133,18 @@ Chain `.create()`, `.update()`, `.delete()` to filter by event type:
 
 ```typescript
 // Only row updates in a table
-Channel.tablesdb('<DB>').table('<TABLE>').row().update()
+Channel.tablesdb('<DB>').table('<TABLE>').row().update();
 
 // Only new files in a bucket
-Channel.bucket('<BUCKET_ID>').file().create()
+Channel.bucket('<BUCKET_ID>').file().create();
 ```
 
 ### Multiple Channels with Helpers
 
 ```typescript
-const sub = await realtime.subscribe([
-    Channel.tablesdb('<DB>').table('<TABLE>').row('<ROW_ID>'),
-    Channel.files()
-], response => console.log(response));
+const sub = await realtime.subscribe([Channel.tablesdb('<DB>').table('<TABLE>').row('<ROW_ID>'), Channel.files()], (response) =>
+  console.log(response),
+);
 ```
 
 ---
@@ -156,29 +154,22 @@ const sub = await realtime.subscribe([
 Pass `Query` helpers on subscribe to filter events server-side. Callback fires only on payload match. Same query syntax as TablesDB.
 
 ```typescript
-import { Client, Realtime, Channel, Query } from "appwrite";
+import { Client, Realtime, Channel, Query } from 'appwrite';
 
 const realtime = new Realtime(client);
 
 // All row events (no filter)
-const all = await realtime.subscribe(
-    Channel.tablesdb('<DB>').table('<TABLE>').row(),
-    response => console.log(response.payload)
-);
+const all = await realtime.subscribe(Channel.tablesdb('<DB>').table('<TABLE>').row(), (response) => console.log(response.payload));
 
 // Only events where person equals 'person1'
-const filtered = await realtime.subscribe(
-    Channel.tablesdb('<DB>').table('<TABLE>').row(),
-    response => console.log(response.payload),
-    [Query.equal('person', ['person1'])]
-);
+const filtered = await realtime.subscribe(Channel.tablesdb('<DB>').table('<TABLE>').row(), (response) => console.log(response.payload), [
+  Query.equal('person', ['person1']),
+]);
 
 // Only events where person is NOT 'person1'
-const excluded = await realtime.subscribe(
-    Channel.tablesdb('<DB>').table('<TABLE>').row(),
-    response => console.log(response.payload),
-    [Query.notEqual('person', 'person1')]
-);
+const excluded = await realtime.subscribe(Channel.tablesdb('<DB>').table('<TABLE>').row(), (response) => console.log(response.payload), [
+  Query.notEqual('person', 'person1'),
+]);
 ```
 
 ### Supported Realtime Queries
@@ -205,11 +196,11 @@ Patterns:
 
 ## Event Types
 
-| Event | Description |
-|-------|-------------|
-| `*.create` | Row/file/resource created |
-| `*.update` | Row/file/resource updated |
-| `*.delete` | Row/file/resource deleted |
+| Event      | Description                   |
+| ---------- | ----------------------------- |
+| `*.create` | Row/file/resource created     |
+| `*.update` | Row/file/resource updated     |
+| `*.delete` | Row/file/resource deleted     |
 | `*.upsert` | Presence created or refreshed |
 
 ### Filter by Event
@@ -295,10 +286,10 @@ realtime.onClose(() => console.log('Disconnected'));
 
 ## Rate Limits
 
-| Limit | Value |
-|-------|-------|
-| Connections per IP | 100 |
-| Subscriptions per connection | 1000 |
+| Limit                        | Value |
+| ---------------------------- | ----- |
+| Connections per IP           | 100   |
+| Subscriptions per connection | 1000  |
 
 ---
 
@@ -359,10 +350,7 @@ Realtime needs WebSocket. For SSR:
 ```typescript
 // TypeScript - Check for browser
 if (typeof window !== 'undefined') {
-    const subscription = await realtime.subscribe(
-        ['tablesdb.main.tables.data.rows'],
-        (event) => console.log(event.payload),
-    );
+  const subscription = await realtime.subscribe(['tablesdb.main.tables.data.rows'], (event) => console.log(event.payload));
 }
 ```
 

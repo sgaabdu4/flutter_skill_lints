@@ -114,8 +114,8 @@ test('Dart Function references preserve an honest typed runtime boundary', async
 
 test('numeric schema distinguishes 32-bit integer from 64-bit bigint', async () => {
   const schema = await text('references/schema-management.md');
-  assert.match(schema, /`integer` \| signed 32-bit/u);
-  assert.match(schema, /`bigint` \| signed 64-bit/u);
+  assert.match(schema, /`integer` +\| +signed 32-bit/u);
+  assert.match(schema, /`bigint` +\| +signed 64-bit/u);
   assert.match(schema, /Number\.isSafeInteger/u);
 });
 
@@ -220,7 +220,7 @@ test('bulk owner matches current Appwrite atomicity and budgeting contracts', as
   assert.match(bulk, /never weaken update into upsert/u);
   assert.match(bulk, /Empty queries = all rows/u);
   assert.match(bulk, /without relationship columns/u);
-  assert.match(bulk, /One bulk call with `transactionId` \| `1`/u);
+  assert.match(bulk, /One bulk call with `transactionId` +\| +`1`/u);
   assert.match(bulk, /chunkSize = min\(deployedBulkRowLimit, deployedQueryEqualValueLimit, idsPer4096CharQuery\)/u);
   assert.match(bulk, /transactionOps = ceil\(targetRows \/ chunkSize\) \+ otherStagedOperations/u);
   assert.match(bulk, /first page avoids cursoring after a row/u);

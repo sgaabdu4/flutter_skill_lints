@@ -22,13 +22,13 @@
 6. Exact post-commit read-back → side-effect reconciliation.
 
 ```typescript
-const tx = await tablesDB.createTransaction({ttl: 300});
+const tx = await tablesDB.createTransaction({ ttl: 300 });
 
 await tablesDB.updateRow({
   databaseId: 'main',
   tableId: 'accounts',
   rowId: sourceId,
-  data: {credits: Operator.decrement(amount)},
+  data: { credits: Operator.decrement(amount) },
   transactionId: tx.$id,
 });
 
@@ -36,7 +36,7 @@ await tablesDB.updateRow({
   databaseId: 'ledger',
   tableId: 'accounts',
   rowId: targetId,
-  data: {credits: Operator.increment(amount)},
+  data: { credits: Operator.increment(amount) },
   transactionId: tx.$id,
 });
 
@@ -47,7 +47,7 @@ const staged = await tablesDB.getRow({
   transactionId: tx.$id,
 });
 
-await tablesDB.updateTransaction({transactionId: tx.$id, commit: true});
+await tablesDB.updateTransaction({ transactionId: tx.$id, commit: true });
 ```
 
 SDK signature = installed target version. Generated SDK/source wins over copied syntax.
@@ -94,14 +94,13 @@ if (rows.rows.length > 64) {
 
 ## Cross-Service Side Effects
 
-| Side effect | Owner |
-|---|---|
-| TablesDB rows | transaction |
-| Storage file ACL/content | compensation + exact file read-back |
-| Auth user/team | compensation + reconciliation |
-| Function/provider/email | outbox/idempotency key + convergence worker |
-| Schema | [production-migrations.md](production-migrations.md) expand/contract |
-
+| Side effect              | Owner                                                                |
+| ------------------------ | -------------------------------------------------------------------- |
+| TablesDB rows            | transaction                                                          |
+| Storage file ACL/content | compensation + exact file read-back                                  |
+| Auth user/team           | compensation + reconciliation                                        |
+| Function/provider/email  | outbox/idempotency key + convergence worker                          |
+| Schema                   | [production-migrations.md](production-migrations.md) expand/contract |
 - Database commit + Storage mutation cannot be one Appwrite transaction.
 - Safe order = stage rows → perform required pre-commit checks → commit → apply post-commit side effects → reconcile/compensate failures.
 - Security revocation spanning rows/files = deny stale access on every surface; partial success must remain visible as failure until converged.

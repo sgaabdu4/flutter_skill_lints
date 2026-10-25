@@ -25,9 +25,9 @@ await account.createOAuth2Session(
 ```typescript
 // React/browser
 await account.createOAuth2Session({
-    provider: OAuthProvider.Google,
-    success: `${window.location.origin}/auth/callback`,
-    failure: `${window.location.origin}/auth/failure`,
+  provider: OAuthProvider.Google,
+  success: `${window.location.origin}/auth/callback`,
+  failure: `${window.location.origin}/auth/failure`,
 });
 ```
 
@@ -40,7 +40,6 @@ await account.createOAuth2Session({
 - Console platform identifier = exact iOS bundle ID or Android package name.
 
 Self-hosted `1.9.6` exception:
-
 - Provider failure + `Missing redirect URL` = server failure-relay bug masking the real OAuth error; Appwrite fixed this after `1.9.6` in `appwrite/appwrite@ef0acd54bdc5`.
 - Preferred repair = upgrade to a release containing that fix.
 - Compatibility path = keep mobile `success` null + set only `failure` to `appwrite-callback-<PROJECT_ID>://callback`.
@@ -49,7 +48,6 @@ Self-hosted `1.9.6` exception:
 ### Apple Provider Gate
 
 Before declaring Apple login fixed:
-
 1. Appwrite provider = enabled + Services ID + Team ID + Key ID + P8 private key whose trusted provenance binds it to that exact Key ID.
 2. Apple Services ID = associated with the app's primary App ID.
 3. Services ID website entry = Appwrite domain + exact Appwrite Console callback URL; complete `Done → Continue → Save`.
@@ -61,7 +59,6 @@ P8 values are write-only. Upload through a trusted Console or secret-safe API pa
 ### Apple Failure Diagnosis
 
 `Invalid OAuth2 Response. Key and Secret not available` = the SDK received a callback without a successful Appwrite session payload. Diagnose the provider exchange before changing client parsing:
-
 1. Capture only callback field names + sanitized Appwrite error type/code in an isolated local diagnostic build; remove the probe before commit.
 2. Verify every Apple/Appwrite association in the gate above.
 3. Bind the P8 to its exact Apple Key ID through trusted provenance: original `AuthKey_<KEY_ID>.p8` download record, or a pre-recorded secret-manager fingerprint/label. Key syntax, filename guess, timestamp proximity, and Appwrite write-only metadata are insufficient.
@@ -183,7 +180,6 @@ print(user.emailVerification); // true
 ## Password Recovery
 
 Recovery preflight:
-
 1. Callback web hostname → exact target Appwrite project platform allowlist entry. iOS/Android platform entry ≠ unrelated web hostname authorization.
 2. Delivered URL → app/web router consuming `userId` + `secret`. Mobile custom scheme → native scheme registration + Flutter route contract + target-device proof.
 3. Invalid + expired + missing parameter tests → no secret exposure.

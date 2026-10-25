@@ -16,7 +16,6 @@ Use row/file perms when access differs per resource.
 If all resources share same rules, set perms on table/bucket and leave row/file perms empty.
 
 Mutation semantics:
-
 - omitted permissions on update/upsert = inherit/preserve current ACL
 - explicit `permissions: []` = revoke all resource-level ACLs
 - missing `$permissions` in a response = unknown, never equivalent to `[]`
@@ -25,13 +24,13 @@ Mutation semantics:
 
 ## Actions
 
-| Action | Meaning |
-|--------|---------|
-| `read` | View resource |
-| `create` | Create resource |
-| `update` | Modify resource |
-| `delete` | Remove resource |
-| `write` | `create + update + delete` |
+| Action   | Meaning                    |
+| -------- | -------------------------- |
+| `read`   | View resource              |
+| `create` | Create resource            |
+| `update` | Modify resource            |
+| `delete` | Remove resource            |
+| `write`  | `create + update + delete` |
 
 ---
 
@@ -59,12 +58,12 @@ permissions = [
 
 ```typescript
 permissions: [
-    Permission.read(Role.any()),
-    Permission.create(Role.users()),
-    Permission.update(Role.user(userId)),
-    Permission.delete(Role.team('team_123', 'admin')),
-    Permission.read(Role.label('premium')),
-]
+  Permission.read(Role.any()),
+  Permission.create(Role.users()),
+  Permission.update(Role.user(userId)),
+  Permission.delete(Role.team('team_123', 'admin')),
+  Permission.read(Role.label('premium')),
+];
 ```
 
 ---
@@ -75,26 +74,18 @@ Set row/file-level permissions only when ACL differs per resource.
 
 ```typescript
 await tablesDB.createRow({
-    databaseId: 'db',
-    tableId: 'posts',
-    rowId: ID.unique(),
-    data: {title: 'Hello'},
-    permissions: [
-        Permission.read(Role.user(userId)),
-        Permission.update(Role.user(userId)),
-        Permission.read(Role.team(teamId)),
-    ],
+  databaseId: 'db',
+  tableId: 'posts',
+  rowId: ID.unique(),
+  data: { title: 'Hello' },
+  permissions: [Permission.read(Role.user(userId)), Permission.update(Role.user(userId)), Permission.read(Role.team(teamId))],
 });
 
 await storage.createFile({
-    bucketId: 'docs',
-    fileId: ID.unique(),
-    file,
-    permissions: [
-        Permission.read(Role.any()),
-        Permission.update(Role.user(userId)),
-        Permission.delete(Role.user(userId)),
-    ],
+  bucketId: 'docs',
+  fileId: ID.unique(),
+  file,
+  permissions: [Permission.read(Role.any()), Permission.update(Role.user(userId)), Permission.delete(Role.user(userId))],
 });
 ```
 

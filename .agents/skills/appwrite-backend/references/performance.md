@@ -2,24 +2,23 @@
 
 ## Quick Reference
 
-| Technique | Impact | Details |
-|-----------|--------|---------|
-| Cursor pagination | 100x faster at scale | [pagination-performance.md](pagination-performance.md) |
-| Query.select() | 12-18x for relationships | [relationships.md](relationships.md) |
-| Skip totals | Eliminates COUNT scan | [pagination-performance.md](pagination-performance.md) |
-| Indexes | 100x faster queries | [schema-management.md](schema-management.md) |
-| Atomic operators | Eliminates race conditions | [atomic-operators.md](atomic-operators.md) |
-| Bulk operations | N requests → 1 | [bulk-operations.md](bulk-operations.md) |
-| Realtime | WebSocket vs polling | [realtime.md](realtime.md) |
-| Image caching | WebP/AVIF 30-55% smaller | [storage-files.md](storage-files.md) |
-| Redis cache (self-hosted) | Cut DB reads hot data | See below |
+| Technique                 | Impact                     | Details                                                |
+| ------------------------- | -------------------------- | ------------------------------------------------------ |
+| Cursor pagination         | 100x faster at scale       | [pagination-performance.md](pagination-performance.md) |
+| Query.select()            | 12-18x for relationships   | [relationships.md](relationships.md)                   |
+| Skip totals               | Eliminates COUNT scan      | [pagination-performance.md](pagination-performance.md) |
+| Indexes                   | 100x faster queries        | [schema-management.md](schema-management.md)           |
+| Atomic operators          | Eliminates race conditions | [atomic-operators.md](atomic-operators.md)             |
+| Bulk operations           | N requests → 1             | [bulk-operations.md](bulk-operations.md)               |
+| Realtime                  | WebSocket vs polling       | [realtime.md](realtime.md)                             |
+| Image caching             | WebP/AVIF 30-55% smaller   | [storage-files.md](storage-files.md)                   |
+| Redis cache (self-hosted) | Cut DB reads hot data      | See below                                              |
 
 ---
 
 ## Checklist
 
 Pre-deploy:
-
 - [ ] All filter/sort columns indexed
 - [ ] Lists use `Query.select()` for needed fields only
 - [ ] Pagination uses cursor (not offset) for >100 rows
@@ -34,24 +33,24 @@ Pre-deploy:
 
 ## Red Flags
 
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| Query >500ms | Missing index | Add index for queried columns |
-| Latency grows over time | Offset pagination | Switch to cursor |
-| High client memory | Fetch all data | Use generators |
-| Duplicate data in responses | Missing Query.select() | Select only needed fields |
-| Lost counter updates | Read-modify-write | Use Operator.increment() |
+| Symptom                     | Cause                  | Fix                           |
+| --------------------------- | ---------------------- | ----------------------------- |
+| Query >500ms                | Missing index          | Add index for queried columns |
+| Latency grows over time     | Offset pagination      | Switch to cursor              |
+| High client memory          | Fetch all data         | Use generators                |
+| Duplicate data in responses | Missing Query.select() | Select only needed fields     |
+| Lost counter updates        | Read-modify-write      | Use Operator.increment()      |
 
 ---
 
 ## Performance Targets
 
-| Operation | Target |
-|-----------|--------|
-| Single row get | <50ms |
-| List (25 rows) | <100ms |
+| Operation        | Target |
+| ---------------- | ------ |
+| Single row get   | <50ms  |
+| List (25 rows)   | <100ms |
 | Full-text search | <200ms |
-| Bulk (100 rows) | <500ms |
+| Bulk (100 rows)  | <500ms |
 
 ## Dependency-Aware Bootstrap
 
@@ -95,12 +94,12 @@ Future<Map<String, dynamic>> getCachedRow(String key, Future<Map<String, dynamic
 
 ### When to Cache
 
-| Cache | Skip Cache |
-|-------|-----------|
-| User profiles read 100x/min | Data changes every request |
-| Config/settings (rarely change) | Writes (go to TablesDB) |
-| Computed aggregations | Security-sensitive data |
-| API responses shared across users | Per-user real-time data |
+| Cache                             | Skip Cache                 |
+| --------------------------------- | -------------------------- |
+| User profiles read 100x/min       | Data changes every request |
+| Config/settings (rarely change)   | Writes (go to TablesDB)    |
+| Computed aggregations             | Security-sensitive data    |
+| API responses shared across users | Per-user real-time data    |
 
 ### Invalidation
 
@@ -180,12 +179,12 @@ Future<List<String>> fetchAllIds(String userId) async {
 
 ### When to Use
 
-| Scenario | Approach |
-|----------|----------|
-| Data rarely changes | Delta sync — fetches nothing on no change |
-| Frequent small edits | Delta sync — fetches only changed rows |
-| Full refresh needed | Full `getAll()` pull |
-| Real-time updates | Realtime subscriptions (not delta sync) |
+| Scenario             | Approach                                  |
+| -------------------- | ----------------------------------------- |
+| Data rarely changes  | Delta sync — fetches nothing on no change |
+| Frequent small edits | Delta sync — fetches only changed rows    |
+| Full refresh needed  | Full `getAll()` pull                      |
+| Real-time updates    | Realtime subscriptions (not delta sync)   |
 
 ---
 

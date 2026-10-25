@@ -20,14 +20,14 @@
 
 ## Select
 
-| Need | Method | Guard |
-|---|---|---|
-| Create rows with different values | `createRows(rows)` | Preallocate + persist every `$id` before retry |
-| Apply one patch to matching rows | `updateRows(data, queries)` | Empty queries update every row |
-| Create-or-update rows with different values | `upsertRows(rows)` | Missing `$id` may create; use only when create-on-missing is valid |
-| Delete matching rows | `deleteRows(queries)` | Empty queries delete every row |
-| Different patch per existing row + create forbidden | Transaction operations or redesign | `upsertRows` is not a safe update-only substitute |
-| Table has relationship columns | Individual row operations | Bulk is unsupported |
+| Need                                                | Method                             | Guard                                                              |
+| --------------------------------------------------- | ---------------------------------- | ------------------------------------------------------------------ |
+| Create rows with different values                   | `createRows(rows)`                 | Preallocate + persist every `$id` before retry                     |
+| Apply one patch to matching rows                    | `updateRows(data, queries)`        | Empty queries update every row                                     |
+| Create-or-update rows with different values         | `upsertRows(rows)`                 | Missing `$id` may create; use only when create-on-missing is valid |
+| Delete matching rows                                | `deleteRows(queries)`              | Empty queries delete every row                                     |
+| Different patch per existing row + create forbidden | Transaction operations or redesign | `upsertRows` is not a safe update-only substitute                  |
+| Table has relationship columns                      | Individual row operations          | Bulk is unsupported                                                |
 
 Prefer one query-based `updateRows`/`deleteRows` call over list IDs → per-row loop when every target receives the same mutation. Index every query column.
 
@@ -66,8 +66,8 @@ Prefer one query-based `updateRows`/`deleteRows` call over list IDs → per-row 
 Build + validate the complete query set before calling `updateRows` or `deleteRows`.
 
 ```typescript
-const queries = [Query.equal("assigneeId", [departingStaffId])];
-if (queries.length === 0) throw new Error("Refuse unscoped bulk mutation");
+const queries = [Query.equal('assigneeId', [departingStaffId])];
+if (queries.length === 0) throw new Error('Refuse unscoped bulk mutation');
 
 await tablesDB.updateRows({
   databaseId,
@@ -105,7 +105,6 @@ Appwrite `1.9.0` self-hosted fallback = bulk rows `100` + `Query.equal()` values
 ### Update + Delete
 
 Use a fixed-point loop instead of one unbounded predicate:
-
 1. Block/reroute writes that can recreate the source predicate.
 2. List the first `chunkSize` matching rows ordered by stable `$id`; select only `$id`.
 3. Mutate with both `Query.equal('$id', chunkIds)` + the original source predicate.
@@ -149,12 +148,12 @@ while (true) {
 
 Bulk row count and transaction operation count are separate limits.
 
-| Staging path | Transaction operations charged |
-|---|---|
-| One row call with `transactionId` | `1` |
-| One bulk call with `transactionId` | `1` |
-| `createOperations(operations)` | Number of top-level operation objects |
-| One `bulkCreate`/`bulkUpdate`/`bulkUpsert`/`bulkDelete` object inside `createOperations` | `1` |
+| Staging path                                                                             | Transaction operations charged        |
+| ---------------------------------------------------------------------------------------- | ------------------------------------- |
+| One row call with `transactionId`                                                        | `1`                                   |
+| One bulk call with `transactionId`                                                       | `1`                                   |
+| `createOperations(operations)`                                                           | Number of top-level operation objects |
+| One `bulkCreate`/`bulkUpdate`/`bulkUpsert`/`bulkDelete` object inside `createOperations` | `1`                                   |
 
 The rows inside a bulk operation still must fit the separate bulk row/request limit. Bind this behavior to the deployed Appwrite version before relying on it; Appwrite `1.9.0` source increments the transaction counter once for a bulk call.
 
@@ -189,7 +188,6 @@ This stages two transaction operations, not one operation per matched row.
 One bulk request = atomic. Multiple bulk requests/chunks = not one atomic unit unless all are staged in one transaction that fits both transaction + bulk limits.
 
 When the full change cannot fit:
-
 1. Persist one stable operation/job ID + source + target + policy + status.
 2. Block or reroute new writes that can recreate the old state.
 3. Process deterministic, idempotent chunks from [Chunk](#chunk); checkpoint only after exact read-back.

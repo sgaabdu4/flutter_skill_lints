@@ -2,12 +2,12 @@
 
 ## Metered Resources
 
-| Resource | Consumed by |
-|----------|-------------|
-| Bandwidth | every API request/response, including row reads and writes |
-| Storage | bucket files + database storage |
-| Executions | each function invocation |
-| MAU | unique logged-in users per month |
+| Resource   | Consumed by                                                |
+| ---------- | ---------------------------------------------------------- |
+| Bandwidth  | every API request/response, including row reads and writes |
+| Storage    | bucket files + database storage                            |
+| Executions | each function invocation                                   |
+| MAU        | unique logged-in users per month                           |
 
 Quotas and prices change per plan and per billing period — read the deployed
 values from Console → Organization → Billing before any cost estimate; never
@@ -24,11 +24,11 @@ budget cap.
 Every technique in the [performance.md](performance.md) quick reference also cuts
 spend — less transferred data, fewer requests. Bill-specific levers on top of it:
 
-| Lever | Bill effect |
-|-------|-------------|
-| Batch function operations | 1 execution instead of N (below) |
+| Lever                      | Bill effect                              |
+| -------------------------- | ---------------------------------------- |
+| Batch function operations  | 1 execution instead of N (below)         |
 | Stable transformation URLs | Cache hits instead of recomputes (below) |
-| Budget cap + alerts | Bounds overage (below) |
+| Budget cap + alerts        | Bounds overage (below)                   |
 
 ### Batch Function Operations
 

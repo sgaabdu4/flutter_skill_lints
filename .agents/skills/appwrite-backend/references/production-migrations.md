@@ -10,17 +10,17 @@
 
 ## Sequence
 
-| Phase | Required completion |
-|---|---|
-| Bind | Exact endpoint + project + server + MCP capability/auth profile verified; application SDK versions bound where relevant; secrets masked. |
-| Preflight | Fresh schema inventory + backup/recovery proof + row counts + uniqueness + tenant + ACL invariants pass. |
-| Expand | Add only backward-compatible tables/columns/indexes; poll each object to ready/available. |
-| Backfill | Stable cursor/chunks + target-type check + exact no-op detection + deterministic accounting + bounded workers. |
-| Verify | Zero failures + exact row/file ACL reads + semantic counts + no missing required data. |
-| Deploy | Candidate variables validated → metadata read back → compatible/inert deployment ready → runtime smoke. |
-| Contract | Required/delete/rename constraints only after every live writer/reader uses the expanded contract. |
-| Activate | Function/worker/consumer release only after contract + smoke receipts PASS. |
-| Final | Active deployment + schema + data + ACL + cleanup read-back bound to one revision/environment. |
+| Phase     | Required completion                                                                                                                      |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Bind      | Exact endpoint + project + server + MCP capability/auth profile verified; application SDK versions bound where relevant; secrets masked. |
+| Preflight | Fresh schema inventory + backup/recovery proof + row counts + uniqueness + tenant + ACL invariants pass.                                 |
+| Expand    | Add only backward-compatible tables/columns/indexes; poll each object to ready/available.                                                |
+| Backfill  | Stable cursor/chunks + target-type check + exact no-op detection + deterministic accounting + bounded workers.                           |
+| Verify    | Zero failures + exact row/file ACL reads + semantic counts + no missing required data.                                                   |
+| Deploy    | Candidate variables validated → metadata read back → compatible/inert deployment ready → runtime smoke.                                  |
+| Contract  | Required/delete/rename constraints only after every live writer/reader uses the expanded contract.                                       |
+| Activate  | Function/worker/consumer release only after contract + smoke receipts PASS.                                                              |
+| Final     | Active deployment + schema + data + ACL + cleanup read-back bound to one revision/environment.                                           |
 
 ## Expand + Contract
 
@@ -80,14 +80,14 @@ Shared `transactionId` + client context, commit-conflict rebuild, and the owners
 
 ## Failure Route
 
-| Evidence | Action |
-|---|---|
-| Failure before mutation | Fix tool/contract owner → focused proof → restart phase. |
-| Failure after partial mutation | Freeze writers → read current state → resume exact incomplete work. |
-| MCP tool/schema/serialization mismatch | Inspect connected tool schema + official source → report unsupported capability; no alternate operational interface. |
-| SQL/backup rows exist but Appwrite API cannot see them | Treat metadata/cache/runtime as inconsistent → self-host incident route. |
-| ACL list disagrees with exact GET | Exact GET wins for proof; repair verifier, not correct backend behavior. |
-| Same root recurs | Stop retries → durable regression + owner correction. |
+| Evidence                                               | Action                                                                                                               |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| Failure before mutation                                | Fix tool/contract owner → focused proof → restart phase.                                                             |
+| Failure after partial mutation                         | Freeze writers → read current state → resume exact incomplete work.                                                  |
+| MCP tool/schema/serialization mismatch                 | Inspect connected tool schema + official source → report unsupported capability; no alternate operational interface. |
+| SQL/backup rows exist but Appwrite API cannot see them | Treat metadata/cache/runtime as inconsistent → self-host incident route.                                             |
+| ACL list disagrees with exact GET                      | Exact GET wins for proof; repair verifier, not correct backend behavior.                                             |
+| Same root recurs                                       | Stop retries → durable regression + owner correction.                                                                |
 
 ## Sources
 

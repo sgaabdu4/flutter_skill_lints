@@ -2,12 +2,12 @@
 
 ## Relationship Types
 
-| Type | Description | Example |
-|------|-------------|---------|
-| `oneToOne` | Single reference | User → Profile |
-| `oneToMany` | Parent has many children | Post → Comments |
-| `manyToOne` | Child references parent | Comment → Post |
-| `manyToMany` | Both have many | Post ↔ Tags |
+| Type         | Description              | Example         |
+| ------------ | ------------------------ | --------------- |
+| `oneToOne`   | Single reference         | User → Profile  |
+| `oneToMany`  | Parent has many children | Post → Comments |
+| `manyToOne`  | Child references parent  | Comment → Post  |
+| `manyToMany` | Both have many           | Post ↔ Tags     |
 
 ---
 
@@ -119,11 +119,11 @@ await tablesDB.createRelationshipColumn(
 
 ## On Delete Behavior
 
-| Setting | Description |
-|---------|-------------|
+| Setting    | Description                        |
+| ---------- | ---------------------------------- |
 | `restrict` | Block delete if related rows exist |
-| `cascade` | Delete related rows |
-| `setNull` | Set foreign key to null |
+| `cascade`  | Delete related rows                |
+| `setNull`  | Set foreign key to null            |
 
 ---
 

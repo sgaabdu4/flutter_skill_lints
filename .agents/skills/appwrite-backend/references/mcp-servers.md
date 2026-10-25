@@ -45,7 +45,6 @@ flowchart TD
 ## Self-Hosted Launcher
 
 Prerequisite = `uv` installed (`uvx` on PATH) + API key with the scopes every intended tool needs.
-
 1. Create one tracked executable repository launcher (`scripts/appwrite-mcp`).
 2. Resolve the repository root from the script's own path; MCP clients do not guarantee the launch working directory.
 3. Source the repository's existing gitignored Appwrite env file; keep one secret owner.
@@ -78,11 +77,10 @@ exec uvx mcp-server-appwrite "$@"
 
 Claude and Codex each point to the launcher; on Cloud each carries the remote URL instead.
 
-| Harness | Committed file | Shape |
-|---|---|---|
-| Claude Code | `.mcp.json` | `mcpServers.appwrite` = `"type": "stdio"` + `"command": "./scripts/appwrite-mcp"` |
-| Codex | `.codex/config.toml` | `[mcp_servers.appwrite]` + `command = "./scripts/appwrite-mcp"`; loads only when the repository is trusted, and overrides a same-named global server |
-
+| Harness     | Committed file       | Shape                                                                                                                                                |
+| ----------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude Code | `.mcp.json`          | `mcpServers.appwrite` = `"type": "stdio"` + `"command": "./scripts/appwrite-mcp"`                                                                    |
+| Codex       | `.codex/config.toml` | `[mcp_servers.appwrite]` + `command = "./scripts/appwrite-mcp"`; loads only when the repository is trusted, and overrides a same-named global server |
 - Committed configs carry relative paths only; absolute home paths, emails, project IDs, and keys stay out.
 - Codex trust is per machine: the repository path needs `[projects."<absolute-repo>"] trust_level = "trusted"` in `~/.codex/config.toml`, written by answering yes on first run in that directory. Untrusted repository = project file silently ignored.
 - `codex mcp add` writes the global `~/.codex/config.toml` and leaks one repository's server into every other repository; prefer the project file and keep the global command only as a documented fallback.
@@ -101,14 +99,14 @@ Claude and Codex each point to the launcher; on Cloud each carries the remote UR
 - Embeddings are bound to OpenAI `text-embedding-3-small`, so no other provider substitutes; vectors from a different model rank as noise.
 - Key-free replacement = Appwrite's own machine-readable manual, preferred default:
 
-| Fact | Value |
-|---|---|
-| Feed | `https://appwrite.io/llms-full.txt` (index-only variant `llms.txt`; single page = append `.md` to its URL) |
-| Page split | line `## <Title>` → blank line → line `URL: https://appwrite.io/...` |
-| Blocked default | Python `urllib` default User-Agent returns `403`; send an identifying User-Agent |
-| Cache | gitignored repository folder, re-download when older than 7 days |
-| Ranking | weight title + URL path segments above body; demote `blog/` below guides |
-| Cleanup | strip `{% ... %}` template tags when printing a page |
+| Fact            | Value                                                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
+| Feed            | `https://appwrite.io/llms-full.txt` (index-only variant `llms.txt`; single page = append `.md` to its URL) |
+| Page split      | line `## <Title>` → blank line → line `URL: https://appwrite.io/...`                                       |
+| Blocked default | Python `urllib` default User-Agent returns `403`; send an identifying User-Agent                           |
+| Cache           | gitignored repository folder, re-download when older than 7 days                                           |
+| Ranking         | weight title + URL path segments above body; demote `blog/` below guides                                   |
+| Cleanup         | strip `{% ... %}` template tags when printing a page                                                       |
 
 ## Proof
 

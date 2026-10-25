@@ -40,45 +40,45 @@ await tablesDB.updateRow(
 
 ### Numeric
 
-| Operator | Dart | Python | TypeScript |
-|----------|------|--------|------------|
-| Add | `Operator.increment(n)` | `Operator.increment(n)` | `Operator.increment(n)` |
-| Add with max | `Operator.increment(n, max)` | `Operator.increment(n, max=x)` | `Operator.increment(n, max)` |
-| Subtract | `Operator.decrement(n)` | `Operator.decrement(n)` | `Operator.decrement(n)` |
+| Operator          | Dart                         | Python                         | TypeScript                   |
+| ----------------- | ---------------------------- | ------------------------------ | ---------------------------- |
+| Add               | `Operator.increment(n)`      | `Operator.increment(n)`        | `Operator.increment(n)`      |
+| Add with max      | `Operator.increment(n, max)` | `Operator.increment(n, max=x)` | `Operator.increment(n, max)` |
+| Subtract          | `Operator.decrement(n)`      | `Operator.decrement(n)`        | `Operator.decrement(n)`      |
 | Subtract with min | `Operator.decrement(n, min)` | `Operator.decrement(n, min=x)` | `Operator.decrement(n, min)` |
-| Multiply | `Operator.multiply(f)` | `Operator.multiply(f)` | `Operator.multiply(f)` |
-| Divide | `Operator.divide(d)` | `Operator.divide(d)` | `Operator.divide(d)` |
-| Modulo | `Operator.modulo(d)` | `Operator.modulo(d)` | `Operator.modulo(d)` |
-| Power | `Operator.power(e)` | `Operator.power(e)` | `Operator.power(e)` |
+| Multiply          | `Operator.multiply(f)`       | `Operator.multiply(f)`         | `Operator.multiply(f)`       |
+| Divide            | `Operator.divide(d)`         | `Operator.divide(d)`           | `Operator.divide(d)`         |
+| Modulo            | `Operator.modulo(d)`         | `Operator.modulo(d)`           | `Operator.modulo(d)`         |
+| Power             | `Operator.power(e)`          | `Operator.power(e)`            | `Operator.power(e)`          |
 
 ### Array
 
-| Operator | Description |
-|----------|-------------|
-| `Operator.arrayAppend([...])` | Add to end |
-| `Operator.arrayPrepend([...])` | Add to start |
-| `Operator.arrayInsert(index, value)` | Insert at pos |
-| `Operator.arrayRemove(value)` | Remove first occurrence |
-| `Operator.arrayUnique()` | Dedupe |
-| `Operator.arrayIntersect([...])` | Keep matching |
-| `Operator.arrayDiff([...])` | Remove matching |
-| `Operator.arrayFilter(condition)` | Filter by cond |
+| Operator                             | Description             |
+| ------------------------------------ | ----------------------- |
+| `Operator.arrayAppend([...])`        | Add to end              |
+| `Operator.arrayPrepend([...])`       | Add to start            |
+| `Operator.arrayInsert(index, value)` | Insert at pos           |
+| `Operator.arrayRemove(value)`        | Remove first occurrence |
+| `Operator.arrayUnique()`             | Dedupe                  |
+| `Operator.arrayIntersect([...])`     | Keep matching           |
+| `Operator.arrayDiff([...])`          | Remove matching         |
+| `Operator.arrayFilter(condition)`    | Filter by cond          |
 
 ### String
 
-| Operator | Description |
-|----------|-------------|
-| `Operator.stringConcat(value)` | Append str |
+| Operator                                  | Description  |
+| ----------------------------------------- | ------------ |
+| `Operator.stringConcat(value)`            | Append str   |
 | `Operator.stringReplace(search, replace)` | Find+replace |
 
 ### Boolean & Date
 
-| Operator | Description |
-|----------|-------------|
-| `Operator.toggle()` | Flip bool |
-| `Operator.dateAddDays(n)` | Add days |
-| `Operator.dateSubDays(n)` | Sub days |
-| `Operator.dateSetNow()` | Set now |
+| Operator                  | Description |
+| ------------------------- | ----------- |
+| `Operator.toggle()`       | Flip bool   |
+| `Operator.dateAddDays(n)` | Add days    |
+| `Operator.dateSubDays(n)` | Sub days    |
+| `Operator.dateSetNow()`   | Set now     |
 
 ## Examples
 
@@ -109,13 +109,13 @@ tables_db.update_row(
 ```typescript
 // TypeScript - Atomic stock decrement
 await tablesDB.updateRow({
-    databaseId: 'db',
-    tableId: 'products',
-    rowId: 'product_123',
-    data: {
-        stock: Operator.decrement(quantity, 0),
-        lastSold: Operator.dateSetNow(),
-    },
+  databaseId: 'db',
+  tableId: 'products',
+  rowId: 'product_123',
+  data: {
+    stock: Operator.decrement(quantity, 0),
+    lastSold: Operator.dateSetNow(),
+  },
 });
 ```
 

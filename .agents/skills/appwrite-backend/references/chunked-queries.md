@@ -1,7 +1,6 @@
 # Chunked ID Queries
 
 `Query.equal()` value cap = deployed target's ([limits.md](limits.md#query-limits)). Chunk bigger lists:
-
 - `idChunkSize` = min(that cap, IDs whose serialized `Query.equal` fits `4096` chars) → `100` on MariaDB/PostgreSQL ([limits.md](limits.md#chunking-large-id-lists)); pass it as `chunkSize`.
 - `Query.limit(chunk.length)` per chunk — default page `25` silently truncates.
 - Chunks run sequentially. Client SDK → every call through the [shared coordinator](error-handling.md#client-request-coordination); unbounded `Future.wait`/`Promise.all`/`asyncio.gather` = forbidden.
@@ -68,29 +67,28 @@ def fetch_by_ids(
 
 ```typescript
 async function fetchByIds<T extends Models.Row>(
-    dbId: string, tableId: string, ids: string[], chunkSize: number,
-    select?: string[],
+  dbId: string,
+  tableId: string,
+  ids: string[],
+  chunkSize: number,
+  select?: string[],
 ): Promise<T[]> {
-    const rows: T[] = [];
-    for (let i = 0; i < ids.length; i += chunkSize) {
-        const chunk = ids.slice(i, i + chunkSize);
-        const result = await tablesDB.listRows<T>({
-            databaseId: dbId, tableId: tableId,
-            queries: [
-                Query.equal('$id', chunk),
-                Query.limit(chunk.length),
-                ...(select ? [Query.select(select)] : []),
-            ],
-            total: false,
-        });
-        rows.push(...result.rows);
-    }
-    return rows;
+  const rows: T[] = [];
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize);
+    const result = await tablesDB.listRows<T>({
+      databaseId: dbId,
+      tableId: tableId,
+      queries: [Query.equal('$id', chunk), Query.limit(chunk.length), ...(select ? [Query.select(select)] : [])],
+      total: false,
+    });
+    rows.push(...result.rows);
+  }
+  return rows;
 }
 
 // Usage
-const patients = await fetchByIds<Patient>('db', 'patients', patientIds,
-    idChunkSize, ['name', 'email', 'phone']);
+const patients = await fetchByIds<Patient>('db', 'patients', patientIds, idChunkSize, ['name', 'email', 'phone']);
 ```
 
 ---

@@ -126,7 +126,7 @@ Failure pattern:
 ### Upgrade Path
 
 - `2.3.0` upgrades from `1.9.6`+ in one step. Older → each minor version's latest patch ([releases](https://github.com/appwrite/appwrite/releases)) up to `1.9.6` first.
-- Skipped `2.x` releases → also apply the `2.0.0` + `2.1.0` + `2.2.0` release upgrade notes.
+- Apply the Upgrade notes of every release after the installed one, the target included. One-step support from `1.9.6` is confirmed for `2.3.0` only; for a later target, read its release notes first.
 - Pin version — never `latest`. Run from the parent of `appwrite/`; the directory name stays `appwrite`.
 
 ```bash
@@ -135,11 +135,14 @@ docker run -it --rm \
     --volume /var/run/docker.sock:/var/run/docker.sock \
     --volume "$(pwd)"/appwrite:/usr/src/code/appwrite:rw \
     --entrypoint="upgrade" \
-    appwrite/appwrite:2.3.0
+    appwrite/appwrite:2.6.2
 ```
 
 - Done = `docker ps | grep appwrite/appwrite` shows no error `STATUS` + one version on every `appwrite/appwrite` container.
 - `2.3.0` = compose adds `appwrite-mqtt` + Traefik ports `8883`/`8084` (taken → set `_APP_MQTT_PORT`/`_APP_MQTT_WSS_PORT`); remove `_APP_CONSOLE_URL_SCHEME`; Console on another host than the API → set `_APP_CONSOLE_URL`; rollback to `2.2.0` → stop workers + drain queued jobs first.
+- `2.4.0` = GitHub integration stops without `_APP_VCS_GITHUB_WEBHOOK_SECRET` (same value in the GitHub App); behind a public load balancer add its ranges to `_APP_TRUSTED_PROXIES` + its client-IP header to `_APP_TRUSTED_HEADERS`; private OAuth2/OIDC, webhook, messaging-webhook, or migration-source hosts must be listed in `_APP_ALLOWED_INTERNAL_ADDRESSES`.
+- `2.6.0` = schema changes; run `migrate` even from `2.5.0`.
+- `2.6.2` = empty or placeholder `_APP_JOBS_SECRET` refused (function job callbacks fail); project SMTP, messaging SMTP, and migration sources on private hosts need `_APP_ALLOWED_INTERNAL_ADDRESSES`.
 
 ### Run Migration
 
@@ -148,7 +151,7 @@ cd appwrite/
 docker compose exec appwrite migrate
 ```
 
-Patch upgrade → `migrate` only when its release notes require it; `2.3.0` requires it (run time grows with project count). Review generated compose before restoring custom proxy edits.
+Upgrade → `migrate` only when its release notes require it; `2.3.0`, `2.4.0` and `2.6.0` require it (run time grows with project count). Review generated compose before restoring custom proxy edits.
 
 **Before every upgrade:** back up, review changelog, test non-prod first.
 

@@ -27,7 +27,7 @@ docker run -it --rm \
     --volume /var/run/docker.sock:/var/run/docker.sock \
     --volume "$(pwd)"/appwrite:/usr/src/code/appwrite:rw \
     --entrypoint="install" \
-    appwrite/appwrite:2.3.0
+    appwrite/appwrite:2.6.2
 ```
 
 No wizard → append `--database=postgresql|mariadb|mongodb` after the image tag.
@@ -44,14 +44,14 @@ Database = PostgreSQL (new `2.x` default), MariaDB, or MongoDB; fixed at install
 
 ### Release-Matched SDK Pins
 
-| Target                   | Package         | Appwrite `2.0.0`–`2.3.0` | Appwrite `1.9.6` (existing installs) |
+| Target                   | Package         | Appwrite `2.0.0`–`2.6.2` | Appwrite `1.9.6` (existing installs) |
 | ------------------------ | --------------- | ------------------------ | ------------------------------------ |
 | Dart Functions/server    | `dart_appwrite` | `29.0.0`                 | `26.0.0`                             |
 | Flutter client app       | `appwrite`      | `26.2.0`                 | `25.3.0`                             |
 | Node.js Functions/server | `node-appwrite` | `29.0.0`                 | `27.0.0`                             |
 | Browser/Web client       | `appwrite`      | `27.0.0`                 | `26.2.0`                             |
 | Python Functions/server  | `appwrite`      | `24.0.0`                 | `22.1.0`                             |
-- Table = release-matched versions; floating `latest` forbidden. Other server versions → read the official table; never infer.
+- Table = release-matched versions; floating `latest` forbidden. `1.9.8` + `1.9.9` use the `1.9.6` pins. Other server versions → read the official table; never infer.
 - Older SDK declaring `1.9.x` compatibility ≠ `1.9.6` release-match.
 - Repository pin wins only after server line + real call shapes are proven.
 - Pin change = every intervening changelog → service-call/result-access inventory → breaking signature/model migration → exact isolated dependency resolution → owned tests → read-only target probe.

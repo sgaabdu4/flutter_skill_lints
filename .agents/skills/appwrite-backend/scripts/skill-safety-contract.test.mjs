@@ -53,6 +53,26 @@ test('MCP credentials preserve least scopes and protected consumer transfer', as
   assert.match(mcp, /Secret values never enter tool arguments visible in the transcript/u);
 });
 
+test('API keys use TablesDB scopes and MCP writes use the write runner', async () => {
+  const [skill, mcp] = await Promise.all([text('SKILL.md'), text('references/mcp-servers.md')]);
+  assert.match(mcp, /TablesDB scopes = `databases\.read\/\.write`/u);
+  assert.match(mcp, /Never request deprecated `collections\.\*`/u);
+  assert.match(mcp, /include `databases\.read` even when every intended call writes/u);
+  assert.match(mcp, /`appwrite_call_write_tool` for every other tool/u);
+  assert.match(mcp, /appwrite_call_write_tool \+ confirm_write=true/u);
+  assert.match(skill, /agents never run the Appwrite CLI/u);
+});
+
+test('CI schema push is serialized and blocks unapproved deletion', async () => {
+  const schema = await text('references/schema-management.md');
+  assert.match(schema, /Agents never run the CLI and never use this job to work around an MCP gap/u);
+  assert.match(schema, /deletes every remote database, table, column or index the file omits/u);
+  assert.match(schema, /blocked until approved through \[production-migrations\]/u);
+  assert.match(schema, /`cancel-in-progress: false`/u);
+  assert.match(schema, /the preflight reads the same endpoint, project and file the job pushes to/u);
+  assert.match(schema, /appwrite-cli@28\.10\.0/u);
+});
+
 test('release-matched SDK pins require call-shape migration proof', async () => {
   const [skill, selfHosting] = await Promise.all([text('SKILL.md'), text('references/self-hosting.md')]);
   assert.match(skill, /Compatible with `1\.9\.x`[^\n]*does not mean release-matched/u);

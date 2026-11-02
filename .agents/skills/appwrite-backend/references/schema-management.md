@@ -126,12 +126,13 @@ await tablesDB.createVarcharColumn(
 
 ## Index Types
 
-| Type       | Use Case                          |
-| ---------- | --------------------------------- |
-| `key`      | WHERE, ORDER BY queries           |
-| `fulltext` | `Query.search()` text search      |
-| `unique`   | Enforce uniqueness constraint     |
-| `spatial`  | Geo queries on Point/Line/Polygon |
+| Type       | Use Case                                                                     |
+| ---------- | ---------------------------------------------------------------------------- |
+| `key`      | WHERE, ORDER BY queries                                                      |
+| `fulltext` | `Query.search()` text search                                                 |
+| `unique`   | Enforce uniqueness constraint                                                |
+| `spatial`  | Geo queries on Point/Line/Polygon                                            |
+| `trigram`  | `startsWith`/`contains`/`endsWith`; PostgreSQL only, other engines reject it |
 
 ### Create Index
 
@@ -261,6 +262,29 @@ Export filtered data → CSV from Console.
 - Custom delimiter
 - Background execution
 - Email on done
+
+---
+
+## Schema Push in CI
+
+- A repository's GitHub Actions job may push tables with the Appwrite CLI; this approval covers tables only. Agents never run the CLI and never use this job to work around an MCP gap ([SKILL.md](../SKILL.md) invariant 1).
+- `appwrite.config.json` keeps TablesDB databases under `tablesDB` and tables under `tables` (each with `databaseId`, `columns`, `indexes`). Legacy `databases` + `collections` keys = the deprecated API; never add them.
+- A push is a live schema migration. The CLI deletes every remote database, table, column or index the file omits, some column changes delete and recreate the column (its data is lost), and `--force` accepts both. Before each push, compare the live schema (MCP reads) with the file; any deletion, omission, remote drift or retype is blocked until approved through [production-migrations](production-migrations.md) (invariants 8 + 9).
+- CI authenticates with an API key from a secret, never a signed-in account. The project comes from `appwrite.config.json` unless `APPWRITE_PROJECT_ID` or `APPWRITE_CONFIG_FILE` overrides it; the preflight reads the same endpoint, project and file the job pushes to.
+- One push at a time per endpoint + project: a GitHub Actions `concurrency` group with `cancel-in-progress: false`, and the preflight runs inside that job, after the lock. Otherwise an older run deletes what a newer run created.
+- Run `appwrite push tables --all --force`. `push all` and `push settings` need a signed-in account.
+- Key scopes = `databases.read/.write` + `tables.read/.write` + `collections.read/.write`; no `rows.*`. CLI `28.10.0` creates and polls columns and indexes through the legacy collection routes, which accept only `collections.*`. This CI-only key is the one exception to the legacy-scope ban in [mcp-servers](mcp-servers.md); recheck it on every CLI upgrade.
+- Pin the CLI version in CI (latest stable `28.10.0`); never an unpinned `npm install -g appwrite-cli`.
+
+```yaml
+concurrency: { group: appwrite-schema-<project-id>, cancel-in-progress: false }
+steps:
+  - run: npm install -g appwrite-cli@28.10.0
+  - run: appwrite client --endpoint "$APPWRITE_ENDPOINT" --key "$APPWRITE_API_KEY"
+  - run: appwrite push tables --all --force
+```
+
+Source: <https://github.com/appwrite/sdk-for-cli#cicd>
 
 ---
 

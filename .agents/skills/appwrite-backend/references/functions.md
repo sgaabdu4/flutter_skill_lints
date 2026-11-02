@@ -220,7 +220,7 @@ bool _isValidEmail(String email) {
 
 ### API Keys
 
-Appwrite auto-generates short-lived API key per execution from function's **scopes** (Console → Settings → Scopes). Use `context.req.headers['x-appwrite-key']` — no manual key mgmt.
+Appwrite auto-generates short-lived API key per execution from function's **scopes** (Console → Settings → Executions → Scopes). Use `context.req.headers['x-appwrite-key']` — no manual key mgmt.
 
 ```
 ✅ rows.read only for a read function

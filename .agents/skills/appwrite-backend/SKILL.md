@@ -4,7 +4,7 @@ description: Appwrite SDK development, self-hosting, and MCP-only agent operatio
 license: MIT
 metadata:
   author: sgaabdu4
-  version: "2.1.6"
+  version: "2.1.7"
   tags: appwrite, backend, baas, dart, python, typescript
 ---
 
@@ -17,6 +17,7 @@ Load the owner before acting. Unlisted detail = read the owner, never infer.
 | Trigger | Owner |
 |---|---|
 | Any agent operation against Appwrite, MCP server setup, or Appwrite documentation lookup | [mcp-servers](references/mcp-servers.md) |
+| API key creation or scope choice | [mcp-servers](references/mcp-servers.md) |
 | Production schema/data/ACL/function cutover | [production-migrations](references/production-migrations.md) + [transactions](references/transactions.md) when writes share a transaction |
 | TablesDB transaction or cross-service consistency | [transactions](references/transactions.md) + [permissions](references/permissions.md) when ACLs change |
 | Permanent account/subject-data erasure across TablesDB, Auth, Storage, provider data, or retained audit evidence | [destructive-erasure](references/destructive-erasure.md) + [transactions](references/transactions.md) |
@@ -51,7 +52,7 @@ Load the owner before acting. Unlisted detail = read the owner, never infer.
 
 ## Invariants
 
-1. **MCP for agent operations; official SDKs for application code** — agent reads, mutations, deployments, and diagnosis use [mcp-servers](references/mcp-servers.md). Missing MCP capability → report the gap; no direct SDK, HTTP, or command-line fallback for agent operations. Application code uses official SDKs; raw Appwrite HTTP (`fetch`, `requests`, `dio`, `package:http`, `curl`) requires a missing SDK endpoint or an isolated, tested `Client.call` model-parsing workaround.
+1. **MCP for agent operations; official SDKs for application code** — agent reads, mutations, deployments, and diagnosis use [mcp-servers](references/mcp-servers.md). Missing MCP capability → report the gap; no direct SDK, HTTP, or command-line fallback for agent operations; agents never run the Appwrite CLI. Separate from agent operations, a repository's CI job may push tables ([schema-management](references/schema-management.md)); it is never a workaround for an MCP gap. Application code uses official SDKs; raw Appwrite HTTP (`fetch`, `requests`, `dio`, `package:http`, `curl`) requires a missing SDK endpoint or an isolated, tested `Client.call` model-parsing workaround.
 2. **Pin SDKs by target and call shape** — Cloud: latest stable official SDK. Self-hosted: exact release-matched pins for the deployed server version (`2.x` or `1.9.x`) in [self-hosting](references/self-hosting.md). “Compatible with `1.9.x`” does not mean release-matched. Before changing a pin, audit every intervening breaking change and prove the repository's real SDK calls against the candidate; version resolution alone is insufficient. A verified repository SDK pin outranks a skill pin.
 3. **TablesDB, not the legacy `Databases` service** — its Collections/Documents API is deprecated since `1.8.0`. DocumentsDB and VectorsDB are separate services, not that legacy API.
 4. **Allocate Appwrite IDs once with `ID.unique()`** — retryable create: call `ID.unique()` before the first attempt → persist the returned ID in the durable draft/intent → reuse that exact ID for every retry/reconciliation. A fresh `ID.unique()` on retry creates a second resource. Business/natural identity remains in indexed columns; never derive resource IDs from names, timestamps, slugs, hashes, or custom generators.

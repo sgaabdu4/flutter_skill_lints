@@ -105,6 +105,7 @@ Appwrite `1.9.0` self-hosted fallback = bulk rows `100` + `Query.equal()` values
 ### Update + Delete
 
 Use a fixed-point loop instead of one unbounded predicate:
+
 1. Block/reroute writes that can recreate the source predicate.
 2. List the first `chunkSize` matching rows ordered by stable `$id`; select only `$id`.
 3. Mutate with both `Query.equal('$id', chunkIds)` + the original source predicate.
@@ -188,6 +189,7 @@ This stages two transaction operations, not one operation per matched row.
 One bulk request = atomic. Multiple bulk requests/chunks = not one atomic unit unless all are staged in one transaction that fits both transaction + bulk limits.
 
 When the full change cannot fit:
+
 1. Persist one stable operation/job ID + source + target + policy + status.
 2. Block or reroute new writes that can recreate the old state.
 3. Process deterministic, idempotent chunks from [Chunk](#chunk); checkpoint only after exact read-back.

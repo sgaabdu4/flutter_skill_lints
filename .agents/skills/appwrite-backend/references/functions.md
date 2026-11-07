@@ -42,6 +42,7 @@ Split when domain function has ops w/ vastly different resource needs, exceeds t
 Cloud runtime note: Appwrite Cloud supports Dart `3.12` for Functions. Self-hosted runtimes depend on the installed Appwrite image and `_APP_FUNCTIONS_RUNTIMES`.
 
 Runtime SDK floor binds the whole pubspec, dev dependencies included:
+
 - runtime `dart-3.5` builds with Dart SDK `3.5.4`
 - the remote build resolves `dev_dependencies` → any dev-only package demanding a higher SDK fails the build in `dart pub get` with `version solving failed`
 - `lints: ^6.1.0` requires SDK `^3.8.0` → pin `lints: ^5.0.0` while the configured runtime is `dart-3.5`
@@ -260,6 +261,7 @@ Future<Object?> main(Object rawContext) async {
 ## Environment Variables
 
 Use variables for configuration + secrets; never track values in source/manifests.
+
 - scope precedence = project → function/site → Appwrite-injected
 - secret value = unreadable from Console/API after creation
 - secret status = one-way; secret → non-secret requires delete + recreate

@@ -7,6 +7,7 @@ POST /v1/graphql
 ```
 
 Headers required:
+
 - `X-Appwrite-Project: <project-id>`
 - `X-Appwrite-Key: <api-key>` (server) or `X-Appwrite-JWT: <jwt>` (client)
 
@@ -154,6 +155,7 @@ Send GraphQL through the official SDK `Graphql` service. Raw Appwrite HTTP follo
 - App code → GraphQL only where the official SDK lacks the endpoint.
 
 ❌ **Use SDK instead:**
+
 - File up/download
 - Bulk ops
 - Transactions

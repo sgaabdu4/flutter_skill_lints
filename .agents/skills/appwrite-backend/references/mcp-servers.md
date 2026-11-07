@@ -49,6 +49,7 @@ flowchart TD
 ## Self-Hosted Launcher
 
 Prerequisite = `uv` installed (`uvx` on PATH) + API key with the scopes every intended tool needs. The stdio server probes readable services at startup and exits before the handshake when no probe succeeds; the TablesDB probe lists databases, so include `databases.read` even when every intended call writes.
+
 1. Create one tracked executable repository launcher (`scripts/appwrite-mcp`).
 2. Resolve the repository root from the script's own path; MCP clients do not guarantee the launch working directory.
 3. Source the repository's existing gitignored Appwrite env file; keep one secret owner.

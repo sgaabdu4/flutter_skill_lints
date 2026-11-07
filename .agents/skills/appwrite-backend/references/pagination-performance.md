@@ -104,6 +104,7 @@ final response = await tablesDB.listRows(
 ## When Offset is Acceptable
 
 Small lookup tables <1,000 rows:
+
 - Countries, currencies, categories
 - Static config data
 - Dropdown options

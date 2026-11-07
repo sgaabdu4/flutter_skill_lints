@@ -53,6 +53,7 @@ final webhook = await webhooks.create(
 ## Signature Verification
 
 Every delivery is signed: `X-Appwrite-Webhook-Signature` = `base64(HMAC-SHA1(secret, webhookUrl + rawBody))`.
+
 - `webhookUrl` = the webhook's configured `url`, byte-for-byte; not the proxied request URL.
 - `rawBody` = unparsed request bytes; re-serialized JSON breaks the signature.
 - Compare in constant time; mismatch → `401` before any processing.
@@ -213,6 +214,7 @@ await webhooks.delete(webhookId: 'webhook_123');
 ## Retry Behavior
 
 Per worker source ([`2.3.0`](https://github.com/appwrite/appwrite/blob/2.3.0/src/Appwrite/Platform/Workers/Webhooks.php#L123-L220)):
+
 - One POST per event; 15 s connect + total timeout.
 - Failure = transport error or HTTP `>= 400` → `attempts` +1 + `logs` updated. Success resets `attempts` to `0`.
 - `attempts` ≥ `_APP_WEBHOOK_MAX_FAILED_ATTEMPTS` (default `10`) → webhook disabled + alert. Fix the endpoint → re-enable via [full-settings update](#update-webhook).
@@ -227,6 +229,7 @@ Source: [webhooks docs](https://appwrite.io/docs/apis/webhooks)
 View in Console → Project Settings → Webhooks → Select webhook → Logs
 
 Shows:
+
 - Request timestamp
 - Response status
 - Response time

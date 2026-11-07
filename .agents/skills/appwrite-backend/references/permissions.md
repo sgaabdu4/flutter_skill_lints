@@ -16,6 +16,7 @@ Use row/file perms when access differs per resource.
 If all resources share same rules, set perms on table/bucket and leave row/file perms empty.
 
 Mutation semantics:
+
 - omitted permissions on update/upsert = inherit/preserve current ACL
 - explicit `permissions: []` = revoke all resource-level ACLs
 - missing `$permissions` in a response = unknown, never equivalent to `[]`

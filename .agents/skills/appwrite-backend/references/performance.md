@@ -19,6 +19,7 @@
 ## Checklist
 
 Pre-deploy:
+
 - [ ] All filter/sort columns indexed
 - [ ] Lists use `Query.select()` for needed fields only
 - [ ] Pagination uses cursor (not offset) for >100 rows

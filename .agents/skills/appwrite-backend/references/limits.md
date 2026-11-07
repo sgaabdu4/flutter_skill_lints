@@ -13,6 +13,7 @@
 ### Chunking Large ID Lists
 
 Over-cap `Query.equal()` values or a query string over `APP_LIMIT_ARRAY_ELEMENT_SIZE` (`4096` chars) → `400`.
+
 - ID chunk = min(value cap, IDs whose serialized `Query.equal('$id', ids)` fits `4096` chars).
 - Fit per query: `ID.unique()` (20 chars) → `176`; 36-char IDs → `103`. MariaDB/PostgreSQL cap IDs at 36 chars → `100` always fits.
 - MongoDB allows 255-char IDs (`15` per query) → size chunks by serialized length.

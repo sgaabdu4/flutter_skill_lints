@@ -46,6 +46,7 @@ tables_db.create_table(
 ```
 
 TypeScript same pattern, camelCase.
+
 - Column/index definitions = plain maps; index maps list columns in `attributes`.
 - Inline `type`: `1.9.x` = `string` (+`size`), `integer`, `bigint`, `double`, `boolean`, `datetime`, `point`/`linestring`/`polygon`; `2.x` adds `varchar`/`text`/`mediumtext`/`longtext`/`email`/`enum`/`ip`/`url`. Example = `2.x`; `1.9.x` → `string` + `size`.
 - Relationship columns cannot be inline → `createRelationshipColumn` ([relationships.md](relationships.md)).
@@ -68,6 +69,7 @@ TypeScript same pattern, camelCase.
 #### Varchar vs Text
 
 Same max, different storage:
+
 - **`varchar`** — inline, counts toward 64KB row budget. Full index when size < 768. Use for short queryable strings.
 - **`text`** — off-page, 20-byte pointer. No row budget hit, prefix index only. Use when full index not needed.
 
@@ -164,6 +166,7 @@ await tablesDB.createIndex(
 ## Auto-Increment
 
 Every row gets a `$sequence` column automatically; it increments with each insert. No table flag. Use for:
+
 - Invoice numbers
 - Activity logs
 - Ordered timelines
@@ -210,6 +213,7 @@ tables_db.create_row(
 ```
 
 **Use for:**
+
 - Migration from other systems
 - Backfill historical data
 - Audit trail preservation
@@ -248,6 +252,7 @@ verify its column-mapping, validation, and upload contract. Missing import or
 safe upload support = report the capability gap.
 
 **Use for:**
+
 - Data migration
 - Seed test envs
 - Bulk import
@@ -257,6 +262,7 @@ safe upload support = report the capability gap.
 Export filtered data → CSV from Console.
 
 **Features:**
+
 - Queries before export
 - Pick columns
 - Custom delimiter

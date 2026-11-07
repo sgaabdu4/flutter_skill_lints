@@ -187,6 +187,7 @@ const excluded = await realtime.subscribe(Channel.tablesdb('<DB>').table('<TABLE
 Use Presences for ephemeral online/typing/active state. Presences have status, optional metadata, permissions, Realtime events, and `expiresAt` auto-expiry. Prefer this over durable table rows + cleanup cron for short-lived user status.
 
 Patterns:
+
 - Upsert on focus, route change, heartbeat, or typing state.
 - Set short `expiresAt`; max is 30 days.
 - Subscribe with `Channel.presences()` / `presences` and Realtime queries when supported.

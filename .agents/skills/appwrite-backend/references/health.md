@@ -45,6 +45,7 @@ Cloud managed internally — endpoints self-hosted only.
 ## Monitoring Integration
 
 Health check uses:
+
 - **Uptime monitors:** Pingdom, UptimeRobot
 - **Kubernetes probes:** Liveness/readiness
 - **Alerting:** PagerDuty, Slack notifications
@@ -56,6 +57,7 @@ Health check uses:
 
 Scaling topology, container types, and tuning variables are owned by
 [self-hosting.md](self-hosting.md). Health-check consequences of scaling:
+
 - Probe each container instance, not only the load-balancer VIP — a single
   healthy node masks failed replicas behind round-robin.
 - Route unauthenticated load-balancer health checks at `/v1/health/version`

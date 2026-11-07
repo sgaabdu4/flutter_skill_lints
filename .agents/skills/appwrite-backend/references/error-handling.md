@@ -3,6 +3,7 @@
 ## Client Request Coordination
 
 Client SDK traffic owner = one shared coordinator per endpoint/project. Foreground actions + background sync + authentication cleanup + table pulls + transaction writes + retries use that owner.
+
 - In-flight bound = measured target behavior; recovery default = `1`; write-heavy sync default = `1..2` until measurement supports more.
 - `429` → one shared cooldown for endpoint/project/auth scope → honor exposed reset/retry header OR bounded exponential backoff + jitter.
 - Transport failure → pause sibling retries; per-table/datasource simultaneous wake-up = forbidden.
@@ -110,6 +111,7 @@ const result = await withRetry(() => tablesDB.createRow({...}));
 ## Dev Keys
 
 Self-hosted `1.9.x` only = bypass client rate limits in development.
+
 - `2.0.0`–`2.2.0` reject new dev keys; existing keys work until the `2.3.0` `migrate`.
 - `2.3.0`+ (Cloud included) removed dev keys + `X-Appwrite-Dev-Key` + `devKey`; Flutter `27.0.0` + Web `28.0.0` removed `setDevKey`.
 
@@ -152,6 +154,7 @@ One type + message covers two causes, and the message always names the
 
 Named ID absent everywhere = unique-index violation, not an impossible error.
 Diagnosis:
+
 1. List the target table's indexes through the MCP catalog ([mcp-servers.md](mcp-servers.md)) → every `unique` index.
 2. Query by that index's exact column tuple → the retained conflicting row.
 3. Read its owner + counter values before any retry; a fresh `ID.unique()`
@@ -175,6 +178,7 @@ leaking secrets:
 
 Python fields are available as `e.message`, `e.code`, `e.type`, and
 `e.response`.
+
 - TypeScript boundary classification = numeric `code` + present `type` or `response`.
 - `constructor.name === 'AppwriteException'` is forbidden; production bundling can rename the class and misroute Appwrite `4xx` errors to generic `500`.
 
@@ -219,7 +223,12 @@ except AppwriteException as e:
 ```typescript
 // TypeScript
 try {
-  await tablesDB.createRow({ databaseId: 'db', tableId: 'orders', rowId: orderId, data: order });
+  await tablesDB.createRow({
+    databaseId: 'db',
+    tableId: 'orders',
+    rowId: orderId,
+    data: order,
+  });
 } catch (e) {
   const err = e as Partial<AppwriteException>;
   if (typeof err.code !== 'number' || (err.type === undefined && err.response === undefined)) throw e;

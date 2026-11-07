@@ -113,6 +113,7 @@ recovery requires an isolated rehearsal + exact infrastructure approval; never
 improvise against the live metadata database.
 
 Failure pattern:
+
 - SQL rows present + API `table not found` → metadata/registry/cache mismatch,
   not missing business rows → restore coherent component state before retry.
 - Partial desired-state reconciliation caused loss → retire that deployment

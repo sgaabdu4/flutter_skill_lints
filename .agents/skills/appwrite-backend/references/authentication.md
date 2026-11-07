@@ -288,6 +288,7 @@ final client = Client()
 `x-appwrite-user-jwt` = the caller's JWT injected into the function runtime on
 client-SDK executions. Its payload carries exactly `userId` + `sessionId` +
 `exp`.
+
 - `Account(client).getSession(sessionId: 'current')` under that JWT fails → never resolve the session through it
 - decode the payload segment yourself for `userId`/`sessionId`
 - payload claims alone = untrusted identity → validate the token with `Account(client).get()` and assert `user.$id == claims.userId` before authorizing anything

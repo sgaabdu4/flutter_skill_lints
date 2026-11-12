@@ -1,7 +1,6 @@
 part of '../riverpod_source_rules.dart';
 
-/// Broad `watch` calls on Riverpod's `Ref` or `WidgetRef` inside a `build`
-/// method.
+/// Broad `watch` calls on Riverpod's `Ref` or `WidgetRef` inside a `build` method.
 final class _BroadBuildWatchVisitor extends RecursiveAstVisitor<void> {
   final offsets = <int>[];
   var _inBuild = false;
@@ -39,9 +38,7 @@ bool _isRiverpodRefWatch(MethodInvocation node) {
       (_riverpodRefType.isAssignableFromType(type) || _widgetRef.isAssignableFromType(type));
 }
 
-/// Watches that already rebuild on a narrow value: `select`, `.notifier`,
-/// computed projection providers consumed as the projection, scalar results,
-/// values consumed whole, and MutationState flags.
+/// Watches that already rebuild on a narrow value, such as `select`, `.notifier` or scalar results.
 bool _isNarrowWatch(MethodInvocation watch) {
   final argument = watch.argumentList.arguments.firstOrNull;
   if (argument is! Expression) return false;
@@ -67,11 +64,7 @@ bool _isNarrowWatch(MethodInvocation watch) {
   return _isRiverpodMutationElement(type?.element, 'MutationState');
 }
 
-/// performance.md:6: a computed (functional) provider's value is already the
-/// render projection when it is a projected collection, destructured as a
-/// record, or consumed whole; a whole projection is minimal view data even for
-/// an app widget. A projection read only by field (performance.md:76 WRONG
-/// `userState.user`) still needs `select`.
+/// performance.md:6: a projection consumed whole is minimal view data; a projection read by field needs `select`.
 bool _consumesProjection(MethodInvocation watch) {
   final type = watch.staticType;
   if (type is InterfaceType &&
@@ -152,12 +145,7 @@ bool _isWholeValueUse(Expression value, {bool projection = false}) {
   return false;
 }
 
-/// performance.md:26-27: reusable widgets receive minimal immutable view data,
-/// and binding boundaries select specific fields. A watched class with more
-/// than one field passed whole into an app widget hands it the whole state.
-/// Records, collections and SDK values stay whole-value inputs (primitives and
-/// enums are exempt earlier). Framework widgets take framework config such as
-/// a RouterConfig, not reusable-widget view data.
+/// performance.md:26-27: a multi-field class watched whole into an app widget hands it the whole state; framework widgets take config.
 bool _isWholeStateIntoAppWidget(Expression value, InstanceCreationExpression creation) {
   final type = value.staticType;
   final widget = creation.constructorName.type.element;
@@ -178,9 +166,7 @@ bool _isAppWidget(InterfaceElement element) =>
 
 bool _isFlutterLibrary(LibraryElement library) => isFlutterUiLibraryUri(library.uri.toString());
 
-/// Counts public instance fields plus public abstract getters, because Freezed
-/// declares a class's fields as abstract getters on its generated mixin. SDK
-/// types (DateTime, Duration, Uri) count as single values.
+/// Counts public instance fields and abstract getters, because Freezed declares fields as getters.
 int _publicFieldCount(InterfaceType type) {
   final names = <String?>{};
   for (final element in [
@@ -248,8 +234,7 @@ bool _isMutationRunCallback(AstNode node) {
       _isRiverpodMutationElement(invocation.methodName.element?.enclosingElement, 'Mutation');
 }
 
-/// Collects Riverpod AsyncValue when/map dispatch calls; `whenData` is a
-/// transform, not a union match, so it is not collected.
+/// Collects Riverpod AsyncValue when/map dispatch calls, not the `whenData` transform.
 final class _AsyncValueWhenMapCalls extends RecursiveAstVisitor<void> {
   final nodes = <MethodInvocation>[];
 
@@ -278,9 +263,7 @@ bool _isRiverpodLibrary(LibraryElement? library) {
   return uri.startsWith('package:riverpod/') || uri.startsWith('package:flutter_riverpod/');
 }
 
-/// A sealed-union variant pattern such as `Authenticated(:final user)` or
-/// `AsyncData(:final value)` dispatches on the whole watched value; select
-/// cannot express that exhaustive switch.
+/// A sealed-union variant pattern dispatches on the whole watched value, which `select` cannot express.
 bool _isSealedVariantPattern(ObjectPattern pattern, Element? scrutinee) =>
     scrutinee is ClassElement && scrutinee.isSealed && pattern.type.element != scrutinee;
 

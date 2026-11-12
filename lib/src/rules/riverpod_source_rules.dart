@@ -96,9 +96,11 @@ bool _isGeneratedNotifierStateOverride(String providerName, String stateType) {
   return providerBase == _lowerFirst(stateBase);
 }
 
+final _extendsConsumerStatePattern = RegExp(r'\bextends\s+(?:[A-Za-z_]\w*\.)?ConsumerState\s*<');
+
 bool _isConsumerStateClass(SourceScannerContext context, ScannerClassSpan classSpan) {
   final signature = sourceClassSignature(context, classSpan);
-  return RegExp(r'\bextends\s+(?:[A-Za-z_]\w*\.)?ConsumerState\s*<').hasMatch(signature);
+  return _extendsConsumerStatePattern.hasMatch(signature);
 }
 
 bool _classContainsRefWatch(SourceScannerContext context, ScannerClassSpan classSpan) {
@@ -166,6 +168,8 @@ final class _RiverpodProviderDefinition {
   final String className;
 }
 
+final _classPattern = RegExp(r'\bclass\s+([A-Za-z_]\w*)\b');
+
 List<_RiverpodProviderDefinition> _providerDefinitions(SourceScannerContext context) {
   final definitions = <_RiverpodProviderDefinition>[];
 
@@ -177,7 +181,7 @@ List<_RiverpodProviderDefinition> _providerDefinitions(SourceScannerContext cont
     if (declarationLine == null) continue;
     final declaration = context.source.masked[declarationLine];
 
-    final classMatch = RegExp(r'\bclass\s+([A-Za-z_]\w*)\b').firstMatch(declaration);
+    final classMatch = _classPattern.firstMatch(declaration);
     if (classMatch != null) {
       final className = classMatch.group(1) ?? '';
       final classSpan = context.classes
@@ -221,9 +225,13 @@ List<_RiverpodProviderDefinition> _providerDefinitions(SourceScannerContext cont
   return definitions;
 }
 
+final _riverpodKeepAliveTruePattern = RegExp(r'@Riverpod\s*\([^)]*keepAlive\s*:\s*true');
+
+final _iverpodPattern = RegExp(r'^\s*@(?:r|R)iverpod\b');
+
 _ProviderAnnotation? _riverpodAnnotationAt(SourceScannerContext context, int lineIndex) {
   final line = context.source.masked[lineIndex];
-  if (!RegExp(r'^\s*@(?:r|R)iverpod\b').hasMatch(line)) return null;
+  if (!_iverpodPattern.hasMatch(line)) return null;
 
   final text = StringBuffer();
   var endLine = lineIndex;
@@ -239,7 +247,7 @@ _ProviderAnnotation? _riverpodAnnotationAt(SourceScannerContext context, int lin
     line: lineIndex,
     endLine: endLine,
     text: annotationText,
-    keepAlive: RegExp(r'@Riverpod\s*\([^)]*keepAlive\s*:\s*true').hasMatch(annotationText),
+    keepAlive: _riverpodKeepAliveTruePattern.hasMatch(annotationText),
   );
 }
 
@@ -265,18 +273,22 @@ String _lowerFirst(String value) {
   return value[0].toLowerCase() + value.substring(1);
 }
 
+final _buildPattern = RegExp(r'\bbuild\s*\(');
+
 bool _classBuildHasParameters(SourceScannerContext context, int classStart, int classEnd) {
   for (var i = classStart; i <= classEnd && i < context.source.length; i++) {
     final line = context.source.masked[i];
-    if (!RegExp(r'\bbuild\s*\(').hasMatch(line)) continue;
+    if (!_buildPattern.hasMatch(line)) continue;
     return _parameterListHasProviderArgs(_declarationText(context, i));
   }
   return false;
 }
 
+final _functionProviderNamePattern = RegExp(r'\b([A-Za-z_]\w*)\s*\(');
+
 String? _functionProviderName(SourceScannerContext context, int declarationLine) {
   final declaration = _declarationWindow(context, declarationLine);
-  final matches = RegExp(r'\b([A-Za-z_]\w*)\s*\(').allMatches(declaration).toList();
+  final matches = _functionProviderNamePattern.allMatches(declaration).toList();
   if (matches.isEmpty) return null;
   return matches.last.group(1);
 }
@@ -321,18 +333,24 @@ bool _parameterListHasProviderArgs(String declaration) {
   return _parameterTextHasProviderArgs(parameters);
 }
 
+final _widgetRefRefPattern = RegExp(r'^WidgetRef\s+ref\s*,?\s*');
+
+final _refRefPattern = RegExp(r'^(?:[A-Za-z_]\w*)?Ref\s+ref\s*,?\s*');
+
 bool _parameterTextHasProviderArgs(String parameters) {
   if (parameters.isEmpty) return false;
   final withoutRef = parameters
-      .replaceFirst(RegExp(r'^(?:[A-Za-z_]\w*)?Ref\s+ref\s*,?\s*'), '')
-      .replaceFirst(RegExp(r'^WidgetRef\s+ref\s*,?\s*'), '')
+      .replaceFirst(_refRefPattern, '')
+      .replaceFirst(_widgetRefRefPattern, '')
       .trim();
   return withoutRef.isNotEmpty;
 }
 
+final _functionParameterTextPattern = RegExp(r'\b[A-Za-z_]\w*\s*\(([^)]*)\)');
+
 String _functionParameterText(SourceScannerContext context, int declarationLine) {
   final declaration = _declarationWindow(context, declarationLine);
-  final matches = RegExp(r'\b[A-Za-z_]\w*\s*\(([^)]*)\)').allMatches(declaration).toList();
+  final matches = _functionParameterTextPattern.allMatches(declaration).toList();
   if (matches.isEmpty) return '';
   return matches.last.group(1)?.trim() ?? '';
 }
@@ -353,8 +371,10 @@ String _declarationWindow(SourceScannerContext context, int startLine) {
   return buffer.toString();
 }
 
+final _asyncSyncPattern = RegExp(r'\)\s*(?:async\s*\*?|sync\s*\*)?\s*\{');
+
 int? _declarationBodyStart(String line) {
-  final blockMatch = RegExp(r'\)\s*(?:async\s*\*?|sync\s*\*)?\s*\{').firstMatch(line);
+  final blockMatch = _asyncSyncPattern.firstMatch(line);
   final blockIndex = blockMatch == null ? -1 : line.indexOf('{', blockMatch.start);
   final arrowIndex = line.indexOf('=>');
   if (blockIndex < 0) return arrowIndex < 0 ? null : arrowIndex;
@@ -419,10 +439,12 @@ final class _ProviderWatches extends RecursiveAstVisitor<void> {
 bool _hasBlockSelectCallback(String invocation) =>
     RegExp(r'\.\s*select\s*\(\s*\([^)]*\)\s*\{').hasMatch(invocation);
 
+final _selectFinalVarPattern = RegExp(
+  r'\.\s*select\s*\(\s*\(\s*(?:(?:final|var|[A-Za-z_]\w*(?:<[^>]+>)?\??)\s+)?([A-Za-z_]\w*)\s*\)\s*=>\s*\1\s*(?:,|\))',
+);
+
 bool _hasIdentitySelectCallback(String invocation) {
-  final match = RegExp(
-    r'\.\s*select\s*\(\s*\(\s*(?:(?:final|var|[A-Za-z_]\w*(?:<[^>]+>)?\??)\s+)?([A-Za-z_]\w*)\s*\)\s*=>\s*\1\s*(?:,|\))',
-  ).firstMatch(invocation);
+  final match = _selectFinalVarPattern.firstMatch(invocation);
   return match != null;
 }
 
@@ -443,14 +465,16 @@ bool _isKeepAliveRiverpodAnnotation(SourceScannerContext context, int lineIndex)
     annotation.write(' ${context.source.masked[i]}');
     if (context.source.masked[i].contains(')')) break;
   }
-  return RegExp(r'@Riverpod\s*\([^)]*keepAlive\s*:\s*true').hasMatch(annotation.toString());
+  return _riverpodKeepAliveTruePattern.hasMatch(annotation.toString());
 }
 
+final _riverpodTickerModePausedActiveSubscriptionCountPattern = RegExp(
+  r'(?:#4709|riverpod#4709|TickerMode|pausedActiveSubscriptionCount)',
+  caseSensitive: false,
+);
+
 bool _hasKeepAliveTickerModeWorkaround(SourceScannerContext context, int annotationLine) {
-  final workaround = RegExp(
-    r'(?:#4709|riverpod#4709|TickerMode|pausedActiveSubscriptionCount)',
-    caseSensitive: false,
-  );
+  final workaround = _riverpodTickerModePausedActiveSubscriptionCountPattern;
   final lineInfo = context.unit.lineInfo;
   for (final declaration in context.unit.declarations) {
     if (!declaration.metadata.any(
@@ -519,6 +543,8 @@ Iterable<Token> _tokensAfter(Token first, Token last) sync* {
   }
 }
 
+final _classHasFamilySignatureAfterKeepAlivePattern = RegExp(r'\bclass\s+[A-Za-z_]\w*\b');
+
 bool _hasFamilySignatureAfterKeepAlive(SourceScannerContext context, int annotationLine) {
   final annotation = _riverpodAnnotationAt(context, annotationLine);
   if (annotation == null) return false;
@@ -526,7 +552,7 @@ bool _hasFamilySignatureAfterKeepAlive(SourceScannerContext context, int annotat
   if (declarationLine == null) return false;
 
   final declaration = _declarationText(context, declarationLine);
-  if (RegExp(r'\bclass\s+[A-Za-z_]\w*\b').hasMatch(declaration)) {
+  if (_classHasFamilySignatureAfterKeepAlivePattern.hasMatch(declaration)) {
     final classSpan = context.classes
         .where((classSpan) => classSpan.start == declarationLine)
         .cast<ScannerClassSpan?>()
@@ -544,16 +570,16 @@ bool _isFeaturePresentationNotifierPath(SourceScannerContext context) {
       normalized.endsWith('_notifier.dart');
 }
 
+final _autoDisposeEphemeralPattern = RegExp(
+  r'\b(?:auto[- ]?dispose|ephemeral|transient|route[- ]?local|screen[- ]?local|reset when|dispose when unused)\b',
+  caseSensitive: false,
+);
+
 bool _hasAutoDisposeRationale(SourceScannerContext context, int annotationLine) {
-  return context.nearOriginal(
-    annotationLine,
-    RegExp(
-      r'\b(?:auto[- ]?dispose|ephemeral|transient|route[- ]?local|screen[- ]?local|reset when|dispose when unused)\b',
-      caseSensitive: false,
-    ),
-    6,
-  );
+  return context.nearOriginal(annotationLine, _autoDisposeEphemeralPattern, 6);
 }
+
+final _refOnDisposePattern = RegExp(r'\bref\s*\.\s*onDispose\s*\(');
 
 bool _registersDisposeCleanup(
   SourceScannerContext context,
@@ -562,7 +588,7 @@ bool _registersDisposeCleanup(
   final body = context.source.masked
       .sublist(definition.bodyStart, definition.bodyEnd + 1)
       .join('\n');
-  return RegExp(r'\bref\s*\.\s*onDispose\s*\(').hasMatch(body);
+  return _refOnDisposePattern.hasMatch(body);
 }
 
 final _eventSignalProviderName = RegExp(
@@ -592,9 +618,11 @@ bool _isProjectionProviderWatch(Expression argument) {
   return type is InterfaceType && _functionalProviderType.isAssignableFromType(type);
 }
 
+final _refWatchPattern = RegExp(r'\bref\s*\.\s*watch\s*\(');
+
 List<String> _refWatchInvocations(SourceScannerContext context, int lineIndex, int methodEnd) {
   final firstLine = context.source.masked[lineIndex];
-  final matches = RegExp(r'\bref\s*\.\s*watch\s*\(').allMatches(firstLine).toList();
+  final matches = _refWatchPattern.allMatches(firstLine).toList();
   if (matches.isEmpty) return const [];
 
   return [

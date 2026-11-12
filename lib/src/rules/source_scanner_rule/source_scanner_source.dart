@@ -225,12 +225,14 @@ final class ScannerMethodSpan {
   final int end;
 }
 
+final _debugPrintPrintPattern = RegExp(r'\b(?:debugPrint|print)\s*\(');
+
 /// Replaces every char inside a `debugPrint(...)` or `print(...)` call body
 /// with a space. Diagnostic offsets stay aligned because chars are not deleted.
 String _blankDebugCalls(String text, {String? structure}) {
   final structuralText = structure ?? text;
   final buffer = StringBuffer();
-  final call = RegExp(r'\b(?:debugPrint|print)\s*\(');
+  final call = _debugPrintPrintPattern;
   var index = 0;
   for (final match in call.allMatches(structuralText)) {
     // An outer call already consumed any nested debug calls in its body.
@@ -262,9 +264,11 @@ int _blankDebugCallBody(String text, String structure, int index, StringBuffer b
   return index;
 }
 
+final _refReadPattern = RegExp(r'\bref\.read\(');
+
 int? _immediateInitStateReadColumn(SourceScannerContext context, int lineIndex) {
   final line = context.source.masked[lineIndex];
-  for (final match in RegExp(r'\bref\.read\(').allMatches(line)) {
+  for (final match in _refReadPattern.allMatches(line)) {
     final offset = context.source.lineOffsets[lineIndex] + match.start;
     AstNode? node = context.unit.nodeCovering(offset: offset);
     while (node != null) {

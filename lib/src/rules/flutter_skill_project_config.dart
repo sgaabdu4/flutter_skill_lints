@@ -137,12 +137,11 @@ final class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
+final _namePackageNamePattern = RegExp(r'^name:\s*([A-Za-z0-9_]+)\s*$', multiLine: true);
+
 String? _anchorPath(Folder root) {
   final pubspecText = _read(root.getFile('pubspec.yaml'));
-  final packageName = RegExp(
-    r'^name:\s*([A-Za-z0-9_]+)\s*$',
-    multiLine: true,
-  ).firstMatch(pubspecText ?? '')?.group(1);
+  final packageName = _namePackageNamePattern.firstMatch(pubspecText ?? '')?.group(1);
 
   if (packageName != null) {
     final entrypoint = root.getFile('lib/$packageName.dart');
@@ -156,6 +155,38 @@ String? _anchorPath(Folder root) {
     ..sort();
   return candidates.isEmpty ? null : candidates.first;
 }
+
+final _toJsonPattern = RegExp(r'\btoJson\s*\(');
+
+final _factoryFromJsonPattern = RegExp(r'factory\s+\w+\.fromJson\s*\(');
+
+final _flutterSkillLintsFlowStyleHasProhibitedLocalSourcePattern = RegExp(
+  r'''['"]?flutter_skill_lints['"]?\s*:\s*\{[^}]*['"]?path['"]?\s*:[^}]*\}''',
+);
+
+final _pluginMatchPattern = RegExp(r'''^\s*['"]?([A-Za-z_]\w*)['"]?\s*:(.*)$''');
+
+final _pluginsPluginsMatchPattern = RegExp(r'^\s*plugins\s*:(.*)$');
+
+final _publishHasNonNonePublishTargetPattern = RegExp(
+  r'''^\s*publish_to\s*:\s*['"]?([^'"#\s]+)['"]?\s*(?:#.*)?$''',
+);
+
+final _anyPattern = RegExp(r'''^\s*['"]?[\w-]+['"]?\s*:\s*['"]?any['"]?\s*(?:#.*)?$''');
+
+final _manyLintsPattern = RegExp(r'(^|\n)\s*many_lints\s*:');
+
+final _riverpodLintPattern = RegExp(r'(^|\n)\s*riverpod_lint\s*:', multiLine: true);
+
+final _flutterSkillLintsPattern = RegExp(r'(^|\n)\s*flutter_skill_lints\s*:', multiLine: true);
+
+final _pluginsPattern = RegExp(r'(^|\n)plugins\s*:', multiLine: true);
+
+final _importPackageFlutterPattern = RegExp(
+  r'''import\s+['"]package:flutter_driver/(?:flutter_driver|driver_extension)\.dart['"]''',
+);
+
+final _explicitJsonTruePattern = RegExp(r'explicit_to_json\s*:\s*true\b');
 
 final class _ProjectConfigScanner {
   _ProjectConfigScanner(this.root);
@@ -191,7 +222,7 @@ final class _ProjectConfigScanner {
 
     if (_hasJsonModels()) {
       final buildYaml = _read(root.getFile('build.yaml'));
-      if (buildYaml == null || !RegExp(r'explicit_to_json\s*:\s*true\b').hasMatch(buildYaml)) {
+      if (buildYaml == null || !_explicitJsonTruePattern.hasMatch(buildYaml)) {
         issues.add('cfg_explicit_to_json');
       }
     }
@@ -232,9 +263,7 @@ final class _ProjectConfigScanner {
       for (final path in _dartFiles(root.getFolder(folder))) {
         final text = _read(root.provider.getFile(path));
         if (text == null) continue;
-        if (RegExp(
-          r'''import\s+['"]package:flutter_driver/(?:flutter_driver|driver_extension)\.dart['"]''',
-        ).hasMatch(text)) {
+        if (_importPackageFlutterPattern.hasMatch(text)) {
           return true;
         }
       }
@@ -251,17 +280,14 @@ final class _ProjectConfigScanner {
   }
 
   void _scanCanonicalAnalysisOptions(String text, Set<String> issues) {
-    final hasPlugins = RegExp(r'(^|\n)plugins\s*:', multiLine: true).hasMatch(text);
-    final hasLintPackage = RegExp(
-      r'(^|\n)\s*flutter_skill_lints\s*:',
-      multiLine: true,
-    ).hasMatch(text);
-    final hasRiverpodLint = RegExp(r'(^|\n)\s*riverpod_lint\s*:', multiLine: true).hasMatch(text);
+    final hasPlugins = _pluginsPattern.hasMatch(text);
+    final hasLintPackage = _flutterSkillLintsPattern.hasMatch(text);
+    final hasRiverpodLint = _riverpodLintPattern.hasMatch(text);
     if (!hasPlugins ||
         !hasLintPackage ||
         !hasRiverpodLint ||
         text.contains('tool/analyzer_plugins') ||
-        RegExp(r'(^|\n)\s*many_lints\s*:').hasMatch(text)) {
+        _manyLintsPattern.hasMatch(text)) {
       issues.add('cfg_analysis_options_canonical');
     }
   }
@@ -337,7 +363,7 @@ final class _ProjectConfigScanner {
     const dependencySections = ['dependencies', 'dev_dependencies', 'dependency_overrides'];
     for (final section in dependencySections) {
       for (final line in _sectionLines(text, section)) {
-        if (RegExp(r'''^\s*['"]?[\w-]+['"]?\s*:\s*['"]?any['"]?\s*(?:#.*)?$''').hasMatch(line)) {
+        if (_anyPattern.hasMatch(line)) {
           return true;
         }
       }
@@ -348,8 +374,7 @@ final class _ProjectConfigScanner {
   bool _hasNonNonePublishTarget(String text) {
     for (final line in text.split('\n')) {
       if (line.trimLeft().startsWith('#')) continue;
-      final match = RegExp(r'''^\s*publish_to\s*:\s*['"]?([^'"#\s]+)['"]?\s*(?:#.*)?$''')
-          .firstMatch(line);
+      final match = _publishHasNonNonePublishTargetPattern.firstMatch(line);
       if (match == null) continue;
       return match.group(1) != 'none';
     }
@@ -373,7 +398,7 @@ final class _ProjectConfigScanner {
   bool _inspectPluginLine(_PluginSourceState state, String line) {
     if (line.trim().isEmpty || line.trimLeft().startsWith('#')) return false;
     final indent = line.length - line.trimLeft().length;
-    final pluginsMatch = RegExp(r'^\s*plugins\s*:(.*)$').firstMatch(line);
+    final pluginsMatch = _pluginsPluginsMatchPattern.firstMatch(line);
     if (pluginsMatch != null) {
       return _startPluginSection(state, indent, pluginsMatch.group(1) ?? '');
     }
@@ -395,7 +420,7 @@ final class _ProjectConfigScanner {
   }
 
   bool _inspectPluginEntry(_PluginSourceState state, String line, int indent) {
-    final pluginMatch = RegExp(r'''^\s*['"]?([A-Za-z_]\w*)['"]?\s*:(.*)$''').firstMatch(line);
+    final pluginMatch = _pluginMatchPattern.firstMatch(line);
     if (pluginMatch != null && indent > state.pluginsIndent) {
       final candidate = pluginMatch.group(1);
       if (candidate == 'path' || candidate == 'git') {
@@ -417,7 +442,7 @@ final class _ProjectConfigScanner {
   bool _flowStyleHasProhibitedLocalSource(String text) {
     if (!_lineHasLocalSource(text)) return false;
     final withoutAllowedFlutterSkillPath = text.replaceAll(
-      RegExp(r'''['"]?flutter_skill_lints['"]?\s*:\s*\{[^}]*['"]?path['"]?\s*:[^}]*\}'''),
+      _flutterSkillLintsFlowStyleHasProhibitedLocalSourcePattern,
       '',
     );
     return _lineHasLocalSource(withoutAllowedFlutterSkillPath);
@@ -428,8 +453,8 @@ final class _ProjectConfigScanner {
       final file = root.provider.getFile(path);
       final text = _read(file);
       if (text == null) continue;
-      if (RegExp(r'factory\s+\w+\.fromJson\s*\(').hasMatch(text) ||
-          RegExp(r'\btoJson\s*\(').hasMatch(text) ||
+      if (_factoryFromJsonPattern.hasMatch(text) ||
+          _toJsonPattern.hasMatch(text) ||
           text.contains('@JsonSerializable')) {
         return true;
       }
@@ -456,13 +481,18 @@ final class _PluginSourceState {
   }
 }
 
+final _runPattern = RegExp(r'\b[A-Za-z_]\w*\.run[A-Z][A-Za-z0-9_]*\s*\(');
+
+final _runAppPattern = RegExp(r'\brunApp(?:\s*<[^>]+>)?\s*\(');
+
+final _enableFlutterDriverExtensionPattern = RegExp(r'\benableFlutterDriverExtension\s*\(');
+
 bool _hasDeterministicFlutterE2eEntrypoint(String text) {
-  final extensionCall = RegExp(r'\benableFlutterDriverExtension\s*\(').firstMatch(text);
+  final extensionCall = _enableFlutterDriverExtensionPattern.firstMatch(text);
   if (extensionCall == null) return false;
 
   final afterExtension = text.substring(extensionCall.end);
-  return RegExp(r'\brunApp(?:\s*<[^>]+>)?\s*\(').hasMatch(afterExtension) ||
-      RegExp(r'\b[A-Za-z_]\w*\.run[A-Z][A-Za-z0-9_]*\s*\(').hasMatch(afterExtension);
+  return _runAppPattern.hasMatch(afterExtension) || _runPattern.hasMatch(afterExtension);
 }
 
 String? _read(File file) {

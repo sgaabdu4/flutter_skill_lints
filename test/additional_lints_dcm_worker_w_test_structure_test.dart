@@ -729,11 +729,12 @@ void main() {}
 
     final dartReads = {
       for (final entry in _reads.entries)
-        if (entry.key.endsWith('.dart')) entry.key: entry.value,
+        if (entry.key.startsWith('$testPackageRootPath/') && entry.key.endsWith('.dart'))
+          entry.key: entry.value,
     };
     final total = dartReads.values.fold<int>(0, (sum, count) => sum + count);
     const libFiles = _chainLength + _decoyLength;
-    const bound = 2 * (_fillerTests + 1 + libFiles) + 20;
+    const bound = 2 * (_fillerTests + 1 + libFiles) + 10;
     expect(total, lessThanOrEqualTo(bound), reason: 'dart file reads: $total, bound: $bound');
   }
 }

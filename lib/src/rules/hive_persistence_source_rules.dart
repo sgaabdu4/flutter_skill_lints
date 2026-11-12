@@ -6,7 +6,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 /// Rules enforcing Hive CE persistence-layer boundary integrity.
-/// these rules surface the risk at code-review time.
 String _pascalCase(String snake) => snake
     .split('_')
     .where((p) => p.isNotEmpty)
@@ -17,7 +16,6 @@ final _importPackageHivePattern = RegExp(r'''^\s*import\s+['"]package:hive_ce/hi
 
 final List<ScannerRule> hivePersistenceSourceRules = [
   /// Persisted maps must validate their runtime key shape before decoding.
-  /// before passing it to a model decoder.
   scannerRule(
     code: const LintCode(
       'avoid_unvalidated_persisted_map_cast',
@@ -40,7 +38,6 @@ final List<ScannerRule> hivePersistenceSourceRules = [
   ),
 
   /// Flutter app source should import Hive through hive_ce_flutter.
-  /// manual `Hive.init(path)` setup.
   scannerRule(
     code: const LintCode(
       'use_hive_ce_flutter_import',
@@ -63,7 +60,6 @@ final List<ScannerRule> hivePersistenceSourceRules = [
   ),
 
   /// Hive Models must not carry Value Object types.
-  /// Model; expose VOs on the domain Entity via `Model.toEntity()`.
   scannerRule(
     code: const LintCode(
       'hive_field_no_vo_type',

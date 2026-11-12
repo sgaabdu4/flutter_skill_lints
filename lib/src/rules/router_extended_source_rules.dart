@@ -15,7 +15,6 @@ final _resolveRedirectPattern = RegExp(r'\bresolve\w*Redirect\s*\(');
 
 final List<ScannerRule> routerExtendedSourceRules = [
   /// Keep GoRouter redirect decisions in a pure resolver.
-  /// into a resolve...Redirect function and matrix-test it.
   scannerRule(
     code: const LintCode(
       'router_impure_redirect',
@@ -40,7 +39,6 @@ final List<ScannerRule> routerExtendedSourceRules = [
   ),
 
   /// Do not push shell tab routes.
-  /// the wrong stack shape.
   scannerRule(
     code: const LintCode(
       'router_shell_tab_push',

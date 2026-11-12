@@ -5,7 +5,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Reports positional record fields on records with three or more of them.
-/// position, so it is allowed too.
 final class AvoidPositionalRecordFields extends RecordRule {
   static const LintCode code = LintCode(
     'avoid_positional_record_fields',

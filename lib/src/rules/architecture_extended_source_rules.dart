@@ -19,7 +19,6 @@ final _classModelPattern = RegExp(r'\bclass\s+\w+Model\b');
 
 final List<ScannerRule> architectureExtendedSourceRules = [
   /// Data models should expose a toEntity() mapper.
-  /// data models and map in repositories.
   scannerRule(
     code: const LintCode(
       'arch_model_missing_to_entity',
@@ -42,7 +41,6 @@ final List<ScannerRule> architectureExtendedSourceRules = [
   ),
 
   /// Repositories map Data -> Domain with the model mapper.
-  /// model (`/data/models/`) members instead of calling the model mapper.
   scannerRule(
     code: const LintCode(
       'arch_repository_inline_entity_mapping',
@@ -63,7 +61,6 @@ final List<ScannerRule> architectureExtendedSourceRules = [
   ),
 
   /// Data models must be separate from domain entities.
-  /// classes separate; map with toEntity().
   scannerRule(
     code: const LintCode(
       'arch_model_extends_entity',
@@ -84,7 +81,6 @@ final List<ScannerRule> architectureExtendedSourceRules = [
   ),
 
   /// Domain entities must not use JSON annotations.
-  /// annotations to data models.
   scannerRule(
     code: const LintCode(
       'arch_domain_json_annotation',
@@ -135,7 +131,6 @@ bool _hasModelMapper(CompilationUnit unit) {
 final _mapperExtensionTargets = Expando<Set<String>>('flutter_skill_lints_mapper_extensions');
 
 /// Whether another analyzed `lib/` file declares a toEntity()/toDomain() extension on [model].
-/// library URI and name are among them.
 bool _hasMapperExtensionElsewhere(ClassElement model) {
   final session = model.library.session;
   final targets = _mapperExtensionTargets[session] ??= _indexMapperExtensionTargets(session);

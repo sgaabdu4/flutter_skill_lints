@@ -6,7 +6,6 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 final _contextCanPopPattern = RegExp(r'\bcontext\s*\.\s*canPop\s*\(');
 
 /// Guard context.pop() with context.canPop().
-/// fallback when there is nothing to pop.
 final class GuardContextPop extends GeneratedMethodInvocationCheckRule {
   static const LintCode code = LintCode(
     'guard_context_pop',

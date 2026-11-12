@@ -6,7 +6,6 @@ final _serviceFactoryServiceLocatorBackendProviderPattern = RegExp(
 
 final List<ScannerRule> _riverpodSourceRulesPart1 = [
   /// Avoid ref.read in initState.
-  /// Why: Flags ref.read calls made from initState. Defer reads with a post-frame callback.
   scannerRule(
     code: const LintCode(
       'riverpod_read_init_state',
@@ -26,7 +25,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Avoid service locator classes in Riverpod apps.
-  /// Why: Flags service locator classes in Riverpod apps. Model dependencies with providers.
   scannerRule(
     code: const LintCode(
       'riverpod_service_locator',
@@ -46,7 +44,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Use Riverpod code generation for providers.
-  /// lifetimes, and generated APIs stay as the single source of truth.
   scannerRule(
     code: const LintCode(
       'riverpod_manual_provider',
@@ -68,7 +65,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Keep WidgetRef inside widgets.
-  /// generated provider/notifier that uses `Ref`.
   scannerRule(
     code: const LintCode(
       'riverpod_widget_ref_outside_widget',
@@ -82,7 +78,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Do not alias generated providers.
-  /// for the same provider. Rename the annotated function/class and regenerate.
   scannerRule(
     code: const LintCode(
       'riverpod_generated_provider_alias',
@@ -97,7 +92,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Do not override generated notifier providers with state values.
-  /// notifier behavior. Use a test/E2E notifier override so `.notifier` remains valid.
   scannerRule(
     code: const LintCode(
       'riverpod_notifier_override_with_value',
@@ -118,7 +112,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Keep provider-derived data in providers, not ConsumerState caches.
-  /// source of truth or in pure build-local derivation, not repeated mutable widget state.
   scannerRule(
     code: const LintCode(
       'riverpod_consumer_state_derived_cache',
@@ -148,7 +141,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Do not store/pass provider-family arg wrapper objects in widgets.
-  /// state or build locals recreate controller logic in the widget layer.
   scannerRule(
     code: const LintCode(
       'riverpod_widget_provider_arg_wrapper',
@@ -165,7 +157,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Do not store ProviderSubscription handles in ConsumerState.
-  /// synchronization belongs in one provider/notifier source of truth.
   scannerRule(
     code: const LintCode(
       'riverpod_consumer_state_provider_subscription',
@@ -184,7 +175,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Do not use ref.listenManual.
-  /// subscriptions belong in provider, notifier, repository, or service lifecycles.
   scannerRule(
     code: const LintCode(
       'riverpod_listen_manual_forbidden',
@@ -204,7 +194,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Do not model one-shot UI events as standalone signal providers.
-  /// the owning notifier state and listen to a concrete field with `select`.
   scannerRule(
     code: const LintCode(
       'riverpod_event_counter_signal_forbidden',
@@ -234,7 +223,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Prefer select when watching state in leaf widgets.
-  /// ref.watch(provider.select((value) => value.field)).
   scannerRule(
     code: const LintCode(
       'riverpod_watch_no_select',
@@ -254,7 +242,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// select() callbacks should use expression-body syntax.
-  /// widget watches. Use ref.watch(provider.select((value) => value.field)).
   scannerRule(
     code: const LintCode(
       'riverpod_select_arrow_syntax',
@@ -267,7 +254,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// select() must narrow to a field or record, not return the source object.
-  /// projection provider directly.
   scannerRule(
     code: const LintCode(
       'riverpod_select_identity_forbidden',
@@ -281,7 +267,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Riverpod Mutation<T>() declarations must carry an experimental note.
-  /// stability boundary.
   scannerRule(
     code: const LintCode(
       'riverpod_mutation_experimental_warning',
@@ -295,7 +280,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Riverpod mutations are file-scope finals.
-  /// build(), a method, or a class field is a new or class-owned instance.
   scannerRule(
     code: const LintCode(
       'riverpod_mutation_top_level',
@@ -324,7 +308,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Use tsx.get instead of ref.read inside Mutation.run.
-  /// tsx.get keeps them alive until the mutation completes; ref.read does not.
   scannerRule(
     code: const LintCode(
       'riverpod_mutation_ref_read',
@@ -343,7 +326,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Match AsyncValue with a sealed switch, not when/map helpers.
-  /// `AsyncData(:final value)`, `AsyncError(:final error)` and `AsyncLoading()`.
   scannerRule(
     code: const LintCode(
       'async_value_switch_over_when',
@@ -362,7 +344,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Keep derived providers alive when all watched dependencies are keepAlive.
-  /// non-family provider keepAlive too.
   scannerRule(
     code: const LintCode(
       'riverpod_auto_dispose_keepalive_dependencies',
@@ -382,7 +363,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Feature notifiers should be keepAlive by default.
-  /// default because keepAlive would cache every argument variant.
   scannerRule(
     code: const LintCode(
       'riverpod_feature_notifier_keepalive',
@@ -407,7 +387,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Avoid keepAlive family providers.
-  /// families unless the cache is bounded.
   scannerRule(
     code: const LintCode(
       'riverpod_keepalive_family',

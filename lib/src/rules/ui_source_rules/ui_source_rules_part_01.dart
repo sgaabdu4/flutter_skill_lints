@@ -10,7 +10,6 @@ final _textStylePattern = RegExp(r'\bTextStyle\s*\(');
 
 final List<ScannerRule> _uiSourceRulesPart1 = [
   /// Avoid raw spacing, radius, size, and color tokens.
-  /// Why: Flags raw visual constants instead of design tokens. Use design tokens.
   scannerRule(
     code: const LintCode(
       'style_raw_token',
@@ -32,7 +31,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Avoid raw TextStyle construction.
-  /// Why: Flags raw TextStyle construction. Use the app theme text styles.
   scannerRule(
     code: const LintCode(
       'style_raw_text_style',
@@ -55,7 +53,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Avoid hardcoded UI strings.
-  /// Why: Flags hardcoded UI strings. Move text into gen-l10n ARB files and read it via AppLocalizations.
   scannerRule(
     code: const LintCode(
       'strings_hardcoded',
@@ -76,7 +73,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Bind localizations once before reading localized strings.
-  /// at the top of `build`, then read keys from `l10n`.
   scannerRule(
     code: const LintCode(
       'l10n_context_direct_access',
@@ -98,7 +94,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Snackbars are shown only by UI helpers.
-  /// listens and calls a UI helper, which may wrap SnackBarUtils.
   scannerRule(
     code: const LintCode(
       'ui_snackbar_boundary',
@@ -124,7 +119,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Widgets must not receive concrete infrastructure dependencies.
-  /// behind providers, repositories, datasources, or owned utility APIs.
   scannerRule(
     code: const LintCode(
       'widget_infra_dependency_boundary',
@@ -144,7 +138,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Widget files must not declare top-level helper functions.
-  /// widget classes, not as globals that any file can call without ownership.
   scannerRule(
     code: const LintCode(
       'widget_top_level_function_boundary',
@@ -170,7 +163,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Widget files must not host provider-backed action namespaces.
-  /// notifier, computed provider, or service with a clear owner.
   scannerRule(
     code: const LintCode(
       'widget_actions_namespace_boundary',
@@ -199,7 +191,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Widget classes must not catch errors.
-  /// state/snackbar effects, and report telemetry so error handling has one owner.
   scannerRule(
     code: const LintCode(
       'widget_try_catch_boundary',
@@ -216,7 +207,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Widgets must not branch on awaited notifier results.
-  /// a stable state transition for the widget to observe.
   scannerRule(
     code: const LintCode(
       'widget_awaits_notifier_result',
@@ -246,7 +236,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Widgets must not own provider mutation busy flags.
-  /// notifier should expose `isSaving` / `isSubmitting` and success serials.
   scannerRule(
     code: const LintCode(
       'widget_local_mutation_flag',
@@ -269,7 +258,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Move derived collection logic out of widgets.
-  /// derived lists in notifiers/computed providers.
   scannerRule(
     code: const LintCode(
       'widget_derived_collection_logic',
@@ -286,7 +274,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Do not globally clamp text scaling.
-  /// accessibility text size.
   scannerRule(
     code: const LintCode(
       'a11y_text_scale_clamp',
@@ -306,7 +293,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Keep app shell widgets free of bootstrap side effects.
-  /// startup orchestration to a dedicated bootstrap widget/provider.
   scannerRule(
     code: const LintCode(
       'app_shell_bootstrap_side_effects',
@@ -339,7 +325,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Make `DateTime.now()` timezone intent explicit.
-  /// DateTime.now().toUtc();`); any member of that extension may hold date windows.
   scannerRule(
     code: const LintCode(
       'datetime_now_requires_timezone_intent',
@@ -352,7 +337,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Keep intl formatting in primitive extensions.
-  /// only in one on `num`/`int`/`double` (primitive-formatting.md).
   scannerRule(
     code: const LintCode(
       'ad_hoc_intl_format',
@@ -369,7 +353,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Keep numeric clamping in the num extension.
-  /// are allowed only inside an extension on `num`/`int`/`double`.
   scannerRule(
     code: const LintCode(
       'inline_num_clamp',
@@ -385,7 +368,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Avoid expensive work in build().
-  /// Notifier `build()` computes provider state, where performance.md sends that work.
   scannerRule(
     code: const LintCode(
       'perf_build_work',
@@ -408,7 +390,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Prefer ListView.builder for dynamic lists.
-  /// ListView(children:...).
   scannerRule(
     code: const LintCode(
       'perf_listview_children',

@@ -9,7 +9,6 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> presentationWidgetSourceRules = [
   /// Keep reusable presentation widgets free of navigation orchestration.
-  /// Why: screens and typed routes own navigation; widgets emit typed callbacks.
   scannerRule(
     code: const LintCode(
       'presentation_widget_navigation_forbidden',
@@ -35,7 +34,6 @@ final List<ScannerRule> presentationWidgetSourceRules = [
   ),
 
   /// Keep reusable presentation widget State free of domain and workflow state.
-  /// own selection, navigation history, mutation status, and derived caches.
   scannerRule(
     code: const LintCode(
       'presentation_widget_controller_state',
@@ -69,7 +67,6 @@ final List<ScannerRule> presentationWidgetSourceRules = [
   ),
 
   /// Keep reusable presentation widgets free of infrastructure dependencies.
-  /// widgets receive immutable view data and emit typed callbacks.
   scannerRule(
     code: const LintCode(
       'presentation_widget_infrastructure_dependency',

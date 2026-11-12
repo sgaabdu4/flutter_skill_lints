@@ -9,7 +9,6 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> dialogSourceRules = [
   /// Dialogs and sheets must not subscribe to the provider their own action mutates.
-  /// Pass an immutable snapshot value object through the constructor instead.
   scannerRule(
     code: const LintCode(
       'dialog_widget_subscribes_to_mutable_provider',
@@ -25,7 +24,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// Modal parent widgets must not watch high-frequency provider fields.
-  /// ConsumerWidget and watch the high-frequency field in that leaf only.
   scannerRule(
     code: const LintCode(
       'modal_high_frequency_watch_not_leaf',
@@ -41,7 +39,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// Dialog button callbacks must pop with a result, not chain side effects.
-  /// Let the caller orchestrate side effects after `await showDialog<T>(...)`.
   scannerRule(
     code: const LintCode(
       'dialog_button_pop_then_state_mutation',
@@ -64,7 +61,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// `select` records that read Map/Set/List getters notify on every parent change.
-  /// provider.
   scannerRule(
     code: const LintCode(
       'select_returns_unstable_record_identity',
@@ -84,7 +80,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// `build` must be pure. Do not assign to fields from inside build.
-  /// a provider.
   scannerRule(
     code: const LintCode(
       'build_method_assigns_to_field',
@@ -112,7 +107,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// `build` must not call helpers that mutate instance state.
-  /// `setState` turns rebuilds into state mutations.
   scannerRule(
     code: const LintCode(
       'build_calls_mutating_instance_method',
@@ -128,7 +122,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// State teardown belongs in the notifier, not in a widget callback after await.
-  /// the awaited mutation is reported too.
   scannerRule(
     code: const LintCode(
       'widget_calls_notifier_teardown_after_await',
@@ -144,7 +137,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// After awaiting a modal, use a typed route .go(context), not pop navigation.
-  /// (or `context.go(...)`) which bypasses the local pop interceptor.
   scannerRule(
     code: const LintCode(
       'popscope_bypass_uses_go_not_pop',
@@ -176,7 +168,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// `showDialog` / `showModalBottomSheet` must carry `routeSettings`.
-  /// `showAppSheet` pass it once inside the helper.
   scannerRule(
     code: const LintCode(
       'modal_helper_requires_route_settings',

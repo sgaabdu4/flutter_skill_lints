@@ -1,5 +1,9 @@
 part of '../riverpod_source_rules.dart';
 
+final _serviceFactoryServiceLocatorBackendProviderPattern = RegExp(
+  r'(?:ServiceFactory|ServiceLocator|BackendProvider)$',
+);
+
 final List<ScannerRule> _riverpodSourceRulesPart1 = [
   /// Avoid ref.read in initState.
   ///
@@ -36,7 +40,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     scan: (reporter, context) {
       // The skill bans these class kinds by name: "NEVER create ServiceFactory,
       // ServiceLocator, or BackendProvider class", including prefixed variants.
-      final banned = RegExp(r'(?:ServiceFactory|ServiceLocator|BackendProvider)$');
+      final banned = _serviceFactoryServiceLocatorBackendProviderPattern;
       for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
         if (!banned.hasMatch(declaration.namePart.typeName.lexeme)) continue;
         _reportAtOffset(reporter, context, declaration.classKeyword.offset);
@@ -536,8 +540,10 @@ void _reportProviderArgWrapperLocal(
   if (inlineMatch != null) reporter.report(context, lineIndex, inlineMatch.start);
 }
 
+final _experimentalPattern = RegExp(r'\bexperimental\b', caseSensitive: false);
+
 void _scanMutationExperimentalWarning(ScannerRuleReporter reporter, SourceScannerContext context) {
-  final experimental = RegExp(r'\bexperimental\b', caseSensitive: false);
+  final experimental = _experimentalPattern;
   final creations = _RiverpodMutationCreations();
   context.unit.accept(creations);
   for (final creation in creations.nodes) {

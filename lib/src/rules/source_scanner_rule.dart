@@ -184,6 +184,80 @@ final class _SourceScannerVisitor extends SimpleAstVisitor<void> {
   }
 }
 
+final _overrideStaticFuturePattern = RegExp(
+  r'^\s*(?:@override\s+)?(?:static\s+)?(?:Future(?:<[^>]+>)?|Stream(?:<[^>]+>)?|void|[A-Za-z_][A-Za-z0-9_<>,? ]*)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(',
+);
+
+final _classClassesPattern = RegExp(r'\bclass\s+([A-Za-z_][A-Za-z0-9_]*)\b');
+
+final _abstractInterfaceFinalPattern = RegExp(r'\babstract\s+(?:interface|final)\s+class\b');
+
+final _partPattern = RegExp(r'^\s*part\s+of\b');
+
+final _abstractFinalClassPattern = RegExp(r'\babstract\s+final\s+class\b');
+
+final _repositoryDatasourcePattern = RegExp(r'[(,]\s*(?!I)[A-Z]\w*(?:Repository|Datasource)\s+\w+');
+
+final _finalRepositoryDatasourcePattern = RegExp(
+  r'\b(?:final\s+)?(?!I)[A-Z]\w*(?:Repository|Datasource)\s+_\w+\s*;',
+);
+
+final _abstractInterfaceClassHasConcreteLayerDependencyLinePattern = RegExp(
+  r'^\s*(?:abstract\s+interface\s+)?class\b',
+);
+
+final _classRepositoryDatasourcePattern = RegExp(r'\bclass\s+\w+(?:Repository|Datasource)\b');
+
+final _mapStringDynamicPattern = RegExp(r'\bMap\s*<\s*String\s*,\s*dynamic\s*>\s+\w+\s*\(');
+
+final _toJsonFromJsonToMapPattern = RegExp(r'\b(?:toJson|fromJson|toMap)\s*\(');
+
+final _l10nDirectContextL10nColumnPattern = RegExp(r'^\s*\.\s*l10n\s*$');
+
+final _l10nPattern = RegExp(r'^\s*\.\s*l10n\s*\.');
+
+final _contextPattern = RegExp(r'\bcontext\s*$');
+
+final _directContextL10nColumnPattern = RegExp(r'^\s*\.\s*\w');
+
+final _contextL10nL10nEndLinePattern = RegExp(r'\bcontext\s*\.\s*l10n\s*$');
+
+final _contextL10nPattern = RegExp(r'\bcontext\s*\.\s*l10n\s*\.');
+
+final _titleLabelTooltipPattern = RegExp(
+  r'''\b(?:title|label|tooltip|hintText|helperText|errorText)\s*:\s*['"][^'"]+['"]''',
+);
+
+final _textTooltipSemanticsPattern = RegExp(
+  r'''\b(?:Text|Tooltip|Semantics)\s*\(\s*['"][^'"]+['"]''',
+);
+
+final _initialLocationPattern = RegExp(r'''\binitialLocation\s*:\s*r?['"]''');
+
+final _routerRouterGoNamedPattern = RegExp(
+  r'''\b(?:_?router|[A-Za-z_]\w*Router\w*)\s*\.\s*(?:goNamed|pushNamed|replaceNamed)\s*(?:<[^>]+>)?\s*\(''',
+);
+
+final _routerRouterPushPattern = RegExp(
+  r'''\b(?:_?router|[A-Za-z_]\w*Router\w*)\s*\.\s*(?:go|push|replace|pushReplacement)\s*(?:<[^>]+>)?\s*\(\s*r?['"]''',
+);
+
+final _goRouterGoNamedPushNamedPattern = RegExp(
+  r'''\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*(?:goNamed|pushNamed|replaceNamed)\s*(?:<[^>]+>)?\s*\(''',
+);
+
+final _goRouterPushReplaceStringNavigationColumnPattern = RegExp(
+  r'''\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*(?:go|push|replace|pushReplacement)\s*(?:<[^>]+>)?\s*\(\s*r?['"]''',
+);
+
+final _contextGoNamedPushNamedPattern = RegExp(
+  r'''\bcontext\s*\.\s*(?:goNamed|pushNamed|replaceNamed)\s*(?:<[^>]+>)?\s*\(''',
+);
+
+final _contextPushReplaceStringNavigationColumnPattern = RegExp(
+  r'''\bcontext\s*\.\s*(?:go|push|replace|pushReplacement)\s*(?:<[^>]+>)?\s*\(\s*r?['"]''',
+);
+
 final class SourceScannerContext {
   SourceScannerContext._({
     required this.path,
@@ -253,23 +327,13 @@ final class SourceScannerContext {
 
   int? stringNavigationColumn(String code, String masked) {
     final patterns = [
-      RegExp(
-        r'''\bcontext\s*\.\s*(?:go|push|replace|pushReplacement)\s*(?:<[^>]+>)?\s*\(\s*r?['"]''',
-      ),
-      RegExp(r'''\bcontext\s*\.\s*(?:goNamed|pushNamed|replaceNamed)\s*(?:<[^>]+>)?\s*\('''),
-      RegExp(
-        r'''\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*(?:go|push|replace|pushReplacement)\s*(?:<[^>]+>)?\s*\(\s*r?['"]''',
-      ),
-      RegExp(
-        r'''\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*(?:goNamed|pushNamed|replaceNamed)\s*(?:<[^>]+>)?\s*\(''',
-      ),
-      RegExp(
-        r'''\b(?:_?router|[A-Za-z_]\w*Router\w*)\s*\.\s*(?:go|push|replace|pushReplacement)\s*(?:<[^>]+>)?\s*\(\s*r?['"]''',
-      ),
-      RegExp(
-        r'''\b(?:_?router|[A-Za-z_]\w*Router\w*)\s*\.\s*(?:goNamed|pushNamed|replaceNamed)\s*(?:<[^>]+>)?\s*\(''',
-      ),
-      RegExp(r'''\binitialLocation\s*:\s*r?['"]'''),
+      _contextPushReplaceStringNavigationColumnPattern,
+      _contextGoNamedPushNamedPattern,
+      _goRouterPushReplaceStringNavigationColumnPattern,
+      _goRouterGoNamedPushNamedPattern,
+      _routerRouterPushPattern,
+      _routerRouterGoNamedPattern,
+      _initialLocationPattern,
     ];
 
     for (final pattern in patterns) {
@@ -286,32 +350,31 @@ final class SourceScannerContext {
   bool hasHardcodedUiString(String code) {
     if (path.contains('/l10n/')) return false;
     if (isTestFile) return false;
-    return RegExp(r'''\b(?:Text|Tooltip|Semantics)\s*\(\s*['"][^'"]+['"]''').hasMatch(code) ||
-        RegExp(r'''\b(?:title|label|tooltip|hintText|helperText|errorText)\s*:\s*['"][^'"]+['"]''')
-            .hasMatch(code);
+    return _textTooltipSemanticsPattern.hasMatch(code) || _titleLabelTooltipPattern.hasMatch(code);
   }
 
   int? directContextL10nColumn(int lineIndex) {
     if (path.contains('/l10n/') || isTestFile) return null;
 
     final line = source.masked[lineIndex];
-    final sameLine = RegExp(r'\bcontext\s*\.\s*l10n\s*\.').firstMatch(line);
+    final sameLine = _contextL10nPattern.firstMatch(line);
     if (sameLine != null) return sameLine.start;
 
-    final l10nEndLine = RegExp(r'\bcontext\s*\.\s*l10n\s*$').firstMatch(line);
-    if (l10nEndLine != null && _nextCodeLineStartsWith(lineIndex, RegExp(r'^\s*\.\s*\w'))) {
+    final l10nEndLine = _contextL10nL10nEndLinePattern.firstMatch(line);
+    if (l10nEndLine != null &&
+        _nextCodeLineStartsWith(lineIndex, _directContextL10nColumnPattern)) {
       return l10nEndLine.start;
     }
 
-    if (!RegExp(r'\bcontext\s*$').hasMatch(line)) return null;
+    if (!_contextPattern.hasMatch(line)) return null;
 
     final nextIndex = _nextCodeLineIndex(lineIndex);
     if (nextIndex == null) return null;
 
     final nextLine = source.masked[nextIndex];
-    if (RegExp(r'^\s*\.\s*l10n\s*\.').hasMatch(nextLine)) return line.indexOf('context');
-    if (RegExp(r'^\s*\.\s*l10n\s*$').hasMatch(nextLine) &&
-        _nextCodeLineStartsWith(nextIndex, RegExp(r'^\s*\.\s*\w'))) {
+    if (_l10nPattern.hasMatch(nextLine)) return line.indexOf('context');
+    if (_l10nDirectContextL10nColumnPattern.hasMatch(nextLine) &&
+        _nextCodeLineStartsWith(nextIndex, _directContextL10nColumnPattern)) {
       return line.indexOf('context');
     }
 
@@ -320,11 +383,10 @@ final class SourceScannerContext {
 
   bool isMapDynamicReturn(String line) {
     if (isDataPath) return false;
-    if (RegExp(r'\b(?:toJson|fromJson|toMap)\s*\(').hasMatch(line) ||
-        line.contains('RequestBody')) {
+    if (_toJsonFromJsonToMapPattern.hasMatch(line) || line.contains('RequestBody')) {
       return false;
     }
-    return RegExp(r'\bMap\s*<\s*String\s*,\s*dynamic\s*>\s+\w+\s*\(').hasMatch(line);
+    return _mapStringDynamicPattern.hasMatch(line);
   }
 
   bool dispatchesSnackbarFromUi(String line) =>
@@ -340,7 +402,7 @@ final class SourceScannerContext {
 
   bool hasConcreteLayerClass() {
     for (final line in source.masked) {
-      if (RegExp(r'\bclass\s+\w+(?:Repository|Datasource)\b').hasMatch(line)) {
+      if (_classRepositoryDatasourcePattern.hasMatch(line)) {
         return true;
       }
     }
@@ -348,14 +410,13 @@ final class SourceScannerContext {
   }
 
   bool hasConcreteLayerDependencyLine(String line) {
-    if (RegExp(r'^\s*(?:abstract\s+interface\s+)?class\b').hasMatch(line)) {
+    if (_abstractInterfaceClassHasConcreteLayerDependencyLinePattern.hasMatch(line)) {
       return false;
     }
-    if (RegExp(r'\b(?:final\s+)?(?!I)[A-Z]\w*(?:Repository|Datasource)\s+_\w+\s*;')
-        .hasMatch(line)) {
+    if (_finalRepositoryDatasourcePattern.hasMatch(line)) {
       return true;
     }
-    if (RegExp(r'[(,]\s*(?!I)[A-Z]\w*(?:Repository|Datasource)\s+\w+').hasMatch(line)) {
+    if (_repositoryDatasourcePattern.hasMatch(line)) {
       return true;
     }
     return false;
@@ -367,7 +428,7 @@ final class SourceScannerContext {
     final leadingText = source.masked.sublist(annotationStart, classSpan.start + 1).join('\n');
     if (leadingText.contains('@freezed') || leadingText.contains('@Freezed')) return false;
     if (!RegExp('${classSpan.name}._\\s*\\(\\s*\\)\\s*;').hasMatch(text)) return false;
-    if (RegExp(r'\babstract\s+final\s+class\b').hasMatch(source.masked[classSpan.start])) {
+    if (_abstractFinalClassPattern.hasMatch(source.masked[classSpan.start])) {
       return false;
     }
     return _namespaceHasOnlyStaticMembers(unit, classSpan.name);
@@ -518,21 +579,21 @@ final class SourceScannerContext {
   bool get _isGeneratedOrPartOfFile {
     final normalized = path.replaceAll('\\', '/');
     if (normalized.endsWith('.g.dart') || normalized.endsWith('.freezed.dart')) return true;
-    return source.masked.any((line) => RegExp(r'^\s*part\s+of\b').hasMatch(line));
+    return source.masked.any((line) => _partPattern.hasMatch(line));
   }
 
   /// An `abstract interface class` contract or an `abstract final class` static
   /// namespace (keys, codecs, mappers): neither is ever instantiated as a value.
   bool _isNeverInstantiatedClass(ScannerClassSpan classSpan) {
     final line = source.masked[classSpan.start];
-    return RegExp(r'\babstract\s+(?:interface|final)\s+class\b').hasMatch(line);
+    return _abstractInterfaceFinalPattern.hasMatch(line);
   }
 
   static List<ScannerClassSpan> _classes(SourceScannerSource source) {
     final classes = <ScannerClassSpan>[];
     for (var i = 0; i < source.length; i++) {
       final line = source.masked[i];
-      final match = RegExp(r'\bclass\s+([A-Za-z_][A-Za-z0-9_]*)\b').firstMatch(line);
+      final match = _classClassesPattern.firstMatch(line);
       if (match == null) continue;
 
       final name = match.group(1) ?? '';
@@ -574,9 +635,7 @@ final class SourceScannerContext {
 
   static List<ScannerMethodSpan> _methods(SourceScannerSource source, ScannerClassSpan classSpan) {
     final methods = <ScannerMethodSpan>[];
-    final methodRegex = RegExp(
-      r'^\s*(?:@override\s+)?(?:static\s+)?(?:Future(?:<[^>]+>)?|Stream(?:<[^>]+>)?|void|[A-Za-z_][A-Za-z0-9_<>,? ]*)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(',
-    );
+    final methodRegex = _overrideStaticFuturePattern;
 
     for (var i = classSpan.start + 1; i < classSpan.end; i++) {
       final method = _methodAtLine(source, classSpan, i, methodRegex);

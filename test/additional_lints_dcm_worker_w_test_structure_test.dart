@@ -1,9 +1,15 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'dart:mirrors';
+import 'dart:typed_data';
+
+import 'package:analyzer/file_system/file_system.dart';
+import 'package:analyzer/file_system/memory_file_system.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missing_test_files.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_top_level_members_in_tests.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_match_file_name.dart';
+import 'package:test/test.dart' show expect, lessThanOrEqualTo;
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
@@ -11,6 +17,7 @@ void main() {
     defineReflectiveTests(AvoidTopLevelMembersInTestsTest);
     defineReflectiveTests(PreferMatchFileNameTest);
     defineReflectiveTests(AvoidMissingTestFilesTest);
+    defineReflectiveTests(AvoidMissingTestFilesReadsTest);
   });
 }
 
@@ -515,4 +522,288 @@ class UserProfile {}
 
     await assertDiagnosticsInFile(path, []);
   }
+
+  Future<void> test_relativeImportFromNestedTest_noLint() async {
+    newFolder('$testPackageRootPath/test/features/profile');
+    newFile('$testPackageRootPath/test/features/profile/flow_test.dart', '''
+import '../../../lib/user_profile.dart';
+
+void main() {}
+''');
+    const source = r'''
+class UserProfile {}
+''';
+    final path = '$testPackageRootPath/lib/user_profile.dart';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, []);
+  }
+
+  Future<void> test_importCycleBetweenLibFiles_noLint() async {
+    newFolder('$testPackageRootPath/test/features');
+    newFile('$testPackageRootPath/lib/hub.dart', '''
+import 'ring_a.dart';
+
+class Hub {}
+''');
+    newFile('$testPackageRootPath/lib/ring_a.dart', '''
+import 'ring_b.dart';
+
+class RingA {}
+''');
+    newFile('$testPackageRootPath/lib/ring_b.dart', '''
+import 'ring_a.dart';
+import 'user_profile.dart';
+
+class RingB {}
+''');
+    newFile('$testPackageRootPath/test/features/hub_test.dart', '''
+import 'package:test/hub.dart';
+
+void main() {}
+''');
+    const source = r'''
+class UserProfile {}
+''';
+    final path = '$testPackageRootPath/lib/user_profile.dart';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, []);
+  }
+
+  Future<void> test_importCycleThatNeverReachesLibrary_lint() async {
+    newFolder('$testPackageRootPath/test/features');
+    newFile('$testPackageRootPath/lib/ring_a.dart', '''
+import 'ring_b.dart';
+
+class RingA {}
+''');
+    newFile('$testPackageRootPath/lib/ring_b.dart', '''
+import 'ring_a.dart';
+
+class RingB {}
+''');
+    newFile('$testPackageRootPath/test/features/ring_flow_test.dart', '''
+import 'package:test/ring_a.dart';
+
+void main() {}
+''');
+    const source = r'''
+class UserProfile {}
+''';
+    final path = '$testPackageRootPath/lib/user_profile.dart';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [lint(0, 'class'.length)]);
+  }
+
+  Future<void> test_importOfOtherPackage_lint() async {
+    newFolder('$testPackageRootPath/test/features');
+    newFile('$testPackageRootPath/test/features/other_flow_test.dart', '''
+import 'package:other_package/user_profile.dart';
+
+void main() {}
+''');
+    const source = r'''
+class UserProfile {}
+''';
+    final path = '$testPackageRootPath/lib/user_profile.dart';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [lint(0, 'class'.length)]);
+  }
+
+  Future<void> test_reachedOnlyThroughReadableLibFile_noLint() async {
+    newFolder('$testPackageRootPath/test/features');
+    newFile('$testPackageRootPath/lib/hub.dart', '''
+import 'user_profile.dart';
+
+class Hub {}
+''');
+    newFile('$testPackageRootPath/test/features/hub_test.dart', '''
+import 'package:test/hub.dart';
+
+void main() {}
+''');
+    const source = r'''
+class UserProfile {}
+''';
+    final path = '$testPackageRootPath/lib/user_profile.dart';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, []);
+  }
+
+  Future<void> test_behindMissingLibFile_lint() async {
+    newFolder('$testPackageRootPath/test/features');
+    newFile('$testPackageRootPath/test/features/ghost_test.dart', '''
+import 'package:test/ghost.dart';
+
+void main() {}
+''');
+    const source = r'''
+class UserProfile {}
+''';
+    final path = '$testPackageRootPath/lib/user_profile.dart';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [lint(0, 'class'.length)]);
+  }
+
+  Future<void> test_cacheFollowsFileChanges() async {
+    newFolder('$testPackageRootPath/test/features');
+    const source = r'''
+class UserProfile {}
+''';
+    final path = '$testPackageRootPath/lib/user_profile.dart';
+    newFile(path, source);
+    final testPath = '$testPackageRootPath/test/features/profile_flow_test.dart';
+
+    await assertDiagnosticsInFile(path, [lint(0, 'class'.length)]);
+
+    newFile(testPath, '''
+import 'package:test/user_profile.dart';
+
+void main() {}
+''');
+    contextFor2(getFile(testPath)).changeFile(convertPath(testPath));
+    await assertDiagnosticsInFile(path, []);
+
+    deleteFile(testPath);
+    contextFor2(getFile(testPath)).changeFile(convertPath(testPath));
+    await assertDiagnosticsInFile(path, [lint(0, 'class'.length)]);
+  }
+}
+
+@reflectiveTest
+final class AvoidMissingTestFilesReadsTest extends AnalysisRuleTest {
+  static const _chainLength = 30;
+  static const _decoyLength = 20;
+  static const _fillerTests = 40;
+
+  final _reads = <String, int>{};
+
+  late final _CountingResourceProvider _provider = _CountingResourceProvider(_reads);
+
+  @override
+  ResourceProvider get resourceProvider => _provider;
+
+  @override
+  void setUp() {
+    rule = AvoidMissingTestFiles();
+    super.setUp();
+  }
+
+  Future<void> test_readsEachFileFewTimes() async {
+    String name(String prefix, int index) => '$prefix${index.toString().padLeft(2, '0')}';
+    void writeChain(String prefix, int length) {
+      for (var index = 0; index < length; index++) {
+        final next = index + 1 < length ? "export '${name(prefix, index + 1)}.dart';\n" : '';
+        newFile(
+          '$testPackageRootPath/lib/${name(prefix, index)}.dart',
+          '${next}class ${name(prefix.toUpperCase(), index)} {}\n',
+        );
+      }
+    }
+
+    newFolder('$testPackageRootPath/test');
+    writeChain('c', _chainLength);
+    writeChain('d', _decoyLength);
+    for (var index = 0; index < _fillerTests; index++) {
+      newFile('$testPackageRootPath/test/${name('f', index)}_test.dart', '''
+import 'package:test/d00.dart';
+
+void main() {}
+''');
+    }
+    newFile('$testPackageRootPath/test/z_reach_test.dart', '''
+import 'package:test/c00.dart';
+
+void main() {}
+''');
+
+    _reads.clear();
+    for (var index = 0; index < _chainLength; index++) {
+      await assertDiagnosticsInFile('$testPackageRootPath/lib/${name('c', index)}.dart', []);
+    }
+
+    final dartReads = {
+      for (final entry in _reads.entries)
+        if (entry.key.endsWith('.dart')) entry.key: entry.value,
+    };
+    final total = dartReads.values.fold<int>(0, (sum, count) => sum + count);
+    const libFiles = _chainLength + _decoyLength;
+    const bound = 2 * (_fillerTests + 1 + libFiles) + 20;
+    expect(total, lessThanOrEqualTo(bound), reason: 'dart file reads: $total, bound: $bound');
+  }
+}
+
+final class _CountingResourceProvider extends MemoryResourceProvider {
+  _CountingResourceProvider(this.reads);
+
+  final Map<String, int> reads;
+
+  @override
+  File getFile(String path) => _counted(super.getFile(path), reads) as File;
+
+  @override
+  Folder getFolder(String path) => _counted(super.getFolder(path), reads) as Folder;
+}
+
+Resource _counted(Resource resource, Map<String, int> reads) {
+  if (resource is _CountingFile || resource is _CountingFolder) return resource;
+  if (resource is File) return _CountingFile(resource, reads);
+  if (resource is Folder) return _CountingFolder(resource, reads);
+  return resource;
+}
+
+final class _CountingFile implements File {
+  _CountingFile(this._inner, this._reads);
+
+  final File _inner;
+  final Map<String, int> _reads;
+
+  @override
+  Folder get parent => _counted(_inner.parent, _reads) as Folder;
+
+  @override
+  String readAsStringSync() {
+    _count();
+    return _inner.readAsStringSync();
+  }
+
+  @override
+  Uint8List readAsBytesSync() {
+    _count();
+    return _inner.readAsBytesSync();
+  }
+
+  void _count() => _reads.update(_inner.path, (count) => count + 1, ifAbsent: () => 1);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => reflect(_inner).delegate(invocation);
+}
+
+final class _CountingFolder implements Folder {
+  _CountingFolder(this._inner, this._reads);
+
+  final Folder _inner;
+  final Map<String, int> _reads;
+
+  @override
+  Folder get parent => _counted(_inner.parent, _reads) as Folder;
+
+  @override
+  List<Resource> getChildren() => [
+    for (final child in _inner.getChildren()) _counted(child, _reads),
+  ];
+
+  @override
+  File getFile(String relPath) => _counted(_inner.getFile(relPath), _reads) as File;
+
+  @override
+  Folder getFolder(String relPath) => _counted(_inner.getFolder(relPath), _reads) as Folder;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => reflect(_inner).delegate(invocation);
 }

@@ -1,6 +1,7 @@
 import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
+import 'package:analyzer/dart/analysis/session.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
@@ -43,7 +44,9 @@ final class AvoidMissingTestFiles extends AnalysisRule {
 
     final expectedTestFile = testFolder.getFile(expectedTestPath);
     if (expectedTestFile.exists) return;
-    if (_hasTestImportCoverage(root, testFolder, currentPath)) return;
+    if (_hasTestImportCoverage(context.libraryElement?.session, root, testFolder, currentPath)) {
+      return;
+    }
 
     registry.addCompilationUnit(this, _Visitor(this));
   }
@@ -89,63 +92,50 @@ bool _isLowSignalLibrary(String path) {
       (path.contains('/lib/core/config/') && path.endsWith('_schema.dart'));
 }
 
-bool _hasTestImportCoverage(Folder root, Folder testFolder, String filePath) {
+final _testReachedUris = Expando<Map<String, Set<String>>>('flutter_skill_lints_test_reached_uris');
+
+bool _hasTestImportCoverage(
+  AnalysisSession? session,
+  Folder root,
+  Folder testFolder,
+  String filePath,
+) {
   final packageName = packageNameFromPubspec(root);
   if (packageName == null) return false;
 
   final packageUri = _packageUri(root, filePath, packageName);
   if (packageUri == null) return false;
 
+  Set<String> build() => _testReachedPackageUris(root, testFolder, packageName);
+  if (session == null) return build().contains(packageUri);
+
+  final byRoot = _testReachedUris[session] ??= <String, Set<String>>{};
+  return (byRoot[root.path] ??= build()).contains(packageUri);
+}
+
+/// Package URIs that test files import or export, plus every lib file they reach from there.
+Set<String> _testReachedPackageUris(Folder root, Folder testFolder, String packageName) {
+  final reached = <String>{};
+  final pending = <String>[];
+
+  void collect(String path, String text) {
+    for (final uri in _importOrExportUris(text)) {
+      final resolved = _resolveToPackageUri(root, path, uri, packageName);
+      if (resolved != null && reached.add(resolved)) pending.add(resolved);
+    }
+  }
+
   for (final file in _dartFiles(testFolder)) {
     final text = readFileText(file);
-    if (text == null) continue;
-    if (_testFileCoversPackage(root, file.path, text, packageName, packageUri)) return true;
+    if (text != null) collect(file.path, text);
   }
-  return false;
-}
-
-bool _testFileCoversPackage(
-  Folder root,
-  String testPath,
-  String text,
-  String packageName,
-  String packageUri,
-) {
-  for (final uri in _importOrExportUris(text)) {
-    final importedUri = _resolveToPackageUri(root, testPath, uri, packageName);
-    if (importedUri == null) continue;
-    if (importedUri == packageUri ||
-        _packageUriReferences(root, packageName, importedUri, packageUri, <String>{})) {
-      return true;
-    }
+  while (pending.isNotEmpty) {
+    final sourceFile = _fileForPackageUri(root, pending.removeLast(), packageName);
+    if (sourceFile == null) continue;
+    final text = readFileText(sourceFile);
+    if (text != null) collect(sourceFile.path, text);
   }
-  return false;
-}
-
-bool _packageUriReferences(
-  Folder root,
-  String packageName,
-  String sourcePackageUri,
-  String targetPackageUri,
-  Set<String> seen,
-) {
-  if (!seen.add(sourcePackageUri)) return false;
-
-  final sourceFile = _fileForPackageUri(root, sourcePackageUri, packageName);
-  if (sourceFile == null) return false;
-
-  final text = readFileText(sourceFile);
-  if (text == null) return false;
-
-  for (final uri in _importOrExportUris(text)) {
-    final referencedUri = _resolveToPackageUri(root, sourceFile.path, uri, packageName);
-    if (referencedUri == null) continue;
-    if (referencedUri == targetPackageUri) return true;
-    if (_packageUriReferences(root, packageName, referencedUri, targetPackageUri, seen)) {
-      return true;
-    }
-  }
-  return false;
+  return reached;
 }
 
 final _importExportPattern = RegExp(

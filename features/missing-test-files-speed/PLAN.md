@@ -19,7 +19,7 @@ Authority: Owner approved this change; plan and build authorized. Delivery targe
 
 ## Acceptance + steps
 
-- [ ] Reads by the rule stay near the test file count plus the lib file count, not their product → `test/performance/avoid_missing_test_files_reads_test.dart::reads each file a bounded number of times` fails on the old code and passes on the new.
+- [ ] Reads by the rule stay near the test file count plus the lib file count, not their product → `AvoidMissingTestFilesReadsTest::test_readsEachFileFewTimes` (in the rule's test file, which owns the analyzer test harness; `test/performance` holds only pure wall-time checks) fails on the old code and passes on the new.
 - [ ] A change of files between analyses is seen: finding, then none after a covering test is added, then the finding again after it is removed → `AvoidMissingTestFilesTest::test_cacheFollowsFileChanges`.
 - [ ] Meaning is unchanged: direct import, relative import from a nested test, cover through export, import cycle, other package import, readable file edge, missing file behind an edge → named `AvoidMissingTestFilesTest` cases; all present cases pass unchanged.
 - [ ] Version 0.13.6 in `pubspec.yaml` and the first CHANGELOG entry.
@@ -27,8 +27,8 @@ Authority: Owner approved this change; plan and build authorized. Delivery targe
 
 ## Baseline + execution
 
-Result: Pending
-Evidence: Pending — Draft check on the starting commit.
+Result: Passed
+Evidence: `python3 .hooks/hard-eng.py check --plan-stage Draft` on starting commit `84bb38a` (main, its CI passed) plus this plan → exit 0; secret scans pass, no package reads the change.
 Execution: One builder; tests first (red on old code), then the cached set at its owner, then version and changelog.
 
 ## Risks + recovery

@@ -9,20 +9,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when an untyped or non-recoverable value is thrown.
-///
-/// Resolved `dart:core` `Error.throwWithStackTrace` calls follow the same
-/// contract, except when they propagate the error and stack trace caught by
-/// the same enclosing catch clause. The documented scoped Riverpod provider
-/// stub (`@Riverpod(dependencies: [...])` with an expression body of
-/// `throw UnimplementedError()`) is allowed because it must be overridden.
-/// Typed [Exception] subtypes, including `FormatException`, may be thrown by
-/// parsers and infrastructure code. Throws in resolved Flutter `Widget` or
-/// `State` members, Flutter widget callbacks, and Riverpod notifier methods
-/// (hand-written or `@riverpod` codegen, resolved through `AnyNotifier`)
-/// remain warnings. Direct same-unit function and method references passed to
-/// Flutter callbacks are recognized. The rule cannot prove that a caller
-/// catches a failure or discover every callback connection across files.
+/// Warns when an untyped or non-recoverable value is thrown, also in Widget, State, callback and notifier code.
 class AvoidThrow extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_throw',
@@ -65,9 +52,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(node);
   }
 
-  /// Applies the direct-throw contract to resolved `dart:core`
-  /// `Error.throwWithStackTrace`, except when it propagates the error and
-  /// stack trace caught by the same enclosing catch clause.
+  /// Applies the direct-throw contract to `Error.throwWithStackTrace` unless it rethrows the enclosing catch error.
   @override
   void visitMethodInvocation(MethodInvocation node) {
     if (!_isCoreThrowWithStackTrace(node.methodName.element)) return;
@@ -232,8 +217,7 @@ bool _isCaughtPairPropagation(AstNode node, Expression error, Expression stackTr
   return false;
 }
 
-/// The documented scoped-provider stub that must be overridden before use:
-/// `@Riverpod(dependencies: [...]) T name(Ref ref) => throw UnimplementedError();`
+/// The scoped-provider stub that must be overridden: `=> throw UnimplementedError();`.
 bool _isScopedProviderOverrideStub(ThrowExpression node) {
   final body = node.parent;
   final function = body?.parent?.parent;
@@ -282,15 +266,13 @@ bool _isValueObjectArgumentGuard(ThrowExpression node, String path) {
   return false;
 }
 
-/// value-objects.md "extracted guard helper": `static double _guard(...)` on the
-/// Value Object class, called from its public factory.
+/// value-objects.md "extracted guard helper": a private static guard on the Value Object class.
 bool _isPrivateStaticClassHelper(MethodDeclaration method) =>
     method.isStatic &&
     method.name.lexeme.startsWith('_') &&
     method.parent?.parent is ClassDeclaration;
 
-/// The formal parameter passed as the value of a `dart:core`
-/// `ArgumentError.value(...)` creation, if [error] is one.
+/// The formal parameter passed as the value of a `dart:core` `ArgumentError.value(...)`, if [error] is one.
 FormalParameterElement? _argumentErrorValueParameter(Expression error) {
   if (error is! InstanceCreationExpression ||
       error.constructorName.element?.name != 'value' ||
@@ -312,8 +294,7 @@ bool _isCoreClassType(DartType? type, String name) =>
     type.element.name == name &&
     type.element.library.identifier == 'dart:core';
 
-/// Whether [expression] reads [parameter] directly or through a `final` local
-/// of [body] whose initializer (transitively) reads it.
+/// Whether [expression] reads [parameter] directly or through a `final` local of [body].
 bool _referencesParameter(
   Expression expression,
   FormalParameterElement parameter,

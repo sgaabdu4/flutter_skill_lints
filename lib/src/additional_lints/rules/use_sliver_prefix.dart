@@ -8,11 +8,7 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when a widget's build method returns a sliver widget but the class
-/// name does not include 'Sliver'.
-///
-/// Consistent sliver naming helps developers quickly identify
-/// which widgets are sliver-based and can be used inside CustomScrollView.
+/// Warns when a widget's build method returns a sliver widget but the class name lacks 'Sliver'.
 class UseSliverPrefix extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'use_sliver_prefix',

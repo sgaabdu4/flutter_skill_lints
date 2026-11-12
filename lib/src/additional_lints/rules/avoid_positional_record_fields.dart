@@ -29,6 +29,8 @@ final class AvoidPositionalRecordFields extends RecordRule {
   AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
+final _futureRecordPattern = RegExp(r'^FutureRecord[2-9]$');
+
 final class _Visitor extends SimpleAstVisitor<void> {
   const _Visitor(this.rule);
 
@@ -52,7 +54,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     final owner = accessor.enclosingElement;
     return owner is ExtensionElement &&
         owner.library.uri.toString() == 'dart:async' &&
-        RegExp(r'^FutureRecord[2-9]$').hasMatch(owner.name ?? '');
+        _futureRecordPattern.hasMatch(owner.name ?? '');
   }
 
   @override

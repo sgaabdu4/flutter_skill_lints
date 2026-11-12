@@ -93,8 +93,10 @@ bool _isDedicatedContractOwner(String className) {
   return _dedicatedOwnerSuffixes.any(className.endsWith);
 }
 
+final _isContractConstantNamePattern = RegExp(r'^_+');
+
 bool _isContractConstantName(String name) {
-  final normalized = name.replaceAll(RegExp(r'^_+'), '').toLowerCase();
+  final normalized = name.replaceAll(_isContractConstantNamePattern, '').toLowerCase();
   return _contractNameSuffixes.any(normalized.endsWith);
 }
 

@@ -334,8 +334,10 @@ bool _isStatusCodeComparison(AstNode node) {
   return false;
 }
 
+final _isAppeasementLiteralConstantPattern = RegExp(r'^_+');
+
 bool _isAppeasementLiteralConstant(VariableDeclaration node) {
-  final name = node.name.lexeme.replaceFirst(RegExp(r'^_+'), '');
+  final name = node.name.lexeme.replaceFirst(_isAppeasementLiteralConstantPattern, '');
 
   final initializer = node.initializer;
   final hasLiteralInitializer =
@@ -373,8 +375,10 @@ int? _integerInitializerValue(Expression? expression) {
   return null;
 }
 
+final _integerNameTokensPattern = RegExp(r'\d+');
+
 Set<String> _integerNameTokens(String name) {
-  return RegExp(r'\d+').allMatches(name).map((match) => match.group(0)!).toSet();
+  return _integerNameTokensPattern.allMatches(name).map((match) => match.group(0)!).toSet();
 }
 
 bool _isExcludedGeneratedLiteralContext(VariableDeclaration node) {

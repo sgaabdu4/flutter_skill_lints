@@ -193,13 +193,15 @@ final class _TargetAccessFinder extends RecursiveAstVisitor<void> {
   void visitFunctionDeclaration(FunctionDeclaration node) {}
 }
 
+final _ensurePattern = RegExp(r'^ensure[A-Z]\w*');
+
 final class _EnsureCallFinder extends RecursiveAstVisitor<void> {
   bool found = false;
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
     final name = node.methodName.name;
-    if (name.startsWith('_ensure') || RegExp(r'^ensure[A-Z]\w*').hasMatch(name)) {
+    if (name.startsWith('_ensure') || _ensurePattern.hasMatch(name)) {
       found = true;
       return;
     }

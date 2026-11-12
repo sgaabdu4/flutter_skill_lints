@@ -81,8 +81,10 @@ bool _isIgnoreComment(Token token) {
       (token.lexeme.contains('ignore:') || token.lexeme.contains('ignore_for_file:'));
 }
 
+final _ignoreForFilePattern = RegExp(r'ignore(?:_for_file)?:\s*([^\n]+)');
+
 bool _containsProtectedSuppression(String lexeme) {
-  final match = RegExp(r'ignore(?:_for_file)?:\s*([^\n]+)').firstMatch(lexeme);
+  final match = _ignoreForFilePattern.firstMatch(lexeme);
   if (match == null) return false;
 
   final names = match

@@ -148,8 +148,13 @@ bool _packageUriReferences(
   return false;
 }
 
+final _importExportPattern = RegExp(
+  r'''^\s*(?:import|export)\s+['"]([^'"]+)['"]''',
+  multiLine: true,
+);
+
 Iterable<String> _importOrExportUris(String text) sync* {
-  final directive = RegExp(r'''^\s*(?:import|export)\s+['"]([^'"]+)['"]''', multiLine: true);
+  final directive = _importExportPattern;
   for (final match in directive.allMatches(text)) {
     yield match.group(1)!;
   }

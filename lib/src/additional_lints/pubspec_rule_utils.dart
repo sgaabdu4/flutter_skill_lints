@@ -1,13 +1,12 @@
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/file_system/file_system.dart';
 
+final _namePattern = RegExp(r'^name:\s*([A-Za-z0-9_]+)\s*$', multiLine: true);
+
 bool isPubspecAnchorUnit(Folder root, RuleContext context) {
   final currentPath = context.definingUnit.file.path;
   final pubspecText = readFileText(root.getFile('pubspec.yaml')) ?? '';
-  final packageName = RegExp(
-    r'^name:\s*([A-Za-z0-9_]+)\s*$',
-    multiLine: true,
-  ).firstMatch(pubspecText)?.group(1);
+  final packageName = _namePattern.firstMatch(pubspecText)?.group(1);
 
   if (packageName != null) {
     return currentPath == root.getFile('lib/$packageName.dart').path;
@@ -18,7 +17,7 @@ bool isPubspecAnchorUnit(Folder root, RuleContext context) {
 
 String? packageNameFromPubspec(Folder root) {
   final text = readFileText(root.getFile('pubspec.yaml')) ?? '';
-  return RegExp(r'^name:\s*([A-Za-z0-9_]+)\s*$', multiLine: true).firstMatch(text)?.group(1);
+  return _namePattern.firstMatch(text)?.group(1);
 }
 
 String unquoteYamlScalar(String value) {

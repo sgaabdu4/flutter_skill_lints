@@ -29,6 +29,8 @@ final class AvoidDuplicateMixins extends AnalysisRule {
   }
 }
 
+final _visitWithClausePattern = RegExp(r'\s+');
+
 final class _Visitor extends SimpleAstVisitor<void> {
   const _Visitor(this.rule);
 
@@ -39,7 +41,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     final seen = <String>{};
 
     for (final mixinType in node.mixinTypes) {
-      final key = mixinType.toSource().replaceAll(RegExp(r'\s+'), ' ').trim();
+      final key = mixinType.toSource().replaceAll(_visitWithClausePattern, ' ').trim();
       if (!seen.add(key)) {
         rule.reportAtNode(mixinType);
       }

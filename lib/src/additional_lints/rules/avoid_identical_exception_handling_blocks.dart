@@ -32,10 +32,12 @@ class AvoidIdenticalExceptionHandlingBlocks extends TryStatementCheckRule {
   }
 }
 
+final _bodySignaturePattern = RegExp(r'\s+');
+
 String? _bodySignature(Block body) {
   if (body.statements.isEmpty) return null;
 
   return body.statements
-      .map((statement) => statement.toSource().replaceAll(RegExp(r'\s+'), ' ').trim())
+      .map((statement) => statement.toSource().replaceAll(_bodySignaturePattern, ' ').trim())
       .join(';');
 }

@@ -62,8 +62,10 @@ bool _hasUnnecessarySeparator(String lexeme) {
   return _underscoredDigitCount(mantissa) <= 3 || _underscoredDigitCount(exponent) <= 3;
 }
 
+final _underscoredDigitCountPattern = RegExp(r'[^0-9a-f]');
+
 int _underscoredDigitCount(String part) {
   if (!part.contains('_')) return 4;
   final withoutPrefix = part.startsWith('0x') ? part.substring(2) : part;
-  return withoutPrefix.replaceAll(RegExp(r'[^0-9a-f]'), '').length;
+  return withoutPrefix.replaceAll(_underscoredDigitCountPattern, '').length;
 }

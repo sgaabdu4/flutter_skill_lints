@@ -2,6 +2,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
+final _buildCheckMethodDeclarationPattern = RegExp(r'^_build[A-Z][A-Za-z0-9_]*$');
+
 /// Avoid private _buildXxx() widget helper methods.
 ///
 /// Why: Bans private _buildXxx helper methods. Extract a named widget class instead of a build
@@ -24,7 +26,7 @@ final class AvoidWidgetBuildHelpers extends GeneratedMethodDeclarationCheckRule 
   @override
   @override
   void checkMethodDeclaration(MethodDeclaration node) {
-    if (RegExp(r'^_build[A-Z][A-Za-z0-9_]*$').hasMatch(node.name.lexeme)) {
+    if (_buildCheckMethodDeclarationPattern.hasMatch(node.name.lexeme)) {
       reportAtToken(node.name);
     }
   }

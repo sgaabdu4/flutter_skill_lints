@@ -7,6 +7,16 @@ import 'package:analyzer/error/error.dart';
 import 'package:analyzer/file_system/file_system.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
+final _jsonKeyJsonSerializableFreezedUnionValuePattern = RegExp(
+  r'\b(?:JsonKey|JsonSerializable|FreezedUnionValue)\b',
+);
+
+final _classModelExtendsPattern = RegExp(r'\bclass\s+\w+Model\s+extends\s+(?!\w+Model\b)\w+');
+
+final _toEntityPattern = RegExp(r'\btoEntity\s*\(');
+
+final _classModelPattern = RegExp(r'\bclass\s+\w+Model\b');
+
 final List<ScannerRule> architectureExtendedSourceRules = [
   /// Data models should expose a toEntity() mapper.
   ///
@@ -24,10 +34,10 @@ final List<ScannerRule> architectureExtendedSourceRules = [
     description: 'Flags data model files whose model classes do not expose toEntity() so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.path.contains('/data/models/')) return;
-      if (!RegExp(r'\bclass\s+\w+Model\b').hasMatch(context.source.masked.join('\n'))) {
+      if (!_classModelPattern.hasMatch(context.source.masked.join('\n'))) {
         return;
       }
-      if (context.source.masked.any((line) => RegExp(r'\btoEntity\s*\(').hasMatch(line))) {
+      if (context.source.masked.any((line) => _toEntityPattern.hasMatch(line))) {
         return;
       }
       if (_hasModelMapper(context.unit)) return;
@@ -75,7 +85,7 @@ final List<ScannerRule> architectureExtendedSourceRules = [
       if (!context.path.contains('/data/models/')) return;
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (RegExp(r'\bclass\s+\w+Model\s+extends\s+(?!\w+Model\b)\w+').hasMatch(line)) {
+        if (_classModelExtendsPattern.hasMatch(line)) {
           reporter.report(context, i, line.indexOf('extends'));
         }
       }
@@ -98,7 +108,7 @@ final List<ScannerRule> architectureExtendedSourceRules = [
       if (!context.isDomainPath) return;
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (RegExp(r'\b(?:JsonKey|JsonSerializable|FreezedUnionValue)\b').hasMatch(line)) {
+        if (_jsonKeyJsonSerializableFreezedUnionValuePattern.hasMatch(line)) {
           reporter.report(context, i, 0);
         }
       }

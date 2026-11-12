@@ -94,10 +94,14 @@ final class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
+final _testDriverPattern = RegExp(r'(^|/)test_driver/');
+
 bool _isHostDriverPath(String path) {
   final normalized = path.replaceAll('\\', '/');
-  return RegExp(r'(^|/)test_driver/').hasMatch(normalized);
+  return _testDriverPattern.hasMatch(normalized);
 }
+
+final _namePackageNamePattern2 = RegExp(r'^name:\s*([A-Za-z0-9_]+)\s*$', multiLine: true);
 
 String? _packageName(RuleContext context) {
   final root = context.package?.root;
@@ -105,7 +109,7 @@ String? _packageName(RuleContext context) {
   final pubspec = root.getFile('pubspec.yaml');
   if (!pubspec.exists) return null;
   final text = pubspec.readAsStringSync();
-  return RegExp(r'^name:\s*([A-Za-z0-9_]+)\s*$', multiLine: true).firstMatch(text)?.group(1);
+  return _namePackageNamePattern2.firstMatch(text)?.group(1);
 }
 
 bool _isForbidden(String uri, String? appPackageName) {

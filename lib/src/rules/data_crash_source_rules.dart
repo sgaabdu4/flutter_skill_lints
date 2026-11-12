@@ -8,6 +8,13 @@ import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
+final _emailNamePhonePattern = RegExp(
+  r'\b(?:email|name|phone|token|password|ssn|address|userId)\b',
+  caseSensitive: false,
+);
+
+final _crashFirebaseCrashlyticsPattern = RegExp(r'\b(?:Crash\.|FirebaseCrashlytics)');
+
 final List<ScannerRule> dataCrashSourceRules = [
   /// Reporting then rethrowing gives one failure two incident owners.
   scannerRule(
@@ -48,11 +55,8 @@ final List<ScannerRule> dataCrashSourceRules = [
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (RegExp(r'\b(?:Crash\.|FirebaseCrashlytics)').hasMatch(line) &&
-            RegExp(
-              r'\b(?:email|name|phone|token|password|ssn|address|userId)\b',
-              caseSensitive: false,
-            ).hasMatch(line)) {
+        if (_crashFirebaseCrashlyticsPattern.hasMatch(line) &&
+            _emailNamePhonePattern.hasMatch(line)) {
           reporter.report(context, i, 0);
         }
       }

@@ -7,6 +7,16 @@ import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
+final _mapStringObjectPattern = RegExp(r'\bas\s+Map\s*<\s*String\s*,\s*Object\?\s*>');
+
+final _refReadWatchPattern = RegExp(r'\bref\s*\.\s*(?:read|watch)\s*\(');
+
+final _classRepositoryExtendsPattern = RegExp(
+  r'\bclass\s+\w+Repository\s+extends\s+_\$\w+Repository\b',
+);
+
+final _fromJsonToJsonFromJsonPattern = RegExp(r'\b(?:fromJson|toJson|_\$\w+FromJson)\s*\(');
+
 final List<ScannerRule> architectureSourceRules = [
   /// Domain code must stay pure Dart.
   scannerRule(
@@ -66,8 +76,7 @@ final List<ScannerRule> architectureSourceRules = [
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         if (context.isDomainPath &&
-            RegExp(r'\b(?:fromJson|toJson|_\$\w+FromJson)\s*\(')
-                .hasMatch(context.source.masked[i])) {
+            _fromJsonToJsonFromJsonPattern.hasMatch(context.source.masked[i])) {
           reporter.report(context, i, 0);
         }
       }
@@ -103,7 +112,7 @@ final List<ScannerRule> architectureSourceRules = [
     ),
     description: 'Flags repositories extending generated classes so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      final generatedRepository = RegExp(r'\bclass\s+\w+Repository\s+extends\s+_\$\w+Repository\b');
+      final generatedRepository = _classRepositoryExtendsPattern;
       for (var i = 0; i < context.source.length; i++) {
         final match = generatedRepository.firstMatch(context.source.masked[i]);
         if (match != null && !context.hasNearbyAnnotation(i, const {'riverpod', 'Riverpod'})) {
@@ -172,8 +181,7 @@ final List<ScannerRule> architectureSourceRules = [
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (context.isAtomicNoProviderPath &&
-            RegExp(r'\bref\s*\.\s*(?:read|watch)\s*\(').hasMatch(line)) {
+        if (context.isAtomicNoProviderPath && _refReadWatchPattern.hasMatch(line)) {
           reporter.report(context, i, line.indexOf('ref'));
         }
       }
@@ -260,7 +268,7 @@ final List<ScannerRule> architectureSourceRules = [
     description:
         'Flags Map<String, Object?> casts so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      final objectMapCast = RegExp(r'\bas\s+Map\s*<\s*String\s*,\s*Object\?\s*>');
+      final objectMapCast = _mapStringObjectPattern;
       for (var i = 0; i < context.source.length; i++) {
         final match = objectMapCast.firstMatch(context.source.masked[i]);
         if (match != null) {

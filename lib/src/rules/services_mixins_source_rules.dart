@@ -157,7 +157,7 @@ bool _hasMutableSingletonState(String body) {
   return false;
 }
 
-/// A class that keeps exactly one non-const static instance of itself and exposes it
+/// Describes a class that keeps one non-const static instance of itself and exposes it publicly.
 final class _SingletonShape {
   const _SingletonShape._({
     required this.exposureOffset,
@@ -208,7 +208,7 @@ FieldElement? _storedSelfInstance(ClassDeclaration declaration, ClassElement cla
   return stored.length == 1 ? stored.single : null;
 }
 
-/// Whether [member] hands out the stored instance: the public field itself, a public static
+/// Whether [member] hands out the stored instance: the public field itself, a public static getter typed as the class, or a public factory constructor that returns it.
 bool _exposes(ClassMember member, FieldElement stored, ClassElement classElement) {
   return switch (member) {
     FieldDeclaration(:final fields) => fields.variables.any(
@@ -224,7 +224,7 @@ bool _exposes(ClassMember member, FieldElement stored, ClassElement classElement
   };
 }
 
-/// Public state or data: any other public field, getter or setter, or a public method whose
+/// Public state or data: any other public field, getter or setter, or a public method whose resolved return type is not `void` or `Future<void>`.
 bool _isPublicDataMember(ClassMember member, FieldElement stored, ClassElement classElement) {
   return switch (member) {
     FieldDeclaration(:final fields) => fields.variables.any(

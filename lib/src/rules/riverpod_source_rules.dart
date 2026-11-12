@@ -398,7 +398,7 @@ int _functionProviderEnd(SourceScannerContext context, int declarationLine) {
   return declarationLine;
 }
 
-/// Whether [definition] watches at least one provider and every `watch`
+/// Whether [definition] watches at least one provider and every `watch` resolves to a keepAlive source.
 bool _watchesOnlyKeepAliveProviders(
   SourceScannerContext context,
   _RiverpodProviderDefinition definition,
@@ -484,7 +484,7 @@ bool _hasKeepAliveTickerModeWorkaround(SourceScannerContext context, int annotat
   return false;
 }
 
-/// Comments owned by [declaration]: its leading comments and comments between
+/// Comments owned by [declaration]: its leading comments and comments between its metadata and its name, such as a trailing note on the annotation line.
 Iterable<String> _declarationComments(
   SourceScannerContext context,
   CompilationUnitMember declaration,
@@ -501,7 +501,7 @@ Iterable<String> _declarationComments(
   return _ownedComments(context, first, nameToken);
 }
 
-/// Comments attached to the tokens [first]..[last]. Leading comments that sit
+/// Comments attached to the tokens [first]..[last].
 Iterable<String> _ownedComments(
   SourceScannerContext context,
   Token first,
@@ -604,7 +604,7 @@ const _functionalProviderType = TypeChecker.fromName(
   packageName: 'riverpod',
 );
 
-/// A watch of a computed (functional) provider, whose whole value can already
+/// A watch of a computed (functional) provider, whose whole value can already be the render projection (performance.md:6; see [_consumesProjection]).
 bool _isProjectionProviderWatch(Expression argument) {
   final type = argument.staticType;
   return type is InterfaceType && _functionalProviderType.isAssignableFromType(type);

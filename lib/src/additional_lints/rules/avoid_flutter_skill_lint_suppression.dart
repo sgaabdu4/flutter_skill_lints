@@ -7,7 +7,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when Flutter skill diagnostics are suppressed with local ignore
+/// Warns when Flutter skill diagnostics are suppressed with local ignore comments.
 class AvoidFlutterSkillLintSuppression extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_flutter_skill_lint_suppression',

@@ -579,7 +579,7 @@ final class SourceScannerContext {
     return source.masked.any((line) => _partPattern.hasMatch(line));
   }
 
-  /// An `abstract interface class` contract or an `abstract final class` static
+  /// An `abstract interface class` contract or an `abstract final class` static namespace (keys, codecs, mappers): neither is ever instantiated as a value.
   bool _isNeverInstantiatedClass(ScannerClassSpan classSpan) {
     final line = source.masked[classSpan.start];
     return _abstractInterfaceFinalPattern.hasMatch(line);
@@ -663,7 +663,7 @@ final class SourceScannerContext {
     var signatureEnd = lineIndex;
     var braceDepth = _braceDelta(line);
     while (!source.masked[signatureEnd].contains('{') && signatureEnd + 1 < classEnd) {
-      // A `;` before any `{` ends a bodyless declaration such as
+      // A `;` before any `{` ends a bodyless declaration such as `const Repo(this.remote);`; never extend it over the next member.
       if (source.masked[signatureEnd].trimRight().endsWith(';')) return null;
       signatureEnd++;
       braceDepth += _braceDelta(source.masked[signatureEnd]);

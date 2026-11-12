@@ -134,7 +134,7 @@ final class _NavigationVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
-/// Whether a Navigator pop is the final work of its callback: an arrow body,
+/// Whether a Navigator pop is the final work of its callback: an arrow body, the last statement of the function, or followed only by a bare `return;`.
 bool _isLocalModalDismissal(MethodInvocation pop) {
   AstNode node = pop;
   if (node.parent is ExpressionFunctionBody) return true;
@@ -166,7 +166,7 @@ bool _isLocalModalDismissal(MethodInvocation pop) {
 
 const _asyncValueChecker = TypeChecker.fromName('AsyncValue', packageName: 'riverpod');
 
-/// Whether [type] is, or is a collection of, a domain-layer type or a
+/// Whether [type] is, or is a collection of, a domain-layer type or a provider-derived AsyncValue snapshot.
 bool _holdsDomainOrProviderState(DartType type) {
   if (type is! InterfaceType) return false;
   final library = type.element.library.identifier;
@@ -175,7 +175,7 @@ bool _holdsDomainOrProviderState(DartType type) {
   return type.typeArguments.any(_holdsDomainOrProviderState);
 }
 
-/// Bool fields assigned before an `await` in the same async function: flags
+/// Bool fields assigned before an `await` in the same async function: flags that track an in-flight async workflow.
 Set<FieldElement> _asyncWorkflowFlags(BlockClassBody body) {
   final visitor = _WorkflowFlagVisitor();
   body.accept(visitor);

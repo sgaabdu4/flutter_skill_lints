@@ -404,7 +404,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 ];
 
-/// A Widget/State `build`: its class extends a widget or State, its signature is
+/// A Widget/State `build`: its class extends a widget or State, its signature is `Widget build(` or takes a `BuildContext`, or it sits in a UI file.
 bool _isWidgetBuild(SourceScannerContext context, ScannerMethodSpan method) {
   final classSpan = context.classes.where((span) => span.contains(method.start)).lastOrNull;
   if (classSpan == null) return false;

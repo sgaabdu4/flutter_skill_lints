@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.13.7] - 2026-11-12
+
+- Recognise Material and Cupertino API from the standalone `material_ui` and
+  `cupertino_ui` packages of Flutter 3.50, as well as from `package:flutter/`.
+  After an app moved its imports, `fire_and_forget_missing_catch` reported
+  `unawaited(showModalBottomSheet(...))` and the other modal functions, while
+  `modal_helper_requires_route_settings`, `style_raw_token`, `avoid_throw`,
+  `use_sliver_prefix`, `prefer_sliver_prefix`, `riverpod_watch_no_select` and
+  `avoid_flutter_host_driver_imports` could stop reporting. They give the same
+  result for both import forms now.
+
 ## [0.13.6] - 2026-11-12
 
 - Make `avoid_missing_test_files` fast on large projects. It used to list and

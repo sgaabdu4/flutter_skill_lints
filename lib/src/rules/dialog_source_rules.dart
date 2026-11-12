@@ -79,7 +79,7 @@ final List<ScannerRule> dialogSourceRules = [
     },
   ),
 
-  /// `build` must be pure. Do not assign to fields from inside build.
+  /// `build` must be pure, so it does not assign to fields from inside build.
   scannerRule(
     code: const LintCode(
       'build_method_assigns_to_field',
@@ -219,7 +219,7 @@ void _reportMutableProviderClass(
   }
 }
 
-/// Collects `ref.watch(<provider>)` calls and the providers mutated through
+/// Collects `ref.watch(<provider>)` calls and the providers mutated through `ref.read(<provider>.notifier)`, keyed by their [_providerKey].
 final class _ProviderAccessVisitor extends RecursiveAstVisitor<void> {
   final watches = <({MethodInvocation watch, Object provider})>[];
   final mutated = <Object>{};
@@ -260,7 +260,7 @@ bool _readsNotifier(Expression argument) => switch (argument.unParenthesized) {
   _ => false,
 };
 
-/// The provider a `watch`/`read` argument listens to, with `.select(...)`, `.notifier`,
+/// Returns the provider that a `watch` or `read` argument listens to, as its element when resolved and otherwise its name.
 Object? _providerKey(Expression argument) {
   final root = _providerRoot(argument);
   return root == null ? null : root.element ?? root.name;
@@ -285,7 +285,7 @@ SimpleIdentifier? _providerRoot(Expression expression) => switch (expression.unP
 
 const _providerAccessors = {'notifier', 'future', 'stream'};
 
-/// Finds `ref.watch(<provider>.select((s) => (...record...)))` selects whose record reads a
+/// Finds `ref.watch(<provider>.select((s) => (...record...)))` selects whose record reads a getter that builds a fresh collection per call.
 final class _UnstableRecordSelectVisitor extends RecursiveAstVisitor<void> {
   final selects = <MethodInvocation>[];
 
@@ -318,7 +318,7 @@ RecordLiteral? _selectedRecord(MethodInvocation select) {
   return returned is RecordLiteral ? returned : null;
 }
 
-/// A record field reading an explicit (non-synthetic) getter that returns a Map, Set or
+/// A record field reading an explicit (non-synthetic) getter that returns a Map, Set or Iterable.
 bool _readsUnstableGetter(RecordLiteralField field) {
   final property = switch (field.fieldExpression.unParenthesized) {
     PrefixedIdentifier(:final identifier) => identifier,
@@ -483,7 +483,7 @@ void _reportDialogPostPopMutation(
   }
 }
 
-/// Reports resolved navigation (another pop, or a typed-route / go_router /
+/// Reports resolved navigation (another pop, or a typed-route / go_router / Navigator push) that runs after a resolved pop in the same block.
 void _reportDialogPostPopNavigation(
   ScannerRuleReporter reporter,
   SourceScannerContext context,

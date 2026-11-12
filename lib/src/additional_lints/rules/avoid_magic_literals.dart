@@ -6,7 +6,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when executable code uses raw string or numeric literals instead of
+/// Warns when executable code uses raw string or numeric literals instead of named constants, value objects, or semantic helpers.
 class AvoidMagicLiterals extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_magic_literals',
@@ -206,7 +206,7 @@ bool _hasUnaryMinus(AstNode node) {
 
 bool _isAllowedNumber(num value) => value == -1 || value == 0 || value == 1;
 
-/// A route name recorded for modal/route observers (modals-navigation.md): a string bound to
+/// Whether [node] is a string bound to a route name recorded for modal and route observers.
 bool _isRouteNameArgument(AstNode node) {
   final argument = node.parent;
   if (argument is! NamedArgument || !identical(argument.argumentExpression, node)) return false;
@@ -224,7 +224,7 @@ bool _isCodecOwnedKey(AstNode node) {
   return _isStringKeyContext(node) && _isInModelCodecOwner(node);
 }
 
-/// Data-layer models own JSON/request-body keys (architecture.md): a class
+/// Data-layer models own JSON/request-body keys (architecture.md): a class named `*Model`, or any code in a `data/models/` file.
 bool _isInModelCodecOwner(AstNode node) {
   final className = node.thisOrAncestorOfType<ClassDeclaration>()?.namePart.typeName.lexeme;
   if (className != null && className.endsWith('Model')) return true;

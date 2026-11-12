@@ -82,7 +82,7 @@ const _tabBarChecker = TypeChecker.any([
   TypeChecker.fromName('BottomNavigationBar', packageName: 'flutter'),
 ]);
 
-/// Typed route navigation reached from a tab bar's selection callback (or a
+/// Finds typed route navigation reached from a tab bar selection callback in a class that holds a `StatefulNavigationShell`.
 Iterable<MethodInvocation> _shellTabCallbackNavigations(CompilationUnit unit) sync* {
   for (final shellClass in unit.declarations.whereType<ClassDeclaration>()) {
     final holdsShell = shellClass.body.members.whereType<FieldDeclaration>().any((field) {

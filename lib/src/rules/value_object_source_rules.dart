@@ -213,7 +213,7 @@ bool _isPublicRawRedirect(ConstructorDeclaration constructor) {
       constructor.parameters.parameters.isNotEmpty;
 }
 
-/// value-objects.md `Money`: the unnamed redirect of a composite Value Object
+/// value-objects.md `Money`: the unnamed redirect of a composite Value Object whose invariant is carried by two or more named component fields.
 bool _isCompositeCanonicalRedirect(ConstructorDeclaration constructor) {
   final parameters = constructor.parameters.parameters;
   return constructor.name == null &&

@@ -40,7 +40,7 @@ const _iconChecker = TypeChecker.fromName('Icon', packageName: 'flutter');
 const _borderSideChecker = TypeChecker.fromName('BorderSide', packageName: 'flutter');
 const _textStyleChecker = TypeChecker.fromName('TextStyle', packageName: 'flutter');
 
-/// Lines holding raw spacing, radius, or size literals, or resolved raw
+/// Lines holding raw spacing, radius, or size literals, or resolved raw colors, icon sizes, font sizes, or border widths.
 Set<int> _rawStyleTokenLines(SourceScannerContext context) {
   final visitor = _RawStyleTokenVisitor();
   context.unit.accept(visitor);
@@ -104,7 +104,7 @@ final class _RawStyleTokenVisitor extends RecursiveAstVisitor<void> {
     super.visitSimpleIdentifier(node);
   }
 
-  /// Non-zero numeric literals that flow into a spacing, radius, or size
+  /// Non-zero numeric literals that flow into a spacing, radius, or size constructor's arguments.
   void _addGeometryLiterals(String typeName, ArgumentList arguments) {
     if (!_geometryTypeNames.contains(typeName)) return;
     for (final argument in arguments.arguments) {
@@ -116,7 +116,7 @@ final class _RawStyleTokenVisitor extends RecursiveAstVisitor<void> {
     }
   }
 
-  /// Walks only the parts of [expression] that become the style value: not
+  /// Walks only the parts of [expression] that become the style value: not conditions, arithmetic right operands (`height / 2`), nested calls, or closures.
   void _addStyleValueLiterals(Expression expression) {
     switch (expression) {
       case ParenthesizedExpression(:final expression):
@@ -168,7 +168,7 @@ Expression? _rawNumericArgument(ArgumentList arguments, String name) {
   return (lineIndex: lineIndex, column: offset - source.lineOffsets[lineIndex]);
 }
 
-/// Whether [offset] sits in a static member of an extension on dart:core
+/// Whether [offset] sits in a static member of an extension on dart:core `DateTime`.
 bool _isAllowedDateTimeExtensionCurrentBoundary(SourceScannerContext context, int offset) {
   return _dateTimeExtensions(context)
       .expand((extension) => extension.body.members)
@@ -176,7 +176,7 @@ bool _isAllowedDateTimeExtensionCurrentBoundary(SourceScannerContext context, in
       .any((member) => member.isStatic && offset >= member.offset && offset < member.end);
 }
 
-/// Whether [offset] sits in an extension on dart:core `DateTime`, where the
+/// Whether [offset] sits in an extension on dart:core `DateTime`, where the skill keeps current-date windows.
 bool _isInsideDateTimeExtension(SourceScannerContext context, int offset) {
   return _dateTimeExtensions(context)
       .any((extension) => offset >= extension.offset && offset < extension.end);
@@ -188,7 +188,7 @@ Iterable<ExtensionDeclaration> _dateTimeExtensions(SourceScannerContext context)
   );
 }
 
-/// Whether [extension] is on one of the dart:core [typeNames], the skill's
+/// Whether [extension] is on one of the dart:core [typeNames], the skill's primitive owners in `core/extensions/` (primitive-formatting.md).
 bool _extendsCoreType(ExtensionDeclaration? extension, Set<String> typeNames) {
   final type = extension?.declaredFragment?.element.extendedType;
   return type is InterfaceType &&
@@ -198,7 +198,7 @@ bool _extendsCoreType(ExtensionDeclaration? extension, Set<String> typeNames) {
 
 const _coreNumTypes = {'num', 'int', 'double'};
 
-/// intl formatters and the dart:core types whose extensions own them:
+/// intl formatters and the dart:core types whose extensions own them: `DateTimeX.formatShortDate` and `NumX.asCurrency` (primitive-formatting.md).
 const _intlFormatterOwners = {
   'DateFormat': {'DateTime'},
   'NumberFormat': _coreNumTypes,
@@ -441,7 +441,7 @@ final class _WidgetCatchVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
-/// Reports `SnackBarUtils.show...` calls from notifiers, repositories, and
+/// Reports `SnackBarUtils.show...` calls from notifiers, repositories, and datasources (context-ui.md: only the UI helper may wrap SnackBarUtils).
 final class _SnackBarUtilsDispatchVisitor extends RecursiveAstVisitor<void> {
   _SnackBarUtilsDispatchVisitor(this.reporter, this.context);
 
@@ -467,7 +467,7 @@ void _reportAtOffset(ScannerRuleReporter reporter, SourceScannerContext context,
   reporter.report(context, location.lineNumber - 1, location.columnNumber - 1);
 }
 
-/// Reports intl `DateFormat`/`NumberFormat` construction outside the
+/// Reports intl `DateFormat`/`NumberFormat` construction outside the dart:core primitive extension that owns it.
 final class _AdHocIntlFormatVisitor extends RecursiveAstVisitor<void> {
   _AdHocIntlFormatVisitor(this.reporter, this.context);
 

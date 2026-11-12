@@ -211,7 +211,7 @@ const _platformCommandNames =
     'runJavaScript|runJavaScriptReturningResult|evaluateJavascript|playVideo|pauseVideo'
     '|seekTo|setVolume|setPlaybackRate|mute|unMute|enterFullScreen|exitFullScreen|loadRequest';
 
-// A fire-and-forget native/webview/media command passed directly to `unawaited`,
+// A fire-and-forget native/webview/media command passed directly to `unawaited`, e.g.
 final _unawaitedPlatformCommand = RegExp(
   r'\bunawaited\s*\(\s*[A-Za-z_][\w.!?]*\s*\.\s*(?:' + _platformCommandNames + r')\s*\(',
 );
@@ -259,7 +259,7 @@ bool _methodLooksDestructive(String methodName) => RegExp(
 int _lineOf(SourceScannerContext context, int offset) =>
     context.unit.lineInfo.getLocation(offset).lineNumber - 1;
 
-/// An async start of long-running destructive or batch work (networking.md
+/// Whether [block] starts long-running destructive or batch work asynchronously.
 bool _startsLongRunningWork(Block block) => collectNodes<MethodInvocation>(block).any((call) {
   final name = call.methodName.name;
   return name.startsWith('start') && _longRunningOperationName.hasMatch(name) ||
@@ -288,7 +288,7 @@ void _reportTelemetryBeforeReconcile(
   }
 }
 
-/// Reports telemetry in the catch of a try that async-starts long-running
+/// Reports telemetry in the catch of a try that async-starts long-running work inside [method]; callers skip methods that reconcile.
 void _reportUnreconciledLongRunningCatches(
   ScannerRuleReporter reporter,
   SourceScannerContext context,
@@ -523,7 +523,7 @@ int? _durationLiteralMs(String line) {
   return seconds == null ? null : seconds * 1000;
 }
 
-/// Returns the first persist helper line in [classSpan] that a synchronous or
+/// Returns the first persist helper line in [classSpan] that a synchronous or repeated mutation path reaches.
 int? _mutationPathPersistHelperLine(SourceScannerContext context, ScannerClassSpan classSpan) {
   final helpers = _persistHelperDeclarations(context, classSpan);
   if (helpers.isEmpty) return null;
@@ -557,7 +557,7 @@ int? _mutationPathPersistHelperLine(SourceScannerContext context, ScannerClassSp
   return null;
 }
 
-/// Resolves the `_persistHelperPattern` lines in [classSpan] to their declared
+/// Resolves the `_persistHelperPattern` lines in [classSpan] to their declared class methods, in source order.
 Map<ExecutableElement, ({MethodDeclaration node, int line})> _persistHelperDeclarations(
   SourceScannerContext context,
   ScannerClassSpan classSpan,
@@ -577,7 +577,7 @@ Map<ExecutableElement, ({MethodDeclaration node, int line})> _persistHelperDecla
   return helpers;
 }
 
-/// A helper invocation is a one-shot lifecycle write when its enclosing body is
+/// A helper invocation is a one-shot lifecycle write when its enclosing body is asynchronous and either never writes `state` or awaited another result before the call.
 bool _isAwaitedLifecycleCall(SimpleIdentifier use) {
   final parent = use.parent;
   if (parent is! MethodInvocation || parent.methodName != use) return false;
@@ -663,7 +663,7 @@ int? _unguardedAsyncStateWriteLine(SourceScannerContext context, ScannerMethodSp
   return null;
 }
 
-/// `if (!ref.mounted) return;` on the notifier's Riverpod ref, after the await and in a block
+/// `if (!ref.mounted) return;` on the notifier's Riverpod ref, after the await and in a block enclosing the state write.
 bool _hasRefMountedGuardBefore(SourceScannerContext context, int awaitLine, int writeLine) {
   final column = _notifierStateWrite.firstMatch(context.source.masked[writeLine])?.start ?? 0;
   AstNode? node = context.unit.nodeCovering(offset: context.source.lineOffsets[writeLine] + column);
@@ -760,7 +760,7 @@ int? _findFunctionDeclarationAfter(SourceScannerContext context, int annotationL
   return null;
 }
 
-/// Last line of the top-level function declared on [fnLine], for block and
+/// Last line of the top-level function declared on [fnLine], for block and `=>` expression bodies alike.
 int? _findFunctionBodyEnd(SourceScannerContext context, int fnLine) {
   final lineInfo = context.unit.lineInfo;
   for (final declaration in context.unit.declarations.whereType<FunctionDeclaration>()) {
@@ -809,7 +809,7 @@ int? _unboundedCollectionWatchColumn(SourceScannerContext context, int startLine
   return watchStart;
 }
 
-/// Whether the `ref.watch(...)` at [column] reads a generated provider whose
+/// Whether the `ref.watch(...)` at [column] reads a generated provider whose source declaration is `@Riverpod(keepAlive: true)`.
 bool _watchesKeepAliveProvider(SourceScannerContext context, int lineIndex, int column) {
   AstNode? node = context.unit.nodeCovering(offset: context.source.lineOffsets[lineIndex] + column);
   while (node != null && !(node is MethodInvocation && node.methodName.name == 'watch')) {

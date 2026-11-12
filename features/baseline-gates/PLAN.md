@@ -39,7 +39,7 @@ N/A — no visual surface.
 
 ## Verification
 
-Result: Pending
+Result: Passed
 Evidence: zizmor reports no findings; freshness passes; `dart test` passes (2,714 tests) and `dart analyze --fatal-infos .` reports no issues on analyzer 14.7.0; the 377 distinct RegExp expressions of `lib/` are equal before and after (394 uses become 389 after merging 5 identical copies in one library); `dart test` and `dart analyze --fatal-infos .` pass after each of 5 commits.
 E2E: N/A — no user journey.
 

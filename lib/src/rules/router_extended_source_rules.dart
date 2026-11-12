@@ -4,6 +4,15 @@ import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
+final _constRoutePattern = RegExp(
+  r'\bconst\s+[A-Z]\w*Route\s*'
+  r'\([^)]*\)\s*\.\s*push\s*(?:<[^>]+>)?\s*\(',
+);
+
+final _switchPattern = RegExp(r'\b(?:if|switch)\s*\(');
+
+final _resolveRedirectPattern = RegExp(r'\bresolve\w*Redirect\s*\(');
+
 final List<ScannerRule> routerExtendedSourceRules = [
   /// Keep GoRouter redirect decisions in a pure resolver.
   ///
@@ -24,8 +33,8 @@ final List<ScannerRule> routerExtendedSourceRules = [
         if (!line.contains('redirect:')) continue;
         final windowEnd = (i + 16).clamp(0, context.source.length - 1);
         final window = context.source.masked.sublist(i, windowEnd + 1).join('\n');
-        if (RegExp(r'\bresolve\w*Redirect\s*\(').hasMatch(window)) continue;
-        if (RegExp(r'\b(?:if|switch)\s*\(').hasMatch(window)) {
+        if (_resolveRedirectPattern.hasMatch(window)) continue;
+        if (_switchPattern.hasMatch(window)) {
           reporter.report(context, i, line.indexOf('redirect'));
         }
       }
@@ -46,10 +55,7 @@ final List<ScannerRule> routerExtendedSourceRules = [
     ),
     description: 'Flags typed route push calls in shell navigation widgets so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      final shellTabPush = RegExp(
-        r'\bconst\s+[A-Z]\w*Route\s*'
-        r'\([^)]*\)\s*\.\s*push\s*(?:<[^>]+>)?\s*\(',
-      );
+      final shellTabPush = _constRoutePattern;
 
       final reportedLines = <int>{};
       for (final method in context.methods) {

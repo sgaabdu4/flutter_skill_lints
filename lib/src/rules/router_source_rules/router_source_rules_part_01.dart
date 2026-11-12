@@ -1,5 +1,44 @@
 part of '../router_source_rules.dart';
 
+final _providerScopeContainerOfPattern = RegExp(r'\bProviderScope\s*\.\s*containerOf\s*\(');
+
+final _routerDelegateNavigatorKeyPattern = RegExp(
+  r'\b(?:[A-Za-z_]\w*\s*\.\s*)?routerDelegate\s*\.\s*navigatorKey\s*\.\s*'
+  r'currentContext\b|\bnavigatorKey\s*\.\s*currentContext\b',
+);
+
+final _goRouterGoRouteShellRoutePattern = RegExp(
+  r'\b(?:GoRouter|GoRoute|ShellRoute|StatefulShellRoute)'
+  r'(?:\s*(?:<[^>]+>)?|\s*\.\s*\w+)\s*\(',
+);
+
+final _navigateToGoToPushToPattern = RegExp(
+  r'\b(?:navigateTo|goTo|pushTo|replaceWith)[A-Z]\w*'
+  r'(?:Route|Screen|Page)\w*\s*(?:<[^>]+>)?\s*\(',
+);
+
+final _abstractInterfaceClassClassMatchPattern = RegExp(
+  r'\b(?:abstract\s+interface\s+class|abstract\s+class|final\s+class|class)\s+'
+  r'_?[A-Z]\w*(?:NavigationCoordinator|Navigation)\b',
+);
+
+final _materialPageRouteCupertinoPageRoutePageRouteBuilderPattern = RegExp(
+  r'\b(?:MaterialPageRoute|CupertinoPageRoute|PageRouteBuilder)\s*'
+  r'(?:<[^>]+>)?\s*\(',
+);
+
+final _navigatorNavigatorCallPattern = RegExp(
+  r'\bNavigator\s*\.\s*(?:of\s*\([^)]*\)\s*\.\s*)?'
+  r'(?:push|pushReplacement|pushAndRemoveUntil)\s*'
+  r'(?:<[^>]+>)?\s*\(',
+);
+
+final _goRouterPattern = RegExp(
+  r'\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*'
+  r'(?:go|push|replace|pushReplacement|goNamed|pushNamed|replaceNamed)\s*'
+  r'(?:<[^>]+>)?\s*\(',
+);
+
 final List<ScannerRule> _routerSourceRulesPart1 = [
   /// Avoid string route navigation.
   scannerRule(
@@ -119,11 +158,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     ),
     description: 'Flags GoRouter.of(context) push/go/replace calls so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      final pattern = RegExp(
-        r'\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*'
-        r'(?:go|push|replace|pushReplacement|goNamed|pushNamed|replaceNamed)\s*'
-        r'(?:<[^>]+>)?\s*\(',
-      );
+      final pattern = _goRouterPattern;
       for (var i = 0; i < context.source.length; i++) {
         final match = sourceWindowMatch(context, i, pattern, maxLines: 4);
         if (match != null) {
@@ -143,15 +178,8 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     ),
     description: 'Flags Navigator push with MaterialPageRoute/CupertinoPageRoute/PageRouteBuilder so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      final navigatorCall = RegExp(
-        r'\bNavigator\s*\.\s*(?:of\s*\([^)]*\)\s*\.\s*)?'
-        r'(?:push|pushReplacement|pushAndRemoveUntil)\s*'
-        r'(?:<[^>]+>)?\s*\(',
-      );
-      final pageRouteCtor = RegExp(
-        r'\b(?:MaterialPageRoute|CupertinoPageRoute|PageRouteBuilder)\s*'
-        r'(?:<[^>]+>)?\s*\(',
-      );
+      final navigatorCall = _navigatorNavigatorCallPattern;
+      final pageRouteCtor = _materialPageRouteCupertinoPageRoutePageRouteBuilderPattern;
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
         final navMatch = navigatorCall.firstMatch(line);
@@ -198,19 +226,13 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        final classMatch = RegExp(
-          r'\b(?:abstract\s+interface\s+class|abstract\s+class|final\s+class|class)\s+'
-          r'_?[A-Z]\w*(?:NavigationCoordinator|Navigation)\b',
-        ).firstMatch(line);
+        final classMatch = _abstractInterfaceClassClassMatchPattern.firstMatch(line);
         if (classMatch != null) {
           reporter.report(context, i, classMatch.start);
           continue;
         }
 
-        final functionMatch = RegExp(
-          r'\b(?:navigateTo|goTo|pushTo|replaceWith)[A-Z]\w*'
-          r'(?:Route|Screen|Page)\w*\s*(?:<[^>]+>)?\s*\(',
-        ).firstMatch(line);
+        final functionMatch = _navigateToGoToPushToPattern.firstMatch(line);
         if (functionMatch != null) {
           reporter.report(context, i, functionMatch.start);
         }
@@ -260,10 +282,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     scan: (reporter, context) {
       if (_isRouterBoundaryPath(context.path)) return;
 
-      final routeDefinition = RegExp(
-        r'\b(?:GoRouter|GoRoute|ShellRoute|StatefulShellRoute)'
-        r'(?:\s*(?:<[^>]+>)?|\s*\.\s*\w+)\s*\(',
-      );
+      final routeDefinition = _goRouterGoRouteShellRoutePattern;
       for (var i = 0; i < context.source.length; i++) {
         final match = sourceWindowMatch(context, i, routeDefinition, maxLines: 4);
         if (match != null) {
@@ -308,22 +327,19 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
       final reportedLines = <int>{};
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        final navigatorContext = RegExp(
-          r'\b(?:[A-Za-z_]\w*\s*\.\s*)?routerDelegate\s*\.\s*navigatorKey\s*\.\s*'
-          r'currentContext\b|\bnavigatorKey\s*\.\s*currentContext\b',
-        ).firstMatch(line);
+        final navigatorContext = _routerDelegateNavigatorKeyPattern.firstMatch(line);
         if (navigatorContext != null) {
           reporter.report(context, i, navigatorContext.start);
           reportedLines.add(i);
           continue;
         }
 
-        final match = RegExp(r'\bProviderScope\s*\.\s*containerOf\s*\(').firstMatch(line);
+        final match = _providerScopeContainerOfPattern.firstMatch(line);
         if (match == null) continue;
 
         final end = (i + 8).clamp(0, context.source.length);
         final window = context.source.masked.sublist(i, end).join('\n');
-        if (!RegExp(r'\b[A-Za-z_]\w*NavigationCoordinatorProvider\b').hasMatch(window)) {
+        if (!_navigationCoordinatorProviderPattern.hasMatch(window)) {
           continue;
         }
         reporter.report(context, i, match.start);

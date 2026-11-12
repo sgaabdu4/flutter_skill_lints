@@ -3,6 +3,8 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
+final _contextCanPopPattern = RegExp(r'\bcontext\s*\.\s*canPop\s*\(');
+
 /// Guard context.pop() with context.canPop().
 ///
 /// Why: Page back actions must account for direct deep links. Check
@@ -34,7 +36,7 @@ final class GuardContextPop extends GeneratedMethodInvocationCheckRule {
     final bodySource = body.toSource();
     final relativeOffset = node.offset - body.offset;
     final prefix = bodySource.substring(0, relativeOffset.clamp(0, bodySource.length));
-    if (!RegExp(r'\bcontext\s*\.\s*canPop\s*\(').hasMatch(prefix)) {
+    if (!_contextCanPopPattern.hasMatch(prefix)) {
       reportAtNode(node);
     }
   }

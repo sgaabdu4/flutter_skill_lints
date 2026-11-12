@@ -19,6 +19,8 @@ String _pascalCase(String snake) => snake
     .map((p) => p[0].toUpperCase() + p.substring(1))
     .join();
 
+final _importPackageHivePattern = RegExp(r'''^\s*import\s+['"]package:hive_ce/hive_ce\.dart['"]''');
+
 final List<ScannerRule> hivePersistenceSourceRules = [
   /// Persisted maps must validate their runtime key shape before decoding.
   ///
@@ -71,8 +73,7 @@ final List<ScannerRule> hivePersistenceSourceRules = [
       if (context.isTestFile || !context.path.startsWith('lib/')) return;
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.code[i];
-        final match = RegExp(r'''^\s*import\s+['"]package:hive_ce/hive_ce\.dart['"]''')
-            .firstMatch(line);
+        final match = _importPackageHivePattern.firstMatch(line);
         if (match != null) reporter.report(context, i, match.start);
       }
     },
@@ -107,6 +108,12 @@ final List<ScannerRule> hivePersistenceSourceRules = [
   ),
 ];
 
+final _showPattern = RegExp(r'\bshow\s+([A-Za-z_][\w,\s]*)');
+
+final _importDomainValuesPattern = RegExp(
+  r'''^\s*import\s+['"][^'"]*?/domain/values/([a-z_][a-z0-9_]*)\.dart['"]([^;]*);''',
+);
+
 Set<String> _importedValueObjectNames(SourceScannerContext context) {
   const baseline = {
     'Distance',
@@ -120,10 +127,8 @@ Set<String> _importedValueObjectNames(SourceScannerContext context) {
     'Username',
   };
   final imported = <String>{...baseline};
-  final importPattern = RegExp(
-    r'''^\s*import\s+['"][^'"]*?/domain/values/([a-z_][a-z0-9_]*)\.dart['"]([^;]*);''',
-  );
-  final showClausePattern = RegExp(r'\bshow\s+([A-Za-z_][\w,\s]*)');
+  final importPattern = _importDomainValuesPattern;
+  final showClausePattern = _showPattern;
   for (var i = 0; i < context.source.length; i++) {
     _addImportedValueObjects(
       imported,

@@ -698,8 +698,10 @@ Set<String> _mutatingPrivateMethods(SourceScannerContext context, ScannerClassSp
   return names;
 }
 
+final _ignoreForFileLineIgnoresRulePattern = RegExp(r'//\s*ignore(?:_for_file)?\s*:\s*([^\n]+)');
+
 bool _lineIgnoresRule(SourceScannerContext context, int lineIndex, String ruleName) {
-  final pattern = RegExp(r'//\s*ignore(?:_for_file)?\s*:\s*([^\n]+)');
+  final pattern = _ignoreForFileLineIgnoresRulePattern;
   return _hasIgnoredCode(context, [lineIndex, lineIndex - 1], pattern, ruleName) ||
       _hasIgnoredCode(context, _leadingLines(context), pattern, ruleName);
 }

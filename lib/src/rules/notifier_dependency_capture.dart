@@ -817,6 +817,10 @@ bool _isDependencyCaptureType(DartType type) =>
     _isRepositoryOrServiceType(type) ||
     type is RecordType && _hasRepositoryOrServiceRecordField(type);
 
+final _repoRepositoryDependenciesPattern = RegExp(
+  r'\b(_[A-Za-z0-9_]*(?:repo|repository)[A-Za-z0-9_]*)\b',
+);
+
 bool _usesConstructorInjectedDependencies(
   SourceScannerContext context,
   ScannerClassSpan classSpan,
@@ -824,7 +828,7 @@ bool _usesConstructorInjectedDependencies(
 ) {
   final body = context.source.masked.sublist(method.start, method.end + 1).join('\n');
   if (body.contains('ref.read(') || _hasNullRepositoryReturn(body)) return false;
-  final dependencies = RegExp(r'\b(_[A-Za-z0-9_]*(?:repo|repository)[A-Za-z0-9_]*)\b')
+  final dependencies = _repoRepositoryDependenciesPattern
       .allMatches(body)
       .map((match) => match.group(1)!)
       .toSet();

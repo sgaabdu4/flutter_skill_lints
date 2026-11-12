@@ -50,6 +50,8 @@ final class _Visitor extends RecursiveAstVisitor<void> {
   }
 }
 
+final _loadInitFetchPattern = RegExp(r'^_(?:load|init|fetch|listen|refresh|setup)[A-Za-z0-9_]*$');
+
 final class _BodyVisitor extends RecursiveAstVisitor<void> {
   _BodyVisitor(this.rule, this.classNode);
 
@@ -68,7 +70,7 @@ final class _BodyVisitor extends RecursiveAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     if (containsFutureMicrotaskAncestor(node)) return;
     final name = node.methodName.name;
-    if (RegExp(r'^_(?:load|init|fetch|listen|refresh|setup)[A-Za-z0-9_]*$').hasMatch(name)) {
+    if (_loadInitFetchPattern.hasMatch(name)) {
       rule.reportAtNode(node);
       return;
     }

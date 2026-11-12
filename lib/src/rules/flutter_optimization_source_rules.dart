@@ -1,6 +1,8 @@
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
+final _operatorPattern = RegExp(r'\boperator\s*==\s*\(');
+
 final List<ScannerRule> flutterOptimizationSourceRules = [
   /// Do not create keys inside build().
   ///
@@ -184,7 +186,7 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
         for (var i = classSpan.start; i <= classSpan.end; i++) {
           final line = context.source.masked[i];
           final column = line.indexOf('operator');
-          if (column >= 0 && RegExp(r'\boperator\s*==\s*\(').hasMatch(line)) {
+          if (column >= 0 && _operatorPattern.hasMatch(line)) {
             reporter.report(context, i, column);
           }
         }
@@ -218,15 +220,20 @@ void _reportConstructors(
 
 bool _containsConstructor(String line, String name) => _constructorColumn(line, name) >= 0;
 
+final _scaffoldMessengerKeyNavigatorKeyRepaintBoundaryKeyPattern = RegExp(
+  r'\b_?(?:scaffoldMessengerKey|navigatorKey|repaintBoundaryKey|chartKey|shareableCardKey)\b',
+);
+
+final _globalKeyStateNavigatorStatePattern = RegExp(
+  r'\bGlobalKey\s*<[^>]*(?:State|NavigatorState|ScaffoldMessengerState)[^>]*>',
+);
+
 bool _isAllowedGlobalKeyUse(SourceScannerContext context, String line) {
   if (context.isTestFile || context.isKeyRegistryFile) return true;
-  if (RegExp(r'\bGlobalKey\s*<[^>]*(?:State|NavigatorState|ScaffoldMessengerState)[^>]*>')
-      .hasMatch(line)) {
+  if (_globalKeyStateNavigatorStatePattern.hasMatch(line)) {
     return true;
   }
-  return RegExp(
-    r'\b_?(?:scaffoldMessengerKey|navigatorKey|repaintBoundaryKey|chartKey|shareableCardKey)\b',
-  ).hasMatch(line);
+  return _scaffoldMessengerKeyNavigatorKeyRepaintBoundaryKeyPattern.hasMatch(line);
 }
 
 int _firstConstructorColumn(String line, List<String> names) {
@@ -246,6 +253,8 @@ int _constructorColumn(String line, String name) {
   return pattern.firstMatch(line)?.start ?? -1;
 }
 
+final _colorFilterPattern = RegExp(r'\bColorFilter\s*\.');
+
 int _firstFilterColumn(String line) {
   final constructorColumn = _firstConstructorColumn(line, const [
     'ShaderMask',
@@ -254,7 +263,7 @@ int _firstFilterColumn(String line) {
   ]);
   if (constructorColumn >= 0) return constructorColumn;
 
-  final colorFilterFactory = RegExp(r'\bColorFilter\s*\.').firstMatch(line);
+  final colorFilterFactory = _colorFilterPattern.firstMatch(line);
   return colorFilterFactory?.start ?? -1;
 }
 
@@ -356,11 +365,16 @@ bool _isIdentifierChar(String char) {
       code >= 97 && code <= 122;
 }
 
+final _extendsWidgetPattern = RegExp(
+  r'\bextends\s+(?:[A-Za-z_][A-Za-z0-9_]*\.)?[A-Za-z_][A-Za-z0-9_]*Widget\b',
+);
+
+final _extendsStatelessWidgetStatefulWidgetPattern = RegExp(
+  r'\bextends\s+(?:[A-Za-z_][A-Za-z0-9_]*\.)?(?:StatelessWidget|StatefulWidget|Widget|ConsumerWidget|HookWidget)\b',
+);
+
 bool _isWidgetClass(SourceScannerContext context, ScannerClassSpan classSpan) {
   final signature = sourceClassSignature(context, classSpan);
-  return RegExp(
-        r'\bextends\s+(?:[A-Za-z_][A-Za-z0-9_]*\.)?(?:StatelessWidget|StatefulWidget|Widget|ConsumerWidget|HookWidget)\b',
-      ).hasMatch(signature) ||
-      RegExp(r'\bextends\s+(?:[A-Za-z_][A-Za-z0-9_]*\.)?[A-Za-z_][A-Za-z0-9_]*Widget\b')
-          .hasMatch(signature);
+  return _extendsStatelessWidgetStatefulWidgetPattern.hasMatch(signature) ||
+      _extendsWidgetPattern.hasMatch(signature);
 }

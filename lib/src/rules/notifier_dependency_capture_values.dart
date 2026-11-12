@@ -109,13 +109,15 @@ Expression? _recordPatternValue(PatternVariableDeclaration declaration) {
   return expressions.length == 1 ? expressions.single : null;
 }
 
+final _localVariableReadElementPattern = RegExp(r'^[A-Za-z_$][A-Za-z0-9_$]*$');
+
 LocalVariableElement? _localVariableReadElement(Expression expression, Block block) {
   if (expression is SimpleIdentifier) {
     final element = expression.element;
     return element is LocalVariableElement ? element : null;
   }
   final name = expression.toSource();
-  if (!RegExp(r'^[A-Za-z_$][A-Za-z0-9_$]*$').hasMatch(name)) return null;
+  if (!_localVariableReadElementPattern.hasMatch(name)) return null;
   final candidates = <LocalVariableElement>{};
   for (final statement in block.statements.whereType<VariableDeclarationStatement>()) {
     if (statement.end > expression.offset || statement.variables.keyword?.lexeme != 'final') {

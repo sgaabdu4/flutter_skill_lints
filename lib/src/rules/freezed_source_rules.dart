@@ -6,6 +6,14 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
+final _factoryFromJsonScannerRulePattern = RegExp(r'\bfactory\s+\w+(?:\.\w+)?\.fromJson\s*\(');
+
+final _freezedToJsonTruePattern = RegExp(r'@Freezed\s*\([^)]*toJson\s*:\s*true');
+
+final _jsonSerializableExplicitToJsonTruePattern = RegExp(
+  r'@JsonSerializable\s*\([^)]*explicitToJson\s*:\s*true',
+);
+
 final List<ScannerRule> freezedSourceRules = [
   /// Prefer abstract final for static-only namespaces.
   ///
@@ -70,7 +78,7 @@ final List<ScannerRule> freezedSourceRules = [
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (RegExp(r'@JsonSerializable\s*\([^)]*explicitToJson\s*:\s*true').hasMatch(line)) {
+        if (_jsonSerializableExplicitToJsonTruePattern.hasMatch(line)) {
           reporter.report(context, i, line.indexOf('@JsonSerializable'));
         }
       }
@@ -91,8 +99,8 @@ final List<ScannerRule> freezedSourceRules = [
     description: 'Flags @Freezed(toJson: true) classes that already define fromJson so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       final text = context.source.masked.join('\n');
-      if (RegExp(r'@Freezed\s*\([^)]*toJson\s*:\s*true').hasMatch(text) &&
-          RegExp(r'\bfactory\s+\w+(?:\.\w+)?\.fromJson\s*\(').hasMatch(text)) {
+      if (_freezedToJsonTruePattern.hasMatch(text) &&
+          _factoryFromJsonScannerRulePattern.hasMatch(text)) {
         reporter.report(context, context.firstLine('@Freezed'), 0);
       }
     },

@@ -33,6 +33,8 @@ final class AvoidSilentRepositoryNullReturn extends AnalysisRule {
   }
 }
 
+final _repoRepositoryPattern = RegExp(r'^_\w*(?:repo|repository)\w*$', caseSensitive: false);
+
 final class _Visitor extends SimpleAstVisitor<void> {
   _Visitor(this.rule);
 
@@ -58,10 +60,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   bool _isRepositoryField(Expression expression) {
     if (expression is SimpleIdentifier) {
-      return RegExp(
-        r'^_\w*(?:repo|repository)\w*$',
-        caseSensitive: false,
-      ).hasMatch(expression.name);
+      return _repoRepositoryPattern.hasMatch(expression.name);
     }
     if (expression is PrefixedIdentifier) {
       return _isRepositoryName(expression.identifier.name);

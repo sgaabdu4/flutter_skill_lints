@@ -22,7 +22,7 @@ class User {
   Future<void> test_allowsCopyWithCallSite() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     newFile(filePath, r'''
-// ignore_for_file: undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read
+// ignore_for_file: undefined_method
 class User {
   const User({required this.id});
   final String id;
@@ -70,7 +70,7 @@ class User {
   Future<void> test_allowsCopyWithInGeneratedMixin() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     newFile(filePath, r'''
-// ignore_for_file: undefined_class, undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read, undefined_unqualified_name_read
+// ignore_for_file: undefined_class, undefined_method
 mixin _$User {
   User copyWith({String? id}) => throw UnimplementedError();
 }
@@ -500,7 +500,7 @@ Future<void> initStorage() async {
   Future<void> test_allowsHiveCeFlutterImportInLib() async {
     final filePath = '$testPackageLibPath/core/hive/hive_boxes.dart';
     newFile(filePath, r'''
-// ignore_for_file: uri_does_not_exist, undefined_unqualified_name_read, undefined_unqualified_name_write
+// ignore_for_file: uri_does_not_exist, undefined_identifier
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 
 Future<void> initStorage() async {
@@ -514,7 +514,7 @@ Future<void> initStorage() async {
   Future<void> test_allowsHiveCeImportInTests() async {
     final filePath = '$testPackageRootPath/test/core/hive/hive_boxes_test.dart';
     newFile(filePath, r'''
-// ignore_for_file: uri_does_not_exist, undefined_unqualified_name_read, undefined_unqualified_name_write
+// ignore_for_file: uri_does_not_exist, undefined_identifier
 import 'package:hive_ce/hive_ce.dart';
 
 Future<void> initTempStorage() async {

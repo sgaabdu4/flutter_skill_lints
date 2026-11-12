@@ -44,7 +44,7 @@ final class AvoidMissingTestFiles extends AnalysisRule {
 
     final expectedTestFile = testFolder.getFile(expectedTestPath);
     if (expectedTestFile.exists) return;
-    if (_hasTestImportCoverage(context.libraryElement?.session, root, testFolder, currentPath)) {
+    if (_hasTestImportCoverage(context.libraryElement!.session, root, testFolder, currentPath)) {
       return;
     }
 
@@ -95,7 +95,7 @@ bool _isLowSignalLibrary(String path) {
 final _testReachedUris = Expando<Map<String, Set<String>>>('flutter_skill_lints_test_reached_uris');
 
 bool _hasTestImportCoverage(
-  AnalysisSession? session,
+  AnalysisSession session,
   Folder root,
   Folder testFolder,
   String filePath,
@@ -106,14 +106,11 @@ bool _hasTestImportCoverage(
   final packageUri = _packageUri(root, filePath, packageName);
   if (packageUri == null) return false;
 
-  Set<String> build() => _testReachedPackageUris(root, testFolder, packageName);
-  if (session == null) return build().contains(packageUri);
-
   final byRoot = _testReachedUris[session] ??= <String, Set<String>>{};
-  return (byRoot[root.path] ??= build()).contains(packageUri);
+  final reached = byRoot[root.path] ??= _testReachedPackageUris(root, testFolder, packageName);
+  return reached.contains(packageUri);
 }
 
-/// Package URIs that test files import or export, plus every lib file they reach from there.
 Set<String> _testReachedPackageUris(Folder root, Folder testFolder, String packageName) {
   final reached = <String>{};
   final pending = <String>[];

@@ -2,6 +2,7 @@
 
 import 'dart:math' as math;
 
+import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/flutter_optimization_source_rules.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
@@ -21,6 +22,13 @@ void main() {
 
 abstract class _FlutterOptimizationRuleTest extends AnalysisRuleTest {
   String get ruleName;
+
+  @override
+  List<DiagnosticCode> get ignoredDiagnosticCodes => [
+    ...super.ignoredDiagnosticCodes,
+    for (final name in const ['undefined_unqualified_name_read_not_found'])
+      errorCodeByUniqueName(name)!,
+  ];
 
   @override
   void setUp() {
@@ -60,7 +68,7 @@ abstract class _FlutterOptimizationRuleTest extends AnalysisRuleTest {
   }
 
   String _withIgnorePrefix(String source) => '''
-// ignore_for_file: const_initialized_with_non_constant_value, equal_elements_in_set, extends_non_class, hash_and_equals, invalid_override, missing_override_of_must_be_overridden, non_abstract_class_inherits_abstract_member, undefined_class, undefined_function, undefined_unqualified_name_read, undefined_unqualified_name_write, undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read, unused_element, unused_import
+// ignore_for_file: const_initialized_with_non_constant_value, equal_elements_in_set, extends_non_class, hash_and_equals, invalid_override, missing_override_of_must_be_overridden, non_abstract_class_inherits_abstract_member, undefined_class, undefined_function, undefined_identifier, undefined_method, unused_element, unused_import
 $source''';
 
   void _addFlutterPackage() {

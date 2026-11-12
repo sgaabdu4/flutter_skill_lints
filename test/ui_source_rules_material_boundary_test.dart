@@ -2,6 +2,7 @@
 
 import 'dart:math' as math;
 
+import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/material_source_rules.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
@@ -16,6 +17,13 @@ void main() {
 @reflectiveTest
 final class WidgetMaterialBoundaryTest extends AnalysisRuleTest {
   static const _ruleName = 'widget_material_boundary';
+
+  @override
+  List<DiagnosticCode> get ignoredDiagnosticCodes => [
+    ...super.ignoredDiagnosticCodes,
+    for (final name in const ['undefined_unqualified_name_read_not_found'])
+      errorCodeByUniqueName(name)!,
+  ];
 
   @override
   void setUp() {
@@ -161,7 +169,7 @@ void main() {
   }
 
   String _withFlutterImport(String source) => '''
-// ignore_for_file: const_initialized_with_non_constant_value, extends_non_class, final_not_initialized, override_on_non_overriding_member, undefined_function, undefined_unqualified_name_read, undefined_unqualified_name_write, unused_local_variable
+// ignore_for_file: const_initialized_with_non_constant_value, extends_non_class, final_not_initialized, override_on_non_overriding_member, undefined_function, undefined_identifier, unused_local_variable
 import 'package:flutter/material.dart';
 
 $source''';

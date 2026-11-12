@@ -723,7 +723,7 @@ class _Meters extends Distance {
   Future<void> test_allowsValidatedFactoryWithoutRedirect() async {
     final filePath = '$testPackageLibPath/core/domain/values/email.dart';
     newFile(filePath, r'''
-// ignore_for_file: undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read, undefined_unqualified_name_read, undefined_unqualified_name_write
+// ignore_for_file: undefined_method, undefined_identifier
 class Email {
   const Email._raw(this.value);
   factory Email(String input) {
@@ -770,7 +770,7 @@ class _DistanceZero extends Distance {
   Future<void> test_reportsAnonymousPublicRawRedirect() async {
     final filePath = '$testPackageLibPath/core/domain/values/email.dart';
     const source = r'''
-// ignore_for_file: undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read
+// ignore_for_file: undefined_method
 class Email {
   const factory Email(String value) = _Email;
   const Email._();
@@ -790,7 +790,7 @@ class _Email extends Email {
   Future<void> test_reportsNullablePrimitiveParam() async {
     final filePath = '$testPackageLibPath/core/domain/values/email.dart';
     const source = r'''
-// ignore_for_file: undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read
+// ignore_for_file: undefined_method
 class Email {
   const factory Email.raw(String? value) = _Email;
   const Email._();
@@ -810,7 +810,7 @@ class _Email extends Email {
   Future<void> test_reportsMultiParamPublicRawRedirect() async {
     final filePath = '$testPackageLibPath/core/domain/values/money.dart';
     const source = r'''
-// ignore_for_file: undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read, undefined_class
+// ignore_for_file: undefined_method, undefined_class
 class Money {
   const factory Money.usd(int cents, Currency currency) = _UsdMoney;
   const Money._();
@@ -865,7 +865,7 @@ class Email {
   Future<void> test_reportsPassthroughPublicFactory() async {
     final filePath = '$testPackageLibPath/core/domain/values/weight_adjustment.dart';
     const source = r'''
-// ignore_for_file: undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read
+// ignore_for_file: undefined_method
 class WeightAdjustment {
   const factory WeightAdjustment._kilograms(double value) = _Kg;
   const WeightAdjustment._();
@@ -886,7 +886,7 @@ class _Kg extends WeightAdjustment {
   Future<void> test_allowsValidatedFactoryWithAssert() async {
     final filePath = '$testPackageLibPath/core/domain/values/weight.dart';
     newFile(filePath, r'''
-// ignore_for_file: undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read
+// ignore_for_file: undefined_method
 class Weight {
   const factory Weight._kilograms(double value) = _Kg;
   const Weight._();
@@ -907,7 +907,7 @@ class _Kg extends Weight {
   Future<void> test_allowsTransformingFactory() async {
     final filePath = '$testPackageLibPath/core/domain/values/email.dart';
     newFile(filePath, r'''
-// ignore_for_file: undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read
+// ignore_for_file: undefined_method
 class Email {
   const factory Email._raw(String value) = _Email;
   const Email._();
@@ -925,7 +925,7 @@ class _Email extends Email {
   Future<void> test_reportsMultiLinePublicRawRedirect() async {
     final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     const source = r'''
-// ignore_for_file: undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read
+// ignore_for_file: undefined_method
 class Distance {
   const factory Distance.meters(
     double value,

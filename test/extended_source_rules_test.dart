@@ -2,6 +2,7 @@
 
 import 'dart:math' as math;
 
+import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/architecture_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/freezed_extended_source_rules.dart';
@@ -37,6 +38,17 @@ abstract class _ExtendedSourceRuleTest extends AnalysisRuleTest {
   String? get path => null;
   bool get lineStart => false;
   bool get addIgnorePrefix => true;
+
+  @override
+  List<DiagnosticCode> get ignoredDiagnosticCodes => [
+    ...super.ignoredDiagnosticCodes,
+    for (final name in const [
+      'undefined_unqualified_name_read_not_found',
+      'undefined_unqualified_name_read_not_found_annotation',
+      'undefined_unqualified_name_write_not_found',
+    ])
+      errorCodeByUniqueName(name)!,
+  ];
 
   @override
   void setUp() {
@@ -75,7 +87,7 @@ abstract class _ExtendedSourceRuleTest extends AnalysisRuleTest {
   String _analyzedSource(String source, {required bool addIgnorePrefix}) {
     if (!addIgnorePrefix) return source;
     return '''
-// ignore_for_file: const_with_non_type, creation_with_non_type, extends_non_class, final_not_initialized, implements_non_class, mixin_of_non_class, redirect_to_non_class, undefined_annotation, undefined_class, undefined_function, undefined_unqualified_name_read, undefined_unqualified_name_write, undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read, unused_import
+// ignore_for_file: const_with_non_type, creation_with_non_type, extends_non_class, final_not_initialized, implements_non_class, mixin_of_non_class, redirect_to_non_class, undefined_annotation, undefined_class, undefined_function, undefined_identifier, undefined_method, unused_import
 $source''';
   }
 

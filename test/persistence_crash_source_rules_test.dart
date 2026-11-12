@@ -57,7 +57,7 @@ abstract class _PersistenceCrashRuleTest extends AnalysisRuleTest {
   }
 
   String _withIgnorePrefix(String source) => '''
-// ignore_for_file: avoid_void_async, discarded_futures, final_not_initialized, undefined_getter, unused_element, unused_import
+// ignore_for_file: avoid_void_async, discarded_futures, final_not_initialized, undefined_static_member_read, unused_element, unused_import
 $source''';
 }
 

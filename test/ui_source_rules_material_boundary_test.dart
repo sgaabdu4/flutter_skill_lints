@@ -161,7 +161,7 @@ void main() {
   }
 
   String _withFlutterImport(String source) => '''
-// ignore_for_file: const_initialized_with_non_constant_value, extends_non_class, final_not_initialized, override_on_non_overriding_member, undefined_function, undefined_identifier, unused_local_variable
+// ignore_for_file: const_initialized_with_non_constant_value, extends_non_class, final_not_initialized, override_on_non_overriding_member, undefined_function, undefined_unqualified_name_read, undefined_unqualified_name_write, unused_local_variable
 import 'package:flutter/material.dart';
 
 $source''';

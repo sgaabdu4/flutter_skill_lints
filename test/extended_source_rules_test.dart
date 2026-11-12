@@ -75,7 +75,7 @@ abstract class _ExtendedSourceRuleTest extends AnalysisRuleTest {
   String _analyzedSource(String source, {required bool addIgnorePrefix}) {
     if (!addIgnorePrefix) return source;
     return '''
-// ignore_for_file: const_with_non_type, creation_with_non_type, extends_non_class, final_not_initialized, implements_non_class, mixin_of_non_class, redirect_to_non_class, undefined_annotation, undefined_class, undefined_function, undefined_identifier, undefined_method, unused_import
+// ignore_for_file: const_with_non_type, creation_with_non_type, extends_non_class, final_not_initialized, implements_non_class, mixin_of_non_class, redirect_to_non_class, undefined_annotation, undefined_class, undefined_function, undefined_unqualified_name_read, undefined_unqualified_name_write, undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read, unused_import
 $source''';
   }
 

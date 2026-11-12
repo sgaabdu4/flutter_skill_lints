@@ -311,7 +311,7 @@ abstract class _SourceRuleTest extends AnalysisRuleTest {
   String _analyzedSource(String source, {required bool addIgnorePrefix}) {
     if (!addIgnorePrefix) return source;
     return '''
-// ignore_for_file: extends_non_class, final_not_initialized, implements_non_class, undefined_function, undefined_identifier, undefined_method, unused_import
+// ignore_for_file: extends_non_class, final_not_initialized, implements_non_class, undefined_function, undefined_unqualified_name_read, undefined_unqualified_name_write, undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read, unused_import
 // ignore_for_file: non_type_as_type_argument, unchecked_use_of_nullable_value, undefined_class, undefined_getter, undefined_setter
 $source''';
   }

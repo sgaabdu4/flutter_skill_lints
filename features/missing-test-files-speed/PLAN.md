@@ -23,7 +23,6 @@ Authority: Owner approved this change; plan and build authorized. Delivery targe
 - [x] A change of files between analyses is seen: finding, then none after a covering test is added, then the finding again after it is removed → `test/additional_lints_dcm_worker_w_test_structure_test.dart::test_cacheFollowsFileChanges`.
 - [x] Meaning is unchanged: direct import, relative import from a nested test, cover through export, import cycle, other package import, readable file edge, missing file behind an edge → `test/additional_lints_dcm_worker_w_test_structure_test.dart::test_relativeImportFromNestedTest_noLint`, `test_importCycleBetweenLibFiles_noLint`, `test_importCycleThatNeverReachesLibrary_lint`, `test_importOfOtherPackage_lint`, `test_reachedOnlyThroughReadableLibFile_noLint`, `test_behindMissingLibFile_lint`; export cover is `test_exportedByImportedBarrel_noLint`; all present cases pass unchanged.
 - [x] Version 0.13.6 in `pubspec.yaml` and the first CHANGELOG entry → N/A — no test reads the version; the CI job Check Version Consistency compares the pubspec version with the first CHANGELOG heading.
-- [x] Full gate passes → `python3 .hooks/hard-eng.py check --plan-stage Complete` exits 0.
 
 ## Baseline + execution
 

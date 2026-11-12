@@ -72,7 +72,7 @@ Shared `transactionId` + client context, commit-conflict rebuild, and the owners
 - Active variable read-back = exact key/ID/count + `secret` metadata; list response may be `{total, variables}`.
 - Secret status = one-way. Secret → non-secret requires delete + recreate; value replacement may update or recreate per target contract.
 - Variable activation timing = [functions.md](functions.md#environment-variables).
-- Capture prior active deployment before mutation; new deployment failure → prior remains/returns active.
+- Capture prior active deployment before mutation; none (a new function's first deploy) → record `no prior deployment`, which is a complete snapshot, so continue. Deploy-script tests include a never-deployed function. New deployment failure → prior remains/returns active; no prior deployment → skip the rollback activation and report the failed deployment.
 - Function-only deployment against missing schema/backfill = forbidden; schema-only contract against old function = forbidden.
 - Deployment ready + execution `completed` = transport proof only.
 - Pre-activation smoke = real authenticated critical route + expected `responseStatusCode` + parsed application payload + empty execution errors + bounded duration.

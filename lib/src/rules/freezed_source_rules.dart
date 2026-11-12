@@ -16,8 +16,6 @@ final _jsonSerializableExplicitToJsonTruePattern = RegExp(
 
 final List<ScannerRule> freezedSourceRules = [
   /// Prefer abstract final for static-only namespaces.
-  ///
-  /// Why: Flags static-only classes that use private constructors. Replace private
   /// constructors on static-only classes with abstract final class.
   scannerRule(
     code: const LintCode(
@@ -38,10 +36,6 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 
   /// Keep `@RecordUse` on dart:ffi bindings.
-  ///
-  /// Why: `@RecordUse` is only for dart:ffi/Code Assets bindings whose native
-  /// linker uses `package:record_use`; normal Flutter application code does
-  /// not add it (dart-patterns-records.md). The annotation must resolve to
   /// package:meta `RecordUse`, and the library must import `dart:ffi`.
   scannerRule(
     code: const LintCode(
@@ -64,8 +58,6 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 
   /// Do not set explicitToJson per JsonSerializable class.
-  ///
-  /// Why: Flags per-class JsonSerializable explicitToJson settings. Set explicit_to_json:
   /// true in build.yaml.
   scannerRule(
     code: const LintCode(
@@ -86,8 +78,6 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 
   /// Do not use @Freezed(toJson: true) when fromJson exists.
-  ///
-  /// Why: Flags @Freezed(toJson: true) classes that already define fromJson. Use plain
   /// @freezed with fromJson.
   scannerRule(
     code: const LintCode(
@@ -107,9 +97,6 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 
   /// Avoid legacy Freezed when/map helpers.
-  ///
-  /// Why: Flags the generated Freezed pattern helpers (`when`, `map`, `maybeWhen`,
-  /// `maybeMap`, `whenOrNull`, `mapOrNull`), including implicit-`this` calls inside
   /// the Freezed class. Use Dart pattern matching and switch expressions.
   scannerRule(
     code: const LintCode(
@@ -125,11 +112,6 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 
   /// Use Freezed for domain entities and data models.
-  ///
-  /// Why: Flags domain entity and data model classes that are manual or Equatable-based.
-  /// Freezed is the project-wide value-class convention, chosen to remove the mental tax
-  /// of picking between equality/copy/serialization patterns. A non-Freezed Hive class
-  /// annotated with a resolved hive_ce `@HiveType` is allowed: hive-persistence.md uses
   /// "@HiveType for non-Freezed. @GenerateAdapters for Freezed."
   scannerRule(
     code: const LintCode(
@@ -154,10 +136,6 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 
   /// Use Freezed instead of manual @immutable value classes.
-  ///
-  /// Why: @immutable only checks field mutability, and Freezed's `@unfreezed` generates
-  /// mutable value/state classes. Freezed owns equality, copyWith, exhaustiveness, and
-  /// serialization conventions, so value/state classes do not drift into one-off hand-written
   /// or mutable models.
   scannerRule(
     code: const LintCode(
@@ -180,9 +158,6 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 
   /// Keep one Freezed declaration per file.
-  ///
-  /// Why: Freezed generates a part file and a private implementation per declaration. Keeping
-  /// each declaration in its own source file keeps generated output, imports, serialization,
   /// and ownership boundaries obvious.
   scannerRule(
     code: const LintCode(

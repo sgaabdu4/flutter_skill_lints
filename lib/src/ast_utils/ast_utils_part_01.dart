@@ -302,8 +302,6 @@ bool isResolvedNavigationPop(MethodInvocation node) {
 }
 
 /// Whether [node] resolves to forward page navigation: `go` / `push*` /
-/// `replace*` on Flutter's Navigator, `GoRouter`, go_router's `BuildContext`
-/// helpers, or a typed `GoRouteData`.
 bool isResolvedForwardNavigation(MethodInvocation node) {
   final name = node.methodName.name;
   final isForward =
@@ -322,7 +320,6 @@ bool isResolvedForwardNavigation(MethodInvocation node) {
 }
 
 /// Whether [element] is declared by go_router's `GoRouterHelper` extension on
-/// `BuildContext`.
 bool isGoRouterHelperMember(Element? element) {
   final owner = element?.enclosingElement;
   return owner is ExtensionElement &&

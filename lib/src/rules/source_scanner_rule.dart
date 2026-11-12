@@ -14,8 +14,6 @@ typedef ScannerRuleCallback = void Function(
 );
 
 /// ScannerRule enforces a Flutter skill lint contract.
-///
-/// Why: The analyzer rule keeps the corresponding Flutter skill guidance visible during
 /// development. Follow the diagnostic correction for the reported Flutter skill requirement.
 final class ScannerRule extends AnalysisRule {
   ScannerRule({
@@ -583,7 +581,6 @@ final class SourceScannerContext {
   }
 
   /// An `abstract interface class` contract or an `abstract final class` static
-  /// namespace (keys, codecs, mappers): neither is ever instantiated as a value.
   bool _isNeverInstantiatedClass(ScannerClassSpan classSpan) {
     final line = source.masked[classSpan.start];
     return _abstractInterfaceFinalPattern.hasMatch(line);
@@ -668,7 +665,6 @@ final class SourceScannerContext {
     var braceDepth = _braceDelta(line);
     while (!source.masked[signatureEnd].contains('{') && signatureEnd + 1 < classEnd) {
       // A `;` before any `{` ends a bodyless declaration such as
-      // `const Repo(this.remote);`; never extend it over the next member.
       if (source.masked[signatureEnd].trimRight().endsWith(';')) return null;
       signatureEnd++;
       braceDepth += _braceDelta(source.masked[signatureEnd]);

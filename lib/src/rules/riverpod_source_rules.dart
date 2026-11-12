@@ -399,9 +399,6 @@ int _functionProviderEnd(SourceScannerContext context, int declarationLine) {
 }
 
 /// Whether [definition] watches at least one provider and every `watch`
-/// resolves, through its generated `@ProviderFor` variable, to a
-/// `@Riverpod(keepAlive: true)` source, in this file or another. An
-/// unresolved or auto-dispose dependency keeps the provider clean.
 bool _watchesOnlyKeepAliveProviders(
   SourceScannerContext context,
   _RiverpodProviderDefinition definition,
@@ -488,7 +485,6 @@ bool _hasKeepAliveTickerModeWorkaround(SourceScannerContext context, int annotat
 }
 
 /// Comments owned by [declaration]: its leading comments and comments between
-/// its metadata and its name, such as a trailing note on the annotation line.
 Iterable<String> _declarationComments(
   SourceScannerContext context,
   CompilationUnitMember declaration,
@@ -506,8 +502,6 @@ Iterable<String> _declarationComments(
 }
 
 /// Comments attached to the tokens [first]..[last]. Leading comments that sit
-/// on the previous token's line belong to the previous code, not this node.
-/// With [trailing], a comment after [last] on the same line is included.
 Iterable<String> _ownedComments(
   SourceScannerContext context,
   Token first,
@@ -611,8 +605,6 @@ const _functionalProviderType = TypeChecker.fromName(
 );
 
 /// A watch of a computed (functional) provider, whose whole value can already
-/// be the render projection (performance.md:6; see [_consumesProjection]).
-/// Notifier providers hold mutable state and need `select`.
 bool _isProjectionProviderWatch(Expression argument) {
   final type = argument.staticType;
   return type is InterfaceType && _functionalProviderType.isAssignableFromType(type);

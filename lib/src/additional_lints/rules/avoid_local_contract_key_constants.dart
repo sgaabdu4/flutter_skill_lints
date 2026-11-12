@@ -7,11 +7,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when notifiers or repositories hide contract keys in local constants.
-///
-/// Persisted keys, storage keys, request payload keys, backend action strings,
-/// and key registries should live behind a dedicated owner such as a keys,
-/// schema, codec, or request class. Moving them to private constants inside the
-/// same notifier or repository only hides the contract without giving it a
 /// stable owner.
 class AvoidLocalContractKeyConstants extends AnalysisRule {
   static const LintCode code = LintCode(

@@ -15,8 +15,6 @@ final _resolveRedirectPattern = RegExp(r'\bresolve\w*Redirect\s*\(');
 
 final List<ScannerRule> routerExtendedSourceRules = [
   /// Keep GoRouter redirect decisions in a pure resolver.
-  ///
-  /// Why: Flags inline branching inside GoRouter redirect closures. Move redirect branching
   /// into a resolve...Redirect function and matrix-test it.
   scannerRule(
     code: const LintCode(
@@ -42,9 +40,6 @@ final List<ScannerRule> routerExtendedSourceRules = [
   ),
 
   /// Do not push shell tab routes.
-  ///
-  /// Why: Flags typed route push calls in shell navigation widgets. Route tab
-  /// changes use StatefulNavigationShell.goBranch; pushing a tab root creates
   /// the wrong stack shape.
   scannerRule(
     code: const LintCode(
@@ -90,8 +85,6 @@ const _tabBarChecker = TypeChecker.any([
 ]);
 
 /// Typed route navigation reached from a tab bar's selection callback (or a
-/// method of the same class it calls) in a class that holds a
-/// `StatefulNavigationShell`, where `goBranch` is the tab-change API.
 Iterable<MethodInvocation> _shellTabCallbackNavigations(CompilationUnit unit) sync* {
   for (final shellClass in unit.declarations.whereType<ClassDeclaration>()) {
     final holdsShell = shellClass.body.members.whereType<FieldDeclaration>().any((field) {

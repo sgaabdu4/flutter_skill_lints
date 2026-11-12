@@ -6,12 +6,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 /// Rules enforcing Hive CE persistence-layer boundary integrity.
-///
-/// Why: `hive_ce` infers `HiveField(N)` indexes from Freezed constructor
-/// parameter order, and the binary box format is locked once shipped.
-/// Wrapping a primitive Model field in a Value Object regenerates the
-/// adapter — old user box bytes become unreadable. Reordering params
-/// silently shifts every subsequent slot. `dart analyze` cannot see disk;
 /// these rules surface the risk at code-review time.
 String _pascalCase(String snake) => snake
     .split('_')
@@ -23,10 +17,6 @@ final _importPackageHivePattern = RegExp(r'''^\s*import\s+['"]package:hive_ce/hi
 
 final List<ScannerRule> hivePersistenceSourceRules = [
   /// Persisted maps must validate their runtime key shape before decoding.
-  ///
-  /// Why: Hive and other local stores restore maps with runtime key types. A
-  /// direct generic cast can fail after an app restart even when the original
-  /// write used string keys. Validate the raw map and copy it into a typed map
   /// before passing it to a model decoder.
   scannerRule(
     code: const LintCode(
@@ -50,13 +40,6 @@ final List<ScannerRule> hivePersistenceSourceRules = [
   ),
 
   /// Flutter app source should import Hive through hive_ce_flutter.
-  ///
-  /// Why: `hive_ce_flutter` is the Flutter-facing package for Hive CE. It
-  /// re-exports the core Hive API and adds Flutter helpers such as
-  /// `Hive.initFlutter`, Color/TimeOfDay adapters, and platform setup. Keeping
-  /// production Flutter code on that import surface prevents an app from
-  /// depending on the core Dart package while bypassing the Flutter integration
-  /// package declared in the stack. Tests can still use temp directories and
   /// manual `Hive.init(path)` setup.
   scannerRule(
     code: const LintCode(
@@ -80,11 +63,6 @@ final List<ScannerRule> hivePersistenceSourceRules = [
   ),
 
   /// Hive Models must not carry Value Object types.
-  ///
-  /// Why: `/data/models/` classes are persistence-layer adapters; their
-  /// constructor parameters become `HiveField(N)` slots on disk. Value
-  /// Objects (`Distance`, `Money`, `Email`, …) belong in `/domain/` and
-  /// require their own adapters to serialize. Keep primitive slots on the
   /// Model; expose VOs on the domain Entity via `Model.toEntity()`.
   scannerRule(
     code: const LintCode(

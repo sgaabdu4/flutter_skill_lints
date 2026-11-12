@@ -11,10 +11,6 @@ final _mixinClassPattern = RegExp(r'^\s*mixin\s+class\s+\w+');
 
 final List<ScannerRule> servicesMixinsSourceRules = [
   /// Keep singleton instance fields plain and boring.
-  ///
-  /// Why: Allows only the boring fire-and-forget singleton shape (private constructor + one
-  /// static final instance + void/Future<void> public methods) while flagging public
-  /// constructors, state/data APIs, mutable resources, debug injection seams, service locators,
   /// and fake/backend swapping inside the singleton itself.
   scannerRule(
     code: const LintCode(
@@ -47,8 +43,6 @@ final List<ScannerRule> servicesMixinsSourceRules = [
   ),
 
   /// Avoid mixin class for capability mixins.
-  ///
-  /// Why: Flags mixin class declarations for capability mixins. Use mixin for reusable
   /// behavior.
   scannerRule(
     code: const LintCode(
@@ -69,8 +63,6 @@ final List<ScannerRule> servicesMixinsSourceRules = [
   ),
 
   /// Mixin names should end with Mixin.
-  ///
-  /// Why: Flags capability mixins without the Mixin suffix. Suffix capability mixins with
   /// Mixin.
   scannerRule(
     code: const LintCode(
@@ -92,7 +84,6 @@ final List<ScannerRule> servicesMixinsSourceRules = [
   ),
 
   /// Mixins should not carry mutable state.
-  ///
   /// Why: Flags mutable fields inside mixins. Keep mixins stateless.
   scannerRule(
     code: const LintCode(
@@ -171,8 +162,6 @@ bool _hasMutableSingletonState(String body) {
 }
 
 /// A class that keeps exactly one non-const static instance of itself and exposes it
-/// through a public static field or getter typed as the class, or a public factory
-/// constructor that returns the stored instance.
 final class _SingletonShape {
   const _SingletonShape._({
     required this.exposureOffset,
@@ -224,7 +213,6 @@ FieldElement? _storedSelfInstance(ClassDeclaration declaration, ClassElement cla
 }
 
 /// Whether [member] hands out the stored instance: the public field itself, a public static
-/// getter typed as the class, or a public factory constructor that returns it.
 bool _exposes(ClassMember member, FieldElement stored, ClassElement classElement) {
   return switch (member) {
     FieldDeclaration(:final fields) => fields.variables.any(
@@ -241,7 +229,6 @@ bool _exposes(ClassMember member, FieldElement stored, ClassElement classElement
 }
 
 /// Public state or data: any other public field, getter or setter, or a public method whose
-/// resolved return type is not `void` or `Future<void>`.
 bool _isPublicDataMember(ClassMember member, FieldElement stored, ClassElement classElement) {
   return switch (member) {
     FieldDeclaration(:final fields) => fields.variables.any(

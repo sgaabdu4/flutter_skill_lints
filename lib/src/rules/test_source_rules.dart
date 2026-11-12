@@ -21,8 +21,6 @@ final _providerContainerPattern = RegExp(r'\bProviderContainer\s*\(');
 
 final List<ScannerRule> testSourceRules = [
   /// Use ProviderContainer.test in tests.
-  ///
-  /// Why: Flags direct ProviderContainer construction in tests. Replace
   /// ProviderContainer(...) with ProviderContainer.test().
   scannerRule(
     code: const LintCode(
@@ -43,8 +41,6 @@ final List<ScannerRule> testSourceRules = [
   ),
 
   /// Use UncontrolledProviderScope in tests.
-  ///
-  /// Why: Flags ProviderScope usage in tests. Wrap test widgets with an explicit test
   /// container.
   scannerRule(
     code: const LintCode(
@@ -65,7 +61,6 @@ final List<ScannerRule> testSourceRules = [
   ),
 
   /// Avoid createContainer test helpers.
-  ///
   /// Why: Flags createContainer test helpers. Use ProviderContainer.test().
   scannerRule(
     code: const LintCode(
@@ -86,8 +81,6 @@ final List<ScannerRule> testSourceRules = [
   ),
 
   /// Mocks should implement interfaces, not concrete classes.
-  ///
-  /// Why: A mock must implement a non-constructable contract rather than a
   /// concrete class. The contract's declared name does not determine this.
   scannerRule(
     code: const LintCode(
@@ -101,8 +94,6 @@ final List<ScannerRule> testSourceRules = [
   ),
 
   /// Avoid unbounded pumpAndSettle in tests.
-  ///
-  /// Why: Flags pumpAndSettle calls without an explicit duration argument. Use explicit pumps or
   /// pass a bounded Duration.
   scannerRule(
     code: const LintCode(
@@ -125,7 +116,6 @@ final List<ScannerRule> testSourceRules = [
   ),
 
   /// Avoid coordinate-based test taps.
-  ///
   /// Why: Flags coordinate-based test taps. Use stable ValueKey finders.
   scannerRule(
     code: const LintCode(
@@ -147,8 +137,6 @@ final List<ScannerRule> testSourceRules = [
   ),
 
   /// Avoid inline string widget keys.
-  ///
-  /// Why: Flags `Key('...')` / `ValueKey('...')` string literals outside key registries.
   /// Centralize widget keys in a key registry.
   scannerRule(
     code: const LintCode(
@@ -162,7 +150,6 @@ final List<ScannerRule> testSourceRules = [
   ),
 
   /// Avoid first-match widget finders in tests.
-  ///
   /// Why: Flags first-match widget finder usage in tests. Use deterministic ValueKey finders.
   scannerRule(
     code: const LintCode(
@@ -176,10 +163,6 @@ final List<ScannerRule> testSourceRules = [
   ),
 
   /// Override repositories or datasources, not notifiers, in tests.
-  ///
-  /// Why: testing.md requires overriding at the repo/datasource level and never
-  /// mocking notifiers directly. `overrideWith(Fake.new)` on a notifier provider
-  /// replaces the notifier under test; `overrideWithBuild` and
   /// `overrideWithValue` stay allowed.
   scannerRule(
     code: const LintCode(
@@ -193,9 +176,6 @@ final List<ScannerRule> testSourceRules = [
   ),
 
   /// Avoid blind sleeps in E2E tests.
-  ///
-  /// Why: E2E flows must wait on semantic UI or source-of-truth state. An
-  /// awaited `Future.delayed` or `dart:io` `sleep` outside a polling loop is a
   /// blind sleep.
   scannerRule(
     code: const LintCode(
@@ -210,9 +190,6 @@ final List<ScannerRule> testSourceRules = [
   ),
 
   /// Avoid case-sensitive label text as a widget-test interaction selector.
-  ///
-  /// Why: testing.md forbids case-sensitive label text selectors for taps and
-  /// other interactions. Assertions such as `expect(find.text(...), ...)` stay
   /// allowed.
   scannerRule(
     code: const LintCode(

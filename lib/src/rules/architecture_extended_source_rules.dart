@@ -19,10 +19,6 @@ final _classModelPattern = RegExp(r'\bclass\s+\w+Model\b');
 
 final List<ScannerRule> architectureExtendedSourceRules = [
   /// Data models should expose a toEntity() mapper.
-  ///
-  /// Why: Flags data model files whose model classes do not expose toEntity(). The mapper may be
-  /// a model method (`toEntity()`, or hive-persistence.md's `toDomain()`) or a mapper extension
-  /// on the model (value-objects.md Option B, e.g. `/data/mappers/`). Add a toEntity() method on
   /// data models and map in repositories.
   scannerRule(
     code: const LintCode(
@@ -46,9 +42,6 @@ final List<ScannerRule> architectureExtendedSourceRules = [
   ),
 
   /// Repositories map Data -> Domain with the model mapper.
-  ///
-  /// Why: architecture.md requires `model.toEntity()` in repositories. Flags repository code
-  /// that constructs a domain entity (a `/domain/` class outside `/domain/values/`) from data
   /// model (`/data/models/`) members instead of calling the model mapper.
   scannerRule(
     code: const LintCode(
@@ -70,8 +63,6 @@ final List<ScannerRule> architectureExtendedSourceRules = [
   ),
 
   /// Data models must be separate from domain entities.
-  ///
-  /// Why: Flags data models that inherit from likely domain entities. Keep model and entity
   /// classes separate; map with toEntity().
   scannerRule(
     code: const LintCode(
@@ -93,8 +84,6 @@ final List<ScannerRule> architectureExtendedSourceRules = [
   ),
 
   /// Domain entities must not use JSON annotations.
-  ///
-  /// Why: Flags JSON annotations in domain files. Move JSON keys and serialization
   /// annotations to data models.
   scannerRule(
     code: const LintCode(
@@ -146,9 +135,6 @@ bool _hasModelMapper(CompilationUnit unit) {
 final _mapperExtensionTargets = Expando<Set<String>>('flutter_skill_lints_mapper_extensions');
 
 /// Whether another analyzed `lib/` file declares a toEntity()/toDomain() extension on [model].
-///
-/// Other libraries are only available parsed here, so an extension target is keyed by the
-/// extended type name plus each library that file imports; the model matches when its own
 /// library URI and name are among them.
 bool _hasMapperExtensionElsewhere(ClassElement model) {
   final session = model.library.session;

@@ -9,10 +9,6 @@ import 'package:flutter_skill_lints/src/additional_lints/pubspec_rule_utils.dart
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Reports package-level Flutter skill configuration drift.
-///
-/// Why: the skill depends on analyzer plugins, strict language checks, generated-file
-/// exclusions, JSON serialization settings, and deterministic E2E entrypoints. This rule
-/// reads project files and reports drift through diagnostics anchored to a Dart analysis
 /// unit before the app relies on missing runtime proof.
 final class FlutterSkillProjectConfig extends MultiAnalysisRule {
   FlutterSkillProjectConfig()

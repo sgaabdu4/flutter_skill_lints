@@ -136,7 +136,7 @@ class User {
   Future<void> test_allowsFromJsonFactoryInDomain() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     newFile(filePath, r'''
-// ignore_for_file: uri_does_not_exist, unused_import, undefined_method, redirect_to_invalid_function_type
+// ignore_for_file: uri_does_not_exist, unused_import, undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read, redirect_to_invalid_function_type
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 @freezed

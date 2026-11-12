@@ -60,7 +60,7 @@ abstract class _FlutterOptimizationRuleTest extends AnalysisRuleTest {
   }
 
   String _withIgnorePrefix(String source) => '''
-// ignore_for_file: const_initialized_with_non_constant_value, equal_elements_in_set, extends_non_class, hash_and_equals, invalid_override, missing_override_of_must_be_overridden, non_abstract_class_inherits_abstract_member, undefined_class, undefined_function, undefined_identifier, undefined_method, unused_element, unused_import
+// ignore_for_file: const_initialized_with_non_constant_value, equal_elements_in_set, extends_non_class, hash_and_equals, invalid_override, missing_override_of_must_be_overridden, non_abstract_class_inherits_abstract_member, undefined_class, undefined_function, undefined_unqualified_name_read, undefined_unqualified_name_write, undefined_instance_member_read, undefined_instance_member_write, undefined_static_member_read, unused_element, unused_import
 $source''';
 
   void _addFlutterPackage() {

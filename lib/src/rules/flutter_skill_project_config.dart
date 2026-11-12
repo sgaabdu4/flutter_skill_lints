@@ -9,7 +9,6 @@ import 'package:flutter_skill_lints/src/additional_lints/pubspec_rule_utils.dart
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Reports package-level Flutter skill configuration drift.
-/// unit before the app relies on missing runtime proof.
 final class FlutterSkillProjectConfig extends MultiAnalysisRule {
   FlutterSkillProjectConfig()
     : super(

@@ -153,8 +153,7 @@ class _User implements User {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  // Issue #38: a redirecting union case carrying a primitive declares a
-  // variant; it converts nothing.
+  // Issue #38: a redirecting union case carrying a primitive declares a variant; it converts nothing.
   Future<void> test_allowsNamedUnionCaseCarryingPrimitive() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     const source = r'''
@@ -275,8 +274,7 @@ class TextFailure implements BackendFailure { const TextFailure({this.statusCode
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  // Issues #38/#64: union cases are allowed; body factories that take
-  // primitives still report.
+  // Issues #38/#64: union cases are allowed; body factories that take primitives still report.
   Future<void> test_reportsBodyFactoriesBesideUnionCases() async {
     final filePath = '$testPackageLibPath/core/domain/backend_failure.dart';
     const source = r'''
@@ -325,8 +323,7 @@ class EmptyResult implements Result { const EmptyResult(); }
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  // Issues #38/#64: the skill's AppError (state-management-lifecycle.md:126-135)
-  // verbatim in core/domain.
+  // Issues #38/#64: the skill's AppError (state-management-lifecycle.md:126-135) verbatim in core/domain.
   Future<void> test_allowsSkillAppErrorUnion() async {
     final filePath = '$testPackageLibPath/core/domain/app_error.dart';
     newFile(filePath, r'''

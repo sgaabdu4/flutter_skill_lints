@@ -361,8 +361,7 @@ DebugPrintCallback debugPrint = (String? message, {int? wrapWidth}) {};
       );
   }
 
-  /// Opt-in stubs for rules that resolve Flutter, flutter_test, mocktail,
-  /// riverpod and go_router elements.
+  /// Opt-in stubs for rules that resolve Flutter, flutter_test, mocktail, riverpod and go_router elements.
   void _addTestingNavigationPackages() {
     newPackage('flutter')
       ..addFile('lib/foundation.dart', r'''

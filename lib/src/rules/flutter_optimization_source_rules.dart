@@ -5,7 +5,6 @@ final _operatorPattern = RegExp(r'\boperator\s*==\s*\(');
 
 final List<ScannerRule> flutterOptimizationSourceRules = [
   /// Do not create keys inside build().
-  /// registry, or source value outside build().
   scannerRule(
     code: const LintCode(
       'flutter_key_created_in_build',
@@ -27,7 +26,6 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
   ),
 
   /// Avoid UniqueKey and GlobalKey unless identity recreation or state access is required.
-  /// state preservation.
   scannerRule(
     code: const LintCode(
       'flutter_unique_or_global_key',
@@ -56,7 +54,6 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
   ),
 
   /// Avoid the Opacity widget for static opacity.
-  /// or FadeTransition for animation.
   scannerRule(
     code: const LintCode(
       'flutter_opacity_widget',
@@ -72,7 +69,6 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
   ),
 
   /// Avoid ShaderMask and ColorFilter saveLayer triggers in hot UI.
-  /// precomputed assets when a saveLayer is not required.
   scannerRule(
     code: const LintCode(
       'flutter_save_layer_filter',
@@ -94,7 +90,6 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
   ),
 
   /// Avoid Clip.antiAliasWithSaveLayer.
-  /// Clip.antiAlias when possible.
   scannerRule(
     code: const LintCode(
       'flutter_clip_save_layer',
@@ -115,7 +110,6 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
   ),
 
   /// Avoid IntrinsicWidth and IntrinsicHeight in performance-sensitive UI.
-  /// layout.
   scannerRule(
     code: const LintCode(
       'flutter_intrinsic_layout',
@@ -131,7 +125,6 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
   ),
 
   /// AnimatedBuilder should pass static subtrees through child.
-  /// AnimatedBuilder.child and reuse child in builder.
   scannerRule(
     code: const LintCode(
       'flutter_animated_builder_child',
@@ -155,7 +148,6 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
   ),
 
   /// Do not override operator == on Widget classes.
-  /// inputs, and caching instead.
   scannerRule(
     code: const LintCode(
       'flutter_widget_operator_equals',

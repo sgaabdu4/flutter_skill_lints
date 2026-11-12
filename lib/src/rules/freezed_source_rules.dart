@@ -16,7 +16,6 @@ final _jsonSerializableExplicitToJsonTruePattern = RegExp(
 
 final List<ScannerRule> freezedSourceRules = [
   /// Prefer abstract final for static-only namespaces.
-  /// constructors on static-only classes with abstract final class.
   scannerRule(
     code: const LintCode(
       'dart_static_namespace',
@@ -36,7 +35,6 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 
   /// Keep `@RecordUse` on dart:ffi bindings.
-  /// package:meta `RecordUse`, and the library must import `dart:ffi`.
   scannerRule(
     code: const LintCode(
       'record_use_outside_ffi',
@@ -58,7 +56,6 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 
   /// Do not set explicitToJson per JsonSerializable class.
-  /// true in build.yaml.
   scannerRule(
     code: const LintCode(
       'freezed_per_class_explicit_to_json',
@@ -78,7 +75,6 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 
   /// Do not use @Freezed(toJson: true) when fromJson exists.
-  /// @freezed with fromJson.
   scannerRule(
     code: const LintCode(
       'freezed_to_json_with_from_json',
@@ -97,7 +93,6 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 
   /// Avoid legacy Freezed when/map helpers.
-  /// the Freezed class. Use Dart pattern matching and switch expressions.
   scannerRule(
     code: const LintCode(
       'freezed_legacy_when_map',
@@ -112,7 +107,6 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 
   /// Use Freezed for domain entities and data models.
-  /// "@HiveType for non-Freezed. @GenerateAdapters for Freezed."
   scannerRule(
     code: const LintCode(
       'freezed_required_value_class',
@@ -136,7 +130,6 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 
   /// Use Freezed instead of manual @immutable value classes.
-  /// or mutable models.
   scannerRule(
     code: const LintCode(
       'use_freezed_instead_of_immutable',
@@ -158,7 +151,6 @@ final List<ScannerRule> freezedSourceRules = [
   ),
 
   /// Keep one Freezed declaration per file.
-  /// and ownership boundaries obvious.
   scannerRule(
     code: const LintCode(
       'freezed_one_class_per_file',

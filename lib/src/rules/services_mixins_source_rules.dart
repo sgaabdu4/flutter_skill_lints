@@ -11,7 +11,6 @@ final _mixinClassPattern = RegExp(r'^\s*mixin\s+class\s+\w+');
 
 final List<ScannerRule> servicesMixinsSourceRules = [
   /// Keep singleton instance fields plain and boring.
-  /// and fake/backend swapping inside the singleton itself.
   scannerRule(
     code: const LintCode(
       'service_singleton',
@@ -43,7 +42,6 @@ final List<ScannerRule> servicesMixinsSourceRules = [
   ),
 
   /// Avoid mixin class for capability mixins.
-  /// behavior.
   scannerRule(
     code: const LintCode(
       'mixin_mixin_class',
@@ -63,7 +61,6 @@ final List<ScannerRule> servicesMixinsSourceRules = [
   ),
 
   /// Mixin names should end with Mixin.
-  /// Mixin.
   scannerRule(
     code: const LintCode(
       'mixin_name_suffix',
@@ -84,7 +81,6 @@ final List<ScannerRule> servicesMixinsSourceRules = [
   ),
 
   /// Mixins should not carry mutable state.
-  /// Why: Flags mutable fields inside mixins. Keep mixins stateless.
   scannerRule(
     code: const LintCode(
       'mixin_mutable_state',

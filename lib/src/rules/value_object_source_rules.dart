@@ -17,10 +17,8 @@ final _mapFreezedMapOptionsNonePattern = RegExp(r'map\s*:\s*(?:FreezedMapOptions
 final _sealedClassPattern = RegExp(r'\bsealed\s+class\b');
 
 /// Rules enforcing Value Object boundary integrity in /domain/ paths.
-/// rules close all three.
 final List<ScannerRule> valueObjectSourceRules = [
   /// Domain strings must not use empty-string sentinels.
-  /// normalized at the boundary.
   scannerRule(
     code: const LintCode(
       'domain_empty_string_sentinel',
@@ -41,7 +39,6 @@ final List<ScannerRule> valueObjectSourceRules = [
   ),
 
   /// Value Object raw constructors must be private.
-  /// cents, required Currency currency})`) is the documented canonical shape.
   scannerRule(
     code: const LintCode(
       'vo_public_raw_constructor',
@@ -61,7 +58,6 @@ final List<ScannerRule> valueObjectSourceRules = [
   ),
 
   /// Domain entities must not own primitive factories.
-  /// nothing and stay allowed.
   scannerRule(
     code: const LintCode(
       'domain_entity_primitive_factory',
@@ -78,7 +74,6 @@ final List<ScannerRule> valueObjectSourceRules = [
   ),
 
   /// Domain entities must not take raw required strings.
-  /// domain text is a validated Value Object; optional text is `String?`.
   scannerRule(
     code: const LintCode(
       'domain_raw_required_string',
@@ -96,7 +91,6 @@ final List<ScannerRule> valueObjectSourceRules = [
   ),
 
   /// Domain entities must not carry units or money as raw numbers.
-  /// negative values. Unit and currency values become Value Objects.
   scannerRule(
     code: const LintCode(
       'domain_unit_primitive',
@@ -112,7 +106,6 @@ final List<ScannerRule> valueObjectSourceRules = [
   ),
 
   /// Sealed Value Objects must disable Freezed map/when generation.
-  /// so the only supported pattern-matching is Dart 3 native `switch`.
   scannerRule(
     code: const LintCode(
       'freezed_disable_map_when_required',
@@ -149,7 +142,6 @@ final List<ScannerRule> valueObjectSourceRules = [
   ),
 
   /// Domain types must not hand-roll copyWith.
-  /// the constructor.
   scannerRule(
     code: const LintCode(
       'domain_custom_copy_with',
@@ -295,7 +287,6 @@ void _reportPrimitiveFactoriesInClass(
 }
 
 /// A named factory with a body that takes primitives (`User.fromPrimitives`).
-/// is not a primitive factory (issues #38, #64).
 bool _isPublicPrimitiveFactory(ConstructorDeclaration constructor) {
   final name = constructor.name?.lexeme;
   return constructor.factoryKeyword != null &&

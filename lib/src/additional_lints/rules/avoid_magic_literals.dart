@@ -7,7 +7,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when executable code uses raw string or numeric literals instead of
-/// owners and are not checked.
 class AvoidMagicLiterals extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_magic_literals',

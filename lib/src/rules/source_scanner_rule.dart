@@ -14,7 +14,6 @@ typedef ScannerRuleCallback = void Function(
 );
 
 /// ScannerRule enforces a Flutter skill lint contract.
-/// development. Follow the diagnostic correction for the reported Flutter skill requirement.
 final class ScannerRule extends AnalysisRule {
   ScannerRule({
     required super.name,

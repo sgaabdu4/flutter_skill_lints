@@ -232,14 +232,26 @@ final class _AwaitOffsetVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
+final _repositoryDatasourceServicePattern = RegExp(
+  r'\b_?[A-Za-z_]\w*(?:Repository|Datasource|Service|Client|Storage)\s*\.',
+);
+
+final _providerNotifierPattern = RegExp(r'\b[A-Za-z_]\w*Provider\s*\.\s*notifier\b');
+
+final _refReadWatchInfrastructureColumnPattern = RegExp(
+  r'\bref\s*\.\s*(?:read|watch|listen|listenManual|invalidate|refresh)\s*\(',
+);
+
+final _importDartDataPattern = RegExp(
+  r'''^\s*import\s+['"](?:dart:io['"]|[^'"]*(?:/data/|/datasources?/|/repositories/|/services?/|/infrastructure/|package:(?:appwrite|cloud_firestore|dio|firebase_|flutter_secure_storage|hive|http|path_provider|shared_preferences|sqflite))[^'"]*['"])''',
+);
+
 int? _infrastructureColumn(String line) {
   final patterns = [
-    RegExp(
-      r'''^\s*import\s+['"](?:dart:io['"]|[^'"]*(?:/data/|/datasources?/|/repositories/|/services?/|/infrastructure/|package:(?:appwrite|cloud_firestore|dio|firebase_|flutter_secure_storage|hive|http|path_provider|shared_preferences|sqflite))[^'"]*['"])''',
-    ),
-    RegExp(r'\bref\s*\.\s*(?:read|watch|listen|listenManual|invalidate|refresh)\s*\('),
-    RegExp(r'\b[A-Za-z_]\w*Provider\s*\.\s*notifier\b'),
-    RegExp(r'\b_?[A-Za-z_]\w*(?:Repository|Datasource|Service|Client|Storage)\s*\.'),
+    _importDartDataPattern,
+    _refReadWatchInfrastructureColumnPattern,
+    _providerNotifierPattern,
+    _repositoryDatasourceServicePattern,
   ];
   for (final pattern in patterns) {
     final match = pattern.firstMatch(line);

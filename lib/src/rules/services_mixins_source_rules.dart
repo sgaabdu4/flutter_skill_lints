@@ -5,6 +5,10 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
+final _mixinClassMixinMatchPattern = RegExp(r'^\s*mixin(?:\s+class)?\s+(\w+)');
+
+final _mixinClassPattern = RegExp(r'^\s*mixin\s+class\s+\w+');
+
 final List<ScannerRule> servicesMixinsSourceRules = [
   /// Keep singleton instance fields plain and boring.
   ///
@@ -57,7 +61,7 @@ final List<ScannerRule> servicesMixinsSourceRules = [
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (RegExp(r'^\s*mixin\s+class\s+\w+').hasMatch(line)) {
+        if (_mixinClassPattern.hasMatch(line)) {
           reporter.report(context, i, line.indexOf('mixin'));
         }
       }
@@ -79,7 +83,7 @@ final List<ScannerRule> servicesMixinsSourceRules = [
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        final mixinMatch = RegExp(r'^\s*mixin(?:\s+class)?\s+(\w+)').firstMatch(line);
+        final mixinMatch = _mixinClassMixinMatchPattern.firstMatch(line);
         if (mixinMatch != null && !(mixinMatch.group(1) ?? '').endsWith('Mixin')) {
           reporter.report(context, i, mixinMatch.start);
         }

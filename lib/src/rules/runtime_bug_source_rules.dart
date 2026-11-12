@@ -234,12 +234,20 @@ final _awaitKeyword = RegExp(r'\bawait\b');
 bool _methodLooksLongRunningFunction(String methodName) =>
     _longRunningOperationName.hasMatch(methodName);
 
+final _dataPattern = RegExp(r'\bdata\s*:\s*([^,\n)]+)');
+
+final _functionIdPattern = RegExp(r'\bfunctionId\s*:\s*([^,\n)]+)');
+
 bool _appwriteExecutionLooksLongRunning(String callWindow) {
-  final functionId = RegExp(r'\bfunctionId\s*:\s*([^,\n)]+)').firstMatch(callWindow)?.group(1);
+  final functionId = _functionIdPattern.firstMatch(callWindow)?.group(1);
   if (functionId != null && _longRunningOperationName.hasMatch(functionId)) return true;
-  final data = RegExp(r'\bdata\s*:\s*([^,\n)]+)').firstMatch(callWindow)?.group(1);
+  final data = _dataPattern.firstMatch(callWindow)?.group(1);
   return data != null && _longRunningOperationName.hasMatch(data);
 }
+
+final _xasyncXasyncPattern = RegExp(r'\bxasync\s*:\s*xasync\b');
+
+final _boolXasyncPattern = RegExp(r'\bbool\??\s+xasync\b');
 
 bool _isExecutionForwardingWrapper(
   SourceScannerContext context,
@@ -247,8 +255,7 @@ bool _isExecutionForwardingWrapper(
   String callWindow,
 ) {
   final signature = sourceLineWindow(context, method.start, method.end, 6);
-  return RegExp(r'\bbool\??\s+xasync\b').hasMatch(signature) &&
-      RegExp(r'\bxasync\s*:\s*xasync\b').hasMatch(callWindow);
+  return _boolXasyncPattern.hasMatch(signature) && _xasyncXasyncPattern.hasMatch(callWindow);
 }
 
 bool _methodLooksDestructive(String methodName) => RegExp(
@@ -323,10 +330,13 @@ bool _hasLaterReconcileCall(SourceScannerContext context, int startLine, int end
   return false;
 }
 
+final _datasourceRepositoryStoragePattern = RegExp(
+  r'(?:Datasource|Repository|Storage|Preferences|Settings|Local)$',
+);
+
 bool _isStorageBoundaryClass(SourceScannerContext context, ScannerClassSpan classSpan) {
   if (context.isDatasourcePath || context.isRepositoryPath) return true;
-  return RegExp(r'(?:Datasource|Repository|Storage|Preferences|Settings|Local)$')
-      .hasMatch(classSpan.name);
+  return _datasourceRepositoryStoragePattern.hasMatch(classSpan.name);
 }
 
 bool _methodLooksLikeResetAll(String methodName) => RegExp(
@@ -373,9 +383,10 @@ bool _hasOuterDirtyGuard(SourceScannerContext context, int saveAllLine) {
   return false;
 }
 
+final _mapFromEntityPattern = RegExp(r'\b([A-Za-z_]\w*)\s*\.\s*map\s*\([^)]*\.\s*fromEntity\s*\)');
+
 String? _saveAllMappedCollection(String callWindow) {
-  final match = RegExp(r'\b([A-Za-z_]\w*)\s*\.\s*map\s*\([^)]*\.\s*fromEntity\s*\)')
-      .firstMatch(callWindow);
+  final match = _mapFromEntityPattern.firstMatch(callWindow);
   return match?.group(1);
 }
 
@@ -397,9 +408,11 @@ bool _methodMutatesCollectionSubset(
   return false;
 }
 
+final _forPattern = RegExp(r'\bfor\s*\(');
+
 bool _collectionGetterAllocates(String body) {
   if (_collectionGetterCache.hasMatch(body)) return false;
-  if (_collectionLiteralAllocation.hasMatch(body) && RegExp(r'\bfor\s*\(').hasMatch(body)) {
+  if (_collectionLiteralAllocation.hasMatch(body) && _forPattern.hasMatch(body)) {
     return true;
   }
   return _collectionExpressionAllocation.hasMatch(body);
@@ -486,17 +499,26 @@ String _durationWindow(SourceScannerContext context, int lineIndex) {
   return buffer.toString();
 }
 
+final _animatedAnimationStyleTransitionDurationPattern = RegExp(
+  r'Animated|AnimationStyle|transitionDuration|duration\s*:',
+  caseSensitive: false,
+);
+
+final _futureDelayedPattern = RegExp(r'Future\s*(?:<[^>]+>)?\s*\.\s*delayed', caseSensitive: false);
+
+final _persistStorageDraftPattern = RegExp(
+  r'persist|storage|draft|preference',
+  caseSensitive: false,
+);
+
 int _userVisibleDurationBudgetMs(String window) {
-  if (RegExp(r'persist|storage|draft|preference', caseSensitive: false).hasMatch(window)) {
+  if (_persistStorageDraftPattern.hasMatch(window)) {
     return 50;
   }
-  if (RegExp(r'Future\s*(?:<[^>]+>)?\s*\.\s*delayed', caseSensitive: false).hasMatch(window)) {
+  if (_futureDelayedPattern.hasMatch(window)) {
     return 50;
   }
-  if (RegExp(
-    r'Animated|AnimationStyle|transitionDuration|duration\s*:',
-    caseSensitive: false,
-  ).hasMatch(window)) {
+  if (_animatedAnimationStyleTransitionDurationPattern.hasMatch(window)) {
     return 120;
   }
   return 150;

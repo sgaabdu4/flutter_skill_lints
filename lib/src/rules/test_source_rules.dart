@@ -7,6 +7,18 @@ import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
+final _tapAtPattern = RegExp(r'\btapAt\s*\(');
+
+final _pumpAndSettleScannerRulePattern = RegExp(r'\bpumpAndSettle\s*\(\s*\)');
+
+final _pumpAndSettlePattern = RegExp(r'\bpumpAndSettle\s*\(');
+
+final _createContainerPattern = RegExp(r'\bcreateContainer\s*\(');
+
+final _providerScopePattern = RegExp(r'\bProviderScope\s*\(');
+
+final _providerContainerPattern = RegExp(r'\bProviderContainer\s*\(');
+
 final List<ScannerRule> testSourceRules = [
   /// Use ProviderContainer.test in tests.
   ///
@@ -23,7 +35,7 @@ final List<ScannerRule> testSourceRules = [
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (context.isTestFile && RegExp(r'\bProviderContainer\s*\(').hasMatch(line)) {
+        if (context.isTestFile && _providerContainerPattern.hasMatch(line)) {
           reporter.report(context, i, line.indexOf('ProviderContainer'));
         }
       }
@@ -45,7 +57,7 @@ final List<ScannerRule> testSourceRules = [
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (context.isTestFile && RegExp(r'\bProviderScope\s*\(').hasMatch(line)) {
+        if (context.isTestFile && _providerScopePattern.hasMatch(line)) {
           reporter.report(context, i, line.indexOf('ProviderScope'));
         }
       }
@@ -66,7 +78,7 @@ final List<ScannerRule> testSourceRules = [
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (context.isTestFile && RegExp(r'\bcreateContainer\s*\(').hasMatch(line)) {
+        if (context.isTestFile && _createContainerPattern.hasMatch(line)) {
           reporter.report(context, i, line.indexOf('createContainer'));
         }
       }
@@ -104,8 +116,8 @@ final List<ScannerRule> testSourceRules = [
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
         if (context.isTestFile &&
-            RegExp(r'\bpumpAndSettle\s*\(').hasMatch(line) &&
-            RegExp(r'\bpumpAndSettle\s*\(\s*\)').hasMatch(line)) {
+            _pumpAndSettlePattern.hasMatch(line) &&
+            _pumpAndSettleScannerRulePattern.hasMatch(line)) {
           reporter.report(context, i, line.indexOf('pumpAndSettle'));
         }
       }
@@ -127,7 +139,7 @@ final List<ScannerRule> testSourceRules = [
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (context.isTestFile && RegExp(r'\btapAt\s*\(').hasMatch(line)) {
+        if (context.isTestFile && _tapAtPattern.hasMatch(line)) {
           reporter.report(context, i, line.indexOf('tapAt'));
         }
       }

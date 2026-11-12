@@ -13,6 +13,10 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 part 'persistence_crash_source_rules/persistence_crash_source_rules_part_01.dart';
 
+final _hiveClosePattern = RegExp(r'\bHive\s*\.\s*close\s*\(');
+
+final _hivePattern = RegExp(r'\bHive\s*\.');
+
 final List<ScannerRule> persistenceCrashSourceRules = [
   /// A generated adapter can claim any @HiveType id in its scope missing from reservedTypeIds.
   scannerRule(
@@ -38,9 +42,9 @@ final List<ScannerRule> persistenceCrashSourceRules = [
     description: 'Flags test files that use Hive without Hive.close() so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isTestFile) return;
-      final hiveUseLine = _firstLineMatching(context, RegExp(r'\bHive\s*\.'));
+      final hiveUseLine = _firstLineMatching(context, _hivePattern);
       if (hiveUseLine == null) return;
-      if (_containsMatch(context, RegExp(r'\bHive\s*\.\s*close\s*\('))) return;
+      if (_containsMatch(context, _hiveClosePattern)) return;
       reporter.report(context, hiveUseLine, context.source.masked[hiveUseLine].indexOf('Hive'));
     },
   ),
@@ -554,18 +558,24 @@ String _statementFrom(SourceScannerContext context, int startLine) {
   return buffer.toString();
 }
 
+final _firebaseCrashlyticsAnalyticsPattern = RegExp(
+  r'\b(?:Firebase|Crashlytics|analytics|remote|sync|logEvent|recordError|setUserIdentifier|setCustomKey)\b',
+  caseSensitive: false,
+);
+
 bool _isFeasibleFireAndForgetRisk(String statement) {
   if (statement.contains('() async')) return true;
-  return RegExp(
-    r'\b(?:Firebase|Crashlytics|analytics|remote|sync|logEvent|recordError|setUserIdentifier|setCustomKey)\b',
-    caseSensitive: false,
-  ).hasMatch(statement);
+  return _firebaseCrashlyticsAnalyticsPattern.hasMatch(statement);
 }
+
+final _catchPattern = RegExp(r'\b(?:catch|on\s+[A-Za-z_][A-Za-z0-9_]*)\b');
+
+final _tryPattern = RegExp(r'\btry\s*\{');
 
 bool _hasCatchGuard(String statement) {
   if (statement.contains('.catchError(')) return true;
-  if (!RegExp(r'\btry\s*\{').hasMatch(statement)) return false;
-  return RegExp(r'\b(?:catch|on\s+[A-Za-z_][A-Za-z0-9_]*)\b').hasMatch(statement);
+  if (!_tryPattern.hasMatch(statement)) return false;
+  return _catchPattern.hasMatch(statement);
 }
 
 final class _UnawaitedVisitor extends RecursiveAstVisitor<void> {

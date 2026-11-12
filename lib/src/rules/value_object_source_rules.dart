@@ -6,6 +6,16 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
+final _abstractOverrideCopyWithPattern = RegExp(
+  r'^\s*(?:abstract\s+|@override\s+)*(?:[A-Za-z_]\w*(?:<[^>]+>)?\??\s+)?copyWith\s*[<(]',
+);
+
+final _whenFreezedWhenOptionsNonePattern = RegExp(r'when\s*:\s*(?:FreezedWhenOptions)?\.none');
+
+final _mapFreezedMapOptionsNonePattern = RegExp(r'map\s*:\s*(?:FreezedMapOptions)?\.none');
+
+final _sealedClassPattern = RegExp(r'\bsealed\s+class\b');
+
 /// Rules enforcing Value Object boundary integrity in /domain/ paths.
 ///
 /// Why: Primitive obsession leaks through three pinholes: public raw Value
@@ -163,11 +173,11 @@ final List<ScannerRule> valueObjectSourceRules = [
         if (!context.hasFreezedAnnotation(classSpan)) continue;
         if (classSpan.name.startsWith('_')) continue;
         final declLine = context.source.masked[classSpan.start];
-        if (!RegExp(r'\bsealed\s+class\b').hasMatch(declLine)) continue;
+        if (!_sealedClassPattern.hasMatch(declLine)) continue;
         final windowStart = classSpan.start - 10 < 0 ? 0 : classSpan.start - 10;
         final window = context.source.masked.sublist(windowStart, classSpan.start).join('\n');
-        final hasMapNone = RegExp(r'map\s*:\s*(?:FreezedMapOptions)?\.none').hasMatch(window);
-        final hasWhenNone = RegExp(r'when\s*:\s*(?:FreezedWhenOptions)?\.none').hasMatch(window);
+        final hasMapNone = _mapFreezedMapOptionsNonePattern.hasMatch(window);
+        final hasWhenNone = _whenFreezedWhenOptionsNonePattern.hasMatch(window);
         if (hasMapNone && hasWhenNone) continue;
         final col = declLine.indexOf('sealed');
         reporter.report(context, classSpan.start, col < 0 ? 0 : col);
@@ -195,9 +205,7 @@ final List<ScannerRule> valueObjectSourceRules = [
     description: 'Flags hand-written copyWith declarations in /domain/ files so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       if (!context.isDomainPath) return;
-      final declRegex = RegExp(
-        r'^\s*(?:abstract\s+|@override\s+)*(?:[A-Za-z_]\w*(?:<[^>]+>)?\??\s+)?copyWith\s*[<(]',
-      );
+      final declRegex = _abstractOverrideCopyWithPattern;
       for (final classSpan in context.classes) {
         if (classSpan.name.startsWith(r'_$')) continue;
         for (var i = classSpan.start; i <= classSpan.end; i++) {
@@ -264,16 +272,18 @@ bool _isCompositeCanonicalRedirect(ConstructorDeclaration constructor) {
       parameters.every((parameter) => parameter.isNamed);
 }
 
+final _factoryPattern = RegExp(
+  r'\bfactory\s+([A-Z]\w*)\s*\.\s*([A-Za-z_]\w*)\s*\(\s*\w+\s+(\w+)\s*\)\s*=>\s*\1\s*\.\s*_\w+\s*\(\s*\3\s*\)\s*;',
+  dotAll: true,
+);
+
 void _reportPassthroughFactories(
   ScannerRuleReporter reporter,
   SourceScannerContext context,
   String source,
   List<int> lineOffsets,
 ) {
-  final pattern = RegExp(
-    r'\bfactory\s+([A-Z]\w*)\s*\.\s*([A-Za-z_]\w*)\s*\(\s*\w+\s+(\w+)\s*\)\s*=>\s*\1\s*\.\s*_\w+\s*\(\s*\3\s*\)\s*;',
-    dotAll: true,
-  );
+  final pattern = _factoryPattern;
   for (final match in pattern.allMatches(source)) {
     final constructorName = match.group(2)!;
     if (constructorName.startsWith('_') || constructorName == 'fromJson') continue;

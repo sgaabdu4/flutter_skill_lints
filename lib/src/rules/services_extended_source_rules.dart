@@ -5,6 +5,13 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
+final _unawaitedPattern = RegExp(r'\bunawaited\s*\(');
+
+final _abstractFinalClassScannerRulePattern = RegExp(
+  r'^\s*abstract\s+final\s+class\b',
+  multiLine: true,
+);
+
 final List<ScannerRule> servicesExtendedSourceRules = [
   /// Keep static service facades tiny and direct.
   scannerRule(
@@ -19,7 +26,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       if (context.isTestFile) return;
       for (final classSpan in context.classes) {
         final body = context.source.masked.sublist(classSpan.start, classSpan.end + 1).join('\n');
-        if (!RegExp(r'^\s*abstract\s+final\s+class\b', multiLine: true).hasMatch(body)) {
+        if (!_abstractFinalClassScannerRulePattern.hasMatch(body)) {
           continue;
         }
 
@@ -208,7 +215,7 @@ final List<ScannerRule> servicesExtendedSourceRules = [
       if (!context.isTestFile) return;
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (RegExp(r'\bunawaited\s*\(').hasMatch(line)) {
+        if (_unawaitedPattern.hasMatch(line)) {
           reporter.report(context, i, line.indexOf('unawaited'));
         }
       }
@@ -308,6 +315,8 @@ int? _implicitNullFallbackColumn(String masked, String code) {
   return null;
 }
 
+final _iverpodTextPattern = RegExp(r'@(?:R|r)iverpod\b');
+
 /// Find resolved stable-infrastructure watches in factories and notifier members.
 MethodInvocation? _stableInfrastructureFactoryWatch(
   SourceScannerContext context,
@@ -327,7 +336,7 @@ MethodInvocation? _stableInfrastructureFactoryWatch(
 
   final start = lineIndex - 12 < 0 ? 0 : lineIndex - 12;
   final window = context.source.masked.sublist(start, lineIndex + 1).join(' ');
-  if (!RegExp(r'@(?:R|r)iverpod\b').hasMatch(window)) return null;
+  if (!_iverpodTextPattern.hasMatch(window)) return null;
   final declaration = watch.thisOrAncestorOfType<FunctionDeclaration>();
   final function = declaration?.declaredFragment?.element;
   if (function is! TopLevelFunctionElement) return null;

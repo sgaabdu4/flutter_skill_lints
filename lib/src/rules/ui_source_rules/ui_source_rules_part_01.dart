@@ -1,5 +1,13 @@
 part of '../ui_source_rules.dart';
 
+final _dateFormatRegExp = RegExp(r'\b(?:DateFormat|RegExp)\s*\(');
+
+final _sortWhereMapPattern = RegExp(r'\.(?:sort|where|map|toList)\s*\(');
+
+final _refReadWatchScannerRulePattern = RegExp(r'\bref\s*\.\s*(?:read|watch|listen)\s*\(');
+
+final _textStylePattern = RegExp(r'\bTextStyle\s*\(');
+
 final List<ScannerRule> _uiSourceRulesPart1 = [
   /// Avoid raw spacing, radius, size, and color tokens.
   ///
@@ -41,7 +49,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
 
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (RegExp(r'\bTextStyle\s*\(').hasMatch(line)) {
+        if (_textStylePattern.hasMatch(line)) {
           reporter.report(context, i, line.indexOf('TextStyle'));
         }
       }
@@ -197,7 +205,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
 
         final text = context.source.masked.sublist(classSpan.start, classSpan.end + 1).join('\n');
         if (!text.contains('WidgetRef')) continue;
-        if (!RegExp(r'\bref\s*\.\s*(?:read|watch|listen)\s*\(').hasMatch(text)) continue;
+        if (!_refReadWatchScannerRulePattern.hasMatch(text)) continue;
 
         reporter.report(
           context,
@@ -441,8 +449,7 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
         if (!_isWidgetBuild(context, method)) continue;
         for (var i = method.start; i <= method.end; i++) {
           final line = context.source.masked[i];
-          if (RegExp(r'\.(?:sort|where|map|toList)\s*\(').hasMatch(line) ||
-              RegExp(r'\b(?:DateFormat|RegExp)\s*\(').hasMatch(line)) {
+          if (_sortWhereMapPattern.hasMatch(line) || _dateFormatRegExp.hasMatch(line)) {
             reporter.report(context, i, 0);
           }
         }

@@ -1,6 +1,5 @@
 // ignore_for_file: non_constant_identifier_names
 
-import 'dart:mirrors';
 import 'dart:typed_data';
 
 import 'package:analyzer/file_system/file_system.dart';
@@ -782,7 +781,49 @@ final class _CountingFile implements File {
   void _count() => _reads.update(_inner.path, (count) => count + 1, ifAbsent: () => 1);
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => reflect(_inner).delegate(invocation);
+  bool get exists => _inner.exists;
+
+  @override
+  int get lengthSync => _inner.lengthSync;
+
+  @override
+  int get modificationStamp => _inner.modificationStamp;
+
+  @override
+  String get path => _inner.path;
+
+  @override
+  ResourceProvider get provider => _inner.provider;
+
+  @override
+  String get shortName => _inner.shortName;
+
+  @override
+  File copyTo(Folder parentFolder) => _inner.copyTo(parentFolder);
+
+  @override
+  void delete() => _inner.delete();
+
+  @override
+  bool isOrContains(String path) => _inner.isOrContains(path);
+
+  @override
+  File renameSync(String newPath) => _inner.renameSync(newPath);
+
+  @override
+  Resource resolveSymbolicLinksSync() => _inner.resolveSymbolicLinksSync();
+
+  @override
+  Uri toUri() => _inner.toUri();
+
+  @override
+  ResourceWatcher watch() => _inner.watch();
+
+  @override
+  void writeAsBytesSync(List<int> bytes) => _inner.writeAsBytesSync(bytes);
+
+  @override
+  void writeAsStringSync(String content) => _inner.writeAsStringSync(content);
 }
 
 final class _CountingFolder implements Folder {
@@ -806,5 +847,53 @@ final class _CountingFolder implements Folder {
   Folder getFolder(String relPath) => _counted(_inner.getFolder(relPath), _reads) as Folder;
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => reflect(_inner).delegate(invocation);
+  Resource getChild(String relPath) => _counted(_inner.getChild(relPath), _reads);
+
+  @override
+  File getChildAssumingFile(String relPath) => getFile(relPath);
+
+  @override
+  Folder getChildAssumingFolder(String relPath) => getFolder(relPath);
+
+  @override
+  bool get exists => _inner.exists;
+
+  @override
+  bool get isRoot => _inner.isRoot;
+
+  @override
+  String get path => _inner.path;
+
+  @override
+  ResourceProvider get provider => _inner.provider;
+
+  @override
+  String get shortName => _inner.shortName;
+
+  @override
+  String canonicalizePath(String path) => _inner.canonicalizePath(path);
+
+  @override
+  bool contains(String path) => _inner.contains(path);
+
+  @override
+  Folder copyTo(Folder parentFolder) => _inner.copyTo(parentFolder);
+
+  @override
+  void create() => _inner.create();
+
+  @override
+  void delete() => _inner.delete();
+
+  @override
+  bool isOrContains(String path) => _inner.isOrContains(path);
+
+  @override
+  Resource resolveSymbolicLinksSync() => _inner.resolveSymbolicLinksSync();
+
+  @override
+  Uri toUri() => _inner.toUri();
+
+  @override
+  ResourceWatcher watch() => _inner.watch();
 }

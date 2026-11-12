@@ -294,9 +294,12 @@ final _widgetInfraLocalConstructor = RegExp(
   r'\b(?:final|var)\s+[A-Za-z_]\w*\s*=\s*(?:const\s+)?[A-Z]\w*(?:CacheManager|Client|Plugin|Storage|Repository|Datasource|DataSource|Service|Queue|Manager)\s*\(',
 );
 
+final _classMixinEnumPattern = RegExp(
+  r'^\s*(?:class|mixin|enum|extension|typedef|sealed\s+class|abstract\s+class)\b',
+);
+
 int _topLevelFunctionColumn(String line) {
-  if (RegExp(r'^\s*(?:class|mixin|enum|extension|typedef|sealed\s+class|abstract\s+class)\b')
-      .hasMatch(line)) {
+  if (_classMixinEnumPattern.hasMatch(line)) {
     return -1;
   }
   final match = _topLevelFunction.firstMatch(line);
@@ -305,6 +308,14 @@ int _topLevelFunctionColumn(String line) {
   if (name == 'build' || name == 'main') return -1;
   return match.start;
 }
+
+final _widgetInfraDependencyColumnPattern2 = RegExp(r'(?:<[^;=]+>)?\??\s+[A-Za-z_]\w*[,)}]');
+
+final _requiredFinalPattern = RegExp(r'[({,]\s*(?:required\s+)?(?:final\s+)?$');
+
+final _widgetInfraDependencyColumnPattern = RegExp(r'(?:<[^;=]+>)?\??\s+[A-Za-z_]\w*\s*;');
+
+final _lateFinalPattern = RegExp(r'^\s*(?:late\s+)?final\s+$');
 
 int _widgetInfraDependencyColumn(String line) {
   final namedArg = _widgetInfraNamedConstructorArg.firstMatch(line);
@@ -318,13 +329,12 @@ int _widgetInfraDependencyColumn(String line) {
   final before = line.substring(0, typeMatch.start);
   final after = line.substring(typeMatch.end);
 
-  if (RegExp(r'^\s*(?:late\s+)?final\s+$').hasMatch(before) &&
-      RegExp(r'(?:<[^;=]+>)?\??\s+[A-Za-z_]\w*\s*;').hasMatch(after)) {
+  if (_lateFinalPattern.hasMatch(before) && _widgetInfraDependencyColumnPattern.hasMatch(after)) {
     return typeMatch.start;
   }
 
-  if (RegExp(r'[({,]\s*(?:required\s+)?(?:final\s+)?$').hasMatch(before) &&
-      RegExp(r'(?:<[^;=]+>)?\??\s+[A-Za-z_]\w*[,)}]').hasMatch(after)) {
+  if (_requiredFinalPattern.hasMatch(before) &&
+      _widgetInfraDependencyColumnPattern2.hasMatch(after)) {
     return typeMatch.start;
   }
 
@@ -409,10 +419,13 @@ int _firstNonWhitespaceColumn(String line) {
   return 0;
 }
 
+final _materialAppCupertinoAppWidgetsAppPattern = RegExp(
+  r'\b(?:MaterialApp|CupertinoApp|WidgetsApp)(?:\.router)?\s*\(',
+);
+
 bool _buildContainsAppShell(SourceScannerContext context, ScannerMethodSpan method) {
   for (var i = method.start; i <= method.end; i++) {
-    if (RegExp(r'\b(?:MaterialApp|CupertinoApp|WidgetsApp)(?:\.router)?\s*\(')
-        .hasMatch(context.source.masked[i])) {
+    if (_materialAppCupertinoAppWidgetsAppPattern.hasMatch(context.source.masked[i])) {
       return true;
     }
   }

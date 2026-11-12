@@ -179,7 +179,7 @@ final List<ScannerRule> testSourceRules = [
     scan: _scanE2eBlindSleeps,
   ),
 
-  /// Avoid case-sensitive label text as a widget-test interaction selector.
+  /// Avoid case-sensitive label text as a widget-test interaction selector; `expect(find.text(...), ...)` stays allowed.
   scannerRule(
     code: const LintCode(
       'test_text_label_selector',

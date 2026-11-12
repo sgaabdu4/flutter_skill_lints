@@ -64,7 +64,7 @@ final class _RawStyleTokenVisitor extends RecursiveAstVisitor<void> {
           node.argumentList,
           'width',
         ),
-        _ when owner.library.identifier.startsWith('package:flutter/') => _rawNumericArgument(
+        _ when isFlutterUiLibraryUri(owner.library.identifier) => _rawNumericArgument(
           node.argumentList,
           'iconSize',
         ),

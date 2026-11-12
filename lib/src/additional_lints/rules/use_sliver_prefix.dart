@@ -125,6 +125,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (!typeName.startsWith('Sliver')) return false;
 
     final libraryUri = type.element.library.identifier;
-    return libraryUri.startsWith('package:flutter/');
+    return isFlutterUiLibraryUri(libraryUri);
   }
 }

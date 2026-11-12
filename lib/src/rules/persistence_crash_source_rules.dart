@@ -8,6 +8,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/scope.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
@@ -737,7 +738,7 @@ bool _isFailureRecordingCall(Element? element) {
     return declared.name == 'run' && ownerName == 'Mutation';
   }
   if (!_routePushMethods.contains(declared.name)) {
-    return uri.startsWith('package:flutter/') &&
+    return isFlutterUiLibraryUri(uri) &&
         declared is TopLevelFunctionElement &&
         _flutterModalFunctions.contains(declared.name);
   }

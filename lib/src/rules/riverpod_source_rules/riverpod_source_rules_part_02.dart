@@ -176,8 +176,7 @@ bool _isAppWidget(InterfaceElement element) =>
       (type) => type.element.name == 'Widget' && _isFlutterLibrary(type.element.library),
     );
 
-bool _isFlutterLibrary(LibraryElement library) =>
-    library.uri.toString().startsWith('package:flutter/');
+bool _isFlutterLibrary(LibraryElement library) => isFlutterUiLibraryUri(library.uri.toString());
 
 /// Counts public instance fields plus public abstract getters, because Freezed
 /// declares a class's fields as abstract getters on its generated mixin. SDK

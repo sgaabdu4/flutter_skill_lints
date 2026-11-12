@@ -131,7 +131,8 @@ class TypeChecker {
       return libraryUri.startsWith('dart:');
     }
 
-    // Check for package: libraries
+    if (_packageName == 'flutter') return isFlutterUiLibraryUri(libraryUri);
+
     return libraryUri.startsWith('package:$_packageName/');
   }
 }
@@ -162,3 +163,11 @@ DartType? iterableElementType(InterfaceType type) {
   }
   return null;
 }
+
+const _flutterUiPackagePrefixes = [
+  'package:flutter/',
+  'package:material_ui/',
+  'package:cupertino_ui/',
+];
+
+bool isFlutterUiLibraryUri(String uri) => _flutterUiPackagePrefixes.any(uri.startsWith);

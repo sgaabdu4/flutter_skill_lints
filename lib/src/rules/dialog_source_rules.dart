@@ -461,7 +461,7 @@ void _reportTeardownMatches(
 bool _isFlutterModalLauncherWithoutRouteSettings(MethodInvocation call) {
   final element = call.methodName.element;
   if (element is! TopLevelFunctionElement) return false;
-  if (!element.library.identifier.startsWith('package:flutter/')) return false;
+  if (!isFlutterUiLibraryUri(element.library.identifier)) return false;
   if (!element.formalParameters.any((parameter) => parameter.name == 'routeSettings')) {
     return false;
   }

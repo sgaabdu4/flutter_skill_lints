@@ -98,7 +98,7 @@ bool _isFlutterSliverExpression(Expression expression) {
   final typeName = element.name;
   if (typeName == null || !typeName.startsWith('Sliver')) return false;
 
-  return element.library.identifier.startsWith('package:flutter/');
+  return isFlutterUiLibraryUri(element.library.identifier);
 }
 
 ClassDeclaration? _findStateForWidget(List<ClassDeclaration> states, String widgetName) {

@@ -178,7 +178,7 @@ bool _isFlutterWidgetCallbackArgument(NamedArgument argument) {
     return true;
   }
 
-  return executable.library.identifier.startsWith('package:flutter/') &&
+  return isFlutterUiLibraryUri(executable.library.identifier) &&
       _flutterWidgetChecker.isAssignableFromType(callbackType.returnType);
 }
 

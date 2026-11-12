@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Keeps Flutter app and widget imports out of host-side Flutter Driver files.
 final class AvoidFlutterHostDriverImports extends AnalysisRule {
@@ -113,7 +114,7 @@ String? _packageName(RuleContext context) {
 }
 
 bool _isForbidden(String uri, String? appPackageName) {
-  if (uri == 'dart:ui' || uri.startsWith('package:flutter/')) return true;
+  if (uri == 'dart:ui' || isFlutterUiLibraryUri(uri)) return true;
   if (uri == 'package:flutter_driver/driver_extension.dart') return true;
   if (uri == 'package:integration_test/integration_test.dart') return true;
   if (appPackageName == null) return false;

@@ -465,13 +465,13 @@ bool _isKeepAliveRiverpodAnnotation(SourceScannerContext context, int lineIndex)
   return _riverpodKeepAliveTruePattern.hasMatch(annotation.toString());
 }
 
-final _riverpodTickerModePausedActiveSubscriptionCountPattern = RegExp(
+final _tickerModeWorkaroundPattern = RegExp(
   r'(?:#4709|riverpod#4709|TickerMode|pausedActiveSubscriptionCount)',
   caseSensitive: false,
 );
 
 bool _hasKeepAliveTickerModeWorkaround(SourceScannerContext context, int annotationLine) {
-  final workaround = _riverpodTickerModePausedActiveSubscriptionCountPattern;
+  final workaround = _tickerModeWorkaroundPattern;
   final lineInfo = context.unit.lineInfo;
   for (final declaration in context.unit.declarations) {
     if (!declaration.metadata.any(
@@ -537,7 +537,7 @@ Iterable<Token> _tokensAfter(Token first, Token last) sync* {
   }
 }
 
-final _classHasFamilySignatureAfterKeepAlivePattern = RegExp(r'\bclass\s+[A-Za-z_]\w*\b');
+final _classDeclarationPattern = RegExp(r'\bclass\s+[A-Za-z_]\w*\b');
 
 bool _hasFamilySignatureAfterKeepAlive(SourceScannerContext context, int annotationLine) {
   final annotation = _riverpodAnnotationAt(context, annotationLine);
@@ -546,7 +546,7 @@ bool _hasFamilySignatureAfterKeepAlive(SourceScannerContext context, int annotat
   if (declarationLine == null) return false;
 
   final declaration = _declarationText(context, declarationLine);
-  if (_classHasFamilySignatureAfterKeepAlivePattern.hasMatch(declaration)) {
+  if (_classDeclarationPattern.hasMatch(declaration)) {
     final classSpan = context.classes
         .where((classSpan) => classSpan.start == declarationLine)
         .cast<ScannerClassSpan?>()

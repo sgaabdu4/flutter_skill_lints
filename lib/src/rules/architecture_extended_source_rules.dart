@@ -7,9 +7,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:analyzer/file_system/file_system.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
-final _jsonKeyJsonSerializableFreezedUnionValuePattern = RegExp(
-  r'\b(?:JsonKey|JsonSerializable|FreezedUnionValue)\b',
-);
+final _jsonAnnotationNamePattern = RegExp(r'\b(?:JsonKey|JsonSerializable|FreezedUnionValue)\b');
 
 final _classModelExtendsPattern = RegExp(r'\bclass\s+\w+Model\s+extends\s+(?!\w+Model\b)\w+');
 
@@ -93,7 +91,7 @@ final List<ScannerRule> architectureExtendedSourceRules = [
       if (!context.isDomainPath) return;
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (_jsonKeyJsonSerializableFreezedUnionValuePattern.hasMatch(line)) {
+        if (_jsonAnnotationNamePattern.hasMatch(line)) {
           reporter.report(context, i, 0);
         }
       }

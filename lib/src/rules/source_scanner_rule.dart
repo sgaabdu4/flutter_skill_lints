@@ -199,9 +199,7 @@ final _finalRepositoryDatasourcePattern = RegExp(
   r'\b(?:final\s+)?(?!I)[A-Z]\w*(?:Repository|Datasource)\s+_\w+\s*;',
 );
 
-final _abstractInterfaceClassHasConcreteLayerDependencyLinePattern = RegExp(
-  r'^\s*(?:abstract\s+interface\s+)?class\b',
-);
+final _classDeclarationLinePattern = RegExp(r'^\s*(?:abstract\s+interface\s+)?class\b');
 
 final _classRepositoryDatasourcePattern = RegExp(r'\bclass\s+\w+(?:Repository|Datasource)\b');
 
@@ -243,7 +241,7 @@ final _goRouterGoNamedPushNamedPattern = RegExp(
   r'''\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*(?:goNamed|pushNamed|replaceNamed)\s*(?:<[^>]+>)?\s*\(''',
 );
 
-final _goRouterPushReplaceStringNavigationColumnPattern = RegExp(
+final _goRouterOfStringNavigationPattern = RegExp(
   r'''\bGoRouter\s*\.\s*of\s*\([^)]*\)\s*\.\s*(?:go|push|replace|pushReplacement)\s*(?:<[^>]+>)?\s*\(\s*r?['"]''',
 );
 
@@ -251,7 +249,7 @@ final _contextGoNamedPushNamedPattern = RegExp(
   r'''\bcontext\s*\.\s*(?:goNamed|pushNamed|replaceNamed)\s*(?:<[^>]+>)?\s*\(''',
 );
 
-final _contextPushReplaceStringNavigationColumnPattern = RegExp(
+final _contextStringNavigationPattern = RegExp(
   r'''\bcontext\s*\.\s*(?:go|push|replace|pushReplacement)\s*(?:<[^>]+>)?\s*\(\s*r?['"]''',
 );
 
@@ -324,9 +322,9 @@ final class SourceScannerContext {
 
   int? stringNavigationColumn(String code, String masked) {
     final patterns = [
-      _contextPushReplaceStringNavigationColumnPattern,
+      _contextStringNavigationPattern,
       _contextGoNamedPushNamedPattern,
-      _goRouterPushReplaceStringNavigationColumnPattern,
+      _goRouterOfStringNavigationPattern,
       _goRouterGoNamedPushNamedPattern,
       _routerRouterPushPattern,
       _routerRouterGoNamedPattern,
@@ -407,7 +405,7 @@ final class SourceScannerContext {
   }
 
   bool hasConcreteLayerDependencyLine(String line) {
-    if (_abstractInterfaceClassHasConcreteLayerDependencyLinePattern.hasMatch(line)) {
+    if (_classDeclarationLinePattern.hasMatch(line)) {
       return false;
     }
     if (_finalRepositoryDatasourcePattern.hasMatch(line)) {

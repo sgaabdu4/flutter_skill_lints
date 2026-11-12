@@ -155,7 +155,7 @@ final _toJsonPattern = RegExp(r'\btoJson\s*\(');
 
 final _factoryFromJsonPattern = RegExp(r'factory\s+\w+\.fromJson\s*\(');
 
-final _flutterSkillLintsFlowStyleHasProhibitedLocalSourcePattern = RegExp(
+final _flowStyleLocalSourceDependencyPattern = RegExp(
   r'''['"]?flutter_skill_lints['"]?\s*:\s*\{[^}]*['"]?path['"]?\s*:[^}]*\}''',
 );
 
@@ -437,7 +437,7 @@ final class _ProjectConfigScanner {
   bool _flowStyleHasProhibitedLocalSource(String text) {
     if (!_lineHasLocalSource(text)) return false;
     final withoutAllowedFlutterSkillPath = text.replaceAll(
-      _flutterSkillLintsFlowStyleHasProhibitedLocalSourcePattern,
+      _flowStyleLocalSourceDependencyPattern,
       '',
     );
     return _lineHasLocalSource(withoutAllowedFlutterSkillPath);

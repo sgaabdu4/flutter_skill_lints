@@ -201,7 +201,7 @@ final _navigatorPattern = RegExp(
   r'(?:<[^>]+>)?\s*\(',
 );
 
-final _routerRouterRouterConvenienceNavigationPattern = RegExp(
+final _routerConvenienceCallPattern = RegExp(
   r'\b(?:_?router|[A-Za-z_]\w*Router\w*)\s*\.\s*'
   r'(?:go|push|replace|pushReplacement)[A-Z]\w*\s*'
   r'(?:<[^>]+>)?\s*\(',
@@ -213,7 +213,7 @@ final _routerRouterPattern = RegExp(
   r'(?:<[^>]+>)?\s*\(',
 );
 
-final _contextPushReplaceContextConvenienceNavigationPattern = RegExp(
+final _contextConvenienceCallPattern = RegExp(
   r'\bcontext\s*\.\s*(?:go|push|replace|pushReplacement)[A-Z]\w*\s*'
   r'(?:<[^>]+>)?\s*\(',
 );
@@ -246,7 +246,7 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
   );
   if (contextNavigationCall != null) return contextNavigationCall.column;
 
-  final contextConvenienceNavigation = _contextPushReplaceContextConvenienceNavigationPattern;
+  final contextConvenienceNavigation = _contextConvenienceCallPattern;
   final contextConvenienceNavigationCall = sourceWindowMatch(
     context,
     lineIndex,
@@ -266,7 +266,7 @@ int? _directRouteNavigationColumn(SourceScannerContext context, int lineIndex) {
   );
   if (routerVariableNavigationCall != null) return routerVariableNavigationCall.column;
 
-  final routerConvenienceNavigation = _routerRouterRouterConvenienceNavigationPattern;
+  final routerConvenienceNavigation = _routerConvenienceCallPattern;
   final routerConvenienceNavigationCall = sourceWindowMatch(
     context,
     lineIndex,

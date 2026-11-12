@@ -1,6 +1,6 @@
 part of '../riverpod_source_rules.dart';
 
-final _serviceFactoryServiceLocatorBackendProviderPattern = RegExp(
+final _backendServiceNameSuffixPattern = RegExp(
   r'(?:ServiceFactory|ServiceLocator|BackendProvider)$',
 );
 
@@ -35,7 +35,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     description: 'Flags service locator classes in Riverpod apps so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       // The skill bans these class kinds by name: "NEVER create ServiceFactory, ServiceLocator, or BackendProvider class", including prefixed variants.
-      final banned = _serviceFactoryServiceLocatorBackendProviderPattern;
+      final banned = _backendServiceNameSuffixPattern;
       for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
         if (!banned.hasMatch(declaration.namePart.typeName.lexeme)) continue;
         _reportAtOffset(reporter, context, declaration.classKeyword.offset);

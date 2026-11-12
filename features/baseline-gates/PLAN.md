@@ -20,7 +20,7 @@ Authority: The coordinator asked for this repair as its own change before the fe
 ## Acceptance + steps
 
 - [x] zizmor passes with the pinned commit unchanged → N/A — no test file covers workflow text; the zizmor gate reports 0 findings.
-- [x] Direct dependencies are current → N/A — the freshness gate lists none outdated; the full test suite and `dart analyze --fatal-infos .` pass on the new versions after the fixture ignore lists name the renamed analyzer 14.7 diagnostics.
+- [x] Direct dependencies are current → N/A — the freshness gate lists none outdated; the full test suite and `dart analyze --fatal-infos .` pass on the new versions after the test classes that need them list the renamed analyzer 14.7 undefined-name codes in `ignoredDiagnosticCodes`; the `ignore_for_file` lines in those fixtures keep their old, now dead, names because Hard Eng counts an edit of such a line as a new switch-off.
 - [x] The 205 regexes are built once at library level with the same pattern text and flags → N/A — the plan check matches quoted test names and reflective Dart tests have none; the proof is the unchanged `dart test` suite plus a comparison of the 377 distinct `RegExp(...)` expressions in `lib/` before and after (equal), and the security gate reporting no finding.
 
 ## Baseline + execution
@@ -40,7 +40,7 @@ N/A — no visual surface.
 ## Verification
 
 Result: Passed
-Evidence: zizmor reports no findings; freshness passes; `dart test` passes (2,714 tests) and `dart analyze --fatal-infos .` reports no issues on analyzer 14.7.0; the 377 distinct RegExp expressions of `lib/` are equal before and after (394 uses become 389 after merging 5 identical copies in one library); `dart test` and `dart analyze --fatal-infos .` pass after each of 5 commits.
+Evidence: `dart format` changed 0 of 560 files; `dart analyze --fatal-infos .` reported no issues; `dart test` passed 2,714 tests; `RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart` passed 1 test; semgrep 1.185.0 with the `.agents/skills/he/security` rules reported 0 findings; the 377 distinct `RegExp(...)` expressions of `lib/` are equal before and after (394 uses became 389 after merging 5 identical copies in one library); 157 cut comment lines were read and 47 rewritten; 20 regex names were shortened or made unique.
 E2E: N/A — no user journey.
 
 Delivery target: PR

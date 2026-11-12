@@ -300,11 +300,11 @@ int _topLevelFunctionColumn(String line) {
   return match.start;
 }
 
-final _widgetInfraDependencyColumnPattern2 = RegExp(r'(?:<[^;=]+>)?\??\s+[A-Za-z_]\w*[,)}]');
+final _declaredParameterTailPattern = RegExp(r'(?:<[^;=]+>)?\??\s+[A-Za-z_]\w*[,)}]');
 
 final _requiredFinalPattern = RegExp(r'[({,]\s*(?:required\s+)?(?:final\s+)?$');
 
-final _widgetInfraDependencyColumnPattern = RegExp(r'(?:<[^;=]+>)?\??\s+[A-Za-z_]\w*\s*;');
+final _declaredFieldTailPattern = RegExp(r'(?:<[^;=]+>)?\??\s+[A-Za-z_]\w*\s*;');
 
 final _lateFinalPattern = RegExp(r'^\s*(?:late\s+)?final\s+$');
 
@@ -320,12 +320,11 @@ int _widgetInfraDependencyColumn(String line) {
   final before = line.substring(0, typeMatch.start);
   final after = line.substring(typeMatch.end);
 
-  if (_lateFinalPattern.hasMatch(before) && _widgetInfraDependencyColumnPattern.hasMatch(after)) {
+  if (_lateFinalPattern.hasMatch(before) && _declaredFieldTailPattern.hasMatch(after)) {
     return typeMatch.start;
   }
 
-  if (_requiredFinalPattern.hasMatch(before) &&
-      _widgetInfraDependencyColumnPattern2.hasMatch(after)) {
+  if (_requiredFinalPattern.hasMatch(before) && _declaredParameterTailPattern.hasMatch(after)) {
     return typeMatch.start;
   }
 
@@ -410,13 +409,13 @@ int _firstNonWhitespaceColumn(String line) {
   return 0;
 }
 
-final _materialAppCupertinoAppWidgetsAppPattern = RegExp(
+final _appRootWidgetPattern = RegExp(
   r'\b(?:MaterialApp|CupertinoApp|WidgetsApp)(?:\.router)?\s*\(',
 );
 
 bool _buildContainsAppShell(SourceScannerContext context, ScannerMethodSpan method) {
   for (var i = method.start; i <= method.end; i++) {
-    if (_materialAppCupertinoAppWidgetsAppPattern.hasMatch(context.source.masked[i])) {
+    if (_appRootWidgetPattern.hasMatch(context.source.masked[i])) {
       return true;
     }
   }

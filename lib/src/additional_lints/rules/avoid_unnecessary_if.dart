@@ -99,8 +99,10 @@ Expression _unwrapParentheses(Expression expression) {
   return current;
 }
 
+final _canonicalSourcePattern = RegExp(r'\s+');
+
 String _canonicalSource(AstNode node) {
-  return node.toSource().replaceAll(RegExp(r'\s+'), ' ').trim();
+  return node.toSource().replaceAll(_canonicalSourcePattern, ' ').trim();
 }
 
 final class _BooleanAssignment {

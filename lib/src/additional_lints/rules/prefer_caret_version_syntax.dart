@@ -93,8 +93,10 @@ final class _SectionScalarState {
   }
 }
 
+final _legacyVersionRangePattern = RegExp(r'^>=\s*(\d+)\.(\d+)\.(\d+)\s+<\s*(\d+)\.(\d+)\.(\d+)$');
+
 bool _isCaretEquivalent(String value) {
-  final match = RegExp(r'^>=\s*(\d+)\.(\d+)\.(\d+)\s+<\s*(\d+)\.(\d+)\.(\d+)$').firstMatch(value);
+  final match = _legacyVersionRangePattern.firstMatch(value);
   if (match == null) return false;
 
   final lower = _Version(

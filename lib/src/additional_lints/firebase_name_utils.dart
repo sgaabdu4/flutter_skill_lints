@@ -1,3 +1,5 @@
+final _isValidFirebaseNamePattern = RegExp(r'^[A-Za-z][A-Za-z0-9_]*$');
+
 bool isValidFirebaseName(String name) {
   if (name.isEmpty || name.length > 40) return false;
   final normalized = name.toLowerCase();
@@ -6,5 +8,5 @@ bool isValidFirebaseName(String name) {
       normalized.startsWith('ga_')) {
     return false;
   }
-  return RegExp(r'^[A-Za-z][A-Za-z0-9_]*$').hasMatch(name);
+  return _isValidFirebaseNamePattern.hasMatch(name);
 }

@@ -36,11 +36,13 @@ final class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
+final _publishPattern = RegExp(
+  r'''^\s*publish_to\s*:\s*['"]?([^'"#\s]+)['"]?\s*(?:#.*)?$''',
+  multiLine: true,
+);
+
 bool _hasNonNonePublishTarget(String text) {
-  final match = RegExp(
-    r'''^\s*publish_to\s*:\s*['"]?([^'"#\s]+)['"]?\s*(?:#.*)?$''',
-    multiLine: true,
-  ).firstMatch(text);
+  final match = _publishPattern.firstMatch(text);
   final target = match?.group(1);
 
   return target != null && target != 'none';

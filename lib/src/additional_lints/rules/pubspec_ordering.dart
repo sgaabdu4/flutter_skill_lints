@@ -69,22 +69,26 @@ const _topLevelOrder = {
   'flutter': 15,
 };
 
+final _unindentedKeyPattern = RegExp(r'''^['"]?([A-Za-z_][\w-]*)['"]?\s*:''');
+
 Iterable<String> _topLevelKeys(String text) sync* {
   for (final line in text.split('\n')) {
     if (line.trim().isEmpty || line.trimLeft().startsWith('#')) continue;
     if (line.startsWith(' ') || line.startsWith('\t')) continue;
 
-    final match = RegExp(r'''^['"]?([A-Za-z_][\w-]*)['"]?\s*:''').firstMatch(line);
+    final match = _unindentedKeyPattern.firstMatch(line);
     final key = match?.group(1);
     if (key != null) yield key;
   }
 }
 
+final _pubspecKeyPattern = RegExp(r'''^\s*['"]?([A-Za-z_][\w-]*)['"]?\s*:''');
+
 Iterable<String> _sectionPackageNames(String text, String section) sync* {
   for (final (:line, :indent) in yamlSectionLines(text, section)) {
     if (indent != 2) continue;
 
-    final match = RegExp(r'''^\s*['"]?([A-Za-z_][\w-]*)['"]?\s*:''').firstMatch(line);
+    final match = _pubspecKeyPattern.firstMatch(line);
     final name = match?.group(1);
     if (name != null) yield name;
   }

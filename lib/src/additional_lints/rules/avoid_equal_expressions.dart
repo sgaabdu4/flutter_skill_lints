@@ -49,13 +49,15 @@ bool sameLintExpressionSource(Expression left, Expression right) {
   return _canonicalExpressionSource(left) == _canonicalExpressionSource(right);
 }
 
+final _canonicalExpressionSourcePattern = RegExp(r'\s+');
+
 String _canonicalExpressionSource(Expression expression) {
   var current = expression;
   while (current is ParenthesizedExpression) {
     current = current.expression;
   }
 
-  return current.toSource().replaceAll(RegExp(r'\s+'), ' ').trim();
+  return current.toSource().replaceAll(_canonicalExpressionSourcePattern, ' ').trim();
 }
 
 bool _isSafeToCompare(Expression expression) {

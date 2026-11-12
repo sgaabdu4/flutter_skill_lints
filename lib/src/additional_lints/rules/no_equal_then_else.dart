@@ -79,6 +79,8 @@ bool _sameSource(AstNode left, AstNode right) {
   return _canonicalSource(left) == _canonicalSource(right);
 }
 
+final _canonicalSourcePattern2 = RegExp(r'\s+');
+
 String _canonicalSource(AstNode node) {
-  return node.toSource().replaceAll(RegExp(r'\s+'), ' ').trim();
+  return node.toSource().replaceAll(_canonicalSourcePattern2, ' ').trim();
 }

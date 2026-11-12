@@ -17,18 +17,9 @@ final _mapFreezedMapOptionsNonePattern = RegExp(r'map\s*:\s*(?:FreezedMapOptions
 final _sealedClassPattern = RegExp(r'\bsealed\s+class\b');
 
 /// Rules enforcing Value Object boundary integrity in /domain/ paths.
-///
-/// Why: Primitive obsession leaks through three pinholes: public raw Value
-/// Object constructors (skipping validation), named primitive factories on
-/// entities (boundary conversion done inside /domain/), and hand-written
-/// copyWith on domain types (drift from Freezed-generated semantics). These
 /// rules close all three.
 final List<ScannerRule> valueObjectSourceRules = [
   /// Domain strings must not use empty-string sentinels.
-  ///
-  /// Why: `''` does not prove a required domain string is valid, and it hides
-  /// absence when the value is optional. Required domain strings should be
-  /// validated Value Objects; optional domain strings should be nullable and
   /// normalized at the boundary.
   scannerRule(
     code: const LintCode(
@@ -50,14 +41,6 @@ final List<ScannerRule> valueObjectSourceRules = [
   ),
 
   /// Value Object raw constructors must be private.
-  ///
-  /// Why: A raw VO constructor (`const factory Distance.meters(double value) =
-  /// _Meters;`) skips invariants — callers can pass `-1` and the type system
-  /// shrugs. Make the raw redirect private (`._meters`) and expose a validated
-  /// factory (`factory Distance.fromMeters(double m) { assert(m >= 0); ... }`)
-  /// so every Distance carries proof of its invariant. Const and non-const
-  /// redirects are both checked. The unnamed redirect of a composite Value
-  /// Object with two or more named fields (the skill's `Money({required int
   /// cents, required Currency currency})`) is the documented canonical shape.
   scannerRule(
     code: const LintCode(
@@ -78,13 +61,6 @@ final List<ScannerRule> valueObjectSourceRules = [
   ),
 
   /// Domain entities must not own primitive factories.
-  ///
-  /// Why: A named factory on a domain entity (`factory User.fromPrimitives(String
-  /// email, int age)`) is a boundary in the wrong layer. Primitive → Value
-  /// Object conversion belongs to data models, notifiers, or import services.
-  /// Domain entities accept VO-typed parameters via the anonymous Freezed
-  /// constructor so invalid state is unrepresentable. Redirecting Freezed union
-  /// cases such as the skill's `AppError.network(String message)` convert
   /// nothing and stay allowed.
   scannerRule(
     code: const LintCode(
@@ -102,9 +78,6 @@ final List<ScannerRule> valueObjectSourceRules = [
   ),
 
   /// Domain entities must not take raw required strings.
-  ///
-  /// Why: A required `String` accepts blank or malformed text, so an entity
-  /// built from it proves nothing about its IDs, names or emails. Required
   /// domain text is a validated Value Object; optional text is `String?`.
   scannerRule(
     code: const LintCode(
@@ -123,9 +96,6 @@ final List<ScannerRule> valueObjectSourceRules = [
   ),
 
   /// Domain entities must not carry units or money as raw numbers.
-  ///
-  /// Why: `int lengthCm`, `double weightKg` or `int amountCents` put the unit
-  /// in the name instead of the type, so callers can mix units or pass
   /// negative values. Unit and currency values become Value Objects.
   scannerRule(
     code: const LintCode(
@@ -142,13 +112,6 @@ final List<ScannerRule> valueObjectSourceRules = [
   ),
 
   /// Sealed Value Objects must disable Freezed map/when generation.
-  ///
-  /// Why: `@freezed` (or `@Freezed()` without opt-outs) on a `sealed` class
-  /// generates `.map()` / `.maybeMap()` / `.when()` / `.maybeWhen()` alongside
-  /// the native sealed hierarchy. Those APIs bypass the analyzer's exhaustiveness
-  /// check on `switch`, are harder to refactor when variants change, and tempt
-  /// LLMs trained on Freezed 2.x examples back into the wrong pattern.
-  /// Annotate with `@Freezed(map: .none, when: .none)`
   /// so the only supported pattern-matching is Dart 3 native `switch`.
   scannerRule(
     code: const LintCode(
@@ -186,11 +149,6 @@ final List<ScannerRule> valueObjectSourceRules = [
   ),
 
   /// Domain types must not hand-roll copyWith.
-  ///
-  /// Why: Freezed generates `copyWith` in the `_$X` mixin from the canonical
-  /// redirect constructor. A hand-written `copyWith` in source drifts from the
-  /// generated semantics — nullability handling, sentinel values, and equality
-  /// diverge silently. Let codegen own the contract; if the API is wrong, fix
   /// the constructor.
   scannerRule(
     code: const LintCode(
@@ -264,7 +222,6 @@ bool _isPublicRawRedirect(ConstructorDeclaration constructor) {
 }
 
 /// value-objects.md `Money`: the unnamed redirect of a composite Value Object
-/// whose invariant is carried by two or more named component fields.
 bool _isCompositeCanonicalRedirect(ConstructorDeclaration constructor) {
   final parameters = constructor.parameters.parameters;
   return constructor.name == null &&
@@ -338,9 +295,6 @@ void _reportPrimitiveFactoriesInClass(
 }
 
 /// A named factory with a body that takes primitives (`User.fromPrimitives`).
-///
-/// A redirecting factory (`const factory AppError.network(String message) =
-/// NetworkError;`) declares a Freezed union case and converts nothing, so it
 /// is not a primitive factory (issues #38, #64).
 bool _isPublicPrimitiveFactory(ConstructorDeclaration constructor) {
   final name = constructor.name?.lexeme;

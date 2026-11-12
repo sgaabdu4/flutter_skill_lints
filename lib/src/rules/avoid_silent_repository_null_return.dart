@@ -7,8 +7,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Don't silently return when a repository field is null in mutation methods.
-///
-/// Why: Bans null repository early returns in mutation methods. Initialize dependencies with an
 /// _ensure... helper before writes.
 final class AvoidSilentRepositoryNullReturn extends AnalysisRule {
   static const LintCode code = LintCode(

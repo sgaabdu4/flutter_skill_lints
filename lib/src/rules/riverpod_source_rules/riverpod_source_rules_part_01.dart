@@ -6,7 +6,6 @@ final _serviceFactoryServiceLocatorBackendProviderPattern = RegExp(
 
 final List<ScannerRule> _riverpodSourceRulesPart1 = [
   /// Avoid ref.read in initState.
-  ///
   /// Why: Flags ref.read calls made from initState. Defer reads with a post-frame callback.
   scannerRule(
     code: const LintCode(
@@ -27,7 +26,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Avoid service locator classes in Riverpod apps.
-  ///
   /// Why: Flags service locator classes in Riverpod apps. Model dependencies with providers.
   scannerRule(
     code: const LintCode(
@@ -39,7 +37,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     description: 'Flags service locator classes in Riverpod apps so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       // The skill bans these class kinds by name: "NEVER create ServiceFactory,
-      // ServiceLocator, or BackendProvider class", including prefixed variants.
       final banned = _serviceFactoryServiceLocatorBackendProviderPattern;
       for (final declaration in context.unit.declarations.whereType<ClassDeclaration>()) {
         if (!banned.hasMatch(declaration.namePart.typeName.lexeme)) continue;
@@ -49,9 +46,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Use Riverpod code generation for providers.
-  ///
-  /// Why: Flags manual Riverpod provider constructors. The Flutter skill keeps
-  /// providers generated through `@riverpod` / `@Riverpod` so provider names,
   /// lifetimes, and generated APIs stay as the single source of truth.
   scannerRule(
     code: const LintCode(
@@ -74,10 +68,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Keep WidgetRef inside widgets.
-  ///
-  /// Why: `Ref` and `WidgetRef` stay separate; `WidgetRef` is for widgets only.
-  /// A service, repository or other non-widget class holding or accepting a
-  /// `WidgetRef` ties its lifetime to a widget element. Move the logic into a
   /// generated provider/notifier that uses `Ref`.
   scannerRule(
     code: const LintCode(
@@ -92,9 +82,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Do not alias generated providers.
-  ///
-  /// Why: Generated provider names are the single source of truth. A top-level
-  /// or static `final cartAliasProvider = cartProvider;` creates a second name
   /// for the same provider. Rename the annotated function/class and regenerate.
   scannerRule(
     code: const LintCode(
@@ -110,10 +97,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Do not override generated notifier providers with state values.
-  ///
-  /// Why: `overrideWithValue(State(...))` replaces the generated notifier
-  /// provider with a plain value override. Any runtime path that later reads
-  /// `provider.notifier` can crash because the provider element no longer has
   /// notifier behavior. Use a test/E2E notifier override so `.notifier` remains valid.
   scannerRule(
     code: const LintCode(
@@ -135,9 +118,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Keep provider-derived data in providers, not ConsumerState caches.
-  ///
-  /// Why: Flags manual cache/source fields in ConsumerState classes that also
-  /// watch providers. Derived provider data belongs in one generated @riverpod
   /// source of truth or in pure build-local derivation, not repeated mutable widget state.
   scannerRule(
     code: const LintCode(
@@ -168,10 +148,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Do not store/pass provider-family arg wrapper objects in widgets.
-  ///
-  /// Why: Provider-family args are part of the provider boundary. Widgets
-  /// should pass immutable IDs/primitives directly, or the provider/notifier
-  /// should own derivation. `config` / `args` / `params` wrappers in widget
   /// state or build locals recreate controller logic in the widget layer.
   scannerRule(
     code: const LintCode(
@@ -189,9 +165,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Do not store ProviderSubscription handles in ConsumerState.
-  ///
-  /// Why: Widget-owned ProviderSubscription fields duplicate Riverpod lifecycle
-  /// state. Widgets use `ref.listen` in build for UI side effects; durable
   /// synchronization belongs in one provider/notifier source of truth.
   scannerRule(
     code: const LintCode(
@@ -211,9 +184,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Do not use ref.listenManual.
-  ///
-  /// Why: Manual Riverpod subscriptions create a second lifecycle source of
-  /// truth in widgets. Use `ref.listen` in build for UI side effects; durable
   /// subscriptions belong in provider, notifier, repository, or service lifecycles.
   scannerRule(
     code: const LintCode(
@@ -234,9 +204,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Do not model one-shot UI events as standalone signal providers.
-  ///
-  /// Why: Standalone `*Signal` / `*Event` providers split one notifier's
-  /// mutation result across two providers. Fold the event serial/payload into
   /// the owning notifier state and listen to a concrete field with `select`.
   scannerRule(
     code: const LintCode(
@@ -267,8 +234,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Prefer select when watching state in leaf widgets.
-  ///
-  /// Why: Flags broad ref.watch calls that do not use select. Use
   /// ref.watch(provider.select((value) => value.field)).
   scannerRule(
     code: const LintCode(
@@ -289,8 +254,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// select() callbacks should use expression-body syntax.
-  ///
-  /// Why: Keeps Riverpod select examples concise and avoids block callbacks in leaf
   /// widget watches. Use ref.watch(provider.select((value) => value.field)).
   scannerRule(
     code: const LintCode(
@@ -304,9 +267,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// select() must narrow to a field or record, not return the source object.
-  ///
-  /// Why: `select((value) => value)` silences broad-watch lint without reducing
-  /// rebuild scope. Use a concrete field/record select, or watch a computed
   /// projection provider directly.
   scannerRule(
     code: const LintCode(
@@ -321,9 +281,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Riverpod Mutation<T>() declarations must carry an experimental note.
-  ///
-  /// Why: Riverpod Mutation is still experimental. The skill's file-scope
-  /// mutation carries the note on its own declaration so reviewers see the API
   /// stability boundary.
   scannerRule(
     code: const LintCode(
@@ -338,9 +295,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Riverpod mutations are file-scope finals.
-  ///
-  /// Why: The skill declares one mutation as one file-scope `final` so the same
-  /// instance is shared across rebuilds and consumers. A Mutation created in
   /// build(), a method, or a class field is a new or class-owned instance.
   scannerRule(
     code: const LintCode(
@@ -370,8 +324,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Use tsx.get instead of ref.read inside Mutation.run.
-  ///
-  /// Why: The skill reads providers through the mutation transaction because
   /// tsx.get keeps them alive until the mutation completes; ref.read does not.
   scannerRule(
     code: const LintCode(
@@ -391,9 +343,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Match AsyncValue with a sealed switch, not when/map helpers.
-  ///
-  /// Why: The skill matches unions with a Dart `switch` and never `.when()` or
-  /// `.map()`. Riverpod AsyncValue is sealed, so the skill switches over
   /// `AsyncData(:final value)`, `AsyncError(:final error)` and `AsyncLoading()`.
   scannerRule(
     code: const LintCode(
@@ -413,9 +362,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Keep derived providers alive when all watched dependencies are keepAlive.
-  ///
-  /// Why: Follows the building-flutter-apps provider decision tree for computed or
-  /// one-time providers. If every watched dependency is keepAlive, make the derived
   /// non-family provider keepAlive too.
   scannerRule(
     code: const LintCode(
@@ -436,10 +382,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Feature notifiers should be keepAlive by default.
-  ///
-  /// Why: Class-based feature notifiers own mutable screen/feature state. In
-  /// presentation notifier files, accidental auto-dispose resets that state when
-  /// a subtree temporarily unmounts. Family notifiers stay auto-dispose by
   /// default because keepAlive would cache every argument variant.
   scannerRule(
     code: const LintCode(
@@ -465,8 +407,6 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
   ),
 
   /// Avoid keepAlive family providers.
-  ///
-  /// Why: Flags keepAlive Riverpod families with required parameters. Use auto-dispose
   /// families unless the cache is bounded.
   scannerRule(
     code: const LintCode(

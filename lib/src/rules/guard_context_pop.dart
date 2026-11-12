@@ -6,9 +6,6 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 final _contextCanPopPattern = RegExp(r'\bcontext\s*\.\s*canPop\s*\(');
 
 /// Guard context.pop() with context.canPop().
-///
-/// Why: Page back actions must account for direct deep links. Check
-/// context.canPop() before context.pop(), then route to a generated typed
 /// fallback when there is nothing to pop.
 final class GuardContextPop extends GeneratedMethodInvocationCheckRule {
   static const LintCode code = LintCode(

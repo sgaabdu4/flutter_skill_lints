@@ -228,7 +228,6 @@ final class ScannerMethodSpan {
 final _debugPrintPrintPattern = RegExp(r'\b(?:debugPrint|print)\s*\(');
 
 /// Replaces every char inside a `debugPrint(...)` or `print(...)` call body
-/// with a space. Diagnostic offsets stay aligned because chars are not deleted.
 String _blankDebugCalls(String text, {String? structure}) {
   final structuralText = structure ?? text;
   final buffer = StringBuffer();

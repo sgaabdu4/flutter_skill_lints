@@ -7,15 +7,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when executable code uses raw string or numeric literals instead of
-/// named constants, value objects, or semantic helpers.
-///
-/// Deterministic sample data inside resolved Flutter `@Preview` functions,
-/// methods, and constructors is exempt; look-alike annotations still report.
-/// Route names passed to a resolved `routeName` parameter or Flutter's
-/// `RouteSettings(name:)` are exempt (modals-navigation.md). JSON and
-/// request-body keys inside a `*Model` class or a `data/models/` file are
-/// exempt: data-layer models are the codec owners (architecture.md). Files under
-/// `core/constants/` such as `storage_keys.dart` and `api_paths.dart` are key
 /// owners and are not checked.
 class AvoidMagicLiterals extends CompilationUnitRule {
   static const LintCode code = LintCode(
@@ -217,7 +208,6 @@ bool _hasUnaryMinus(AstNode node) {
 bool _isAllowedNumber(num value) => value == -1 || value == 0 || value == 1;
 
 /// A route name recorded for modal/route observers (modals-navigation.md): a string bound to
-/// a resolved `routeName` parameter or to Flutter's `RouteSettings(name:)`.
 bool _isRouteNameArgument(AstNode node) {
   final argument = node.parent;
   if (argument is! NamedArgument || !identical(argument.argumentExpression, node)) return false;
@@ -236,7 +226,6 @@ bool _isCodecOwnedKey(AstNode node) {
 }
 
 /// Data-layer models own JSON/request-body keys (architecture.md): a class
-/// named `*Model`, or any code in a `data/models/` file.
 bool _isInModelCodecOwner(AstNode node) {
   final className = node.thisOrAncestorOfType<ClassDeclaration>()?.namePart.typeName.lexeme;
   if (className != null && className.endsWith('Model')) return true;

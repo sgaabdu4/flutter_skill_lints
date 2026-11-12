@@ -10,7 +10,6 @@ final _textStylePattern = RegExp(r'\bTextStyle\s*\(');
 
 final List<ScannerRule> _uiSourceRulesPart1 = [
   /// Avoid raw spacing, radius, size, and color tokens.
-  ///
   /// Why: Flags raw visual constants instead of design tokens. Use design tokens.
   scannerRule(
     code: const LintCode(
@@ -33,7 +32,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Avoid raw TextStyle construction.
-  ///
   /// Why: Flags raw TextStyle construction. Use the app theme text styles.
   scannerRule(
     code: const LintCode(
@@ -57,7 +55,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Avoid hardcoded UI strings.
-  ///
   /// Why: Flags hardcoded UI strings. Move text into gen-l10n ARB files and read it via AppLocalizations.
   scannerRule(
     code: const LintCode(
@@ -79,8 +76,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Bind localizations once before reading localized strings.
-  ///
-  /// Why: Keeps widget localization access consistent. Bind `final l10n = context.l10n;`
   /// at the top of `build`, then read keys from `l10n`.
   scannerRule(
     code: const LintCode(
@@ -103,11 +98,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Snackbars are shown only by UI helpers.
-  ///
-  /// Why: Flags direct snackbar dispatches from UI widgets, and
-  /// `SnackBarUtils.show...` calls from notifiers (resolved Riverpod or
-  /// state_notifier supertypes), repositories, and datasources
-  /// (context-ui.md). The notifier owns a durable status field; the widget
   /// listens and calls a UI helper, which may wrap SnackBarUtils.
   scannerRule(
     code: const LintCode(
@@ -134,9 +124,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Widgets must not receive concrete infrastructure dependencies.
-  ///
-  /// Why: Widget constructor args are render inputs, not composition roots. Keep
-  /// cache managers, clients, storage, services, repositories, and datasources
   /// behind providers, repositories, datasources, or owned utility APIs.
   scannerRule(
     code: const LintCode(
@@ -157,8 +144,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Widget files must not declare top-level helper functions.
-  ///
-  /// Why: Widget-level helpers are feature/controller APIs. Keep UI behavior on
   /// widget classes, not as globals that any file can call without ownership.
   scannerRule(
     code: const LintCode(
@@ -185,9 +170,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Widget files must not host provider-backed action namespaces.
-  ///
-  /// Why: `*Actions` classes that accept `WidgetRef` and call providers become
-  /// hidden controllers in the widget layer. Keep orchestration in a coordinator,
   /// notifier, computed provider, or service with a clear owner.
   scannerRule(
     code: const LintCode(
@@ -217,8 +199,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Widget classes must not catch errors.
-  ///
-  /// Why: Widgets render and dispatch only. Notifiers catch, translate to typed
   /// state/snackbar effects, and report telemetry so error handling has one owner.
   scannerRule(
     code: const LintCode(
@@ -236,9 +216,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Widgets must not branch on awaited notifier results.
-  ///
-  /// Why: Assigning/branching on an awaited notifier result turns the widget into
-  /// a controller. The notifier should own the mutation, update state, and expose
   /// a stable state transition for the widget to observe.
   scannerRule(
     code: const LintCode(
@@ -269,9 +246,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Widgets must not own provider mutation busy flags.
-  ///
-  /// Why: Local `_isSaving` / `_isSubmitting` fields beside notifier mutations
-  /// split one mutation lifecycle between widget and provider state. The owning
   /// notifier should expose `isSaving` / `isSubmitting` and success serials.
   scannerRule(
     code: const LintCode(
@@ -295,9 +269,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Move derived collection logic out of widgets.
-  ///
-  /// Why: Private widget helpers that filter/map/sort collections hide feature
-  /// state and rebuild work inside the UI layer. Put filtering, indexes, and
   /// derived lists in notifiers/computed providers.
   scannerRule(
     code: const LintCode(
@@ -315,8 +286,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Do not globally clamp text scaling.
-  ///
-  /// Why: Flags app-level text scaling clamps. Fix responsive layout instead of clamping
   /// accessibility text size.
   scannerRule(
     code: const LintCode(
@@ -337,9 +306,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Keep app shell widgets free of bootstrap side effects.
-  ///
-  /// Why: Flags root app widgets that both return an app shell (`MaterialApp`,
-  /// `CupertinoApp`, or `WidgetsApp`) and register `ref.listen` side effects. Move
   /// startup orchestration to a dedicated bootstrap widget/provider.
   scannerRule(
     code: const LintCode(
@@ -373,11 +339,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Make `DateTime.now()` timezone intent explicit.
-  ///
-  /// Why: Raw current-time calls spread timezone and calendar-window policy through
-  /// app code. Keep current-time helpers and semantic date windows in
-  /// `core/extensions/date_time_extensions.dart`. Static members of a resolved
-  /// `extension ... on DateTime` own the raw call (`static DateTime nowUtc() =>
   /// DateTime.now().toUtc();`); any member of that extension may hold date windows.
   scannerRule(
     code: const LintCode(
@@ -391,11 +352,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Keep intl formatting in primitive extensions.
-  ///
-  /// Why: Primitive formatting lives in `core/extensions/`; call sites use
-  /// semantic getters such as `date.formatShortDate(l10n)` and
-  /// `price.asCurrency(l10n)`. Resolved intl `DateFormat` construction is
-  /// allowed only in an extension on dart:core `DateTime`, and `NumberFormat`
   /// only in one on `num`/`int`/`double` (primitive-formatting.md).
   scannerRule(
     code: const LintCode(
@@ -413,9 +369,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Keep numeric clamping in the num extension.
-  ///
-  /// Why: Inline `.clamp(...)` is forbidden at call sites; `NumX.clamped`
-  /// owns it (primitive-formatting.md). Resolved dart:core `num.clamp` calls
   /// are allowed only inside an extension on `num`/`int`/`double`.
   scannerRule(
     code: const LintCode(
@@ -432,9 +385,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Avoid expensive work in build().
-  ///
-  /// Why: Flags expensive collection or formatting work inside Widget/State build methods.
-  /// Move sorting, filtering, formatting, and regex creation out of build. Riverpod
   /// Notifier `build()` computes provider state, where performance.md sends that work.
   scannerRule(
     code: const LintCode(
@@ -458,8 +408,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
   ),
 
   /// Prefer ListView.builder for dynamic lists.
-  ///
-  /// Why: Flags ListView(children:...) usage. Use builder/sliver variants instead of
   /// ListView(children:...).
   scannerRule(
     code: const LintCode(
@@ -476,8 +424,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
 ];
 
 /// A Widget/State `build`: its class extends a widget or State, its signature is
-/// `Widget build(` or takes a `BuildContext`, or it sits in a UI file. Riverpod
-/// Notifier classes (`@riverpod`, `extends _$`, `*Notifier`) never qualify.
 bool _isWidgetBuild(SourceScannerContext context, ScannerMethodSpan method) {
   final classSpan = context.classes.where((span) => span.contains(method.start)).lastOrNull;
   if (classSpan == null) return false;

@@ -9,10 +9,6 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> dialogSourceRules = [
   /// Dialogs and sheets must not subscribe to the provider their own action mutates.
-  ///
-  /// Why: A modal route stays mounted for the entire dismiss animation. If the
-  /// dialog widget watches state that its button callback mutates, the dialog
-  /// rebuilds mid-dismiss against now-stale state and visibly flips its variant.
   /// Pass an immutable snapshot value object through the constructor instead.
   scannerRule(
     code: const LintCode(
@@ -29,10 +25,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// Modal parent widgets must not watch high-frequency provider fields.
-  ///
-  /// Why: A sheet/dialog parent often owns text fields, scroll views, and other
-  /// large subtrees. Watching timer/ticker/progress fields there rebuilds the
-  /// whole modal every tick. Extract the ticking controls to a leaf
   /// ConsumerWidget and watch the high-frequency field in that leaf only.
   scannerRule(
     code: const LintCode(
@@ -49,10 +41,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// Dialog button callbacks must pop with a result, not chain side effects.
-  ///
-  /// Why: Code after Navigator.pop runs against a dying widget tree — the
-  /// dismiss animation has started, context.mounted will flip to false mid-flight,
-  /// and any provider mutation triggers a rebuild on the disappearing dialog.
   /// Let the caller orchestrate side effects after `await showDialog<T>(...)`.
   scannerRule(
     code: const LintCode(
@@ -76,11 +64,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// `select` records that read Map/Set/List getters notify on every parent change.
-  ///
-  /// Why: Records compare by field identity. A getter that builds a fresh Map,
-  /// Set, or List per access produces a new identity on every read, so the
-  /// record `==` is always false and the watcher rebuilds even when no relevant
-  /// field changed. Watch primitive fields or memoize the derived value in a
   /// provider.
   scannerRule(
     code: const LintCode(
@@ -101,11 +84,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// `build` must be pure. Do not assign to fields from inside build.
-  ///
-  /// Why: `build` may run any number of times for any reason. Caching a derived
-  /// value in `_field ??= compute()` makes the widget retain stale data across
-  /// the next provider invalidation and turns rebuilds into ordering-dependent
-  /// state mutations. Compute the value in an event callback or expose it via
   /// a provider.
   scannerRule(
     code: const LintCode(
@@ -134,10 +112,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// `build` must not call helpers that mutate instance state.
-  ///
-  /// Why: Moving field/controller writes into `_sync...()` or `_load...()` keeps
-  /// the assignment out of sight but still makes build impure. `build` can run
-  /// any time; a helper that writes fields, controller text/value, or calls
   /// `setState` turns rebuilds into state mutations.
   scannerRule(
     code: const LintCode(
@@ -154,13 +128,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// State teardown belongs in the notifier, not in a widget callback after await.
-  ///
-  /// Why: When a widget awaits a notifier mutation and then calls reset/clear,
-  /// the same mutation may have triggered a parent rebuild that unmounted the
-  /// widget. context.mounted goes false, the teardown is skipped, and the
-  /// screen never sees the cleared state. Make the notifier method own its
-  /// own teardown on the success path. Screens self-navigate from the cleared
-  /// state (`onMissing*` hooks), so a widget-side `.go(context)` chained off
   /// the awaited mutation is reported too.
   scannerRule(
     code: const LintCode(
@@ -177,10 +144,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// After awaiting a modal, use a typed route .go(context), not pop navigation.
-  ///
-  /// Why: A screen that protects accidental exit with `PopScope(canPop: false)`
-  /// intercepts every programmatic pop, including pop-fallback helpers, and
-  /// flashes its own confirm-exit dialog. Use a typed `<Route>().go(context)`
   /// (or `context.go(...)`) which bypasses the local pop interceptor.
   scannerRule(
     code: const LintCode(
@@ -213,11 +176,6 @@ final List<ScannerRule> dialogSourceRules = [
   ),
 
   /// `showDialog` / `showModalBottomSheet` must carry `routeSettings`.
-  ///
-  /// Why: Without a route name, the dialog/sheet route does not appear in
-  /// observer logs, analytics, or `GoRouter` debug output as anything other
-  /// than `?`. Pass `routeSettings: const RouteSettings(name: '<feature>-<intent>')`
-  /// wherever a Flutter modal launcher is called; app helpers such as
   /// `showAppSheet` pass it once inside the helper.
   scannerRule(
     code: const LintCode(
@@ -271,7 +229,6 @@ void _reportMutableProviderClass(
 }
 
 /// Collects `ref.watch(<provider>)` calls and the providers mutated through
-/// `ref.read(<provider>.notifier)`, keyed by their [_providerKey].
 final class _ProviderAccessVisitor extends RecursiveAstVisitor<void> {
   final watches = <({MethodInvocation watch, Object provider})>[];
   final mutated = <Object>{};
@@ -313,7 +270,6 @@ bool _readsNotifier(Expression argument) => switch (argument.unParenthesized) {
 };
 
 /// The provider a `watch`/`read` argument listens to, with `.select(...)`, `.notifier`,
-/// `.future`, family calls and casts stripped: its element when resolved, otherwise its name.
 Object? _providerKey(Expression argument) {
   final root = _providerRoot(argument);
   return root == null ? null : root.element ?? root.name;
@@ -339,7 +295,6 @@ SimpleIdentifier? _providerRoot(Expression expression) => switch (expression.unP
 const _providerAccessors = {'notifier', 'future', 'stream'};
 
 /// Finds `ref.watch(<provider>.select((s) => (...record...)))` selects whose record reads a
-/// getter that builds a fresh collection per call.
 final class _UnstableRecordSelectVisitor extends RecursiveAstVisitor<void> {
   final selects = <MethodInvocation>[];
 
@@ -373,8 +328,6 @@ RecordLiteral? _selectedRecord(MethodInvocation select) {
 }
 
 /// A record field reading an explicit (non-synthetic) getter that returns a Map, Set or
-/// Iterable. Stored fields keep their identity between notifications. Unresolved reads
-/// fall back to getter names such as `tagsMap` or `itemsByCategoryId`.
 bool _readsUnstableGetter(RecordLiteralField field) {
   final property = switch (field.fieldExpression.unParenthesized) {
     PrefixedIdentifier(:final identifier) => identifier,
@@ -540,8 +493,6 @@ void _reportDialogPostPopMutation(
 }
 
 /// Reports resolved navigation (another pop, or a typed-route / go_router /
-/// Navigator push) that runs after a resolved pop in the same block. Offenders
-/// the line scanner already reports are skipped.
 void _reportDialogPostPopNavigation(
   ScannerRuleReporter reporter,
   SourceScannerContext context,
@@ -598,8 +549,6 @@ final class _DialogPopState {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Shared regex patterns and helpers
 // ---------------------------------------------------------------------------
 
 final _highFrequencyWatch = RegExp(

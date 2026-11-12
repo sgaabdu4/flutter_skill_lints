@@ -5,10 +5,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Reports positional record fields on records with three or more of them.
-///
-/// The skill shows positional pairs such as `(String, int) userInfo()` and
-/// prefers named fields "when 3+ fields". A positional literal destructured in
-/// place (`final (_, price, _) = (id, 9.99, sku);`) never exposes its fields by
 /// position, so it is allowed too.
 final class AvoidPositionalRecordFields extends RecordRule {
   static const LintCode code = LintCode(

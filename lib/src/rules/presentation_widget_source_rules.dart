@@ -9,7 +9,6 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> presentationWidgetSourceRules = [
   /// Keep reusable presentation widgets free of navigation orchestration.
-  ///
   /// Why: screens and typed routes own navigation; widgets emit typed callbacks.
   scannerRule(
     code: const LintCode(
@@ -36,8 +35,6 @@ final List<ScannerRule> presentationWidgetSourceRules = [
   ),
 
   /// Keep reusable presentation widget State free of domain and workflow state.
-  ///
-  /// Why: widgets may retain UI lifecycle objects, while screens and notifiers
   /// own selection, navigation history, mutation status, and derived caches.
   scannerRule(
     code: const LintCode(
@@ -72,8 +69,6 @@ final List<ScannerRule> presentationWidgetSourceRules = [
   ),
 
   /// Keep reusable presentation widgets free of infrastructure dependencies.
-  ///
-  /// Why: screens and notifiers own providers, repositories, services, and SDKs;
   /// widgets receive immutable view data and emit typed callbacks.
   scannerRule(
     code: const LintCode(
@@ -143,7 +138,6 @@ final class _NavigationVisitor extends RecursiveAstVisitor<void> {
 }
 
 /// Whether a Navigator pop is the final work of its callback: an arrow body,
-/// the last statement of the function, or followed only by a bare `return;`.
 bool _isLocalModalDismissal(MethodInvocation pop) {
   AstNode node = pop;
   if (node.parent is ExpressionFunctionBody) return true;
@@ -176,7 +170,6 @@ bool _isLocalModalDismissal(MethodInvocation pop) {
 const _asyncValueChecker = TypeChecker.fromName('AsyncValue', packageName: 'riverpod');
 
 /// Whether [type] is, or is a collection of, a domain-layer type or a
-/// provider-derived AsyncValue snapshot.
 bool _holdsDomainOrProviderState(DartType type) {
   if (type is! InterfaceType) return false;
   final library = type.element.library.identifier;
@@ -186,7 +179,6 @@ bool _holdsDomainOrProviderState(DartType type) {
 }
 
 /// Bool fields assigned before an `await` in the same async function: flags
-/// that track an in-flight async workflow.
 Set<FieldElement> _asyncWorkflowFlags(BlockClassBody body) {
   final visitor = _WorkflowFlagVisitor();
   body.accept(visitor);

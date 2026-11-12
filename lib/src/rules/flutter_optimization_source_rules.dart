@@ -5,8 +5,6 @@ final _operatorPattern = RegExp(r'\boperator\s*==\s*\(');
 
 final List<ScannerRule> flutterOptimizationSourceRules = [
   /// Do not create keys inside build().
-  ///
-  /// Why: Flags local key construction inside build methods. Move stable keys to a field,
   /// registry, or source value outside build().
   scannerRule(
     code: const LintCode(
@@ -29,8 +27,6 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
   ),
 
   /// Avoid UniqueKey and GlobalKey unless identity recreation or state access is required.
-  ///
-  /// Why: Flags UniqueKey and GlobalKey construction. Prefer ValueKey or ObjectKey for normal
   /// state preservation.
   scannerRule(
     code: const LintCode(
@@ -60,8 +56,6 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
   ),
 
   /// Avoid the Opacity widget for static opacity.
-  ///
-  /// Why: Flags Opacity widget construction. Use a semi-transparent color for static opacity
   /// or FadeTransition for animation.
   scannerRule(
     code: const LintCode(
@@ -78,8 +72,6 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
   ),
 
   /// Avoid ShaderMask and ColorFilter saveLayer triggers in hot UI.
-  ///
-  /// Why: Flags ShaderMask, ColorFiltered, and ColorFilter usage. Prefer cheaper painting or
   /// precomputed assets when a saveLayer is not required.
   scannerRule(
     code: const LintCode(
@@ -102,8 +94,6 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
   ),
 
   /// Avoid Clip.antiAliasWithSaveLayer.
-  ///
-  /// Why: Flags Clip.antiAliasWithSaveLayer usage. Use border radius, Clip.hardEdge, or
   /// Clip.antiAlias when possible.
   scannerRule(
     code: const LintCode(
@@ -125,8 +115,6 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
   ),
 
   /// Avoid IntrinsicWidth and IntrinsicHeight in performance-sensitive UI.
-  ///
-  /// Why: Flags intrinsic layout widgets. Prefer fixed constraints, ConstrainedBox, or direct
   /// layout.
   scannerRule(
     code: const LintCode(
@@ -143,8 +131,6 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
   ),
 
   /// AnimatedBuilder should pass static subtrees through child.
-  ///
-  /// Why: Flags AnimatedBuilder calls without a child argument. Move static widgets to
   /// AnimatedBuilder.child and reuse child in builder.
   scannerRule(
     code: const LintCode(
@@ -169,8 +155,6 @@ final List<ScannerRule> flutterOptimizationSourceRules = [
   ),
 
   /// Do not override operator == on Widget classes.
-  ///
-  /// Why: Flags operator == overrides on Widget classes. Use const constructors, stable
   /// inputs, and caching instead.
   scannerRule(
     code: const LintCode(

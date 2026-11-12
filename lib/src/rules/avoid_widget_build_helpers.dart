@@ -5,8 +5,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 final _buildCheckMethodDeclarationPattern = RegExp(r'^_build[A-Z][A-Za-z0-9_]*$');
 
 /// Avoid private _buildXxx() widget helper methods.
-///
-/// Why: Bans private _buildXxx helper methods. Extract a named widget class instead of a build
 /// helper method.
 final class AvoidWidgetBuildHelpers extends GeneratedMethodDeclarationCheckRule {
   static const LintCode code = LintCode(

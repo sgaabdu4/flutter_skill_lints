@@ -8,11 +8,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when Flutter skill diagnostics are suppressed with local ignore
-/// comments.
-///
-/// Architectural diagnostics should be fixed at the owning code boundary. If a
-/// project intentionally opts out, disable the diagnostic in
-/// `analysis_options.yaml` so the decision is visible at project scope instead
 /// of being hidden beside the violation.
 class AvoidFlutterSkillLintSuppression extends AnalysisRule {
   static const LintCode code = LintCode(

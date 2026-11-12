@@ -79,8 +79,8 @@ bool _sameSource(AstNode left, AstNode right) {
   return _canonicalSource(left) == _canonicalSource(right);
 }
 
-final _canonicalSourcePattern2 = RegExp(r'\s+');
+final _sourceWhitespaceRunPattern = RegExp(r'\s+');
 
 String _canonicalSource(AstNode node) {
-  return node.toSource().replaceAll(_canonicalSourcePattern2, ' ').trim();
+  return node.toSource().replaceAll(_sourceWhitespaceRunPattern, ' ').trim();
 }

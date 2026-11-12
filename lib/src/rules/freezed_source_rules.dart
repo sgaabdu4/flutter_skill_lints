@@ -10,9 +10,7 @@ final _factoryFromJsonScannerRulePattern = RegExp(r'\bfactory\s+\w+(?:\.\w+)?\.f
 
 final _freezedToJsonTruePattern = RegExp(r'@Freezed\s*\([^)]*toJson\s*:\s*true');
 
-final _jsonSerializableExplicitToJsonTruePattern = RegExp(
-  r'@JsonSerializable\s*\([^)]*explicitToJson\s*:\s*true',
-);
+final _explicitToJsonTruePattern = RegExp(r'@JsonSerializable\s*\([^)]*explicitToJson\s*:\s*true');
 
 final List<ScannerRule> freezedSourceRules = [
   /// Prefer abstract final for static-only namespaces.
@@ -67,7 +65,7 @@ final List<ScannerRule> freezedSourceRules = [
     scan: (reporter, context) {
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (_jsonSerializableExplicitToJsonTruePattern.hasMatch(line)) {
+        if (_explicitToJsonTruePattern.hasMatch(line)) {
           reporter.report(context, i, line.indexOf('@JsonSerializable'));
         }
       }

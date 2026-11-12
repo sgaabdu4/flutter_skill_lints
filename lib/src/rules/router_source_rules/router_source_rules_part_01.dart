@@ -22,7 +22,7 @@ final _abstractInterfaceClassClassMatchPattern = RegExp(
   r'_?[A-Z]\w*(?:NavigationCoordinator|Navigation)\b',
 );
 
-final _materialPageRouteCupertinoPageRoutePageRouteBuilderPattern = RegExp(
+final _rawPageRouteConstructionPattern = RegExp(
   r'\b(?:MaterialPageRoute|CupertinoPageRoute|PageRouteBuilder)\s*'
   r'(?:<[^>]+>)?\s*\(',
 );
@@ -179,7 +179,7 @@ final List<ScannerRule> _routerSourceRulesPart1 = [
     description: 'Flags Navigator push with MaterialPageRoute/CupertinoPageRoute/PageRouteBuilder so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
       final navigatorCall = _navigatorNavigatorCallPattern;
-      final pageRouteCtor = _materialPageRouteCupertinoPageRoutePageRouteBuilderPattern;
+      final pageRouteCtor = _rawPageRouteConstructionPattern;
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
         final navMatch = navigatorCall.firstMatch(line);

@@ -101,7 +101,7 @@ bool _isHostDriverPath(String path) {
   return _testDriverPattern.hasMatch(normalized);
 }
 
-final _namePackageNamePattern2 = RegExp(r'^name:\s*([A-Za-z0-9_]+)\s*$', multiLine: true);
+final _pubspecNameLinePattern = RegExp(r'^name:\s*([A-Za-z0-9_]+)\s*$', multiLine: true);
 
 String? _packageName(RuleContext context) {
   final root = context.package?.root;
@@ -109,7 +109,7 @@ String? _packageName(RuleContext context) {
   final pubspec = root.getFile('pubspec.yaml');
   if (!pubspec.exists) return null;
   final text = pubspec.readAsStringSync();
-  return _namePackageNamePattern2.firstMatch(text)?.group(1);
+  return _pubspecNameLinePattern.firstMatch(text)?.group(1);
 }
 
 bool _isForbidden(String uri, String? appPackageName) {

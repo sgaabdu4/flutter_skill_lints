@@ -196,7 +196,7 @@ void _reportConstructors(
 
 bool _containsConstructor(String line, String name) => _constructorColumn(line, name) >= 0;
 
-final _scaffoldMessengerKeyNavigatorKeyRepaintBoundaryKeyPattern = RegExp(
+final _sharedKeyNamePattern = RegExp(
   r'\b_?(?:scaffoldMessengerKey|navigatorKey|repaintBoundaryKey|chartKey|shareableCardKey)\b',
 );
 
@@ -209,7 +209,7 @@ bool _isAllowedGlobalKeyUse(SourceScannerContext context, String line) {
   if (_globalKeyStateNavigatorStatePattern.hasMatch(line)) {
     return true;
   }
-  return _scaffoldMessengerKeyNavigatorKeyRepaintBoundaryKeyPattern.hasMatch(line);
+  return _sharedKeyNamePattern.hasMatch(line);
 }
 
 int _firstConstructorColumn(String line, List<String> names) {
@@ -345,12 +345,12 @@ final _extendsWidgetPattern = RegExp(
   r'\bextends\s+(?:[A-Za-z_][A-Za-z0-9_]*\.)?[A-Za-z_][A-Za-z0-9_]*Widget\b',
 );
 
-final _extendsStatelessWidgetStatefulWidgetPattern = RegExp(
+final _extendsWidgetClassPattern = RegExp(
   r'\bextends\s+(?:[A-Za-z_][A-Za-z0-9_]*\.)?(?:StatelessWidget|StatefulWidget|Widget|ConsumerWidget|HookWidget)\b',
 );
 
 bool _isWidgetClass(SourceScannerContext context, ScannerClassSpan classSpan) {
   final signature = sourceClassSignature(context, classSpan);
-  return _extendsStatelessWidgetStatefulWidgetPattern.hasMatch(signature) ||
+  return _extendsWidgetClassPattern.hasMatch(signature) ||
       _extendsWidgetPattern.hasMatch(signature);
 }

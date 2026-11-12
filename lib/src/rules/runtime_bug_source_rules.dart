@@ -489,7 +489,7 @@ String _durationWindow(SourceScannerContext context, int lineIndex) {
   return buffer.toString();
 }
 
-final _animatedAnimationStyleTransitionDurationPattern = RegExp(
+final _animationHintPattern = RegExp(
   r'Animated|AnimationStyle|transitionDuration|duration\s*:',
   caseSensitive: false,
 );
@@ -508,7 +508,7 @@ int _userVisibleDurationBudgetMs(String window) {
   if (_futureDelayedPattern.hasMatch(window)) {
     return 50;
   }
-  if (_animatedAnimationStyleTransitionDurationPattern.hasMatch(window)) {
+  if (_animationHintPattern.hasMatch(window)) {
     return 120;
   }
   return 150;

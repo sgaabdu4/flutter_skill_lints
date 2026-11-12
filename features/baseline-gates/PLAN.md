@@ -13,20 +13,20 @@ Same cause: N/A — the three failures have different causes; each gate is repai
 
 ## Decisions + authorization
 
-Blockers: None
-Handoff: Approval
+Blockers: The security gate cannot take the 205 old regex findings as debt: `check` prints `HE-DEBT-SHRINK-ONLY: only the change that installs Hard Eng can add hard-eng.debt.json; repair the findings instead`. Decision needed: repair the 205 findings in code, or have the owner of Hard Eng allow a later debt record.
+Handoff: Clarification
 Authority: The coordinator asked for this repair as its own change before the feature change; plan and build authorized; no push, PR, tag or publish.
 
 ## Acceptance + steps
 
-- [ ] zizmor passes with the pinned commit unchanged → N/A — no test file covers workflow text; the zizmor gate reports 0 findings.
-- [ ] Direct dependencies are current → N/A — the freshness gate lists none outdated; the full test suite and `dart analyze --fatal-infos .` pass on the new versions.
+- [x] zizmor passes with the pinned commit unchanged → N/A — no test file covers workflow text; the zizmor gate reports 0 findings.
+- [x] Direct dependencies are current → N/A — the freshness gate lists none outdated; the full test suite and `dart analyze --fatal-infos .` pass on the new versions after the fixture ignore lists name the renamed analyzer 14.7 diagnostics.
 - [ ] The security gate passes with its old findings recorded and shrink-only → N/A — the security gate and HE-DEBT-SHRINK-ONLY check `hard-eng.debt.json`.
 
 ## Baseline + execution
 
-Result: Pending
-Evidence: Pending
+Result: Passed
+Evidence: `python3 .hooks/hard-eng.py check --plan-stage Draft` on main plus the feature change failed zizmor, freshness and security (same three gates); the starting tree is main at `84bb38a`.
 Execution: One builder; workflow comments, then the dependency upgrade, then the debt record.
 
 ## Risks + recovery
@@ -40,7 +40,7 @@ N/A — no visual surface.
 ## Verification
 
 Result: Pending
-Evidence: Pending
+Evidence: zizmor reports no findings; freshness passes; `dart test` passes (2,714 tests) and `dart analyze --fatal-infos .` reports no issues on analyzer 14.7.0; the security gate still reports 205 findings of one rule (see Blockers).
 E2E: N/A — no user journey.
 
 Delivery target: PR

@@ -211,7 +211,7 @@ const _platformCommandNames =
     'runJavaScript|runJavaScriptReturningResult|evaluateJavascript|playVideo|pauseVideo'
     '|seekTo|setVolume|setPlaybackRate|mute|unMute|enterFullScreen|exitFullScreen|loadRequest';
 
-// A fire-and-forget native/webview/media command passed directly to `unawaited`, e.g.
+// A fire-and-forget native, webview or media command passed directly to `unawaited`.
 final _unawaitedPlatformCommand = RegExp(
   r'\bunawaited\s*\(\s*[A-Za-z_][\w.!?]*\s*\.\s*(?:' + _platformCommandNames + r')\s*\(',
 );

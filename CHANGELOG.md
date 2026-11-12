@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.13.6] - 2026-11-12
+
+- Make `avoid_missing_test_files` fast on large projects. It used to list and
+  read every test file again for each library without a matching test file, and
+  to walk the imports of lib files from disk for each import. In one project
+  with 601 lib files and 261 test files it read about 956,000 files in one
+  analysis and took 254 s, while the other 507 rules took about 16 s together.
+  It now reads the test files and the lib files they reach one time for each
+  analysis session and answers each library from that set. A change to any file
+  starts a new session, so the set is built again then. The findings are the
+  same.
 ## [0.13.5] - 2026-10-14
 
 - Report `prefer_type_over_var` at error severity, so `var` fails plain

@@ -1,6 +1,6 @@
 # Fast avoid_missing_test_files
 
-Status: Draft
+Status: Complete
 
 ## Outcome + scope
 
@@ -19,11 +19,11 @@ Authority: Owner approved this change; plan and build authorized. Delivery targe
 
 ## Acceptance + steps
 
-- [ ] Reads by the rule stay near the test file count plus the lib file count, not their product → `AvoidMissingTestFilesReadsTest::test_readsEachFileFewTimes` (in the rule's test file, which owns the analyzer test harness; `test/performance` holds only pure wall-time checks) fails on the old code and passes on the new.
-- [ ] A change of files between analyses is seen: finding, then none after a covering test is added, then the finding again after it is removed → `AvoidMissingTestFilesTest::test_cacheFollowsFileChanges`.
-- [ ] Meaning is unchanged: direct import, relative import from a nested test, cover through export, import cycle, other package import, readable file edge, missing file behind an edge → named `AvoidMissingTestFilesTest` cases; all present cases pass unchanged.
-- [ ] Version 0.13.6 in `pubspec.yaml` and the first CHANGELOG entry.
-- [ ] Full gate passes → `python3 .hooks/hard-eng.py check --plan-stage Complete` exits 0.
+- [x] Reads by the rule stay near the test file count plus the lib file count, not their product → `AvoidMissingTestFilesReadsTest::test_readsEachFileFewTimes` (in the rule's test file, which owns the analyzer test harness; `test/performance` holds only pure wall-time checks) fails on the old code and passes on the new.
+- [x] A change of files between analyses is seen: finding, then none after a covering test is added, then the finding again after it is removed → `AvoidMissingTestFilesTest::test_cacheFollowsFileChanges`.
+- [x] Meaning is unchanged: direct import, relative import from a nested test, cover through export, import cycle, other package import, readable file edge, missing file behind an edge → named `AvoidMissingTestFilesTest` cases; all present cases pass unchanged.
+- [x] Version 0.13.6 in `pubspec.yaml` and the first CHANGELOG entry.
+- [x] Full gate passes → `python3 .hooks/hard-eng.py check --plan-stage Complete` exits 0.
 
 ## Baseline + execution
 
@@ -41,8 +41,8 @@ N/A — analyzer diagnostics have no visual interface.
 
 ## Verification
 
-Result: Pending
-Evidence: Pending
+Result: Passed
+Evidence: Red first: on the old rule `AvoidMissingTestFilesReadsTest::test_readsEachFileFewTimes` failed with 25,764 Dart file reads against a bound of 202 (41 test files, 50 lib files in one session). On the new rule it reads 190 (one analyzer read of each file plus one rule read of each file, plus 8 SDK reads) and the 46 tests of the file pass. A root-only static key breaks `test_cacheFollowsFileChanges` and other cases. `dart analyze --fatal-infos .` → no issues. `test/plugin_registration_test.dart` passes. Limit: the 956,000 read and 254 s figures come from one real project and were not re-measured here.
 E2E: N/A — no user journey; the rule tests run the real analyzer on an in-memory project.
 
 Delivery target: PR

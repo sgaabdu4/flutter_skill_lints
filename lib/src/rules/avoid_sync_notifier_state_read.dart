@@ -123,7 +123,10 @@ final class _BodyVisitor extends RecursiveAstVisitor<void> {
 bool _isNotifierStateRead(SimpleIdentifier node) {
   if (node.name != 'state') return false;
   final parent = node.parent;
-  if (parent is PropertyAccess && parent.propertyName == node && parent.target is! ThisExpression) {
+  if (parent is PropertyAccess &&
+      parent.propertyName == node &&
+      parent.realTarget is! ThisExpression &&
+      parent.realTarget is! SuperExpression) {
     return false;
   }
   if (parent is PrefixedIdentifier && parent.identifier == node) return false;

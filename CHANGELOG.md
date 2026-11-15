@@ -28,9 +28,10 @@
   too. It also reports a load method passed as a tear-off, such as
   `Future.microtask(_load)`. A local variable named `state` and the `state` of
   another object are not reads of the notifier state. The rule skipped every
-  callback before. Increments and compound assignments of `state` in a sync
-  `build()` (`state++`, `this.state += 1`) also report now, because they read
-  `state`; a plain `state = value` does not.
+  callback before. A compound assignment of `state` in a sync `build()`
+  (`state += 1`, `state ??= value`) now reports too, because it reads `state`.
+  A plain write such as `state = value` or `this.state = value` does not
+  report, because it reads nothing.
 - Change the `avoid_sync_notifier_state_read` correction message. It named
   `Future.microtask` as the fix. It now names `AsyncNotifier.build()` or
   starting the load from the event that causes it, as the

@@ -6,6 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a function or method mutates one of its parameters.
@@ -57,16 +58,18 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
-    _check(node.parameters, node.body);
+    _check(node.parameters, node.body, writableParameter: renderObjectUpdateParameter(node));
   }
 
   void _check(
     FormalParameterList? parameters,
     FunctionBody body, {
+    FormalParameter? writableParameter,
     Set<FormalParameterElement> sdkOptionsBuilderParameters = const {},
   }) {
-    final names = formalParameterNames(parameters);
-    final parameterElements = _formalParameterElements(parameters);
+    final names = formalParameterNames(parameters).difference({?writableParameter?.name?.lexeme});
+    final parameterElements = _formalParameterElements(parameters)
+        .difference({?writableParameter?.declaredFragment?.element});
     if (names.isEmpty) return;
     body.accept(
       _MutationVisitor(

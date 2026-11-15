@@ -125,6 +125,44 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, '_loadTodos()'), lintFor(source, 'state')]);
   }
 
+  Future<void> test_allowsLocalVariableNamedStateInsideMicrotask() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    Future.microtask(() {
+      final state = 1;
+      print(state);
+    });
+    return 0;
+  }
+}
+''');
+  }
+
+  Future<void> test_allowsStateOfAnotherObjectInsideMicrotask() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+class Holder {
+  int state = 0;
+}
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    final other = Holder();
+    Future.microtask(() {
+      print(other.state);
+    });
+    return 0;
+  }
+}
+''');
+  }
+
   Future<void> test_reportsLoadInsideShorthandMicrotaskClosure() async {
     const source = r'''
 import 'dart:async';

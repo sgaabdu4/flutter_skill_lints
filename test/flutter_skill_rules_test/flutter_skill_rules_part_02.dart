@@ -167,6 +167,28 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, 'state'), lint(second, 'state'.length)]);
   }
 
+  Future<void> test_reportsCascadeAndSuperStateReadsInSyncBuild() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    this..state += 1;
+    this..state.abs();
+    print(super.state);
+    super.state++;
+    return 0;
+  }
+}
+''';
+    final reads = RegExp(r'\bstate\b').allMatches(source.substring(source.indexOf('int build')));
+    final start = source.indexOf('int build');
+    await assertDiagnostics(source, [
+      for (final read in reads) lint(start + read.start, 'state'.length),
+    ]);
+  }
+
   Future<void> test_allowsPlainWriteOfStateInSyncBuild() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';

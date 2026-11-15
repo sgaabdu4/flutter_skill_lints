@@ -127,7 +127,13 @@ bool _isNotifierStateRead(SimpleIdentifier node) {
     return false;
   }
   if (parent is PrefixedIdentifier && parent.identifier == node) return false;
-  final element = node.element;
+  final element = switch (parent) {
+    PostfixExpression(:final operand, :final readElement) when operand == node =>
+      readElement ?? node.element,
+    PrefixExpression(:final operand, :final readElement) when operand == node =>
+      readElement ?? node.element,
+    _ => node.element,
+  };
   return element is PropertyAccessorElement && element.enclosingElement is InterfaceElement;
 }
 

@@ -18,7 +18,7 @@
   methods, still report.
 - Change the `riverpod_read_init_state` correction message. It told users to
   defer the read with a post-frame callback. It now names `AsyncNotifier.build()`
-  or starting the load from the event that causes it. The check is unchanged.
+  or starting the load from the event that causes it.
 - Report `riverpod_read_init_state` for a `ref.read` inside a post-frame,
   `Timer` or microtask callback in `initState`. The rule used to accept it as a
   deferred read.

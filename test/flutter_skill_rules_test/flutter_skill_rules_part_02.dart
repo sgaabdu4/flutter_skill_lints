@@ -125,6 +125,61 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, '_loadTodos()'), lintFor(source, 'state')]);
   }
 
+  Future<void> test_reportsLoadInsideShorthandMicrotaskClosure() async {
+    const source = r'''
+import 'dart:async';
+
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    unawaited(.microtask(() => _loadTodos()));
+    return 0;
+  }
+
+  void _loadTodos() {}
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, '_loadTodos()')]);
+  }
+
+  Future<void> test_reportsLoadTearOffPassedToMicrotask() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    Future.microtask(_loadTodos);
+    return 0;
+  }
+
+  void _loadTodos() {}
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, '_loadTodos')]);
+  }
+
+  Future<void> test_reportsLoadTearOffPassedToShorthandMicrotask() async {
+    const source = r'''
+import 'dart:async';
+
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    unawaited(.microtask(_loadTodos));
+    return 0;
+  }
+
+  void _loadTodos() {}
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, '_loadTodos')]);
+  }
+
   Future<void> test_reportsHelperThatReadsStateTransitively() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';

@@ -93,18 +93,41 @@ final class _BodyVisitor extends RecursiveAstVisitor<void> {
   }
 
   @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    _reportLoadTearOffs(node, node.argumentList);
+    super.visitInstanceCreationExpression(node);
+  }
+
+  @override
+  void visitDotShorthandConstructorInvocation(DotShorthandConstructorInvocation node) {
+    _reportLoadTearOffs(node, node.argumentList);
+    super.visitDotShorthandConstructorInvocation(node);
+  }
+
+  void _reportLoadTearOffs(AstNode call, ArgumentList arguments) {
+    if (!_isMicrotaskCall(call)) return;
+    for (final argument in arguments.arguments) {
+      if (argument is SimpleIdentifier && _loadInitFetchPattern.hasMatch(argument.name)) {
+        rule.reportAtNode(argument);
+      }
+    }
+  }
+
+  @override
   void visitFunctionExpression(FunctionExpression node) {
-    if (_isMicrotaskCallback(node)) super.visitFunctionExpression(node);
+    if (_isMicrotaskCall(node.parent?.parent)) super.visitFunctionExpression(node);
   }
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {}
 }
 
-bool _isMicrotaskCallback(FunctionExpression node) {
-  final call = node.parent?.parent;
-  if (call is! InstanceCreationExpression) return false;
-  final element = call.constructorName.element;
+bool _isMicrotaskCall(AstNode? call) {
+  final element = switch (call) {
+    InstanceCreationExpression(:final constructorName) => constructorName.element,
+    DotShorthandConstructorInvocation(:final element) => element,
+    _ => null,
+  };
   return element != null &&
       element.name == 'microtask' &&
       element.library.identifier == 'dart:async';

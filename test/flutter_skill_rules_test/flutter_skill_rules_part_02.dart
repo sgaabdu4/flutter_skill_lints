@@ -105,6 +105,36 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, 'state')]);
   }
 
+  Future<void> test_reportsPostfixIncrementOfStateInSyncBuild() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    state++;
+    return 0;
+  }
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, 'state')]);
+  }
+
+  Future<void> test_reportsPrefixIncrementOfStateInSyncBuild() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    --state;
+    return 0;
+  }
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, 'state')]);
+  }
+
   Future<void> test_reportsLoadAndStateReadInsideMicrotask() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';

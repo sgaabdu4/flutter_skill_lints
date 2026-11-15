@@ -4,15 +4,64 @@ import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_collection_mutating_methods.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_global_state.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_mutating_parameters.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/consistent_update_render_object.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
   defineReflectiveSuite(() {
     defineReflectiveTests(AvoidGlobalStateTest);
     defineReflectiveTests(AvoidMutatingParametersTest);
+    defineReflectiveTests(ConsistentUpdateRenderObjectSharedWidgetTest);
     defineReflectiveTests(AvoidCollectionMutatingMethodsTest);
   });
 }
+
+const _flutterRenderObjectLibrary = r'''
+class BuildContext {
+  Object? tag;
+}
+
+class Widget {
+  const Widget();
+}
+
+class RenderObject {}
+
+abstract class RenderObjectWidget extends Widget {
+  const RenderObjectWidget();
+}
+
+abstract class LeafRenderObjectWidget extends RenderObjectWidget {
+  const LeafRenderObjectWidget();
+
+  RenderObject createRenderObject(BuildContext context);
+
+  void updateRenderObject(BuildContext context, covariant RenderObject renderObject) {}
+}
+''';
+
+const _renderObjectWidgetSource = r'''
+import 'package:flutter/widgets.dart';
+
+class CounterRenderObject extends RenderObject {
+  int count = 0;
+}
+
+class CounterWidget extends LeafRenderObjectWidget {
+  const CounterWidget({required this.count});
+
+  final int count;
+
+  @override
+  CounterRenderObject createRenderObject(BuildContext context) =>
+      CounterRenderObject()..count = count;
+
+  @override
+  void updateRenderObject(BuildContext context, CounterRenderObject renderObject) {
+    renderObject.count = count;
+  }
+}
+''';
 
 @reflectiveTest
 final class AvoidGlobalStateTest extends AnalysisRuleTest {
@@ -61,8 +110,60 @@ final class AvoidMutatingParametersTest extends AnalysisRuleTest {
   @override
   void setUp() {
     _addSentryFlutterPackage();
+    newPackage('flutter').addFile('lib/widgets.dart', _flutterRenderObjectLibrary);
     rule = AvoidMutatingParameters();
     super.setUp();
+  }
+
+  Future<void> test_updateRenderObjectWritesRenderObjectParameter_noLint() async {
+    await assertNoDiagnostics(_renderObjectWidgetSource);
+  }
+
+  Future<void> test_updateRenderObjectCascadeWritesRenderObjectParameter_noLint() async {
+    await assertNoDiagnostics(
+      _renderObjectWidgetSource.replaceFirst(
+        'renderObject.count = count;',
+        'renderObject..count = count;',
+      ),
+    );
+  }
+
+  Future<void> test_updateRenderObjectWritesContextParameter_lint() async {
+    final source = _renderObjectWidgetSource.replaceFirst(
+      'renderObject.count = count;',
+      'context.tag = count;',
+    );
+
+    await assertDiagnostics(source, [lint(source.indexOf('tag ='), 'tag'.length)]);
+  }
+
+  Future<void> test_otherMethodWritesRenderObjectParameter_lint() async {
+    final source = _renderObjectWidgetSource.replaceFirst(
+      '  @override\n  void updateRenderObject',
+      '  void configure(BuildContext context, CounterRenderObject renderObject) {\n'
+          '    renderObject.count = count;\n'
+          '  }\n\n'
+          '  @override\n  void updateRenderObject',
+    );
+
+    final write = source.indexOf('renderObject.count = count') + 'renderObject.'.length;
+    await assertDiagnostics(source, [lint(write, 'count'.length)]);
+  }
+
+  Future<void> test_updateRenderObjectOutsideRenderObjectWidget_lint() async {
+    const source = r'''
+class Holder {
+  int count = 0;
+}
+
+class Updater {
+  void updateRenderObject(Object context, Holder renderObject) {
+    renderObject.count = 1;
+  }
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('count = 1'), 'count'.length)]);
   }
 
   Future<void> test_assignmentToParameter_lint() async {
@@ -293,6 +394,20 @@ void normalize(int value) {
   local++;
 }
 ''');
+  }
+}
+
+@reflectiveTest
+final class ConsistentUpdateRenderObjectSharedWidgetTest extends AnalysisRuleTest {
+  @override
+  void setUp() {
+    newPackage('flutter').addFile('lib/widgets.dart', _flutterRenderObjectLibrary);
+    rule = ConsistentUpdateRenderObject();
+    super.setUp();
+  }
+
+  Future<void> test_widgetThatWritesRenderObjectParameter_noLint() async {
+    await assertNoDiagnostics(_renderObjectWidgetSource);
   }
 }
 

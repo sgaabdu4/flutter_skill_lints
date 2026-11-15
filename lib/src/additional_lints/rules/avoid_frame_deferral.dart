@@ -51,6 +51,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
     if (!_deferralNames.contains(node.name)) return;
+    if (node.thisOrAncestorOfType<CommentReference>() != null) return;
     final element = node.element;
     final library = element is MethodElement || element is GetterElement ? element?.library : null;
     if (library == null || !library.identifier.startsWith('package:flutter/')) return;

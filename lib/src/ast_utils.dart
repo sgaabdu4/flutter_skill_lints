@@ -9,10 +9,7 @@ import 'package:flutter_skill_lints/src/mounted_guard_utils.dart';
 
 part 'ast_utils/ast_utils_part_01.dart';
 
-/// Whether [provider], a `ref.watch` argument, resolves through its generated
-/// `@ProviderFor` variable to a `@Riverpod(keepAlive: true)` source, in any
-/// file. `.select(...)`, `.notifier`/`.future` and family calls are stripped
-/// down to the provider variable.
+/// Whether the `ref.watch` argument [provider] resolves to a `@Riverpod(keepAlive: true)` source.
 bool isKeepAliveProviderExpression(Expression provider) {
   Expression? current = provider.unParenthesized;
   while (current != null) {
@@ -66,13 +63,11 @@ bool isPackageAnnotation(ElementAnnotation? annotation, String package, String c
       uri.pathSegments.first == package;
 }
 
-/// Recognizes a value annotated by the actual Freezed annotation library,
-/// either `@freezed` or a configured `@Freezed(...)` constructor call.
+/// Whether [type] is annotated with `@freezed` or `@Freezed(...)` from the Freezed library.
 bool isFreezedInterfaceType(InterfaceType type) =>
     type.element.metadata.annotations.any(isFreezedAnnotation);
 
-/// Whether [annotation] resolves to `@freezed` or `@Freezed(...)` from
-/// `package:freezed_annotation`.
+/// Whether [annotation] is `@freezed` or `@Freezed(...)` from `package:freezed_annotation`.
 bool isFreezedAnnotation(ElementAnnotation annotation) {
   final owner = annotation.element;
   if (owner?.library?.uri.toString() != 'package:freezed_annotation/freezed_annotation.dart') {
@@ -323,9 +318,7 @@ bool isInFreezedClass(AstNode node) {
       false;
 }
 
-/// Riverpod and state_notifier notifier bases. Riverpod 3 codegen notifiers
-/// (`extends _$X`) reach AnyNotifier through `$Notifier`/`$AsyncNotifier`,
-/// never through the hand-written Notifier.
+/// Riverpod and state_notifier bases; codegen notifiers (`extends _$X`) reach AnyNotifier via `$Notifier`.
 const riverpodNotifierChecker = TypeChecker.any([
   TypeChecker.fromName('AnyNotifier', packageName: 'riverpod'),
   TypeChecker.fromName('Notifier', packageName: 'riverpod'),
@@ -594,10 +587,7 @@ bool classMemberNameIsDeclaration(SimpleIdentifier node) {
   return false;
 }
 
-/// Tracks whether each statement can run after an unguarded `await`.
-///
-/// The state flows into nested blocks, catch/finally clauses, loop iterations
-/// and inline awaits, so a guard is required wherever execution resumes.
+/// Tracks whether each statement can run after an unguarded `await`, including nested blocks and loops.
 final class AsyncStatementScanner {
   AsyncStatementScanner({
     required this.guardTarget,
@@ -820,9 +810,7 @@ final class AsyncStatementScanner {
   }
 }
 
-/// Whether [node] is the `dynamic` value type of the JSON map shape
-/// `Map<String, dynamic>`: a `Map` type annotation or a map literal's type
-/// arguments (`<String, dynamic>{}`, hive-persistence.md).
+/// Whether [node] is the `dynamic` value type of a `Map<String, dynamic>` JSON map shape.
 bool isJsonMapDynamicValueType(NamedType node) {
   final typeArguments = node.parent;
   if (typeArguments is! TypeArgumentList) return false;

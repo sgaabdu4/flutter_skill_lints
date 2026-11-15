@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.14.0] - 2026-11-15
+
+- Add `avoid_frame_deferral`, which reports Flutter next-frame deferral at error
+  severity: `addPostFrameCallback`, `scheduleFrameCallback`, `scheduleFrame` and
+  reads of `endOfFrame` from `package:flutter/`, on any binding instance. A
+  method with the same name in app code is not reported. Test files and
+  generated files are skipped. Fix the order of events at its cause: drive the
+  work from state, a listener, a controller that corrects during layout, or the
+  event handler. This release is a minor version because projects that call
+  these APIs fail analysis until they change; move the `^0.13` pin to `^0.14.0`
+  when ready.
+- Allow writes to the render object parameter inside `updateRenderObject` of a
+  `RenderObjectWidget` subclass in `avoid_mutating_parameters`.
+  `consistent_update_render_object` requires those writes, so no render widget
+  could pass both rules. Writes to the other parameter, and writes in other
+  methods, still report.
+- Change the `riverpod_read_init_state` correction message. It told users to
+  defer the read with a post-frame callback.
+
 ## [0.13.7] - 2026-11-12
 
 - Recognise Material and Cupertino API from the standalone `material_ui` and

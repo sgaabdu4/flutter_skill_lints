@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type_system.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
@@ -7,6 +8,18 @@ enum FlexAxis { vertical, horizontal }
 
 /// Lightweight info about a widget node in the AST.
 typedef WidgetInfo = ({String name, ArgumentList argumentList, Expression node});
+
+bool isRenderObjectWidgetClass(Element? element) =>
+    element != null && _renderObjectWidgetChecker.isSuperOf(element);
+
+/// The render object parameter (the second one) of an `updateRenderObject`
+/// override in a `RenderObjectWidget` subclass, or null for any other method.
+FormalParameter? renderObjectUpdateParameter(MethodDeclaration method) {
+  if (method.name.lexeme != 'updateRenderObject') return null;
+  if (!isRenderObjectWidgetClass(method.declaredFragment?.element.enclosingElement)) return null;
+  final parameters = method.parameters?.parameters;
+  return parameters != null && parameters.length >= 2 ? parameters[1] : null;
+}
 
 String? allowedWidgetName(Expression expression, Set<String> allowedNames) {
   final name = switch (expression) {

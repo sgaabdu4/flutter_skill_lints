@@ -2,9 +2,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
-
-import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Checks that RenderObjectWidget constructor fields are copied during updates.
 final class ConsistentUpdateRenderObject extends ClassDeclarationRule {
@@ -33,15 +32,9 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   final ConsistentUpdateRenderObject rule;
 
-  static const _renderObjectWidgetChecker = TypeChecker.fromName(
-    'RenderObjectWidget',
-    packageName: 'flutter',
-  );
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    final element = node.declaredFragment?.element;
-    if (element == null || !_renderObjectWidgetChecker.isSuperOf(element)) return;
+    if (!isRenderObjectWidgetClass(node.declaredFragment?.element)) return;
 
     final fields = _constructorBackedFields(node);
     if (fields.isEmpty) return;
@@ -49,7 +42,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     final updateRenderObject = _updateRenderObjectMethod(node);
     if (updateRenderObject == null) return;
 
-    final renderObjectParameter = _renderObjectParameterName(updateRenderObject);
+    final renderObjectParameter = renderObjectUpdateParameter(updateRenderObject)?.name?.lexeme;
     if (renderObjectParameter == null) return;
 
     final assigned = _RenderObjectAssignments.collect(updateRenderObject, renderObjectParameter);
@@ -113,15 +106,6 @@ MethodDeclaration? _updateRenderObjectMethod(ClassDeclaration node) {
   }
 
   return null;
-}
-
-String? _renderObjectParameterName(MethodDeclaration method) {
-  final parameters = method.parameters?.parameters;
-  if (parameters == null || parameters.length < 2) return null;
-
-  final parameter = parameters[1];
-  final normalized = parameter;
-  return normalized.name?.lexeme;
 }
 
 final class _RenderObjectAssignments extends RecursiveAstVisitor<void> {

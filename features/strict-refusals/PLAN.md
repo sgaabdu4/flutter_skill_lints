@@ -30,10 +30,11 @@ Authority: Owner asked for both changes, a draft PR first, and a ready PR when t
 
 Result: Passed
 Evidence: Starting commit 113d91d on origin/main 4a36b8a; `dart test` with Dart 3.14.0: 2755 passed, 1 skipped, exit 0.
-Execution: One builder; each change as its own commit, test first: shared render object helper, the parameter write fix, the `riverpod_read_init_state` message, the new rule, counts and docs, version.
+Execution: One builder; each change as its own commit, test first: shared render object helper, the parameter write fix, the `riverpod_read_init_state` message, the new rule, counts and docs, version 0.14.0.
 
 ## Risks + recovery
 
+Version: 0.14.0, not 0.13.8. Projects pin `^0.13.4`, so a 0.13.x release would reach every project on its next analyze, and the new rule would fail them before their fix PRs merge. A 0.14.0 release needs an explicit pin bump. The release job tags and publishes on the merge of the version bump, so this PR waits for the owner to merge it. No tag is pushed by hand.
 The vendored `building-flutter-apps` skill still shows `addPostFrameCallback` in its post-frame section; its owner repo needs its own PR. Recovery = revert the commit of the rule.
 
 ## ux_reference

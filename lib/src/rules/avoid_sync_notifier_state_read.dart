@@ -2,6 +2,7 @@ import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
@@ -122,15 +123,18 @@ final class _BodyVisitor extends RecursiveAstVisitor<void> {
 bool _isNotifierStateRead(SimpleIdentifier node) {
   if (node.name != 'state') return false;
   final parent = node.parent;
-  if (parent is AssignmentExpression && parent.leftHandSide == node) return false;
   if (parent is PropertyAccess && parent.propertyName == node && parent.target is! ThisExpression) {
     return false;
   }
   if (parent is PrefixedIdentifier && parent.identifier == node) return false;
-  final element = switch (parent) {
-    PostfixExpression(:final operand, :final readElement) when operand == node =>
+  final access = parent is PropertyAccess && parent.propertyName == node ? parent : node;
+  final element = switch (access.parent) {
+    AssignmentExpression(:final leftHandSide, :final operator, :final readElement)
+        when leftHandSide == access =>
+      operator.type == TokenType.EQ ? null : readElement,
+    PostfixExpression(:final operand, :final readElement) when operand == access =>
       readElement ?? node.element,
-    PrefixExpression(:final operand, :final readElement) when operand == node =>
+    PrefixExpression(:final operand, :final readElement) when operand == access =>
       readElement ?? node.element,
     _ => node.element,
   };

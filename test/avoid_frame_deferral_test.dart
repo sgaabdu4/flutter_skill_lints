@@ -17,7 +17,9 @@ void main() {
     'reportsEndOfFrameReadFromBindingVariable': (t) => t.reportsEndOfFrameReadFromBindingVariable(),
     'allowsUserMethodsWithTheSameNames': (t) => t.allowsUserMethodsWithTheSameNames(),
     'allowsOtherSchedulerMembers': (t) => t.allowsOtherSchedulerMembers(),
+    'ignoresDocCommentReferences': (t) => t.ignoresDocCommentReferences(),
     'skipsTestFiles': (t) => t.skipsTestFiles(),
+    'skipsIntegrationTestHelpers': (t) => t.skipsIntegrationTestHelpers(),
     'skipsGeneratedFiles': (t) => t.skipsGeneratedFiles(),
   });
 }
@@ -169,6 +171,28 @@ void run() {
   SchedulerBinding.instance.scheduleForcedFrame();
 }
 ''');
+  }
+
+  Future<void> ignoresDocCommentReferences() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+/// Not [SchedulerBinding.addPostFrameCallback] and not [SchedulerBinding.endOfFrame].
+void run() {}
+''');
+  }
+
+  Future<void> skipsIntegrationTestHelpers() async {
+    final path = '$testPackageRootPath/integration_test/support/pump.dart';
+    newFile(path, r'''
+import 'package:flutter/widgets.dart';
+
+Future<void> pump() async {
+  await SchedulerBinding.instance.endOfFrame;
+}
+''');
+
+    await assertDiagnosticsInFile(path, []);
   }
 
   Future<void> skipsTestFiles() async {

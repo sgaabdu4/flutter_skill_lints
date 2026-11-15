@@ -128,6 +128,17 @@ final class AvoidMutatingParametersTest extends AnalysisRuleTest {
     );
   }
 
+  Future<void> test_updateRenderObjectReassignsRenderObjectParameter_lint() async {
+    final source = _renderObjectWidgetSource.replaceFirst(
+      'renderObject.count = count;',
+      'renderObject = CounterRenderObject();\n    renderObject.count = count;',
+    );
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf('renderObject = '), 'renderObject'.length),
+    ]);
+  }
+
   Future<void> test_updateRenderObjectWritesContextParameter_lint() async {
     final source = _renderObjectWidgetSource.replaceFirst(
       'renderObject.count = count;',

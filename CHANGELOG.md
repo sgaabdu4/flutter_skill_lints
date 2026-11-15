@@ -11,11 +11,12 @@
   event handler. This release is a minor version because projects that call
   these APIs fail analysis until they change; move the `^0.13` pin to `^0.14.0`
   when ready.
-- Allow writes to the render object parameter inside `updateRenderObject` of a
-  `RenderObjectWidget` subclass in `avoid_mutating_parameters`.
-  `consistent_update_render_object` requires those writes, so no render widget
-  could pass both rules. Writes to the other parameter, and writes in other
-  methods, still report.
+- Allow writes through the render object parameter (its fields, cascades and
+  index writes) inside `updateRenderObject` of a `RenderObjectWidget` subclass
+  in `avoid_mutating_parameters`. `consistent_update_render_object` requires
+  those writes, so no render widget could pass both rules. Reassigning the
+  render object parameter itself, writes to the other parameter, and writes in
+  other methods still report.
 - Change the `riverpod_read_init_state` correction message. It told users to
   defer the read with a post-frame callback. It now names `AsyncNotifier.build()`
   or starting the load from the event that causes it.

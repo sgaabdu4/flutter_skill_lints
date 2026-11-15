@@ -67,16 +67,15 @@ final class _Visitor extends SimpleAstVisitor<void> {
     FormalParameter? writableParameter,
     Set<FormalParameterElement> sdkOptionsBuilderParameters = const {},
   }) {
-    final names = formalParameterNames(parameters).difference({?writableParameter?.name?.lexeme});
-    final parameterElements = _formalParameterElements(parameters)
-        .difference({?writableParameter?.declaredFragment?.element});
+    final names = formalParameterNames(parameters);
     if (names.isEmpty) return;
     body.accept(
       _MutationVisitor(
         rule,
         names,
-        parameterElements: parameterElements,
+        parameterElements: _formalParameterElements(parameters),
         sdkOptionsBuilderParameters: sdkOptionsBuilderParameters,
+        writableThrough: writableParameter?.name?.lexeme,
       ),
     );
   }
@@ -97,12 +96,14 @@ final class _MutationVisitor extends RecursiveAstVisitor<void> {
     this.parameters, {
     required this.parameterElements,
     this.sdkOptionsBuilderParameters = const {},
+    this.writableThrough,
   });
 
   final AvoidMutatingParameters rule;
   final Set<String> parameters;
   final Set<FormalParameterElement> parameterElements;
   final Set<FormalParameterElement> sdkOptionsBuilderParameters;
+  final String? writableThrough;
   int _nestedFunctionDepth = 0;
 
   @override
@@ -154,6 +155,7 @@ final class _MutationVisitor extends RecursiveAstVisitor<void> {
     if (_nestedFunctionDepth > 0) {
       return _sdkOptionsParameterWriteTarget(expression, sdkOptionsBuilderParameters);
     }
+    if (writableThrough != null && _writeRoot(expression) == writableThrough) return null;
     return _parameterWriteTarget(
       expression,
       parameters,
@@ -162,6 +164,14 @@ final class _MutationVisitor extends RecursiveAstVisitor<void> {
     );
   }
 }
+
+String? _writeRoot(Expression expression) => switch (expression) {
+  PrefixedIdentifier(:final prefix) => prefix.name,
+  PropertyAccess(target: final SimpleIdentifier target) => target.name,
+  PropertyAccess(isCascaded: true) => _cascadeTargetIdentifier(expression)?.name,
+  IndexExpression(target: final SimpleIdentifier target) => target.name,
+  _ => null,
+};
 
 Set<FormalParameterElement> _sentryFlutterOptionsBuilderParameters(FunctionExpression node) {
   final callbackParameter = node.correspondingParameter;

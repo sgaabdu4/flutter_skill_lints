@@ -586,23 +586,6 @@ bool containsEnsureCall(AstNode node) {
   return visitor.found;
 }
 
-bool containsFutureMicrotaskAncestor(AstNode node) {
-  AstNode? current = node.parent;
-  while (current != null) {
-    if (current is MethodInvocation &&
-        current.methodName.name == 'microtask' &&
-        current.target is SimpleIdentifier &&
-        (current.target as SimpleIdentifier).name == 'Future') {
-      return true;
-    }
-    if (current is MethodDeclaration || current is FunctionDeclaration) {
-      return false;
-    }
-    current = current.parent;
-  }
-  return false;
-}
-
 bool classMemberNameIsDeclaration(SimpleIdentifier node) {
   final parent = node.parent;
   if (parent is VariableDeclaration && parent.name.lexeme == node.name) {

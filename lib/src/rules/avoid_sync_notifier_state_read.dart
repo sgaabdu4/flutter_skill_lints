@@ -67,7 +67,6 @@ final class _BodyVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (containsFutureMicrotaskAncestor(node)) return;
     final name = node.methodName.name;
     if (_loadInitFetchPattern.hasMatch(name)) {
       rule.reportAtNode(node);
@@ -94,10 +93,21 @@ final class _BodyVisitor extends RecursiveAstVisitor<void> {
   }
 
   @override
-  void visitFunctionExpression(FunctionExpression node) {}
+  void visitFunctionExpression(FunctionExpression node) {
+    if (_isMicrotaskCallback(node)) super.visitFunctionExpression(node);
+  }
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {}
+}
+
+bool _isMicrotaskCallback(FunctionExpression node) {
+  final call = node.parent?.parent;
+  if (call is! InstanceCreationExpression) return false;
+  final element = call.constructorName.element;
+  return element != null &&
+      element.name == 'microtask' &&
+      element.library.identifier == 'dart:async';
 }
 
 /// A same-class method invoked on the notifier itself.
@@ -163,7 +173,6 @@ final class _SyncStateReadFinder extends RecursiveAstVisitor<void> {
   @override
   void visitMethodInvocation(MethodInvocation node) {
     if (_done) return;
-    if (containsFutureMicrotaskAncestor(node)) return;
     final helper = _ownHelper(classNode, node);
     if (helper != null && _helperReadsState(classNode, helper, seen)) {
       found = true;

@@ -53,6 +53,24 @@ void main() {
     }
   });
 
+  test('no correction message tells users to defer work to a later frame', () {
+    final registry = _RecordingPluginRegistry('flutter_skill_lints');
+
+    FlutterSkillLintsPlugin().register(registry);
+
+    final deferring = [
+      for (final rule in registry.warningRules.values)
+        for (final code in rule.diagnosticCodes)
+          if (RegExp(
+            r'post-?frame|next frame|later frame',
+            caseSensitive: false,
+          ).hasMatch('${code.correctionMessage}'))
+            code.lowerCaseName,
+    ];
+
+    expect(deferring, isEmpty);
+  });
+
   test('skill lint references resolve to registered diagnostics', () {
     final skillRegistry = _RecordingPluginRegistry('flutter_skill_lints');
     final additionalRegistry = _RecordingPluginRegistry('flutter_skill_lints_additional');

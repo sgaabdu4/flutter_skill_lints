@@ -71,6 +71,23 @@ void main() {
     expect(deferring, isEmpty);
   });
 
+  test('the init state and sync notifier messages name the same two fixes', () {
+    final messages = [
+      for (final rule in flutterSkillRules)
+        if (const {
+          'riverpod_read_init_state',
+          'avoid_sync_notifier_state_read',
+        }.contains(rule.name))
+          for (final code in rule.diagnosticCodes) '${code.correctionMessage}',
+    ];
+
+    expect(messages, hasLength(2));
+    for (final message in messages) {
+      expect(message, contains('AsyncNotifier.build()'));
+      expect(message, contains('start it from the event that causes it'));
+    }
+  });
+
   test('skill lint references resolve to registered diagnostics', () {
     final skillRegistry = _RecordingPluginRegistry('flutter_skill_lints');
     final additionalRegistry = _RecordingPluginRegistry('flutter_skill_lints_additional');

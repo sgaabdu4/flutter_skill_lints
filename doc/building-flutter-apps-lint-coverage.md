@@ -4,12 +4,22 @@ This audit covers both plugin surfaces:
 
 - `lib/src/rules/**`: 229 registered `building-flutter-apps` warning rules.
 - `lib/src/rules/**`: 237 `building-flutter-apps` diagnostic codes.
-- `lib/src/additional_lints/rules/**`: 273 additional diagnostics.
-- Total unique diagnostics: 508.
+- `lib/src/additional_lints/rules/**`: 274 additional diagnostics.
+- Total unique diagnostics: 509.
 
 ## Full Rule Inventory
 
 Read [building-flutter-apps-lint-inventory.md](building-flutter-apps-lint-inventory.md).
+
+## `avoid_frame_deferral` next-frame boundary
+
+`avoid_frame_deferral` reports at error severity. It resolves each use by
+element and reports `addPostFrameCallback`, `scheduleFrameCallback`,
+`scheduleFrame` and reads of `endOfFrame` when the member comes from
+`package:flutter/`, on any binding instance. A method or getter with the same
+name in app code, and `PlatformDispatcher.scheduleFrame` from `dart:ui`, are
+not reported. Test files and generated files are skipped. `Timer`,
+`Future.delayed` and microtasks are not frame calls and stay out of scope.
 
 ## `avoid_throw` typed-failure boundary
 

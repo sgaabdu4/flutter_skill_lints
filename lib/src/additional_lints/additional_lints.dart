@@ -127,6 +127,7 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_expanded_as
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_extensions_on_records.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_flexible_outside_flex.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_flutter_skill_lint_suppression.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_frame_deferral.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_function_type_in_records.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_future_ignore.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_future_tostring.dart';
@@ -404,6 +405,7 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidReferencingDiscardedVariables());
     registry.registerWarningRule(AvoidFlexibleOutsideFlex());
     registry.registerWarningRule(AvoidFlutterSkillLintSuppression());
+    registry.registerWarningRule(AvoidFrameDeferral());
     registry.registerWarningRule(AvoidIncompleteCopyWith());
     registry.registerWarningRule(AvoidIncorrectImageOpacity());
     registry.registerWarningRule(AvoidInlineErrorCodes());

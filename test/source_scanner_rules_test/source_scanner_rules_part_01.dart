@@ -54,8 +54,46 @@ abstract class _RiverpodRuleTest extends _SourceRuleTest {
 
 @reflectiveTest
 final class RiverpodReadInitStateTest extends _RiverpodRuleTest {
-  Future<void> test_allowsDeferredAndAdjacentReads() async {
+  @override
+  void setUp() {
+    super.setUp();
+    newPackage('flutter').addFile('lib/scheduler.dart', r'''
+class SchedulerBinding {
+  static SchedulerBinding get instance => throw UnimplementedError();
+  void addPostFrameCallback(void Function(Duration timeStamp) callback) {}
+}
+''');
+  }
+
+  Future<void> test_allowsReadInAnotherMethod() async {
     await assertAllows(r'''
+final provider = Object();
+class Ref { Object read(Object value) => value; }
+class View {
+  final ref = Ref();
+  void initState() {}
+  void later() { ref.read(provider); }
+}
+''');
+  }
+
+  Future<void> test_reportsReadInsidePostFrameCallback() async {
+    final analyzedSource = _analyzedSource(r'''
+import 'package:flutter/scheduler.dart';
+final provider = Object();
+class Ref { Object read(Object value) => value; }
+class View {
+  final ref = Ref();
+  void initState() {
+    SchedulerBinding.instance.addPostFrameCallback((_) { ref.read(provider); });
+  }
+}
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, needle, ruleName)]);
+  }
+
+  Future<void> test_reportsReadInsideMicrotask() async {
+    final analyzedSource = _analyzedSource(r'''
 import 'dart:async';
 final provider = Object();
 class Ref { Object read(Object value) => value; }
@@ -64,9 +102,9 @@ class View {
   void initState() {
     Future<void>.microtask(() { ref.read(provider); });
   }
-  void later() { ref.read(provider); }
 }
-''');
+''', addIgnorePrefix: addIgnorePrefix);
+    await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, needle, ruleName)]);
   }
 
   Future<void> test_reportsImmediatelyInvokedRead() async {
@@ -95,23 +133,6 @@ class View {
 }
 ''', addIgnorePrefix: addIgnorePrefix);
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, needle, ruleName)]);
-  }
-
-  Future<void> test_reportsReadAfterDeferredCallbackOnSameLine() async {
-    final analyzedSource = _analyzedSource(r'''
-import 'dart:async';
-final provider = Object();
-class Ref { Object read(Object value) => value; }
-class View {
-  final ref = Ref();
-  void initState() {
-    Future<void>.microtask(() { ref.read(provider); }); ref.read(provider);
-  }
-}
-''', addIgnorePrefix: addIgnorePrefix);
-    await assertDiagnostics(analyzedSource, [
-      lint(analyzedSource.lastIndexOf(needle), needle.length + 1),
-    ]);
   }
 
   @override

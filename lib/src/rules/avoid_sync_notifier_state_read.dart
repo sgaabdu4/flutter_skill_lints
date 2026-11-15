@@ -59,10 +59,7 @@ final class _BodyVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
-    if (node.name != 'state') return;
-    final parent = node.parent;
-    if (parent is AssignmentExpression && parent.leftHandSide == node) return;
-    rule.reportAtNode(node);
+    if (_isNotifierStateRead(node)) rule.reportAtNode(node);
   }
 
   @override
@@ -122,6 +119,18 @@ final class _BodyVisitor extends RecursiveAstVisitor<void> {
   void visitFunctionDeclaration(FunctionDeclaration node) {}
 }
 
+bool _isNotifierStateRead(SimpleIdentifier node) {
+  if (node.name != 'state') return false;
+  final parent = node.parent;
+  if (parent is AssignmentExpression && parent.leftHandSide == node) return false;
+  if (parent is PropertyAccess && parent.propertyName == node && parent.target is! ThisExpression) {
+    return false;
+  }
+  if (parent is PrefixedIdentifier && parent.identifier == node) return false;
+  final element = node.element;
+  return element is PropertyAccessorElement && element.enclosingElement is InterfaceElement;
+}
+
 bool _isMicrotaskCall(AstNode? call) {
   final element = switch (call) {
     InstanceCreationExpression(:final constructorName) => constructorName.element,
@@ -178,19 +187,7 @@ final class _SyncStateReadFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
-    if (_done || node.name != 'state') return;
-    final parent = node.parent;
-    if (parent is AssignmentExpression && parent.leftHandSide == node) return;
-    if (parent is PropertyAccess &&
-        parent.propertyName == node &&
-        parent.target is! ThisExpression) {
-      return;
-    }
-    if (parent is PrefixedIdentifier && parent.identifier == node) return;
-    final element = node.element;
-    if (element is PropertyAccessorElement && element.enclosingElement is InterfaceElement) {
-      found = true;
-    }
+    if (!_done && _isNotifierStateRead(node)) found = true;
   }
 
   @override

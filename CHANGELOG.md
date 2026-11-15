@@ -27,9 +27,9 @@
   too. It also reports a load method passed as a tear-off, such as
   `Future.microtask(_load)`. The rule skipped every callback before.
 - Change the `avoid_sync_notifier_state_read` correction message. It named
-  `Future.microtask` as the fix. It now names `AsyncNotifier.build()` for
-  primary async state, or a trigger such as `initState` that calls a public
-  `load()` that awaits before it writes state.
+  `Future.microtask` as the fix. It now names `AsyncNotifier.build()` or
+  starting the load from the event that causes it, as the
+  `riverpod_read_init_state` message does.
 
 ## [0.13.7] - 2026-11-12
 

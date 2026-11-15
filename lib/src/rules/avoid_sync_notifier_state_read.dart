@@ -13,8 +13,8 @@ final class AvoidSyncNotifierStateRead extends AnalysisRule {
     'avoid_sync_notifier_state_read',
     "Don't read state or run immediate loading work in sync Notifier.build().",
     correctionMessage:
-        'Return initial state from build(). Use AsyncNotifier.build() for primary async state, '
-        'or let the trigger start the load: initState calls a public load() that awaits before it writes state.',
+        'Return initial state from build(). Move the load into AsyncNotifier.build(), '
+        'or start it from the event that causes it.',
     severity: DiagnosticSeverity.ERROR,
   );
 

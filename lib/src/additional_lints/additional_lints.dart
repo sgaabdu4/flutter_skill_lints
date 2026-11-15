@@ -1,8 +1,4 @@
-/// Additional analyzer diagnostics used by `flutter_skill_lints`.
-///
-/// These rules, fixes, and assists preserve their diagnostic IDs so existing
-/// analyzer configuration can keep using the same rule names through the
-/// `flutter_skill_lints` plugin.
+/// Additional analyzer diagnostics of `flutter_skill_lints`, with stable rule names.
 library;
 
 import 'package:analysis_server_plugin/plugin.dart';

@@ -18,6 +18,10 @@
   methods, still report.
 - Change the `riverpod_read_init_state` correction message. It told users to
   defer the read with a post-frame callback.
+- Change the `avoid_sync_notifier_state_read` correction message. It named
+  `Future.microtask` as the fix. It now names `AsyncNotifier.build()` for
+  primary async state, or a trigger such as `initState` that calls a public
+  `load()` that awaits before it writes state.
 
 ## [0.13.7] - 2026-11-12
 

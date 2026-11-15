@@ -12,7 +12,9 @@ final class AvoidSyncNotifierStateRead extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_sync_notifier_state_read',
     "Don't read state or run immediate loading work in sync Notifier.build().",
-    correctionMessage: 'Return initial state from build() and defer loading with Future.microtask.',
+    correctionMessage:
+        'Return initial state from build(). Use AsyncNotifier.build() for primary async state, '
+        'or let the trigger start the load: initState calls a public load() that awaits before it writes state.',
     severity: DiagnosticSeverity.ERROR,
   );
 

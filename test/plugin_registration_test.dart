@@ -53,7 +53,7 @@ void main() {
     }
   });
 
-  test('no correction message tells users to defer work to a later frame', () {
+  test('no correction message names a deferral call as the fix', () {
     final registry = _RecordingPluginRegistry('flutter_skill_lints');
 
     FlutterSkillLintsPlugin().register(registry);
@@ -62,7 +62,7 @@ void main() {
       for (final rule in registry.warningRules.values)
         for (final code in rule.diagnosticCodes)
           if (RegExp(
-            r'post-?frame|next frame|later frame',
+            r'microtask|Duration\.zero|Timer\.run|post-?frame|next frame|later frame',
             caseSensitive: false,
           ).hasMatch('${code.correctionMessage}'))
             code.lowerCaseName,

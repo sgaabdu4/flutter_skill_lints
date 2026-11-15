@@ -128,18 +128,20 @@ bool _isNotifierStateRead(SimpleIdentifier node) {
   }
   if (parent is PrefixedIdentifier && parent.identifier == node) return false;
   final access = parent is PropertyAccess && parent.propertyName == node ? parent : node;
-  final element = switch (access.parent) {
-    AssignmentExpression(:final leftHandSide, :final operator, :final readElement)
-        when leftHandSide == access =>
-      operator.type == TokenType.EQ ? null : readElement,
-    PostfixExpression(:final operand, :final readElement) when operand == access =>
-      readElement ?? node.element,
-    PrefixExpression(:final operand, :final readElement) when operand == access =>
-      readElement ?? node.element,
-    _ => node.element,
-  };
+  final element = _readElement(access, node.element);
   return element is PropertyAccessorElement && element.enclosingElement is InterfaceElement;
 }
+
+Element? _readElement(Expression access, Element? element) => switch (access.parent) {
+  AssignmentExpression(:final leftHandSide, :final operator, :final readElement)
+      when leftHandSide == access =>
+    operator.type == TokenType.EQ ? null : readElement,
+  PostfixExpression(:final operand, :final readElement) when operand == access =>
+    readElement ?? element,
+  PrefixExpression(:final operand, :final readElement) when operand == access =>
+    readElement ?? element,
+  _ => element,
+};
 
 bool _isMicrotaskCall(AstNode? call) {
   final element = switch (call) {

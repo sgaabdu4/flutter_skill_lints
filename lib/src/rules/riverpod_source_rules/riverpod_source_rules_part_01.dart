@@ -10,7 +10,7 @@ final List<ScannerRule> _riverpodSourceRulesPart1 = [
     code: const LintCode(
       'riverpod_read_init_state',
       'Avoid ref.read in initState.',
-      correctionMessage: 'Defer reads with a post-frame callback.',
+      correctionMessage: 'Read in an event handler, or drive the work from state or a listener.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags ref.read calls made from initState so the Flutter skill violation is shown during analysis.',

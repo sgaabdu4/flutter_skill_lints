@@ -307,6 +307,7 @@ avoid_explicit_pattern_field_name
 avoid_extensions_on_records
 avoid_flexible_outside_flex
 avoid_flutter_skill_lint_suppression
+avoid_frame_deferral
 avoid_function_type_in_records
 avoid_future_ignore
 avoid_future_tostring

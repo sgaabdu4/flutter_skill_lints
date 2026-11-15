@@ -426,7 +426,7 @@ void main() {
 
 const _enabledFlutterSkillRuleCount = 229;
 const _enabledFlutterSkillDiagnosticCount = 237;
-const _enabledAdditionalRuleCount = 273;
+const _enabledAdditionalRuleCount = 274;
 
 const _modelSkillErrorDiagnostics = [
   'use_sealed_freezed_classes',

@@ -23,9 +23,9 @@ Designed for Riverpod + codegen Flutter apps.
 | --- | ---: |
 | Flutter skill warning rules | 229 |
 | Flutter skill diagnostic codes | 237 |
-| Additional Dart/Flutter warning rules | 235 |
-| Additional Dart/Flutter diagnostic codes | 273 |
-| Total unique diagnostic codes | 508 |
+| Additional Dart/Flutter warning rules | 236 |
+| Additional Dart/Flutter diagnostic codes | 274 |
+| Total unique diagnostic codes | 509 |
 | Quick fixes | 63 |
 | Assists | 1 |
 
@@ -203,6 +203,20 @@ class User {
 
   final String userId; // typed_id_raw_id
   final String orgId;
+}
+```
+
+`avoid_frame_deferral` refuses Flutter calls that defer work to the next
+frame: `addPostFrameCallback`, `scheduleFrameCallback`, `scheduleFrame` and
+`endOfFrame`. Fix the order of events at its cause instead. Drive the work from
+state, a listener, a controller that corrects during layout, or the event
+handler.
+
+```dart
+@override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {}); // avoid_frame_deferral
 }
 ```
 

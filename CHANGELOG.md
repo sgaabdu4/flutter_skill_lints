@@ -23,7 +23,9 @@
   `Timer` or microtask callback in `initState`. The rule used to accept it as a
   deferred read.
 - Report loads and `state` reads inside a `Future.microtask` callback in
-  `avoid_sync_notifier_state_read`. The rule skipped every callback before.
+  `avoid_sync_notifier_state_read`, in the dot-shorthand form `.microtask(...)`
+  too. It also reports a load method passed as a tear-off, such as
+  `Future.microtask(_load)`. The rule skipped every callback before.
 - Change the `avoid_sync_notifier_state_read` correction message. It named
   `Future.microtask` as the fix. It now names `AsyncNotifier.build()` for
   primary async state, or a trigger such as `initState` that calls a public

@@ -15,6 +15,8 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 import 'package:flutter_skill_lints/src/rules/ui_source_rules.dart';
 import 'package:test/test.dart';
 
+import 'analysis_rule_suite.dart';
+
 void main() {
   group('FlutterUiLibraryUriTest', () {
     test('test_acceptsFrameworkAndStandalonePackages', () {
@@ -41,7 +43,7 @@ void main() {
     });
   });
 
-  _suite<FireAndForgetModalStandaloneTest>(
+  analysisRuleSuite<FireAndForgetModalStandaloneTest>(
     'FireAndForgetModalStandaloneTest',
     FireAndForgetModalStandaloneTest.new,
     {
@@ -60,7 +62,7 @@ void main() {
     },
   );
 
-  _suite<ModalRouteSettingsStandaloneTest>(
+  analysisRuleSuite<ModalRouteSettingsStandaloneTest>(
     'ModalRouteSettingsStandaloneTest',
     ModalRouteSettingsStandaloneTest.new,
     {
@@ -76,7 +78,7 @@ void main() {
     },
   );
 
-  _suite<StyleRawTokenStandaloneTest>(
+  analysisRuleSuite<StyleRawTokenStandaloneTest>(
     'StyleRawTokenStandaloneTest',
     StyleRawTokenStandaloneTest.new,
     {
@@ -95,7 +97,7 @@ void main() {
     },
   );
 
-  _suite<WatchIntoFrameworkWidgetStandaloneTest>(
+  analysisRuleSuite<WatchIntoFrameworkWidgetStandaloneTest>(
     'WatchIntoFrameworkWidgetStandaloneTest',
     WatchIntoFrameworkWidgetStandaloneTest.new,
     {
@@ -110,7 +112,7 @@ void main() {
     },
   );
 
-  _suite<AvoidThrowModalBuilderStandaloneTest>(
+  analysisRuleSuite<AvoidThrowModalBuilderStandaloneTest>(
     'AvoidThrowModalBuilderStandaloneTest',
     AvoidThrowModalBuilderStandaloneTest.new,
     {
@@ -121,7 +123,7 @@ void main() {
     },
   );
 
-  _suite<UseSliverPrefixStandaloneTest>(
+  analysisRuleSuite<UseSliverPrefixStandaloneTest>(
     'UseSliverPrefixStandaloneTest',
     UseSliverPrefixStandaloneTest.new,
     {
@@ -132,7 +134,7 @@ void main() {
     },
   );
 
-  _suite<PreferSliverPrefixStandaloneTest>(
+  analysisRuleSuite<PreferSliverPrefixStandaloneTest>(
     'PreferSliverPrefixStandaloneTest',
     PreferSliverPrefixStandaloneTest.new,
     {
@@ -143,7 +145,7 @@ void main() {
     },
   );
 
-  _suite<HostDriverImportsStandaloneTest>(
+  analysisRuleSuite<HostDriverImportsStandaloneTest>(
     'HostDriverImportsStandaloneTest',
     HostDriverImportsStandaloneTest.new,
     {
@@ -154,25 +156,6 @@ void main() {
           t.reportsCupertinoImportStandaloneImport(),
     },
   );
-}
-
-void _suite<T extends AnalysisRuleTest>(
-  String name,
-  T Function() create,
-  Map<String, Future<void> Function(T)> cases,
-) {
-  group(name, () {
-    for (final entry in cases.entries) {
-      test(entry.key, () async {
-        final fixture = create()..setUp();
-        try {
-          await entry.value(fixture);
-        } finally {
-          await fixture.tearDown();
-        }
-      });
-    }
-  });
 }
 
 const _flutterMaterial = "import 'package:flutter/material.dart';";

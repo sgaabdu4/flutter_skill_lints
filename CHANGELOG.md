@@ -17,7 +17,8 @@
   could pass both rules. Writes to the other parameter, and writes in other
   methods, still report.
 - Change the `riverpod_read_init_state` correction message. It told users to
-  defer the read with a post-frame callback.
+  defer the read with a post-frame callback. It now names `AsyncNotifier.build()`
+  or starting the load from the event that causes it. The check is unchanged.
 - Change the `avoid_sync_notifier_state_read` correction message. It named
   `Future.microtask` as the fix. It now names `AsyncNotifier.build()` for
   primary async state, or a trigger such as `initState` that calls a public

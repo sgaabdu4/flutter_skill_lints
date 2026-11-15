@@ -673,7 +673,7 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
           'text_field_on_changed_no_debounce': [11, 12],
           'avoid_flexible_outside_flex': [14, 15],
           'use_existing_variable': [28],
-          'riverpod_read_init_state': [41, 42, 43],
+          'riverpod_read_init_state': [41, 42, 43, 44],
           'avoid_frame_deferral': [44, 45],
         }.entries) {
           final findings = audit.where((line) => line.contains(entry.key));

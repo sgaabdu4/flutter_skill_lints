@@ -12,8 +12,7 @@ typedef WidgetInfo = ({String name, ArgumentList argumentList, Expression node})
 bool isRenderObjectWidgetClass(Element? element) =>
     element != null && _renderObjectWidgetChecker.isSuperOf(element);
 
-/// The render object parameter (the second one) of an `updateRenderObject`
-/// override in a `RenderObjectWidget` subclass, or null for any other method.
+/// The second parameter of `updateRenderObject` in a `RenderObjectWidget`, else null.
 FormalParameter? renderObjectUpdateParameter(MethodDeclaration method) {
   if (method.name.lexeme != 'updateRenderObject') return null;
   if (!isRenderObjectWidgetClass(method.declaredFragment?.element.enclosingElement)) return null;
@@ -40,8 +39,7 @@ const _scrollingParentChecker = TypeChecker.any([
 ]);
 const _containerChecker = TypeChecker.fromName('Container', packageName: 'flutter');
 
-/// The widget constructor whose argument receives [node] unchanged, or null
-/// when a callback, method call or other expression may wrap it first.
+/// The widget constructor that receives [node] unchanged, else null.
 InstanceCreationExpression? directWidgetParent(Expression node) {
   AstNode? current = node.parent;
   while (current != null) {
@@ -63,11 +61,7 @@ InstanceCreationExpression? directWidgetParent(Expression node) {
   return null;
 }
 
-/// Whether the parent-data widget [node] is proven to render under a parent
-/// that is not [allowedParent].
-///
-/// Transparent `Container`s are walked. Any other composed widget ends the
-/// proof, because its runtime child placement is not visible in the source.
+/// Whether [node] provably renders under a parent other than [allowedParent].
 bool hasProvenForeignRenderParent(
   InstanceCreationExpression node,
   TypeChecker allowedParent,

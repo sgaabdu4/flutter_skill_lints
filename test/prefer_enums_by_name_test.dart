@@ -43,7 +43,7 @@ ${_color}Color f(String value) => Color.values.firstWhere((e) => e.name == value
   ]);
 
   Future<void> reportsReversedComparison() async {
-    final source =
+    const source =
         '''
 ${_color}Color f(String value) => Color.values.firstWhere((e) => value == e.name);
 ''';
@@ -52,7 +52,7 @@ ${_color}Color f(String value) => Color.values.firstWhere((e) => value == e.name
   }
 
   Future<void> reportsBlockBodyCallback() async {
-    final source =
+    const source =
         '''
 ${_color}Color f(String value) => Color.values.firstWhere((e) {
   return e.name == value;

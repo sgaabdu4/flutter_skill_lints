@@ -35,33 +35,33 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
-    if (targetNode is! SimpleIdentifier) return;
+    final nameToken = node.thisOrAncestorOfType<ClassDeclaration>()?.namePart.typeName;
+    if (nameToken == null) return;
 
-    final baseName = _stripMisspelledSuffix(targetNode.name, suffix);
+    final baseName = _stripMisspelledSuffix(nameToken.lexeme, suffix);
 
     await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(range.node(targetNode), '$baseName$suffix');
+      builder.addSimpleReplacement(range.token(nameToken), '$baseName$suffix');
     });
   }
 
-  /// Strips a potentially misspelled suffix from [name].
+  /// Strips the tail of [name] that is the closest typo of [suffix], at most two edits away.
   static String _stripMisspelledSuffix(String name, String suffix) {
     final suffixLower = suffix.toLowerCase();
-    final suffixLen = suffix.length;
+    var bestDistance = 3;
+    var bestLength = 0;
 
-    for (var len = suffixLen + 2; len >= suffixLen - 2; len--) {
+    for (var len = suffix.length + 2; len >= suffix.length - 2; len--) {
       if (len <= 0 || len >= name.length) continue;
 
       final tail = name.substring(name.length - len);
       final distance = computeEditDistance(tail.toLowerCase(), suffixLower);
-
-      // Allow up to 2 edits for the suffix to be considered a typo.
-      if (distance > 0 && distance <= 2) {
-        return name.substring(0, name.length - len);
+      if (distance > 0 && distance < bestDistance) {
+        bestDistance = distance;
+        bestLength = len;
       }
     }
 
-    return name;
+    return bestLength == 0 ? name : name.substring(0, name.length - bestLength);
   }
 }

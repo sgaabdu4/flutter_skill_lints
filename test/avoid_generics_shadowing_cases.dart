@@ -5,29 +5,30 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<AvoidGenericsShadowingTest>(
+  analysisRuleSuite<_AvoidGenericsShadowingTest>(
     'AvoidGenericsShadowingTest',
-    AvoidGenericsShadowingTest.new,
+    _AvoidGenericsShadowingTest.new,
     {
-      'reportsTypeParameterNamedLikeClass': (t) => t.reportsTypeParameterNamedLikeClass(),
-      'reportsMethodTypeParameterNamedLikeEnum': (t) => t.reportsMethodTypeParameterNamedLikeEnum(),
-      'acceptsUnrelatedTypeParameters': (t) => t.acceptsUnrelatedTypeParameters(),
-      'renamesParameterAndUsages': (t) => t.renamesParameterAndUsages(),
-      'skipsNamesAlreadyUsedInScope': (t) => t.skipsNamesAlreadyUsedInScope(),
-      'renamesMethodTypeParameter': (t) => t.renamesMethodTypeParameter(),
-      'fallsBackToNumberedNames': (t) => t.fallsBackToNumberedNames(),
+      'reportsTypeParameterNamedLikeClass': (t) => t._reportsTypeParameterNamedLikeClass(),
+      'reportsMethodTypeParameterNamedLikeEnum': (t) =>
+          t._reportsMethodTypeParameterNamedLikeEnum(),
+      'acceptsUnrelatedTypeParameters': (t) => t._acceptsUnrelatedTypeParameters(),
+      'renamesParameterAndUsages': (t) => t._renamesParameterAndUsages(),
+      'skipsNamesAlreadyUsedInScope': (t) => t._skipsNamesAlreadyUsedInScope(),
+      'renamesMethodTypeParameter': (t) => t._renamesMethodTypeParameter(),
+      'fallsBackToNumberedNames': (t) => t._fallsBackToNumberedNames(),
     },
   );
 }
 
-final class AvoidGenericsShadowingTest extends FixRuleTest {
+final class _AvoidGenericsShadowingTest extends FixRuleTest {
   @override
   void setUp() {
     rule = AvoidGenericsShadowing();
     super.setUp();
   }
 
-  Future<void> reportsTypeParameterNamedLikeClass() async {
+  Future<void> _reportsTypeParameterNamedLikeClass() async {
     const source = '''
 class T {}
 
@@ -38,7 +39,7 @@ class Box<T> {
     await assertDiagnostics(source, [lint(source.indexOf('<T>') + 1, 1)]);
   }
 
-  Future<void> reportsMethodTypeParameterNamedLikeEnum() async {
+  Future<void> _reportsMethodTypeParameterNamedLikeEnum() async {
     const source = '''
 enum Kind { a }
 
@@ -49,13 +50,13 @@ class Holder {
     await assertDiagnostics(source, [lint(source.indexOf('<Kind>') + 1, 'Kind'.length)]);
   }
 
-  Future<void> acceptsUnrelatedTypeParameters() => assertNoDiagnostics('''
+  Future<void> _acceptsUnrelatedTypeParameters() => assertNoDiagnostics('''
 class Box<T> {
   T? value;
 }
 ''');
 
-  Future<void> renamesParameterAndUsages() => expectFix(
+  Future<void> _renamesParameterAndUsages() => expectFix(
     '''
 class T {}
 
@@ -75,7 +76,7 @@ class Box<R> {
 ''',
   );
 
-  Future<void> skipsNamesAlreadyUsedInScope() => expectFix(
+  Future<void> _skipsNamesAlreadyUsedInScope() => expectFix(
     '''
 class T {}
 
@@ -95,7 +96,7 @@ class Box<E, R> {
 ''',
   );
 
-  Future<void> renamesMethodTypeParameter() => expectFix(
+  Future<void> _renamesMethodTypeParameter() => expectFix(
     '''
 enum Kind { a }
 
@@ -113,7 +114,7 @@ class Holder {
 ''',
   );
 
-  Future<void> fallsBackToNumberedNames() => expectFix(
+  Future<void> _fallsBackToNumberedNames() => expectFix(
     '''
 class T {}
 class R {}

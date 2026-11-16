@@ -5,21 +5,21 @@ import 'fix_test_support.dart';
 import 'support/mocktail_stub.dart';
 
 void main() {
-  analysisRuleSuite<MissingTestAssertionCallTest>(
+  analysisRuleSuite<_MissingTestAssertionCallTest>(
     'MissingTestAssertionCallTest',
-    MissingTestAssertionCallTest.new,
+    _MissingTestAssertionCallTest.new,
     {
-      'parenthesizedVerifyInTestBody': (t) => t.parenthesizedVerifyInTestBody(),
-      'parenthesizedUnrelatedCallInTestBody': (t) => t.parenthesizedUnrelatedCallInTestBody(),
-      'parenthesizedVerifyInHelper': (t) => t.parenthesizedVerifyInHelper(),
-      'parenthesizedPrefixedVerifyInHelper': (t) => t.parenthesizedPrefixedVerifyInHelper(),
-      'shadowedParenthesizedVerifyInHelper': (t) => t.shadowedParenthesizedVerifyInHelper(),
-      'shadowedPrefixInHelper': (t) => t.shadowedPrefixInHelper(),
+      'parenthesizedVerifyInTestBody': (t) => t._parenthesizedVerifyInTestBody(),
+      'parenthesizedUnrelatedCallInTestBody': (t) => t._parenthesizedUnrelatedCallInTestBody(),
+      'parenthesizedVerifyInHelper': (t) => t._parenthesizedVerifyInHelper(),
+      'parenthesizedPrefixedVerifyInHelper': (t) => t._parenthesizedPrefixedVerifyInHelper(),
+      'shadowedParenthesizedVerifyInHelper': (t) => t._shadowedParenthesizedVerifyInHelper(),
+      'shadowedPrefixInHelper': (t) => t._shadowedPrefixInHelper(),
     },
   );
 }
 
-final class MissingTestAssertionCallTest extends FixRuleTest {
+final class _MissingTestAssertionCallTest extends FixRuleTest {
   @override
   void setUp() {
     rule = MissingTestAssertion();
@@ -49,7 +49,7 @@ void main() {
     ]);
   }
 
-  Future<void> parenthesizedVerifyInTestBody() => assertNoDiagnostics('''
+  Future<void> _parenthesizedVerifyInTestBody() => assertNoDiagnostics('''
 import 'package:mocktail/mocktail.dart';
 
 ${_testStub}void main() {
@@ -59,7 +59,7 @@ ${_testStub}void main() {
 }
 ''');
 
-  Future<void> parenthesizedUnrelatedCallInTestBody() async {
+  Future<void> _parenthesizedUnrelatedCallInTestBody() async {
     const source =
         '''
 $_testStub
@@ -72,7 +72,7 @@ void main() {
     await assertDiagnostics(source, [lint(source.indexOf("test('prints'"), 'test'.length)]);
   }
 
-  Future<void> parenthesizedVerifyInHelper() => _expectHelper('''
+  Future<void> _parenthesizedVerifyInHelper() => _expectHelper('''
 import 'package:mocktail/mocktail.dart';
 
 void check() {
@@ -80,7 +80,7 @@ void check() {
 }
 ''', reported: false);
 
-  Future<void> parenthesizedPrefixedVerifyInHelper() => _expectHelper('''
+  Future<void> _parenthesizedPrefixedVerifyInHelper() => _expectHelper('''
 import 'package:mocktail/mocktail.dart' as mocktail;
 
 void check() {
@@ -88,7 +88,7 @@ void check() {
 }
 ''', reported: false);
 
-  Future<void> shadowedParenthesizedVerifyInHelper() => _expectHelper('''
+  Future<void> _shadowedParenthesizedVerifyInHelper() => _expectHelper('''
 import 'package:mocktail/mocktail.dart';
 
 void check() {
@@ -97,7 +97,7 @@ void check() {
 }
 ''', reported: true);
 
-  Future<void> shadowedPrefixInHelper() => _expectHelper('''
+  Future<void> _shadowedPrefixInHelper() => _expectHelper('''
 import 'package:mocktail/mocktail.dart' as mocktail;
 
 void check() {

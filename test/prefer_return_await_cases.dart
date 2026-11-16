@@ -4,20 +4,20 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<PreferReturnAwaitTest>('PreferReturnAwaitTest', PreferReturnAwaitTest.new, {
-    'reportsFutureReturnedInTryBody': (t) => t.reportsFutureReturnedInTryBody(),
-    'reportsFutureReturnedInCatchClause': (t) => t.reportsFutureReturnedInCatchClause(),
-    'reportsFutureOrReturnedInTryBody': (t) => t.reportsFutureOrReturnedInTryBody(),
-    'acceptsAwaitedReturn': (t) => t.acceptsAwaitedReturn(),
-    'acceptsReturnInFinallyBlock': (t) => t.acceptsReturnInFinallyBlock(),
-    'acceptsReturnOutsideTry': (t) => t.acceptsReturnOutsideTry(),
-    'acceptsReturnInSynchronousFunction': (t) => t.acceptsReturnInSynchronousFunction(),
-    'acceptsReturnInsideNestedClosure': (t) => t.acceptsReturnInsideNestedClosure(),
-    'acceptsNonFutureAndEmptyReturns': (t) => t.acceptsNonFutureAndEmptyReturns(),
+  analysisRuleSuite<_PreferReturnAwaitTest>('PreferReturnAwaitTest', _PreferReturnAwaitTest.new, {
+    'reportsFutureReturnedInTryBody': (t) => t._reportsFutureReturnedInTryBody(),
+    'reportsFutureReturnedInCatchClause': (t) => t._reportsFutureReturnedInCatchClause(),
+    'reportsFutureOrReturnedInTryBody': (t) => t._reportsFutureOrReturnedInTryBody(),
+    'acceptsAwaitedReturn': (t) => t._acceptsAwaitedReturn(),
+    'acceptsReturnInFinallyBlock': (t) => t._acceptsReturnInFinallyBlock(),
+    'acceptsReturnOutsideTry': (t) => t._acceptsReturnOutsideTry(),
+    'acceptsReturnInSynchronousFunction': (t) => t._acceptsReturnInSynchronousFunction(),
+    'acceptsReturnInsideNestedClosure': (t) => t._acceptsReturnInsideNestedClosure(),
+    'acceptsNonFutureAndEmptyReturns': (t) => t._acceptsNonFutureAndEmptyReturns(),
   });
 }
 
-final class PreferReturnAwaitTest extends FixRuleTest {
+final class _PreferReturnAwaitTest extends FixRuleTest {
   @override
   void setUp() {
     rule = PreferReturnAwait();
@@ -38,7 +38,7 @@ FutureOr<int> maybe() => 1;
     ]);
   }
 
-  Future<void> reportsFutureReturnedInTryBody() => _expectReported('''
+  Future<void> _reportsFutureReturnedInTryBody() => _expectReported('''
 Future<int> run() async {
   try {
     return fetch();
@@ -47,7 +47,7 @@ Future<int> run() async {
   }
 }''', 'fetch()');
 
-  Future<void> reportsFutureReturnedInCatchClause() => _expectReported('''
+  Future<void> _reportsFutureReturnedInCatchClause() => _expectReported('''
 Future<int> run() async {
   try {
     return 1;
@@ -56,7 +56,7 @@ Future<int> run() async {
   }
 }''', 'fetch()');
 
-  Future<void> reportsFutureOrReturnedInTryBody() => _expectReported('''
+  Future<void> _reportsFutureOrReturnedInTryBody() => _expectReported('''
 Future<int> run() async {
   try {
     return maybe();
@@ -65,7 +65,7 @@ Future<int> run() async {
   }
 }''', 'maybe()');
 
-  Future<void> acceptsAwaitedReturn() => assertNoDiagnostics('''
+  Future<void> _acceptsAwaitedReturn() => assertNoDiagnostics('''
 $_prelude
 Future<int> run() async {
   try {
@@ -76,7 +76,7 @@ Future<int> run() async {
 }
 ''');
 
-  Future<void> acceptsReturnInFinallyBlock() => assertNoDiagnostics('''
+  Future<void> _acceptsReturnInFinallyBlock() => assertNoDiagnostics('''
 $_prelude
 Future<int> run() async {
   try {
@@ -87,14 +87,14 @@ Future<int> run() async {
 }
 ''');
 
-  Future<void> acceptsReturnOutsideTry() => assertNoDiagnostics('''
+  Future<void> _acceptsReturnOutsideTry() => assertNoDiagnostics('''
 $_prelude
 Future<int> run() async {
   return fetch();
 }
 ''');
 
-  Future<void> acceptsReturnInSynchronousFunction() => assertNoDiagnostics('''
+  Future<void> _acceptsReturnInSynchronousFunction() => assertNoDiagnostics('''
 $_prelude
 Future<int> run() {
   try {
@@ -105,7 +105,7 @@ Future<int> run() {
 }
 ''');
 
-  Future<void> acceptsReturnInsideNestedClosure() => assertNoDiagnostics('''
+  Future<void> _acceptsReturnInsideNestedClosure() => assertNoDiagnostics('''
 $_prelude
 Future<int> run() async {
   try {
@@ -119,7 +119,7 @@ Future<int> run() async {
 }
 ''');
 
-  Future<void> acceptsNonFutureAndEmptyReturns() => assertNoDiagnostics('''
+  Future<void> _acceptsNonFutureAndEmptyReturns() => assertNoDiagnostics('''
 $_prelude
 Future<void> run() async {
   try {

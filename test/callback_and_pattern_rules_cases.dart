@@ -5,53 +5,53 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_simpler_pa
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<PreferAsyncCallbackTest>(
+  analysisRuleSuite<_PreferAsyncCallbackTest>(
     'PreferAsyncCallbackTest',
-    PreferAsyncCallbackTest.new,
+    _PreferAsyncCallbackTest.new,
     {
-      'reportsFieldType': (t) => t.reportsFieldType(),
-      'reportsParameterType': (t) => t.reportsParameterType(),
-      'acceptsOtherFutureTypes': (t) => t.acceptsOtherFutureTypes(),
+      'reportsFieldType': (t) => t._reportsFieldType(),
+      'reportsParameterType': (t) => t._reportsParameterType(),
+      'acceptsOtherFutureTypes': (t) => t._acceptsOtherFutureTypes(),
       'acceptsFunctionsWithParametersOrTypeParameters': (t) =>
-          t.acceptsFunctionsWithParametersOrTypeParameters(),
-      'acceptsTypedefDeclarations': (t) => t.acceptsTypedefDeclarations(),
-      'acceptsOtherReturnTypes': (t) => t.acceptsOtherReturnTypes(),
+          t._acceptsFunctionsWithParametersOrTypeParameters(),
+      'acceptsTypedefDeclarations': (t) => t._acceptsTypedefDeclarations(),
+      'acceptsOtherReturnTypes': (t) => t._acceptsOtherReturnTypes(),
     },
   );
-  analysisRuleSuite<PreferSimplerPatternsNullCheckTest>(
+  analysisRuleSuite<_PreferSimplerPatternsNullCheckTest>(
     'PreferSimplerPatternsNullCheckTest',
-    PreferSimplerPatternsNullCheckTest.new,
+    _PreferSimplerPatternsNullCheckTest.new,
     {
-      'reportsNullCheckWithVariable': (t) => t.reportsNullCheckWithVariable(),
-      'reportsNullCheckWithTypedVariable': (t) => t.reportsNullCheckWithTypedVariable(),
-      'acceptsNullCheckPattern': (t) => t.acceptsNullCheckPattern(),
-      'acceptsOtherComparisons': (t) => t.acceptsOtherComparisons(),
-      'acceptsOtherRightOperands': (t) => t.acceptsOtherRightOperands(),
-      'acceptsIfWithoutCase': (t) => t.acceptsIfWithoutCase(),
+      'reportsNullCheckWithVariable': (t) => t._reportsNullCheckWithVariable(),
+      'reportsNullCheckWithTypedVariable': (t) => t._reportsNullCheckWithTypedVariable(),
+      'acceptsNullCheckPattern': (t) => t._acceptsNullCheckPattern(),
+      'acceptsOtherComparisons': (t) => t._acceptsOtherComparisons(),
+      'acceptsOtherRightOperands': (t) => t._acceptsOtherRightOperands(),
+      'acceptsIfWithoutCase': (t) => t._acceptsIfWithoutCase(),
     },
   );
 }
 
-final class PreferAsyncCallbackTest extends AnalysisRuleTest {
+final class _PreferAsyncCallbackTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = PreferAsyncCallback();
     super.setUp();
   }
 
-  Future<void> reportsFieldType() async {
+  Future<void> _reportsFieldType() async {
     const source = 'class A {\n  Future<void> Function()? onTap;\n}\n';
     const type = 'Future<void> Function()?';
     await assertDiagnostics(source, [lint(source.indexOf(type), type.length)]);
   }
 
-  Future<void> reportsParameterType() async {
+  Future<void> _reportsParameterType() async {
     const source = 'void run(Future<void> Function() action) {}\n';
     const type = 'Future<void> Function()';
     await assertDiagnostics(source, [lint(source.indexOf(type), type.length)]);
   }
 
-  Future<void> acceptsOtherFutureTypes() => assertNoDiagnostics('''
+  Future<void> _acceptsOtherFutureTypes() => assertNoDiagnostics('''
 void run(
   Future<int> Function() count,
   Future Function() raw,
@@ -60,23 +60,23 @@ void run(
 ) {}
 ''');
 
-  Future<void> acceptsFunctionsWithParametersOrTypeParameters() => assertNoDiagnostics('''
+  Future<void> _acceptsFunctionsWithParametersOrTypeParameters() => assertNoDiagnostics('''
 void run(
   Future<void> Function(int value) withParameter,
   Future<void> Function<T>() generic,
 ) {}
 ''');
 
-  Future<void> acceptsTypedefDeclarations() => assertNoDiagnostics('''
+  Future<void> _acceptsTypedefDeclarations() => assertNoDiagnostics('''
 typedef Action = Future<void> Function();
 ''');
 
-  Future<void> acceptsOtherReturnTypes() => assertNoDiagnostics('''
+  Future<void> _acceptsOtherReturnTypes() => assertNoDiagnostics('''
 void run(void Function() plain, (int, int) Function() record, Object Function() any) {}
 ''');
 }
 
-final class PreferSimplerPatternsNullCheckTest extends AnalysisRuleTest {
+final class _PreferSimplerPatternsNullCheckTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = PreferSimplerPatternsNullCheck();
@@ -88,31 +88,31 @@ final class PreferSimplerPatternsNullCheckTest extends AnalysisRuleTest {
     await assertDiagnostics(source, [lint(source.indexOf(pattern), pattern.length)]);
   }
 
-  Future<void> reportsNullCheckWithVariable() => _expectReported('!= null && final x');
+  Future<void> _reportsNullCheckWithVariable() => _expectReported('!= null && final x');
 
-  Future<void> reportsNullCheckWithTypedVariable() => _expectReported('!= null && final int x');
+  Future<void> _reportsNullCheckWithTypedVariable() => _expectReported('!= null && final int x');
 
-  Future<void> acceptsNullCheckPattern() => assertNoDiagnostics('''
+  Future<void> _acceptsNullCheckPattern() => assertNoDiagnostics('''
 void f(int? value) {
   if (value case final x?) {}
 }
 ''');
 
-  Future<void> acceptsOtherComparisons() => assertNoDiagnostics('''
+  Future<void> _acceptsOtherComparisons() => assertNoDiagnostics('''
 void f(int? value) {
   if (value case != 0 && final x) {}
   if (value case == null && final y) {}
 }
 ''');
 
-  Future<void> acceptsOtherRightOperands() => assertNoDiagnostics('''
+  Future<void> _acceptsOtherRightOperands() => assertNoDiagnostics('''
 void f(int? value) {
   if (value case != null && > 1) {}
   if (value case int() || null) {}
 }
 ''');
 
-  Future<void> acceptsIfWithoutCase() => assertNoDiagnostics('''
+  Future<void> _acceptsIfWithoutCase() => assertNoDiagnostics('''
 void f(int? value) {
   if (value != null) {}
 }

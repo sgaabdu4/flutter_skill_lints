@@ -6,23 +6,23 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<AvoidExpandedAsSpacerTest>(
+  analysisRuleSuite<_AvoidExpandedAsSpacerTest>(
     'AvoidExpandedAsSpacerTest',
-    AvoidExpandedAsSpacerTest.new,
+    _AvoidExpandedAsSpacerTest.new,
     {
-      'reportsExpandedAroundEmptySizedBox': (t) => t.reportsExpandedAroundEmptySizedBox(),
-      'reportsExpandedAroundEmptyContainer': (t) => t.reportsExpandedAroundEmptyContainer(),
-      'ignoresChildWithArguments': (t) => t.ignoresChildWithArguments(),
-      'ignoresOtherChildren': (t) => t.ignoresOtherChildren(),
-      'ignoresExpandedWithoutChild': (t) => t.ignoresExpandedWithoutChild(),
-      'ignoresSizedBoxWithDimension': (t) => t.ignoresSizedBoxWithDimension(),
-      'replacesWithSpacer': (t) => t.replacesWithSpacer(),
-      'keepsFlexAndKeyAndConst': (t) => t.keepsFlexAndKeyAndConst(),
+      'reportsExpandedAroundEmptySizedBox': (t) => t._reportsExpandedAroundEmptySizedBox(),
+      'reportsExpandedAroundEmptyContainer': (t) => t._reportsExpandedAroundEmptyContainer(),
+      'ignoresChildWithArguments': (t) => t._ignoresChildWithArguments(),
+      'ignoresOtherChildren': (t) => t._ignoresOtherChildren(),
+      'ignoresExpandedWithoutChild': (t) => t._ignoresExpandedWithoutChild(),
+      'ignoresSizedBoxWithDimension': (t) => t._ignoresSizedBoxWithDimension(),
+      'replacesWithSpacer': (t) => t._replacesWithSpacer(),
+      'keepsFlexAndKeyAndConst': (t) => t._keepsFlexAndKeyAndConst(),
     },
   );
 }
 
-final class AvoidExpandedAsSpacerTest extends FixRuleTest {
+final class _AvoidExpandedAsSpacerTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -36,10 +36,10 @@ import 'package:flutter/widgets.dart';
 Widget build() => Expanded(child: SizedBox());
 ''';
 
-  Future<void> reportsExpandedAroundEmptySizedBox() =>
+  Future<void> _reportsExpandedAroundEmptySizedBox() =>
       assertDiagnostics(_expanded, [lint(_expanded.indexOf('Expanded('), 'Expanded'.length)]);
 
-  Future<void> reportsExpandedAroundEmptyContainer() async {
+  Future<void> _reportsExpandedAroundEmptyContainer() async {
     const source = '''
 import 'package:flutter/widgets.dart';
 
@@ -48,31 +48,31 @@ Widget build() => Expanded(child: Container(key: Key('a')));
     await assertDiagnostics(source, [lint(source.indexOf('Expanded('), 'Expanded'.length)]);
   }
 
-  Future<void> ignoresChildWithArguments() => assertNoDiagnostics('''
+  Future<void> _ignoresChildWithArguments() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Expanded(child: SizedBox(height: 4));
 ''');
 
-  Future<void> ignoresOtherChildren() => assertNoDiagnostics('''
+  Future<void> _ignoresOtherChildren() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Expanded(child: Text('a'));
 ''');
 
-  Future<void> ignoresExpandedWithoutChild() => assertNoDiagnostics('''
+  Future<void> _ignoresExpandedWithoutChild() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Expanded();
 ''');
 
-  Future<void> ignoresSizedBoxWithDimension() => assertNoDiagnostics('''
+  Future<void> _ignoresSizedBoxWithDimension() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Expanded(child: SizedBox.square(dimension: 2));
 ''');
 
-  Future<void> replacesWithSpacer() => expectFix(
+  Future<void> _replacesWithSpacer() => expectFix(
     _expanded,
     (context) => AvoidExpandedAsSpacerFix(context: context),
     expected: '''
@@ -82,7 +82,7 @@ Widget build() => Spacer();
 ''',
   );
 
-  Future<void> keepsFlexAndKeyAndConst() => expectFix(
+  Future<void> _keepsFlexAndKeyAndConst() => expectFix(
     '''
 import 'package:flutter/widgets.dart';
 

@@ -5,19 +5,19 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<PreferUseCallbackTest>('PreferUseCallbackTest', PreferUseCallbackTest.new, {
-    'reportsMemoizedFunction': (t) => t.reportsMemoizedFunction(),
-    'reportsBlockBodyReturningFunction': (t) => t.reportsBlockBodyReturningFunction(),
-    'acceptsMemoizedValue': (t) => t.acceptsMemoizedValue(),
-    'acceptsNonFunctionFactory': (t) => t.acceptsNonFunctionFactory(),
-    'acceptsMultiStatementFactory': (t) => t.acceptsMultiStatementFactory(),
-    'acceptsOtherFunctions': (t) => t.acceptsOtherFunctions(),
-    'rewritesExpressionBody': (t) => t.rewritesExpressionBody(),
-    'rewritesSingleReturnBlock': (t) => t.rewritesSingleReturnBlock(),
+  analysisRuleSuite<_PreferUseCallbackTest>('PreferUseCallbackTest', _PreferUseCallbackTest.new, {
+    'reportsMemoizedFunction': (t) => t._reportsMemoizedFunction(),
+    'reportsBlockBodyReturningFunction': (t) => t._reportsBlockBodyReturningFunction(),
+    'acceptsMemoizedValue': (t) => t._acceptsMemoizedValue(),
+    'acceptsNonFunctionFactory': (t) => t._acceptsNonFunctionFactory(),
+    'acceptsMultiStatementFactory': (t) => t._acceptsMultiStatementFactory(),
+    'acceptsOtherFunctions': (t) => t._acceptsOtherFunctions(),
+    'rewritesExpressionBody': (t) => t._rewritesExpressionBody(),
+    'rewritesSingleReturnBlock': (t) => t._rewritesSingleReturnBlock(),
   });
 }
 
-final class PreferUseCallbackTest extends FixRuleTest {
+final class _PreferUseCallbackTest extends FixRuleTest {
   @override
   void setUp() {
     rule = PreferUseCallback();
@@ -38,11 +38,11 @@ ${_hooks}void f(int a) {
 }
 ''';
 
-  Future<void> reportsMemoizedFunction() => assertDiagnostics(_memoized, [
+  Future<void> _reportsMemoizedFunction() => assertDiagnostics(_memoized, [
     lint(_memoized.indexOf('useMemoized('), 'useMemoized(() => () => print(a), [a])'.length),
   ]);
 
-  Future<void> reportsBlockBodyReturningFunction() async {
+  Future<void> _reportsBlockBodyReturningFunction() async {
     const source =
         '''
 ${_hooks}void f(int a) {
@@ -57,19 +57,19 @@ ${_hooks}void f(int a) {
     await assertDiagnostics(source, [lint(source.indexOf(call), call.length)]);
   }
 
-  Future<void> acceptsMemoizedValue() => assertNoDiagnostics('''
+  Future<void> _acceptsMemoizedValue() => assertNoDiagnostics('''
 ${_hooks}void f(int a) {
   useMemoized(() => a + 1, [a]);
 }
 ''');
 
-  Future<void> acceptsNonFunctionFactory() => assertNoDiagnostics('''
+  Future<void> _acceptsNonFunctionFactory() => assertNoDiagnostics('''
 ${_hooks}void f(Function() make) {
   useMemoized(make, []);
 }
 ''');
 
-  Future<void> acceptsMultiStatementFactory() => assertNoDiagnostics('''
+  Future<void> _acceptsMultiStatementFactory() => assertNoDiagnostics('''
 ${_hooks}void f(int a) {
   useMemoized(() {
     print(a);
@@ -78,7 +78,7 @@ ${_hooks}void f(int a) {
 }
 ''');
 
-  Future<void> acceptsOtherFunctions() => assertNoDiagnostics('''
+  Future<void> _acceptsOtherFunctions() => assertNoDiagnostics('''
 T remember<T>(T Function() factory) => factory();
 
 void f(int a) {
@@ -86,7 +86,7 @@ void f(int a) {
 }
 ''');
 
-  Future<void> rewritesExpressionBody() => expectFix(
+  Future<void> _rewritesExpressionBody() => expectFix(
     _memoized,
     (context) => PreferUseCallbackFix(context: context),
     expected:
@@ -97,7 +97,7 @@ ${_hooks}void f(int a) {
 ''',
   );
 
-  Future<void> rewritesSingleReturnBlock() => expectFix(
+  Future<void> _rewritesSingleReturnBlock() => expectFix(
     '''
 ${_hooks}void f(int a) {
   useMemoized(() {

@@ -6,21 +6,21 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<PreferCenterOverAlignTest>(
+  analysisRuleSuite<_PreferCenterOverAlignTest>(
     'PreferCenterOverAlignTest',
-    PreferCenterOverAlignTest.new,
+    _PreferCenterOverAlignTest.new,
     {
-      'reportsAlignWithoutAlignment': (t) => t.reportsAlignWithoutAlignment(),
-      'reportsAlignWithCenterConstant': (t) => t.reportsAlignWithCenterConstant(),
-      'reportsAlignWithZeroZero': (t) => t.reportsAlignWithZeroZero(),
-      'acceptsOtherAlignment': (t) => t.acceptsOtherAlignment(),
-      'replacesAlignWithCenter': (t) => t.replacesAlignWithCenter(),
-      'dropsCenterAlignmentArgument': (t) => t.dropsCenterAlignmentArgument(),
+      'reportsAlignWithoutAlignment': (t) => t._reportsAlignWithoutAlignment(),
+      'reportsAlignWithCenterConstant': (t) => t._reportsAlignWithCenterConstant(),
+      'reportsAlignWithZeroZero': (t) => t._reportsAlignWithZeroZero(),
+      'acceptsOtherAlignment': (t) => t._acceptsOtherAlignment(),
+      'replacesAlignWithCenter': (t) => t._replacesAlignWithCenter(),
+      'dropsCenterAlignmentArgument': (t) => t._dropsCenterAlignmentArgument(),
     },
   );
 }
 
-final class PreferCenterOverAlignTest extends FixRuleTest {
+final class _PreferCenterOverAlignTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -28,7 +28,7 @@ final class PreferCenterOverAlignTest extends FixRuleTest {
     super.setUp();
   }
 
-  Future<void> reportsAlignWithoutAlignment() async {
+  Future<void> _reportsAlignWithoutAlignment() async {
     const source = '''
 import 'package:flutter/widgets.dart';
 
@@ -37,7 +37,7 @@ Widget build() => Align(child: Text('a'));
     await assertDiagnostics(source, [lint(source.indexOf('Align('), 'Align'.length)]);
   }
 
-  Future<void> reportsAlignWithCenterConstant() async {
+  Future<void> _reportsAlignWithCenterConstant() async {
     const source = '''
 import 'package:flutter/widgets.dart';
 
@@ -46,7 +46,7 @@ Widget build() => Align(alignment: Alignment.center, child: Text('a'));
     await assertDiagnostics(source, [lint(source.indexOf('Align('), 'Align'.length)]);
   }
 
-  Future<void> reportsAlignWithZeroZero() async {
+  Future<void> _reportsAlignWithZeroZero() async {
     const source = '''
 import 'package:flutter/widgets.dart';
 
@@ -55,13 +55,13 @@ Widget build() => Align(alignment: Alignment(0, 0), child: Text('a'));
     await assertDiagnostics(source, [lint(source.indexOf('Align('), 'Align'.length)]);
   }
 
-  Future<void> acceptsOtherAlignment() => assertNoDiagnostics('''
+  Future<void> _acceptsOtherAlignment() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Align(alignment: Alignment(1, 0), child: Text('a'));
 ''');
 
-  Future<void> replacesAlignWithCenter() => expectFix(
+  Future<void> _replacesAlignWithCenter() => expectFix(
     '''
 import 'package:flutter/widgets.dart';
 
@@ -75,7 +75,7 @@ Widget build() => Center(child: Text('a'));
 ''',
   );
 
-  Future<void> dropsCenterAlignmentArgument() => expectFix(
+  Future<void> _dropsCenterAlignmentArgument() => expectFix(
     '''
 import 'package:flutter/widgets.dart';
 

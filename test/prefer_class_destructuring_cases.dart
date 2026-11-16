@@ -5,25 +5,25 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<PreferClassDestructuringTest>(
+  analysisRuleSuite<_PreferClassDestructuringTest>(
     'PreferClassDestructuringTest',
-    PreferClassDestructuringTest.new,
+    _PreferClassDestructuringTest.new,
     {
-      'reportsThreeDistinctProperties': (t) => t.reportsThreeDistinctProperties(),
-      'acceptsTwoProperties': (t) => t.acceptsTwoProperties(),
-      'acceptsRepeatedSingleProperty': (t) => t.acceptsRepeatedSingleProperty(),
-      'ignoresMethodCallsAndAssignments': (t) => t.ignoresMethodCallsAndAssignments(),
-      'ignoresConstructorArguments': (t) => t.ignoresConstructorArguments(),
-      'ignoresLocalizationObjects': (t) => t.ignoresLocalizationObjects(),
-      'reportsOnceInsideLocalFunctionBlock': (t) => t.reportsOnceInsideLocalFunctionBlock(),
-      'ignoresFieldsOfThis': (t) => t.ignoresFieldsOfThis(),
-      'insertsDestructuringBeforeFirstUse': (t) => t.insertsDestructuringBeforeFirstUse(),
-      'sortsDestructuredProperties': (t) => t.sortsDestructuredProperties(),
+      'reportsThreeDistinctProperties': (t) => t._reportsThreeDistinctProperties(),
+      'acceptsTwoProperties': (t) => t._acceptsTwoProperties(),
+      'acceptsRepeatedSingleProperty': (t) => t._acceptsRepeatedSingleProperty(),
+      'ignoresMethodCallsAndAssignments': (t) => t._ignoresMethodCallsAndAssignments(),
+      'ignoresConstructorArguments': (t) => t._ignoresConstructorArguments(),
+      'ignoresLocalizationObjects': (t) => t._ignoresLocalizationObjects(),
+      'reportsOnceInsideLocalFunctionBlock': (t) => t._reportsOnceInsideLocalFunctionBlock(),
+      'ignoresFieldsOfThis': (t) => t._ignoresFieldsOfThis(),
+      'insertsDestructuringBeforeFirstUse': (t) => t._insertsDestructuringBeforeFirstUse(),
+      'sortsDestructuredProperties': (t) => t._sortsDestructuredProperties(),
     },
   );
 }
 
-final class PreferClassDestructuringTest extends FixRuleTest {
+final class _PreferClassDestructuringTest extends FixRuleTest {
   @override
   void setUp() {
     rule = PreferClassDestructuring();
@@ -50,18 +50,18 @@ ${_model}String f(User user) {
 }
 ''';
 
-  Future<void> reportsThreeDistinctProperties() =>
+  Future<void> _reportsThreeDistinctProperties() =>
       assertDiagnostics(_used, [lint(_used.indexOf('user.name'), 'user.name'.length)]);
 
-  Future<void> acceptsTwoProperties() => assertNoDiagnostics('''
+  Future<void> _acceptsTwoProperties() => assertNoDiagnostics('''
 ${_model}String f(User user) => '\${user.name}\${user.age}';
 ''');
 
-  Future<void> acceptsRepeatedSingleProperty() => assertNoDiagnostics('''
+  Future<void> _acceptsRepeatedSingleProperty() => assertNoDiagnostics('''
 ${_model}String f(User user) => '\${user.name}\${user.name}\${user.name}';
 ''');
 
-  Future<void> ignoresMethodCallsAndAssignments() => assertNoDiagnostics('''
+  Future<void> _ignoresMethodCallsAndAssignments() => assertNoDiagnostics('''
 class Box {
   String name = '';
   int age = 0;
@@ -77,7 +77,7 @@ void f(Box box) {
 }
 ''');
 
-  Future<void> ignoresConstructorArguments() => assertNoDiagnostics('''
+  Future<void> _ignoresConstructorArguments() => assertNoDiagnostics('''
 ${_model}class Wrap {
   const Wrap(this.a, this.b, this.c);
   final String a;
@@ -88,7 +88,7 @@ ${_model}class Wrap {
 Wrap f(User user) => Wrap(user.name, user.age, user.admin);
 ''');
 
-  Future<void> ignoresLocalizationObjects() => assertNoDiagnostics('''
+  Future<void> _ignoresLocalizationObjects() => assertNoDiagnostics('''
 class AppLocalizations {
   final String title = '';
   final String body = '';
@@ -101,7 +101,7 @@ String f(AppLocalizations l10n, AppLocalizations other) {
 }
 ''');
 
-  Future<void> reportsOnceInsideLocalFunctionBlock() async {
+  Future<void> _reportsOnceInsideLocalFunctionBlock() async {
     const source =
         '''
 ${_model}void f(User user) {
@@ -116,7 +116,7 @@ ${_model}void f(User user) {
     await assertDiagnostics(source, [lint(source.indexOf('user.name'), 'user.name'.length)]);
   }
 
-  Future<void> ignoresFieldsOfThis() => assertNoDiagnostics('''
+  Future<void> _ignoresFieldsOfThis() => assertNoDiagnostics('''
 class Holder {
   final user = _Inner();
   void f() {
@@ -133,7 +133,7 @@ class _Inner {
 }
 ''');
 
-  Future<void> insertsDestructuringBeforeFirstUse() => expectFix(
+  Future<void> _insertsDestructuringBeforeFirstUse() => expectFix(
     _used,
     (context) => PreferClassDestructuringFix(context: context),
     expected:
@@ -148,7 +148,7 @@ ${_model}String f(User user) {
 ''',
   );
 
-  Future<void> sortsDestructuredProperties() => expectFix(
+  Future<void> _sortsDestructuredProperties() => expectFix(
     '''
 ${_model}String f(User user) {
   print(user.admin);

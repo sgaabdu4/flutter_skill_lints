@@ -5,24 +5,24 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<AvoidCommentedOutCodeTest>(
+  analysisRuleSuite<_AvoidCommentedOutCodeTest>(
     'AvoidCommentedOutCodeTest',
-    AvoidCommentedOutCodeTest.new,
+    _AvoidCommentedOutCodeTest.new,
     {
-      'removesCommentedOutCallLine': (t) => t.removesCommentedOutCallLine(),
-      'removesWholeCommentGroup': (t) => t.removesWholeCommentGroup(),
+      'removesCommentedOutCallLine': (t) => t._removesCommentedOutCallLine(),
+      'removesWholeCommentGroup': (t) => t._removesWholeCommentGroup(),
     },
   );
 }
 
-final class AvoidCommentedOutCodeTest extends FixRuleTest {
+final class _AvoidCommentedOutCodeTest extends FixRuleTest {
   @override
   void setUp() {
     rule = AvoidCommentedOutCode();
     super.setUp();
   }
 
-  Future<void> removesCommentedOutCallLine() => expectFix(
+  Future<void> _removesCommentedOutCallLine() => expectFix(
     '''
 void f() {
   // print(1);
@@ -37,7 +37,7 @@ void f() {
 ''',
   );
 
-  Future<void> removesWholeCommentGroup() => expectFix(
+  Future<void> _removesWholeCommentGroup() => expectFix(
     '''
 void f() {
   // final a = 1;

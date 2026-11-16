@@ -6,27 +6,28 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<AlwaysRemoveListenerTest>(
+  analysisRuleSuite<_AlwaysRemoveListenerTest>(
     'AlwaysRemoveListenerTest',
-    AlwaysRemoveListenerTest.new,
+    _AlwaysRemoveListenerTest.new,
     {
-      'reportsListenerNeverRemoved': (t) => t.reportsListenerNeverRemoved(),
-      'reportsListenersInEveryLifecycleMethod': (t) => t.reportsListenersInEveryLifecycleMethod(),
-      'reportsListenerRemovedForOtherCallback': (t) => t.reportsListenerRemovedForOtherCallback(),
-      'reportsListenerRemovedFromOtherTarget': (t) => t.reportsListenerRemovedFromOtherTarget(),
-      'acceptsListenerRemovedInDispose': (t) => t.acceptsListenerRemovedInDispose(),
-      'acceptsListenersOutsideLifecycleMethods': (t) => t.acceptsListenersOutsideLifecycleMethods(),
-      'acceptsListenersInsideCallbacks': (t) => t.acceptsListenersInsideCallbacks(),
-      'ignoresClassesThatAreNotState': (t) => t.ignoresClassesThatAreNotState(),
-      'addsDisposeMethodWhenMissing': (t) => t.addsDisposeMethodWhenMissing(),
-      'addsRemovalBeforeSuperDispose': (t) => t.addsRemovalBeforeSuperDispose(),
-      'addsRemovalToDisposeWithoutSuperCall': (t) => t.addsRemovalToDisposeWithoutSuperCall(),
-      'addsUnqualifiedRemoval': (t) => t.addsUnqualifiedRemoval(),
+      'reportsListenerNeverRemoved': (t) => t._reportsListenerNeverRemoved(),
+      'reportsListenersInEveryLifecycleMethod': (t) => t._reportsListenersInEveryLifecycleMethod(),
+      'reportsListenerRemovedForOtherCallback': (t) => t._reportsListenerRemovedForOtherCallback(),
+      'reportsListenerRemovedFromOtherTarget': (t) => t._reportsListenerRemovedFromOtherTarget(),
+      'acceptsListenerRemovedInDispose': (t) => t._acceptsListenerRemovedInDispose(),
+      'acceptsListenersOutsideLifecycleMethods': (t) =>
+          t._acceptsListenersOutsideLifecycleMethods(),
+      'acceptsListenersInsideCallbacks': (t) => t._acceptsListenersInsideCallbacks(),
+      'ignoresClassesThatAreNotState': (t) => t._ignoresClassesThatAreNotState(),
+      'addsDisposeMethodWhenMissing': (t) => t._addsDisposeMethodWhenMissing(),
+      'addsRemovalBeforeSuperDispose': (t) => t._addsRemovalBeforeSuperDispose(),
+      'addsRemovalToDisposeWithoutSuperCall': (t) => t._addsRemovalToDisposeWithoutSuperCall(),
+      'addsUnqualifiedRemoval': (t) => t._addsUnqualifiedRemoval(),
     },
   );
 }
 
-final class AlwaysRemoveListenerTest extends FixRuleTest {
+final class _AlwaysRemoveListenerTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -66,7 +67,7 @@ $members
     ]);
   }
 
-  Future<void> reportsListenerNeverRemoved() => _expectReported(
+  Future<void> _reportsListenerNeverRemoved() => _expectReported(
     '''
   @override
   void initState() {
@@ -77,7 +78,7 @@ $members
     ['controller.addListener(_onChange)'],
   );
 
-  Future<void> reportsListenersInEveryLifecycleMethod() => _expectReported(
+  Future<void> _reportsListenersInEveryLifecycleMethod() => _expectReported(
     '''
   @override
   void initState() {
@@ -101,7 +102,7 @@ $members
     ],
   );
 
-  Future<void> reportsListenerRemovedForOtherCallback() => _expectReported(
+  Future<void> _reportsListenerRemovedForOtherCallback() => _expectReported(
     '''
   @override
   void initState() {
@@ -117,7 +118,7 @@ $members
     ['controller.addListener(_onChange)'],
   );
 
-  Future<void> reportsListenerRemovedFromOtherTarget() => _expectReported(
+  Future<void> _reportsListenerRemovedFromOtherTarget() => _expectReported(
     '''
   @override
   void initState() {
@@ -133,7 +134,7 @@ $members
     ['controller.addListener(_onChange)'],
   );
 
-  Future<void> acceptsListenerRemovedInDispose() => assertNoDiagnostics(
+  Future<void> _acceptsListenerRemovedInDispose() => assertNoDiagnostics(
     _source('''
   @override
   void initState() {
@@ -148,7 +149,7 @@ $members
 '''),
   );
 
-  Future<void> acceptsListenersOutsideLifecycleMethods() => assertNoDiagnostics(
+  Future<void> _acceptsListenersOutsideLifecycleMethods() => assertNoDiagnostics(
     _source('''
   void attach() {
     controller.addListener(_onChange);
@@ -156,7 +157,7 @@ $members
 '''),
   );
 
-  Future<void> acceptsListenersInsideCallbacks() => assertNoDiagnostics(
+  Future<void> _acceptsListenersInsideCallbacks() => assertNoDiagnostics(
     _source('''
   @override
   void initState() {
@@ -168,7 +169,7 @@ $members
 '''),
   );
 
-  Future<void> ignoresClassesThatAreNotState() => assertNoDiagnostics('''
+  Future<void> _ignoresClassesThatAreNotState() => assertNoDiagnostics('''
 class Notifier {
   void addListener(void Function() listener) {}
 }
@@ -188,7 +189,7 @@ class Holder {
     expected: _source(expectedMembers),
   );
 
-  Future<void> addsDisposeMethodWhenMissing() => expectFix(
+  Future<void> _addsDisposeMethodWhenMissing() => expectFix(
     _source('''
   @override
   void initState() {
@@ -209,7 +210,7 @@ class Holder {
         ),
   );
 
-  Future<void> addsRemovalBeforeSuperDispose() => _expectFix(
+  Future<void> _addsRemovalBeforeSuperDispose() => _expectFix(
     '''
   @override
   void initState() {
@@ -237,7 +238,7 @@ class Holder {
 ''',
   );
 
-  Future<void> addsRemovalToDisposeWithoutSuperCall() => _expectFix(
+  Future<void> _addsRemovalToDisposeWithoutSuperCall() => _expectFix(
     '''
   @override
   void initState() {
@@ -263,7 +264,7 @@ class Holder {
 ''',
   );
 
-  Future<void> addsUnqualifiedRemoval() => expectFix(
+  Future<void> _addsUnqualifiedRemoval() => expectFix(
     '''
 import 'package:flutter/widgets.dart';
 

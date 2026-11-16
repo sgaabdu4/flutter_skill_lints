@@ -5,16 +5,16 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<AvoidOnlyRethrowTest>('AvoidOnlyRethrowTest', AvoidOnlyRethrowTest.new, {
-    'reportsCatchThatOnlyRethrows': (t) => t.reportsCatchThatOnlyRethrows(),
-    'acceptsCatchThatDoesMoreThanRethrow': (t) => t.acceptsCatchThatDoesMoreThanRethrow(),
-    'unwrapsTryWhenItIsTheOnlyCatch': (t) => t.unwrapsTryWhenItIsTheOnlyCatch(),
-    'removesOnlyTheCatchWhenFinallyExists': (t) => t.removesOnlyTheCatchWhenFinallyExists(),
-    'removesOnlyTheCatchWhenOthersExist': (t) => t.removesOnlyTheCatchWhenOthersExist(),
+  analysisRuleSuite<_AvoidOnlyRethrowTest>('AvoidOnlyRethrowTest', _AvoidOnlyRethrowTest.new, {
+    'reportsCatchThatOnlyRethrows': (t) => t._reportsCatchThatOnlyRethrows(),
+    'acceptsCatchThatDoesMoreThanRethrow': (t) => t._acceptsCatchThatDoesMoreThanRethrow(),
+    'unwrapsTryWhenItIsTheOnlyCatch': (t) => t._unwrapsTryWhenItIsTheOnlyCatch(),
+    'removesOnlyTheCatchWhenFinallyExists': (t) => t._removesOnlyTheCatchWhenFinallyExists(),
+    'removesOnlyTheCatchWhenOthersExist': (t) => t._removesOnlyTheCatchWhenOthersExist(),
   });
 }
 
-final class AvoidOnlyRethrowTest extends FixRuleTest {
+final class _AvoidOnlyRethrowTest extends FixRuleTest {
   @override
   void setUp() {
     rule = AvoidOnlyRethrow();
@@ -32,11 +32,11 @@ void f() {
 }
 ''';
 
-  Future<void> reportsCatchThatOnlyRethrows() => assertDiagnostics(_only, [
+  Future<void> _reportsCatchThatOnlyRethrows() => assertDiagnostics(_only, [
     lint(_only.indexOf('catch (e)'), 'catch (e) {\n    rethrow;\n  }'.length),
   ]);
 
-  Future<void> acceptsCatchThatDoesMoreThanRethrow() => assertNoDiagnostics('''
+  Future<void> _acceptsCatchThatDoesMoreThanRethrow() => assertNoDiagnostics('''
 void f() {
   try {
     print(1);
@@ -47,7 +47,7 @@ void f() {
 }
 ''');
 
-  Future<void> unwrapsTryWhenItIsTheOnlyCatch() => expectFix(
+  Future<void> _unwrapsTryWhenItIsTheOnlyCatch() => expectFix(
     _only,
     (context) => AvoidOnlyRethrowFix(context: context),
     expected: '''
@@ -58,7 +58,7 @@ print(2);
 ''',
   );
 
-  Future<void> removesOnlyTheCatchWhenFinallyExists() => expectFix(
+  Future<void> _removesOnlyTheCatchWhenFinallyExists() => expectFix(
     '''
 void f() {
   try {
@@ -82,7 +82,7 @@ void f() {
 ''',
   );
 
-  Future<void> removesOnlyTheCatchWhenOthersExist() => expectFix(
+  Future<void> _removesOnlyTheCatchWhenOthersExist() => expectFix(
     '''
 void f() {
   try {

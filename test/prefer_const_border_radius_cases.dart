@@ -6,20 +6,20 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<PreferConstBorderRadiusTest>(
+  analysisRuleSuite<_PreferConstBorderRadiusTest>(
     'PreferConstBorderRadiusTest',
-    PreferConstBorderRadiusTest.new,
+    _PreferConstBorderRadiusTest.new,
     {
-      'reportsCircularConstructor': (t) => t.reportsCircularConstructor(),
-      'acceptsAllConstructor': (t) => t.acceptsAllConstructor(),
-      'ignoresRadiusCircular': (t) => t.ignoresRadiusCircular(),
-      'ignoresOtherClassesWithCircular': (t) => t.ignoresOtherClassesWithCircular(),
-      'rewritesToBorderRadiusAll': (t) => t.rewritesToBorderRadiusAll(),
+      'reportsCircularConstructor': (t) => t._reportsCircularConstructor(),
+      'acceptsAllConstructor': (t) => t._acceptsAllConstructor(),
+      'ignoresRadiusCircular': (t) => t._ignoresRadiusCircular(),
+      'ignoresOtherClassesWithCircular': (t) => t._ignoresOtherClassesWithCircular(),
+      'rewritesToBorderRadiusAll': (t) => t._rewritesToBorderRadiusAll(),
     },
   );
 }
 
-final class PreferConstBorderRadiusTest extends FixRuleTest {
+final class _PreferConstBorderRadiusTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -33,23 +33,23 @@ import 'package:flutter/widgets.dart';
 BorderRadius f() => BorderRadius.circular(8);
 ''';
 
-  Future<void> reportsCircularConstructor() => assertDiagnostics(_circular, [
+  Future<void> _reportsCircularConstructor() => assertDiagnostics(_circular, [
     lint(_circular.indexOf('BorderRadius.circular'), 'BorderRadius.circular(8)'.length),
   ]);
 
-  Future<void> acceptsAllConstructor() => assertNoDiagnostics('''
+  Future<void> _acceptsAllConstructor() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 BorderRadius f() => BorderRadius.all(Radius.circular(8));
 ''');
 
-  Future<void> ignoresRadiusCircular() => assertNoDiagnostics('''
+  Future<void> _ignoresRadiusCircular() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Radius f() => Radius.circular(8);
 ''');
 
-  Future<void> ignoresOtherClassesWithCircular() => assertNoDiagnostics('''
+  Future<void> _ignoresOtherClassesWithCircular() => assertNoDiagnostics('''
 class BorderRadius {
   const BorderRadius.circular(double radius);
 }
@@ -57,7 +57,7 @@ class BorderRadius {
 BorderRadius f() => BorderRadius.circular(8);
 ''');
 
-  Future<void> rewritesToBorderRadiusAll() => expectFix(
+  Future<void> _rewritesToBorderRadiusAll() => expectFix(
     _circular,
     (context) => PreferConstBorderRadiusFix(context: context),
     expected: '''

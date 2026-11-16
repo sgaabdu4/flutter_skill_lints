@@ -4,21 +4,21 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidUnnecessaryNullableReturnTypeExitTest>(
+  analysisRuleSuite<_AvoidUnnecessaryNullableReturnTypeExitTest>(
     'AvoidUnnecessaryNullableReturnTypeExitTest',
-    AvoidUnnecessaryNullableReturnTypeExitTest.new,
+    _AvoidUnnecessaryNullableReturnTypeExitTest.new,
     {
-      'reportsIfElseWithReturningBlocks': (t) => t.reportsIfElseWithReturningBlocks(),
-      'reportsIfElseThatEndsInThrow': (t) => t.reportsIfElseThatEndsInThrow(),
-      'reportsElseIfChainThatAlwaysReturns': (t) => t.reportsElseIfChainThatAlwaysReturns(),
+      'reportsIfElseWithReturningBlocks': (t) => t._reportsIfElseWithReturningBlocks(),
+      'reportsIfElseThatEndsInThrow': (t) => t._reportsIfElseThatEndsInThrow(),
+      'reportsElseIfChainThatAlwaysReturns': (t) => t._reportsElseIfChainThatAlwaysReturns(),
       'acceptsElseBranchThatOnlyCallsNeverFunction': (t) =>
-          t.acceptsElseBranchThatOnlyCallsNeverFunction(),
-      'acceptsElseIfChainEndingInNeverCall': (t) => t.acceptsElseIfChainEndingInNeverCall(),
+          t._acceptsElseBranchThatOnlyCallsNeverFunction(),
+      'acceptsElseIfChainEndingInNeverCall': (t) => t._acceptsElseIfChainEndingInNeverCall(),
     },
   );
 }
 
-final class AvoidUnnecessaryNullableReturnTypeExitTest extends AnalysisRuleTest {
+final class _AvoidUnnecessaryNullableReturnTypeExitTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = AvoidUnnecessaryNullableReturnType();
@@ -30,21 +30,21 @@ final class AvoidUnnecessaryNullableReturnTypeExitTest extends AnalysisRuleTest 
     await assertDiagnostics(source, [lint(source.indexOf('String?'), 'String?'.length)]);
   }
 
-  Future<void> reportsIfElseWithReturningBlocks() => _expectReported('''
+  Future<void> _reportsIfElseWithReturningBlocks() => _expectReported('''
   if (a) {
     return 'a';
   } else {
     return 'b';
   }''');
 
-  Future<void> reportsIfElseThatEndsInThrow() => _expectReported('''
+  Future<void> _reportsIfElseThatEndsInThrow() => _expectReported('''
   if (a) {
     return 'a';
   } else {
     throw 'b';
   }''');
 
-  Future<void> reportsElseIfChainThatAlwaysReturns() => _expectReported('''
+  Future<void> _reportsElseIfChainThatAlwaysReturns() => _expectReported('''
   if (a) {
     return 'a';
   } else if (b) {
@@ -53,7 +53,7 @@ final class AvoidUnnecessaryNullableReturnTypeExitTest extends AnalysisRuleTest 
     return 'c';
   }''');
 
-  Future<void> acceptsElseBranchThatOnlyCallsNeverFunction() => assertNoDiagnostics('''
+  Future<void> _acceptsElseBranchThatOnlyCallsNeverFunction() => assertNoDiagnostics('''
 Never fail() => throw 'failed';
 
 String? label(bool a) {
@@ -65,7 +65,7 @@ String? label(bool a) {
 }
 ''');
 
-  Future<void> acceptsElseIfChainEndingInNeverCall() => assertNoDiagnostics('''
+  Future<void> _acceptsElseIfChainEndingInNeverCall() => assertNoDiagnostics('''
 Never fail() => throw 'failed';
 
 String? label(bool a, bool b) {

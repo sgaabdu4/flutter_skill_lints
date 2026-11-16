@@ -6,22 +6,22 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<AvoidWrappingInPaddingTest>(
+  analysisRuleSuite<_AvoidWrappingInPaddingTest>(
     'AvoidWrappingInPaddingTest',
-    AvoidWrappingInPaddingTest.new,
+    _AvoidWrappingInPaddingTest.new,
     {
       'reportsPaddingAroundWidgetWithPaddingParameter': (t) =>
-          t.reportsPaddingAroundWidgetWithPaddingParameter(),
-      'ignoresChildWithoutPaddingParameter': (t) => t.ignoresChildWithoutPaddingParameter(),
-      'ignoresChildThatAlreadyHasPadding': (t) => t.ignoresChildThatAlreadyHasPadding(),
-      'ignoresChildThatIsNotAWidgetCall': (t) => t.ignoresChildThatIsNotAWidgetCall(),
-      'movesPaddingIntoChild': (t) => t.movesPaddingIntoChild(),
-      'carriesPaddingKeyToChild': (t) => t.carriesPaddingKeyToChild(),
+          t._reportsPaddingAroundWidgetWithPaddingParameter(),
+      'ignoresChildWithoutPaddingParameter': (t) => t._ignoresChildWithoutPaddingParameter(),
+      'ignoresChildThatAlreadyHasPadding': (t) => t._ignoresChildThatAlreadyHasPadding(),
+      'ignoresChildThatIsNotAWidgetCall': (t) => t._ignoresChildThatIsNotAWidgetCall(),
+      'movesPaddingIntoChild': (t) => t._movesPaddingIntoChild(),
+      'carriesPaddingKeyToChild': (t) => t._carriesPaddingKeyToChild(),
     },
   );
 }
 
-final class AvoidWrappingInPaddingTest extends FixRuleTest {
+final class _AvoidWrappingInPaddingTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -38,16 +38,16 @@ Widget build() => Padding(
 );
 ''';
 
-  Future<void> reportsPaddingAroundWidgetWithPaddingParameter() =>
+  Future<void> _reportsPaddingAroundWidgetWithPaddingParameter() =>
       assertDiagnostics(_wrapped, [lint(_wrapped.indexOf('Padding('), 'Padding'.length)]);
 
-  Future<void> ignoresChildWithoutPaddingParameter() => assertNoDiagnostics('''
+  Future<void> _ignoresChildWithoutPaddingParameter() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Padding(padding: EdgeInsets.all(8), child: Text('a'));
 ''');
 
-  Future<void> ignoresChildThatAlreadyHasPadding() => assertNoDiagnostics('''
+  Future<void> _ignoresChildThatAlreadyHasPadding() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Padding(
@@ -56,13 +56,13 @@ Widget build() => Padding(
 );
 ''');
 
-  Future<void> ignoresChildThatIsNotAWidgetCall() => assertNoDiagnostics('''
+  Future<void> _ignoresChildThatIsNotAWidgetCall() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build(Container other) => Padding(padding: EdgeInsets.all(8), child: other);
 ''');
 
-  Future<void> movesPaddingIntoChild() => expectFix(
+  Future<void> _movesPaddingIntoChild() => expectFix(
     _wrapped,
     (context) => AvoidWrappingInPaddingFix(context: context),
     expected: '''
@@ -72,7 +72,7 @@ Widget build() => Container(color: Color(1), padding: EdgeInsets.all(8));
 ''',
   );
 
-  Future<void> carriesPaddingKeyToChild() => expectFix(
+  Future<void> _carriesPaddingKeyToChild() => expectFix(
     '''
 import 'package:flutter/widgets.dart';
 

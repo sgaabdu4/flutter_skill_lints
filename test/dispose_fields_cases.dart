@@ -6,24 +6,24 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<DisposeFieldsTest>('DisposeFieldsTest', DisposeFieldsTest.new, {
-    'reportsFieldsWithCleanupMethods': (t) => t.reportsFieldsWithCleanupMethods(),
+  analysisRuleSuite<_DisposeFieldsTest>('DisposeFieldsTest', _DisposeFieldsTest.new, {
+    'reportsFieldsWithCleanupMethods': (t) => t._reportsFieldsWithCleanupMethods(),
     'reportsFieldWhenOnlyAnotherMethodIsCalled': (t) =>
-        t.reportsFieldWhenOnlyAnotherMethodIsCalled(),
-    'reportsFieldCleanedUpOnlyInsideClosure': (t) => t.reportsFieldCleanedUpOnlyInsideClosure(),
-    'acceptsFieldsCleanedUpInDispose': (t) => t.acceptsFieldsCleanedUpInDispose(),
-    'acceptsThisQualifiedCleanup': (t) => t.acceptsThisQualifiedCleanup(),
+        t._reportsFieldWhenOnlyAnotherMethodIsCalled(),
+    'reportsFieldCleanedUpOnlyInsideClosure': (t) => t._reportsFieldCleanedUpOnlyInsideClosure(),
+    'acceptsFieldsCleanedUpInDispose': (t) => t._acceptsFieldsCleanedUpInDispose(),
+    'acceptsThisQualifiedCleanup': (t) => t._acceptsThisQualifiedCleanup(),
     'ignoresStaticFieldsAndFieldsWithoutCleanup': (t) =>
-        t.ignoresStaticFieldsAndFieldsWithoutCleanup(),
-    'ignoresClassesThatAreNotState': (t) => t.ignoresClassesThatAreNotState(),
-    'addsDisposeMethodWhenMissing': (t) => t.addsDisposeMethodWhenMissing(),
-    'addsCleanupBeforeSuperDispose': (t) => t.addsCleanupBeforeSuperDispose(),
-    'addsCleanupToDisposeWithoutSuperCall': (t) => t.addsCleanupToDisposeWithoutSuperCall(),
-    'usesTheCleanupMethodOfTheFieldType': (t) => t.usesTheCleanupMethodOfTheFieldType(),
+        t._ignoresStaticFieldsAndFieldsWithoutCleanup(),
+    'ignoresClassesThatAreNotState': (t) => t._ignoresClassesThatAreNotState(),
+    'addsDisposeMethodWhenMissing': (t) => t._addsDisposeMethodWhenMissing(),
+    'addsCleanupBeforeSuperDispose': (t) => t._addsCleanupBeforeSuperDispose(),
+    'addsCleanupToDisposeWithoutSuperCall': (t) => t._addsCleanupToDisposeWithoutSuperCall(),
+    'usesTheCleanupMethodOfTheFieldType': (t) => t._usesTheCleanupMethodOfTheFieldType(),
   });
 }
 
-final class DisposeFieldsTest extends FixRuleTest {
+final class _DisposeFieldsTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -58,7 +58,7 @@ $members
 }
 ''';
 
-  Future<void> reportsFieldsWithCleanupMethods() async {
+  Future<void> _reportsFieldsWithCleanupMethods() async {
     final source = _source('''
   final controller = Controller();
   final subscription = Subscription();
@@ -71,7 +71,7 @@ $members
     ]);
   }
 
-  Future<void> reportsFieldWhenOnlyAnotherMethodIsCalled() async {
+  Future<void> _reportsFieldWhenOnlyAnotherMethodIsCalled() async {
     final source = _source('''
   final controller = Controller();
 
@@ -84,7 +84,7 @@ $members
     await assertDiagnostics(source, [lint(source.indexOf('controller ='), 'controller'.length)]);
   }
 
-  Future<void> reportsFieldCleanedUpOnlyInsideClosure() async {
+  Future<void> _reportsFieldCleanedUpOnlyInsideClosure() async {
     final source = _source('''
   final controller = Controller();
 
@@ -97,7 +97,7 @@ $members
     await assertDiagnostics(source, [lint(source.indexOf('controller ='), 'controller'.length)]);
   }
 
-  Future<void> acceptsFieldsCleanedUpInDispose() => assertNoDiagnostics(
+  Future<void> _acceptsFieldsCleanedUpInDispose() => assertNoDiagnostics(
     _source('''
   final controller = Controller();
   final subscription = Subscription();
@@ -111,7 +111,7 @@ $members
 '''),
   );
 
-  Future<void> acceptsThisQualifiedCleanup() => assertNoDiagnostics(
+  Future<void> _acceptsThisQualifiedCleanup() => assertNoDiagnostics(
     _source('''
   final controller = Controller();
 
@@ -123,14 +123,14 @@ $members
 '''),
   );
 
-  Future<void> ignoresStaticFieldsAndFieldsWithoutCleanup() => assertNoDiagnostics(
+  Future<void> _ignoresStaticFieldsAndFieldsWithoutCleanup() => assertNoDiagnostics(
     _source('''
   static final shared = Controller();
   final count = 1;
 '''),
   );
 
-  Future<void> ignoresClassesThatAreNotState() => assertNoDiagnostics('''
+  Future<void> _ignoresClassesThatAreNotState() => assertNoDiagnostics('''
 class Controller {
   void dispose() {}
 }
@@ -146,7 +146,7 @@ class Holder {
     expected: _source(expectedMembers),
   );
 
-  Future<void> addsDisposeMethodWhenMissing() => expectFix(
+  Future<void> _addsDisposeMethodWhenMissing() => expectFix(
     _source('  final controller = Controller();\n'),
     (context) => DisposeFieldsFix(context: context),
     expected: _source('  final controller = Controller();\n').replaceFirst(
@@ -156,7 +156,7 @@ class Holder {
     ),
   );
 
-  Future<void> addsCleanupBeforeSuperDispose() => _expectFix(
+  Future<void> _addsCleanupBeforeSuperDispose() => _expectFix(
     '''
   final controller = Controller();
   final sink = Sink();
@@ -180,7 +180,7 @@ class Holder {
 ''',
   );
 
-  Future<void> addsCleanupToDisposeWithoutSuperCall() => _expectFix(
+  Future<void> _addsCleanupToDisposeWithoutSuperCall() => _expectFix(
     '''
   final controller = Controller();
   final sink = Sink();
@@ -202,7 +202,7 @@ class Holder {
 ''',
   );
 
-  Future<void> usesTheCleanupMethodOfTheFieldType() => _expectFix(
+  Future<void> _usesTheCleanupMethodOfTheFieldType() => _expectFix(
     '''
   final subscription = Subscription();
 

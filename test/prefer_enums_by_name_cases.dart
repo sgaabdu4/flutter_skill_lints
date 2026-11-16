@@ -5,20 +5,20 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<PreferEnumsByNameTest>('PreferEnumsByNameTest', PreferEnumsByNameTest.new, {
-    'reportsFirstWhereOnEnumValues': (t) => t.reportsFirstWhereOnEnumValues(),
-    'reportsReversedComparison': (t) => t.reportsReversedComparison(),
-    'reportsBlockBodyCallback': (t) => t.reportsBlockBodyCallback(),
-    'acceptsComparisonOnOtherProperty': (t) => t.acceptsComparisonOnOtherProperty(),
-    'acceptsNonEnumTargets': (t) => t.acceptsNonEnumTargets(),
-    'acceptsNotEqualComparison': (t) => t.acceptsNotEqualComparison(),
-    'acceptsNamedPredicate': (t) => t.acceptsNamedPredicate(),
-    'rewritesToByName': (t) => t.rewritesToByName(),
-    'rewritesReversedComparison': (t) => t.rewritesReversedComparison(),
+  analysisRuleSuite<_PreferEnumsByNameTest>('PreferEnumsByNameTest', _PreferEnumsByNameTest.new, {
+    'reportsFirstWhereOnEnumValues': (t) => t._reportsFirstWhereOnEnumValues(),
+    'reportsReversedComparison': (t) => t._reportsReversedComparison(),
+    'reportsBlockBodyCallback': (t) => t._reportsBlockBodyCallback(),
+    'acceptsComparisonOnOtherProperty': (t) => t._acceptsComparisonOnOtherProperty(),
+    'acceptsNonEnumTargets': (t) => t._acceptsNonEnumTargets(),
+    'acceptsNotEqualComparison': (t) => t._acceptsNotEqualComparison(),
+    'acceptsNamedPredicate': (t) => t._acceptsNamedPredicate(),
+    'rewritesToByName': (t) => t._rewritesToByName(),
+    'rewritesReversedComparison': (t) => t._rewritesReversedComparison(),
   });
 }
 
-final class PreferEnumsByNameTest extends FixRuleTest {
+final class _PreferEnumsByNameTest extends FixRuleTest {
   @override
   void setUp() {
     rule = PreferEnumsByName();
@@ -35,14 +35,14 @@ enum Color { red, green }
 ${_color}Color f(String value) => Color.values.firstWhere((e) => e.name == value);
 ''';
 
-  Future<void> reportsFirstWhereOnEnumValues() => assertDiagnostics(_plain, [
+  Future<void> _reportsFirstWhereOnEnumValues() => assertDiagnostics(_plain, [
     lint(
       _plain.indexOf('Color.values.firstWhere'),
       'Color.values.firstWhere((e) => e.name == value)'.length,
     ),
   ]);
 
-  Future<void> reportsReversedComparison() async {
+  Future<void> _reportsReversedComparison() async {
     const source =
         '''
 ${_color}Color f(String value) => Color.values.firstWhere((e) => value == e.name);
@@ -51,7 +51,7 @@ ${_color}Color f(String value) => Color.values.firstWhere((e) => value == e.name
     await assertDiagnostics(source, [lint(source.indexOf(call), call.length)]);
   }
 
-  Future<void> reportsBlockBodyCallback() async {
+  Future<void> _reportsBlockBodyCallback() async {
     const source =
         '''
 ${_color}Color f(String value) => Color.values.firstWhere((e) {
@@ -64,7 +64,7 @@ ${_color}Color f(String value) => Color.values.firstWhere((e) {
     await assertDiagnostics(source, [lint(source.indexOf(call), call.length)]);
   }
 
-  Future<void> acceptsComparisonOnOtherProperty() => assertNoDiagnostics('''
+  Future<void> _acceptsComparisonOnOtherProperty() => assertNoDiagnostics('''
 enum Color {
   red('r'),
   green('g');
@@ -76,7 +76,7 @@ enum Color {
 Color f(String value) => Color.values.firstWhere((e) => e.code == value);
 ''');
 
-  Future<void> acceptsNonEnumTargets() => assertNoDiagnostics('''
+  Future<void> _acceptsNonEnumTargets() => assertNoDiagnostics('''
 class Item {
   final String name = '';
 }
@@ -84,17 +84,17 @@ class Item {
 Item f(List<Item> items, String value) => items.firstWhere((e) => e.name == value);
 ''');
 
-  Future<void> acceptsNotEqualComparison() => assertNoDiagnostics('''
+  Future<void> _acceptsNotEqualComparison() => assertNoDiagnostics('''
 ${_color}Color f(String value) => Color.values.firstWhere((e) => e.name != value);
 ''');
 
-  Future<void> acceptsNamedPredicate() => assertNoDiagnostics('''
+  Future<void> _acceptsNamedPredicate() => assertNoDiagnostics('''
 ${_color}bool matches(Color e) => e.name == 'red';
 
 Color f() => Color.values.firstWhere(matches);
 ''');
 
-  Future<void> rewritesToByName() => expectFix(
+  Future<void> _rewritesToByName() => expectFix(
     _plain,
     (context) => PreferEnumsByNameFix(context: context),
     expected:
@@ -103,7 +103,7 @@ ${_color}Color f(String value) => Color.values.byName(value);
 ''',
   );
 
-  Future<void> rewritesReversedComparison() => expectFix(
+  Future<void> _rewritesReversedComparison() => expectFix(
     '''
 ${_color}Color f(String value) => Color.values.firstWhere((e) => value == e.name);
 ''',

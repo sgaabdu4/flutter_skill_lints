@@ -4,26 +4,26 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/use_ref_and_state
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<UseRefAndStateSynchronouslyTest>(
+  analysisRuleSuite<_UseRefAndStateSynchronouslyTest>(
     'UseRefAndStateSynchronouslyTest',
-    UseRefAndStateSynchronouslyTest.new,
+    _UseRefAndStateSynchronouslyTest.new,
     {
-      'reportsStateAssignmentAfterAwait': (t) => t.reportsStateAssignmentAfterAwait(),
-      'reportsRefMethodCallAfterAwait': (t) => t.reportsRefMethodCallAfterAwait(),
-      'reportsStatePropertyAfterAwait': (t) => t.reportsStatePropertyAfterAwait(),
-      'reportsStateUsedAsArgumentAfterAwait': (t) => t.reportsStateUsedAsArgumentAfterAwait(),
-      'reportsUseInStatementThatContainsAwait': (t) => t.reportsUseInStatementThatContainsAwait(),
-      'acceptsUseAfterMountedGuard': (t) => t.acceptsUseAfterMountedGuard(),
-      'acceptsMountedCheckItself': (t) => t.acceptsMountedCheckItself(),
-      'acceptsUseBeforeAwait': (t) => t.acceptsUseBeforeAwait(),
-      'acceptsUseInsideClosure': (t) => t.acceptsUseInsideClosure(),
-      'ignoresSynchronousMethods': (t) => t.ignoresSynchronousMethods(),
-      'ignoresClassesThatAreNotNotifiers': (t) => t.ignoresClassesThatAreNotNotifiers(),
+      'reportsStateAssignmentAfterAwait': (t) => t._reportsStateAssignmentAfterAwait(),
+      'reportsRefMethodCallAfterAwait': (t) => t._reportsRefMethodCallAfterAwait(),
+      'reportsStatePropertyAfterAwait': (t) => t._reportsStatePropertyAfterAwait(),
+      'reportsStateUsedAsArgumentAfterAwait': (t) => t._reportsStateUsedAsArgumentAfterAwait(),
+      'reportsUseInStatementThatContainsAwait': (t) => t._reportsUseInStatementThatContainsAwait(),
+      'acceptsUseAfterMountedGuard': (t) => t._acceptsUseAfterMountedGuard(),
+      'acceptsMountedCheckItself': (t) => t._acceptsMountedCheckItself(),
+      'acceptsUseBeforeAwait': (t) => t._acceptsUseBeforeAwait(),
+      'acceptsUseInsideClosure': (t) => t._acceptsUseInsideClosure(),
+      'ignoresSynchronousMethods': (t) => t._ignoresSynchronousMethods(),
+      'ignoresClassesThatAreNotNotifiers': (t) => t._ignoresClassesThatAreNotNotifiers(),
     },
   );
 }
 
-final class UseRefAndStateSynchronouslyTest extends AnalysisRuleTest {
+final class _UseRefAndStateSynchronouslyTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = UseRefAndStateSynchronously();
@@ -64,19 +64,21 @@ $body
     await assertDiagnostics(source, [lint(source.indexOf(reported), reported.length)]);
   }
 
-  Future<void> reportsStateAssignmentAfterAwait() => _expectReported("state = 'a';", "state = 'a'");
+  Future<void> _reportsStateAssignmentAfterAwait() =>
+      _expectReported("state = 'a';", "state = 'a'");
 
-  Future<void> reportsRefMethodCallAfterAwait() =>
+  Future<void> _reportsRefMethodCallAfterAwait() =>
       _expectReported('ref.read<int>(work);', 'ref.read<int>(work)');
 
-  Future<void> reportsStatePropertyAfterAwait() => _expectReported('state.length;', 'state.length');
+  Future<void> _reportsStatePropertyAfterAwait() =>
+      _expectReported('state.length;', 'state.length');
 
-  Future<void> reportsStateUsedAsArgumentAfterAwait() async {
+  Future<void> _reportsStateUsedAsArgumentAfterAwait() async {
     final source = _source('    await work();\n    use(state);');
     await assertDiagnostics(source, [lint(source.lastIndexOf('state'), 'state'.length)]);
   }
 
-  Future<void> reportsUseInStatementThatContainsAwait() async {
+  Future<void> _reportsUseInStatementThatContainsAwait() async {
     final source = _source('''
     await work();
     if (state.isEmpty) {
@@ -87,14 +89,14 @@ $body
     ]);
   }
 
-  Future<void> acceptsUseAfterMountedGuard() => assertNoDiagnostics(
+  Future<void> _acceptsUseAfterMountedGuard() => assertNoDiagnostics(
     _source('''
     await work();
     if (!ref.mounted) return;
     state = 'a';'''),
   );
 
-  Future<void> acceptsMountedCheckItself() => assertNoDiagnostics(
+  Future<void> _acceptsMountedCheckItself() => assertNoDiagnostics(
     _source('''
     await work();
     if (!ref.mounted) {
@@ -103,19 +105,19 @@ $body
     final ok = ref.mounted;'''),
   );
 
-  Future<void> acceptsUseBeforeAwait() => assertNoDiagnostics(
+  Future<void> _acceptsUseBeforeAwait() => assertNoDiagnostics(
     _source('''
     state = 'a';
     await work();'''),
   );
 
-  Future<void> acceptsUseInsideClosure() => assertNoDiagnostics(
+  Future<void> _acceptsUseInsideClosure() => assertNoDiagnostics(
     _source('''
     await work();
     final later = () => state;'''),
   );
 
-  Future<void> ignoresSynchronousMethods() => assertNoDiagnostics('''
+  Future<void> _ignoresSynchronousMethods() => assertNoDiagnostics('''
 import 'package:riverpod/riverpod.dart';
 
 class N extends Notifier<String> {
@@ -128,7 +130,7 @@ class N extends Notifier<String> {
 }
 ''');
 
-  Future<void> ignoresClassesThatAreNotNotifiers() => assertNoDiagnostics('''
+  Future<void> _ignoresClassesThatAreNotNotifiers() => assertNoDiagnostics('''
 class Plain {
   String state = '';
 

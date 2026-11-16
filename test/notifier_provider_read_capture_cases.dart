@@ -4,20 +4,20 @@ import 'package:flutter_skill_lints/src/rules/notifier_source_rules.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<NotifierProviderReadCaptureTest>(
+  analysisRuleSuite<_NotifierProviderReadCaptureTest>(
     'NotifierProviderReadCaptureTest',
-    NotifierProviderReadCaptureTest.new,
+    _NotifierProviderReadCaptureTest.new,
     {
       'allowsCapturedOperationOfRiverpodNotifier': (t) =>
-          t.allowsCapturedOperationOfRiverpodNotifier(),
-      'allowsParenthesizedNotifierProvider': (t) => t.allowsParenthesizedNotifierProvider(),
+          t._allowsCapturedOperationOfRiverpodNotifier(),
+      'allowsParenthesizedNotifierProvider': (t) => t._allowsParenthesizedNotifierProvider(),
       'reportsOperationOfLookalikeNotifierGetter': (t) =>
-          t.reportsOperationOfLookalikeNotifierGetter(),
+          t._reportsOperationOfLookalikeNotifierGetter(),
     },
   );
 }
 
-final class NotifierProviderReadCaptureTest extends AnalysisRuleTest {
+final class _NotifierProviderReadCaptureTest extends AnalysisRuleTest {
   static const _ruleName = 'notifier_ensure_deps';
 
   @override
@@ -80,13 +80,13 @@ class ItemsNotifier extends Notifier<Object> {
 }
 ''';
 
-  Future<void> allowsCapturedOperationOfRiverpodNotifier() =>
+  Future<void> _allowsCapturedOperationOfRiverpodNotifier() =>
       assertNoDiagnostics(_source('itemsNotifierProvider.notifier'));
 
-  Future<void> allowsParenthesizedNotifierProvider() =>
+  Future<void> _allowsParenthesizedNotifierProvider() =>
       assertNoDiagnostics(_source('(itemsNotifierProvider).notifier'));
 
-  Future<void> reportsOperationOfLookalikeNotifierGetter() async {
+  Future<void> _reportsOperationOfLookalikeNotifierGetter() async {
     final source = _source('lookalikeProvider.notifier');
     final lineStart = source.lastIndexOf('\n', source.indexOf('Future<void> saveItem')) + 1;
     final lineEnd = source.indexOf('\n', lineStart);

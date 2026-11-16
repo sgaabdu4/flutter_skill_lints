@@ -6,20 +6,20 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<PreferContainerTest>('PreferContainerTest', PreferContainerTest.new, {
-    'reportsThreeNestedWidgets': (t) => t.reportsThreeNestedWidgets(),
-    'ignoresTwoNestedWidgets': (t) => t.ignoresTwoNestedWidgets(),
-    'ignoresRepeatedContainerParameter': (t) => t.ignoresRepeatedContainerParameter(),
-    'reportsOnlyOutermostWidget': (t) => t.reportsOnlyOutermostWidget(),
-    'ignoresNonFlutterWidgetsWithSameNames': (t) => t.ignoresNonFlutterWidgetsWithSameNames(),
-    'mergesChainIntoContainer': (t) => t.mergesChainIntoContainer(),
-    'centerBecomesCenterAlignment': (t) => t.centerBecomesCenterAlignment(),
-    'keepsFirstKey': (t) => t.keepsFirstKey(),
-    'mapsSizedBoxDimensions': (t) => t.mapsSizedBoxDimensions(),
+  analysisRuleSuite<_PreferContainerTest>('PreferContainerTest', _PreferContainerTest.new, {
+    'reportsThreeNestedWidgets': (t) => t._reportsThreeNestedWidgets(),
+    'ignoresTwoNestedWidgets': (t) => t._ignoresTwoNestedWidgets(),
+    'ignoresRepeatedContainerParameter': (t) => t._ignoresRepeatedContainerParameter(),
+    'reportsOnlyOutermostWidget': (t) => t._reportsOnlyOutermostWidget(),
+    'ignoresNonFlutterWidgetsWithSameNames': (t) => t._ignoresNonFlutterWidgetsWithSameNames(),
+    'mergesChainIntoContainer': (t) => t._mergesChainIntoContainer(),
+    'centerBecomesCenterAlignment': (t) => t._centerBecomesCenterAlignment(),
+    'keepsFirstKey': (t) => t._keepsFirstKey(),
+    'mapsSizedBoxDimensions': (t) => t._mapsSizedBoxDimensions(),
   });
 }
 
-final class PreferContainerTest extends FixRuleTest {
+final class _PreferContainerTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -39,11 +39,11 @@ Widget build() => Padding(
 );
 ''';
 
-  Future<void> reportsThreeNestedWidgets() async {
+  Future<void> _reportsThreeNestedWidgets() async {
     await assertDiagnostics(_chain, [lint(_chain.indexOf('Padding('), 'Padding'.length)]);
   }
 
-  Future<void> ignoresTwoNestedWidgets() => assertNoDiagnostics(r'''
+  Future<void> _ignoresTwoNestedWidgets() => assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Padding(
@@ -52,7 +52,7 @@ Widget build() => Padding(
 );
 ''');
 
-  Future<void> ignoresRepeatedContainerParameter() => assertNoDiagnostics(r'''
+  Future<void> _ignoresRepeatedContainerParameter() => assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Padding(
@@ -64,7 +64,7 @@ Widget build() => Padding(
 );
 ''');
 
-  Future<void> reportsOnlyOutermostWidget() async {
+  Future<void> _reportsOnlyOutermostWidget() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -81,7 +81,7 @@ Widget build() => Align(
     await assertDiagnostics(source, [lint(source.indexOf('Align('), 'Align'.length)]);
   }
 
-  Future<void> ignoresNonFlutterWidgetsWithSameNames() => assertNoDiagnostics(r'''
+  Future<void> _ignoresNonFlutterWidgetsWithSameNames() => assertNoDiagnostics(r'''
 class Padding {
   const Padding({Object? child});
 }
@@ -97,7 +97,7 @@ class ColoredBox {
 Object build() => Padding(child: Align(child: ColoredBox()));
 ''');
 
-  Future<void> mergesChainIntoContainer() => expectFix(
+  Future<void> _mergesChainIntoContainer() => expectFix(
     _chain,
     (context) => PreferContainerFix(context: context),
     expected: r'''
@@ -107,7 +107,7 @@ Widget build() => Container(padding: EdgeInsets.all(8), color: Color(1), child: 
 ''',
   );
 
-  Future<void> centerBecomesCenterAlignment() => expectFix(
+  Future<void> _centerBecomesCenterAlignment() => expectFix(
     r'''
 import 'package:flutter/widgets.dart';
 
@@ -126,7 +126,7 @@ Widget build() => Container(alignment: Alignment.center, padding: EdgeInsets.all
 ''',
   );
 
-  Future<void> keepsFirstKey() => expectFix(
+  Future<void> _keepsFirstKey() => expectFix(
     r'''
 import 'package:flutter/widgets.dart';
 
@@ -148,7 +148,7 @@ Widget build() => Container(key: Key('outer'), padding: EdgeInsets.all(8), color
 ''',
   );
 
-  Future<void> mapsSizedBoxDimensions() => expectFix(
+  Future<void> _mapsSizedBoxDimensions() => expectFix(
     r'''
 import 'package:flutter/widgets.dart';
 

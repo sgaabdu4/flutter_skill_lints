@@ -5,19 +5,19 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<PreferAnyOrEveryTest>('PreferAnyOrEveryTest', PreferAnyOrEveryTest.new, {
-    'rewritesWhereIsNotEmptyToAny': (t) => t.rewritesWhereIsNotEmptyToAny(),
-    'rewritesWhereIsEmptyToEvery': (t) => t.rewritesWhereIsEmptyToEvery(),
-    'negatesSimpleIdentifierBodies': (t) => t.negatesSimpleIdentifierBodies(),
-    'removesDoubleNegation': (t) => t.removesDoubleNegation(),
-    'wrapsBinaryBodiesInParentheses': (t) => t.wrapsBinaryBodiesInParentheses(),
-    'negatesMethodCallBodies': (t) => t.negatesMethodCallBodies(),
-    'usesSingleReturnBlockBody': (t) => t.usesSingleReturnBlockBody(),
-    'refusesEveryForNamedPredicates': (t) => t.refusesEveryForNamedPredicates(),
+  analysisRuleSuite<_PreferAnyOrEveryTest>('PreferAnyOrEveryTest', _PreferAnyOrEveryTest.new, {
+    'rewritesWhereIsNotEmptyToAny': (t) => t._rewritesWhereIsNotEmptyToAny(),
+    'rewritesWhereIsEmptyToEvery': (t) => t._rewritesWhereIsEmptyToEvery(),
+    'negatesSimpleIdentifierBodies': (t) => t._negatesSimpleIdentifierBodies(),
+    'removesDoubleNegation': (t) => t._removesDoubleNegation(),
+    'wrapsBinaryBodiesInParentheses': (t) => t._wrapsBinaryBodiesInParentheses(),
+    'negatesMethodCallBodies': (t) => t._negatesMethodCallBodies(),
+    'usesSingleReturnBlockBody': (t) => t._usesSingleReturnBlockBody(),
+    'refusesEveryForNamedPredicates': (t) => t._refusesEveryForNamedPredicates(),
   });
 }
 
-final class PreferAnyOrEveryTest extends FixRuleTest {
+final class _PreferAnyOrEveryTest extends FixRuleTest {
   @override
   void setUp() {
     rule = PreferAnyOrEvery();
@@ -30,28 +30,28 @@ final class PreferAnyOrEveryTest extends FixRuleTest {
     expected: 'bool f(List<int> l, bool Function(int) p) => $expected;\n',
   );
 
-  Future<void> rewritesWhereIsNotEmptyToAny() =>
+  Future<void> _rewritesWhereIsNotEmptyToAny() =>
       _expectRewrite('l.where((e) => e > 1).isNotEmpty', 'l.any((e) => e > 1)');
 
-  Future<void> rewritesWhereIsEmptyToEvery() =>
+  Future<void> _rewritesWhereIsEmptyToEvery() =>
       _expectRewrite('l.where((e) => e > 1).isEmpty', 'l.every((e) => !(e > 1))');
 
-  Future<void> negatesSimpleIdentifierBodies() =>
+  Future<void> _negatesSimpleIdentifierBodies() =>
       _expectRewrite('l.where((e) => e.isEven).isEmpty', 'l.every((e) => !e.isEven)');
 
-  Future<void> removesDoubleNegation() =>
+  Future<void> _removesDoubleNegation() =>
       _expectRewrite('l.where((e) => !e.isEven).isEmpty', 'l.every((e) => e.isEven)');
 
-  Future<void> wrapsBinaryBodiesInParentheses() =>
+  Future<void> _wrapsBinaryBodiesInParentheses() =>
       _expectRewrite('l.where((e) => e > 1 && e < 5).isEmpty', 'l.every((e) => !(e > 1 && e < 5))');
 
-  Future<void> negatesMethodCallBodies() =>
+  Future<void> _negatesMethodCallBodies() =>
       _expectRewrite('l.where((e) => l.contains(e)).isEmpty', 'l.every((e) => !l.contains(e))');
 
-  Future<void> usesSingleReturnBlockBody() =>
+  Future<void> _usesSingleReturnBlockBody() =>
       _expectRewrite('l.where((e) { return e.isOdd; }).isEmpty', 'l.every((e) => !e.isOdd)');
 
-  Future<void> refusesEveryForNamedPredicates() => expectNoFix(
+  Future<void> _refusesEveryForNamedPredicates() => expectNoFix(
     'bool f(List<int> l, bool Function(int) p) => l.where(p).isEmpty;\n',
     (context) => PreferAnyOrEveryFix(context: context),
   );

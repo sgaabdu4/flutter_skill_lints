@@ -6,21 +6,21 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<PreferSizedBoxSquareTest>(
+  analysisRuleSuite<_PreferSizedBoxSquareTest>(
     'PreferSizedBoxSquareTest',
-    PreferSizedBoxSquareTest.new,
+    _PreferSizedBoxSquareTest.new,
     {
-      'reportsEqualWidthAndHeight': (t) => t.reportsEqualWidthAndHeight(),
-      'acceptsDifferentDimensions': (t) => t.acceptsDifferentDimensions(),
-      'acceptsOnlyOneDimension': (t) => t.acceptsOnlyOneDimension(),
-      'ignoresNamedConstructors': (t) => t.ignoresNamedConstructors(),
-      'rewritesToSquare': (t) => t.rewritesToSquare(),
-      'keepsConstAndOtherArguments': (t) => t.keepsConstAndOtherArguments(),
+      'reportsEqualWidthAndHeight': (t) => t._reportsEqualWidthAndHeight(),
+      'acceptsDifferentDimensions': (t) => t._acceptsDifferentDimensions(),
+      'acceptsOnlyOneDimension': (t) => t._acceptsOnlyOneDimension(),
+      'ignoresNamedConstructors': (t) => t._ignoresNamedConstructors(),
+      'rewritesToSquare': (t) => t._rewritesToSquare(),
+      'keepsConstAndOtherArguments': (t) => t._keepsConstAndOtherArguments(),
     },
   );
 }
 
-final class PreferSizedBoxSquareTest extends FixRuleTest {
+final class _PreferSizedBoxSquareTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -34,28 +34,28 @@ import 'package:flutter/widgets.dart';
 Widget build() => SizedBox(width: 8, height: 8);
 ''';
 
-  Future<void> reportsEqualWidthAndHeight() =>
+  Future<void> _reportsEqualWidthAndHeight() =>
       assertDiagnostics(_equal, [lint(_equal.indexOf('SizedBox('), 'SizedBox'.length)]);
 
-  Future<void> acceptsDifferentDimensions() => assertNoDiagnostics('''
+  Future<void> _acceptsDifferentDimensions() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => SizedBox(width: 8, height: 9);
 ''');
 
-  Future<void> acceptsOnlyOneDimension() => assertNoDiagnostics('''
+  Future<void> _acceptsOnlyOneDimension() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => SizedBox(width: 8);
 ''');
 
-  Future<void> ignoresNamedConstructors() => assertNoDiagnostics('''
+  Future<void> _ignoresNamedConstructors() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => SizedBox.square(dimension: 8);
 ''');
 
-  Future<void> rewritesToSquare() => expectFix(
+  Future<void> _rewritesToSquare() => expectFix(
     _equal,
     (context) => PreferSizedBoxSquareFix(context: context),
     expected: '''
@@ -65,7 +65,7 @@ Widget build() => SizedBox.square(dimension: 8);
 ''',
   );
 
-  Future<void> keepsConstAndOtherArguments() => expectFix(
+  Future<void> _keepsConstAndOtherArguments() => expectFix(
     '''
 import 'package:flutter/widgets.dart';
 

@@ -5,25 +5,25 @@ import 'analysis_rule_suite.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<AvoidSingleChildInMultiChildWidgetsTest>(
+  analysisRuleSuite<_AvoidSingleChildInMultiChildWidgetsTest>(
     'AvoidSingleChildInMultiChildWidgetsTest',
-    AvoidSingleChildInMultiChildWidgetsTest.new,
+    _AvoidSingleChildInMultiChildWidgetsTest.new,
     {
-      'reportsColumnWithOneChild': (t) => t.reportsColumnWithOneChild(),
-      'reportsWrapWithOneChild': (t) => t.reportsWrapWithOneChild(),
-      'acceptsTwoChildren': (t) => t.acceptsTwoChildren(),
-      'acceptsSpreadChild': (t) => t.acceptsSpreadChild(),
-      'acceptsForElementChild': (t) => t.acceptsForElementChild(),
-      'reportsConditionalSingleChild': (t) => t.reportsConditionalSingleChild(),
-      'acceptsConditionalWithSpread': (t) => t.acceptsConditionalWithSpread(),
-      'acceptsNonLiteralChildren': (t) => t.acceptsNonLiteralChildren(),
-      'ignoresUnlistedWidgets': (t) => t.ignoresUnlistedWidgets(),
-      'acceptsColumnWithoutChildren': (t) => t.acceptsColumnWithoutChildren(),
+      'reportsColumnWithOneChild': (t) => t._reportsColumnWithOneChild(),
+      'reportsWrapWithOneChild': (t) => t._reportsWrapWithOneChild(),
+      'acceptsTwoChildren': (t) => t._acceptsTwoChildren(),
+      'acceptsSpreadChild': (t) => t._acceptsSpreadChild(),
+      'acceptsForElementChild': (t) => t._acceptsForElementChild(),
+      'reportsConditionalSingleChild': (t) => t._reportsConditionalSingleChild(),
+      'acceptsConditionalWithSpread': (t) => t._acceptsConditionalWithSpread(),
+      'acceptsNonLiteralChildren': (t) => t._acceptsNonLiteralChildren(),
+      'ignoresUnlistedWidgets': (t) => t._ignoresUnlistedWidgets(),
+      'acceptsColumnWithoutChildren': (t) => t._acceptsColumnWithoutChildren(),
     },
   );
 }
 
-final class AvoidSingleChildInMultiChildWidgetsTest extends AnalysisRuleTest {
+final class _AvoidSingleChildInMultiChildWidgetsTest extends AnalysisRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -33,7 +33,7 @@ final class AvoidSingleChildInMultiChildWidgetsTest extends AnalysisRuleTest {
 
   static const _import = "import 'package:flutter/widgets.dart';\n";
 
-  Future<void> reportsColumnWithOneChild() async {
+  Future<void> _reportsColumnWithOneChild() async {
     const source =
         '''
 ${_import}Widget build() => Column(children: [Text('a')]);
@@ -41,7 +41,7 @@ ${_import}Widget build() => Column(children: [Text('a')]);
     await assertDiagnostics(source, [lint(source.indexOf('Column'), 'Column'.length)]);
   }
 
-  Future<void> reportsWrapWithOneChild() async {
+  Future<void> _reportsWrapWithOneChild() async {
     const source =
         '''
 ${_import}Widget build() => Wrap(children: [Text('a')]);
@@ -49,19 +49,19 @@ ${_import}Widget build() => Wrap(children: [Text('a')]);
     await assertDiagnostics(source, [lint(source.indexOf('Wrap'), 'Wrap'.length)]);
   }
 
-  Future<void> acceptsTwoChildren() => assertNoDiagnostics('''
+  Future<void> _acceptsTwoChildren() => assertNoDiagnostics('''
 ${_import}Widget build() => Row(children: [Text('a'), Text('b')]);
 ''');
 
-  Future<void> acceptsSpreadChild() => assertNoDiagnostics('''
+  Future<void> _acceptsSpreadChild() => assertNoDiagnostics('''
 ${_import}Widget build(List<Widget> all) => Column(children: [...all]);
 ''');
 
-  Future<void> acceptsForElementChild() => assertNoDiagnostics('''
+  Future<void> _acceptsForElementChild() => assertNoDiagnostics('''
 ${_import}Widget build(List<int> all) => Column(children: [for (final a in all) Text('a')]);
 ''');
 
-  Future<void> reportsConditionalSingleChild() async {
+  Future<void> _reportsConditionalSingleChild() async {
     const source =
         '''
 ${_import}Widget build(bool on) => Column(children: [if (on) Text('a') else Text('b')]);
@@ -69,19 +69,19 @@ ${_import}Widget build(bool on) => Column(children: [if (on) Text('a') else Text
     await assertDiagnostics(source, [lint(source.indexOf('Column'), 'Column'.length)]);
   }
 
-  Future<void> acceptsConditionalWithSpread() => assertNoDiagnostics('''
+  Future<void> _acceptsConditionalWithSpread() => assertNoDiagnostics('''
 ${_import}Widget build(bool on, List<Widget> all) => Column(children: [if (on) ...all]);
 ''');
 
-  Future<void> acceptsNonLiteralChildren() => assertNoDiagnostics('''
+  Future<void> _acceptsNonLiteralChildren() => assertNoDiagnostics('''
 ${_import}Widget build(List<Widget> all) => Column(children: all);
 ''');
 
-  Future<void> ignoresUnlistedWidgets() => assertNoDiagnostics('''
+  Future<void> _ignoresUnlistedWidgets() => assertNoDiagnostics('''
 ${_import}Widget build() => Padding(padding: EdgeInsets.all(1), child: Text('a'));
 ''');
 
-  Future<void> acceptsColumnWithoutChildren() => assertNoDiagnostics('''
+  Future<void> _acceptsColumnWithoutChildren() => assertNoDiagnostics('''
 ${_import}Widget build() => Column();
 ''');
 }

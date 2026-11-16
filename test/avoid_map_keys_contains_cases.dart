@@ -5,24 +5,24 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<AvoidMapKeysContainsTest>(
+  analysisRuleSuite<_AvoidMapKeysContainsTest>(
     'AvoidMapKeysContainsTest',
-    AvoidMapKeysContainsTest.new,
+    _AvoidMapKeysContainsTest.new,
     {
-      'rewritesPrefixedKeysContains': (t) => t.rewritesPrefixedKeysContains(),
-      'rewritesPropertyAccessKeysContains': (t) => t.rewritesPropertyAccessKeysContains(),
+      'rewritesPrefixedKeysContains': (t) => t._rewritesPrefixedKeysContains(),
+      'rewritesPropertyAccessKeysContains': (t) => t._rewritesPropertyAccessKeysContains(),
     },
   );
 }
 
-final class AvoidMapKeysContainsTest extends FixRuleTest {
+final class _AvoidMapKeysContainsTest extends FixRuleTest {
   @override
   void setUp() {
     rule = AvoidMapKeysContains();
     super.setUp();
   }
 
-  Future<void> rewritesPrefixedKeysContains() => expectFix(
+  Future<void> _rewritesPrefixedKeysContains() => expectFix(
     '''
 bool f(Map<String, int> m) => m.keys.contains('a');
 ''',
@@ -32,7 +32,7 @@ bool f(Map<String, int> m) => m.containsKey('a');
 ''',
   );
 
-  Future<void> rewritesPropertyAccessKeysContains() => expectFix(
+  Future<void> _rewritesPropertyAccessKeysContains() => expectFix(
     '''
 class Holder {
   final Map<String, int> m = {};

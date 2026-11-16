@@ -6,15 +6,15 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<PreferTextRichTest>('PreferTextRichTest', PreferTextRichTest.new, {
-    'reportsRichText': (t) => t.reportsRichText(),
-    'ignoresPlainText': (t) => t.ignoresPlainText(),
-    'rewritesToTextRich': (t) => t.rewritesToTextRich(),
-    'keepsOtherArguments': (t) => t.keepsOtherArguments(),
+  analysisRuleSuite<_PreferTextRichTest>('PreferTextRichTest', _PreferTextRichTest.new, {
+    'reportsRichText': (t) => t._reportsRichText(),
+    'ignoresPlainText': (t) => t._ignoresPlainText(),
+    'rewritesToTextRich': (t) => t._rewritesToTextRich(),
+    'keepsOtherArguments': (t) => t._keepsOtherArguments(),
   });
 }
 
-final class PreferTextRichTest extends FixRuleTest {
+final class _PreferTextRichTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -28,16 +28,16 @@ import 'package:flutter/widgets.dart';
 Widget build() => RichText(text: TextSpan(text: 'a'));
 ''';
 
-  Future<void> reportsRichText() =>
+  Future<void> _reportsRichText() =>
       assertDiagnostics(_rich, [lint(_rich.indexOf('RichText('), 'RichText'.length)]);
 
-  Future<void> ignoresPlainText() => assertNoDiagnostics('''
+  Future<void> _ignoresPlainText() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Text('a');
 ''');
 
-  Future<void> rewritesToTextRich() => expectFix(
+  Future<void> _rewritesToTextRich() => expectFix(
     _rich,
     (context) => PreferTextRichFix(context: context),
     expected: '''
@@ -47,7 +47,7 @@ Widget build() => Text.rich(TextSpan(text: 'a'));
 ''',
   );
 
-  Future<void> keepsOtherArguments() => expectFix(
+  Future<void> _keepsOtherArguments() => expectFix(
     '''
 import 'package:flutter/widgets.dart';
 

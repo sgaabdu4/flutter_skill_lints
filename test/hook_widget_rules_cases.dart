@@ -6,28 +6,28 @@ import 'analysis_rule_suite.dart';
 import 'support/flutter_hooks_stub.dart';
 
 void main() {
-  analysisRuleSuite<AvoidUnnecessaryHookWidgetsTest>(
+  analysisRuleSuite<_AvoidUnnecessaryHookWidgetsTest>(
     'AvoidUnnecessaryHookWidgetsTest',
-    AvoidUnnecessaryHookWidgetsTest.new,
+    _AvoidUnnecessaryHookWidgetsTest.new,
     {
-      'reportsHookWidgetWithoutHooks': (t) => t.reportsHookWidgetWithoutHooks(),
-      'reportsHookConsumerWidgetWithoutHooks': (t) => t.reportsHookConsumerWidgetWithoutHooks(),
-      'reportsHookBuilderWithoutHooks': (t) => t.reportsHookBuilderWithoutHooks(),
-      'acceptsHookWidgetWithHooks': (t) => t.acceptsHookWidgetWithHooks(),
-      'acceptsHookBuilderWithHooks': (t) => t.acceptsHookBuilderWithHooks(),
-      'ignoresOtherWidgetClasses': (t) => t.ignoresOtherWidgetClasses(),
+      'reportsHookWidgetWithoutHooks': (t) => t._reportsHookWidgetWithoutHooks(),
+      'reportsHookConsumerWidgetWithoutHooks': (t) => t._reportsHookConsumerWidgetWithoutHooks(),
+      'reportsHookBuilderWithoutHooks': (t) => t._reportsHookBuilderWithoutHooks(),
+      'acceptsHookWidgetWithHooks': (t) => t._acceptsHookWidgetWithHooks(),
+      'acceptsHookBuilderWithHooks': (t) => t._acceptsHookBuilderWithHooks(),
+      'ignoresOtherWidgetClasses': (t) => t._ignoresOtherWidgetClasses(),
     },
   );
-  analysisRuleSuite<AvoidConditionalHooksTest>(
+  analysisRuleSuite<_AvoidConditionalHooksTest>(
     'AvoidConditionalHooksTest',
-    AvoidConditionalHooksTest.new,
+    _AvoidConditionalHooksTest.new,
     {
-      'reportsHookInIfBranchOfHookWidget': (t) => t.reportsHookInIfBranchOfHookWidget(),
+      'reportsHookInIfBranchOfHookWidget': (t) => t._reportsHookInIfBranchOfHookWidget(),
       'reportsHookInIfBranchOfHookConsumerWidget': (t) =>
-          t.reportsHookInIfBranchOfHookConsumerWidget(),
-      'reportsHookInHookBuilder': (t) => t.reportsHookInHookBuilder(),
-      'acceptsUnconditionalHooks': (t) => t.acceptsUnconditionalHooks(),
-      'ignoresOtherWidgetClasses': (t) => t.ignoresOtherWidgetClasses(),
+          t._reportsHookInIfBranchOfHookConsumerWidget(),
+      'reportsHookInHookBuilder': (t) => t._reportsHookInHookBuilder(),
+      'acceptsUnconditionalHooks': (t) => t._acceptsUnconditionalHooks(),
+      'ignoresOtherWidgetClasses': (t) => t._ignoresOtherWidgetClasses(),
     },
   );
 }
@@ -50,7 +50,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 ''';
 
-final class AvoidUnnecessaryHookWidgetsTest extends AnalysisRuleTest {
+final class _AvoidUnnecessaryHookWidgetsTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = AvoidUnnecessaryHookWidgets();
@@ -58,7 +58,7 @@ final class AvoidUnnecessaryHookWidgetsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> reportsHookWidgetWithoutHooks() async {
+  Future<void> _reportsHookWidgetWithoutHooks() async {
     const source =
         '''
 ${_hooksImports}class W extends HookWidget {
@@ -71,7 +71,7 @@ ${_hooksImports}class W extends HookWidget {
     await assertDiagnostics(source, [lint(source.indexOf('HookWidget {'), 'HookWidget'.length)]);
   }
 
-  Future<void> reportsHookConsumerWidgetWithoutHooks() async {
+  Future<void> _reportsHookConsumerWidgetWithoutHooks() async {
     const source =
         '''
 ${_consumerImports}class W extends HookConsumerWidget {
@@ -86,7 +86,7 @@ ${_consumerImports}class W extends HookConsumerWidget {
     ]);
   }
 
-  Future<void> reportsHookBuilderWithoutHooks() async {
+  Future<void> _reportsHookBuilderWithoutHooks() async {
     const source =
         '''
 ${_hooksImports}Widget f() => HookBuilder(builder: (context) => const Widget());
@@ -94,7 +94,7 @@ ${_hooksImports}Widget f() => HookBuilder(builder: (context) => const Widget());
     await assertDiagnostics(source, [lint(source.indexOf('HookBuilder('), 'HookBuilder'.length)]);
   }
 
-  Future<void> acceptsHookWidgetWithHooks() => assertNoDiagnostics('''
+  Future<void> _acceptsHookWidgetWithHooks() => assertNoDiagnostics('''
 ${_hooksImports}class W extends HookWidget {
   const W();
 
@@ -106,14 +106,14 @@ ${_hooksImports}class W extends HookWidget {
 }
 ''');
 
-  Future<void> acceptsHookBuilderWithHooks() => assertNoDiagnostics('''
+  Future<void> _acceptsHookBuilderWithHooks() => assertNoDiagnostics('''
 ${_hooksImports}Widget f() => HookBuilder(builder: (context) {
   useState(0);
   return const Widget();
 });
 ''');
 
-  Future<void> ignoresOtherWidgetClasses() => assertNoDiagnostics('''
+  Future<void> _ignoresOtherWidgetClasses() => assertNoDiagnostics('''
 ${_hooksImports}abstract class W extends HookWidget {
   const W();
 }
@@ -126,7 +126,7 @@ class P extends Widget {
 ''');
 }
 
-final class AvoidConditionalHooksTest extends AnalysisRuleTest {
+final class _AvoidConditionalHooksTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = AvoidConditionalHooks();
@@ -134,7 +134,7 @@ final class AvoidConditionalHooksTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> reportsHookInIfBranchOfHookWidget() async {
+  Future<void> _reportsHookInIfBranchOfHookWidget() async {
     const source =
         '''
 ${_hooksImports}bool flag() => true;
@@ -154,7 +154,7 @@ class W extends HookWidget {
     await assertDiagnostics(source, [lint(source.indexOf('useState(0)'), 'useState(0)'.length)]);
   }
 
-  Future<void> reportsHookInIfBranchOfHookConsumerWidget() async {
+  Future<void> _reportsHookInIfBranchOfHookConsumerWidget() async {
     const source =
         '''
 ${_consumerHooksImports}bool flag() => true;
@@ -174,7 +174,7 @@ class W extends HookConsumerWidget {
     await assertDiagnostics(source, [lint(source.indexOf('useState(0)'), 'useState(0)'.length)]);
   }
 
-  Future<void> reportsHookInHookBuilder() async {
+  Future<void> _reportsHookInHookBuilder() async {
     const source =
         '''
 ${_hooksImports}Widget f(bool flag) => HookBuilder(builder: (context) {
@@ -187,7 +187,7 @@ ${_hooksImports}Widget f(bool flag) => HookBuilder(builder: (context) {
     await assertDiagnostics(source, [lint(source.indexOf('useState(0)'), 'useState(0)'.length)]);
   }
 
-  Future<void> acceptsUnconditionalHooks() => assertNoDiagnostics('''
+  Future<void> _acceptsUnconditionalHooks() => assertNoDiagnostics('''
 ${_hooksImports}class W extends HookWidget {
   const W();
 
@@ -199,7 +199,7 @@ ${_hooksImports}class W extends HookWidget {
 }
 ''');
 
-  Future<void> ignoresOtherWidgetClasses() => assertNoDiagnostics('''
+  Future<void> _ignoresOtherWidgetClasses() => assertNoDiagnostics('''
 ${_hooksImports}bool flag() => true;
 
 class P extends Widget {

@@ -6,49 +6,49 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_wildcard_p
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidCollectionMutatingMethodsStaticTest>(
+  analysisRuleSuite<_AvoidCollectionMutatingMethodsStaticTest>(
     'AvoidCollectionMutatingMethodsStaticTest',
-    AvoidCollectionMutatingMethodsStaticTest.new,
+    _AvoidCollectionMutatingMethodsStaticTest.new,
     {
-      'reportsStaticFieldMutation': (t) => t.reportsStaticFieldMutation(),
-      'reportsTopLevelVariableMutation': (t) => t.reportsTopLevelVariableMutation(),
-      'reportsParameterMutationThroughCascade': (t) => t.reportsParameterMutationThroughCascade(),
-      'acceptsInstanceFieldsAndLocals': (t) => t.acceptsInstanceFieldsAndLocals(),
-      'acceptsStaticFieldsOfOtherClasses': (t) => t.acceptsStaticFieldsOfOtherClasses(),
-      'acceptsNonMutatingMethods': (t) => t.acceptsNonMutatingMethods(),
+      'reportsStaticFieldMutation': (t) => t._reportsStaticFieldMutation(),
+      'reportsTopLevelVariableMutation': (t) => t._reportsTopLevelVariableMutation(),
+      'reportsParameterMutationThroughCascade': (t) => t._reportsParameterMutationThroughCascade(),
+      'acceptsInstanceFieldsAndLocals': (t) => t._acceptsInstanceFieldsAndLocals(),
+      'acceptsStaticFieldsOfOtherClasses': (t) => t._acceptsStaticFieldsOfOtherClasses(),
+      'acceptsNonMutatingMethods': (t) => t._acceptsNonMutatingMethods(),
     },
   );
-  analysisRuleSuite<AvoidUnassignedStreamSubscriptionsTest>(
+  analysisRuleSuite<_AvoidUnassignedStreamSubscriptionsTest>(
     'AvoidUnassignedStreamSubscriptionsTest',
-    AvoidUnassignedStreamSubscriptionsTest.new,
+    _AvoidUnassignedStreamSubscriptionsTest.new,
     {
-      'reportsDiscardedSubscription': (t) => t.reportsDiscardedSubscription(),
-      'acceptsAssignedSubscription': (t) => t.acceptsAssignedSubscription(),
-      'acceptsListenLookalikes': (t) => t.acceptsListenLookalikes(),
+      'reportsDiscardedSubscription': (t) => t._reportsDiscardedSubscription(),
+      'acceptsAssignedSubscription': (t) => t._acceptsAssignedSubscription(),
+      'acceptsListenLookalikes': (t) => t._acceptsListenLookalikes(),
     },
   );
-  analysisRuleSuite<PreferWildcardPatternTest>(
+  analysisRuleSuite<_PreferWildcardPatternTest>(
     'PreferWildcardPatternTest',
-    PreferWildcardPatternTest.new,
+    _PreferWildcardPatternTest.new,
     {
-      'reportsObjectPatternInSwitchExpression': (t) => t.reportsObjectPatternInSwitchExpression(),
-      'reportsObjectPatternInSwitchStatement': (t) => t.reportsObjectPatternInSwitchStatement(),
-      'reportsObjectPatternInIfCase': (t) => t.reportsObjectPatternInIfCase(),
-      'reportsObjectPatternInsideLogicalOr': (t) => t.reportsObjectPatternInsideLogicalOr(),
-      'reportsObjectPatternInsideLogicalAnd': (t) => t.reportsObjectPatternInsideLogicalAnd(),
-      'acceptsWildcardAndOtherObjectPatterns': (t) => t.acceptsWildcardAndOtherObjectPatterns(),
+      'reportsObjectPatternInSwitchExpression': (t) => t._reportsObjectPatternInSwitchExpression(),
+      'reportsObjectPatternInSwitchStatement': (t) => t._reportsObjectPatternInSwitchStatement(),
+      'reportsObjectPatternInIfCase': (t) => t._reportsObjectPatternInIfCase(),
+      'reportsObjectPatternInsideLogicalOr': (t) => t._reportsObjectPatternInsideLogicalOr(),
+      'reportsObjectPatternInsideLogicalAnd': (t) => t._reportsObjectPatternInsideLogicalAnd(),
+      'acceptsWildcardAndOtherObjectPatterns': (t) => t._acceptsWildcardAndOtherObjectPatterns(),
     },
   );
 }
 
-final class AvoidCollectionMutatingMethodsStaticTest extends AnalysisRuleTest {
+final class _AvoidCollectionMutatingMethodsStaticTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = AvoidCollectionMutatingMethods();
     super.setUp();
   }
 
-  Future<void> reportsStaticFieldMutation() async {
+  Future<void> _reportsStaticFieldMutation() async {
     const source = '''
 class Registry {
   static final items = <int>[];
@@ -61,7 +61,7 @@ void register() {
     await assertDiagnostics(source, [lint(source.indexOf('add(1)'), 'add'.length)]);
   }
 
-  Future<void> reportsTopLevelVariableMutation() async {
+  Future<void> _reportsTopLevelVariableMutation() async {
     const source = '''
 final seen = <int>{};
 
@@ -72,7 +72,7 @@ void record() {
     await assertDiagnostics(source, [lint(source.indexOf('add(1)'), 'add'.length)]);
   }
 
-  Future<void> reportsParameterMutationThroughCascade() async {
+  Future<void> _reportsParameterMutationThroughCascade() async {
     const source = '''
 void fill(List<int> target) {
   target..add(1);
@@ -81,7 +81,7 @@ void fill(List<int> target) {
     await assertDiagnostics(source, [lint(source.indexOf('add(1)'), 'add'.length)]);
   }
 
-  Future<void> acceptsInstanceFieldsAndLocals() => assertNoDiagnostics('''
+  Future<void> _acceptsInstanceFieldsAndLocals() => assertNoDiagnostics('''
 class Holder {
   final items = <int>[];
 
@@ -93,7 +93,7 @@ class Holder {
 }
 ''');
 
-  Future<void> acceptsStaticFieldsOfOtherClasses() => assertNoDiagnostics('''
+  Future<void> _acceptsStaticFieldsOfOtherClasses() => assertNoDiagnostics('''
 class Registry {
   static final items = <int>[];
   static final names = <String>[];
@@ -108,7 +108,7 @@ void register(Other other) {
 }
 ''');
 
-  Future<void> acceptsNonMutatingMethods() => assertNoDiagnostics('''
+  Future<void> _acceptsNonMutatingMethods() => assertNoDiagnostics('''
 class Registry {
   static final items = <int>[];
 }
@@ -117,14 +117,14 @@ int count(List<int> values) => values.length + Registry.items.length + values.fi
 ''');
 }
 
-final class AvoidUnassignedStreamSubscriptionsTest extends AnalysisRuleTest {
+final class _AvoidUnassignedStreamSubscriptionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = AvoidUnassignedStreamSubscriptions();
     super.setUp();
   }
 
-  Future<void> reportsDiscardedSubscription() async {
+  Future<void> _reportsDiscardedSubscription() async {
     const source = '''
 import 'dart:async';
 
@@ -136,7 +136,7 @@ void watch(Stream<int> stream) {
     await assertDiagnostics(source, [lint(source.indexOf(call), call.length)]);
   }
 
-  Future<void> acceptsAssignedSubscription() => assertNoDiagnostics('''
+  Future<void> _acceptsAssignedSubscription() => assertNoDiagnostics('''
 import 'dart:async';
 
 StreamSubscription<int>? stored;
@@ -147,7 +147,7 @@ void watch(Stream<int> stream) {
 }
 ''');
 
-  Future<void> acceptsListenLookalikes() => assertNoDiagnostics('''
+  Future<void> _acceptsListenLookalikes() => assertNoDiagnostics('''
 class Radio {
   void listen() {}
 }
@@ -158,7 +158,7 @@ void tune(Radio radio) {
 ''');
 }
 
-final class PreferWildcardPatternTest extends AnalysisRuleTest {
+final class _PreferWildcardPatternTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = PreferWildcardPattern();
@@ -168,14 +168,14 @@ final class PreferWildcardPatternTest extends AnalysisRuleTest {
   Future<void> _expectReported(String source) =>
       assertDiagnostics(source, [lint(source.indexOf('Object()'), 'Object()'.length)]);
 
-  Future<void> reportsObjectPatternInSwitchExpression() => _expectReported('''
+  Future<void> _reportsObjectPatternInSwitchExpression() => _expectReported('''
 String f(int v) => switch (v) {
   1 => 'one',
   Object() => 'other',
 };
 ''');
 
-  Future<void> reportsObjectPatternInSwitchStatement() => _expectReported('''
+  Future<void> _reportsObjectPatternInSwitchStatement() => _expectReported('''
 void f(int v) {
   switch (v) {
     case 1:
@@ -186,25 +186,25 @@ void f(int v) {
 }
 ''');
 
-  Future<void> reportsObjectPatternInIfCase() => _expectReported('''
+  Future<void> _reportsObjectPatternInIfCase() => _expectReported('''
 void f(int v) {
   if (v case Object()) {}
 }
 ''');
 
-  Future<void> reportsObjectPatternInsideLogicalOr() => _expectReported('''
+  Future<void> _reportsObjectPatternInsideLogicalOr() => _expectReported('''
 void f(int? v) {
   if (v case null || Object()) {}
 }
 ''');
 
-  Future<void> reportsObjectPatternInsideLogicalAnd() => _expectReported('''
+  Future<void> _reportsObjectPatternInsideLogicalAnd() => _expectReported('''
 void f(int? v) {
   if (v case Object() && final x) {}
 }
 ''');
 
-  Future<void> acceptsWildcardAndOtherObjectPatterns() => assertNoDiagnostics('''
+  Future<void> _acceptsWildcardAndOtherObjectPatterns() => assertNoDiagnostics('''
 String f(Object v) => switch (v) {
   int() => 'int',
   Object(hashCode: 1) => 'one',

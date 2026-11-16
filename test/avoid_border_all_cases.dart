@@ -5,14 +5,14 @@ import 'analysis_rule_suite.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<AvoidBorderAllTest>('AvoidBorderAllTest', AvoidBorderAllTest.new, {
-    'reportsBorderAll': (t) => t.reportsBorderAll(),
-    'acceptsFromBorderSide': (t) => t.acceptsFromBorderSide(),
-    'ignoresOtherClassesWithAll': (t) => t.ignoresOtherClassesWithAll(),
+  analysisRuleSuite<_AvoidBorderAllTest>('AvoidBorderAllTest', _AvoidBorderAllTest.new, {
+    'reportsBorderAll': (t) => t._reportsBorderAll(),
+    'acceptsFromBorderSide': (t) => t._acceptsFromBorderSide(),
+    'ignoresOtherClassesWithAll': (t) => t._ignoresOtherClassesWithAll(),
   });
 }
 
-final class AvoidBorderAllTest extends AnalysisRuleTest {
+final class _AvoidBorderAllTest extends AnalysisRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -20,7 +20,7 @@ final class AvoidBorderAllTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> reportsBorderAll() async {
+  Future<void> _reportsBorderAll() async {
     const source = '''
 import 'package:flutter/widgets.dart';
 
@@ -31,13 +31,13 @@ Border f() => Border.all(width: 2);
     ]);
   }
 
-  Future<void> acceptsFromBorderSide() => assertNoDiagnostics('''
+  Future<void> _acceptsFromBorderSide() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Border f() => Border.fromBorderSide(BorderSide(width: 2));
 ''');
 
-  Future<void> ignoresOtherClassesWithAll() => assertNoDiagnostics('''
+  Future<void> _ignoresOtherClassesWithAll() => assertNoDiagnostics('''
 class Border {
   const Border.all();
 }

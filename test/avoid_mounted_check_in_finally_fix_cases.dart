@@ -5,20 +5,20 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<AvoidMountedCheckInFinallyFixTest>(
+  analysisRuleSuite<_AvoidMountedCheckInFinallyFixTest>(
     'AvoidMountedCheckInFinallyFixTest',
-    AvoidMountedCheckInFinallyFixTest.new,
+    _AvoidMountedCheckInFinallyFixTest.new,
     {
-      'wrapsTrailingStatementInPositiveGuard': (t) => t.wrapsTrailingStatementInPositiveGuard(),
-      'wrapsEveryTrailingStatement': (t) => t.wrapsEveryTrailingStatement(),
-      'keepsGuardStatementsBeforeTheCheck': (t) => t.keepsGuardStatementsBeforeTheCheck(),
-      'keepsTheTargetOfTheMountedCheck': (t) => t.keepsTheTargetOfTheMountedCheck(),
-      'offersNoFixWithoutTrailingStatements': (t) => t.offersNoFixWithoutTrailingStatements(),
+      'wrapsTrailingStatementInPositiveGuard': (t) => t._wrapsTrailingStatementInPositiveGuard(),
+      'wrapsEveryTrailingStatement': (t) => t._wrapsEveryTrailingStatement(),
+      'keepsGuardStatementsBeforeTheCheck': (t) => t._keepsGuardStatementsBeforeTheCheck(),
+      'keepsTheTargetOfTheMountedCheck': (t) => t._keepsTheTargetOfTheMountedCheck(),
+      'offersNoFixWithoutTrailingStatements': (t) => t._offersNoFixWithoutTrailingStatements(),
     },
   );
 }
 
-final class AvoidMountedCheckInFinallyFixTest extends FixRuleTest {
+final class _AvoidMountedCheckInFinallyFixTest extends FixRuleTest {
   @override
   void setUp() {
     rule = AvoidMountedCheckInFinally();
@@ -48,7 +48,7 @@ $finallyBody
     expected: _source(after),
   );
 
-  Future<void> wrapsTrailingStatementInPositiveGuard() => _expectRewrite(
+  Future<void> _wrapsTrailingStatementInPositiveGuard() => _expectRewrite(
     '''
     if (!ref.mounted) return;
     use(1);''',
@@ -58,7 +58,7 @@ $finallyBody
     }''',
   );
 
-  Future<void> wrapsEveryTrailingStatement() => _expectRewrite(
+  Future<void> _wrapsEveryTrailingStatement() => _expectRewrite(
     '''
     if (!ref.mounted) return;
     use(1);
@@ -70,7 +70,7 @@ $finallyBody
     }''',
   );
 
-  Future<void> keepsGuardStatementsBeforeTheCheck() => _expectRewrite(
+  Future<void> _keepsGuardStatementsBeforeTheCheck() => _expectRewrite(
     '''
     use(0);
     if (!ref.mounted) return;
@@ -82,7 +82,7 @@ $finallyBody
     }''',
   );
 
-  Future<void> keepsTheTargetOfTheMountedCheck() => expectFix(
+  Future<void> _keepsTheTargetOfTheMountedCheck() => expectFix(
     '''
 class Ctx {
   bool get mounted => true;
@@ -119,7 +119,7 @@ Future<void> f(Ctx context) async {
 ''',
   );
 
-  Future<void> offersNoFixWithoutTrailingStatements() => expectNoFix(
+  Future<void> _offersNoFixWithoutTrailingStatements() => expectNoFix(
     _source('    if (!ref.mounted) return;'),
     (context) => AvoidMountedCheckInFinallyFix(context: context),
   );

@@ -7,24 +7,24 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<ConvertIterableMapToCollectionForTest>(
+  analysisRuleSuite<_ConvertIterableMapToCollectionForTest>(
     'ConvertIterableMapToCollectionForTest',
-    ConvertIterableMapToCollectionForTest.new,
+    _ConvertIterableMapToCollectionForTest.new,
     {
-      'convertsMapToList': (t) => t.convertsMapToList(),
-      'convertsMapToSet': (t) => t.convertsMapToSet(),
-      'convertsBareMapToList': (t) => t.convertsBareMapToList(),
-      'convertsParenthesizedMapWithCollect': (t) => t.convertsParenthesizedMapWithCollect(),
-      'convertsFromAnyPositionInsideTheCall': (t) => t.convertsFromAnyPositionInsideTheCall(),
-      'keepsCallbackWithBlockBody': (t) => t.keepsCallbackWithBlockBody(),
-      'keepsMapThatIsNotOnIterable': (t) => t.keepsMapThatIsNotOnIterable(),
-      'keepsOtherMethods': (t) => t.keepsOtherMethods(),
-      'keepsSelectionOutsideInvocations': (t) => t.keepsSelectionOutsideInvocations(),
+      'convertsMapToList': (t) => t._convertsMapToList(),
+      'convertsMapToSet': (t) => t._convertsMapToSet(),
+      'convertsBareMapToList': (t) => t._convertsBareMapToList(),
+      'convertsParenthesizedMapWithCollect': (t) => t._convertsParenthesizedMapWithCollect(),
+      'convertsFromAnyPositionInsideTheCall': (t) => t._convertsFromAnyPositionInsideTheCall(),
+      'keepsCallbackWithBlockBody': (t) => t._keepsCallbackWithBlockBody(),
+      'keepsMapThatIsNotOnIterable': (t) => t._keepsMapThatIsNotOnIterable(),
+      'keepsOtherMethods': (t) => t._keepsOtherMethods(),
+      'keepsSelectionOutsideInvocations': (t) => t._keepsSelectionOutsideInvocations(),
     },
   );
 }
 
-final class ConvertIterableMapToCollectionForTest extends FixRuleTest {
+final class _ConvertIterableMapToCollectionForTest extends FixRuleTest {
   @override
   void setUp() {
     rule = PreferForLoopInChildren();
@@ -60,31 +60,31 @@ Object f(List<int> numbers) => $expression;
     expect(converted, isNull);
   }
 
-  Future<void> convertsMapToList() =>
+  Future<void> _convertsMapToList() =>
       _expectConverted('numbers.map((n) => n * 2).toList()', '[for(final n in numbers) n * 2]');
 
-  Future<void> convertsMapToSet() =>
+  Future<void> _convertsMapToSet() =>
       _expectConverted('numbers.map((n) => n * 2).toSet()', '{for(final n in numbers) n * 2}');
 
-  Future<void> convertsBareMapToList() =>
+  Future<void> _convertsBareMapToList() =>
       _expectConverted('numbers.map((n) => n * 2)', '[for(final n in numbers) n * 2]');
 
-  Future<void> convertsParenthesizedMapWithCollect() =>
+  Future<void> _convertsParenthesizedMapWithCollect() =>
       _expectConverted('(numbers.map((n) => n * 2)).toList()', '[for(final n in numbers) n * 2]');
 
-  Future<void> convertsFromAnyPositionInsideTheCall() => _expectConverted(
+  Future<void> _convertsFromAnyPositionInsideTheCall() => _expectConverted(
     'numbers.map((n) => n * 2).toList()',
     '[for(final n in numbers) n * 2]',
     at: 'n * 2',
   );
 
-  Future<void> keepsCallbackWithBlockBody() =>
+  Future<void> _keepsCallbackWithBlockBody() =>
       _expectUnchanged('numbers.map((n) { print(n); return n; }).toList()');
 
-  Future<void> keepsMapThatIsNotOnIterable() => _expectUnchanged('Mapper().map((n) => n)');
+  Future<void> _keepsMapThatIsNotOnIterable() => _expectUnchanged('Mapper().map((n) => n)');
 
-  Future<void> keepsOtherMethods() => _expectUnchanged('numbers.where((n) => n > 1)', at: 'where');
+  Future<void> _keepsOtherMethods() => _expectUnchanged('numbers.where((n) => n > 1)', at: 'where');
 
-  Future<void> keepsSelectionOutsideInvocations() =>
+  Future<void> _keepsSelectionOutsideInvocations() =>
       _expectUnchanged('numbers.map((n) => n * 2)', at: 'Object');
 }

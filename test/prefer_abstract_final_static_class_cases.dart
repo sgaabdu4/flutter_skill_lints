@@ -5,24 +5,24 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<PreferAbstractFinalStaticClassTest>(
+  analysisRuleSuite<_PreferAbstractFinalStaticClassTest>(
     'PreferAbstractFinalStaticClassTest',
-    PreferAbstractFinalStaticClassTest.new,
+    _PreferAbstractFinalStaticClassTest.new,
     {
-      'reportsStaticOnlyClass': (t) => t.reportsStaticOnlyClass(),
-      'acceptsClassWithInstanceMember': (t) => t.acceptsClassWithInstanceMember(),
-      'acceptsAlreadyAbstractFinalClass': (t) => t.acceptsAlreadyAbstractFinalClass(),
-      'acceptsEmptyClass': (t) => t.acceptsEmptyClass(),
-      'acceptsSealedAndBaseClasses': (t) => t.acceptsSealedAndBaseClasses(),
-      'acceptsClassWithConstructor': (t) => t.acceptsClassWithConstructor(),
-      'addsAbstractFinal': (t) => t.addsAbstractFinal(),
-      'addsFinalToAbstractClass': (t) => t.addsFinalToAbstractClass(),
-      'addsAbstractToFinalClass': (t) => t.addsAbstractToFinalClass(),
+      'reportsStaticOnlyClass': (t) => t._reportsStaticOnlyClass(),
+      'acceptsClassWithInstanceMember': (t) => t._acceptsClassWithInstanceMember(),
+      'acceptsAlreadyAbstractFinalClass': (t) => t._acceptsAlreadyAbstractFinalClass(),
+      'acceptsEmptyClass': (t) => t._acceptsEmptyClass(),
+      'acceptsSealedAndBaseClasses': (t) => t._acceptsSealedAndBaseClasses(),
+      'acceptsClassWithConstructor': (t) => t._acceptsClassWithConstructor(),
+      'addsAbstractFinal': (t) => t._addsAbstractFinal(),
+      'addsFinalToAbstractClass': (t) => t._addsFinalToAbstractClass(),
+      'addsAbstractToFinalClass': (t) => t._addsAbstractToFinalClass(),
     },
   );
 }
 
-final class PreferAbstractFinalStaticClassTest extends FixRuleTest {
+final class _PreferAbstractFinalStaticClassTest extends FixRuleTest {
   @override
   void setUp() {
     rule = PreferAbstractFinalStaticClass();
@@ -36,27 +36,27 @@ class Utils {
 }
 ''';
 
-  Future<void> reportsStaticOnlyClass() =>
+  Future<void> _reportsStaticOnlyClass() =>
       assertDiagnostics(_plain, [lint(_plain.indexOf('class Utils'), _plain.trimRight().length)]);
 
-  Future<void> acceptsClassWithInstanceMember() => assertNoDiagnostics('''
+  Future<void> _acceptsClassWithInstanceMember() => assertNoDiagnostics('''
 class Utils {
   static int twice(int x) => x * 2;
   int thrice(int x) => x * 3;
 }
 ''');
 
-  Future<void> acceptsAlreadyAbstractFinalClass() => assertNoDiagnostics('''
+  Future<void> _acceptsAlreadyAbstractFinalClass() => assertNoDiagnostics('''
 abstract final class Utils {
   static int twice(int x) => x * 2;
 }
 ''');
 
-  Future<void> acceptsEmptyClass() => assertNoDiagnostics('''
+  Future<void> _acceptsEmptyClass() => assertNoDiagnostics('''
 class Empty {}
 ''');
 
-  Future<void> acceptsSealedAndBaseClasses() => assertNoDiagnostics('''
+  Future<void> _acceptsSealedAndBaseClasses() => assertNoDiagnostics('''
 sealed class A {
   static int one() => 1;
 }
@@ -66,14 +66,14 @@ base class B {
 }
 ''');
 
-  Future<void> acceptsClassWithConstructor() => assertNoDiagnostics('''
+  Future<void> _acceptsClassWithConstructor() => assertNoDiagnostics('''
 class Utils {
   const Utils();
   static int twice(int x) => x * 2;
 }
 ''');
 
-  Future<void> addsAbstractFinal() => expectFix(
+  Future<void> _addsAbstractFinal() => expectFix(
     _plain,
     (context) => PreferAbstractFinalStaticClassFix(context: context),
     expected: '''
@@ -84,7 +84,7 @@ abstract final class Utils {
 ''',
   );
 
-  Future<void> addsFinalToAbstractClass() => expectFix(
+  Future<void> _addsFinalToAbstractClass() => expectFix(
     '''
 abstract class Utils {
   static int twice(int x) => x * 2;
@@ -98,7 +98,7 @@ abstract final class Utils {
 ''',
   );
 
-  Future<void> addsAbstractToFinalClass() => expectFix(
+  Future<void> _addsAbstractToFinalClass() => expectFix(
     '''
 final class Utils {
   static int twice(int x) => x * 2;

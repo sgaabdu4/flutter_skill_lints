@@ -6,25 +6,25 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<PreferForLoopInChildrenFixTest>(
+  analysisRuleSuite<_PreferForLoopInChildrenFixTest>(
     'PreferForLoopInChildrenFixTest',
-    PreferForLoopInChildrenFixTest.new,
+    _PreferForLoopInChildrenFixTest.new,
     {
-      'rewritesMapToList': (t) => t.rewritesMapToList(),
-      'rewritesSpreadOfMap': (t) => t.rewritesSpreadOfMap(),
-      'rewritesSpreadOfMapToList': (t) => t.rewritesSpreadOfMapToList(),
-      'rewritesListGenerate': (t) => t.rewritesListGenerate(),
-      'rewritesTypedListGenerate': (t) => t.rewritesTypedListGenerate(),
-      'rewritesAppendOnceFold': (t) => t.rewritesAppendOnceFold(),
-      'keepsMapWithStatementBody': (t) => t.keepsMapWithStatementBody(),
-      'keepsGenerateWithStatementBody': (t) => t.keepsGenerateWithStatementBody(),
-      'keepsCascadeFold': (t) => t.keepsCascadeFold(),
-      'keepsBlockReturnCascadeFold': (t) => t.keepsBlockReturnCascadeFold(),
+      'rewritesMapToList': (t) => t._rewritesMapToList(),
+      'rewritesSpreadOfMap': (t) => t._rewritesSpreadOfMap(),
+      'rewritesSpreadOfMapToList': (t) => t._rewritesSpreadOfMapToList(),
+      'rewritesListGenerate': (t) => t._rewritesListGenerate(),
+      'rewritesTypedListGenerate': (t) => t._rewritesTypedListGenerate(),
+      'rewritesAppendOnceFold': (t) => t._rewritesAppendOnceFold(),
+      'keepsMapWithStatementBody': (t) => t._keepsMapWithStatementBody(),
+      'keepsGenerateWithStatementBody': (t) => t._keepsGenerateWithStatementBody(),
+      'keepsCascadeFold': (t) => t._keepsCascadeFold(),
+      'keepsBlockReturnCascadeFold': (t) => t._keepsBlockReturnCascadeFold(),
     },
   );
 }
 
-final class PreferForLoopInChildrenFixTest extends FixRuleTest {
+final class _PreferForLoopInChildrenFixTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -48,54 +48,54 @@ $body
   Future<void> _expectUnchanged(String body) =>
       expectNoFix(_source(body), (context) => PreferForLoopInChildrenFix(context: context));
 
-  Future<void> rewritesMapToList() => _expectRewrite(
+  Future<void> _rewritesMapToList() => _expectRewrite(
     "List<Widget> build(List<int> v) => v.map((n) => Text('\$n')).toList();",
     "List<Widget> build(List<int> v) => [for (final n in v) Text('\$n')];",
   );
 
-  Future<void> rewritesSpreadOfMap() => _expectRewrite(
+  Future<void> _rewritesSpreadOfMap() => _expectRewrite(
     "List<Widget> build(List<int> v) => <Widget>[...v.map((n) => Text('\$n'))];",
     "List<Widget> build(List<int> v) => <Widget>[for (final n in v) Text('\$n')];",
   );
 
-  Future<void> rewritesSpreadOfMapToList() => _expectRewrite(
+  Future<void> _rewritesSpreadOfMapToList() => _expectRewrite(
     "List<Widget> build(List<int> v) => <Widget>[...v.map((n) => Text('\$n')).toList()];",
     "List<Widget> build(List<int> v) => <Widget>[for (final n in v) Text('\$n')];",
   );
 
-  Future<void> rewritesListGenerate() => _expectRewrite(
+  Future<void> _rewritesListGenerate() => _expectRewrite(
     "List<Widget> build() => List.generate(3, (i) => Text('\$i'));",
     "List<Widget> build() => [for (var i = 0; i < 3; i++) Text('\$i')];",
   );
 
-  Future<void> rewritesTypedListGenerate() => _expectRewrite(
+  Future<void> _rewritesTypedListGenerate() => _expectRewrite(
     "List<Widget> build(int count) => List<Widget>.generate(count, (index) => Text('\$index'));",
     "List<Widget> build(int count) => [for (var index = 0; index < count; index++) Text('\$index')];",
   );
 
-  Future<void> rewritesAppendOnceFold() => _expectRewrite('''
+  Future<void> _rewritesAppendOnceFold() => _expectRewrite('''
 List<Widget> build(List<int> v) => v.fold<List<Widget>>(<Widget>[], (items, n) {
   items.add(Text('\$n'));
   return items;
 });''', "List<Widget> build(List<int> v) => [for (final n in v) Text('\$n')];");
 
-  Future<void> keepsMapWithStatementBody() => _expectUnchanged('''
+  Future<void> _keepsMapWithStatementBody() => _expectUnchanged('''
 List<Widget> build(List<int> v) => v.map((n) {
   final label = '\$n';
   return Text(label);
 }).toList();''');
 
-  Future<void> keepsGenerateWithStatementBody() => _expectUnchanged('''
+  Future<void> _keepsGenerateWithStatementBody() => _expectUnchanged('''
 List<Widget> build() => List.generate(3, (i) {
   final label = '\$i';
   return Text(label);
 });''');
 
-  Future<void> keepsCascadeFold() => _expectUnchanged(
+  Future<void> _keepsCascadeFold() => _expectUnchanged(
     "List<Widget> build(List<int> v) => v.fold<List<Widget>>(<Widget>[], (items, n) => items..add(Text('\$n')));",
   );
 
-  Future<void> keepsBlockReturnCascadeFold() => _expectUnchanged('''
+  Future<void> _keepsBlockReturnCascadeFold() => _expectUnchanged('''
 List<Widget> build(List<int> v) => v.fold<List<Widget>>(<Widget>[], (items, n) {
   return items..add(Text('\$n'));
 });''');

@@ -47,6 +47,7 @@ final class AvoidSyncNotifierStateRead extends MultiAnalysisRule {
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
     if (isGeneratedRuleContext(context)) return;
+    registry.addArgumentList(this, _Visitor(this));
     registry.addMethodDeclaration(this, _Visitor(this));
     registry.addFunctionDeclaration(this, _Visitor(this));
     registry.addFunctionExpression(this, _Visitor(this));
@@ -77,13 +78,53 @@ final class _Visitor extends RecursiveAstVisitor<void> {
   }
 
   @override
+  void visitArgumentList(ArgumentList node) {
+    for (final argument in node.arguments) {
+      final expression = argument.argumentExpression;
+      final element = switch (expression) {
+        SimpleIdentifier() => expression.element,
+        PrefixedIdentifier() => expression.identifier.element,
+        _ => null,
+      };
+      final declaration = element is TopLevelFunctionElement
+          ? topLevelFunctionOf(node, element)
+          : null;
+      final parameters = declaration?.functionExpression.parameters?.parameters;
+      final type = parameters == null || parameters.isEmpty
+          ? null
+          : parameters.first.declaredFragment?.element.type;
+      if (declaration != null && type != null && _riverpodRefChecker.isAssignableFromType(type)) {
+        final body = declaration.functionExpression.body;
+        body.accept(ProviderTurnHopVisitor(rule.reportProvider, body));
+      }
+    }
+  }
+
+  @override
   void visitMethodDeclaration(MethodDeclaration node) {
-    if (node.name.lexeme != 'build' || node.body.isAsynchronous) return;
+    if (node.name.lexeme != 'build') return;
     final classNode = enclosingClass(node);
-    if (classNode == null || !isNotifierClass(classNode)) return;
+    if (classNode == null) return;
+    if (_isResolvedNotifier(classNode)) {
+      node.body.accept(ProviderTurnHopVisitor(rule.reportProvider, node.body));
+    }
+    if (node.body.isAsynchronous || !isNotifierClass(classNode)) return;
     node.body.accept(_BodyVisitor(rule, classNode));
   }
 }
+
+bool _isResolvedNotifier(ClassDeclaration node) {
+  final element = node.declaredFragment?.element;
+  return hasRiverpodCodegenAnnotation(node) ||
+      (element != null && _riverpodNotifierChecker.isSuperOf(element));
+}
+
+const _riverpodNotifierChecker = TypeChecker.any([
+  TypeChecker.fromName('AnyNotifier', packageName: 'riverpod'),
+  TypeChecker.fromName('Notifier', packageName: 'riverpod'),
+  TypeChecker.fromName('AsyncNotifier', packageName: 'riverpod'),
+  TypeChecker.fromName('StreamNotifier', packageName: 'riverpod'),
+]);
 
 final _loadInitFetchPattern = RegExp(r'^_(?:load|init|fetch|listen|refresh|setup)[A-Za-z0-9_]*$');
 

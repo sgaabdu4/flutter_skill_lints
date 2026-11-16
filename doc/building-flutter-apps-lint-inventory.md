@@ -37,6 +37,7 @@ avoid_object_map_cast
 avoid_orientation_layout
 avoid_positioned_outside_stack
 avoid_private_widget_classes
+avoid_provider_turn_hop
 avoid_route_param_throw_in_build
 avoid_run_zoned_guarded
 avoid_shrink_wrap

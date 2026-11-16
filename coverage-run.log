@@ -1,13 +1,73 @@
-The Dart VM service is listening on http://127.0.0.1:52080/
-The Dart DevTools debugger and profiler is available at: http://127.0.0.1:52080/devtools/?uri=ws://127.0.0.1:52080/ws
+The Dart VM service is listening on http://127.0.0.1:55395/
+The Dart DevTools debugger and profiler is available at: http://127.0.0.1:55395/devtools/?uri=ws://127.0.0.1:55395/ws
 00:00 +0: loading test/prefer_container_test.dart
-00:00 +0: PreferContainerTest reportsThreeNestedWidgets
-00:06 +1: PreferContainerTest ignoresTwoNestedWidgets
-00:07 +2: PreferContainerTest ignoresRepeatedContainerParameter
-00:07 +3: PreferContainerTest reportsOnlyOutermostWidget
-00:07 +4: PreferContainerTest ignoresNonFlutterWidgetsWithSameNames
-00:08 +5: PreferContainerTest mergesChainIntoContainer
-00:08 +6: PreferContainerTest centerBecomesCenterAlignment
-00:08 +7: PreferContainerTest keepsFirstKey
-00:09 +8: PreferContainerTest mapsSizedBoxDimensions
-00:09 +9: All tests passed!
+00:00 +0: test/prefer_container_test.dart: PreferContainerTest reportsThreeNestedWidgets
+00:02 +1: test/prefer_container_test.dart: PreferContainerTest reportsThreeNestedWidgets
+00:02 +2: test/proper_super_calls_test.dart: ProperSuperCallsTest reportsInitStateSuperNotFirst
+00:02 +3: test/proper_super_calls_test.dart: ProperSuperCallsTest reportsInitStateSuperNotFirst
+00:03 +4: test/proper_super_calls_test.dart: ProperSuperCallsTest reportsInitStateSuperNotFirst
+00:03 +5: test/proper_super_calls_test.dart: ProperSuperCallsTest reportsInitStateSuperNotFirst
+00:03 +6: test/proper_super_calls_test.dart: ProperSuperCallsTest reportsInitStateSuperNotFirst
+00:03 +7: test/proper_super_calls_test.dart: ProperSuperCallsTest reportsInitStateSuperNotFirst
+00:03 +8: test/proper_super_calls_test.dart: ProperSuperCallsTest reportsInitStateSuperNotFirst
+00:03 +9: test/proper_super_calls_test.dart: ProperSuperCallsTest reportsInitStateSuperNotFirst
+00:03 +10: test/proper_super_calls_test.dart: ProperSuperCallsTest reportsInitStateSuperNotFirst
+00:03 +11: test/avoid_generics_shadowing_test.dart: AvoidGenericsShadowingTest reportsTypeParameterNamedLikeClass
+00:03 +12: test/avoid_generics_shadowing_test.dart: AvoidGenericsShadowingTest reportsTypeParameterNamedLikeClass
+00:03 +13: test/avoid_incorrect_image_opacity_test.dart: AvoidIncorrectImageOpacityTest reportsOpacityAroundImage
+00:03 +14: test/avoid_incorrect_image_opacity_test.dart: AvoidIncorrectImageOpacityTest reportsOpacityAroundImage
+00:03 +15: test/avoid_incorrect_image_opacity_test.dart: AvoidIncorrectImageOpacityTest reportsOpacityAroundImage
+00:03 +16: test/avoid_incorrect_image_opacity_test.dart: AvoidIncorrectImageOpacityTest reportsOpacityAroundImage
+00:03 +17: test/avoid_incorrect_image_opacity_test.dart: AvoidIncorrectImageOpacityTest reportsOpacityAroundImage
+00:03 +18: test/avoid_incorrect_image_opacity_test.dart: AvoidIncorrectImageOpacityTest reportsOpacityAroundImage
+00:03 +19: test/avoid_incorrect_image_opacity_test.dart: AvoidIncorrectImageOpacityTest reportsOpacityAroundImage
+00:03 +20: test/avoid_incorrect_image_opacity_test.dart: AvoidIncorrectImageOpacityTest reportsOpacityAroundImage
+00:03 +21: test/avoid_incorrect_image_opacity_test.dart: AvoidIncorrectImageOpacityTest reportsOpacityAroundImage
+00:03 +22: test/prefer_center_over_align_test.dart: PreferCenterOverAlignTest reportsAlignWithoutAlignment
+00:03 +23: test/prefer_center_over_align_test.dart: PreferCenterOverAlignTest reportsAlignWithoutAlignment
+00:03 +24: test/prefer_center_over_align_test.dart: PreferCenterOverAlignTest reportsAlignWithoutAlignment
+00:03 +25: test/avoid_generics_shadowing_test.dart: AvoidGenericsShadowingTest reportsMethodTypeParameterNamedLikeEnum
+00:03 +26: test/avoid_generics_shadowing_test.dart: AvoidGenericsShadowingTest reportsMethodTypeParameterNamedLikeEnum
+00:03 +27: test/avoid_unnecessary_gesture_detector_test.dart: AvoidUnnecessaryGestureDetectorTest acceptsDetectorWithHandler
+00:03 +28: test/avoid_unnecessary_gesture_detector_test.dart: AvoidUnnecessaryGestureDetectorTest acceptsDetectorWithHandler
+00:03 +29: test/proper_super_calls_test.dart: ProperSuperCallsTest acceptsCorrectOrder
+00:03 +30: test/avoid_incomplete_copy_with_test.dart: AvoidIncompleteCopyWithTest addsMissingNamedParameter
+00:03 +31: test/avoid_incomplete_copy_with_test.dart: AvoidIncompleteCopyWithTest addsMissingNamedParameter
+00:03 +32: test/avoid_incorrect_image_opacity_test.dart: AvoidIncorrectImageOpacityTest ignoresOpacityAroundText
+00:03 +33: test/avoid_incorrect_image_opacity_test.dart: AvoidIncorrectImageOpacityTest ignoresOpacityAroundText
+00:03 +34: test/prefer_center_over_align_test.dart: PreferCenterOverAlignTest reportsAlignWithCenterConstant
+00:04 +35: test/prefer_center_over_align_test.dart: PreferCenterOverAlignTest reportsAlignWithCenterConstant
+00:04 +36: test/prefer_center_over_align_test.dart: PreferCenterOverAlignTest reportsAlignWithCenterConstant
+00:04 +37: test/prefer_center_over_align_test.dart: PreferCenterOverAlignTest reportsAlignWithCenterConstant
+00:04 +38: test/prefer_center_over_align_test.dart: PreferCenterOverAlignTest reportsAlignWithCenterConstant
+00:04 +39: test/prefer_center_over_align_test.dart: PreferCenterOverAlignTest reportsAlignWithCenterConstant
+00:04 +40: test/prefer_center_over_align_test.dart: PreferCenterOverAlignTest reportsAlignWithCenterConstant
+00:04 +41: test/prefer_spacing_test.dart: PreferSpacingTest reportsSeparatedBy
+00:04 +42: test/avoid_generics_shadowing_test.dart: AvoidGenericsShadowingTest renamesParameterAndUsages
+00:04 +43: test/avoid_generics_shadowing_test.dart: AvoidGenericsShadowingTest renamesParameterAndUsages
+00:04 +44: test/avoid_generics_shadowing_test.dart: AvoidGenericsShadowingTest renamesParameterAndUsages
+00:04 +45: test/avoid_generics_shadowing_test.dart: AvoidGenericsShadowingTest renamesParameterAndUsages
+00:04 +46: test/avoid_generics_shadowing_test.dart: AvoidGenericsShadowingTest renamesParameterAndUsages
+00:04 +47: test/avoid_incorrect_image_opacity_test.dart: AvoidIncorrectImageOpacityTest movesOpacityIntoImage
+00:04 +48: test/avoid_incorrect_image_opacity_test.dart: AvoidIncorrectImageOpacityTest movesOpacityIntoImage
+00:04 +49: test/avoid_incorrect_image_opacity_test.dart: AvoidIncorrectImageOpacityTest movesOpacityIntoImage
+00:04 +50: test/prefer_center_over_align_test.dart: PreferCenterOverAlignTest acceptsOtherAlignment
+00:04 +51: test/avoid_generics_shadowing_test.dart: AvoidGenericsShadowingTest skipsNamesAlreadyUsedInScope
+00:04 +52: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest reportsPaddingAroundWidgetWithPaddingParameter
+00:04 +53: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest reportsPaddingAroundWidgetWithPaddingParameter
+00:04 +54: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest reportsPaddingAroundWidgetWithPaddingParameter
+00:04 +55: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest reportsPaddingAroundWidgetWithPaddingParameter
+00:04 +56: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest reportsPaddingAroundWidgetWithPaddingParameter
+00:04 +57: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest reportsPaddingAroundWidgetWithPaddingParameter
+00:04 +58: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest reportsPaddingAroundWidgetWithPaddingParameter
+00:04 +59: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest reportsPaddingAroundWidgetWithPaddingParameter
+00:04 +60: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest reportsPaddingAroundWidgetWithPaddingParameter
+00:04 +61: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest reportsPaddingAroundWidgetWithPaddingParameter
+00:04 +62: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest reportsPaddingAroundWidgetWithPaddingParameter
+00:04 +63: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest reportsPaddingAroundWidgetWithPaddingParameter
+00:06 +64: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest ignoresChildWithoutPaddingParameter
+00:06 +65: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest ignoresChildThatAlreadyHasPadding
+00:06 +66: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest ignoresChildThatIsNotAWidgetCall
+00:06 +67: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest movesPaddingIntoChild
+00:06 +68: test/avoid_wrapping_in_padding_test.dart: AvoidWrappingInPaddingTest carriesPaddingKeyToChild
+00:06 +69: All tests passed!

@@ -139,11 +139,11 @@ class Column extends Widget {
 }
 
 class Expanded extends Widget {
-  const Expanded({super.key, Widget? child});
+  const Expanded({super.key, int flex = 1, Widget? child});
 }
 
 class Spacer extends Widget {
-  const Spacer({super.key});
+  const Spacer({super.key, int flex = 1});
 }
 
 extension WidgetListSeparator on List<Widget> {
@@ -165,6 +165,10 @@ class Image extends Widget {
 
 class GestureDetector extends Widget {
   const GestureDetector({super.key, void Function()? onTap, void Function()? onLongPress, Widget? child});
+}
+
+class Wrap extends Widget {
+  const Wrap({super.key, List<Widget> children = const []});
 }
 
 class Text extends Widget {

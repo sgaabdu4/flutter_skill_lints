@@ -15,6 +15,17 @@ AstNode reportedConstructorName(AstNode node) {
   return node is NamedType && parent is ConstructorName ? parent : node;
 }
 
+/// The widget creation or call that owns the constructor or method name a diagnostic selects, else [node].
+AstNode reportedWidgetExpression(AstNode node) {
+  final name = reportedConstructorName(node);
+  final parent = name.parent;
+  if (name is ConstructorName && parent is InstanceCreationExpression) return parent;
+  if (name is SimpleIdentifier && parent is MethodInvocation && parent.methodName == name) {
+    return parent;
+  }
+  return node;
+}
+
 bool isRenderObjectWidgetClass(Element? element) =>
     element != null && _renderObjectWidgetChecker.isSuperOf(element);
 

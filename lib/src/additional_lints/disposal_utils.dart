@@ -68,16 +68,15 @@ void addCleanupToDispose(
     final block = disposeBody.block;
     final superDisposeStmt = findSuperDispose(block);
     if (superDisposeStmt != null) {
-      builder.addSimpleInsertion(superDisposeStmt.offset, '    $cleanupCall;\n');
+      builder.addSimpleInsertion(superDisposeStmt.offset, '$cleanupCall;\n    ');
     } else {
-      builder.addSimpleInsertion(block.rightBracket.offset, '    $cleanupCall;\n  ');
+      builder.addSimpleInsertion(block.rightBracket.offset, '  $cleanupCall;\n  ');
     }
     return;
   }
 
   const indent = '  ';
   final disposeMethodSource =
-      '\n'
       '\n'
       '$indent@override\n'
       '${indent}void dispose() {\n'

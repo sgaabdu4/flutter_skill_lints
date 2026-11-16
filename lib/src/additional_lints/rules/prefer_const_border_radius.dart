@@ -44,18 +44,4 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     rule.reportAtNode(node);
   }
-
-  @override
-  void visitMethodInvocation(MethodInvocation node) {
-    // BorderRadius.circular(...) without type args is parsed as MethodInvocation
-    if (node.methodName.name != 'circular') return;
-    final target = node.target;
-    if (target is! SimpleIdentifier) return;
-    final staticType = node.staticType;
-    if (staticType == null || !_borderRadiusChecker.isExactlyType(staticType)) {
-      return;
-    }
-
-    rule.reportAtNode(node);
-  }
 }

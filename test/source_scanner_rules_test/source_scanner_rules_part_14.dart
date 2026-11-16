@@ -1,6 +1,19 @@
 part of '../source_scanner_rules_test.dart';
 
-final class DialogWidgetSubscribesToMutableProviderTest extends _DialogRuleTest {
+final class _DialogWidgetSubscribesToMutableProviderTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_DialogWidgetSubscribesToMutableProviderTest)>
+  get _allCases => caseSet<_DialogWidgetSubscribesToMutableProviderTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_reportsMultilineWatchFromSkillNeverExample': (t) =>
+          t._reportsMultilineWatchFromSkillNeverExample(),
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_allowsNonDialogClass': (t) => t._allowsNonDialogClass(),
+      'test_allowsDialogWithSnapshotPattern': (t) => t._allowsDialogWithSnapshotPattern(),
+      'test_reportsConsumerStateSheetFromPath': (t) => t._reportsConsumerStateSheetFromPath(),
+    },
+  );
+
   @override
   String get ruleName => 'dialog_widget_subscribes_to_mutable_provider';
   @override
@@ -109,7 +122,16 @@ class _SessionSheetState extends ConsumerState<SessionSheet> {
   }
 }
 
-final class ModalHighFrequencyWatchNotLeafTest extends _DialogRuleTest {
+final class _ModalHighFrequencyWatchNotLeafTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_ModalHighFrequencyWatchNotLeafTest)> get _allCases =>
+      caseSet<_ModalHighFrequencyWatchNotLeafTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsMultilineSelect': (t) => t._reportsMultilineSelect(),
+          'test_allowsLeafNonModalClass': (t) => t._allowsLeafNonModalClass(),
+        },
+      );
+
   @override
   String get ruleName => 'modal_high_frequency_watch_not_leaf';
   @override
@@ -173,7 +195,21 @@ class TimerControls extends ConsumerWidget {
   }
 }
 
-final class DialogButtonPopThenStateMutationTest extends _DialogRuleTest {
+final class _DialogButtonPopThenStateMutationTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_DialogButtonPopThenStateMutationTest)> get _allCases =>
+      caseSet<_DialogButtonPopThenStateMutationTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsPopWithResultNoFollowUp': (t) => t._allowsPopWithResultNoFollowUp(),
+          'test_allowsPostPopInNonDialogClass': (t) => t._allowsPostPopInNonDialogClass(),
+          'test_reportsSecondPopAfterRootNavigatorPop': (t) =>
+              t._reportsSecondPopAfterRootNavigatorPop(),
+          'test_reportsTypedRoutePushAfterSheetPop': (t) => t._reportsTypedRoutePushAfterSheetPop(),
+          'test_allowsSeparateButtonPopsWithResults': (t) =>
+              t._allowsSeparateButtonPopsWithResults(),
+        },
+      );
+
   @override
   void setUp() {
     _addTestingNavigationPackages();
@@ -295,7 +331,21 @@ class ChoiceSheet extends Widget {
   }
 }
 
-final class SelectReturnsUnstableRecordIdentityTest extends _DialogRuleTest {
+final class _SelectReturnsUnstableRecordIdentityTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_SelectReturnsUnstableRecordIdentityTest)>
+  get _allCases => caseSet<_SelectReturnsUnstableRecordIdentityTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_reportsMultilineSelectFromSkillNeverExample': (t) =>
+          t._reportsMultilineSelectFromSkillNeverExample(),
+      'test_resolvedGettersDecideRecordFieldIdentity': (t) =>
+          t._resolvedGettersDecideRecordFieldIdentity(),
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_allowsPrimitiveSelect': (t) => t._allowsPrimitiveSelect(),
+      'test_allowsRecordOfStableFields': (t) => t._allowsRecordOfStableFields(),
+    },
+  );
+
   @override
   String get ruleName => 'select_returns_unstable_record_identity';
   @override
@@ -398,7 +448,16 @@ class Reader {
   }
 }
 
-final class BuildMethodAssignsToFieldTest extends _DialogRuleTest {
+final class _BuildMethodAssignsToFieldTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_BuildMethodAssignsToFieldTest)> get _allCases =>
+      caseSet<_BuildMethodAssignsToFieldTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsLocalFinal': (t) => t._allowsLocalFinal(),
+          'test_allowsAssignmentOutsideBuild': (t) => t._allowsAssignmentOutsideBuild(),
+        },
+      );
+
   @override
   String get ruleName => 'build_method_assigns_to_field';
   @override
@@ -447,7 +506,24 @@ class ConfirmDialog extends ConsumerWidget {
   }
 }
 
-final class BuildCallsMutatingInstanceMethodTest extends _DialogRuleTest {
+final class _BuildCallsMutatingInstanceMethodTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_BuildCallsMutatingInstanceMethodTest)> get _allCases =>
+      caseSet<_BuildCallsMutatingInstanceMethodTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsArrowEventCallback': (t) => t._allowsArrowEventCallback(),
+          'test_reportsImmediateArrowInvocation': (t) => t._reportsImmediateArrowInvocation(),
+          'test_reportsImmediateBlockInvocation': (t) => t._reportsImmediateBlockInvocation(),
+          'test_reportsImmediateCallAfterCallbackOnSameLine': (t) =>
+              t._reportsImmediateCallAfterCallbackOnSameLine(),
+          'test_reportsImmediateCallInvocation': (t) => t._reportsImmediateCallInvocation(),
+          'test_allowsPureHelperFromBuild': (t) => t._allowsPureHelperFromBuild(),
+          'test_reportsControllerPropertyMutation': (t) => t._reportsControllerPropertyMutation(),
+          'test_allowsMutatingHelperInsideMultilineCallback': (t) =>
+              t._allowsMutatingHelperInsideMultilineCallback(),
+        },
+      );
+
   @override
   String get ruleName => 'build_calls_mutating_instance_method';
   @override
@@ -614,7 +690,20 @@ class EditSheet extends ConsumerWidget {
   }
 }
 
-final class WidgetCallsNotifierTeardownAfterAwaitTest extends _DialogRuleTest {
+final class _WidgetCallsNotifierTeardownAfterAwaitTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_WidgetCallsNotifierTeardownAfterAwaitTest)>
+  get _allCases => caseSet<_WidgetCallsNotifierTeardownAfterAwaitTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_allowsResetWithoutAwait': (t) => t._allowsResetWithoutAwait(),
+      'test_reportsGoNavigationChainedOffAwaitedMutation': (t) =>
+          t._reportsGoNavigationChainedOffAwaitedMutation(),
+      'test_allowsNavigationNotChainedOffNotifierMutation': (t) =>
+          t._allowsNavigationNotChainedOffNotifierMutation(),
+      'test_allowsResetInsideNotifier': (t) => t._allowsResetInsideNotifier(),
+    },
+  );
+
   @override
   String get ruleName => 'widget_calls_notifier_teardown_after_await';
   @override
@@ -748,7 +837,17 @@ class FormNotifier extends Notifier {
   }
 }
 
-final class PopScopeBypassUsesGoNotPopTest extends _DialogRuleTest {
+final class _PopScopeBypassUsesGoNotPopTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_PopScopeBypassUsesGoNotPopTest)> get _allCases =>
+      caseSet<_PopScopeBypassUsesGoNotPopTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsTypedRouteGo': (t) => t._allowsTypedRouteGo(),
+          'test_allowsPopWithFallbackWithoutPrecedingModal': (t) =>
+              t._allowsPopWithFallbackWithoutPrecedingModal(),
+        },
+      );
+
   @override
   String get ruleName => 'popscope_bypass_uses_go_not_pop';
   @override
@@ -802,7 +901,19 @@ abstract class _RuntimeBugRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => runtimeBugSourceRules;
 }
 
-final class ModalHelperRequiresRouteSettingsTest extends _DialogRuleTest {
+final class _ModalHelperRequiresRouteSettingsTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_ModalHelperRequiresRouteSettingsTest)> get _allCases =>
+      caseSet<_ModalHelperRequiresRouteSettingsTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsWithRouteSettings': (t) => t._allowsWithRouteSettings(),
+          'test_allowsSheetWithRouteSettings': (t) => t._allowsSheetWithRouteSettings(),
+          'test_allowsSkillShowAppSheetHelperAndCallers': (t) =>
+              t._allowsSkillShowAppSheetHelperAndCallers(),
+          'test_allowsSkillModalContextExtension': (t) => t._allowsSkillModalContextExtension(),
+        },
+      );
+
   @override
   void setUp() {
     _addTestingNavigationPackages();
@@ -929,114 +1040,49 @@ class ConfirmDialog extends ConsumerWidget {
 ''';
 
 void _defineSourceScannerRulesPart14Tests() {
-  analysisRuleSuite<DialogWidgetSubscribesToMutableProviderTest>(
+  analysisRuleSuite<_DialogWidgetSubscribesToMutableProviderTest>(
     'DialogWidgetSubscribesToMutableProviderTest',
-    DialogWidgetSubscribesToMutableProviderTest.new,
-    {
-      'test_reportsMultilineWatchFromSkillNeverExample': (t) =>
-          t._reportsMultilineWatchFromSkillNeverExample(),
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_allowsNonDialogClass': (t) => t._allowsNonDialogClass(),
-      'test_allowsDialogWithSnapshotPattern': (t) => t._allowsDialogWithSnapshotPattern(),
-      'test_reportsConsumerStateSheetFromPath': (t) => t._reportsConsumerStateSheetFromPath(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _DialogWidgetSubscribesToMutableProviderTest.new,
+    _DialogWidgetSubscribesToMutableProviderTest._allCases,
   );
-  analysisRuleSuite<ModalHighFrequencyWatchNotLeafTest>(
+  analysisRuleSuite<_ModalHighFrequencyWatchNotLeafTest>(
     'ModalHighFrequencyWatchNotLeafTest',
-    ModalHighFrequencyWatchNotLeafTest.new,
-    {
-      'test_reportsMultilineSelect': (t) => t._reportsMultilineSelect(),
-      'test_allowsLeafNonModalClass': (t) => t._allowsLeafNonModalClass(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ModalHighFrequencyWatchNotLeafTest.new,
+    _ModalHighFrequencyWatchNotLeafTest._allCases,
   );
-  analysisRuleSuite<DialogButtonPopThenStateMutationTest>(
+  analysisRuleSuite<_DialogButtonPopThenStateMutationTest>(
     'DialogButtonPopThenStateMutationTest',
-    DialogButtonPopThenStateMutationTest.new,
-    {
-      'test_allowsPopWithResultNoFollowUp': (t) => t._allowsPopWithResultNoFollowUp(),
-      'test_allowsPostPopInNonDialogClass': (t) => t._allowsPostPopInNonDialogClass(),
-      'test_reportsSecondPopAfterRootNavigatorPop': (t) =>
-          t._reportsSecondPopAfterRootNavigatorPop(),
-      'test_reportsTypedRoutePushAfterSheetPop': (t) => t._reportsTypedRoutePushAfterSheetPop(),
-      'test_allowsSeparateButtonPopsWithResults': (t) => t._allowsSeparateButtonPopsWithResults(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _DialogButtonPopThenStateMutationTest.new,
+    _DialogButtonPopThenStateMutationTest._allCases,
   );
-  analysisRuleSuite<SelectReturnsUnstableRecordIdentityTest>(
+  analysisRuleSuite<_SelectReturnsUnstableRecordIdentityTest>(
     'SelectReturnsUnstableRecordIdentityTest',
-    SelectReturnsUnstableRecordIdentityTest.new,
-    {
-      'test_reportsMultilineSelectFromSkillNeverExample': (t) =>
-          t._reportsMultilineSelectFromSkillNeverExample(),
-      'test_resolvedGettersDecideRecordFieldIdentity': (t) =>
-          t._resolvedGettersDecideRecordFieldIdentity(),
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_allowsPrimitiveSelect': (t) => t._allowsPrimitiveSelect(),
-      'test_allowsRecordOfStableFields': (t) => t._allowsRecordOfStableFields(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _SelectReturnsUnstableRecordIdentityTest.new,
+    _SelectReturnsUnstableRecordIdentityTest._allCases,
   );
-  analysisRuleSuite<BuildMethodAssignsToFieldTest>(
+  analysisRuleSuite<_BuildMethodAssignsToFieldTest>(
     'BuildMethodAssignsToFieldTest',
-    BuildMethodAssignsToFieldTest.new,
-    {
-      'test_allowsLocalFinal': (t) => t._allowsLocalFinal(),
-      'test_allowsAssignmentOutsideBuild': (t) => t._allowsAssignmentOutsideBuild(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _BuildMethodAssignsToFieldTest.new,
+    _BuildMethodAssignsToFieldTest._allCases,
   );
-  analysisRuleSuite<BuildCallsMutatingInstanceMethodTest>(
+  analysisRuleSuite<_BuildCallsMutatingInstanceMethodTest>(
     'BuildCallsMutatingInstanceMethodTest',
-    BuildCallsMutatingInstanceMethodTest.new,
-    {
-      'test_allowsArrowEventCallback': (t) => t._allowsArrowEventCallback(),
-      'test_reportsImmediateArrowInvocation': (t) => t._reportsImmediateArrowInvocation(),
-      'test_reportsImmediateBlockInvocation': (t) => t._reportsImmediateBlockInvocation(),
-      'test_reportsImmediateCallAfterCallbackOnSameLine': (t) =>
-          t._reportsImmediateCallAfterCallbackOnSameLine(),
-      'test_reportsImmediateCallInvocation': (t) => t._reportsImmediateCallInvocation(),
-      'test_allowsPureHelperFromBuild': (t) => t._allowsPureHelperFromBuild(),
-      'test_reportsControllerPropertyMutation': (t) => t._reportsControllerPropertyMutation(),
-      'test_allowsMutatingHelperInsideMultilineCallback': (t) =>
-          t._allowsMutatingHelperInsideMultilineCallback(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _BuildCallsMutatingInstanceMethodTest.new,
+    _BuildCallsMutatingInstanceMethodTest._allCases,
   );
-  analysisRuleSuite<WidgetCallsNotifierTeardownAfterAwaitTest>(
+  analysisRuleSuite<_WidgetCallsNotifierTeardownAfterAwaitTest>(
     'WidgetCallsNotifierTeardownAfterAwaitTest',
-    WidgetCallsNotifierTeardownAfterAwaitTest.new,
-    {
-      'test_allowsResetWithoutAwait': (t) => t._allowsResetWithoutAwait(),
-      'test_reportsGoNavigationChainedOffAwaitedMutation': (t) =>
-          t._reportsGoNavigationChainedOffAwaitedMutation(),
-      'test_allowsNavigationNotChainedOffNotifierMutation': (t) =>
-          t._allowsNavigationNotChainedOffNotifierMutation(),
-      'test_allowsResetInsideNotifier': (t) => t._allowsResetInsideNotifier(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _WidgetCallsNotifierTeardownAfterAwaitTest.new,
+    _WidgetCallsNotifierTeardownAfterAwaitTest._allCases,
   );
-  analysisRuleSuite<PopScopeBypassUsesGoNotPopTest>(
+  analysisRuleSuite<_PopScopeBypassUsesGoNotPopTest>(
     'PopScopeBypassUsesGoNotPopTest',
-    PopScopeBypassUsesGoNotPopTest.new,
-    {
-      'test_allowsTypedRouteGo': (t) => t._allowsTypedRouteGo(),
-      'test_allowsPopWithFallbackWithoutPrecedingModal': (t) =>
-          t._allowsPopWithFallbackWithoutPrecedingModal(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _PopScopeBypassUsesGoNotPopTest.new,
+    _PopScopeBypassUsesGoNotPopTest._allCases,
   );
-  analysisRuleSuite<ModalHelperRequiresRouteSettingsTest>(
+  analysisRuleSuite<_ModalHelperRequiresRouteSettingsTest>(
     'ModalHelperRequiresRouteSettingsTest',
-    ModalHelperRequiresRouteSettingsTest.new,
-    {
-      'test_allowsWithRouteSettings': (t) => t._allowsWithRouteSettings(),
-      'test_allowsSheetWithRouteSettings': (t) => t._allowsSheetWithRouteSettings(),
-      'test_allowsSkillShowAppSheetHelperAndCallers': (t) =>
-          t._allowsSkillShowAppSheetHelperAndCallers(),
-      'test_allowsSkillModalContextExtension': (t) => t._allowsSkillModalContextExtension(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ModalHelperRequiresRouteSettingsTest.new,
+    _ModalHelperRequiresRouteSettingsTest._allCases,
   );
 }

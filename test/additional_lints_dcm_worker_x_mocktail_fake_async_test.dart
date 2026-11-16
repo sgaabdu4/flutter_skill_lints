@@ -6,33 +6,34 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/use_then_answer.d
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidAsyncCallbackInFakeAsyncTest>(
+  analysisRuleSuite<_AvoidAsyncCallbackInFakeAsyncTest>(
     'AvoidAsyncCallbackInFakeAsyncTest',
-    AvoidAsyncCallbackInFakeAsyncTest.new,
-    {
-      'test_fakeAsyncAsyncCallback_lint': (t) => t._fakeAsyncAsyncCallbackLint(),
-      'test_fakeAsyncRunAsyncCallback_lint': (t) => t._fakeAsyncRunAsyncCallbackLint(),
-      'test_fakeAsyncSyncCallback_noLint': (t) => t._fakeAsyncSyncCallbackNoLint(),
-    },
+    _AvoidAsyncCallbackInFakeAsyncTest.new,
+    _AvoidAsyncCallbackInFakeAsyncTest._allCases,
   );
-  analysisRuleSuite<UseThenAnswerTest>('UseThenAnswerTest', UseThenAnswerTest.new, {
-    'test_futureValue_lint': (t) => t._futureValueLint(),
-    'test_streamValue_lint': (t) => t._streamValueLint(),
-    'test_plainValue_noLint': (t) => t._plainValueNoLint(),
-  });
-  analysisRuleSuite<PreferCorrectAnyMatcherTest>(
+  analysisRuleSuite<_UseThenAnswerTest>(
+    'UseThenAnswerTest',
+    _UseThenAnswerTest.new,
+    _UseThenAnswerTest._allCases,
+  );
+  analysisRuleSuite<_PreferCorrectAnyMatcherTest>(
     'PreferCorrectAnyMatcherTest',
-    PreferCorrectAnyMatcherTest.new,
-    {
-      'test_whenNamedMatcherMismatch_lint': (t) => t._whenNamedMatcherMismatchLint(),
-      'test_verifyNamedMatcherMismatch_lint': (t) => t._verifyNamedMatcherMismatchLint(),
-      'test_matchingNamedMatcher_noLint': (t) => t._matchingNamedMatcherNoLint(),
-      'test_positionalMatcher_noLint': (t) => t._positionalMatcherNoLint(),
-    },
+    _PreferCorrectAnyMatcherTest.new,
+    _PreferCorrectAnyMatcherTest._allCases,
   );
 }
 
-final class AvoidAsyncCallbackInFakeAsyncTest extends AnalysisRuleTest {
+final class _AvoidAsyncCallbackInFakeAsyncTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidAsyncCallbackInFakeAsyncTest)> get _allCases =>
+      caseSet<_AvoidAsyncCallbackInFakeAsyncTest>(
+        parent: const {},
+        own: {
+          'test_fakeAsyncAsyncCallback_lint': (t) => t._fakeAsyncAsyncCallbackLint(),
+          'test_fakeAsyncRunAsyncCallback_lint': (t) => t._fakeAsyncRunAsyncCallbackLint(),
+          'test_fakeAsyncSyncCallback_noLint': (t) => t._fakeAsyncSyncCallbackNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidAsyncCallbackInFakeAsync();
@@ -82,7 +83,17 @@ void test() {
   }
 }
 
-final class UseThenAnswerTest extends AnalysisRuleTest {
+final class _UseThenAnswerTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_UseThenAnswerTest)> get _allCases =>
+      caseSet<_UseThenAnswerTest>(
+        parent: const {},
+        own: {
+          'test_futureValue_lint': (t) => t._futureValueLint(),
+          'test_streamValue_lint': (t) => t._streamValueLint(),
+          'test_plainValue_noLint': (t) => t._plainValueNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = UseThenAnswer();
@@ -139,7 +150,18 @@ void test() {
   }
 }
 
-final class PreferCorrectAnyMatcherTest extends AnalysisRuleTest {
+final class _PreferCorrectAnyMatcherTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferCorrectAnyMatcherTest)> get _allCases =>
+      caseSet<_PreferCorrectAnyMatcherTest>(
+        parent: const {},
+        own: {
+          'test_whenNamedMatcherMismatch_lint': (t) => t._whenNamedMatcherMismatchLint(),
+          'test_verifyNamedMatcherMismatch_lint': (t) => t._verifyNamedMatcherMismatchLint(),
+          'test_matchingNamedMatcher_noLint': (t) => t._matchingNamedMatcherNoLint(),
+          'test_positionalMatcher_noLint': (t) => t._positionalMatcherNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferCorrectAnyMatcher();

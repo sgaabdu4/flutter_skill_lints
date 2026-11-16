@@ -7,29 +7,30 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidNonEmptyConstructorBodiesTest>(
+  analysisRuleSuite<_AvoidNonEmptyConstructorBodiesTest>(
     'AvoidNonEmptyConstructorBodiesTest',
-    AvoidNonEmptyConstructorBodiesTest.new,
-    {
-      'test_blockBodyWithStatement_lint': (t) => t._blockBodyWithStatementLint(),
-      'test_factoryExpressionBody_lint': (t) => t._factoryExpressionBodyLint(),
-      'test_emptyBodyAndInitializerList_noLint': (t) => t._emptyBodyAndInitializerListNoLint(),
-      'test_severity_info': (t) => t._severityInfo(),
-    },
+    _AvoidNonEmptyConstructorBodiesTest.new,
+    _AvoidNonEmptyConstructorBodiesTest._allCases,
   );
-  analysisRuleSuite<AvoidExtensionsOnRecordsTest>(
+  analysisRuleSuite<_AvoidExtensionsOnRecordsTest>(
     'AvoidExtensionsOnRecordsTest',
-    AvoidExtensionsOnRecordsTest.new,
-    {
-      'test_positionalRecordExtension_lint': (t) => t._positionalRecordExtensionLint(),
-      'test_namedRecordExtension_lint': (t) => t._namedRecordExtensionLint(),
-      'test_namedTypeExtension_noLint': (t) => t._namedTypeExtensionNoLint(),
-      'test_severity_error': (t) => t._severityError(),
-    },
+    _AvoidExtensionsOnRecordsTest.new,
+    _AvoidExtensionsOnRecordsTest._allCases,
   );
 }
 
-final class AvoidNonEmptyConstructorBodiesTest extends AnalysisRuleTest {
+final class _AvoidNonEmptyConstructorBodiesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNonEmptyConstructorBodiesTest)> get _allCases =>
+      caseSet<_AvoidNonEmptyConstructorBodiesTest>(
+        parent: const {},
+        own: {
+          'test_blockBodyWithStatement_lint': (t) => t._blockBodyWithStatementLint(),
+          'test_factoryExpressionBody_lint': (t) => t._factoryExpressionBodyLint(),
+          'test_emptyBodyAndInitializerList_noLint': (t) => t._emptyBodyAndInitializerListNoLint(),
+          'test_severity_info': (t) => t._severityInfo(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNonEmptyConstructorBodies();
@@ -80,7 +81,18 @@ class Example {
   }
 }
 
-final class AvoidExtensionsOnRecordsTest extends AnalysisRuleTest {
+final class _AvoidExtensionsOnRecordsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidExtensionsOnRecordsTest)> get _allCases =>
+      caseSet<_AvoidExtensionsOnRecordsTest>(
+        parent: const {},
+        own: {
+          'test_positionalRecordExtension_lint': (t) => t._positionalRecordExtensionLint(),
+          'test_namedRecordExtension_lint': (t) => t._namedRecordExtensionLint(),
+          'test_namedTypeExtension_noLint': (t) => t._namedTypeExtensionNoLint(),
+          'test_severity_error': (t) => t._severityError(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidExtensionsOnRecords();

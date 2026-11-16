@@ -16,122 +16,45 @@ import 'analysis_rule_suite.dart';
 part 'additional_lints_false_positive_test/use_existing_variable_cases.dart';
 
 void main() {
-  analysisRuleSuite<PreferExplicitFunctionTypeFalsePositiveTest>(
+  analysisRuleSuite<_PreferExplicitFunctionTypeFalsePositiveTest>(
     'PreferExplicitFunctionTypeFalsePositiveTest',
-    PreferExplicitFunctionTypeFalsePositiveTest.new,
-    {
-      'test_reportsPlainFunctionField': (t) => t._reportsPlainFunctionField(),
-      'test_allowsSdkCompatibleOverrideParameter': (t) => t._allowsSdkCompatibleOverrideParameter(),
-    },
+    _PreferExplicitFunctionTypeFalsePositiveTest.new,
+    _PreferExplicitFunctionTypeFalsePositiveTest._allCases,
   );
-  analysisRuleSuite<AvoidReturningWidgetsFalsePositiveTest>(
+  analysisRuleSuite<_AvoidReturningWidgetsFalsePositiveTest>(
     'AvoidReturningWidgetsFalsePositiveTest',
-    AvoidReturningWidgetsFalsePositiveTest.new,
-    {
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_reportsHelperReturningWidget': (t) => t._reportsHelperReturningWidget(),
-      'test_allowsResolvedPreviewFunction': (t) => t._allowsResolvedPreviewFunction(),
-      'test_reportsFunctionUnderLookalikePreviewAnnotation': (t) =>
-          t._reportsFunctionUnderLookalikePreviewAnnotation(),
-      'test_reportsHelperReturningWidgetList': (t) => t._reportsHelperReturningWidgetList(),
-      'test_allowsWidgetListExtensionReturningWidgetList': (t) =>
-          t._allowsWidgetListExtensionReturningWidgetList(),
-      'test_reportsWidgetExtensionsOutsideCollectionUtilities': (t) =>
-          t._reportsWidgetExtensionsOutsideCollectionUtilities(),
-      'test_severity_error': (t) async => t._severityError(),
-      'test_reportsPrivateMethodReturningWidgetList': (t) =>
-          t._reportsPrivateMethodReturningWidgetList(),
-      'test_allowsTestHelperReturningWidget': (t) => t._allowsTestHelperReturningWidget(),
-      'test_allowsFrameworkBuilderOverride': (t) => t._allowsFrameworkBuilderOverride(),
-      'test_allowsFrameworkBuilderCallbackMethod': (t) => t._allowsFrameworkBuilderCallbackMethod(),
-    },
+    _AvoidReturningWidgetsFalsePositiveTest.new,
+    _AvoidReturningWidgetsFalsePositiveTest._allCases,
   );
-  analysisRuleSuite<PreferSingleSetstateFalsePositiveTest>(
+  analysisRuleSuite<_PreferSingleSetstateFalsePositiveTest>(
     'PreferSingleSetstateFalsePositiveTest',
-    PreferSingleSetstateFalsePositiveTest.new,
-    {
-      'test_reportsSequentialSetStateCalls': (t) => t._reportsSequentialSetStateCalls(),
-      'test_allowsSetStateSeparatedByAwait': (t) => t._allowsSetStateSeparatedByAwait(),
-      'test_allowsMutuallyExclusiveSetStateBranches': (t) =>
-          t._allowsMutuallyExclusiveSetStateBranches(),
-    },
+    _PreferSingleSetstateFalsePositiveTest.new,
+    _PreferSingleSetstateFalsePositiveTest._allCases,
   );
-  analysisRuleSuite<PreferSingleWidgetPerFileFalsePositiveTest>(
+  analysisRuleSuite<_PreferSingleWidgetPerFileFalsePositiveTest>(
     'PreferSingleWidgetPerFileFalsePositiveTest',
-    PreferSingleWidgetPerFileFalsePositiveTest.new,
-    {
-      'test_reportsSecondPublicWidget': (t) => t._reportsSecondPublicWidget(),
-      'test_reportsPrivateWidgetCompanion': (t) => t._reportsPrivateWidgetCompanion(),
-      'test_allowsVisibleForTestingWidgetCompanion': (t) =>
-          t._allowsVisibleForTestingWidgetCompanion(),
-      'test_reportsPrivateVisibleForTestingWidgetCompanion': (t) =>
-          t._reportsPrivateVisibleForTestingWidgetCompanion(),
-      'test_allowsPrivateWidgetCompanionInTestFile': (t) =>
-          t._allowsPrivateWidgetCompanionInTestFile(),
-      'test_reportsVisibleForTestingWidgetCompanionInTestFile': (t) =>
-          t._reportsVisibleForTestingWidgetCompanionInTestFile(),
-    },
+    _PreferSingleWidgetPerFileFalsePositiveTest.new,
+    _PreferSingleWidgetPerFileFalsePositiveTest._allCases,
   );
-  analysisRuleSuite<UseClosestBuildContextFalsePositiveTest>(
+  analysisRuleSuite<_UseClosestBuildContextFalsePositiveTest>(
     'UseClosestBuildContextFalsePositiveTest',
-    UseClosestBuildContextFalsePositiveTest.new,
-    {
-      'test_reportsOuterContextWhenInnerContextNamed': (t) =>
-          t._reportsOuterContextWhenInnerContextNamed(),
-      'test_allowsWildcardBuilderContextWhenOuterContextIsIntentionallyPassed': (t) =>
-          t._allowsWildcardBuilderContextWhenOuterContextIsIntentionallyPassed(),
-    },
+    _UseClosestBuildContextFalsePositiveTest.new,
+    _UseClosestBuildContextFalsePositiveTest._allCases,
   );
-  analysisRuleSuite<PreferClassDestructuringFalsePositiveTest>(
+  analysisRuleSuite<_PreferClassDestructuringFalsePositiveTest>(
     'PreferClassDestructuringFalsePositiveTest',
-    PreferClassDestructuringFalsePositiveTest.new,
-    {
-      'test_allowsPropertyReadsPassedToConstructor': (t) =>
-          t._allowsPropertyReadsPassedToConstructor(),
-      'test_reportsPropertyReadsIntoLocals': (t) => t._reportsPropertyReadsIntoLocals(),
-      'test_severity_error': (t) async => t._severityError(),
-      'test_allowsPropertyAssertionsInTests': (t) => t._allowsPropertyAssertionsInTests(),
-      'test_allowsL10nLocalBinding': (t) => t._allowsL10nLocalBinding(),
-      'test_allowsAppLocalizationsVariableWithDifferentName': (t) =>
-          t._allowsAppLocalizationsVariableWithDifferentName(),
-    },
+    _PreferClassDestructuringFalsePositiveTest.new,
+    _PreferClassDestructuringFalsePositiveTest._allCases,
   );
-  analysisRuleSuite<UseSliverPrefixFalsePositiveTest>(
+  analysisRuleSuite<_UseSliverPrefixFalsePositiveTest>(
     'UseSliverPrefixFalsePositiveTest',
-    UseSliverPrefixFalsePositiveTest.new,
-    {
-      'test_reportsSliverReturningWidgetWithoutSliverName': (t) =>
-          t._reportsSliverReturningWidgetWithoutSliverName(),
-      'test_allowsPublicNameContainingSliver': (t) => t._allowsPublicNameContainingSliver(),
-    },
+    _UseSliverPrefixFalsePositiveTest.new,
+    _UseSliverPrefixFalsePositiveTest._allCases,
   );
-  analysisRuleSuite<AvoidCommentedOutCodeFalsePositiveTest>(
+  analysisRuleSuite<_AvoidCommentedOutCodeFalsePositiveTest>(
     'AvoidCommentedOutCodeFalsePositiveTest',
-    AvoidCommentedOutCodeFalsePositiveTest.new,
-    {
-      'test_allowsParenthesizedHyphenatedDescription': (t) =>
-          t._allowsParenthesizedHyphenatedDescription(),
-      'test_allowsParenthesizedDescriptionThatWouldParseAsCall': (t) =>
-          t._allowsParenthesizedDescriptionThatWouldParseAsCall(),
-      'test_allowsUnspacedDescriptionThatDoesNotParse': (t) =>
-          t._allowsUnspacedDescriptionThatDoesNotParse(),
-      'test_doesNotGroupTrailingDescriptionsWithLaterCode': (t) =>
-          t._doesNotGroupTrailingDescriptionsWithLaterCode(),
-      'test_reportsCommentedOutCallStatement': (t) => t._reportsCommentedOutCallStatement(),
-      'test_reportsCommentedOutCallWithoutSemicolon': (t) =>
-          t._reportsCommentedOutCallWithoutSemicolon(),
-      'test_reportsCommentedOutDeclaration': (t) => t._reportsCommentedOutDeclaration(),
-      'test_reportsCommentedOutMultilineCall': (t) => t._reportsCommentedOutMultilineCall(),
-      'test_allowsProseStartingWithTypeKeyword': (t) => t._allowsProseStartingWithTypeKeyword(),
-      'test_allowsProseWithAssignmentLikeEquals': (t) => t._allowsProseWithAssignmentLikeEquals(),
-      'test_reportsCommentedOutAssignmentWithoutSemicolon': (t) =>
-          t._reportsCommentedOutAssignmentWithoutSemicolon(),
-      'test_reportsCommentedOutMultilineDeclaration': (t) =>
-          t._reportsCommentedOutMultilineDeclaration(),
-      'test_reportsCommentedOutConstructorCallAfterProse': (t) =>
-          t._reportsCommentedOutConstructorCallAfterProse(),
-      'test_reportsCommentedOutBlock': (t) => t._reportsCommentedOutBlock(),
-    },
+    _AvoidCommentedOutCodeFalsePositiveTest.new,
+    _AvoidCommentedOutCodeFalsePositiveTest._allCases,
   );
   _defineUseExistingVariableCasesTests();
 }
@@ -183,7 +106,16 @@ abstract base class MultiPreview {
   }
 }
 
-final class PreferExplicitFunctionTypeFalsePositiveTest extends _AdditionalLintRuleTest {
+final class _PreferExplicitFunctionTypeFalsePositiveTest extends _AdditionalLintRuleTest {
+  static Map<String, Future<void> Function(_PreferExplicitFunctionTypeFalsePositiveTest)>
+  get _allCases => caseSet<_PreferExplicitFunctionTypeFalsePositiveTest>(
+    parent: const {},
+    own: {
+      'test_reportsPlainFunctionField': (t) => t._reportsPlainFunctionField(),
+      'test_allowsSdkCompatibleOverrideParameter': (t) => t._allowsSdkCompatibleOverrideParameter(),
+    },
+  );
+
   @override
   void setUp() {
     rule = PreferExplicitFunctionType();
@@ -220,7 +152,30 @@ abstract class FakeStream extends Stream<List<int>> {
   }
 }
 
-final class AvoidReturningWidgetsFalsePositiveTest extends _AdditionalLintRuleTest {
+final class _AvoidReturningWidgetsFalsePositiveTest extends _AdditionalLintRuleTest {
+  static Map<String, Future<void> Function(_AvoidReturningWidgetsFalsePositiveTest)>
+  get _allCases => caseSet<_AvoidReturningWidgetsFalsePositiveTest>(
+    parent: const {},
+    own: {
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_reportsHelperReturningWidget': (t) => t._reportsHelperReturningWidget(),
+      'test_allowsResolvedPreviewFunction': (t) => t._allowsResolvedPreviewFunction(),
+      'test_reportsFunctionUnderLookalikePreviewAnnotation': (t) =>
+          t._reportsFunctionUnderLookalikePreviewAnnotation(),
+      'test_reportsHelperReturningWidgetList': (t) => t._reportsHelperReturningWidgetList(),
+      'test_allowsWidgetListExtensionReturningWidgetList': (t) =>
+          t._allowsWidgetListExtensionReturningWidgetList(),
+      'test_reportsWidgetExtensionsOutsideCollectionUtilities': (t) =>
+          t._reportsWidgetExtensionsOutsideCollectionUtilities(),
+      'test_severity_error': (t) async => t._severityError(),
+      'test_reportsPrivateMethodReturningWidgetList': (t) =>
+          t._reportsPrivateMethodReturningWidgetList(),
+      'test_allowsTestHelperReturningWidget': (t) => t._allowsTestHelperReturningWidget(),
+      'test_allowsFrameworkBuilderOverride': (t) => t._allowsFrameworkBuilderOverride(),
+      'test_allowsFrameworkBuilderCallbackMethod': (t) => t._allowsFrameworkBuilderCallbackMethod(),
+    },
+  );
+
   @override
   void setUp() {
     rule = AvoidReturningWidgets();
@@ -388,7 +343,18 @@ class SplashScreen extends StatelessWidget {
   }
 }
 
-final class PreferSingleSetstateFalsePositiveTest extends _AdditionalLintRuleTest {
+final class _PreferSingleSetstateFalsePositiveTest extends _AdditionalLintRuleTest {
+  static Map<String, Future<void> Function(_PreferSingleSetstateFalsePositiveTest)> get _allCases =>
+      caseSet<_PreferSingleSetstateFalsePositiveTest>(
+        parent: const {},
+        own: {
+          'test_reportsSequentialSetStateCalls': (t) => t._reportsSequentialSetStateCalls(),
+          'test_allowsSetStateSeparatedByAwait': (t) => t._allowsSetStateSeparatedByAwait(),
+          'test_allowsMutuallyExclusiveSetStateBranches': (t) =>
+              t._allowsMutuallyExclusiveSetStateBranches(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferSingleSetstate();
@@ -456,7 +422,24 @@ class DemoState extends State<Demo> {
   }
 }
 
-final class PreferSingleWidgetPerFileFalsePositiveTest extends _AdditionalLintRuleTest {
+final class _PreferSingleWidgetPerFileFalsePositiveTest extends _AdditionalLintRuleTest {
+  static Map<String, Future<void> Function(_PreferSingleWidgetPerFileFalsePositiveTest)>
+  get _allCases => caseSet<_PreferSingleWidgetPerFileFalsePositiveTest>(
+    parent: const {},
+    own: {
+      'test_reportsSecondPublicWidget': (t) => t._reportsSecondPublicWidget(),
+      'test_reportsPrivateWidgetCompanion': (t) => t._reportsPrivateWidgetCompanion(),
+      'test_allowsVisibleForTestingWidgetCompanion': (t) =>
+          t._allowsVisibleForTestingWidgetCompanion(),
+      'test_reportsPrivateVisibleForTestingWidgetCompanion': (t) =>
+          t._reportsPrivateVisibleForTestingWidgetCompanion(),
+      'test_allowsPrivateWidgetCompanionInTestFile': (t) =>
+          t._allowsPrivateWidgetCompanionInTestFile(),
+      'test_reportsVisibleForTestingWidgetCompanionInTestFile': (t) =>
+          t._reportsVisibleForTestingWidgetCompanionInTestFile(),
+    },
+  );
+
   @override
   void setUp() {
     rule = PreferSingleWidgetPerFile();
@@ -597,7 +580,18 @@ class PrimaryWidgetContent extends StatelessWidget {
   }
 }
 
-final class UseClosestBuildContextFalsePositiveTest extends _AdditionalLintRuleTest {
+final class _UseClosestBuildContextFalsePositiveTest extends _AdditionalLintRuleTest {
+  static Map<String, Future<void> Function(_UseClosestBuildContextFalsePositiveTest)>
+  get _allCases => caseSet<_UseClosestBuildContextFalsePositiveTest>(
+    parent: const {},
+    own: {
+      'test_reportsOuterContextWhenInnerContextNamed': (t) =>
+          t._reportsOuterContextWhenInnerContextNamed(),
+      'test_allowsWildcardBuilderContextWhenOuterContextIsIntentionallyPassed': (t) =>
+          t._allowsWildcardBuilderContextWhenOuterContextIsIntentionallyPassed(),
+    },
+  );
+
   @override
   void setUp() {
     rule = UseClosestBuildContext();
@@ -651,7 +645,22 @@ class Sheet {
   }
 }
 
-final class PreferClassDestructuringFalsePositiveTest extends _AdditionalLintRuleTest {
+final class _PreferClassDestructuringFalsePositiveTest extends _AdditionalLintRuleTest {
+  static Map<String, Future<void> Function(_PreferClassDestructuringFalsePositiveTest)>
+  get _allCases => caseSet<_PreferClassDestructuringFalsePositiveTest>(
+    parent: const {},
+    own: {
+      'test_allowsPropertyReadsPassedToConstructor': (t) =>
+          t._allowsPropertyReadsPassedToConstructor(),
+      'test_reportsPropertyReadsIntoLocals': (t) => t._reportsPropertyReadsIntoLocals(),
+      'test_severity_error': (t) async => t._severityError(),
+      'test_allowsPropertyAssertionsInTests': (t) => t._allowsPropertyAssertionsInTests(),
+      'test_allowsL10nLocalBinding': (t) => t._allowsL10nLocalBinding(),
+      'test_allowsAppLocalizationsVariableWithDifferentName': (t) =>
+          t._allowsAppLocalizationsVariableWithDifferentName(),
+    },
+  );
+
   @override
   void setUp() {
     rule = PreferClassDestructuring();
@@ -760,7 +769,17 @@ void build() {
   }
 }
 
-final class UseSliverPrefixFalsePositiveTest extends _AdditionalLintRuleTest {
+final class _UseSliverPrefixFalsePositiveTest extends _AdditionalLintRuleTest {
+  static Map<String, Future<void> Function(_UseSliverPrefixFalsePositiveTest)> get _allCases =>
+      caseSet<_UseSliverPrefixFalsePositiveTest>(
+        parent: const {},
+        own: {
+          'test_reportsSliverReturningWidgetWithoutSliverName': (t) =>
+              t._reportsSliverReturningWidgetWithoutSliverName(),
+          'test_allowsPublicNameContainingSliver': (t) => t._allowsPublicNameContainingSliver(),
+        },
+      );
+
   @override
   void setUp() {
     rule = UseSliverPrefix();
@@ -796,7 +815,36 @@ class CatalogSliverList extends StatelessWidget {
   }
 }
 
-final class AvoidCommentedOutCodeFalsePositiveTest extends _AdditionalLintRuleTest {
+final class _AvoidCommentedOutCodeFalsePositiveTest extends _AdditionalLintRuleTest {
+  static Map<String, Future<void> Function(_AvoidCommentedOutCodeFalsePositiveTest)>
+  get _allCases => caseSet<_AvoidCommentedOutCodeFalsePositiveTest>(
+    parent: const {},
+    own: {
+      'test_allowsParenthesizedHyphenatedDescription': (t) =>
+          t._allowsParenthesizedHyphenatedDescription(),
+      'test_allowsParenthesizedDescriptionThatWouldParseAsCall': (t) =>
+          t._allowsParenthesizedDescriptionThatWouldParseAsCall(),
+      'test_allowsUnspacedDescriptionThatDoesNotParse': (t) =>
+          t._allowsUnspacedDescriptionThatDoesNotParse(),
+      'test_doesNotGroupTrailingDescriptionsWithLaterCode': (t) =>
+          t._doesNotGroupTrailingDescriptionsWithLaterCode(),
+      'test_reportsCommentedOutCallStatement': (t) => t._reportsCommentedOutCallStatement(),
+      'test_reportsCommentedOutCallWithoutSemicolon': (t) =>
+          t._reportsCommentedOutCallWithoutSemicolon(),
+      'test_reportsCommentedOutDeclaration': (t) => t._reportsCommentedOutDeclaration(),
+      'test_reportsCommentedOutMultilineCall': (t) => t._reportsCommentedOutMultilineCall(),
+      'test_allowsProseStartingWithTypeKeyword': (t) => t._allowsProseStartingWithTypeKeyword(),
+      'test_allowsProseWithAssignmentLikeEquals': (t) => t._allowsProseWithAssignmentLikeEquals(),
+      'test_reportsCommentedOutAssignmentWithoutSemicolon': (t) =>
+          t._reportsCommentedOutAssignmentWithoutSemicolon(),
+      'test_reportsCommentedOutMultilineDeclaration': (t) =>
+          t._reportsCommentedOutMultilineDeclaration(),
+      'test_reportsCommentedOutConstructorCallAfterProse': (t) =>
+          t._reportsCommentedOutConstructorCallAfterProse(),
+      'test_reportsCommentedOutBlock': (t) => t._reportsCommentedOutBlock(),
+    },
+  );
+
   @override
   void setUp() {
     rule = AvoidCommentedOutCode();

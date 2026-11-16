@@ -1,6 +1,41 @@
 part of '../source_scanner_rules_test.dart';
 
-final class RouterDirectRouteCallTest extends _RouterRuleTest {
+final class _RouterDirectRouteCallTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_RouterDirectRouteCallTest)> get _allCases =>
+      caseSet<_RouterDirectRouteCallTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsGeneratedTypedRouteGo': (t) => t._allowsGeneratedTypedRouteGo(),
+          'test_allowsConstTypedRoutePush': (t) => t._allowsConstTypedRoutePush(),
+          'test_reportsTypedLocationOnExplicitRouter': (t) =>
+              t._reportsTypedLocationOnExplicitRouter(),
+          'test_reportsRawLocationOnExplicitRouter': (t) => t._reportsRawLocationOnExplicitRouter(),
+          'test_reportsContextGoWithTypedLocation': (t) => t._reportsContextGoWithTypedLocation(),
+          'test_reportsInjectedRouterGo': (t) => t._reportsInjectedRouterGo(),
+          'test_reportsCamelCaseInjectedRouterGo': (t) => t._reportsCamelCaseInjectedRouterGo(),
+          'test_reportsRouterConvenienceGoHome': (t) => t._reportsRouterConvenienceGoHome(),
+          'test_reportsCamelCaseRouterConveniencePush': (t) =>
+              t._reportsCamelCaseRouterConveniencePush(),
+          'test_reportsContextConvenienceGoHome': (t) => t._reportsContextConvenienceGoHome(),
+          'test_reportsMultilineContextGo': (t) => t._reportsMultilineContextGo(),
+          'test_reportsMultilineInjectedRouterGo': (t) => t._reportsMultilineInjectedRouterGo(),
+          'test_allowsContextPopHelperCall': (t) => t._allowsContextPopHelperCall(),
+          'test_allowsNavigatorMaybePopForLocalDismissal': (t) =>
+              t._allowsNavigatorMaybePopForLocalDismissal(),
+          'test_allowsShellGoBranch': (t) => t._allowsShellGoBranch(),
+          'test_allowsLocalModalApi': (t) => t._allowsLocalModalApi(),
+          'test_reportsPublicStaticCoordinatorCallOutsideCoreNavigation': (t) =>
+              t._reportsPublicStaticCoordinatorCallOutsideCoreNavigation(),
+          'test_reportsRouterGoEvenInCoreRouter': (t) => t._reportsRouterGoEvenInCoreRouter(),
+          'test_allowsFallbackRouteGoHelper': (t) => t._allowsFallbackRouteGoHelper(),
+          'test_reportsTestFileRawNavigation': (t) => t._reportsTestFileRawNavigation(),
+          'test_scansPartFileSourceInsteadOfDefiningLibrary': (t) =>
+              t._scansPartFileSourceInsteadOfDefiningLibrary(),
+          'test_reportsInjectedRouterNavigation': (t) => t._reportsInjectedRouterNavigation(),
+          'test_allowsTypedRouteNavigation': (t) => t._allowsTypedRouteNavigation(),
+        },
+      );
+
   @override
   void setUp() {
     _addTestingNavigationPackages();
@@ -349,7 +384,26 @@ void openHome(BuildContext context) {
   }
 }
 
-final class RouterRawRouteDefinitionTest extends _RouterRuleTest {
+final class _RouterRawRouteDefinitionTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_RouterRawRouteDefinitionTest)> get _allCases =>
+      caseSet<_RouterRawRouteDefinitionTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsRawGoRouteOutsideRouterBoundary': (t) =>
+              t._reportsRawGoRouteOutsideRouterBoundary(),
+          'test_reportsRawGoRouteWithSeparatedCallParen': (t) =>
+              t._reportsRawGoRouteWithSeparatedCallParen(),
+          'test_reportsRawShellRouteOutsideRouterBoundary': (t) =>
+              t._reportsRawShellRouteOutsideRouterBoundary(),
+          'test_reportsRawGoRouterOutsideRouterBoundary': (t) =>
+              t._reportsRawGoRouterOutsideRouterBoundary(),
+          'test_allowsRouterBoundary': (t) => t._allowsRouterBoundary(),
+          'test_reportsTestHarnessRouterOutsideHelper': (t) =>
+              t._reportsTestHarnessRouterOutsideHelper(),
+          'test_allowsSharedTestRouterHelper': (t) => t._allowsSharedTestRouterHelper(),
+        },
+      );
+
   @override
   String get ruleName => 'router_raw_route_definition';
   @override
@@ -441,7 +495,18 @@ void build() {
   }
 }
 
-final class RouterModalLocalHelpersTest extends _RouterRuleTest {
+final class _RouterModalLocalHelpersTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_RouterModalLocalHelpersTest)> get _allCases =>
+      caseSet<_RouterModalLocalHelpersTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsModalRouteAbstraction': (t) => t._reportsModalRouteAbstraction(),
+          'test_reportsProviderPresent': (t) => t._reportsProviderPresent(),
+          'test_allowsLocalBottomSheetHelper': (t) => t._allowsLocalBottomSheetHelper(),
+          'test_allowsThemedDialogHelper': (t) => t._allowsThemedDialogHelper(),
+        },
+      );
+
   @override
   String get ruleName => 'router_modal_local_helpers';
   @override
@@ -499,7 +564,25 @@ void open(context) {
   }
 }
 
-final class RouterProviderScopeNavigationReadTest extends _RouterRuleTest {
+final class _RouterProviderScopeNavigationReadTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_RouterProviderScopeNavigationReadTest)> get _allCases =>
+      caseSet<_RouterProviderScopeNavigationReadTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsMultilineReadAfterContainerLookup': (t) =>
+              t._reportsMultilineReadAfterContainerLookup(),
+          'test_reportsRouterDelegateNavigatorContext': (t) =>
+              t._reportsRouterDelegateNavigatorContext(),
+          'test_reportsNavigatorKeyCurrentContext': (t) => t._reportsNavigatorKeyCurrentContext(),
+          'test_allowsUnrelatedProviderScopeRead': (t) => t._allowsUnrelatedProviderScopeRead(),
+          'test_allowsWidgetRefNavigationRead': (t) => t._allowsWidgetRefNavigationRead(),
+          'test_reportsNavigatorGlobalKeyCurrentContext': (t) =>
+              t._reportsNavigatorGlobalKeyCurrentContext(),
+          'test_allowsNonNavigatorGlobalKeyCurrentContext': (t) =>
+              t._allowsNonNavigatorGlobalKeyCurrentContext(),
+        },
+      );
+
   @override
   void setUp() {
     _addTestingNavigationPackages();
@@ -666,7 +749,22 @@ abstract class Notifier<T> extends AnyNotifier<T, T> {}
 abstract class AsyncNotifier<T> extends AnyNotifier<Future<T>, T> {}
 ''';
 
-final class NotifierStoredRefFieldTest extends _NotifierRuleTest {
+final class _NotifierStoredRefFieldTest extends _NotifierRuleTest {
+  static Map<String, Future<void> Function(_NotifierStoredRefFieldTest)> get _allCases =>
+      caseSet<_NotifierStoredRefFieldTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsInferredRefField': (t) => t._reportsInferredRefField(),
+          'test_reportsAnnotatedNotifierBeforeCodegen': (t) =>
+              t._reportsAnnotatedNotifierBeforeCodegen(),
+          'test_allowsRefFieldOutsideNotifier': (t) => t._allowsRefFieldOutsideNotifier(),
+          'test_allowsInheritedRefAndNonRefFields': (t) => t._allowsInheritedRefAndNonRefFields(),
+          'test_allowsUnrelatedRefTypeInNotifierLikeClass': (t) =>
+              t._allowsUnrelatedRefTypeInNotifierLikeClass(),
+          'test_severityIsError': (t) => t._severityIsError(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('riverpod').addFile('lib/riverpod.dart', _notifierRefRiverpodStub);
@@ -768,7 +866,18 @@ class CartNotifier extends Notifier<int> {
   }
 }
 
-final class NotifierTimerWithoutOnDisposeTest extends _NotifierRuleTest {
+final class _NotifierTimerWithoutOnDisposeTest extends _NotifierRuleTest {
+  static Map<String, Future<void> Function(_NotifierTimerWithoutOnDisposeTest)> get _allCases =>
+      caseSet<_NotifierTimerWithoutOnDisposeTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsSkillDraftNotifierAsWritten': (t) => t._reportsSkillDraftNotifierAsWritten(),
+          'test_allowsTimerCancelledInOnDispose': (t) => t._allowsTimerCancelledInOnDispose(),
+          'test_allowsTimerOutsideNotifier': (t) => t._allowsTimerOutsideNotifier(),
+          'test_allowsLocalTimerLookalike': (t) => t._allowsLocalTimerLookalike(),
+        },
+      );
+
   @override
   void setUp() {
     _addTestingNavigationPackages();
@@ -865,112 +974,34 @@ class Stopwatch extends Notifier<int> {
 }
 
 void _defineSourceScannerRulesPart10Tests() {
-  analysisRuleSuite<RouterDirectRouteCallTest>(
+  analysisRuleSuite<_RouterDirectRouteCallTest>(
     'RouterDirectRouteCallTest',
-    RouterDirectRouteCallTest.new,
-    {
-      'test_allowsGeneratedTypedRouteGo': (t) => t._allowsGeneratedTypedRouteGo(),
-      'test_allowsConstTypedRoutePush': (t) => t._allowsConstTypedRoutePush(),
-      'test_reportsTypedLocationOnExplicitRouter': (t) => t._reportsTypedLocationOnExplicitRouter(),
-      'test_reportsRawLocationOnExplicitRouter': (t) => t._reportsRawLocationOnExplicitRouter(),
-      'test_reportsContextGoWithTypedLocation': (t) => t._reportsContextGoWithTypedLocation(),
-      'test_reportsInjectedRouterGo': (t) => t._reportsInjectedRouterGo(),
-      'test_reportsCamelCaseInjectedRouterGo': (t) => t._reportsCamelCaseInjectedRouterGo(),
-      'test_reportsRouterConvenienceGoHome': (t) => t._reportsRouterConvenienceGoHome(),
-      'test_reportsCamelCaseRouterConveniencePush': (t) =>
-          t._reportsCamelCaseRouterConveniencePush(),
-      'test_reportsContextConvenienceGoHome': (t) => t._reportsContextConvenienceGoHome(),
-      'test_reportsMultilineContextGo': (t) => t._reportsMultilineContextGo(),
-      'test_reportsMultilineInjectedRouterGo': (t) => t._reportsMultilineInjectedRouterGo(),
-      'test_allowsContextPopHelperCall': (t) => t._allowsContextPopHelperCall(),
-      'test_allowsNavigatorMaybePopForLocalDismissal': (t) =>
-          t._allowsNavigatorMaybePopForLocalDismissal(),
-      'test_allowsShellGoBranch': (t) => t._allowsShellGoBranch(),
-      'test_allowsLocalModalApi': (t) => t._allowsLocalModalApi(),
-      'test_reportsPublicStaticCoordinatorCallOutsideCoreNavigation': (t) =>
-          t._reportsPublicStaticCoordinatorCallOutsideCoreNavigation(),
-      'test_reportsRouterGoEvenInCoreRouter': (t) => t._reportsRouterGoEvenInCoreRouter(),
-      'test_allowsFallbackRouteGoHelper': (t) => t._allowsFallbackRouteGoHelper(),
-      'test_reportsTestFileRawNavigation': (t) => t._reportsTestFileRawNavigation(),
-      'test_scansPartFileSourceInsteadOfDefiningLibrary': (t) =>
-          t._scansPartFileSourceInsteadOfDefiningLibrary(),
-      'test_reportsInjectedRouterNavigation': (t) => t._reportsInjectedRouterNavigation(),
-      'test_allowsTypedRouteNavigation': (t) => t._allowsTypedRouteNavigation(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RouterDirectRouteCallTest.new,
+    _RouterDirectRouteCallTest._allCases,
   );
-  analysisRuleSuite<RouterRawRouteDefinitionTest>(
+  analysisRuleSuite<_RouterRawRouteDefinitionTest>(
     'RouterRawRouteDefinitionTest',
-    RouterRawRouteDefinitionTest.new,
-    {
-      'test_reportsRawGoRouteOutsideRouterBoundary': (t) =>
-          t._reportsRawGoRouteOutsideRouterBoundary(),
-      'test_reportsRawGoRouteWithSeparatedCallParen': (t) =>
-          t._reportsRawGoRouteWithSeparatedCallParen(),
-      'test_reportsRawShellRouteOutsideRouterBoundary': (t) =>
-          t._reportsRawShellRouteOutsideRouterBoundary(),
-      'test_reportsRawGoRouterOutsideRouterBoundary': (t) =>
-          t._reportsRawGoRouterOutsideRouterBoundary(),
-      'test_allowsRouterBoundary': (t) => t._allowsRouterBoundary(),
-      'test_reportsTestHarnessRouterOutsideHelper': (t) =>
-          t._reportsTestHarnessRouterOutsideHelper(),
-      'test_allowsSharedTestRouterHelper': (t) => t._allowsSharedTestRouterHelper(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RouterRawRouteDefinitionTest.new,
+    _RouterRawRouteDefinitionTest._allCases,
   );
-  analysisRuleSuite<RouterModalLocalHelpersTest>(
+  analysisRuleSuite<_RouterModalLocalHelpersTest>(
     'RouterModalLocalHelpersTest',
-    RouterModalLocalHelpersTest.new,
-    {
-      'test_reportsModalRouteAbstraction': (t) => t._reportsModalRouteAbstraction(),
-      'test_reportsProviderPresent': (t) => t._reportsProviderPresent(),
-      'test_allowsLocalBottomSheetHelper': (t) => t._allowsLocalBottomSheetHelper(),
-      'test_allowsThemedDialogHelper': (t) => t._allowsThemedDialogHelper(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RouterModalLocalHelpersTest.new,
+    _RouterModalLocalHelpersTest._allCases,
   );
-  analysisRuleSuite<RouterProviderScopeNavigationReadTest>(
+  analysisRuleSuite<_RouterProviderScopeNavigationReadTest>(
     'RouterProviderScopeNavigationReadTest',
-    RouterProviderScopeNavigationReadTest.new,
-    {
-      'test_reportsMultilineReadAfterContainerLookup': (t) =>
-          t._reportsMultilineReadAfterContainerLookup(),
-      'test_reportsRouterDelegateNavigatorContext': (t) =>
-          t._reportsRouterDelegateNavigatorContext(),
-      'test_reportsNavigatorKeyCurrentContext': (t) => t._reportsNavigatorKeyCurrentContext(),
-      'test_allowsUnrelatedProviderScopeRead': (t) => t._allowsUnrelatedProviderScopeRead(),
-      'test_allowsWidgetRefNavigationRead': (t) => t._allowsWidgetRefNavigationRead(),
-      'test_reportsNavigatorGlobalKeyCurrentContext': (t) =>
-          t._reportsNavigatorGlobalKeyCurrentContext(),
-      'test_allowsNonNavigatorGlobalKeyCurrentContext': (t) =>
-          t._allowsNonNavigatorGlobalKeyCurrentContext(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RouterProviderScopeNavigationReadTest.new,
+    _RouterProviderScopeNavigationReadTest._allCases,
   );
-  analysisRuleSuite<NotifierStoredRefFieldTest>(
+  analysisRuleSuite<_NotifierStoredRefFieldTest>(
     'NotifierStoredRefFieldTest',
-    NotifierStoredRefFieldTest.new,
-    {
-      'test_reportsInferredRefField': (t) => t._reportsInferredRefField(),
-      'test_reportsAnnotatedNotifierBeforeCodegen': (t) =>
-          t._reportsAnnotatedNotifierBeforeCodegen(),
-      'test_allowsRefFieldOutsideNotifier': (t) => t._allowsRefFieldOutsideNotifier(),
-      'test_allowsInheritedRefAndNonRefFields': (t) => t._allowsInheritedRefAndNonRefFields(),
-      'test_allowsUnrelatedRefTypeInNotifierLikeClass': (t) =>
-          t._allowsUnrelatedRefTypeInNotifierLikeClass(),
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _NotifierStoredRefFieldTest.new,
+    _NotifierStoredRefFieldTest._allCases,
   );
-  analysisRuleSuite<NotifierTimerWithoutOnDisposeTest>(
+  analysisRuleSuite<_NotifierTimerWithoutOnDisposeTest>(
     'NotifierTimerWithoutOnDisposeTest',
-    NotifierTimerWithoutOnDisposeTest.new,
-    {
-      'test_reportsSkillDraftNotifierAsWritten': (t) => t._reportsSkillDraftNotifierAsWritten(),
-      'test_allowsTimerCancelledInOnDispose': (t) => t._allowsTimerCancelledInOnDispose(),
-      'test_allowsTimerOutsideNotifier': (t) => t._allowsTimerOutsideNotifier(),
-      'test_allowsLocalTimerLookalike': (t) => t._allowsLocalTimerLookalike(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _NotifierTimerWithoutOnDisposeTest.new,
+    _NotifierTimerWithoutOnDisposeTest._allCases,
   );
 }

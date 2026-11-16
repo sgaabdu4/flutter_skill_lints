@@ -6,76 +6,37 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unassigned_
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidLateFinalReassignmentTest>(
+  analysisRuleSuite<_AvoidLateFinalReassignmentTest>(
     'AvoidLateFinalReassignmentTest',
-    AvoidLateFinalReassignmentTest.new,
-    {
-      'test_lateFinalFieldReassignmentInSameBody_lint': (t) =>
-          t._lateFinalFieldReassignmentInSameBodyLint(),
-      'test_constructorInitializersAndBodyReassignment_lint': (t) =>
-          t._constructorInitializersAndBodyReassignmentLint(),
-      'test_singleLateFinalAssignment_noLint': (t) => t._singleLateFinalAssignmentNoLint(),
-      'test_shadowingLocal_noLint': (t) => t._shadowingLocalNoLint(),
-    },
+    _AvoidLateFinalReassignmentTest.new,
+    _AvoidLateFinalReassignmentTest._allCases,
   );
-  analysisRuleSuite<AvoidUnassignedLateFieldsTest>(
+  analysisRuleSuite<_AvoidUnassignedLateFieldsTest>(
     'AvoidUnassignedLateFieldsTest',
-    AvoidUnassignedLateFieldsTest.new,
-    {
-      'test_flutterInitStateAssignsField_noLint': (t) => t._flutterInitStateAssignsFieldNoLint(),
-      'test_explicitThisInitStateAssignsField_noLint': (t) =>
-          t._explicitThisInitStateAssignsFieldNoLint(),
-      'test_otherInstanceAssignmentStillReports_lint': (t) =>
-          t._otherInstanceAssignmentStillReportsLint(),
-      'test_asyncInitStateStillReports_lint': (t) => t._asyncInitStateStillReportsLint(),
-      'test_conditionalInitStateStillReports_lint': (t) =>
-          t._conditionalInitStateStillReportsLint(),
-      'test_earlyReturnBeforeAssignmentStillReports_lint': (t) =>
-          t._earlyReturnBeforeAssignmentStillReportsLint(),
-      'test_deferredInitStateStillReports_lint': (t) => t._deferredInitStateStillReportsLint(),
-      'test_shadowedLocalIsNotFieldInitialization_lint': (t) =>
-          t._shadowedLocalIsNotFieldInitializationLint(),
-      'test_nonFlutterLifecycleStillReports_lint': (t) => t._nonFlutterLifecycleStillReportsLint(),
-      'test_lateFieldWithoutConstructor_lint': (t) => t._lateFieldWithoutConstructorLint(),
-      'test_constructorMissesLateField_lint': (t) => t._constructorMissesLateFieldLint(),
-      'test_allConstructorsAssignLateField_noLint': (t) =>
-          t._allConstructorsAssignLateFieldNoLint(),
-      'test_requiredNamedLateFieldFormal_noLint': (t) => t._requiredNamedLateFieldFormalNoLint(),
-      'test_constructorMissesLateFieldAssignedByAnotherConstructor_lint': (t) =>
-          t._constructorMissesLateFieldAssignedByAnotherConstructorLint(),
-      'test_redirectingConstructorToLateFieldTarget_noLint': (t) =>
-          t._redirectingConstructorToLateFieldTargetNoLint(),
-      'test_lateFieldWithInitializer_noLint': (t) => t._lateFieldWithInitializerNoLint(),
-    },
+    _AvoidUnassignedLateFieldsTest.new,
+    _AvoidUnassignedLateFieldsTest._allCases,
   );
-  analysisRuleSuite<AvoidUnassignedFieldsTest>(
+  analysisRuleSuite<_AvoidUnassignedFieldsTest>(
     'AvoidUnassignedFieldsTest',
-    AvoidUnassignedFieldsTest.new,
-    {
-      'test_nullableFieldWithoutConstructor_noLint': (t) =>
-          t._nullableFieldWithoutConstructorNoLint(),
-      'test_nonNullableFieldWithoutConstructor_lint': (t) =>
-          t._nonNullableFieldWithoutConstructorLint(),
-      'test_constructorMissesNullableField_noLint': (t) =>
-          t._constructorMissesNullableFieldNoLint(),
-      'test_constructorMissesNonNullableField_lint': (t) =>
-          t._constructorMissesNonNullableFieldLint(),
-      'test_allConstructorsAssignField_noLint': (t) => t._allConstructorsAssignFieldNoLint(),
-      'test_requiredNamedFieldFormal_noLint': (t) => t._requiredNamedFieldFormalNoLint(),
-      'test_optionalNamedFieldFormalWithDefault_noLint': (t) =>
-          t._optionalNamedFieldFormalWithDefaultNoLint(),
-      'test_constructorMissesFieldAssignedByAnotherConstructor_lint': (t) =>
-          t._constructorMissesFieldAssignedByAnotherConstructorLint(),
-      'test_redirectingConstructorToPrimary_noLint': (t) =>
-          t._redirectingConstructorToPrimaryNoLint(),
-      'test_redirectingConstructorToPrivateTarget_noLint': (t) =>
-          t._redirectingConstructorToPrivateTargetNoLint(),
-      'test_fieldWithInitializer_noLint': (t) => t._fieldWithInitializerNoLint(),
-    },
+    _AvoidUnassignedFieldsTest.new,
+    _AvoidUnassignedFieldsTest._allCases,
   );
 }
 
-final class AvoidLateFinalReassignmentTest extends AnalysisRuleTest {
+final class _AvoidLateFinalReassignmentTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidLateFinalReassignmentTest)> get _allCases =>
+      caseSet<_AvoidLateFinalReassignmentTest>(
+        parent: const {},
+        own: {
+          'test_lateFinalFieldReassignmentInSameBody_lint': (t) =>
+              t._lateFinalFieldReassignmentInSameBodyLint(),
+          'test_constructorInitializersAndBodyReassignment_lint': (t) =>
+              t._constructorInitializersAndBodyReassignmentLint(),
+          'test_singleLateFinalAssignment_noLint': (t) => t._singleLateFinalAssignmentNoLint(),
+          'test_shadowingLocal_noLint': (t) => t._shadowingLocalNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidLateFinalReassignment();
@@ -144,7 +105,41 @@ class Cache {
   }
 }
 
-final class AvoidUnassignedLateFieldsTest extends AnalysisRuleTest {
+final class _AvoidUnassignedLateFieldsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnassignedLateFieldsTest)> get _allCases =>
+      caseSet<_AvoidUnassignedLateFieldsTest>(
+        parent: const {},
+        own: {
+          'test_flutterInitStateAssignsField_noLint': (t) =>
+              t._flutterInitStateAssignsFieldNoLint(),
+          'test_explicitThisInitStateAssignsField_noLint': (t) =>
+              t._explicitThisInitStateAssignsFieldNoLint(),
+          'test_otherInstanceAssignmentStillReports_lint': (t) =>
+              t._otherInstanceAssignmentStillReportsLint(),
+          'test_asyncInitStateStillReports_lint': (t) => t._asyncInitStateStillReportsLint(),
+          'test_conditionalInitStateStillReports_lint': (t) =>
+              t._conditionalInitStateStillReportsLint(),
+          'test_earlyReturnBeforeAssignmentStillReports_lint': (t) =>
+              t._earlyReturnBeforeAssignmentStillReportsLint(),
+          'test_deferredInitStateStillReports_lint': (t) => t._deferredInitStateStillReportsLint(),
+          'test_shadowedLocalIsNotFieldInitialization_lint': (t) =>
+              t._shadowedLocalIsNotFieldInitializationLint(),
+          'test_nonFlutterLifecycleStillReports_lint': (t) =>
+              t._nonFlutterLifecycleStillReportsLint(),
+          'test_lateFieldWithoutConstructor_lint': (t) => t._lateFieldWithoutConstructorLint(),
+          'test_constructorMissesLateField_lint': (t) => t._constructorMissesLateFieldLint(),
+          'test_allConstructorsAssignLateField_noLint': (t) =>
+              t._allConstructorsAssignLateFieldNoLint(),
+          'test_requiredNamedLateFieldFormal_noLint': (t) =>
+              t._requiredNamedLateFieldFormalNoLint(),
+          'test_constructorMissesLateFieldAssignedByAnotherConstructor_lint': (t) =>
+              t._constructorMissesLateFieldAssignedByAnotherConstructorLint(),
+          'test_redirectingConstructorToLateFieldTarget_noLint': (t) =>
+              t._redirectingConstructorToLateFieldTargetNoLint(),
+          'test_lateFieldWithInitializer_noLint': (t) => t._lateFieldWithInitializerNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnassignedLateFields();
@@ -300,7 +295,33 @@ class Cache {
   }
 }
 
-final class AvoidUnassignedFieldsTest extends AnalysisRuleTest {
+final class _AvoidUnassignedFieldsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnassignedFieldsTest)> get _allCases =>
+      caseSet<_AvoidUnassignedFieldsTest>(
+        parent: const {},
+        own: {
+          'test_nullableFieldWithoutConstructor_noLint': (t) =>
+              t._nullableFieldWithoutConstructorNoLint(),
+          'test_nonNullableFieldWithoutConstructor_lint': (t) =>
+              t._nonNullableFieldWithoutConstructorLint(),
+          'test_constructorMissesNullableField_noLint': (t) =>
+              t._constructorMissesNullableFieldNoLint(),
+          'test_constructorMissesNonNullableField_lint': (t) =>
+              t._constructorMissesNonNullableFieldLint(),
+          'test_allConstructorsAssignField_noLint': (t) => t._allConstructorsAssignFieldNoLint(),
+          'test_requiredNamedFieldFormal_noLint': (t) => t._requiredNamedFieldFormalNoLint(),
+          'test_optionalNamedFieldFormalWithDefault_noLint': (t) =>
+              t._optionalNamedFieldFormalWithDefaultNoLint(),
+          'test_constructorMissesFieldAssignedByAnotherConstructor_lint': (t) =>
+              t._constructorMissesFieldAssignedByAnotherConstructorLint(),
+          'test_redirectingConstructorToPrimary_noLint': (t) =>
+              t._redirectingConstructorToPrimaryNoLint(),
+          'test_redirectingConstructorToPrivateTarget_noLint': (t) =>
+              t._redirectingConstructorToPrivateTargetNoLint(),
+          'test_fieldWithInitializer_noLint': (t) => t._fieldWithInitializerNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnassignedFields();

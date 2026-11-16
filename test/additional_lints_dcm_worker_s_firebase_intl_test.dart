@@ -6,38 +6,36 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_date_forma
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<IncorrectFirebaseEventNameTest>(
+  analysisRuleSuite<_IncorrectFirebaseEventNameTest>(
     'IncorrectFirebaseEventNameTest',
-    IncorrectFirebaseEventNameTest.new,
-    {
-      'test_invalidLiteralName_lint': (t) => t._invalidLiteralNameLint(),
-      'test_positionalInvalidLiteralName_lint': (t) => t._positionalInvalidLiteralNameLint(),
-      'test_reservedLiteralName_lint': (t) => t._reservedLiteralNameLint(),
-      'test_validLiteralName_noLint': (t) => t._validLiteralNameNoLint(),
-      'test_nonLiteralName_noLint': (t) => t._nonLiteralNameNoLint(),
-    },
+    _IncorrectFirebaseEventNameTest.new,
+    _IncorrectFirebaseEventNameTest._allCases,
   );
-  analysisRuleSuite<IncorrectFirebaseParameterNameTest>(
+  analysisRuleSuite<_IncorrectFirebaseParameterNameTest>(
     'IncorrectFirebaseParameterNameTest',
-    IncorrectFirebaseParameterNameTest.new,
-    {
-      'test_invalidLiteralParameterName_lint': (t) => t._invalidLiteralParameterNameLint(),
-      'test_reservedLiteralParameterName_lint': (t) => t._reservedLiteralParameterNameLint(),
-      'test_validLiteralParameterNames_noLint': (t) => t._validLiteralParameterNamesNoLint(),
-      'test_nonLiteralParameters_noLint': (t) => t._nonLiteralParametersNoLint(),
-    },
+    _IncorrectFirebaseParameterNameTest.new,
+    _IncorrectFirebaseParameterNameTest._allCases,
   );
-  analysisRuleSuite<PreferDateFormatTest>('PreferDateFormatTest', PreferDateFormatTest.new, {
-    'test_textDateTimeToString_lint': (t) => t._textDateTimeToStringLint(),
-    'test_textInterpolationDateTimeToString_lint': (t) =>
-        t._textInterpolationDateTimeToStringLint(),
-    'test_textSpanDateTimeToString_lint': (t) => t._textSpanDateTimeToStringLint(),
-    'test_logDateTimeToString_noLint': (t) => t._logDateTimeToStringNoLint(),
-    'test_textNonDateTimeToString_noLint': (t) => t._textNonDateTimeToStringNoLint(),
-  });
+  analysisRuleSuite<_PreferDateFormatTest>(
+    'PreferDateFormatTest',
+    _PreferDateFormatTest.new,
+    _PreferDateFormatTest._allCases,
+  );
 }
 
-final class IncorrectFirebaseEventNameTest extends AnalysisRuleTest {
+final class _IncorrectFirebaseEventNameTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_IncorrectFirebaseEventNameTest)> get _allCases =>
+      caseSet<_IncorrectFirebaseEventNameTest>(
+        parent: const {},
+        own: {
+          'test_invalidLiteralName_lint': (t) => t._invalidLiteralNameLint(),
+          'test_positionalInvalidLiteralName_lint': (t) => t._positionalInvalidLiteralNameLint(),
+          'test_reservedLiteralName_lint': (t) => t._reservedLiteralNameLint(),
+          'test_validLiteralName_noLint': (t) => t._validLiteralNameNoLint(),
+          'test_nonLiteralName_noLint': (t) => t._nonLiteralNameNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = IncorrectFirebaseEventName();
@@ -115,7 +113,18 @@ void f(Analytics analytics, String eventName) {
   }
 }
 
-final class IncorrectFirebaseParameterNameTest extends AnalysisRuleTest {
+final class _IncorrectFirebaseParameterNameTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_IncorrectFirebaseParameterNameTest)> get _allCases =>
+      caseSet<_IncorrectFirebaseParameterNameTest>(
+        parent: const {},
+        own: {
+          'test_invalidLiteralParameterName_lint': (t) => t._invalidLiteralParameterNameLint(),
+          'test_reservedLiteralParameterName_lint': (t) => t._reservedLiteralParameterNameLint(),
+          'test_validLiteralParameterNames_noLint': (t) => t._validLiteralParameterNamesNoLint(),
+          'test_nonLiteralParameters_noLint': (t) => t._nonLiteralParametersNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = IncorrectFirebaseParameterName();
@@ -184,7 +193,20 @@ void f(Analytics analytics, Map<String, Object?> params) {
   }
 }
 
-final class PreferDateFormatTest extends AnalysisRuleTest {
+final class _PreferDateFormatTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferDateFormatTest)> get _allCases =>
+      caseSet<_PreferDateFormatTest>(
+        parent: const {},
+        own: {
+          'test_textDateTimeToString_lint': (t) => t._textDateTimeToStringLint(),
+          'test_textInterpolationDateTimeToString_lint': (t) =>
+              t._textInterpolationDateTimeToStringLint(),
+          'test_textSpanDateTimeToString_lint': (t) => t._textSpanDateTimeToStringLint(),
+          'test_logDateTimeToString_noLint': (t) => t._logDateTimeToStringNoLint(),
+          'test_textNonDateTimeToString_noLint': (t) => t._textNonDateTimeToStringNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferDateFormat();

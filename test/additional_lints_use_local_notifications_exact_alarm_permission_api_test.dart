@@ -4,10 +4,18 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/use_local_notific
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<UseLocalNotificationsExactAlarmPermissionApiTest>(
+  analysisRuleSuite<_UseLocalNotificationsExactAlarmPermissionApiTest>(
     'UseLocalNotificationsExactAlarmPermissionApiTest',
-    UseLocalNotificationsExactAlarmPermissionApiTest.new,
-    {
+    _UseLocalNotificationsExactAlarmPermissionApiTest.new,
+    _UseLocalNotificationsExactAlarmPermissionApiTest._allCases,
+  );
+}
+
+class _UseLocalNotificationsExactAlarmPermissionApiTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_UseLocalNotificationsExactAlarmPermissionApiTest)>
+  get _allCases => caseSet<_UseLocalNotificationsExactAlarmPermissionApiTest>(
+    parent: const {},
+    own: {
       'test_androidIntentExactAlarmSettingsAction_lint': (t) =>
           t._androidIntentExactAlarmSettingsActionLint(),
       'test_androidIntentOtherSettingsAction_noLint': (t) =>
@@ -17,9 +25,7 @@ void main() {
           t._exactAlarmSettingsStringWithoutAndroidIntentNoLint(),
     },
   );
-}
 
-class UseLocalNotificationsExactAlarmPermissionApiTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = UseLocalNotificationsExactAlarmPermissionApi();

@@ -6,53 +6,35 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_cond
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidNestedConditionalExpressionsTest>(
+  analysisRuleSuite<_AvoidNestedConditionalExpressionsTest>(
     'AvoidNestedConditionalExpressionsTest',
-    AvoidNestedConditionalExpressionsTest.new,
-    {
-      'test_thenBranchNestedConditional_lint': (t) => t._thenBranchNestedConditionalLint(),
-      'test_elseBranchNestedConditional_lint': (t) => t._elseBranchNestedConditionalLint(),
-      'test_separateConditionalExpressions_noLint': (t) =>
-          t._separateConditionalExpressionsNoLint(),
-    },
+    _AvoidNestedConditionalExpressionsTest.new,
+    _AvoidNestedConditionalExpressionsTest._allCases,
   );
-  analysisRuleSuite<AvoidIfWithManyBranchesTest>(
+  analysisRuleSuite<_AvoidIfWithManyBranchesTest>(
     'AvoidIfWithManyBranchesTest',
-    AvoidIfWithManyBranchesTest.new,
-    {
-      'test_fourBranches_lint_maxThreeBranches': (t) => t._fourBranchesLintMaxThreeBranches(),
-      'test_threeBranches_noLint_maxThreeBranches': (t) => t._threeBranchesNoLintMaxThreeBranches(),
-      'test_nestedSeparateIfChains_noLint': (t) => t._nestedSeparateIfChainsNoLint(),
-    },
+    _AvoidIfWithManyBranchesTest.new,
+    _AvoidIfWithManyBranchesTest._allCases,
   );
-  analysisRuleSuite<AvoidLongParameterListTest>(
+  analysisRuleSuite<_AvoidLongParameterListTest>(
     'AvoidLongParameterListTest',
-    AvoidLongParameterListTest.new,
-    {
-      'test_fiveFunctionParameters_lint_maxFourParameters': (t) =>
-          t._fiveFunctionParametersLintMaxFourParameters(),
-      'test_optionalNamedParametersNotCounted_noLint': (t) =>
-          t._optionalNamedParametersNotCountedNoLint(),
-      'test_fiveRequiredNamedAndPositionalParameters_lint': (t) =>
-          t._fiveRequiredNamedAndPositionalParametersLint(),
-      'test_fivePositionalWithOptionalPositionalParameters_lint': (t) =>
-          t._fivePositionalWithOptionalPositionalParametersLint(),
-      'test_fourFunctionParameters_noLint_maxFourParameters': (t) =>
-          t._fourFunctionParametersNoLintMaxFourParameters(),
-      'test_overrideMethodParameters_lintsBaseOnly': (t) =>
-          t._overrideMethodParametersLintsBaseOnly(),
-      'test_zoneSpecificationHandleUncaughtErrorCallback_noLint': (t) =>
-          t._zoneSpecificationHandleUncaughtErrorCallbackNoLint(),
-      'test_fiveConstructorParameters_lint_maxFourParameters': (t) =>
-          t._fiveConstructorParametersLintMaxFourParameters(),
-      'test_widgetConstructorParameters_noLint': (t) => t._widgetConstructorParametersNoLint(),
-      'test_freezedFactoryConstructorParameters_noLint': (t) =>
-          t._freezedFactoryConstructorParametersNoLint(),
-    },
+    _AvoidLongParameterListTest.new,
+    _AvoidLongParameterListTest._allCases,
   );
 }
 
-final class AvoidNestedConditionalExpressionsTest extends AnalysisRuleTest {
+final class _AvoidNestedConditionalExpressionsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNestedConditionalExpressionsTest)> get _allCases =>
+      caseSet<_AvoidNestedConditionalExpressionsTest>(
+        parent: const {},
+        own: {
+          'test_thenBranchNestedConditional_lint': (t) => t._thenBranchNestedConditionalLint(),
+          'test_elseBranchNestedConditional_lint': (t) => t._elseBranchNestedConditionalLint(),
+          'test_separateConditionalExpressions_noLint': (t) =>
+              t._separateConditionalExpressionsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNestedConditionalExpressions();
@@ -94,7 +76,18 @@ int choose(bool first, bool second) {
   }
 }
 
-final class AvoidIfWithManyBranchesTest extends AnalysisRuleTest {
+final class _AvoidIfWithManyBranchesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidIfWithManyBranchesTest)> get _allCases =>
+      caseSet<_AvoidIfWithManyBranchesTest>(
+        parent: const {},
+        own: {
+          'test_fourBranches_lint_maxThreeBranches': (t) => t._fourBranchesLintMaxThreeBranches(),
+          'test_threeBranches_noLint_maxThreeBranches': (t) =>
+              t._threeBranchesNoLintMaxThreeBranches(),
+          'test_nestedSeparateIfChains_noLint': (t) => t._nestedSeparateIfChainsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidIfWithManyBranches();
@@ -150,7 +143,33 @@ String label(int value, bool verbose) {
   }
 }
 
-final class AvoidLongParameterListTest extends AnalysisRuleTest {
+final class _AvoidLongParameterListTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidLongParameterListTest)> get _allCases =>
+      caseSet<_AvoidLongParameterListTest>(
+        parent: const {},
+        own: {
+          'test_fiveFunctionParameters_lint_maxFourParameters': (t) =>
+              t._fiveFunctionParametersLintMaxFourParameters(),
+          'test_optionalNamedParametersNotCounted_noLint': (t) =>
+              t._optionalNamedParametersNotCountedNoLint(),
+          'test_fiveRequiredNamedAndPositionalParameters_lint': (t) =>
+              t._fiveRequiredNamedAndPositionalParametersLint(),
+          'test_fivePositionalWithOptionalPositionalParameters_lint': (t) =>
+              t._fivePositionalWithOptionalPositionalParametersLint(),
+          'test_fourFunctionParameters_noLint_maxFourParameters': (t) =>
+              t._fourFunctionParametersNoLintMaxFourParameters(),
+          'test_overrideMethodParameters_lintsBaseOnly': (t) =>
+              t._overrideMethodParametersLintsBaseOnly(),
+          'test_zoneSpecificationHandleUncaughtErrorCallback_noLint': (t) =>
+              t._zoneSpecificationHandleUncaughtErrorCallbackNoLint(),
+          'test_fiveConstructorParameters_lint_maxFourParameters': (t) =>
+              t._fiveConstructorParametersLintMaxFourParameters(),
+          'test_widgetConstructorParameters_noLint': (t) => t._widgetConstructorParametersNoLint(),
+          'test_freezedFactoryConstructorParameters_noLint': (t) =>
+              t._freezedFactoryConstructorParametersNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     _addFlutterPackage();

@@ -13,75 +13,51 @@ import 'analysis_rule_suite.dart';
 part 'extended_source_rules_test/extended_source_rules_part_01.dart';
 
 void main() {
-  analysisRuleSuite<ArchModelMissingToEntityTest>(
+  analysisRuleSuite<_ArchModelMissingToEntityTest>(
     'ArchModelMissingToEntityTest',
-    ArchModelMissingToEntityTest.new,
-    {
-      'test_allowsMapperExtensionInDataMappers': (t) => t._allowsMapperExtensionInDataMappers(),
-      'test_reportsMapperExtensionOnAnotherModel': (t) => t._reportsMapperExtensionOnAnotherModel(),
-      'test_allowsToDomainMapper': (t) => t._allowsToDomainMapper(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ArchModelMissingToEntityTest.new,
+    _ArchModelMissingToEntityTest._allCases,
   );
-  analysisRuleSuite<ArchRepositoryInlineEntityMappingTest>(
+  analysisRuleSuite<_ArchRepositoryInlineEntityMappingTest>(
     'ArchRepositoryInlineEntityMappingTest',
-    ArchRepositoryInlineEntityMappingTest.new,
-    {
-      'test_allowsToEntityAndEntitiesBuiltFromDomainInputs': (t) =>
-          t._allowsToEntityAndEntitiesBuiltFromDomainInputs(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ArchRepositoryInlineEntityMappingTest.new,
+    _ArchRepositoryInlineEntityMappingTest._allCases,
   );
-  analysisRuleSuite<ArchModelExtendsEntityTest>(
+  analysisRuleSuite<_ArchModelExtendsEntityTest>(
     'ArchModelExtendsEntityTest',
-    ArchModelExtendsEntityTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _ArchModelExtendsEntityTest.new,
+    _ArchModelExtendsEntityTest._allCases,
   );
-  analysisRuleSuite<ArchDomainJsonAnnotationTest>(
+  analysisRuleSuite<_ArchDomainJsonAnnotationTest>(
     'ArchDomainJsonAnnotationTest',
-    ArchDomainJsonAnnotationTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _ArchDomainJsonAnnotationTest.new,
+    _ArchDomainJsonAnnotationTest._allCases,
   );
-  analysisRuleSuite<FreezedMissingPrivateConstructorTest>(
+  analysisRuleSuite<_FreezedMissingPrivateConstructorTest>(
     'FreezedMissingPrivateConstructorTest',
-    FreezedMissingPrivateConstructorTest.new,
-    {
-      'test_factoryObjectPatternDoesNotRequirePrivateConstructor': (t) =>
-          t._factoryObjectPatternDoesNotRequirePrivateConstructor(),
-      'test_staticHelpersDoNotRequirePrivateConstructor': (t) =>
-          t._staticHelpersDoNotRequirePrivateConstructor(),
-      'test_customBlockGetterRequiresPrivateConstructor': (t) =>
-          t._customBlockGetterRequiresPrivateConstructor(),
-      'test_privateConstructorSupportsCustomMethod': (t) =>
-          t._privateConstructorSupportsCustomMethod(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _FreezedMissingPrivateConstructorTest.new,
+    _FreezedMissingPrivateConstructorTest._allCases,
   );
-  analysisRuleSuite<RouterImpureRedirectTest>(
+  analysisRuleSuite<_RouterImpureRedirectTest>(
     'RouterImpureRedirectTest',
-    RouterImpureRedirectTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _RouterImpureRedirectTest.new,
+    _RouterImpureRedirectTest._allCases,
   );
-  analysisRuleSuite<RouterShellTabPushTest>('RouterShellTabPushTest', RouterShellTabPushTest.new, {
-    'test_reportsInlineTabCallbackPush': (t) => t._reportsInlineTabCallbackPush(),
-    'test_reportsPushInMethodReferencedByTabCallback': (t) =>
-        t._reportsPushInMethodReferencedByTabCallback(),
-    'test_reportsTypedGoInBottomNavigationTap': (t) => t._reportsTypedGoInBottomNavigationTap(),
-    'test_reportsMixedTabCallbackOnce': (t) => t._reportsMixedTabCallbackOnce(),
-    'test_allowsSkillGoBranchTearOff': (t) => t._allowsSkillGoBranchTearOff(),
-    'test_allowsNonTabPushInShellClass': (t) => t._allowsNonTabPushInShellClass(),
-    'test_allowsTabPushWithoutShell': (t) => t._allowsTabPushWithoutShell(),
-    'test_allowsStandaloneRoutePushInFileWithShellRoute': (t) =>
-        t._allowsStandaloneRoutePushInFileWithShellRoute(),
-    'test_allowsRoutePushInSiblingCallbackWhenMethodUsesShell': (t) =>
-        t._allowsRoutePushInSiblingCallbackWhenMethodUsesShell(),
-    'test_allowsTypedGoFallbackWhenShellMissing': (t) => t._allowsTypedGoFallbackWhenShellMissing(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
+  analysisRuleSuite<_RouterShellTabPushTest>(
+    'RouterShellTabPushTest',
+    _RouterShellTabPushTest.new,
+    _RouterShellTabPushTest._allCases,
+  );
   _defineExtendedSourceRulesPart01Tests();
 }
 
 abstract class _ExtendedSourceRuleTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_ExtendedSourceRuleTest)> get _allCases =>
+      caseSet<_ExtendedSourceRuleTest>(
+        parent: const {},
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   List<ScannerRule> get rules;
   String get ruleName;
   String get source;
@@ -175,7 +151,18 @@ abstract class _ArchitectureExtendedRuleTest extends _ExtendedSourceRuleTest {
   List<ScannerRule> get rules => architectureExtendedSourceRules;
 }
 
-final class ArchModelMissingToEntityTest extends _ArchitectureExtendedRuleTest {
+final class _ArchModelMissingToEntityTest extends _ArchitectureExtendedRuleTest {
+  static Map<String, Future<void> Function(_ArchModelMissingToEntityTest)> get _allCases =>
+      caseSet<_ArchModelMissingToEntityTest>(
+        parent: _ExtendedSourceRuleTest._allCases,
+        own: {
+          'test_allowsMapperExtensionInDataMappers': (t) => t._allowsMapperExtensionInDataMappers(),
+          'test_reportsMapperExtensionOnAnotherModel': (t) =>
+              t._reportsMapperExtensionOnAnotherModel(),
+          'test_allowsToDomainMapper': (t) => t._allowsToDomainMapper(),
+        },
+      );
+
   @override
   String get ruleName => 'arch_model_missing_to_entity';
   @override
@@ -242,7 +229,16 @@ final class OrderModel {
   }
 }
 
-final class ArchRepositoryInlineEntityMappingTest extends _ArchitectureExtendedRuleTest {
+final class _ArchRepositoryInlineEntityMappingTest extends _ArchitectureExtendedRuleTest {
+  static Map<String, Future<void> Function(_ArchRepositoryInlineEntityMappingTest)> get _allCases =>
+      caseSet<_ArchRepositoryInlineEntityMappingTest>(
+        parent: _ExtendedSourceRuleTest._allCases,
+        own: {
+          'test_allowsToEntityAndEntitiesBuiltFromDomainInputs': (t) =>
+              t._allowsToEntityAndEntitiesBuiltFromDomainInputs(),
+        },
+      );
+
   @override
   String get ruleName => 'arch_repository_inline_entity_mapping';
   @override
@@ -312,7 +308,10 @@ final class ProductRepository {
   }
 }
 
-final class ArchModelExtendsEntityTest extends _ArchitectureExtendedRuleTest {
+final class _ArchModelExtendsEntityTest extends _ArchitectureExtendedRuleTest {
+  static Map<String, Future<void> Function(_ArchModelExtendsEntityTest)> get _allCases =>
+      caseSet<_ArchModelExtendsEntityTest>(parent: _ExtendedSourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'arch_model_extends_entity';
   @override
@@ -323,7 +322,10 @@ final class ArchModelExtendsEntityTest extends _ArchitectureExtendedRuleTest {
   String get needle => 'extends Item';
 }
 
-final class ArchDomainJsonAnnotationTest extends _ArchitectureExtendedRuleTest {
+final class _ArchDomainJsonAnnotationTest extends _ArchitectureExtendedRuleTest {
+  static Map<String, Future<void> Function(_ArchDomainJsonAnnotationTest)> get _allCases =>
+      caseSet<_ArchDomainJsonAnnotationTest>(parent: _ExtendedSourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'arch_domain_json_annotation';
   @override
@@ -347,7 +349,22 @@ abstract class _FreezedExtendedRuleTest extends _ExtendedSourceRuleTest {
   List<ScannerRule> get rules => freezedExtendedSourceRules;
 }
 
-final class FreezedMissingPrivateConstructorTest extends _FreezedExtendedRuleTest {
+final class _FreezedMissingPrivateConstructorTest extends _FreezedExtendedRuleTest {
+  static Map<String, Future<void> Function(_FreezedMissingPrivateConstructorTest)> get _allCases =>
+      caseSet<_FreezedMissingPrivateConstructorTest>(
+        parent: _ExtendedSourceRuleTest._allCases,
+        own: {
+          'test_factoryObjectPatternDoesNotRequirePrivateConstructor': (t) =>
+              t._factoryObjectPatternDoesNotRequirePrivateConstructor(),
+          'test_staticHelpersDoNotRequirePrivateConstructor': (t) =>
+              t._staticHelpersDoNotRequirePrivateConstructor(),
+          'test_customBlockGetterRequiresPrivateConstructor': (t) =>
+              t._customBlockGetterRequiresPrivateConstructor(),
+          'test_privateConstructorSupportsCustomMethod': (t) =>
+              t._privateConstructorSupportsCustomMethod(),
+        },
+      );
+
   @override
   String get ruleName => 'freezed_missing_private_constructor';
   @override
@@ -417,7 +434,10 @@ abstract class _RouterExtendedRuleTest extends _ExtendedSourceRuleTest {
   List<ScannerRule> get rules => routerExtendedSourceRules;
 }
 
-final class RouterImpureRedirectTest extends _RouterExtendedRuleTest {
+final class _RouterImpureRedirectTest extends _RouterExtendedRuleTest {
+  static Map<String, Future<void> Function(_RouterImpureRedirectTest)> get _allCases =>
+      caseSet<_RouterImpureRedirectTest>(parent: _ExtendedSourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'router_impure_redirect';
   @override
@@ -433,7 +453,29 @@ final router = GoRouter(
   String get needle => 'redirect:';
 }
 
-final class RouterShellTabPushTest extends _RouterExtendedRuleTest {
+final class _RouterShellTabPushTest extends _RouterExtendedRuleTest {
+  static Map<String, Future<void> Function(_RouterShellTabPushTest)> get _allCases =>
+      caseSet<_RouterShellTabPushTest>(
+        parent: _ExtendedSourceRuleTest._allCases,
+        own: {
+          'test_reportsInlineTabCallbackPush': (t) => t._reportsInlineTabCallbackPush(),
+          'test_reportsPushInMethodReferencedByTabCallback': (t) =>
+              t._reportsPushInMethodReferencedByTabCallback(),
+          'test_reportsTypedGoInBottomNavigationTap': (t) =>
+              t._reportsTypedGoInBottomNavigationTap(),
+          'test_reportsMixedTabCallbackOnce': (t) => t._reportsMixedTabCallbackOnce(),
+          'test_allowsSkillGoBranchTearOff': (t) => t._allowsSkillGoBranchTearOff(),
+          'test_allowsNonTabPushInShellClass': (t) => t._allowsNonTabPushInShellClass(),
+          'test_allowsTabPushWithoutShell': (t) => t._allowsTabPushWithoutShell(),
+          'test_allowsStandaloneRoutePushInFileWithShellRoute': (t) =>
+              t._allowsStandaloneRoutePushInFileWithShellRoute(),
+          'test_allowsRoutePushInSiblingCallbackWhenMethodUsesShell': (t) =>
+              t._allowsRoutePushInSiblingCallbackWhenMethodUsesShell(),
+          'test_allowsTypedGoFallbackWhenShellMissing': (t) =>
+              t._allowsTypedGoFallbackWhenShellMissing(),
+        },
+      );
+
   @override
   String get ruleName => 'router_shell_tab_push';
   @override

@@ -11,93 +11,58 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidUnusedAssignmentTest>(
+  analysisRuleSuite<_AvoidUnusedAssignmentTest>(
     'AvoidUnusedAssignmentTest',
-    AvoidUnusedAssignmentTest.new,
-    {
-      'test_assignedTwiceBeforeRead_lint': (t) => t._assignedTwiceBeforeReadLint(),
-      'test_readBetweenAssignments_noLint': (t) => t._readBetweenAssignmentsNoLint(),
-      'test_registeredInlineCallbackReadsAcrossAwaits_noLint': (t) =>
-          t._registeredInlineCallbackReadsAcrossAwaitsNoLint(),
-      'test_callbackCaptureStillRequiresExecution_lint': (t) =>
-          t._callbackCaptureStillRequiresExecutionLint(),
-      'test_storedClosureReadsValue_noLint': (t) => t._storedClosureReadsValueNoLint(),
-      'test_escapedClosureDoesNotHideAdjacentOverwrite_lint': (t) =>
-          t._escapedClosureDoesNotHideAdjacentOverwriteLint(),
-      'test_shadowedCallbackReadDoesNotConsumeOuter_lint': (t) =>
-          t._shadowedCallbackReadDoesNotConsumeOuterLint(),
-      'test_shadowedVariable_noLint': (t) => t._shadowedVariableNoLint(),
-    },
+    _AvoidUnusedAssignmentTest.new,
+    _AvoidUnusedAssignmentTest._allCases,
   );
-  analysisRuleSuite<AvoidParameterAliasesTest>(
+  analysisRuleSuite<_AvoidParameterAliasesTest>(
     'AvoidParameterAliasesTest',
-    AvoidParameterAliasesTest.new,
-    {
-      'test_directParameterAlias_lint': (t) => t._directParameterAliasLint(),
-      'test_finalParameterAlias_lint': (t) => t._finalParameterAliasLint(),
-      'test_derivedFromParameter_noLint': (t) => t._derivedFromParameterNoLint(),
-      'test_forLoopCursor_noLint': (t) => t._forLoopCursorNoLint(),
-      'test_localAliasOfLocal_lint': (t) => t._localAliasOfLocalLint(),
-      'test_reassignedAlias_lint': (t) => t._reassignedAliasLint(),
-      'test_reassignedAdjustedBoundsAliases_lint': (t) => t._reassignedAdjustedBoundsAliasesLint(),
-      'test_topLevelValueAlias_noLint': (t) => t._topLevelValueAliasNoLint(),
-      'test_parenthesizedParameterAlias_lint': (t) => t._parenthesizedParameterAliasLint(),
-    },
+    _AvoidParameterAliasesTest.new,
+    _AvoidParameterAliasesTest._allCases,
   );
-  analysisRuleSuite<AvoidRepeatedPropertyAliasesTest>(
+  analysisRuleSuite<_AvoidRepeatedPropertyAliasesTest>(
     'AvoidRepeatedPropertyAliasesTest',
-    AvoidRepeatedPropertyAliasesTest.new,
-    {
-      'test_threeAliasesFromSameReceiver_lint': (t) => t._threeAliasesFromSameReceiverLint(),
-      'test_twoAliases_noLint': (t) => t._twoAliasesNoLint(),
-      'test_useSourceObjectDirectly_noLint': (t) => t._useSourceObjectDirectlyNoLint(),
-      'test_namedRecordProjection_noLint': (t) => t._namedRecordProjectionNoLint(),
-      'test_l10nAliases_noLint': (t) => t._l10nAliasesNoLint(),
-    },
+    _AvoidRepeatedPropertyAliasesTest.new,
+    _AvoidRepeatedPropertyAliasesTest._allCases,
   );
-  analysisRuleSuite<AvoidUnassignedLocalVariableTest>(
+  analysisRuleSuite<_AvoidUnassignedLocalVariableTest>(
     'AvoidUnassignedLocalVariableTest',
-    AvoidUnassignedLocalVariableTest.new,
-    {
-      'test_readBeforeAssignment_lint': (t) => t._readBeforeAssignmentLint(),
-      'test_assignmentBeforeRead_noLint': (t) => t._assignmentBeforeReadNoLint(),
-      'test_nullableDefaultIsInitialized_noLint': (t) => t._nullableDefaultIsInitializedNoLint(),
-      'test_lateNullableStillNeedsAssignment_lint': (t) =>
-          t._lateNullableStillNeedsAssignmentLint(),
-      'test_finalNullableStillNeedsAssignment_lint': (t) =>
-          t._finalNullableStillNeedsAssignmentLint(),
-      'test_initializerMakesVariableAssigned_noLint': (t) =>
-          t._initializerMakesVariableAssignedNoLint(),
-      'test_severity_info': (t) => t._severityInfo(),
-    },
+    _AvoidUnassignedLocalVariableTest.new,
+    _AvoidUnassignedLocalVariableTest._allCases,
   );
-  analysisRuleSuite<AvoidUnusedLocalVariableTest>(
+  analysisRuleSuite<_AvoidUnusedLocalVariableTest>(
     'AvoidUnusedLocalVariableTest',
-    AvoidUnusedLocalVariableTest.new,
-    {
-      'test_neverRead_lint': (t) => t._neverReadLint(),
-      'test_readInNestedBlock_noLint': (t) => t._readInNestedBlockNoLint(),
-      'test_readInClosure_noLint': (t) => t._readInClosureNoLint(),
-      'test_readInLocalFunction_noLint': (t) => t._readInLocalFunctionNoLint(),
-      'test_wildcardLikeName_noLint': (t) => t._wildcardLikeNameNoLint(),
-    },
+    _AvoidUnusedLocalVariableTest.new,
+    _AvoidUnusedLocalVariableTest._allCases,
   );
-  analysisRuleSuite<PreferTypeOverVarTest>('PreferTypeOverVarTest', PreferTypeOverVarTest.new, {
-    'test_localVar_lint': (t) => t._localVarLint(),
-    'test_forLoopVar_lint': (t) => t._forLoopVarLint(),
-    'test_fieldVar_lint': (t) => t._fieldVarLint(),
-    'test_patternDeclarationVar_lint': (t) => t._patternDeclarationVarLint(),
-    'test_casePatternVar_lint': (t) => t._casePatternVarLint(),
-    'test_topLevelVar_lint': (t) => t._topLevelVarLint(),
-    'test_forInLoopVar_lint': (t) => t._forInLoopVarLint(),
-    'test_awaitForLoopVar_lint': (t) => t._awaitForLoopVarLint(),
-    'test_forInPatternVar_lint': (t) => t._forInPatternVarLint(),
-    'test_inferredFinal_noLint': (t) => t._inferredFinalNoLint(),
-    'test_explicitType_noLint': (t) => t._explicitTypeNoLint(),
-  });
+  analysisRuleSuite<_PreferTypeOverVarTest>(
+    'PreferTypeOverVarTest',
+    _PreferTypeOverVarTest.new,
+    _PreferTypeOverVarTest._allCases,
+  );
 }
 
-final class AvoidUnusedAssignmentTest extends AnalysisRuleTest {
+final class _AvoidUnusedAssignmentTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnusedAssignmentTest)> get _allCases =>
+      caseSet<_AvoidUnusedAssignmentTest>(
+        parent: const {},
+        own: {
+          'test_assignedTwiceBeforeRead_lint': (t) => t._assignedTwiceBeforeReadLint(),
+          'test_readBetweenAssignments_noLint': (t) => t._readBetweenAssignmentsNoLint(),
+          'test_registeredInlineCallbackReadsAcrossAwaits_noLint': (t) =>
+              t._registeredInlineCallbackReadsAcrossAwaitsNoLint(),
+          'test_callbackCaptureStillRequiresExecution_lint': (t) =>
+              t._callbackCaptureStillRequiresExecutionLint(),
+          'test_storedClosureReadsValue_noLint': (t) => t._storedClosureReadsValueNoLint(),
+          'test_escapedClosureDoesNotHideAdjacentOverwrite_lint': (t) =>
+              t._escapedClosureDoesNotHideAdjacentOverwriteLint(),
+          'test_shadowedCallbackReadDoesNotConsumeOuter_lint': (t) =>
+              t._shadowedCallbackReadDoesNotConsumeOuterLint(),
+          'test_shadowedVariable_noLint': (t) => t._shadowedVariableNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnusedAssignment();
@@ -242,7 +207,19 @@ void f() {
   }
 }
 
-final class AvoidRepeatedPropertyAliasesTest extends AnalysisRuleTest {
+final class _AvoidRepeatedPropertyAliasesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidRepeatedPropertyAliasesTest)> get _allCases =>
+      caseSet<_AvoidRepeatedPropertyAliasesTest>(
+        parent: const {},
+        own: {
+          'test_threeAliasesFromSameReceiver_lint': (t) => t._threeAliasesFromSameReceiverLint(),
+          'test_twoAliases_noLint': (t) => t._twoAliasesNoLint(),
+          'test_useSourceObjectDirectly_noLint': (t) => t._useSourceObjectDirectlyNoLint(),
+          'test_namedRecordProjection_noLint': (t) => t._namedRecordProjectionNoLint(),
+          'test_l10nAliases_noLint': (t) => t._l10nAliasesNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidRepeatedPropertyAliases();
@@ -338,7 +315,24 @@ void f(AppLocalizations l10n) {
   }
 }
 
-final class AvoidParameterAliasesTest extends AnalysisRuleTest {
+final class _AvoidParameterAliasesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidParameterAliasesTest)> get _allCases =>
+      caseSet<_AvoidParameterAliasesTest>(
+        parent: const {},
+        own: {
+          'test_directParameterAlias_lint': (t) => t._directParameterAliasLint(),
+          'test_finalParameterAlias_lint': (t) => t._finalParameterAliasLint(),
+          'test_derivedFromParameter_noLint': (t) => t._derivedFromParameterNoLint(),
+          'test_forLoopCursor_noLint': (t) => t._forLoopCursorNoLint(),
+          'test_localAliasOfLocal_lint': (t) => t._localAliasOfLocalLint(),
+          'test_reassignedAlias_lint': (t) => t._reassignedAliasLint(),
+          'test_reassignedAdjustedBoundsAliases_lint': (t) =>
+              t._reassignedAdjustedBoundsAliasesLint(),
+          'test_topLevelValueAlias_noLint': (t) => t._topLevelValueAliasNoLint(),
+          'test_parenthesizedParameterAlias_lint': (t) => t._parenthesizedParameterAliasLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidParameterAliases();
@@ -452,7 +446,25 @@ void f(int count) {
   }
 }
 
-final class AvoidUnassignedLocalVariableTest extends AnalysisRuleTest {
+final class _AvoidUnassignedLocalVariableTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnassignedLocalVariableTest)> get _allCases =>
+      caseSet<_AvoidUnassignedLocalVariableTest>(
+        parent: const {},
+        own: {
+          'test_readBeforeAssignment_lint': (t) => t._readBeforeAssignmentLint(),
+          'test_assignmentBeforeRead_noLint': (t) => t._assignmentBeforeReadNoLint(),
+          'test_nullableDefaultIsInitialized_noLint': (t) =>
+              t._nullableDefaultIsInitializedNoLint(),
+          'test_lateNullableStillNeedsAssignment_lint': (t) =>
+              t._lateNullableStillNeedsAssignmentLint(),
+          'test_finalNullableStillNeedsAssignment_lint': (t) =>
+              t._finalNullableStillNeedsAssignmentLint(),
+          'test_initializerMakesVariableAssigned_noLint': (t) =>
+              t._initializerMakesVariableAssignedNoLint(),
+          'test_severity_info': (t) => t._severityInfo(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnassignedLocalVariable();
@@ -540,7 +552,19 @@ void f() {
   }
 }
 
-final class AvoidUnusedLocalVariableTest extends AnalysisRuleTest {
+final class _AvoidUnusedLocalVariableTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnusedLocalVariableTest)> get _allCases =>
+      caseSet<_AvoidUnusedLocalVariableTest>(
+        parent: const {},
+        own: {
+          'test_neverRead_lint': (t) => t._neverReadLint(),
+          'test_readInNestedBlock_noLint': (t) => t._readInNestedBlockNoLint(),
+          'test_readInClosure_noLint': (t) => t._readInClosureNoLint(),
+          'test_readInLocalFunction_noLint': (t) => t._readInLocalFunctionNoLint(),
+          'test_wildcardLikeName_noLint': (t) => t._wildcardLikeNameNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnusedLocalVariable();
@@ -601,7 +625,25 @@ void f() {
   }
 }
 
-final class PreferTypeOverVarTest extends AnalysisRuleTest {
+final class _PreferTypeOverVarTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferTypeOverVarTest)> get _allCases =>
+      caseSet<_PreferTypeOverVarTest>(
+        parent: const {},
+        own: {
+          'test_localVar_lint': (t) => t._localVarLint(),
+          'test_forLoopVar_lint': (t) => t._forLoopVarLint(),
+          'test_fieldVar_lint': (t) => t._fieldVarLint(),
+          'test_patternDeclarationVar_lint': (t) => t._patternDeclarationVarLint(),
+          'test_casePatternVar_lint': (t) => t._casePatternVarLint(),
+          'test_topLevelVar_lint': (t) => t._topLevelVarLint(),
+          'test_forInLoopVar_lint': (t) => t._forInLoopVarLint(),
+          'test_awaitForLoopVar_lint': (t) => t._awaitForLoopVarLint(),
+          'test_forInPatternVar_lint': (t) => t._forInPatternVarLint(),
+          'test_inferredFinal_noLint': (t) => t._inferredFinalNoLint(),
+          'test_explicitType_noLint': (t) => t._explicitTypeNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferTypeOverVar();

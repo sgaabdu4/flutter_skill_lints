@@ -8,51 +8,38 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidAnyVersionTest>('AvoidAnyVersionTest', AvoidAnyVersionTest.new, {
-    'test_allowsPinnedDependencies_noLint': (t) => t._allowsPinnedDependenciesNoLint(),
-    'test_reportsAnyInDependencies_lint': (t) => t._reportsAnyInDependenciesLint(),
-    'test_reportsQuotedAnyInDevDependencies_lint': (t) =>
-        t._reportsQuotedAnyInDevDependenciesLint(),
-    'test_allowsPathDependencyWithoutVersionAny_noLint': (t) =>
-        t._allowsPathDependencyWithoutVersionAnyNoLint(),
-    'test_usesErrorSeverity': (t) => t._usesErrorSeverity(),
-  });
-  analysisRuleSuite<AvoidDependencyOverridesTest>(
-    'AvoidDependencyOverridesTest',
-    AvoidDependencyOverridesTest.new,
-    {
-      'test_allowsNoDependencyOverrides_noLint': (t) => t._allowsNoDependencyOverridesNoLint(),
-      'test_allowsEmptyDependencyOverrides_noLint': (t) =>
-          t._allowsEmptyDependencyOverridesNoLint(),
-      'test_allowsResolvedLockfileWithoutOverride_noLint': (t) =>
-          t._allowsResolvedLockfileWithoutOverrideNoLint(),
-      'test_reportsDependencyOverrides_lint': (t) => t._reportsDependencyOverridesLint(),
-      'test_reportsInlineDependencyOverrides_lint': (t) =>
-          t._reportsInlineDependencyOverridesLint(),
-      'test_allowsEmptyPubspecOverrides_noLint': (t) => t._allowsEmptyPubspecOverridesNoLint(),
-      'test_reportsPubspecOverrides_lint': (t) => t._reportsPubspecOverridesLint(),
-      'test_reportsAuditedPubspecOverride_lint': (t) => t._reportsAuditedPubspecOverrideLint(),
-      'test_reportsWorkspaceMemberOverride_lint': (t) => t._reportsWorkspaceMemberOverrideLint(),
-      'test_reportsWorkspaceGlobMemberOverride_lint': (t) =>
-          t._reportsWorkspaceGlobMemberOverrideLint(),
-      'test_usesErrorSeverity': (t) => t._usesErrorSeverity(),
-    },
+  analysisRuleSuite<_AvoidAnyVersionTest>(
+    'AvoidAnyVersionTest',
+    _AvoidAnyVersionTest.new,
+    _AvoidAnyVersionTest._allCases,
   );
-  analysisRuleSuite<PreferPublishToNoneTest>(
+  analysisRuleSuite<_AvoidDependencyOverridesTest>(
+    'AvoidDependencyOverridesTest',
+    _AvoidDependencyOverridesTest.new,
+    _AvoidDependencyOverridesTest._allCases,
+  );
+  analysisRuleSuite<_PreferPublishToNoneTest>(
     'PreferPublishToNoneTest',
-    PreferPublishToNoneTest.new,
-    {
-      'test_allowsPublishToNone_noLint': (t) => t._allowsPublishToNoneNoLint(),
-      'test_allowsMissingPublishTo_noLint': (t) => t._allowsMissingPublishToNoLint(),
-      'test_reportsNonNonePublishTarget_lint': (t) => t._reportsNonNonePublishTargetLint(),
-      'test_reportsQuotedNonNonePublishTarget_lint': (t) =>
-          t._reportsQuotedNonNonePublishTargetLint(),
-      'test_usesInfoSeverity': (t) => t._usesInfoSeverity(),
-    },
+    _PreferPublishToNoneTest.new,
+    _PreferPublishToNoneTest._allCases,
   );
 }
 
-final class AvoidAnyVersionTest extends AnalysisRuleTest {
+final class _AvoidAnyVersionTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidAnyVersionTest)> get _allCases =>
+      caseSet<_AvoidAnyVersionTest>(
+        parent: const {},
+        own: {
+          'test_allowsPinnedDependencies_noLint': (t) => t._allowsPinnedDependenciesNoLint(),
+          'test_reportsAnyInDependencies_lint': (t) => t._reportsAnyInDependenciesLint(),
+          'test_reportsQuotedAnyInDevDependencies_lint': (t) =>
+              t._reportsQuotedAnyInDevDependenciesLint(),
+          'test_allowsPathDependencyWithoutVersionAny_noLint': (t) =>
+              t._allowsPathDependencyWithoutVersionAnyNoLint(),
+          'test_usesErrorSeverity': (t) => t._usesErrorSeverity(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidAnyVersion();
@@ -137,7 +124,30 @@ $dependencies
   }
 }
 
-final class AvoidDependencyOverridesTest extends AnalysisRuleTest {
+final class _AvoidDependencyOverridesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidDependencyOverridesTest)> get _allCases =>
+      caseSet<_AvoidDependencyOverridesTest>(
+        parent: const {},
+        own: {
+          'test_allowsNoDependencyOverrides_noLint': (t) => t._allowsNoDependencyOverridesNoLint(),
+          'test_allowsEmptyDependencyOverrides_noLint': (t) =>
+              t._allowsEmptyDependencyOverridesNoLint(),
+          'test_allowsResolvedLockfileWithoutOverride_noLint': (t) =>
+              t._allowsResolvedLockfileWithoutOverrideNoLint(),
+          'test_reportsDependencyOverrides_lint': (t) => t._reportsDependencyOverridesLint(),
+          'test_reportsInlineDependencyOverrides_lint': (t) =>
+              t._reportsInlineDependencyOverridesLint(),
+          'test_allowsEmptyPubspecOverrides_noLint': (t) => t._allowsEmptyPubspecOverridesNoLint(),
+          'test_reportsPubspecOverrides_lint': (t) => t._reportsPubspecOverridesLint(),
+          'test_reportsAuditedPubspecOverride_lint': (t) => t._reportsAuditedPubspecOverrideLint(),
+          'test_reportsWorkspaceMemberOverride_lint': (t) =>
+              t._reportsWorkspaceMemberOverrideLint(),
+          'test_reportsWorkspaceGlobMemberOverride_lint': (t) =>
+              t._reportsWorkspaceGlobMemberOverrideLint(),
+          'test_usesErrorSeverity': (t) => t._usesErrorSeverity(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidDependencyOverrides();
@@ -298,7 +308,20 @@ $overrides
   }
 }
 
-final class PreferPublishToNoneTest extends AnalysisRuleTest {
+final class _PreferPublishToNoneTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferPublishToNoneTest)> get _allCases =>
+      caseSet<_PreferPublishToNoneTest>(
+        parent: const {},
+        own: {
+          'test_allowsPublishToNone_noLint': (t) => t._allowsPublishToNoneNoLint(),
+          'test_allowsMissingPublishTo_noLint': (t) => t._allowsMissingPublishToNoLint(),
+          'test_reportsNonNonePublishTarget_lint': (t) => t._reportsNonNonePublishTargetLint(),
+          'test_reportsQuotedNonNonePublishTarget_lint': (t) =>
+              t._reportsQuotedNonNonePublishTargetLint(),
+          'test_usesInfoSeverity': (t) => t._usesInfoSeverity(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferPublishToNone();

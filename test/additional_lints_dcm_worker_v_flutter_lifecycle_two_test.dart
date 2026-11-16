@@ -6,30 +6,20 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_stateless_w
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidEmptySetstateTest>('AvoidEmptySetstateTest', AvoidEmptySetstateTest.new, {
-    'test_emptySetState_lint': (t) => t._emptySetStateLint(),
-    'test_setStateWithMutation_noLint': (t) => t._setStateWithMutationNoLint(),
-    'test_emptyCallbackOutsideState_noLint': (t) => t._emptyCallbackOutsideStateNoLint(),
-  });
-  analysisRuleSuite<AvoidInheritedWidgetInInitstateTest>(
-    'AvoidInheritedWidgetInInitstateTest',
-    AvoidInheritedWidgetInInitstateTest.new,
-    {
-      'test_dependOnInheritedWidgetInInitState_lint': (t) =>
-          t._dependOnInheritedWidgetInInitStateLint(),
-      'test_dependOnInheritedWidgetInDidChangeDependencies_noLint': (t) =>
-          t._dependOnInheritedWidgetInDidChangeDependenciesNoLint(),
-      'test_unrelatedMethodNamedContext_noLint': (t) => t._unrelatedMethodNamedContextNoLint(),
-    },
+  analysisRuleSuite<_AvoidEmptySetstateTest>(
+    'AvoidEmptySetstateTest',
+    _AvoidEmptySetstateTest.new,
+    _AvoidEmptySetstateTest._allCases,
   );
-  analysisRuleSuite<AvoidStatelessWidgetInitializedFieldsTest>(
+  analysisRuleSuite<_AvoidInheritedWidgetInInitstateTest>(
+    'AvoidInheritedWidgetInInitstateTest',
+    _AvoidInheritedWidgetInInitstateTest.new,
+    _AvoidInheritedWidgetInInitstateTest._allCases,
+  );
+  analysisRuleSuite<_AvoidStatelessWidgetInitializedFieldsTest>(
     'AvoidStatelessWidgetInitializedFieldsTest',
-    AvoidStatelessWidgetInitializedFieldsTest.new,
-    {
-      'test_initializedInstanceField_lint': (t) => t._initializedInstanceFieldLint(),
-      'test_constructorInitializedField_noLint': (t) => t._constructorInitializedFieldNoLint(),
-      'test_staticInitializedField_noLint': (t) => t._staticInitializedFieldNoLint(),
-    },
+    _AvoidStatelessWidgetInitializedFieldsTest.new,
+    _AvoidStatelessWidgetInitializedFieldsTest._allCases,
   );
 }
 
@@ -86,7 +76,17 @@ abstract class State<T extends StatefulWidget> {
   }
 }
 
-final class AvoidEmptySetstateTest extends _FlutterLifecycleRuleTest {
+final class _AvoidEmptySetstateTest extends _FlutterLifecycleRuleTest {
+  static Map<String, Future<void> Function(_AvoidEmptySetstateTest)> get _allCases =>
+      caseSet<_AvoidEmptySetstateTest>(
+        parent: const {},
+        own: {
+          'test_emptySetState_lint': (t) => t._emptySetStateLint(),
+          'test_setStateWithMutation_noLint': (t) => t._setStateWithMutationNoLint(),
+          'test_emptyCallbackOutsideState_noLint': (t) => t._emptyCallbackOutsideStateNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidEmptySetstate();
@@ -138,7 +138,19 @@ void update() {
   }
 }
 
-final class AvoidInheritedWidgetInInitstateTest extends _FlutterLifecycleRuleTest {
+final class _AvoidInheritedWidgetInInitstateTest extends _FlutterLifecycleRuleTest {
+  static Map<String, Future<void> Function(_AvoidInheritedWidgetInInitstateTest)> get _allCases =>
+      caseSet<_AvoidInheritedWidgetInInitstateTest>(
+        parent: const {},
+        own: {
+          'test_dependOnInheritedWidgetInInitState_lint': (t) =>
+              t._dependOnInheritedWidgetInInitStateLint(),
+          'test_dependOnInheritedWidgetInDidChangeDependencies_noLint': (t) =>
+              t._dependOnInheritedWidgetInDidChangeDependenciesNoLint(),
+          'test_unrelatedMethodNamedContext_noLint': (t) => t._unrelatedMethodNamedContextNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidInheritedWidgetInInitstate();
@@ -209,7 +221,17 @@ class Host {
   }
 }
 
-final class AvoidStatelessWidgetInitializedFieldsTest extends _FlutterLifecycleRuleTest {
+final class _AvoidStatelessWidgetInitializedFieldsTest extends _FlutterLifecycleRuleTest {
+  static Map<String, Future<void> Function(_AvoidStatelessWidgetInitializedFieldsTest)>
+  get _allCases => caseSet<_AvoidStatelessWidgetInitializedFieldsTest>(
+    parent: const {},
+    own: {
+      'test_initializedInstanceField_lint': (t) => t._initializedInstanceFieldLint(),
+      'test_constructorInitializedField_noLint': (t) => t._constructorInitializedFieldNoLint(),
+      'test_staticInitializedField_noLint': (t) => t._staticInitializedFieldNoLint(),
+    },
+  );
+
   @override
   void setUp() {
     rule = AvoidStatelessWidgetInitializedFields();

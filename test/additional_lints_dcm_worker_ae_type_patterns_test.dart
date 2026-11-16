@@ -5,28 +5,29 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_implicitly_
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidBottomTypeInPatternsTest>(
+  analysisRuleSuite<_AvoidBottomTypeInPatternsTest>(
     'AvoidBottomTypeInPatternsTest',
-    AvoidBottomTypeInPatternsTest.new,
-    {
-      'test_declaredVariablePattern_lint': (t) => t._declaredVariablePatternLint(),
-      'test_objectPattern_lint': (t) => t._objectPatternLint(),
-      'test_reachablePatterns_noLint': (t) => t._reachablePatternsNoLint(),
-    },
+    _AvoidBottomTypeInPatternsTest.new,
+    _AvoidBottomTypeInPatternsTest._allCases,
   );
-  analysisRuleSuite<AvoidImplicitlyNullableExtensionTypesTest>(
+  analysisRuleSuite<_AvoidImplicitlyNullableExtensionTypesTest>(
     'AvoidImplicitlyNullableExtensionTypesTest',
-    AvoidImplicitlyNullableExtensionTypesTest.new,
-    {
-      'test_unconstrainedRepresentationTypeParameter_lint': (t) =>
-          t._unconstrainedRepresentationTypeParameterLint(),
-      'test_nonNullableBound_noLint': (t) => t._nonNullableBoundNoLint(),
-      'test_concreteRepresentationType_noLint': (t) => t._concreteRepresentationTypeNoLint(),
-    },
+    _AvoidImplicitlyNullableExtensionTypesTest.new,
+    _AvoidImplicitlyNullableExtensionTypesTest._allCases,
   );
 }
 
-final class AvoidBottomTypeInPatternsTest extends AnalysisRuleTest {
+final class _AvoidBottomTypeInPatternsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidBottomTypeInPatternsTest)> get _allCases =>
+      caseSet<_AvoidBottomTypeInPatternsTest>(
+        parent: const {},
+        own: {
+          'test_declaredVariablePattern_lint': (t) => t._declaredVariablePatternLint(),
+          'test_objectPattern_lint': (t) => t._objectPatternLint(),
+          'test_reachablePatterns_noLint': (t) => t._reachablePatternsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidBottomTypeInPatterns();
@@ -66,7 +67,18 @@ String describe(Object value) => switch (value) {
   }
 }
 
-final class AvoidImplicitlyNullableExtensionTypesTest extends AnalysisRuleTest {
+final class _AvoidImplicitlyNullableExtensionTypesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidImplicitlyNullableExtensionTypesTest)>
+  get _allCases => caseSet<_AvoidImplicitlyNullableExtensionTypesTest>(
+    parent: const {},
+    own: {
+      'test_unconstrainedRepresentationTypeParameter_lint': (t) =>
+          t._unconstrainedRepresentationTypeParameterLint(),
+      'test_nonNullableBound_noLint': (t) => t._nonNullableBoundNoLint(),
+      'test_concreteRepresentationType_noLint': (t) => t._concreteRepresentationTypeNoLint(),
+    },
+  );
+
   @override
   void setUp() {
     rule = AvoidImplicitlyNullableExtensionTypes();

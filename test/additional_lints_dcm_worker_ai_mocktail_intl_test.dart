@@ -6,32 +6,35 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_intl_name.
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidImplementationInMocksTest>(
+  analysisRuleSuite<_AvoidImplementationInMocksTest>(
     'AvoidImplementationInMocksTest',
-    AvoidImplementationInMocksTest.new,
-    {
-      'test_overrideMethodInMock_lint': (t) => t._overrideMethodInMockLint(),
-      'test_overrideFieldInMock_lint': (t) => t._overrideFieldInMockLint(),
-      'test_emptyMock_noLint': (t) => t._emptyMockNoLint(),
-      'test_fakeImplementation_noLint': (t) => t._fakeImplementationNoLint(),
-    },
+    _AvoidImplementationInMocksTest.new,
+    _AvoidImplementationInMocksTest._allCases,
   );
-  analysisRuleSuite<PassMockObjectTest>('PassMockObjectTest', PassMockObjectTest.new, {
-    'test_whenTargetsRegularObject_lint': (t) => t._whenTargetsRegularObjectLint(),
-    'test_verifyTargetsRegularObject_lint': (t) => t._verifyTargetsRegularObjectLint(),
-    'test_whenTargetsMock_noLint': (t) => t._whenTargetsMockNoLint(),
-    'test_nonCallbackWhen_noLint': (t) => t._nonCallbackWhenNoLint(),
-  });
-  analysisRuleSuite<PreferIntlNameTest>('PreferIntlNameTest', PreferIntlNameTest.new, {
-    'test_fieldNameMismatch_lint': (t) => t._fieldNameMismatchLint(),
-    'test_getterNameMismatch_lint': (t) => t._getterNameMismatchLint(),
-    'test_methodNameMismatch_lint': (t) => t._methodNameMismatchLint(),
-    'test_matchingName_noLint': (t) => t._matchingNameNoLint(),
-    'test_topLevelIntl_noLint': (t) => t._topLevelIntlNoLint(),
-  });
+  analysisRuleSuite<_PassMockObjectTest>(
+    'PassMockObjectTest',
+    _PassMockObjectTest.new,
+    _PassMockObjectTest._allCases,
+  );
+  analysisRuleSuite<_PreferIntlNameTest>(
+    'PreferIntlNameTest',
+    _PreferIntlNameTest.new,
+    _PreferIntlNameTest._allCases,
+  );
 }
 
-final class AvoidImplementationInMocksTest extends AnalysisRuleTest {
+final class _AvoidImplementationInMocksTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidImplementationInMocksTest)> get _allCases =>
+      caseSet<_AvoidImplementationInMocksTest>(
+        parent: const {},
+        own: {
+          'test_overrideMethodInMock_lint': (t) => t._overrideMethodInMockLint(),
+          'test_overrideFieldInMock_lint': (t) => t._overrideFieldInMockLint(),
+          'test_emptyMock_noLint': (t) => t._emptyMockNoLint(),
+          'test_fakeImplementation_noLint': (t) => t._fakeImplementationNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidImplementationInMocks();
@@ -104,7 +107,18 @@ class FakeCat implements Cat {
   }
 }
 
-final class PassMockObjectTest extends AnalysisRuleTest {
+final class _PassMockObjectTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PassMockObjectTest)> get _allCases =>
+      caseSet<_PassMockObjectTest>(
+        parent: const {},
+        own: {
+          'test_whenTargetsRegularObject_lint': (t) => t._whenTargetsRegularObjectLint(),
+          'test_verifyTargetsRegularObject_lint': (t) => t._verifyTargetsRegularObjectLint(),
+          'test_whenTargetsMock_noLint': (t) => t._whenTargetsMockNoLint(),
+          'test_nonCallbackWhen_noLint': (t) => t._nonCallbackWhenNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PassMockObject();
@@ -193,7 +207,19 @@ void test() {
   }
 }
 
-final class PreferIntlNameTest extends AnalysisRuleTest {
+final class _PreferIntlNameTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferIntlNameTest)> get _allCases =>
+      caseSet<_PreferIntlNameTest>(
+        parent: const {},
+        own: {
+          'test_fieldNameMismatch_lint': (t) => t._fieldNameMismatchLint(),
+          'test_getterNameMismatch_lint': (t) => t._getterNameMismatchLint(),
+          'test_methodNameMismatch_lint': (t) => t._methodNameMismatchLint(),
+          'test_matchingName_noLint': (t) => t._matchingNameNoLint(),
+          'test_topLevelIntl_noLint': (t) => t._topLevelIntlNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferIntlName();

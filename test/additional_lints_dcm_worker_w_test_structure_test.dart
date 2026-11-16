@@ -11,85 +11,45 @@ import 'package:test/test.dart' show expect, lessThanOrEqualTo;
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidTopLevelMembersInTestsTest>(
+  analysisRuleSuite<_AvoidTopLevelMembersInTestsTest>(
     'AvoidTopLevelMembersInTestsTest',
-    AvoidTopLevelMembersInTestsTest.new,
-    {
-      'test_allowsMainOnly_noLint': (t) => t._allowsMainOnlyNoLint(),
-      'test_topLevelFunctionInTest_lint': (t) => t._topLevelFunctionInTestLint(),
-      'test_privateTopLevelFunctionInTest_noLint': (t) => t._privateTopLevelFunctionInTestNoLint(),
-      'test_publicTopLevelVariableInTest_lint': (t) => t._publicTopLevelVariableInTestLint(),
-      'test_privateTopLevelVariableInTest_noLint': (t) => t._privateTopLevelVariableInTestNoLint(),
-      'test_topLevelClassInTest_noLint': (t) => t._topLevelClassInTestNoLint(),
-      'test_testSupportFile_noLint': (t) => t._testSupportFileNoLint(),
-    },
+    _AvoidTopLevelMembersInTestsTest.new,
+    _AvoidTopLevelMembersInTestsTest._allCases,
   );
-  analysisRuleSuite<PreferMatchFileNameTest>(
+  analysisRuleSuite<_PreferMatchFileNameTest>(
     'PreferMatchFileNameTest',
-    PreferMatchFileNameTest.new,
-    {
-      'test_allowsDocumentedCrashFacadeFilename': (t) => t._allowsDocumentedCrashFacadeFilename(),
-      'test_reportsUnrelatedPublicTypeInCrashServiceFile': (t) =>
-          t._reportsUnrelatedPublicTypeInCrashServiceFile(),
-      'test_allowsDocumentedDateTimeHelperFilename': (t) =>
-          t._allowsDocumentedDateTimeHelperFilename(),
-      'test_reportsDifferentTypeInDateTimeHelperFilename': (t) =>
-          t._reportsDifferentTypeInDateTimeHelperFilename(),
-      'test_reportsDateTimeHelperOutsideCanonicalPath': (t) =>
-          t._reportsDateTimeHelperOutsideCanonicalPath(),
-      'test_allowsInterfacePrefixFileName': (t) => t._allowsInterfacePrefixFileName(),
-      'test_reportsInterfacePrefixFileNameForConcreteClass': (t) =>
-          t._reportsInterfacePrefixFileNameForConcreteClass(),
-      'test_matchingClassName_noLint': (t) => t._matchingClassNameNoLint(),
-      'test_matchingMixedCaseWord_noLint': (t) => t._matchingMixedCaseWordNoLint(),
-      'test_matchingInitialAcronymWord_noLint': (t) => t._matchingInitialAcronymWordNoLint(),
-      'test_mismatchedClassName_lint': (t) => t._mismatchedClassNameLint(),
-      'test_multiplePublicTypes_noLint': (t) => t._multiplePublicTypesNoLint(),
-      'test_generatedFile_noLint': (t) => t._generatedFileNoLint(),
-      'test_generatedPartDoesNotSkipFileNameLint': (t) => t._generatedPartDoesNotSkipFileNameLint(),
-      'test_manualPartLibrary_noLint': (t) => t._manualPartLibraryNoLint(),
-      'test_partFile_noLint': (t) => t._partFileNoLint(),
-      'test_extensionDeclaration_noLint': (t) => t._extensionDeclarationNoLint(),
-    },
+    _PreferMatchFileNameTest.new,
+    _PreferMatchFileNameTest._allCases,
   );
-  analysisRuleSuite<AvoidMissingTestFilesTest>(
+  analysisRuleSuite<_AvoidMissingTestFilesTest>(
     'AvoidMissingTestFilesTest',
-    AvoidMissingTestFilesTest.new,
-    {
-      'test_missingSiblingTest_lint': (t) => t._missingSiblingTestLint(),
-      'test_existingSiblingTest_noLint': (t) => t._existingSiblingTestNoLint(),
-      'test_importedByNonSiblingTest_noLint': (t) => t._importedByNonSiblingTestNoLint(),
-      'test_exportedByImportedBarrel_noLint': (t) => t._exportedByImportedBarrelNoLint(),
-      'test_importedByImportedOwner_noLint': (t) => t._importedByImportedOwnerNoLint(),
-      'test_unrelatedImportedBarrel_lint': (t) => t._unrelatedImportedBarrelLint(),
-      'test_noTestDirectory_noLint': (t) => t._noTestDirectoryNoLint(),
-      'test_generatedFile_noLint': (t) => t._generatedFileNoLint(),
-      'test_partOfFile_noLint': (t) => t._partOfFileNoLint(),
-      'test_exportOnlyBarrel_noLint': (t) => t._exportOnlyBarrelNoLint(),
-      'test_importOnlyFile_noLint': (t) => t._importOnlyFileNoLint(),
-      'test_constantsFile_noLint': (t) => t._constantsFileNoLint(),
-      'test_coreConfigSchemaFile_noLint': (t) => t._coreConfigSchemaFileNoLint(),
-      'test_nestedLibPathUsesNestedTestPath_noLint': (t) =>
-          t._nestedLibPathUsesNestedTestPathNoLint(),
-      'test_relativeImportFromNestedTest_noLint': (t) => t._relativeImportFromNestedTestNoLint(),
-      'test_importCycleBetweenLibFiles_noLint': (t) => t._importCycleBetweenLibFilesNoLint(),
-      'test_importCycleThatNeverReachesLibrary_lint': (t) =>
-          t._importCycleThatNeverReachesLibraryLint(),
-      'test_importOfOtherPackage_lint': (t) => t._importOfOtherPackageLint(),
-      'test_reachedOnlyThroughReadableLibFile_noLint': (t) =>
-          t._reachedOnlyThroughReadableLibFileNoLint(),
-      'test_behindMissingLibFile_lint': (t) => t._behindMissingLibFileLint(),
-      'test_cacheFollowsFileChanges': (t) => t._cacheFollowsFileChanges(),
-    },
+    _AvoidMissingTestFilesTest.new,
+    _AvoidMissingTestFilesTest._allCases,
   );
-  analysisRuleSuite<AvoidMissingTestFilesReadsTest>(
+  analysisRuleSuite<_AvoidMissingTestFilesReadsTest>(
     'AvoidMissingTestFilesReadsTest',
-    AvoidMissingTestFilesReadsTest.new,
-    {'test_readsEachFileFewTimes': (t) => t._readsEachFileFewTimes()},
+    _AvoidMissingTestFilesReadsTest.new,
+    _AvoidMissingTestFilesReadsTest._allCases,
   );
 }
 
-final class AvoidTopLevelMembersInTestsTest extends AnalysisRuleTest {
+final class _AvoidTopLevelMembersInTestsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidTopLevelMembersInTestsTest)> get _allCases =>
+      caseSet<_AvoidTopLevelMembersInTestsTest>(
+        parent: const {},
+        own: {
+          'test_allowsMainOnly_noLint': (t) => t._allowsMainOnlyNoLint(),
+          'test_topLevelFunctionInTest_lint': (t) => t._topLevelFunctionInTestLint(),
+          'test_privateTopLevelFunctionInTest_noLint': (t) =>
+              t._privateTopLevelFunctionInTestNoLint(),
+          'test_publicTopLevelVariableInTest_lint': (t) => t._publicTopLevelVariableInTestLint(),
+          'test_privateTopLevelVariableInTest_noLint': (t) =>
+              t._privateTopLevelVariableInTestNoLint(),
+          'test_topLevelClassInTest_noLint': (t) => t._topLevelClassInTestNoLint(),
+          'test_testSupportFile_noLint': (t) => t._testSupportFileNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidTopLevelMembersInTests();
@@ -183,7 +143,38 @@ void helper() {}
   }
 }
 
-final class PreferMatchFileNameTest extends AnalysisRuleTest {
+final class _PreferMatchFileNameTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferMatchFileNameTest)> get _allCases =>
+      caseSet<_PreferMatchFileNameTest>(
+        parent: const {},
+        own: {
+          'test_allowsDocumentedCrashFacadeFilename': (t) =>
+              t._allowsDocumentedCrashFacadeFilename(),
+          'test_reportsUnrelatedPublicTypeInCrashServiceFile': (t) =>
+              t._reportsUnrelatedPublicTypeInCrashServiceFile(),
+          'test_allowsDocumentedDateTimeHelperFilename': (t) =>
+              t._allowsDocumentedDateTimeHelperFilename(),
+          'test_reportsDifferentTypeInDateTimeHelperFilename': (t) =>
+              t._reportsDifferentTypeInDateTimeHelperFilename(),
+          'test_reportsDateTimeHelperOutsideCanonicalPath': (t) =>
+              t._reportsDateTimeHelperOutsideCanonicalPath(),
+          'test_allowsInterfacePrefixFileName': (t) => t._allowsInterfacePrefixFileName(),
+          'test_reportsInterfacePrefixFileNameForConcreteClass': (t) =>
+              t._reportsInterfacePrefixFileNameForConcreteClass(),
+          'test_matchingClassName_noLint': (t) => t._matchingClassNameNoLint(),
+          'test_matchingMixedCaseWord_noLint': (t) => t._matchingMixedCaseWordNoLint(),
+          'test_matchingInitialAcronymWord_noLint': (t) => t._matchingInitialAcronymWordNoLint(),
+          'test_mismatchedClassName_lint': (t) => t._mismatchedClassNameLint(),
+          'test_multiplePublicTypes_noLint': (t) => t._multiplePublicTypesNoLint(),
+          'test_generatedFile_noLint': (t) => t._generatedFileNoLint(),
+          'test_generatedPartDoesNotSkipFileNameLint': (t) =>
+              t._generatedPartDoesNotSkipFileNameLint(),
+          'test_manualPartLibrary_noLint': (t) => t._manualPartLibraryNoLint(),
+          'test_partFile_noLint': (t) => t._partFileNoLint(),
+          'test_extensionDeclaration_noLint': (t) => t._extensionDeclarationNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferMatchFileName();
@@ -369,7 +360,39 @@ extension DateTimeX on DateTime {}
   }
 }
 
-final class AvoidMissingTestFilesTest extends AnalysisRuleTest {
+final class _AvoidMissingTestFilesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidMissingTestFilesTest)> get _allCases =>
+      caseSet<_AvoidMissingTestFilesTest>(
+        parent: const {},
+        own: {
+          'test_missingSiblingTest_lint': (t) => t._missingSiblingTestLint(),
+          'test_existingSiblingTest_noLint': (t) => t._existingSiblingTestNoLint(),
+          'test_importedByNonSiblingTest_noLint': (t) => t._importedByNonSiblingTestNoLint(),
+          'test_exportedByImportedBarrel_noLint': (t) => t._exportedByImportedBarrelNoLint(),
+          'test_importedByImportedOwner_noLint': (t) => t._importedByImportedOwnerNoLint(),
+          'test_unrelatedImportedBarrel_lint': (t) => t._unrelatedImportedBarrelLint(),
+          'test_noTestDirectory_noLint': (t) => t._noTestDirectoryNoLint(),
+          'test_generatedFile_noLint': (t) => t._generatedFileNoLint(),
+          'test_partOfFile_noLint': (t) => t._partOfFileNoLint(),
+          'test_exportOnlyBarrel_noLint': (t) => t._exportOnlyBarrelNoLint(),
+          'test_importOnlyFile_noLint': (t) => t._importOnlyFileNoLint(),
+          'test_constantsFile_noLint': (t) => t._constantsFileNoLint(),
+          'test_coreConfigSchemaFile_noLint': (t) => t._coreConfigSchemaFileNoLint(),
+          'test_nestedLibPathUsesNestedTestPath_noLint': (t) =>
+              t._nestedLibPathUsesNestedTestPathNoLint(),
+          'test_relativeImportFromNestedTest_noLint': (t) =>
+              t._relativeImportFromNestedTestNoLint(),
+          'test_importCycleBetweenLibFiles_noLint': (t) => t._importCycleBetweenLibFilesNoLint(),
+          'test_importCycleThatNeverReachesLibrary_lint': (t) =>
+              t._importCycleThatNeverReachesLibraryLint(),
+          'test_importOfOtherPackage_lint': (t) => t._importOfOtherPackageLint(),
+          'test_reachedOnlyThroughReadableLibFile_noLint': (t) =>
+              t._reachedOnlyThroughReadableLibFileNoLint(),
+          'test_behindMissingLibFile_lint': (t) => t._behindMissingLibFileLint(),
+          'test_cacheFollowsFileChanges': (t) => t._cacheFollowsFileChanges(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidMissingTestFiles();
@@ -740,7 +763,13 @@ void main() {}
   }
 }
 
-final class AvoidMissingTestFilesReadsTest extends AnalysisRuleTest {
+final class _AvoidMissingTestFilesReadsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidMissingTestFilesReadsTest)> get _allCases =>
+      caseSet<_AvoidMissingTestFilesReadsTest>(
+        parent: const {},
+        own: {'test_readsEachFileFewTimes': (t) => t._readsEachFileFewTimes()},
+      );
+
   static const _chainLength = 30;
   static const _decoyLength = 20;
   static const _fillerTests = 40;

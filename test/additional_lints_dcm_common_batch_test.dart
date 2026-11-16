@@ -8,40 +8,45 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_local_funct
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidAdjacentStringsTest>(
+  analysisRuleSuite<_AvoidAdjacentStringsTest>(
     'AvoidAdjacentStringsTest',
-    AvoidAdjacentStringsTest.new,
-    {
-      'test_adjacentStringLiterals_lint': (t) => t._adjacentStringLiteralsLint(),
-      'test_singleStringLiteral_noLint': (t) => t._singleStringLiteralNoLint(),
-      'test_generatedLocalizationAdjacentStrings_noLint': (t) =>
-          t._generatedLocalizationAdjacentStringsNoLint(),
-    },
+    _AvoidAdjacentStringsTest.new,
+    _AvoidAdjacentStringsTest._allCases,
   );
-  analysisRuleSuite<AvoidEmptySpreadTest>('AvoidEmptySpreadTest', AvoidEmptySpreadTest.new, {
-    'test_emptyListSpread_lint': (t) => t._emptyListSpreadLint(),
-    'test_emptySetSpread_lint': (t) => t._emptySetSpreadLint(),
-    'test_nonEmptySpread_noLint': (t) => t._nonEmptySpreadNoLint(),
-  });
-  analysisRuleSuite<AvoidFutureIgnoreTest>('AvoidFutureIgnoreTest', AvoidFutureIgnoreTest.new, {
-    'test_futureIgnore_lint': (t) => t._futureIgnoreLint(),
-    'test_nonFutureIgnore_noLint': (t) => t._nonFutureIgnoreNoLint(),
-  });
-  analysisRuleSuite<AvoidLabelsTest>('AvoidLabelsTest', AvoidLabelsTest.new, {
-    'test_labeledStatement_lint': (t) => t._labeledStatementLint(),
-    'test_unlabeledLoop_noLint': (t) => t._unlabeledLoopNoLint(),
-  });
-  analysisRuleSuite<AvoidLocalFunctionsTest>(
+  analysisRuleSuite<_AvoidEmptySpreadTest>(
+    'AvoidEmptySpreadTest',
+    _AvoidEmptySpreadTest.new,
+    _AvoidEmptySpreadTest._allCases,
+  );
+  analysisRuleSuite<_AvoidFutureIgnoreTest>(
+    'AvoidFutureIgnoreTest',
+    _AvoidFutureIgnoreTest.new,
+    _AvoidFutureIgnoreTest._allCases,
+  );
+  analysisRuleSuite<_AvoidLabelsTest>(
+    'AvoidLabelsTest',
+    _AvoidLabelsTest.new,
+    _AvoidLabelsTest._allCases,
+  );
+  analysisRuleSuite<_AvoidLocalFunctionsTest>(
     'AvoidLocalFunctionsTest',
-    AvoidLocalFunctionsTest.new,
-    {
-      'test_localFunction_lint': (t) => t._localFunctionLint(),
-      'test_topLevelFunction_noLint': (t) => t._topLevelFunctionNoLint(),
-    },
+    _AvoidLocalFunctionsTest.new,
+    _AvoidLocalFunctionsTest._allCases,
   );
 }
 
-final class AvoidAdjacentStringsTest extends AnalysisRuleTest {
+final class _AvoidAdjacentStringsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidAdjacentStringsTest)> get _allCases =>
+      caseSet<_AvoidAdjacentStringsTest>(
+        parent: const {},
+        own: {
+          'test_adjacentStringLiterals_lint': (t) => t._adjacentStringLiteralsLint(),
+          'test_singleStringLiteral_noLint': (t) => t._singleStringLiteralNoLint(),
+          'test_generatedLocalizationAdjacentStrings_noLint': (t) =>
+              t._generatedLocalizationAdjacentStringsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidAdjacentStrings();
@@ -70,7 +75,17 @@ const message = 'hello world';
   }
 }
 
-final class AvoidEmptySpreadTest extends AnalysisRuleTest {
+final class _AvoidEmptySpreadTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidEmptySpreadTest)> get _allCases =>
+      caseSet<_AvoidEmptySpreadTest>(
+        parent: const {},
+        own: {
+          'test_emptyListSpread_lint': (t) => t._emptyListSpreadLint(),
+          'test_emptySetSpread_lint': (t) => t._emptySetSpreadLint(),
+          'test_nonEmptySpread_noLint': (t) => t._nonEmptySpreadNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidEmptySpread();
@@ -100,7 +115,16 @@ const values = [1, ...[2], 3];
   }
 }
 
-final class AvoidFutureIgnoreTest extends AnalysisRuleTest {
+final class _AvoidFutureIgnoreTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidFutureIgnoreTest)> get _allCases =>
+      caseSet<_AvoidFutureIgnoreTest>(
+        parent: const {},
+        own: {
+          'test_futureIgnore_lint': (t) => t._futureIgnoreLint(),
+          'test_nonFutureIgnore_noLint': (t) => t._nonFutureIgnoreNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidFutureIgnore();
@@ -136,7 +160,16 @@ void f(Task task) {
   }
 }
 
-final class AvoidLabelsTest extends AnalysisRuleTest {
+final class _AvoidLabelsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidLabelsTest)> get _allCases =>
+      caseSet<_AvoidLabelsTest>(
+        parent: const {},
+        own: {
+          'test_labeledStatement_lint': (t) => t._labeledStatementLint(),
+          'test_unlabeledLoop_noLint': (t) => t._unlabeledLoopNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidLabels();
@@ -171,7 +204,16 @@ void f() {
   }
 }
 
-final class AvoidLocalFunctionsTest extends AnalysisRuleTest {
+final class _AvoidLocalFunctionsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidLocalFunctionsTest)> get _allCases =>
+      caseSet<_AvoidLocalFunctionsTest>(
+        parent: const {},
+        own: {
+          'test_localFunction_lint': (t) => t._localFunctionLint(),
+          'test_topLevelFunction_noLint': (t) => t._topLevelFunctionNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidLocalFunctions();

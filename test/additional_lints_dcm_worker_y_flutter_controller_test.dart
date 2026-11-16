@@ -5,33 +5,15 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_disposing_l
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidDisposingLateFieldsTest>(
+  analysisRuleSuite<_AvoidDisposingLateFieldsTest>(
     'AvoidDisposingLateFieldsTest',
-    AvoidDisposingLateFieldsTest.new,
-    {
-      'test_flutterInitStateAndDispose_noLint': (t) => t._flutterInitStateAndDisposeNoLint(),
-      'test_conditionalLifecycleDisposalStillReports_lint': (t) =>
-          t._conditionalLifecycleDisposalStillReportsLint(),
-      'test_lateFieldDisposed_lint': (t) => t._lateFieldDisposedLint(),
-      'test_thisPrefixedLateFieldDisposed_lint': (t) => t._thisPrefixedLateFieldDisposedLint(),
-      'test_lateInitializerCanBeDisposed_noLint': (t) => t._lateInitializerCanBeDisposedNoLint(),
-      'test_conditionalConstructorDoesNotProveDisposalSafe_lint': (t) =>
-          t._conditionalConstructorDoesNotProveDisposalSafeLint(),
-      'test_eagerFieldDisposed_noLint': (t) => t._eagerFieldDisposedNoLint(),
-      'test_lateFieldUsedOutsideDispose_noLint': (t) => t._lateFieldUsedOutsideDisposeNoLint(),
-    },
+    _AvoidDisposingLateFieldsTest.new,
+    _AvoidDisposingLateFieldsTest._allCases,
   );
-  analysisRuleSuite<AlwaysPassGlobalKeyTest>(
+  analysisRuleSuite<_AlwaysPassGlobalKeyTest>(
     'AlwaysPassGlobalKeyTest',
-    AlwaysPassGlobalKeyTest.new,
-    {
-      'test_globalKeyCreatedInBuild_lint': (t) => t._globalKeyCreatedInBuildLint(),
-      'test_globalKeyCreatedInWidgetConstructor_lint': (t) =>
-          t._globalKeyCreatedInWidgetConstructorLint(),
-      'test_globalKeyPassedThroughConstructor_noLint': (t) =>
-          t._globalKeyPassedThroughConstructorNoLint(),
-      'test_globalKeyCreatedOutsideWidget_noLint': (t) => t._globalKeyCreatedOutsideWidgetNoLint(),
-    },
+    _AlwaysPassGlobalKeyTest.new,
+    _AlwaysPassGlobalKeyTest._allCases,
   );
 }
 
@@ -102,7 +84,25 @@ class DropdownButton<T> extends Widget {
   }
 }
 
-final class AvoidDisposingLateFieldsTest extends _FlutterControllerRuleTest {
+final class _AvoidDisposingLateFieldsTest extends _FlutterControllerRuleTest {
+  static Map<String, Future<void> Function(_AvoidDisposingLateFieldsTest)> get _allCases =>
+      caseSet<_AvoidDisposingLateFieldsTest>(
+        parent: const {},
+        own: {
+          'test_flutterInitStateAndDispose_noLint': (t) => t._flutterInitStateAndDisposeNoLint(),
+          'test_conditionalLifecycleDisposalStillReports_lint': (t) =>
+              t._conditionalLifecycleDisposalStillReportsLint(),
+          'test_lateFieldDisposed_lint': (t) => t._lateFieldDisposedLint(),
+          'test_thisPrefixedLateFieldDisposed_lint': (t) => t._thisPrefixedLateFieldDisposedLint(),
+          'test_lateInitializerCanBeDisposed_noLint': (t) =>
+              t._lateInitializerCanBeDisposedNoLint(),
+          'test_conditionalConstructorDoesNotProveDisposalSafe_lint': (t) =>
+              t._conditionalConstructorDoesNotProveDisposalSafeLint(),
+          'test_eagerFieldDisposed_noLint': (t) => t._eagerFieldDisposedNoLint(),
+          'test_lateFieldUsedOutsideDispose_noLint': (t) => t._lateFieldUsedOutsideDisposeNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidDisposingLateFields();
@@ -237,7 +237,21 @@ class Host {
   }
 }
 
-final class AlwaysPassGlobalKeyTest extends _FlutterControllerRuleTest {
+final class _AlwaysPassGlobalKeyTest extends _FlutterControllerRuleTest {
+  static Map<String, Future<void> Function(_AlwaysPassGlobalKeyTest)> get _allCases =>
+      caseSet<_AlwaysPassGlobalKeyTest>(
+        parent: const {},
+        own: {
+          'test_globalKeyCreatedInBuild_lint': (t) => t._globalKeyCreatedInBuildLint(),
+          'test_globalKeyCreatedInWidgetConstructor_lint': (t) =>
+              t._globalKeyCreatedInWidgetConstructorLint(),
+          'test_globalKeyPassedThroughConstructor_noLint': (t) =>
+              t._globalKeyPassedThroughConstructorNoLint(),
+          'test_globalKeyCreatedOutsideWidget_noLint': (t) =>
+              t._globalKeyCreatedOutsideWidgetNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AlwaysPassGlobalKey();

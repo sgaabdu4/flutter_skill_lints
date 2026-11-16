@@ -1,6 +1,37 @@
 part of '../source_scanner_rules_test.dart';
 
-final class DomainEntityPrimitiveFactoryTest extends _ValueObjectRuleTest {
+final class _DomainEntityPrimitiveFactoryTest extends _ValueObjectRuleTest {
+  static Map<String, Future<void> Function(_DomainEntityPrimitiveFactoryTest)> get _allCases =>
+      caseSet<_DomainEntityPrimitiveFactoryTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsAnonymousFreezedRedirect': (t) => t._allowsAnonymousFreezedRedirect(),
+          'test_allowsNamedFactoryInValueObjectsPath': (t) =>
+              t._allowsNamedFactoryInValueObjectsPath(),
+          'test_allowsNamedFactoryInDataPath': (t) => t._allowsNamedFactoryInDataPath(),
+          'test_allowsPrivateNamedFactory': (t) => t._allowsPrivateNamedFactory(),
+          'test_allowsClassWithoutFreezedAnnotation': (t) =>
+              t._allowsClassWithoutFreezedAnnotation(),
+          'test_allowsFromJsonFactoryInDomain': (t) => t._allowsFromJsonFactoryInDomain(),
+          'test_allowsNamedUnionCaseCarryingPrimitive': (t) =>
+              t._allowsNamedUnionCaseCarryingPrimitive(),
+          'test_allowsParameterlessFreezedUnionVariants': (t) =>
+              t._allowsParameterlessFreezedUnionVariants(),
+          'test_allowsMultilineAndValueObjectVariants': (t) =>
+              t._allowsMultilineAndValueObjectVariants(),
+          'test_allowsNullableDiagnosticPayloadOnExceptionUnion': (t) =>
+              t._allowsNullableDiagnosticPayloadOnExceptionUnion(),
+          'test_allowsExceptionUnionCasesCarryingPrimitives': (t) =>
+              t._allowsExceptionUnionCasesCarryingPrimitives(),
+          'test_reportsBodyFactoriesBesideUnionCases': (t) =>
+              t._reportsBodyFactoriesBesideUnionCases(),
+          'test_allowsNonExceptionUnionCaseCarryingPrimitive': (t) =>
+              t._allowsNonExceptionUnionCaseCarryingPrimitive(),
+          'test_allowsSkillAppErrorUnion': (t) => t._allowsSkillAppErrorUnion(),
+          'test_reportsBodyFactoryOnDataUnion': (t) => t._reportsBodyFactoryOnDataUnion(),
+        },
+      );
+
   @override
   String get ruleName => 'domain_entity_primitive_factory';
   @override
@@ -404,7 +435,22 @@ $parameters
 ''';
 }
 
-final class DomainRawRequiredStringTest extends _DomainEntityParameterRuleTest {
+final class _DomainRawRequiredStringTest extends _DomainEntityParameterRuleTest {
+  static Map<String, Future<void> Function(_DomainRawRequiredStringTest)> get _allCases =>
+      caseSet<_DomainRawRequiredStringTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsEveryRawStringAroundAnnotatedParameters': (t) =>
+              t._reportsEveryRawStringAroundAnnotatedParameters(),
+          'test_reportsNonConstRedirectingFactory': (t) => t._reportsNonConstRedirectingFactory(),
+          'test_reportsUnmarkedStringBesideHiveFieldSlots': (t) =>
+              t._reportsUnmarkedStringBesideHiveFieldSlots(),
+          'test_allowsValueObjectsOptionalTextAndNamedUnionFactories': (t) =>
+              t._allowsValueObjectsOptionalTextAndNamedUnionFactories(),
+          'test_allowsDataModelsAndValueObjects': (t) => t._allowsDataModelsAndValueObjects(),
+        },
+      );
+
   @override
   String get ruleName => 'domain_raw_required_string';
   @override
@@ -471,7 +517,20 @@ sealed class AppError {
   }
 }
 
-final class DomainUnitPrimitiveTest extends _DomainEntityParameterRuleTest {
+final class _DomainUnitPrimitiveTest extends _DomainEntityParameterRuleTest {
+  static Map<String, Future<void> Function(_DomainUnitPrimitiveTest)> get _allCases =>
+      caseSet<_DomainUnitPrimitiveTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsDefaultedAndNullableUnitNumbers': (t) =>
+              t._reportsDefaultedAndNullableUnitNumbers(),
+          'test_allowsShippedHiveEntityLockedSlots': (t) => t._allowsShippedHiveEntityLockedSlots(),
+          'test_reportsNonConstFactoryAndUnmarkedHiveNeighbour': (t) =>
+              t._reportsNonConstFactoryAndUnmarkedHiveNeighbour(),
+          'test_allowsCountsAndTypedUnits': (t) => t._allowsCountsAndTypedUnits(),
+        },
+      );
+
   @override
   String get ruleName => 'domain_unit_primitive';
   @override
@@ -523,60 +582,19 @@ final class DomainUnitPrimitiveTest extends _DomainEntityParameterRuleTest {
 }
 
 void _defineSourceScannerRulesPart22Tests() {
-  analysisRuleSuite<DomainEntityPrimitiveFactoryTest>(
+  analysisRuleSuite<_DomainEntityPrimitiveFactoryTest>(
     'DomainEntityPrimitiveFactoryTest',
-    DomainEntityPrimitiveFactoryTest.new,
-    {
-      'test_allowsAnonymousFreezedRedirect': (t) => t._allowsAnonymousFreezedRedirect(),
-      'test_allowsNamedFactoryInValueObjectsPath': (t) => t._allowsNamedFactoryInValueObjectsPath(),
-      'test_allowsNamedFactoryInDataPath': (t) => t._allowsNamedFactoryInDataPath(),
-      'test_allowsPrivateNamedFactory': (t) => t._allowsPrivateNamedFactory(),
-      'test_allowsClassWithoutFreezedAnnotation': (t) => t._allowsClassWithoutFreezedAnnotation(),
-      'test_allowsFromJsonFactoryInDomain': (t) => t._allowsFromJsonFactoryInDomain(),
-      'test_allowsNamedUnionCaseCarryingPrimitive': (t) =>
-          t._allowsNamedUnionCaseCarryingPrimitive(),
-      'test_allowsParameterlessFreezedUnionVariants': (t) =>
-          t._allowsParameterlessFreezedUnionVariants(),
-      'test_allowsMultilineAndValueObjectVariants': (t) =>
-          t._allowsMultilineAndValueObjectVariants(),
-      'test_allowsNullableDiagnosticPayloadOnExceptionUnion': (t) =>
-          t._allowsNullableDiagnosticPayloadOnExceptionUnion(),
-      'test_allowsExceptionUnionCasesCarryingPrimitives': (t) =>
-          t._allowsExceptionUnionCasesCarryingPrimitives(),
-      'test_reportsBodyFactoriesBesideUnionCases': (t) => t._reportsBodyFactoriesBesideUnionCases(),
-      'test_allowsNonExceptionUnionCaseCarryingPrimitive': (t) =>
-          t._allowsNonExceptionUnionCaseCarryingPrimitive(),
-      'test_allowsSkillAppErrorUnion': (t) => t._allowsSkillAppErrorUnion(),
-      'test_reportsBodyFactoryOnDataUnion': (t) => t._reportsBodyFactoryOnDataUnion(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _DomainEntityPrimitiveFactoryTest.new,
+    _DomainEntityPrimitiveFactoryTest._allCases,
   );
-  analysisRuleSuite<DomainRawRequiredStringTest>(
+  analysisRuleSuite<_DomainRawRequiredStringTest>(
     'DomainRawRequiredStringTest',
-    DomainRawRequiredStringTest.new,
-    {
-      'test_reportsEveryRawStringAroundAnnotatedParameters': (t) =>
-          t._reportsEveryRawStringAroundAnnotatedParameters(),
-      'test_reportsNonConstRedirectingFactory': (t) => t._reportsNonConstRedirectingFactory(),
-      'test_reportsUnmarkedStringBesideHiveFieldSlots': (t) =>
-          t._reportsUnmarkedStringBesideHiveFieldSlots(),
-      'test_allowsValueObjectsOptionalTextAndNamedUnionFactories': (t) =>
-          t._allowsValueObjectsOptionalTextAndNamedUnionFactories(),
-      'test_allowsDataModelsAndValueObjects': (t) => t._allowsDataModelsAndValueObjects(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _DomainRawRequiredStringTest.new,
+    _DomainRawRequiredStringTest._allCases,
   );
-  analysisRuleSuite<DomainUnitPrimitiveTest>(
+  analysisRuleSuite<_DomainUnitPrimitiveTest>(
     'DomainUnitPrimitiveTest',
-    DomainUnitPrimitiveTest.new,
-    {
-      'test_reportsDefaultedAndNullableUnitNumbers': (t) =>
-          t._reportsDefaultedAndNullableUnitNumbers(),
-      'test_allowsShippedHiveEntityLockedSlots': (t) => t._allowsShippedHiveEntityLockedSlots(),
-      'test_reportsNonConstFactoryAndUnmarkedHiveNeighbour': (t) =>
-          t._reportsNonConstFactoryAndUnmarkedHiveNeighbour(),
-      'test_allowsCountsAndTypedUnits': (t) => t._allowsCountsAndTypedUnits(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _DomainUnitPrimitiveTest.new,
+    _DomainUnitPrimitiveTest._allCases,
   );
 }

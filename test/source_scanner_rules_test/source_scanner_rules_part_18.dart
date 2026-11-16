@@ -1,6 +1,9 @@
 part of '../source_scanner_rules_test.dart';
 
-final class ScrollListenerWidgetPrefixTest extends _RuntimeBugRuleTest {
+final class _ScrollListenerWidgetPrefixTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_ScrollListenerWidgetPrefixTest)> get _allCases =>
+      caseSet<_ScrollListenerWidgetPrefixTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'scroll_listener_no_throttle';
   @override
@@ -18,7 +21,13 @@ class FeedScreenState {
 ''';
 }
 
-final class ScrollListenerAllowsDebouncerTest extends _RuntimeBugRuleTest {
+final class _ScrollListenerAllowsDebouncerTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_ScrollListenerAllowsDebouncerTest)> get _allCases =>
+      caseSet<_ScrollListenerAllowsDebouncerTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   @override
   String get ruleName => 'scroll_listener_no_throttle';
   @override
@@ -43,7 +52,16 @@ class FeedScreenWithDebouncer {
   }
 }
 
-final class UserVisibleDurationTooLongTest extends _RuntimeBugRuleTest {
+final class _UserVisibleDurationTooLongTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_UserVisibleDurationTooLongTest)> get _allCases =>
+      caseSet<_UserVisibleDurationTooLongTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsHardWaitInAsyncMethod': (t) => t._reportsHardWaitInAsyncMethod(),
+          'test_allowsSyncSettleTimerInAsyncMethod': (t) => t._allowsSyncSettleTimerInAsyncMethod(),
+        },
+      );
+
   @override
   String get ruleName => 'user_visible_duration_too_long';
   @override
@@ -87,7 +105,13 @@ class SaveNotifier {
   }
 }
 
-final class UserVisibleDurationAllowsSnappyDebounceTest extends _RuntimeBugRuleTest {
+final class _UserVisibleDurationAllowsSnappyDebounceTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_UserVisibleDurationAllowsSnappyDebounceTest)>
+  get _allCases => caseSet<_UserVisibleDurationAllowsSnappyDebounceTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+
   @override
   String get ruleName => 'user_visible_duration_too_long';
   @override
@@ -108,7 +132,13 @@ class SearchNotifier {
   }
 }
 
-final class UserVisibleDurationAllowsRetryBackoffTest extends _RuntimeBugRuleTest {
+final class _UserVisibleDurationAllowsRetryBackoffTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_UserVisibleDurationAllowsRetryBackoffTest)>
+  get _allCases => caseSet<_UserVisibleDurationAllowsRetryBackoffTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+
   @override
   String get ruleName => 'user_visible_duration_too_long';
   @override
@@ -130,7 +160,13 @@ class RetryService {
   }
 }
 
-final class UserVisibleDurationAllowsDismissTimerTest extends _RuntimeBugRuleTest {
+final class _UserVisibleDurationAllowsDismissTimerTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_UserVisibleDurationAllowsDismissTimerTest)>
+  get _allCases => caseSet<_UserVisibleDurationAllowsDismissTimerTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+
   @override
   String get ruleName => 'user_visible_duration_too_long';
   @override
@@ -153,7 +189,13 @@ class CelebrationOverlayState {
   }
 }
 
-final class UserVisibleDurationAllowsSnackBarDurationTest extends _RuntimeBugRuleTest {
+final class _UserVisibleDurationAllowsSnackBarDurationTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_UserVisibleDurationAllowsSnackBarDurationTest)>
+  get _allCases => caseSet<_UserVisibleDurationAllowsSnackBarDurationTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+
   @override
   String get ruleName => 'user_visible_duration_too_long';
   @override
@@ -176,7 +218,16 @@ class SquadSync {
   }
 }
 
-final class DebugPrintBlankingMasksMatchesTest extends _RuntimeBugRuleTest {
+final class _DebugPrintBlankingMasksMatchesTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_DebugPrintBlankingMasksMatchesTest)> get _allCases =>
+      caseSet<_DebugPrintBlankingMasksMatchesTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+          'test_allowsPrintStatement': (t) => t._allowsPrintStatement(),
+        },
+      );
+
   @override
   String get ruleName => 'notifier_zero_value_save_no_guard';
   @override
@@ -206,7 +257,13 @@ class HiddenPrintCall {
   }
 }
 
-final class IsTestFileSkipsRuleTest extends _RuntimeBugRuleTest {
+final class _IsTestFileSkipsRuleTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_IsTestFileSkipsRuleTest)> get _allCases =>
+      caseSet<_IsTestFileSkipsRuleTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   @override
   String get ruleName => 'sync_save_all_no_dirty_guard';
   @override
@@ -230,7 +287,13 @@ class SyncService {
   }
 }
 
-final class DialogRuleSkipsTestFileTest extends _DialogRuleTest {
+final class _DialogRuleSkipsTestFileTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_DialogRuleSkipsTestFileTest)> get _allCases =>
+      caseSet<_DialogRuleSkipsTestFileTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   @override
   String get ruleName => 'dialog_button_pop_then_state_mutation';
   @override
@@ -260,7 +323,13 @@ class EditDialog extends ConsumerWidget {
   }
 }
 
-final class DebugPrintMultilineBlankingTest extends _RuntimeBugRuleTest {
+final class _DebugPrintMultilineBlankingTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_DebugPrintMultilineBlankingTest)> get _allCases =>
+      caseSet<_DebugPrintMultilineBlankingTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   @override
   String get ruleName => 'notifier_zero_value_save_no_guard';
   @override
@@ -283,7 +352,13 @@ class MultilinePrint {
   }
 }
 
-final class DatasourceBoundaryFourGettersAllowedTest extends _RuntimeBugRuleTest {
+final class _DatasourceBoundaryFourGettersAllowedTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_DatasourceBoundaryFourGettersAllowedTest)>
+  get _allCases => caseSet<_DatasourceBoundaryFourGettersAllowedTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+
   @override
   String get ruleName => 'datasource_missing_batch_loader';
   @override
@@ -304,7 +379,11 @@ abstract class FourGetterLocalDatasource {
   }
 }
 
-final class DatasourceBoundaryFiveGettersFiresTest extends _RuntimeBugRuleTest {
+final class _DatasourceBoundaryFiveGettersFiresTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_DatasourceBoundaryFiveGettersFiresTest)>
+  get _allCases =>
+      caseSet<_DatasourceBoundaryFiveGettersFiresTest>(parent: _SourceRuleTest._allCases, own: {});
+
   // Boundary: exactly 5 getters is the cutoff and MUST trigger.
   @override
   String get ruleName => 'datasource_missing_batch_loader';
@@ -322,7 +401,30 @@ abstract class FiveGetterLocalDatasource {
 ''';
 }
 
-final class NotifierPersistenceNoDebounceTest extends _RuntimeBugRuleTest {
+final class _NotifierPersistenceNoDebounceTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_NotifierPersistenceNoDebounceTest)> get _allCases =>
+      caseSet<_NotifierPersistenceNoDebounceTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsWithTimerDebounce': (t) => t._allowsWithTimerDebounce(),
+          'test_allowsWithDotShorthandTimerDebounce': (t) =>
+              t._allowsWithDotShorthandTimerDebounce(),
+          'test_reportsQueueAndGenerationWithoutDebounce': (t) =>
+              t._reportsQueueAndGenerationWithoutDebounce(),
+          'test_allowsNonNotifierClass': (t) => t._allowsNonNotifierClass(),
+          'test_allowsAwaitedResourceHandleLifecycleWrites': (t) =>
+              t._allowsAwaitedResourceHandleLifecycleWrites(),
+          'test_allowsStateWriteAfterAwaitedLifecycleResult': (t) =>
+              t._allowsStateWriteAfterAwaitedLifecycleResult(),
+          'test_allowsLookalikeLocalPersistFunctionInSetter': (t) =>
+              t._allowsLookalikeLocalPersistFunctionInSetter(),
+          'test_reportsAsyncSetterPersistingAfterStateWrite': (t) =>
+              t._reportsAsyncSetterPersistingAfterStateWrite(),
+          'test_reportsSyncDraftUpdateCallingAsyncPersist': (t) =>
+              t._reportsSyncDraftUpdateCallingAsyncPersist(),
+        },
+      );
+
   @override
   String get ruleName => 'notifier_persistence_no_debounce';
   @override
@@ -519,7 +621,22 @@ class DraftNotifier {
   }
 }
 
-final class NotifierAsyncInitStaleStateWriteTest extends _RuntimeBugRuleTest {
+final class _NotifierAsyncInitStaleStateWriteTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_NotifierAsyncInitStaleStateWriteTest)> get _allCases =>
+      caseSet<_NotifierAsyncInitStaleStateWriteTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsGenerationGuardBeforeStateWrite': (t) =>
+              t._allowsGenerationGuardBeforeStateWrite(),
+          'test_allowsStateWriteBeforeAwait': (t) => t._allowsStateWriteBeforeAwait(),
+          'test_allowsSkillRefMountedGuard': (t) => t._allowsSkillRefMountedGuard(),
+          'test_reportsMountedGuardOnNonRiverpodRefOrBeforeAwait': (t) =>
+              t._reportsMountedGuardOnNonRiverpodRefOrBeforeAwait(),
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_allowsNonNotifierClass': (t) => t._allowsNonNotifierClass(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('riverpod').addFile('lib/riverpod.dart', r'''
@@ -647,7 +764,18 @@ class ActiveWorkoutRepository {
   }
 }
 
-final class FullCollectionLoadInLoopTest extends _RuntimeBugRuleTest {
+final class _FullCollectionLoadInLoopTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_FullCollectionLoadInLoopTest)> get _allCases =>
+      caseSet<_FullCollectionLoadInLoopTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsLoadBeforeLoop': (t) => t._allowsLoadBeforeLoop(),
+          'test_allowsLoaderInLoopHeader': (t) => t._allowsLoaderInLoopHeader(),
+          'test_allowsCollectionForInMapLiteral': (t) => t._allowsCollectionForInMapLiteral(),
+          'test_allowsLoaderAfterBracelessLoop': (t) => t._allowsLoaderAfterBracelessLoop(),
+        },
+      );
+
   @override
   String get ruleName => 'full_collection_load_in_loop';
   @override
@@ -716,7 +844,18 @@ class Repo {
   }
 }
 
-final class UnguardedFireAndForgetPlatformCommandTest extends _RuntimeBugRuleTest {
+final class _UnguardedFireAndForgetPlatformCommandTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_UnguardedFireAndForgetPlatformCommandTest)>
+  get _allCases => caseSet<_UnguardedFireAndForgetPlatformCommandTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_allowsAwaitedCommand': (t) => t._allowsAwaitedCommand(),
+      'test_allowsWrappedCommand': (t) => t._allowsWrappedCommand(),
+      'test_allowsReturnedCommand': (t) => t._allowsReturnedCommand(),
+      'test_allowsCatchError': (t) => t._allowsCatchError(),
+    },
+  );
+
   @override
   String get ruleName => 'unguarded_fire_and_forget_platform_command';
   @override
@@ -772,135 +911,89 @@ class DemoPlayer {
 }
 
 void _defineSourceScannerRulesPart18Tests() {
-  analysisRuleSuite<NotifierPersistenceNoDebounceTest>(
+  analysisRuleSuite<_NotifierPersistenceNoDebounceTest>(
     'NotifierPersistenceNoDebounceTest',
-    NotifierPersistenceNoDebounceTest.new,
-    {
-      'test_allowsWithTimerDebounce': (t) => t._allowsWithTimerDebounce(),
-      'test_allowsWithDotShorthandTimerDebounce': (t) => t._allowsWithDotShorthandTimerDebounce(),
-      'test_reportsQueueAndGenerationWithoutDebounce': (t) =>
-          t._reportsQueueAndGenerationWithoutDebounce(),
-      'test_allowsNonNotifierClass': (t) => t._allowsNonNotifierClass(),
-      'test_allowsAwaitedResourceHandleLifecycleWrites': (t) =>
-          t._allowsAwaitedResourceHandleLifecycleWrites(),
-      'test_allowsStateWriteAfterAwaitedLifecycleResult': (t) =>
-          t._allowsStateWriteAfterAwaitedLifecycleResult(),
-      'test_allowsLookalikeLocalPersistFunctionInSetter': (t) =>
-          t._allowsLookalikeLocalPersistFunctionInSetter(),
-      'test_reportsAsyncSetterPersistingAfterStateWrite': (t) =>
-          t._reportsAsyncSetterPersistingAfterStateWrite(),
-      'test_reportsSyncDraftUpdateCallingAsyncPersist': (t) =>
-          t._reportsSyncDraftUpdateCallingAsyncPersist(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _NotifierPersistenceNoDebounceTest.new,
+    _NotifierPersistenceNoDebounceTest._allCases,
   );
-  analysisRuleSuite<NotifierAsyncInitStaleStateWriteTest>(
+  analysisRuleSuite<_NotifierAsyncInitStaleStateWriteTest>(
     'NotifierAsyncInitStaleStateWriteTest',
-    NotifierAsyncInitStaleStateWriteTest.new,
-    {
-      'test_allowsGenerationGuardBeforeStateWrite': (t) =>
-          t._allowsGenerationGuardBeforeStateWrite(),
-      'test_allowsStateWriteBeforeAwait': (t) => t._allowsStateWriteBeforeAwait(),
-      'test_allowsSkillRefMountedGuard': (t) => t._allowsSkillRefMountedGuard(),
-      'test_reportsMountedGuardOnNonRiverpodRefOrBeforeAwait': (t) =>
-          t._reportsMountedGuardOnNonRiverpodRefOrBeforeAwait(),
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_allowsNonNotifierClass': (t) => t._allowsNonNotifierClass(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _NotifierAsyncInitStaleStateWriteTest.new,
+    _NotifierAsyncInitStaleStateWriteTest._allCases,
   );
-  analysisRuleSuite<UserVisibleDurationTooLongTest>(
+  analysisRuleSuite<_UserVisibleDurationTooLongTest>(
     'UserVisibleDurationTooLongTest',
-    UserVisibleDurationTooLongTest.new,
-    {
-      'test_reportsHardWaitInAsyncMethod': (t) => t._reportsHardWaitInAsyncMethod(),
-      'test_allowsSyncSettleTimerInAsyncMethod': (t) => t._allowsSyncSettleTimerInAsyncMethod(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _UserVisibleDurationTooLongTest.new,
+    _UserVisibleDurationTooLongTest._allCases,
   );
-  analysisRuleSuite<FullCollectionLoadInLoopTest>(
+  analysisRuleSuite<_FullCollectionLoadInLoopTest>(
     'FullCollectionLoadInLoopTest',
-    FullCollectionLoadInLoopTest.new,
-    {
-      'test_allowsLoadBeforeLoop': (t) => t._allowsLoadBeforeLoop(),
-      'test_allowsLoaderInLoopHeader': (t) => t._allowsLoaderInLoopHeader(),
-      'test_allowsCollectionForInMapLiteral': (t) => t._allowsCollectionForInMapLiteral(),
-      'test_allowsLoaderAfterBracelessLoop': (t) => t._allowsLoaderAfterBracelessLoop(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _FullCollectionLoadInLoopTest.new,
+    _FullCollectionLoadInLoopTest._allCases,
   );
-  analysisRuleSuite<UnguardedFireAndForgetPlatformCommandTest>(
+  analysisRuleSuite<_UnguardedFireAndForgetPlatformCommandTest>(
     'UnguardedFireAndForgetPlatformCommandTest',
-    UnguardedFireAndForgetPlatformCommandTest.new,
-    {
-      'test_allowsAwaitedCommand': (t) => t._allowsAwaitedCommand(),
-      'test_allowsWrappedCommand': (t) => t._allowsWrappedCommand(),
-      'test_allowsReturnedCommand': (t) => t._allowsReturnedCommand(),
-      'test_allowsCatchError': (t) => t._allowsCatchError(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _UnguardedFireAndForgetPlatformCommandTest.new,
+    _UnguardedFireAndForgetPlatformCommandTest._allCases,
   );
-  analysisRuleSuite<ScrollListenerWidgetPrefixTest>(
+  analysisRuleSuite<_ScrollListenerWidgetPrefixTest>(
     'ScrollListenerWidgetPrefixTest',
-    ScrollListenerWidgetPrefixTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _ScrollListenerWidgetPrefixTest.new,
+    _ScrollListenerWidgetPrefixTest._allCases,
   );
-  analysisRuleSuite<ScrollListenerAllowsDebouncerTest>(
+  analysisRuleSuite<_ScrollListenerAllowsDebouncerTest>(
     'ScrollListenerAllowsDebouncerTest',
-    ScrollListenerAllowsDebouncerTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _ScrollListenerAllowsDebouncerTest.new,
+    _ScrollListenerAllowsDebouncerTest._allCases,
   );
-  analysisRuleSuite<UserVisibleDurationAllowsSnappyDebounceTest>(
+  analysisRuleSuite<_UserVisibleDurationAllowsSnappyDebounceTest>(
     'UserVisibleDurationAllowsSnappyDebounceTest',
-    UserVisibleDurationAllowsSnappyDebounceTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _UserVisibleDurationAllowsSnappyDebounceTest.new,
+    _UserVisibleDurationAllowsSnappyDebounceTest._allCases,
   );
-  analysisRuleSuite<UserVisibleDurationAllowsRetryBackoffTest>(
+  analysisRuleSuite<_UserVisibleDurationAllowsRetryBackoffTest>(
     'UserVisibleDurationAllowsRetryBackoffTest',
-    UserVisibleDurationAllowsRetryBackoffTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _UserVisibleDurationAllowsRetryBackoffTest.new,
+    _UserVisibleDurationAllowsRetryBackoffTest._allCases,
   );
-  analysisRuleSuite<UserVisibleDurationAllowsDismissTimerTest>(
+  analysisRuleSuite<_UserVisibleDurationAllowsDismissTimerTest>(
     'UserVisibleDurationAllowsDismissTimerTest',
-    UserVisibleDurationAllowsDismissTimerTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _UserVisibleDurationAllowsDismissTimerTest.new,
+    _UserVisibleDurationAllowsDismissTimerTest._allCases,
   );
-  analysisRuleSuite<UserVisibleDurationAllowsSnackBarDurationTest>(
+  analysisRuleSuite<_UserVisibleDurationAllowsSnackBarDurationTest>(
     'UserVisibleDurationAllowsSnackBarDurationTest',
-    UserVisibleDurationAllowsSnackBarDurationTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _UserVisibleDurationAllowsSnackBarDurationTest.new,
+    _UserVisibleDurationAllowsSnackBarDurationTest._allCases,
   );
-  analysisRuleSuite<DebugPrintBlankingMasksMatchesTest>(
+  analysisRuleSuite<_DebugPrintBlankingMasksMatchesTest>(
     'DebugPrintBlankingMasksMatchesTest',
-    DebugPrintBlankingMasksMatchesTest.new,
-    {
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-      'test_allowsPrintStatement': (t) => t._allowsPrintStatement(),
-    },
+    _DebugPrintBlankingMasksMatchesTest.new,
+    _DebugPrintBlankingMasksMatchesTest._allCases,
   );
-  analysisRuleSuite<IsTestFileSkipsRuleTest>(
+  analysisRuleSuite<_IsTestFileSkipsRuleTest>(
     'IsTestFileSkipsRuleTest',
-    IsTestFileSkipsRuleTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _IsTestFileSkipsRuleTest.new,
+    _IsTestFileSkipsRuleTest._allCases,
   );
-  analysisRuleSuite<DialogRuleSkipsTestFileTest>(
+  analysisRuleSuite<_DialogRuleSkipsTestFileTest>(
     'DialogRuleSkipsTestFileTest',
-    DialogRuleSkipsTestFileTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _DialogRuleSkipsTestFileTest.new,
+    _DialogRuleSkipsTestFileTest._allCases,
   );
-  analysisRuleSuite<DebugPrintMultilineBlankingTest>(
+  analysisRuleSuite<_DebugPrintMultilineBlankingTest>(
     'DebugPrintMultilineBlankingTest',
-    DebugPrintMultilineBlankingTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _DebugPrintMultilineBlankingTest.new,
+    _DebugPrintMultilineBlankingTest._allCases,
   );
-  analysisRuleSuite<DatasourceBoundaryFourGettersAllowedTest>(
+  analysisRuleSuite<_DatasourceBoundaryFourGettersAllowedTest>(
     'DatasourceBoundaryFourGettersAllowedTest',
-    DatasourceBoundaryFourGettersAllowedTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _DatasourceBoundaryFourGettersAllowedTest.new,
+    _DatasourceBoundaryFourGettersAllowedTest._allCases,
   );
-  analysisRuleSuite<DatasourceBoundaryFiveGettersFiresTest>(
+  analysisRuleSuite<_DatasourceBoundaryFiveGettersFiresTest>(
     'DatasourceBoundaryFiveGettersFiresTest',
-    DatasourceBoundaryFiveGettersFiresTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _DatasourceBoundaryFiveGettersFiresTest.new,
+    _DatasourceBoundaryFiveGettersFiresTest._allCases,
   );
 }

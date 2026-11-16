@@ -8,64 +8,44 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_multi_assig
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidDoubleSlashImportsTest>(
+  analysisRuleSuite<_AvoidDoubleSlashImportsTest>(
     'AvoidDoubleSlashImportsTest',
-    AvoidDoubleSlashImportsTest.new,
-    {
-      'test_exportWithDoubleSlash_lint': (t) => t._exportWithDoubleSlashLint(),
-      'test_importWithDoubleSlash_lint': (t) => t._importWithDoubleSlashLint(),
-      'test_normalizedImport_noLint': (t) => t._normalizedImportNoLint(),
-    },
+    _AvoidDoubleSlashImportsTest.new,
+    _AvoidDoubleSlashImportsTest._allCases,
   );
-  analysisRuleSuite<AvoidEnumValuesByIndexTest>(
+  analysisRuleSuite<_AvoidEnumValuesByIndexTest>(
     'AvoidEnumValuesByIndexTest',
-    AvoidEnumValuesByIndexTest.new,
-    {
-      'test_enumValuesByIndex_lint': (t) => t._enumValuesByIndexLint(),
-      'test_importPrefixedEnumValuesByIndex_lint': (t) => t._importPrefixedEnumValuesByIndexLint(),
-      'test_enumTypeAliasValuesByIndex_lint': (t) => t._enumTypeAliasValuesByIndexLint(),
-      'test_importPrefixedEnumTypeAliasValuesByIndex_lint': (t) =>
-          t._importPrefixedEnumTypeAliasValuesByIndexLint(),
-      'test_enumValueDirect_noLint': (t) => t._enumValueDirectNoLint(),
-      'test_mapFieldNamedValuesByIndex_noLint': (t) => t._mapFieldNamedValuesByIndexNoLint(),
-      'test_nonEnumStaticValuesByIndex_noLint': (t) => t._nonEnumStaticValuesByIndexNoLint(),
-      'test_nonEnumTypeAliasValuesByIndex_noLint': (t) => t._nonEnumTypeAliasValuesByIndexNoLint(),
-    },
+    _AvoidEnumValuesByIndexTest.new,
+    _AvoidEnumValuesByIndexTest._allCases,
   );
-  analysisRuleSuite<AvoidFutureToStringTest>(
+  analysisRuleSuite<_AvoidFutureToStringTest>(
     'AvoidFutureToStringTest',
-    AvoidFutureToStringTest.new,
-    {
-      'test_futureToString_lint': (t) => t._futureToStringLint(),
-      'test_nonFutureToString_noLint': (t) => t._nonFutureToStringNoLint(),
-    },
+    _AvoidFutureToStringTest.new,
+    _AvoidFutureToStringTest._allCases,
   );
-  analysisRuleSuite<AvoidLateKeywordTest>('AvoidLateKeywordTest', AvoidLateKeywordTest.new, {
-    'test_lateLocal_lint': (t) => t._lateLocalLint(),
-    'test_eagerLocal_noLint': (t) => t._eagerLocalNoLint(),
-    'test_lateInTestFile_noLint': (t) => t._lateInTestFileNoLint(),
-    'test_lateFinalStateField_noLint': (t) => t._lateFinalStateFieldNoLint(),
-    'test_lateFinalConsumerStateField_noLint': (t) => t._lateFinalConsumerStateFieldNoLint(),
-    'test_lateMutableStateField_noLint': (t) => t._lateMutableStateFieldNoLint(),
-    'test_lateMutableNonStateField_lint': (t) => t._lateMutableNonStateFieldLint(),
-    'test_lateFinalDerivedInstanceField_noLint': (t) => t._lateFinalDerivedInstanceFieldNoLint(),
-    'test_lateFinalFieldWithoutInitializer_lint': (t) => t._lateFinalFieldWithoutInitializerLint(),
-    'test_lateMutableFieldWithInitializer_lint': (t) => t._lateMutableFieldWithInitializerLint(),
-    'test_lateFinalStaticFieldWithInitializer_lint': (t) =>
-        t._lateFinalStaticFieldWithInitializerLint(),
-    'test_lateFinalLocalWithInitializer_lint': (t) => t._lateFinalLocalWithInitializerLint(),
-  });
-  analysisRuleSuite<AvoidMultiAssignmentTest>(
+  analysisRuleSuite<_AvoidLateKeywordTest>(
+    'AvoidLateKeywordTest',
+    _AvoidLateKeywordTest.new,
+    _AvoidLateKeywordTest._allCases,
+  );
+  analysisRuleSuite<_AvoidMultiAssignmentTest>(
     'AvoidMultiAssignmentTest',
-    AvoidMultiAssignmentTest.new,
-    {
-      'test_chainedAssignment_lint': (t) => t._chainedAssignmentLint(),
-      'test_separateAssignments_noLint': (t) => t._separateAssignmentsNoLint(),
-    },
+    _AvoidMultiAssignmentTest.new,
+    _AvoidMultiAssignmentTest._allCases,
   );
 }
 
-final class AvoidDoubleSlashImportsTest extends AnalysisRuleTest {
+final class _AvoidDoubleSlashImportsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidDoubleSlashImportsTest)> get _allCases =>
+      caseSet<_AvoidDoubleSlashImportsTest>(
+        parent: const {},
+        own: {
+          'test_exportWithDoubleSlash_lint': (t) => t._exportWithDoubleSlashLint(),
+          'test_importWithDoubleSlash_lint': (t) => t._importWithDoubleSlashLint(),
+          'test_normalizedImport_noLint': (t) => t._normalizedImportNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidDoubleSlashImports();
@@ -106,7 +86,25 @@ import 'src/models.dart';
   }
 }
 
-final class AvoidEnumValuesByIndexTest extends AnalysisRuleTest {
+final class _AvoidEnumValuesByIndexTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidEnumValuesByIndexTest)> get _allCases =>
+      caseSet<_AvoidEnumValuesByIndexTest>(
+        parent: const {},
+        own: {
+          'test_enumValuesByIndex_lint': (t) => t._enumValuesByIndexLint(),
+          'test_importPrefixedEnumValuesByIndex_lint': (t) =>
+              t._importPrefixedEnumValuesByIndexLint(),
+          'test_enumTypeAliasValuesByIndex_lint': (t) => t._enumTypeAliasValuesByIndexLint(),
+          'test_importPrefixedEnumTypeAliasValuesByIndex_lint': (t) =>
+              t._importPrefixedEnumTypeAliasValuesByIndexLint(),
+          'test_enumValueDirect_noLint': (t) => t._enumValueDirectNoLint(),
+          'test_mapFieldNamedValuesByIndex_noLint': (t) => t._mapFieldNamedValuesByIndexNoLint(),
+          'test_nonEnumStaticValuesByIndex_noLint': (t) => t._nonEnumStaticValuesByIndexNoLint(),
+          'test_nonEnumTypeAliasValuesByIndex_noLint': (t) =>
+              t._nonEnumTypeAliasValuesByIndexNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidEnumValuesByIndex();
@@ -204,7 +202,16 @@ String read() => LookupAlias.values[0];
   }
 }
 
-final class AvoidFutureToStringTest extends AnalysisRuleTest {
+final class _AvoidFutureToStringTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidFutureToStringTest)> get _allCases =>
+      caseSet<_AvoidFutureToStringTest>(
+        parent: const {},
+        own: {
+          'test_futureToString_lint': (t) => t._futureToStringLint(),
+          'test_nonFutureToString_noLint': (t) => t._nonFutureToStringNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidFutureToString();
@@ -232,7 +239,30 @@ void f(Object value) {
   }
 }
 
-final class AvoidLateKeywordTest extends AnalysisRuleTest {
+final class _AvoidLateKeywordTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidLateKeywordTest)> get _allCases =>
+      caseSet<_AvoidLateKeywordTest>(
+        parent: const {},
+        own: {
+          'test_lateLocal_lint': (t) => t._lateLocalLint(),
+          'test_eagerLocal_noLint': (t) => t._eagerLocalNoLint(),
+          'test_lateInTestFile_noLint': (t) => t._lateInTestFileNoLint(),
+          'test_lateFinalStateField_noLint': (t) => t._lateFinalStateFieldNoLint(),
+          'test_lateFinalConsumerStateField_noLint': (t) => t._lateFinalConsumerStateFieldNoLint(),
+          'test_lateMutableStateField_noLint': (t) => t._lateMutableStateFieldNoLint(),
+          'test_lateMutableNonStateField_lint': (t) => t._lateMutableNonStateFieldLint(),
+          'test_lateFinalDerivedInstanceField_noLint': (t) =>
+              t._lateFinalDerivedInstanceFieldNoLint(),
+          'test_lateFinalFieldWithoutInitializer_lint': (t) =>
+              t._lateFinalFieldWithoutInitializerLint(),
+          'test_lateMutableFieldWithInitializer_lint': (t) =>
+              t._lateMutableFieldWithInitializerLint(),
+          'test_lateFinalStaticFieldWithInitializer_lint': (t) =>
+              t._lateFinalStaticFieldWithInitializerLint(),
+          'test_lateFinalLocalWithInitializer_lint': (t) => t._lateFinalLocalWithInitializerLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidLateKeyword();
@@ -424,7 +454,16 @@ void f(int Function() compute) {
   }
 }
 
-final class AvoidMultiAssignmentTest extends AnalysisRuleTest {
+final class _AvoidMultiAssignmentTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidMultiAssignmentTest)> get _allCases =>
+      caseSet<_AvoidMultiAssignmentTest>(
+        parent: const {},
+        own: {
+          'test_chainedAssignment_lint': (t) => t._chainedAssignmentLint(),
+          'test_separateAssignments_noLint': (t) => t._separateAssignmentsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidMultiAssignment();

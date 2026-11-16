@@ -5,8 +5,7 @@ Map<String, Future<void> Function(T)> caseSet<T extends AnalysisRuleTest>({
   required Map<String, Future<void> Function(Never)> parent,
   required Map<String, Future<void> Function(T)> own,
 }) => {
-  for (final entry in parent.entries)
-    entry.key: entry.value as Future<void> Function(T),
+  for (final entry in parent.entries) entry.key: entry.value as Future<void> Function(T),
   ...own,
 };
 

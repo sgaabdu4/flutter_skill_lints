@@ -4,15 +4,25 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_use_prefix
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<PreferUsePrefixTest>('PreferUsePrefixTest', PreferUsePrefixTest.new, {
-    'test_reportsFunctionCallingHookWithoutUsePrefix': (t) =>
-        t._reportsFunctionCallingHookWithoutUsePrefix(),
-    'test_allowsTestEntrypointCallingUsePrefixedHelpers': (t) =>
-        t._allowsTestEntrypointCallingUsePrefixedHelpers(),
-  });
+  analysisRuleSuite<_PreferUsePrefixTest>(
+    'PreferUsePrefixTest',
+    _PreferUsePrefixTest.new,
+    _PreferUsePrefixTest._allCases,
+  );
 }
 
-final class PreferUsePrefixTest extends AnalysisRuleTest {
+final class _PreferUsePrefixTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferUsePrefixTest)> get _allCases =>
+      caseSet<_PreferUsePrefixTest>(
+        parent: const {},
+        own: {
+          'test_reportsFunctionCallingHookWithoutUsePrefix': (t) =>
+              t._reportsFunctionCallingHookWithoutUsePrefix(),
+          'test_allowsTestEntrypointCallingUsePrefixedHelpers': (t) =>
+              t._allowsTestEntrypointCallingUsePrefixedHelpers(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferUsePrefix();

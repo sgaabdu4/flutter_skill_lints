@@ -1,6 +1,46 @@
 part of '../source_scanner_rules_test.dart';
 
-final class TextFieldOnChangedNoDebounceTest extends _RuntimeBugRuleTest {
+final class _TextFieldOnChangedNoDebounceTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_TextFieldOnChangedNoDebounceTest)> get _allCases =>
+      caseSet<_TextFieldOnChangedNoDebounceTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsResolvedSynchronousFormUpdate': (t) =>
+              t._allowsResolvedSynchronousFormUpdate(),
+          'test_allowsCopyWithAndLocalValidation': (t) => t._allowsCopyWithAndLocalValidation(),
+          'test_allowsGeneratedFreezedCallableCopyWith': (t) =>
+              t._allowsGeneratedFreezedCallableCopyWith(),
+          'test_reportsCopyWithThatStartsAsyncWork': (t) => t._reportsCopyWithThatStartsAsyncWork(),
+          'test_reportsCopyWithUsingEffectfulConstructor': (t) =>
+              t._reportsCopyWithUsingEffectfulConstructor(),
+          'test_reportsCopyWithReadingEffectfulGetter': (t) =>
+              t._reportsCopyWithReadingEffectfulGetter(),
+          'test_reportsReturnThatStartsAsyncWork': (t) => t._reportsReturnThatStartsAsyncWork(),
+          'test_allowsDirectStateAssignment': (t) => t._allowsDirectStateAssignment(),
+          'test_reportsSynchronousForwardingMethods': (t) =>
+              t._reportsSynchronousForwardingMethods(),
+          'test_reportsResolvedAsyncRequest': (t) => t._reportsResolvedAsyncRequest(),
+          'test_submissionWorkIsNotOnChangedWork': (t) => t._submissionWorkIsNotOnChangedWork(),
+          'test_onlyAsyncNeighborReports': (t) => t._onlyAsyncNeighborReports(),
+          'test_reportsResolvedAsyncVoidRequest': (t) => t._reportsResolvedAsyncVoidRequest(),
+          'test_allowsWithTimerInFile': (t) => t._allowsWithTimerInFile(),
+          'test_allowsLocalOnlyCallback': (t) => t._allowsLocalOnlyCallback(),
+          'test_allowsIssue37SynchronousFormHandlers': (t) =>
+              t._allowsIssue37SynchronousFormHandlers(),
+          'test_allowsIssue37SynchronousFormHandlersFromAnotherFile': (t) =>
+              t._allowsIssue37SynchronousFormHandlersFromAnotherFile(),
+          'test_reportsIssue37AsyncTearOff': (t) => t._reportsIssue37AsyncTearOff(),
+          'test_reportsIssue37AsyncRequestFromAnotherFile': (t) =>
+              t._reportsIssue37AsyncRequestFromAnotherFile(),
+          'test_reportsCrossFileSynchronousForwarders': (t) =>
+              t._reportsCrossFileSynchronousForwarders(),
+          'test_allowsCrossFileFreezedCallableCopyWith': (t) =>
+              t._allowsCrossFileFreezedCallableCopyWith(),
+          'test_allowsCrossFileNotifierDebounce': (t) => t._allowsCrossFileNotifierDebounce(),
+          'test_allowsSkillTimerDebounceDo': (t) => t._allowsSkillTimerDebounceDo(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('freezed_annotation').addFile('lib/freezed_annotation.dart', r'''
@@ -561,7 +601,19 @@ class FormNotifier {
 }
 ''';
 
-final class SliderOnChangedNoDebounceTest extends _RuntimeBugRuleTest {
+final class _SliderOnChangedNoDebounceTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_SliderOnChangedNoDebounceTest)> get _allCases =>
+      caseSet<_SliderOnChangedNoDebounceTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsResolvedSynchronousSliderUpdate': (t) =>
+              t._allowsResolvedSynchronousSliderUpdate(),
+          'test_reportsResolvedAsyncSliderRequest': (t) => t._reportsResolvedAsyncSliderRequest(),
+          'test_allowsSliderWithOnlySetState': (t) => t._allowsSliderWithOnlySetState(),
+          'test_allowsSliderWhenFileHasTimer': (t) => t._allowsSliderWhenFileHasTimer(),
+        },
+      );
+
   @override
   String get ruleName => 'slider_on_changed_no_debounce';
   @override
@@ -629,7 +681,16 @@ class RangeSheet {
   }
 }
 
-final class ScrollListenerNoThrottleTest extends _RuntimeBugRuleTest {
+final class _ScrollListenerNoThrottleTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_ScrollListenerNoThrottleTest)> get _allCases =>
+      caseSet<_ScrollListenerNoThrottleTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsListenerWithLocalStateOnly': (t) => t._allowsListenerWithLocalStateOnly(),
+          'test_allowsListenerWhenFileHasTimer': (t) => t._allowsListenerWhenFileHasTimer(),
+        },
+      );
+
   @override
   String get ruleName => 'scroll_listener_no_throttle';
   @override
@@ -680,7 +741,10 @@ class Timer {
   }
 }
 
-final class DialogWidgetSubscribesPathBasedTest extends _DialogRuleTest {
+final class _DialogWidgetSubscribesPathBasedTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_DialogWidgetSubscribesPathBasedTest)> get _allCases =>
+      caseSet<_DialogWidgetSubscribesPathBasedTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'dialog_widget_subscribes_to_mutable_provider';
   @override
@@ -726,67 +790,24 @@ Object build(Ref ref) => $inputType(onChanged: (value) => ref.read(formProvider.
 ''';
 
 void _defineSourceScannerRulesPart21Tests() {
-  analysisRuleSuite<TextFieldOnChangedNoDebounceTest>(
+  analysisRuleSuite<_TextFieldOnChangedNoDebounceTest>(
     'TextFieldOnChangedNoDebounceTest',
-    TextFieldOnChangedNoDebounceTest.new,
-    {
-      'test_allowsResolvedSynchronousFormUpdate': (t) => t._allowsResolvedSynchronousFormUpdate(),
-      'test_allowsCopyWithAndLocalValidation': (t) => t._allowsCopyWithAndLocalValidation(),
-      'test_allowsGeneratedFreezedCallableCopyWith': (t) =>
-          t._allowsGeneratedFreezedCallableCopyWith(),
-      'test_reportsCopyWithThatStartsAsyncWork': (t) => t._reportsCopyWithThatStartsAsyncWork(),
-      'test_reportsCopyWithUsingEffectfulConstructor': (t) =>
-          t._reportsCopyWithUsingEffectfulConstructor(),
-      'test_reportsCopyWithReadingEffectfulGetter': (t) =>
-          t._reportsCopyWithReadingEffectfulGetter(),
-      'test_reportsReturnThatStartsAsyncWork': (t) => t._reportsReturnThatStartsAsyncWork(),
-      'test_allowsDirectStateAssignment': (t) => t._allowsDirectStateAssignment(),
-      'test_reportsSynchronousForwardingMethods': (t) => t._reportsSynchronousForwardingMethods(),
-      'test_reportsResolvedAsyncRequest': (t) => t._reportsResolvedAsyncRequest(),
-      'test_submissionWorkIsNotOnChangedWork': (t) => t._submissionWorkIsNotOnChangedWork(),
-      'test_onlyAsyncNeighborReports': (t) => t._onlyAsyncNeighborReports(),
-      'test_reportsResolvedAsyncVoidRequest': (t) => t._reportsResolvedAsyncVoidRequest(),
-      'test_allowsWithTimerInFile': (t) => t._allowsWithTimerInFile(),
-      'test_allowsLocalOnlyCallback': (t) => t._allowsLocalOnlyCallback(),
-      'test_allowsIssue37SynchronousFormHandlers': (t) => t._allowsIssue37SynchronousFormHandlers(),
-      'test_allowsIssue37SynchronousFormHandlersFromAnotherFile': (t) =>
-          t._allowsIssue37SynchronousFormHandlersFromAnotherFile(),
-      'test_reportsIssue37AsyncTearOff': (t) => t._reportsIssue37AsyncTearOff(),
-      'test_reportsIssue37AsyncRequestFromAnotherFile': (t) =>
-          t._reportsIssue37AsyncRequestFromAnotherFile(),
-      'test_reportsCrossFileSynchronousForwarders': (t) =>
-          t._reportsCrossFileSynchronousForwarders(),
-      'test_allowsCrossFileFreezedCallableCopyWith': (t) =>
-          t._allowsCrossFileFreezedCallableCopyWith(),
-      'test_allowsCrossFileNotifierDebounce': (t) => t._allowsCrossFileNotifierDebounce(),
-      'test_allowsSkillTimerDebounceDo': (t) => t._allowsSkillTimerDebounceDo(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _TextFieldOnChangedNoDebounceTest.new,
+    _TextFieldOnChangedNoDebounceTest._allCases,
   );
-  analysisRuleSuite<SliderOnChangedNoDebounceTest>(
+  analysisRuleSuite<_SliderOnChangedNoDebounceTest>(
     'SliderOnChangedNoDebounceTest',
-    SliderOnChangedNoDebounceTest.new,
-    {
-      'test_allowsResolvedSynchronousSliderUpdate': (t) =>
-          t._allowsResolvedSynchronousSliderUpdate(),
-      'test_reportsResolvedAsyncSliderRequest': (t) => t._reportsResolvedAsyncSliderRequest(),
-      'test_allowsSliderWithOnlySetState': (t) => t._allowsSliderWithOnlySetState(),
-      'test_allowsSliderWhenFileHasTimer': (t) => t._allowsSliderWhenFileHasTimer(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _SliderOnChangedNoDebounceTest.new,
+    _SliderOnChangedNoDebounceTest._allCases,
   );
-  analysisRuleSuite<ScrollListenerNoThrottleTest>(
+  analysisRuleSuite<_ScrollListenerNoThrottleTest>(
     'ScrollListenerNoThrottleTest',
-    ScrollListenerNoThrottleTest.new,
-    {
-      'test_allowsListenerWithLocalStateOnly': (t) => t._allowsListenerWithLocalStateOnly(),
-      'test_allowsListenerWhenFileHasTimer': (t) => t._allowsListenerWhenFileHasTimer(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ScrollListenerNoThrottleTest.new,
+    _ScrollListenerNoThrottleTest._allCases,
   );
-  analysisRuleSuite<DialogWidgetSubscribesPathBasedTest>(
+  analysisRuleSuite<_DialogWidgetSubscribesPathBasedTest>(
     'DialogWidgetSubscribesPathBasedTest',
-    DialogWidgetSubscribesPathBasedTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _DialogWidgetSubscribesPathBasedTest.new,
+    _DialogWidgetSubscribesPathBasedTest._allCases,
   );
 }

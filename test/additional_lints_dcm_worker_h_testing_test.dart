@@ -6,36 +6,34 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_then_return
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidEmptyTestGroupsTest>(
+  analysisRuleSuite<_AvoidEmptyTestGroupsTest>(
     'AvoidEmptyTestGroupsTest',
-    AvoidEmptyTestGroupsTest.new,
-    {
-      'test_groupWithoutTests_lint': (t) => t._groupWithoutTestsLint(),
-      'test_groupWithTest_noLint': (t) => t._groupWithTestNoLint(),
-      'test_groupWithTestWidgets_noLint': (t) => t._groupWithTestWidgetsNoLint(),
-    },
+    _AvoidEmptyTestGroupsTest.new,
+    _AvoidEmptyTestGroupsTest._allCases,
   );
-  analysisRuleSuite<AvoidDuplicateTestAssertionsTest>(
+  analysisRuleSuite<_AvoidDuplicateTestAssertionsTest>(
     'AvoidDuplicateTestAssertionsTest',
-    AvoidDuplicateTestAssertionsTest.new,
-    {
-      'test_duplicateExpectInSameTest_lint': (t) => t._duplicateExpectInSameTestLint(),
-      'test_sameAssertionInDifferentTests_noLint': (t) => t._sameAssertionInDifferentTestsNoLint(),
-      'test_distinctExpectedValue_noLint': (t) => t._distinctExpectedValueNoLint(),
-    },
+    _AvoidDuplicateTestAssertionsTest.new,
+    _AvoidDuplicateTestAssertionsTest._allCases,
   );
-  analysisRuleSuite<AvoidThenReturnWithFutureTest>(
+  analysisRuleSuite<_AvoidThenReturnWithFutureTest>(
     'AvoidThenReturnWithFutureTest',
-    AvoidThenReturnWithFutureTest.new,
-    {
-      'test_thenReturnFuture_lint': (t) => t._thenReturnFutureLint(),
-      'test_thenReturnStream_lint': (t) => t._thenReturnStreamLint(),
-      'test_thenReturnSynchronousValue_noLint': (t) => t._thenReturnSynchronousValueNoLint(),
-    },
+    _AvoidThenReturnWithFutureTest.new,
+    _AvoidThenReturnWithFutureTest._allCases,
   );
 }
 
-final class AvoidEmptyTestGroupsTest extends AnalysisRuleTest {
+final class _AvoidEmptyTestGroupsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidEmptyTestGroupsTest)> get _allCases =>
+      caseSet<_AvoidEmptyTestGroupsTest>(
+        parent: const {},
+        own: {
+          'test_groupWithoutTests_lint': (t) => t._groupWithoutTestsLint(),
+          'test_groupWithTest_noLint': (t) => t._groupWithTestNoLint(),
+          'test_groupWithTestWidgets_noLint': (t) => t._groupWithTestWidgetsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidEmptyTestGroups();
@@ -85,7 +83,18 @@ void main() {
   }
 }
 
-final class AvoidDuplicateTestAssertionsTest extends AnalysisRuleTest {
+final class _AvoidDuplicateTestAssertionsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidDuplicateTestAssertionsTest)> get _allCases =>
+      caseSet<_AvoidDuplicateTestAssertionsTest>(
+        parent: const {},
+        own: {
+          'test_duplicateExpectInSameTest_lint': (t) => t._duplicateExpectInSameTestLint(),
+          'test_sameAssertionInDifferentTests_noLint': (t) =>
+              t._sameAssertionInDifferentTestsNoLint(),
+          'test_distinctExpectedValue_noLint': (t) => t._distinctExpectedValueNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidDuplicateTestAssertions();
@@ -141,7 +150,17 @@ void main() {
   }
 }
 
-final class AvoidThenReturnWithFutureTest extends AnalysisRuleTest {
+final class _AvoidThenReturnWithFutureTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidThenReturnWithFutureTest)> get _allCases =>
+      caseSet<_AvoidThenReturnWithFutureTest>(
+        parent: const {},
+        own: {
+          'test_thenReturnFuture_lint': (t) => t._thenReturnFutureLint(),
+          'test_thenReturnStream_lint': (t) => t._thenReturnStreamLint(),
+          'test_thenReturnSynchronousValue_noLint': (t) => t._thenReturnSynchronousValueNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidThenReturnWithFuture();

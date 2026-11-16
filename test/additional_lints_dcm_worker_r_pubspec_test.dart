@@ -4,19 +4,25 @@ import 'package:flutter_skill_lints/src/rules/flutter_skill_project_config.dart'
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<PubspecProjectConfigLintTest>(
+  analysisRuleSuite<_PubspecProjectConfigLintTest>(
     'PubspecProjectConfigLintTest',
-    PubspecProjectConfigLintTest.new,
-    {
-      'test_reportsAnyDependencyVersions': (t) => t._reportsAnyDependencyVersions(),
-      'test_reportsNonNonePublishTarget': (t) => t._reportsNonNonePublishTarget(),
-      'test_allowsPinnedDependenciesWithoutOverrides': (t) =>
-          t._allowsPinnedDependenciesWithoutOverrides(),
-    },
+    _PubspecProjectConfigLintTest.new,
+    _PubspecProjectConfigLintTest._allCases,
   );
 }
 
-final class PubspecProjectConfigLintTest extends AnalysisRuleTest {
+final class _PubspecProjectConfigLintTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PubspecProjectConfigLintTest)> get _allCases =>
+      caseSet<_PubspecProjectConfigLintTest>(
+        parent: const {},
+        own: {
+          'test_reportsAnyDependencyVersions': (t) => t._reportsAnyDependencyVersions(),
+          'test_reportsNonNonePublishTarget': (t) => t._reportsNonNonePublishTarget(),
+          'test_allowsPinnedDependenciesWithoutOverrides': (t) =>
+              t._allowsPinnedDependenciesWithoutOverrides(),
+        },
+      );
+
   @override
   void setUp() {
     rule = FlutterSkillProjectConfig();

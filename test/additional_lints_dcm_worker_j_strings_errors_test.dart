@@ -6,43 +6,34 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_throw_objec
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidNullableInterpolationTest>(
+  analysisRuleSuite<_AvoidNullableInterpolationTest>(
     'AvoidNullableInterpolationTest',
-    AvoidNullableInterpolationTest.new,
-    {
-      'test_nullableLocal_lint': (t) => t._nullableLocalLint(),
-      'test_nonNullableLocal_noLint': (t) => t._nonNullableLocalNoLint(),
-      'test_promotedNullable_noLint': (t) => t._promotedNullableNoLint(),
-    },
+    _AvoidNullableInterpolationTest.new,
+    _AvoidNullableInterpolationTest._allCases,
   );
-  analysisRuleSuite<AvoidMissingInterpolationTest>(
+  analysisRuleSuite<_AvoidMissingInterpolationTest>(
     'AvoidMissingInterpolationTest',
-    AvoidMissingInterpolationTest.new,
-    {
-      'test_matchesPriorLocal_lint': (t) => t._matchesPriorLocalLint(),
-      'test_matchesParameter_lint': (t) => t._matchesParameterLint(),
-      'test_structuralMapKeys_noLint': (t) => t._structuralMapKeysNoLint(),
-      'test_mapValue_lint': (t) => t._mapValueLint(),
-      'test_coreErrorParameterNames_noLint': (t) => t._coreErrorParameterNamesNoLint(),
-      'test_unrelatedErrorClass_lint': (t) => t._unrelatedErrorClassLint(),
-      'test_unrelatedNameParameter_lint': (t) => t._unrelatedNameParameterLint(),
-      'test_noLocalName_noLint': (t) => t._noLocalNameNoLint(),
-      'test_notExactlyIdentifier_noLint': (t) => t._notExactlyIdentifierNoLint(),
-      'test_laterLocal_noLint': (t) => t._laterLocalNoLint(),
-    },
+    _AvoidMissingInterpolationTest.new,
+    _AvoidMissingInterpolationTest._allCases,
   );
-  analysisRuleSuite<AvoidThrowObjectsWithoutToStringTest>(
+  analysisRuleSuite<_AvoidThrowObjectsWithoutToStringTest>(
     'AvoidThrowObjectsWithoutToStringTest',
-    AvoidThrowObjectsWithoutToStringTest.new,
-    {
-      'test_localClassWithoutToString_lint': (t) => t._localClassWithoutToStringLint(),
-      'test_localClassWithToString_noLint': (t) => t._localClassWithToStringNoLint(),
-      'test_throwString_noLint': (t) => t._throwStringNoLint(),
-    },
+    _AvoidThrowObjectsWithoutToStringTest.new,
+    _AvoidThrowObjectsWithoutToStringTest._allCases,
   );
 }
 
-final class AvoidNullableInterpolationTest extends AnalysisRuleTest {
+final class _AvoidNullableInterpolationTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNullableInterpolationTest)> get _allCases =>
+      caseSet<_AvoidNullableInterpolationTest>(
+        parent: const {},
+        own: {
+          'test_nullableLocal_lint': (t) => t._nullableLocalLint(),
+          'test_nonNullableLocal_noLint': (t) => t._nonNullableLocalNoLint(),
+          'test_promotedNullable_noLint': (t) => t._promotedNullableNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNullableInterpolation();
@@ -77,7 +68,24 @@ void f(String? name) {
   }
 }
 
-final class AvoidMissingInterpolationTest extends AnalysisRuleTest {
+final class _AvoidMissingInterpolationTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidMissingInterpolationTest)> get _allCases =>
+      caseSet<_AvoidMissingInterpolationTest>(
+        parent: const {},
+        own: {
+          'test_matchesPriorLocal_lint': (t) => t._matchesPriorLocalLint(),
+          'test_matchesParameter_lint': (t) => t._matchesParameterLint(),
+          'test_structuralMapKeys_noLint': (t) => t._structuralMapKeysNoLint(),
+          'test_mapValue_lint': (t) => t._mapValueLint(),
+          'test_coreErrorParameterNames_noLint': (t) => t._coreErrorParameterNamesNoLint(),
+          'test_unrelatedErrorClass_lint': (t) => t._unrelatedErrorClassLint(),
+          'test_unrelatedNameParameter_lint': (t) => t._unrelatedNameParameterLint(),
+          'test_noLocalName_noLint': (t) => t._noLocalNameNoLint(),
+          'test_notExactlyIdentifier_noLint': (t) => t._notExactlyIdentifierNoLint(),
+          'test_laterLocal_noLint': (t) => t._laterLocalNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidMissingInterpolation();
@@ -175,7 +183,17 @@ void f() {
   }
 }
 
-final class AvoidThrowObjectsWithoutToStringTest extends AnalysisRuleTest {
+final class _AvoidThrowObjectsWithoutToStringTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidThrowObjectsWithoutToStringTest)> get _allCases =>
+      caseSet<_AvoidThrowObjectsWithoutToStringTest>(
+        parent: const {},
+        own: {
+          'test_localClassWithoutToString_lint': (t) => t._localClassWithoutToStringLint(),
+          'test_localClassWithToString_noLint': (t) => t._localClassWithToStringNoLint(),
+          'test_throwString_noLint': (t) => t._throwStringNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidThrowObjectsWithoutToString();

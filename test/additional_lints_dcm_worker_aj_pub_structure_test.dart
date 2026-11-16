@@ -6,34 +6,34 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/pubspec_ordering.
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<PubspecOrderingTest>('PubspecOrderingTest', PubspecOrderingTest.new, {
-    'test_allowsOrderedPubspec_noLint': (t) => t._allowsOrderedPubspecNoLint(),
-    'test_outOfOrderTopLevelSection_lint': (t) => t._outOfOrderTopLevelSectionLint(),
-    'test_outOfOrderDependencies_lint': (t) => t._outOfOrderDependenciesLint(),
-  });
-  analysisRuleSuite<PreferCaretVersionSyntaxTest>(
-    'PreferCaretVersionSyntaxTest',
-    PreferCaretVersionSyntaxTest.new,
-    {
-      'test_allowsCaretVersion_noLint': (t) => t._allowsCaretVersionNoLint(),
-      'test_caretEquivalentRange_lint': (t) => t._caretEquivalentRangeLint(),
-      'test_nonEquivalentRange_noLint': (t) => t._nonEquivalentRangeNoLint(),
-      'test_zeroMajorCaretEquivalentRange_lint': (t) => t._zeroMajorCaretEquivalentRangeLint(),
-    },
+  analysisRuleSuite<_PubspecOrderingTest>(
+    'PubspecOrderingTest',
+    _PubspecOrderingTest.new,
+    _PubspecOrderingTest._allCases,
   );
-  analysisRuleSuite<MatchLibFolderStructureTest>(
+  analysisRuleSuite<_PreferCaretVersionSyntaxTest>(
+    'PreferCaretVersionSyntaxTest',
+    _PreferCaretVersionSyntaxTest.new,
+    _PreferCaretVersionSyntaxTest._allCases,
+  );
+  analysisRuleSuite<_MatchLibFolderStructureTest>(
     'MatchLibFolderStructureTest',
-    MatchLibFolderStructureTest.new,
-    {
-      'test_matchingTestPath_noLint': (t) => t._matchingTestPathNoLint(),
-      'test_mismatchedTestPath_lint': (t) => t._mismatchedTestPathLint(),
-      'test_nonLibTopLevelTestFolder_noLint': (t) => t._nonLibTopLevelTestFolderNoLint(),
-      'test_multiplePackageImports_noLint': (t) => t._multiplePackageImportsNoLint(),
-    },
+    _MatchLibFolderStructureTest.new,
+    _MatchLibFolderStructureTest._allCases,
   );
 }
 
-final class PubspecOrderingTest extends AnalysisRuleTest {
+final class _PubspecOrderingTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PubspecOrderingTest)> get _allCases =>
+      caseSet<_PubspecOrderingTest>(
+        parent: const {},
+        own: {
+          'test_allowsOrderedPubspec_noLint': (t) => t._allowsOrderedPubspecNoLint(),
+          'test_outOfOrderTopLevelSection_lint': (t) => t._outOfOrderTopLevelSectionLint(),
+          'test_outOfOrderDependencies_lint': (t) => t._outOfOrderDependenciesLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PubspecOrdering();
@@ -100,7 +100,18 @@ $body
   }
 }
 
-final class PreferCaretVersionSyntaxTest extends AnalysisRuleTest {
+final class _PreferCaretVersionSyntaxTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferCaretVersionSyntaxTest)> get _allCases =>
+      caseSet<_PreferCaretVersionSyntaxTest>(
+        parent: const {},
+        own: {
+          'test_allowsCaretVersion_noLint': (t) => t._allowsCaretVersionNoLint(),
+          'test_caretEquivalentRange_lint': (t) => t._caretEquivalentRangeLint(),
+          'test_nonEquivalentRange_noLint': (t) => t._nonEquivalentRangeNoLint(),
+          'test_zeroMajorCaretEquivalentRange_lint': (t) => t._zeroMajorCaretEquivalentRangeLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferCaretVersionSyntax();
@@ -143,7 +154,18 @@ dependencies:
   }
 }
 
-final class MatchLibFolderStructureTest extends AnalysisRuleTest {
+final class _MatchLibFolderStructureTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_MatchLibFolderStructureTest)> get _allCases =>
+      caseSet<_MatchLibFolderStructureTest>(
+        parent: const {},
+        own: {
+          'test_matchingTestPath_noLint': (t) => t._matchingTestPathNoLint(),
+          'test_mismatchedTestPath_lint': (t) => t._mismatchedTestPathLint(),
+          'test_nonLibTopLevelTestFolder_noLint': (t) => t._nonLibTopLevelTestFolderNoLint(),
+          'test_multiplePackageImports_noLint': (t) => t._multiplePackageImportsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = MatchLibFolderStructure();

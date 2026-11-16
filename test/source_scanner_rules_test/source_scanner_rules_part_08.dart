@@ -1,6 +1,16 @@
 part of '../source_scanner_rules_test.dart';
 
-final class BareStateMountedForbiddenTest extends _StateRuleTest {
+final class _BareStateMountedForbiddenTest extends _StateRuleTest {
+  static Map<String, Future<void> Function(_BareStateMountedForbiddenTest)> get _allCases =>
+      caseSet<_BareStateMountedForbiddenTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsThisMounted': (t) => t._reportsThisMounted(),
+          'test_allowsContextAndRefMounted': (t) => t._allowsContextAndRefMounted(),
+          'test_allowsNonWidgetMountedMember': (t) => t._allowsNonWidgetMountedMember(),
+        },
+      );
+
   @override
   String get ruleName => 'bare_state_mounted_forbidden';
   @override
@@ -58,7 +68,26 @@ abstract class _RouterRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => routerSourceRules;
 }
 
-final class RouterStringNavTest extends _RouterRuleTest {
+final class _RouterStringNavTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_RouterStringNavTest)> get _allCases =>
+      caseSet<_RouterStringNavTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsTestHostStringRoutes': (t) => t._allowsTestHostStringRoutes(),
+          'test_reportsRouterStringInsideCoreRouter': (t) =>
+              t._reportsRouterStringInsideCoreRouter(),
+          'test_reportsRouterPushNamedInsideCoreRouter': (t) =>
+              t._reportsRouterPushNamedInsideCoreRouter(),
+          'test_reportsCamelCaseRouterVariableInsideCoreRouter': (t) =>
+              t._reportsCamelCaseRouterVariableInsideCoreRouter(),
+          'test_reportsRawInitialLocationInsideCoreRouter': (t) =>
+              t._reportsRawInitialLocationInsideCoreRouter(),
+          'test_allowsTypedLocationsForStringNavRule': (t) =>
+              t._allowsTypedLocationsForStringNavRule(),
+          'test_allowsTypedRouteDefinitions': (t) => t._allowsTypedRouteDefinitions(),
+        },
+      );
+
   @override
   String get ruleName => 'router_string_nav';
   @override
@@ -219,7 +248,20 @@ class ProductRoute extends GoRouteData {}
   }
 }
 
-final class RouterPopThenPushTest extends _RouterRuleTest {
+final class _RouterPopThenPushTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_RouterPopThenPushTest)> get _allCases =>
+      caseSet<_RouterPopThenPushTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsSkillSafePopAfterEarlierPushReplacement': (t) =>
+              t._allowsSkillSafePopAfterEarlierPushReplacement(),
+          'test_reportsNavigatorPopThenTypedRoutePush': (t) =>
+              t._reportsNavigatorPopThenTypedRoutePush(),
+          'test_allowsSkillPopWithResultThenCallerPush': (t) =>
+              t._allowsSkillPopWithResultThenCallerPush(),
+        },
+      );
+
   @override
   void setUp() {
     _addTestingNavigationPackages();
@@ -311,7 +353,19 @@ Future<void> openCreateSheet(BuildContext context, Future<CreateChoice?> sheet) 
   }
 }
 
-final class PopFallbackHelperMustCheckNavigatorStackTest extends _RouterRuleTest {
+final class _PopFallbackHelperMustCheckNavigatorStackTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_PopFallbackHelperMustCheckNavigatorStackTest)>
+  get _allCases => caseSet<_PopFallbackHelperMustCheckNavigatorStackTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_allowsNavigatorStackChecks': (t) => t._allowsNavigatorStackChecks(),
+      'test_reportsMissingMountedGuard': (t) => t._reportsMissingMountedGuard(),
+      'test_reportsMissingLocalNavigatorCheck': (t) => t._reportsMissingLocalNavigatorCheck(),
+      'test_reportsMissingRootNavigatorCheck': (t) => t._reportsMissingRootNavigatorCheck(),
+      'test_allowsNonFallbackHelper': (t) => t._allowsNonFallbackHelper(),
+    },
+  );
+
   @override
   String get ruleName => 'pop_fallback_helper_must_check_navigator_stack';
   @override
@@ -499,7 +553,10 @@ extension ContextNavigationX on BuildContext {
   }
 }
 
-final class RouterRedirectWatchTest extends _RouterRuleTest {
+final class _RouterRedirectWatchTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_RouterRedirectWatchTest)> get _allCases =>
+      caseSet<_RouterRedirectWatchTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'router_redirect_watch';
   @override
@@ -515,7 +572,26 @@ final router = GoRouter(
 ''';
 }
 
-final class RouterRedirectLoadingBounceTest extends _RouterRuleTest {
+final class _RouterRedirectLoadingBounceTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_RouterRedirectLoadingBounceTest)> get _allCases =>
+      caseSet<_RouterRedirectLoadingBounceTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsLoadingSwitchCaseReturningTypedLocation': (t) =>
+              t._reportsLoadingSwitchCaseReturningTypedLocation(),
+          'test_reportsFallThroughLoadingCase': (t) => t._reportsFallThroughLoadingCase(),
+          'test_reportsLoadingSwitchExpressionCase': (t) => t._reportsLoadingSwitchExpressionCase(),
+          'test_reportsIsLoadingBranchInRedirectClosure': (t) =>
+              t._reportsIsLoadingBranchInRedirectClosure(),
+          'test_allowsSkillResolverThatStaysPutWhileLoading': (t) =>
+              t._allowsSkillResolverThatStaysPutWhileLoading(),
+          'test_allowsNegatedLoadingBranch': (t) => t._allowsNegatedLoadingBranch(),
+          'test_allowsNonEnumLoadingConstant': (t) => t._allowsNonEnumLoadingConstant(),
+          'test_allowsLoadingComparisonInsideOtherCase': (t) =>
+              t._allowsLoadingComparisonInsideOtherCase(),
+        },
+      );
+
   @override
   void setUp() {
     _addTestingNavigationPackages();
@@ -744,7 +820,17 @@ String? resolve(SetupStatus setupStatus, SetupStatus previous) {
   }
 }
 
-final class RouterSplashWaitsForInitialSyncTest extends _RouterRuleTest {
+final class _RouterSplashWaitsForInitialSyncTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_RouterSplashWaitsForInitialSyncTest)> get _allCases =>
+      caseSet<_RouterSplashWaitsForInitialSyncTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsAuthLoadingSplashGate': (t) => t._allowsAuthLoadingSplashGate(),
+          'test_allowsInitialSyncStatusOutsideSplashRedirect': (t) =>
+              t._allowsInitialSyncStatusOutsideSplashRedirect(),
+        },
+      );
+
   @override
   String get ruleName => 'router_splash_waits_for_initial_sync';
   @override
@@ -790,7 +876,22 @@ void logSyncStatus(InitialSyncStatus status) {
   }
 }
 
-final class RouterComplexExtraTest extends _RouterRuleTest {
+final class _RouterComplexExtraTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_RouterComplexExtraTest)> get _allCases =>
+      caseSet<_RouterComplexExtraTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+          'test_reportsTypedRouteExtraCall': (t) => t._reportsTypedRouteExtraCall(),
+          'test_reportsGoRouterStateExtraRead': (t) => t._reportsGoRouterStateExtraRead(),
+          'test_reportsContextNavigationExtraArgument': (t) =>
+              t._reportsContextNavigationExtraArgument(),
+          'test_allowsTypedRouteWithoutExtra': (t) => t._allowsTypedRouteWithoutExtra(),
+          'test_allowsTestFixtureExtraRead': (t) => t._allowsTestFixtureExtraRead(),
+          'test_allowsUnrelatedNamedExtraArgument': (t) => t._allowsUnrelatedNamedExtraArgument(),
+        },
+      );
+
   @override
   String get ruleName => 'router_complex_extra';
   @override
@@ -885,90 +986,44 @@ void build(value) {
 }
 
 void _defineSourceScannerRulesPart08Tests() {
-  analysisRuleSuite<BareStateMountedForbiddenTest>(
+  analysisRuleSuite<_BareStateMountedForbiddenTest>(
     'BareStateMountedForbiddenTest',
-    BareStateMountedForbiddenTest.new,
-    {
-      'test_reportsThisMounted': (t) => t._reportsThisMounted(),
-      'test_allowsContextAndRefMounted': (t) => t._allowsContextAndRefMounted(),
-      'test_allowsNonWidgetMountedMember': (t) => t._allowsNonWidgetMountedMember(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _BareStateMountedForbiddenTest.new,
+    _BareStateMountedForbiddenTest._allCases,
   );
-  analysisRuleSuite<RouterStringNavTest>('RouterStringNavTest', RouterStringNavTest.new, {
-    'test_allowsTestHostStringRoutes': (t) => t._allowsTestHostStringRoutes(),
-    'test_reportsRouterStringInsideCoreRouter': (t) => t._reportsRouterStringInsideCoreRouter(),
-    'test_reportsRouterPushNamedInsideCoreRouter': (t) =>
-        t._reportsRouterPushNamedInsideCoreRouter(),
-    'test_reportsCamelCaseRouterVariableInsideCoreRouter': (t) =>
-        t._reportsCamelCaseRouterVariableInsideCoreRouter(),
-    'test_reportsRawInitialLocationInsideCoreRouter': (t) =>
-        t._reportsRawInitialLocationInsideCoreRouter(),
-    'test_allowsTypedLocationsForStringNavRule': (t) => t._allowsTypedLocationsForStringNavRule(),
-    'test_allowsTypedRouteDefinitions': (t) => t._allowsTypedRouteDefinitions(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<RouterPopThenPushTest>('RouterPopThenPushTest', RouterPopThenPushTest.new, {
-    'test_allowsSkillSafePopAfterEarlierPushReplacement': (t) =>
-        t._allowsSkillSafePopAfterEarlierPushReplacement(),
-    'test_reportsNavigatorPopThenTypedRoutePush': (t) => t._reportsNavigatorPopThenTypedRoutePush(),
-    'test_allowsSkillPopWithResultThenCallerPush': (t) =>
-        t._allowsSkillPopWithResultThenCallerPush(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<PopFallbackHelperMustCheckNavigatorStackTest>(
+  analysisRuleSuite<_RouterStringNavTest>(
+    'RouterStringNavTest',
+    _RouterStringNavTest.new,
+    _RouterStringNavTest._allCases,
+  );
+  analysisRuleSuite<_RouterPopThenPushTest>(
+    'RouterPopThenPushTest',
+    _RouterPopThenPushTest.new,
+    _RouterPopThenPushTest._allCases,
+  );
+  analysisRuleSuite<_PopFallbackHelperMustCheckNavigatorStackTest>(
     'PopFallbackHelperMustCheckNavigatorStackTest',
-    PopFallbackHelperMustCheckNavigatorStackTest.new,
-    {
-      'test_allowsNavigatorStackChecks': (t) => t._allowsNavigatorStackChecks(),
-      'test_reportsMissingMountedGuard': (t) => t._reportsMissingMountedGuard(),
-      'test_reportsMissingLocalNavigatorCheck': (t) => t._reportsMissingLocalNavigatorCheck(),
-      'test_reportsMissingRootNavigatorCheck': (t) => t._reportsMissingRootNavigatorCheck(),
-      'test_allowsNonFallbackHelper': (t) => t._allowsNonFallbackHelper(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _PopFallbackHelperMustCheckNavigatorStackTest.new,
+    _PopFallbackHelperMustCheckNavigatorStackTest._allCases,
   );
-  analysisRuleSuite<RouterRedirectWatchTest>(
+  analysisRuleSuite<_RouterRedirectWatchTest>(
     'RouterRedirectWatchTest',
-    RouterRedirectWatchTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _RouterRedirectWatchTest.new,
+    _RouterRedirectWatchTest._allCases,
   );
-  analysisRuleSuite<RouterRedirectLoadingBounceTest>(
+  analysisRuleSuite<_RouterRedirectLoadingBounceTest>(
     'RouterRedirectLoadingBounceTest',
-    RouterRedirectLoadingBounceTest.new,
-    {
-      'test_reportsLoadingSwitchCaseReturningTypedLocation': (t) =>
-          t._reportsLoadingSwitchCaseReturningTypedLocation(),
-      'test_reportsFallThroughLoadingCase': (t) => t._reportsFallThroughLoadingCase(),
-      'test_reportsLoadingSwitchExpressionCase': (t) => t._reportsLoadingSwitchExpressionCase(),
-      'test_reportsIsLoadingBranchInRedirectClosure': (t) =>
-          t._reportsIsLoadingBranchInRedirectClosure(),
-      'test_allowsSkillResolverThatStaysPutWhileLoading': (t) =>
-          t._allowsSkillResolverThatStaysPutWhileLoading(),
-      'test_allowsNegatedLoadingBranch': (t) => t._allowsNegatedLoadingBranch(),
-      'test_allowsNonEnumLoadingConstant': (t) => t._allowsNonEnumLoadingConstant(),
-      'test_allowsLoadingComparisonInsideOtherCase': (t) =>
-          t._allowsLoadingComparisonInsideOtherCase(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RouterRedirectLoadingBounceTest.new,
+    _RouterRedirectLoadingBounceTest._allCases,
   );
-  analysisRuleSuite<RouterSplashWaitsForInitialSyncTest>(
+  analysisRuleSuite<_RouterSplashWaitsForInitialSyncTest>(
     'RouterSplashWaitsForInitialSyncTest',
-    RouterSplashWaitsForInitialSyncTest.new,
-    {
-      'test_allowsAuthLoadingSplashGate': (t) => t._allowsAuthLoadingSplashGate(),
-      'test_allowsInitialSyncStatusOutsideSplashRedirect': (t) =>
-          t._allowsInitialSyncStatusOutsideSplashRedirect(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RouterSplashWaitsForInitialSyncTest.new,
+    _RouterSplashWaitsForInitialSyncTest._allCases,
   );
-  analysisRuleSuite<RouterComplexExtraTest>('RouterComplexExtraTest', RouterComplexExtraTest.new, {
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    'test_reportsTypedRouteExtraCall': (t) => t._reportsTypedRouteExtraCall(),
-    'test_reportsGoRouterStateExtraRead': (t) => t._reportsGoRouterStateExtraRead(),
-    'test_reportsContextNavigationExtraArgument': (t) => t._reportsContextNavigationExtraArgument(),
-    'test_allowsTypedRouteWithoutExtra': (t) => t._allowsTypedRouteWithoutExtra(),
-    'test_allowsTestFixtureExtraRead': (t) => t._allowsTestFixtureExtraRead(),
-    'test_allowsUnrelatedNamedExtraArgument': (t) => t._allowsUnrelatedNamedExtraArgument(),
-  });
+  analysisRuleSuite<_RouterComplexExtraTest>(
+    'RouterComplexExtraTest',
+    _RouterComplexExtraTest.new,
+    _RouterComplexExtraTest._allCases,
+  );
 }

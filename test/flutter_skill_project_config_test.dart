@@ -4,43 +4,50 @@ import 'package:flutter_skill_lints/src/rules/flutter_skill_project_config.dart'
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<FlutterSkillProjectConfigTest>(
+  analysisRuleSuite<_FlutterSkillProjectConfigTest>(
     'FlutterSkillProjectConfigTest',
-    FlutterSkillProjectConfigTest.new,
-    {
-      'test_reportsProjectConfigGaps': (t) => t._reportsProjectConfigGaps(),
-      'test_reportsBuildYamlExplicitToJsonGap': (t) => t._reportsBuildYamlExplicitToJsonGap(),
-      'test_reportsFlutterAppMissingDeterministicE2eEntrypoint': (t) =>
-          t._reportsFlutterAppMissingDeterministicE2eEntrypoint(),
-      'test_allowsIntegrationTestWithoutDriverEntrypoint': (t) =>
-          t._allowsIntegrationTestWithoutDriverEntrypoint(),
-      'test_skipsProjectConfigDiagnosticsForNonAnchorFiles': (t) =>
-          t._skipsProjectConfigDiagnosticsForNonAnchorFiles(),
-      'test_allowsFlutterAppWithDeterministicE2eEntrypoint': (t) =>
-          t._allowsFlutterAppWithDeterministicE2eEntrypoint(),
-      'test_allowsFlutterAppWithQualifiedDeterministicE2eEntrypoint': (t) =>
-          t._allowsFlutterAppWithQualifiedDeterministicE2eEntrypoint(),
-      'test_reportsProhibitedPubspecLintPackages': (t) => t._reportsProhibitedPubspecLintPackages(),
-      'test_allowsNestedFunctionAnalysisOptionsWithoutPluginBlock': (t) =>
-          t._allowsNestedFunctionAnalysisOptionsWithoutPluginBlock(),
-      'test_allowsFlutterSkillLintsLocalPluginPathSource': (t) =>
-          t._allowsFlutterSkillLintsLocalPluginPathSource(),
-      'test_reportsProhibitedOtherLocalPluginPathSources': (t) =>
-          t._reportsProhibitedOtherLocalPluginPathSources(),
-      'test_reportsCanonicalErrorAndLintGaps': (t) => t._reportsCanonicalErrorAndLintGaps(),
-      'test_reportsProhibitedLocalPluginGitSources': (t) =>
-          t._reportsProhibitedLocalPluginGitSources(),
-      'test_reportsProhibitedFlowStyleLocalPluginSources': (t) =>
-          t._reportsProhibitedFlowStyleLocalPluginSources(),
-      'test_reportsQuotedProhibitedAnalysisOptionPlugins': (t) =>
-          t._reportsQuotedProhibitedAnalysisOptionPlugins(),
-      'test_allowsCanonicalConfigWithoutDeprecatedLints': (t) =>
-          t._allowsCanonicalConfigWithoutDeprecatedLints(),
-    },
+    _FlutterSkillProjectConfigTest.new,
+    _FlutterSkillProjectConfigTest._allCases,
   );
 }
 
-final class FlutterSkillProjectConfigTest extends AnalysisRuleTest {
+final class _FlutterSkillProjectConfigTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_FlutterSkillProjectConfigTest)> get _allCases =>
+      caseSet<_FlutterSkillProjectConfigTest>(
+        parent: const {},
+        own: {
+          'test_reportsProjectConfigGaps': (t) => t._reportsProjectConfigGaps(),
+          'test_reportsBuildYamlExplicitToJsonGap': (t) => t._reportsBuildYamlExplicitToJsonGap(),
+          'test_reportsFlutterAppMissingDeterministicE2eEntrypoint': (t) =>
+              t._reportsFlutterAppMissingDeterministicE2eEntrypoint(),
+          'test_allowsIntegrationTestWithoutDriverEntrypoint': (t) =>
+              t._allowsIntegrationTestWithoutDriverEntrypoint(),
+          'test_skipsProjectConfigDiagnosticsForNonAnchorFiles': (t) =>
+              t._skipsProjectConfigDiagnosticsForNonAnchorFiles(),
+          'test_allowsFlutterAppWithDeterministicE2eEntrypoint': (t) =>
+              t._allowsFlutterAppWithDeterministicE2eEntrypoint(),
+          'test_allowsFlutterAppWithQualifiedDeterministicE2eEntrypoint': (t) =>
+              t._allowsFlutterAppWithQualifiedDeterministicE2eEntrypoint(),
+          'test_reportsProhibitedPubspecLintPackages': (t) =>
+              t._reportsProhibitedPubspecLintPackages(),
+          'test_allowsNestedFunctionAnalysisOptionsWithoutPluginBlock': (t) =>
+              t._allowsNestedFunctionAnalysisOptionsWithoutPluginBlock(),
+          'test_allowsFlutterSkillLintsLocalPluginPathSource': (t) =>
+              t._allowsFlutterSkillLintsLocalPluginPathSource(),
+          'test_reportsProhibitedOtherLocalPluginPathSources': (t) =>
+              t._reportsProhibitedOtherLocalPluginPathSources(),
+          'test_reportsCanonicalErrorAndLintGaps': (t) => t._reportsCanonicalErrorAndLintGaps(),
+          'test_reportsProhibitedLocalPluginGitSources': (t) =>
+              t._reportsProhibitedLocalPluginGitSources(),
+          'test_reportsProhibitedFlowStyleLocalPluginSources': (t) =>
+              t._reportsProhibitedFlowStyleLocalPluginSources(),
+          'test_reportsQuotedProhibitedAnalysisOptionPlugins': (t) =>
+              t._reportsQuotedProhibitedAnalysisOptionPlugins(),
+          'test_allowsCanonicalConfigWithoutDeprecatedLints': (t) =>
+              t._allowsCanonicalConfigWithoutDeprecatedLints(),
+        },
+      );
+
   @override
   void setUp() {
     rule = FlutterSkillProjectConfig();

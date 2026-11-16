@@ -6,56 +6,36 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/require_atomic_as
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidUncaughtFutureErrorsTest>(
+  analysisRuleSuite<_AvoidUncaughtFutureErrorsTest>(
     'AvoidUncaughtFutureErrorsTest',
-    AvoidUncaughtFutureErrorsTest.new,
-    {
-      'test_unawaitedNamedFuture_noLint': (t) => t._unawaitedNamedFutureNoLint(),
-      'test_unawaitedInlineAsyncWithoutTry_lint': (t) => t._unawaitedInlineAsyncWithoutTryLint(),
-      'test_unawaitedInlineAsyncWithTry_noLint': (t) => t._unawaitedInlineAsyncWithTryNoLint(),
-      'test_awaitedFuture_noLint': (t) => t._awaitedFutureNoLint(),
-    },
+    _AvoidUncaughtFutureErrorsTest.new,
+    _AvoidUncaughtFutureErrorsTest._allCases,
   );
-  analysisRuleSuite<RequireAtomicAsyncUpdatesTest>(
+  analysisRuleSuite<_RequireAtomicAsyncUpdatesTest>(
     'RequireAtomicAsyncUpdatesTest',
-    RequireAtomicAsyncUpdatesTest.new,
-    {
-      'test_sameVariableAssignedBeforeAndAfterAwait_lint': (t) =>
-          t._sameVariableAssignedBeforeAndAfterAwaitLint(),
-      'test_stateAssignedBeforeAndAfterAwait_lint': (t) =>
-          t._stateAssignedBeforeAndAfterAwaitLint(),
-      'test_differentVariablesAcrossAwait_noLint': (t) => t._differentVariablesAcrossAwaitNoLint(),
-      'test_terminalBranchUpdatesAreMutuallyExclusive_noLint': (t) =>
-          t._terminalBranchUpdatesAreMutuallyExclusiveNoLint(),
-      'test_reportsAwaitedUpdateInTerminalBranchAfterPriorWrite_lint': (t) =>
-          t._reportsAwaitedUpdateInTerminalBranchAfterPriorWriteLint(),
-      'test_allowsGuardedLoadingToResultTransition_noLint': (t) =>
-          t._allowsGuardedLoadingToResultTransitionNoLint(),
-      'test_reportsLocalStateAndMountedNames_lint': (t) =>
-          t._reportsLocalStateAndMountedNamesLint(),
-      'test_allowsSkillLoadMoreMountedGuard_noLint': (t) =>
-          t._allowsSkillLoadMoreMountedGuardNoLint(),
-      'test_reportsTransitionAfterSecondAwait_lint': (t) =>
-          t._reportsTransitionAfterSecondAwaitLint(),
-      'test_reportsManyConditionalWritesWithoutPathExplosion_lint': (t) =>
-          t._reportsManyConditionalWritesWithoutPathExplosionLint(),
-    },
+    _RequireAtomicAsyncUpdatesTest.new,
+    _RequireAtomicAsyncUpdatesTest._allCases,
   );
-  analysisRuleSuite<AvoidPassingAsyncWhenSyncExpectedTest>(
+  analysisRuleSuite<_AvoidPassingAsyncWhenSyncExpectedTest>(
     'AvoidPassingAsyncWhenSyncExpectedTest',
-    AvoidPassingAsyncWhenSyncExpectedTest.new,
-    {
-      'test_asyncNamedCallbackForVoidFunction_lint': (t) =>
-          t._asyncNamedCallbackForVoidFunctionLint(),
-      'test_asyncPositionalCallbackForVoidFunction_lint': (t) =>
-          t._asyncPositionalCallbackForVoidFunctionLint(),
-      'test_asyncCallbackForFutureFunction_noLint': (t) =>
-          t._asyncCallbackForFutureFunctionNoLint(),
-    },
+    _AvoidPassingAsyncWhenSyncExpectedTest.new,
+    _AvoidPassingAsyncWhenSyncExpectedTest._allCases,
   );
 }
 
-final class AvoidUncaughtFutureErrorsTest extends AnalysisRuleTest {
+final class _AvoidUncaughtFutureErrorsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUncaughtFutureErrorsTest)> get _allCases =>
+      caseSet<_AvoidUncaughtFutureErrorsTest>(
+        parent: const {},
+        own: {
+          'test_unawaitedNamedFuture_noLint': (t) => t._unawaitedNamedFutureNoLint(),
+          'test_unawaitedInlineAsyncWithoutTry_lint': (t) =>
+              t._unawaitedInlineAsyncWithoutTryLint(),
+          'test_unawaitedInlineAsyncWithTry_noLint': (t) => t._unawaitedInlineAsyncWithTryNoLint(),
+          'test_awaitedFuture_noLint': (t) => t._awaitedFutureNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUncaughtFutureErrors();
@@ -121,7 +101,34 @@ Future<void> submit() async {
   }
 }
 
-final class RequireAtomicAsyncUpdatesTest extends AnalysisRuleTest {
+final class _RequireAtomicAsyncUpdatesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_RequireAtomicAsyncUpdatesTest)> get _allCases =>
+      caseSet<_RequireAtomicAsyncUpdatesTest>(
+        parent: const {},
+        own: {
+          'test_sameVariableAssignedBeforeAndAfterAwait_lint': (t) =>
+              t._sameVariableAssignedBeforeAndAfterAwaitLint(),
+          'test_stateAssignedBeforeAndAfterAwait_lint': (t) =>
+              t._stateAssignedBeforeAndAfterAwaitLint(),
+          'test_differentVariablesAcrossAwait_noLint': (t) =>
+              t._differentVariablesAcrossAwaitNoLint(),
+          'test_terminalBranchUpdatesAreMutuallyExclusive_noLint': (t) =>
+              t._terminalBranchUpdatesAreMutuallyExclusiveNoLint(),
+          'test_reportsAwaitedUpdateInTerminalBranchAfterPriorWrite_lint': (t) =>
+              t._reportsAwaitedUpdateInTerminalBranchAfterPriorWriteLint(),
+          'test_allowsGuardedLoadingToResultTransition_noLint': (t) =>
+              t._allowsGuardedLoadingToResultTransitionNoLint(),
+          'test_reportsLocalStateAndMountedNames_lint': (t) =>
+              t._reportsLocalStateAndMountedNamesLint(),
+          'test_allowsSkillLoadMoreMountedGuard_noLint': (t) =>
+              t._allowsSkillLoadMoreMountedGuardNoLint(),
+          'test_reportsTransitionAfterSecondAwait_lint': (t) =>
+              t._reportsTransitionAfterSecondAwaitLint(),
+          'test_reportsManyConditionalWritesWithoutPathExplosion_lint': (t) =>
+              t._reportsManyConditionalWritesWithoutPathExplosionLint(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('riverpod').addFile('lib/riverpod.dart', r'''
@@ -362,7 +369,20 @@ class Controller {
   }
 }
 
-final class AvoidPassingAsyncWhenSyncExpectedTest extends AnalysisRuleTest {
+final class _AvoidPassingAsyncWhenSyncExpectedTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidPassingAsyncWhenSyncExpectedTest)> get _allCases =>
+      caseSet<_AvoidPassingAsyncWhenSyncExpectedTest>(
+        parent: const {},
+        own: {
+          'test_asyncNamedCallbackForVoidFunction_lint': (t) =>
+              t._asyncNamedCallbackForVoidFunctionLint(),
+          'test_asyncPositionalCallbackForVoidFunction_lint': (t) =>
+              t._asyncPositionalCallbackForVoidFunctionLint(),
+          'test_asyncCallbackForFutureFunction_noLint': (t) =>
+              t._asyncCallbackForFutureFunctionNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidPassingAsyncWhenSyncExpected();

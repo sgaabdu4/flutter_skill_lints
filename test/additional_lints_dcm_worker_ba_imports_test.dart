@@ -6,39 +6,35 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_incorrect_u
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidDuplicateNamedImportsTest>(
+  analysisRuleSuite<_AvoidDuplicateNamedImportsTest>(
     'AvoidDuplicateNamedImportsTest',
-    AvoidDuplicateNamedImportsTest.new,
-    {
-      'test_sameUriDifferentPrefixes_lint': (t) => t._sameUriDifferentPrefixesLint(),
-      'test_sameUriPrefixedAndUnprefixed_lint': (t) => t._sameUriPrefixedAndUnprefixedLint(),
-      'test_sameUriSamePrefix_noLint': (t) => t._sameUriSamePrefixNoLint(),
-      'test_distinctUris_noLint': (t) => t._distinctUrisNoLint(),
-    },
+    _AvoidDuplicateNamedImportsTest.new,
+    _AvoidDuplicateNamedImportsTest._allCases,
   );
-  analysisRuleSuite<AvoidImportingEntrypointExportsTest>(
+  analysisRuleSuite<_AvoidImportingEntrypointExportsTest>(
     'AvoidImportingEntrypointExportsTest',
-    AvoidImportingEntrypointExportsTest.new,
-    {
-      'test_srcImportsOwnEntrypoint_lint': (t) => t._srcImportsOwnEntrypointLint(),
-      'test_srcImportsAnotherPackageEntrypoint_noLint': (t) =>
-          t._srcImportsAnotherPackageEntrypointNoLint(),
-    },
+    _AvoidImportingEntrypointExportsTest.new,
+    _AvoidImportingEntrypointExportsTest._allCases,
   );
-  analysisRuleSuite<AvoidIncorrectUriTest>('AvoidIncorrectUriTest', AvoidIncorrectUriTest.new, {
-    'test_backslashImportUri_lint': (t) => t._backslashImportUriLint(),
-    'test_packageUriWithoutPath_lint': (t) => t._packageUriWithoutPathLint(),
-    'test_partUriWithCurrentDirectorySegment_lint': (t) =>
-        t._partUriWithCurrentDirectorySegmentLint(),
-    'test_uriWithNonLeadingParentDirectorySegment_lint': (t) =>
-        t._uriWithNonLeadingParentDirectorySegmentLint(),
-    'test_uriWithLeadingParentDirectorySegments_noLint': (t) =>
-        t._uriWithLeadingParentDirectorySegmentsNoLint(),
-    'test_validUris_noLint': (t) => t._validUrisNoLint(),
-  });
+  analysisRuleSuite<_AvoidIncorrectUriTest>(
+    'AvoidIncorrectUriTest',
+    _AvoidIncorrectUriTest.new,
+    _AvoidIncorrectUriTest._allCases,
+  );
 }
 
-final class AvoidDuplicateNamedImportsTest extends AnalysisRuleTest {
+final class _AvoidDuplicateNamedImportsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidDuplicateNamedImportsTest)> get _allCases =>
+      caseSet<_AvoidDuplicateNamedImportsTest>(
+        parent: const {},
+        own: {
+          'test_sameUriDifferentPrefixes_lint': (t) => t._sameUriDifferentPrefixesLint(),
+          'test_sameUriPrefixedAndUnprefixed_lint': (t) => t._sameUriPrefixedAndUnprefixedLint(),
+          'test_sameUriSamePrefix_noLint': (t) => t._sameUriSamePrefixNoLint(),
+          'test_distinctUris_noLint': (t) => t._distinctUrisNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidDuplicateNamedImports();
@@ -93,7 +89,17 @@ import 'src/b.dart' as b;
   }
 }
 
-final class AvoidImportingEntrypointExportsTest extends AnalysisRuleTest {
+final class _AvoidImportingEntrypointExportsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidImportingEntrypointExportsTest)> get _allCases =>
+      caseSet<_AvoidImportingEntrypointExportsTest>(
+        parent: const {},
+        own: {
+          'test_srcImportsOwnEntrypoint_lint': (t) => t._srcImportsOwnEntrypointLint(),
+          'test_srcImportsAnotherPackageEntrypoint_noLint': (t) =>
+              t._srcImportsAnotherPackageEntrypointNoLint(),
+        },
+      );
+
   @override
   String get testFileName => 'src/feature.dart';
 
@@ -128,7 +134,23 @@ import 'dart:async';
   }
 }
 
-final class AvoidIncorrectUriTest extends AnalysisRuleTest {
+final class _AvoidIncorrectUriTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidIncorrectUriTest)> get _allCases =>
+      caseSet<_AvoidIncorrectUriTest>(
+        parent: const {},
+        own: {
+          'test_backslashImportUri_lint': (t) => t._backslashImportUriLint(),
+          'test_packageUriWithoutPath_lint': (t) => t._packageUriWithoutPathLint(),
+          'test_partUriWithCurrentDirectorySegment_lint': (t) =>
+              t._partUriWithCurrentDirectorySegmentLint(),
+          'test_uriWithNonLeadingParentDirectorySegment_lint': (t) =>
+              t._uriWithNonLeadingParentDirectorySegmentLint(),
+          'test_uriWithLeadingParentDirectorySegments_noLint': (t) =>
+              t._uriWithLeadingParentDirectorySegmentsNoLint(),
+          'test_validUris_noLint': (t) => t._validUrisNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidIncorrectUri();

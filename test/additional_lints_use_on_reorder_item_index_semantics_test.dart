@@ -4,24 +4,31 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/use_on_reorder_it
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<UseOnReorderItemIndexSemanticsTest>(
+  analysisRuleSuite<_UseOnReorderItemIndexSemanticsTest>(
     'UseOnReorderItemIndexSemanticsTest',
-    UseOnReorderItemIndexSemanticsTest.new,
-    {
-      'test_frameworkOnReorder_lint': (t) => t._frameworkOnReorderLint(),
-      'test_customOnReorder_noLint': (t) => t._customOnReorderNoLint(),
-      'test_onReorderItemInverseAdapter_lint': (t) => t._onReorderItemInverseAdapterLint(),
-      'test_onReorderItemPassThrough_noLint': (t) => t._onReorderItemPassThroughNoLint(),
-      'test_downstreamReorderLegacyAdjustment_lint': (t) =>
-          t._downstreamReorderLegacyAdjustmentLint(),
-      'test_downstreamReorderDirectInsert_noLint': (t) => t._downstreamReorderDirectInsertNoLint(),
-      'test_nonReorderFunctionWithSameParams_noLint': (t) =>
-          t._nonReorderFunctionWithSameParamsNoLint(),
-    },
+    _UseOnReorderItemIndexSemanticsTest.new,
+    _UseOnReorderItemIndexSemanticsTest._allCases,
   );
 }
 
-class UseOnReorderItemIndexSemanticsTest extends AnalysisRuleTest {
+class _UseOnReorderItemIndexSemanticsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_UseOnReorderItemIndexSemanticsTest)> get _allCases =>
+      caseSet<_UseOnReorderItemIndexSemanticsTest>(
+        parent: const {},
+        own: {
+          'test_frameworkOnReorder_lint': (t) => t._frameworkOnReorderLint(),
+          'test_customOnReorder_noLint': (t) => t._customOnReorderNoLint(),
+          'test_onReorderItemInverseAdapter_lint': (t) => t._onReorderItemInverseAdapterLint(),
+          'test_onReorderItemPassThrough_noLint': (t) => t._onReorderItemPassThroughNoLint(),
+          'test_downstreamReorderLegacyAdjustment_lint': (t) =>
+              t._downstreamReorderLegacyAdjustmentLint(),
+          'test_downstreamReorderDirectInsert_noLint': (t) =>
+              t._downstreamReorderDirectInsertNoLint(),
+          'test_nonReorderFunctionWithSameParams_noLint': (t) =>
+              t._nonReorderFunctionWithSameParamsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = UseOnReorderItemIndexSemantics();

@@ -1,6 +1,17 @@
 part of '../source_scanner_rules_test.dart';
 
-final class WebViewInitInBuildNoGateTest extends _RuntimeBugRuleTest {
+final class _WebViewInitInBuildNoGateTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_WebViewInitInBuildNoGateTest)> get _allCases =>
+      caseSet<_WebViewInitInBuildNoGateTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsWithUserTappedGate': (t) => t._allowsWithUserTappedGate(),
+          'test_reportsWhenGateFieldExistsButConstructorUngated': (t) =>
+              t._reportsWhenGateFieldExistsButConstructorUngated(),
+          'test_allowsHeavyWidgetOutsideBuild': (t) => t._allowsHeavyWidgetOutsideBuild(),
+        },
+      );
+
   @override
   String get ruleName => 'webview_init_in_build_no_gate';
   @override
@@ -71,7 +82,16 @@ class DemoSheet extends ConsumerWidget {
   }
 }
 
-final class ServiceStorageReadNoMemoTest extends _RuntimeBugRuleTest {
+final class _ServiceStorageReadNoMemoTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_ServiceStorageReadNoMemoTest)> get _allCases =>
+      caseSet<_ServiceStorageReadNoMemoTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsWithMemoCache': (t) => t._allowsWithMemoCache(),
+          'test_allowsNonServiceClass': (t) => t._allowsNonServiceClass(),
+        },
+      );
+
   @override
   String get ruleName => 'service_storage_read_no_memo';
   @override
@@ -114,7 +134,16 @@ class ContentRepository {
   }
 }
 
-final class KeepAliveWatchesResolvedProviderLifecycleTest extends _RuntimeBugRuleTest {
+final class _KeepAliveWatchesResolvedProviderLifecycleTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_KeepAliveWatchesResolvedProviderLifecycleTest)>
+  get _allCases => caseSet<_KeepAliveWatchesResolvedProviderLifecycleTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+      'test_allowsKeepAliveSourceFromAnotherFile': (t) => t._allowsKeepAliveSourceFromAnotherFile(),
+    },
+  );
+
   @override
   String get ruleName => 'keepalive_watches_unbounded_collection';
   @override
@@ -189,7 +218,22 @@ List<int> sortedProducts(Ref ref) {
 ''';
 }
 
-final class KeepAliveWatchesUnboundedCollectionTest extends _RuntimeBugRuleTest {
+final class _KeepAliveWatchesUnboundedCollectionTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_KeepAliveWatchesUnboundedCollectionTest)>
+  get _allCases => caseSet<_KeepAliveWatchesUnboundedCollectionTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_reportsLocalPureProjection': (t) => t._reportsLocalPureProjection(),
+      'test_reportsDirectPureProjection': (t) => t._reportsDirectPureProjection(),
+      'test_reportsSkillNeverExpressionBodyProjection': (t) =>
+          t._reportsSkillNeverExpressionBodyProjection(),
+      'test_allowsSkillDoBoundedProjection': (t) => t._allowsSkillDoBoundedProjection(),
+      'test_allowsAutoDispose': (t) => t._allowsAutoDispose(),
+      'test_allowsKeepAliveWithBoundedProjection': (t) => t._allowsKeepAliveWithBoundedProjection(),
+      'test_reportsMultilineSelect': (t) => t._reportsMultilineSelect(),
+    },
+  );
+
   @override
   String get ruleName => 'keepalive_watches_unbounded_collection';
   @override
@@ -335,7 +379,16 @@ class ProgressNotifier {
   }
 }
 
-final class DatasourceMissingBatchLoaderTest extends _RuntimeBugRuleTest {
+final class _DatasourceMissingBatchLoaderTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_DatasourceMissingBatchLoaderTest)> get _allCases =>
+      caseSet<_DatasourceMissingBatchLoaderTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsWithLoadAll': (t) => t._allowsWithLoadAll(),
+          'test_allowsSmallInterface': (t) => t._allowsSmallInterface(),
+        },
+      );
+
   @override
   String get ruleName => 'datasource_missing_batch_loader';
   @override
@@ -376,7 +429,20 @@ abstract class SettingsLocalDatasource {
   }
 }
 
-final class NotifierZeroValueSaveNoGuardTest extends _RuntimeBugRuleTest {
+final class _NotifierZeroValueSaveNoGuardTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_NotifierZeroValueSaveNoGuardTest)> get _allCases =>
+      caseSet<_NotifierZeroValueSaveNoGuardTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsWithPositiveGuard': (t) => t._allowsWithPositiveGuard(),
+          'test_allowsDocEarlyReturnGuard': (t) => t._allowsDocEarlyReturnGuard(),
+          'test_allowsValueObjectSave': (t) => t._allowsValueObjectSave(),
+          'test_reportsZeroCheckThatDoesNotExit': (t) => t._reportsZeroCheckThatDoesNotExit(),
+          'test_allowsNonSaveCall': (t) => t._allowsNonSaveCall(),
+          'test_reportsPlainSaveMethod': (t) => t._reportsPlainSaveMethod(),
+        },
+      );
+
   @override
   String get ruleName => 'notifier_zero_value_save_no_guard';
   @override
@@ -473,7 +539,17 @@ class EntrySheet {
   }
 }
 
-final class NotifierParamRequiresValueObjectTest extends _RuntimeBugRuleTest {
+final class _NotifierParamRequiresValueObjectTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_NotifierParamRequiresValueObjectTest)> get _allCases =>
+      caseSet<_NotifierParamRequiresValueObjectTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsValueObjectAtBoundary': (t) => t._allowsValueObjectAtBoundary(),
+          'test_allowsPlainNonUnitLocal': (t) => t._allowsPlainNonUnitLocal(),
+          'test_reportsPlainSaveMethod': (t) => t._reportsPlainSaveMethod(),
+        },
+      );
+
   @override
   String get ruleName => 'notifier_param_requires_value_object';
   @override
@@ -525,79 +601,39 @@ class EntrySheet {
 }
 
 void _defineSourceScannerRulesPart16Tests() {
-  analysisRuleSuite<WebViewInitInBuildNoGateTest>(
+  analysisRuleSuite<_WebViewInitInBuildNoGateTest>(
     'WebViewInitInBuildNoGateTest',
-    WebViewInitInBuildNoGateTest.new,
-    {
-      'test_allowsWithUserTappedGate': (t) => t._allowsWithUserTappedGate(),
-      'test_reportsWhenGateFieldExistsButConstructorUngated': (t) =>
-          t._reportsWhenGateFieldExistsButConstructorUngated(),
-      'test_allowsHeavyWidgetOutsideBuild': (t) => t._allowsHeavyWidgetOutsideBuild(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _WebViewInitInBuildNoGateTest.new,
+    _WebViewInitInBuildNoGateTest._allCases,
   );
-  analysisRuleSuite<ServiceStorageReadNoMemoTest>(
+  analysisRuleSuite<_ServiceStorageReadNoMemoTest>(
     'ServiceStorageReadNoMemoTest',
-    ServiceStorageReadNoMemoTest.new,
-    {
-      'test_allowsWithMemoCache': (t) => t._allowsWithMemoCache(),
-      'test_allowsNonServiceClass': (t) => t._allowsNonServiceClass(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ServiceStorageReadNoMemoTest.new,
+    _ServiceStorageReadNoMemoTest._allCases,
   );
-  analysisRuleSuite<KeepAliveWatchesUnboundedCollectionTest>(
+  analysisRuleSuite<_KeepAliveWatchesUnboundedCollectionTest>(
     'KeepAliveWatchesUnboundedCollectionTest',
-    KeepAliveWatchesUnboundedCollectionTest.new,
-    {
-      'test_reportsLocalPureProjection': (t) => t._reportsLocalPureProjection(),
-      'test_reportsDirectPureProjection': (t) => t._reportsDirectPureProjection(),
-      'test_reportsSkillNeverExpressionBodyProjection': (t) =>
-          t._reportsSkillNeverExpressionBodyProjection(),
-      'test_allowsSkillDoBoundedProjection': (t) => t._allowsSkillDoBoundedProjection(),
-      'test_allowsAutoDispose': (t) => t._allowsAutoDispose(),
-      'test_allowsKeepAliveWithBoundedProjection': (t) => t._allowsKeepAliveWithBoundedProjection(),
-      'test_reportsMultilineSelect': (t) => t._reportsMultilineSelect(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _KeepAliveWatchesUnboundedCollectionTest.new,
+    _KeepAliveWatchesUnboundedCollectionTest._allCases,
   );
-  analysisRuleSuite<KeepAliveWatchesResolvedProviderLifecycleTest>(
+  analysisRuleSuite<_KeepAliveWatchesResolvedProviderLifecycleTest>(
     'KeepAliveWatchesResolvedProviderLifecycleTest',
-    KeepAliveWatchesResolvedProviderLifecycleTest.new,
-    {
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-      'test_allowsKeepAliveSourceFromAnotherFile': (t) => t._allowsKeepAliveSourceFromAnotherFile(),
-    },
+    _KeepAliveWatchesResolvedProviderLifecycleTest.new,
+    _KeepAliveWatchesResolvedProviderLifecycleTest._allCases,
   );
-  analysisRuleSuite<DatasourceMissingBatchLoaderTest>(
+  analysisRuleSuite<_DatasourceMissingBatchLoaderTest>(
     'DatasourceMissingBatchLoaderTest',
-    DatasourceMissingBatchLoaderTest.new,
-    {
-      'test_allowsWithLoadAll': (t) => t._allowsWithLoadAll(),
-      'test_allowsSmallInterface': (t) => t._allowsSmallInterface(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _DatasourceMissingBatchLoaderTest.new,
+    _DatasourceMissingBatchLoaderTest._allCases,
   );
-  analysisRuleSuite<NotifierZeroValueSaveNoGuardTest>(
+  analysisRuleSuite<_NotifierZeroValueSaveNoGuardTest>(
     'NotifierZeroValueSaveNoGuardTest',
-    NotifierZeroValueSaveNoGuardTest.new,
-    {
-      'test_allowsWithPositiveGuard': (t) => t._allowsWithPositiveGuard(),
-      'test_allowsDocEarlyReturnGuard': (t) => t._allowsDocEarlyReturnGuard(),
-      'test_allowsValueObjectSave': (t) => t._allowsValueObjectSave(),
-      'test_reportsZeroCheckThatDoesNotExit': (t) => t._reportsZeroCheckThatDoesNotExit(),
-      'test_allowsNonSaveCall': (t) => t._allowsNonSaveCall(),
-      'test_reportsPlainSaveMethod': (t) => t._reportsPlainSaveMethod(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _NotifierZeroValueSaveNoGuardTest.new,
+    _NotifierZeroValueSaveNoGuardTest._allCases,
   );
-  analysisRuleSuite<NotifierParamRequiresValueObjectTest>(
+  analysisRuleSuite<_NotifierParamRequiresValueObjectTest>(
     'NotifierParamRequiresValueObjectTest',
-    NotifierParamRequiresValueObjectTest.new,
-    {
-      'test_allowsValueObjectAtBoundary': (t) => t._allowsValueObjectAtBoundary(),
-      'test_allowsPlainNonUnitLocal': (t) => t._allowsPlainNonUnitLocal(),
-      'test_reportsPlainSaveMethod': (t) => t._reportsPlainSaveMethod(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _NotifierParamRequiresValueObjectTest.new,
+    _NotifierParamRequiresValueObjectTest._allCases,
   );
 }

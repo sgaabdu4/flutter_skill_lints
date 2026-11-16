@@ -6,10 +6,28 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_type
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidAccessingOtherClassesPrivateMembersTest>(
+  analysisRuleSuite<_AvoidAccessingOtherClassesPrivateMembersTest>(
     'AvoidAccessingOtherClassesPrivateMembersTest',
-    AvoidAccessingOtherClassesPrivateMembersTest.new,
-    {
+    _AvoidAccessingOtherClassesPrivateMembersTest.new,
+    _AvoidAccessingOtherClassesPrivateMembersTest._allCases,
+  );
+  analysisRuleSuite<_AvoidBannedNamesTest>(
+    'AvoidBannedNamesTest',
+    _AvoidBannedNamesTest.new,
+    _AvoidBannedNamesTest._allCases,
+  );
+  analysisRuleSuite<_AvoidBannedTypesTest>(
+    'AvoidBannedTypesTest',
+    _AvoidBannedTypesTest.new,
+    _AvoidBannedTypesTest._allCases,
+  );
+}
+
+final class _AvoidAccessingOtherClassesPrivateMembersTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidAccessingOtherClassesPrivateMembersTest)>
+  get _allCases => caseSet<_AvoidAccessingOtherClassesPrivateMembersTest>(
+    parent: const {},
+    own: {
       'test_privateInstanceFieldFromOtherObject_lint': (t) =>
           t._privateInstanceFieldFromOtherObjectLint(),
       'test_privateStaticFieldFromOtherClass_lint': (t) =>
@@ -19,27 +37,7 @@ void main() {
       'test_publicMemberFromOtherObject_noLint': (t) => t._publicMemberFromOtherObjectNoLint(),
     },
   );
-  analysisRuleSuite<AvoidBannedNamesTest>('AvoidBannedNamesTest', AvoidBannedNamesTest.new, {
-    'test_placeholderLocalVariableName_lint': (t) => t._placeholderLocalVariableNameLint(),
-    'test_placeholderClassName_lint': (t) => t._placeholderClassNameLint(),
-    'test_placeholderParameterName_lint': (t) => t._placeholderParameterNameLint(),
-    'test_descriptiveNames_noLint': (t) => t._descriptiveNamesNoLint(),
-    'test_overrideMethodName_lintsBaseDeclarationOnly': (t) =>
-        t._overrideMethodNameLintsBaseDeclarationOnly(),
-  });
-  analysisRuleSuite<AvoidBannedTypesTest>('AvoidBannedTypesTest', AvoidBannedTypesTest.new, {
-    'test_dynamicParameter_lint': (t) => t._dynamicParameterLint(),
-    'test_dynamicReturnType_lint': (t) => t._dynamicReturnTypeLint(),
-    'test_listDynamic_lint': (t) => t._listDynamicLint(),
-    'test_jsonMapDynamicValue_noLint': (t) => t._jsonMapDynamicValueNoLint(),
-    'test_jsonMapLiteralDynamicValue_noLint': (t) => t._jsonMapLiteralDynamicValueNoLint(),
-    'test_nonJsonMapLiteralDynamic_lint': (t) => t._nonJsonMapLiteralDynamicLint(),
-    'test_generatedLocalizationDynamic_noLint': (t) => t._generatedLocalizationDynamicNoLint(),
-    'test_objectBoundary_noLint': (t) => t._objectBoundaryNoLint(),
-  });
-}
 
-final class AvoidAccessingOtherClassesPrivateMembersTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = AvoidAccessingOtherClassesPrivateMembers();
@@ -108,7 +106,20 @@ class Presenter {
   }
 }
 
-final class AvoidBannedNamesTest extends AnalysisRuleTest {
+final class _AvoidBannedNamesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidBannedNamesTest)> get _allCases =>
+      caseSet<_AvoidBannedNamesTest>(
+        parent: const {},
+        own: {
+          'test_placeholderLocalVariableName_lint': (t) => t._placeholderLocalVariableNameLint(),
+          'test_placeholderClassName_lint': (t) => t._placeholderClassNameLint(),
+          'test_placeholderParameterName_lint': (t) => t._placeholderParameterNameLint(),
+          'test_descriptiveNames_noLint': (t) => t._descriptiveNamesNoLint(),
+          'test_overrideMethodName_lintsBaseDeclarationOnly': (t) =>
+              t._overrideMethodNameLintsBaseDeclarationOnly(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidBannedNames();
@@ -168,7 +179,23 @@ class Child extends Base {
   }
 }
 
-final class AvoidBannedTypesTest extends AnalysisRuleTest {
+final class _AvoidBannedTypesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidBannedTypesTest)> get _allCases =>
+      caseSet<_AvoidBannedTypesTest>(
+        parent: const {},
+        own: {
+          'test_dynamicParameter_lint': (t) => t._dynamicParameterLint(),
+          'test_dynamicReturnType_lint': (t) => t._dynamicReturnTypeLint(),
+          'test_listDynamic_lint': (t) => t._listDynamicLint(),
+          'test_jsonMapDynamicValue_noLint': (t) => t._jsonMapDynamicValueNoLint(),
+          'test_jsonMapLiteralDynamicValue_noLint': (t) => t._jsonMapLiteralDynamicValueNoLint(),
+          'test_nonJsonMapLiteralDynamic_lint': (t) => t._nonJsonMapLiteralDynamicLint(),
+          'test_generatedLocalizationDynamic_noLint': (t) =>
+              t._generatedLocalizationDynamicNoLint(),
+          'test_objectBoundary_noLint': (t) => t._objectBoundaryNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidBannedTypes();

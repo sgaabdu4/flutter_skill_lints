@@ -1,6 +1,31 @@
 part of '../source_scanner_rules_test.dart';
 
-final class RiverpodKeepaliveFamilyTest extends _RiverpodRuleTest {
+final class _RiverpodKeepaliveFamilyTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodKeepaliveFamilyTest)> get _allCases =>
+      caseSet<_RiverpodKeepaliveFamilyTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsNearbyRequiredFieldsAndMethods': (t) =>
+              t._allowsNearbyRequiredFieldsAndMethods(),
+          'test_reportsRefFamilyParameter': (t) => t._reportsRefFamilyParameter(),
+          'test_allowsKeepAliveProviderWithoutFamilyArgument': (t) =>
+              t._allowsKeepAliveProviderWithoutFamilyArgument(),
+          'test_allowsFamilyProviderAfterKeepAliveProviderBody': (t) =>
+              t._allowsFamilyProviderAfterKeepAliveProviderBody(),
+          'test_allowsKeepAliveClassProviderWithoutBuildArgument': (t) =>
+              t._allowsKeepAliveClassProviderWithoutBuildArgument(),
+          'test_reportsMultilineKeepAliveFamilyAnnotation': (t) =>
+              t._reportsMultilineKeepAliveFamilyAnnotation(),
+          'test_reportsKeepAliveClassBuildFamily': (t) => t._reportsKeepAliveClassBuildFamily(),
+          'test_allowsTickerModeKeepAliveWorkaround': (t) =>
+              t._allowsTickerModeKeepAliveWorkaround(),
+          'test_allowsDocumentedWorkaroundNoteOnAnnotationLine': (t) =>
+              t._allowsDocumentedWorkaroundNoteOnAnnotationLine(),
+          'test_reportsFamilyBesideNeighbourWorkaroundNote': (t) =>
+              t._reportsFamilyBesideNeighbourWorkaroundNote(),
+        },
+      );
+
   Future<void> _allowsNearbyRequiredFieldsAndMethods() async {
     await assertAllows(r'''
 class Riverpod { const Riverpod({bool keepAlive = false}); }
@@ -177,7 +202,18 @@ abstract class _FreezedRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => freezedSourceRules;
 }
 
-final class DartStaticNamespaceTest extends _FreezedRuleTest {
+final class _DartStaticNamespaceTest extends _FreezedRuleTest {
+  static Map<String, Future<void> Function(_DartStaticNamespaceTest)> get _allCases =>
+      caseSet<_DartStaticNamespaceTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsPrivateConstructorSingletonWithInstanceMembers': (t) =>
+              t._allowsPrivateConstructorSingletonWithInstanceMembers(),
+          'test_allowsPrivateConstructorWithFactoryAndInstanceMembers': (t) =>
+              t._allowsPrivateConstructorWithFactoryAndInstanceMembers(),
+        },
+      );
+
   @override
   String get ruleName => 'dart_static_namespace';
   @override
@@ -216,7 +252,16 @@ class SharedCache {
   }
 }
 
-final class RecordUseOutsideFfiTest extends _FreezedRuleTest {
+final class _RecordUseOutsideFfiTest extends _FreezedRuleTest {
+  static Map<String, Future<void> Function(_RecordUseOutsideFfiTest)> get _allCases =>
+      caseSet<_RecordUseOutsideFfiTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsFfiBinding': (t) => t._allowsFfiBinding(),
+          'test_allowsNonMetaRecordUse': (t) => t._allowsNonMetaRecordUse(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('meta').addFile('lib/meta.dart', r'''
@@ -265,7 +310,10 @@ String greeting(String name) => 'Hello $name';
   }
 }
 
-final class FreezedPerClassExplicitToJsonTest extends _FreezedRuleTest {
+final class _FreezedPerClassExplicitToJsonTest extends _FreezedRuleTest {
+  static Map<String, Future<void> Function(_FreezedPerClassExplicitToJsonTest)> get _allCases =>
+      caseSet<_FreezedPerClassExplicitToJsonTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'freezed_per_class_explicit_to_json';
   @override
@@ -281,7 +329,10 @@ class UserDto {}
 ''';
 }
 
-final class FreezedToJsonWithFromJsonTest extends _FreezedRuleTest {
+final class _FreezedToJsonWithFromJsonTest extends _FreezedRuleTest {
+  static Map<String, Future<void> Function(_FreezedToJsonWithFromJsonTest)> get _allCases =>
+      caseSet<_FreezedToJsonWithFromJsonTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'freezed_to_json_with_from_json';
   @override
@@ -303,7 +354,21 @@ class User {
 ''';
 }
 
-final class FreezedLegacyWhenMapTest extends _FreezedRuleTest {
+final class _FreezedLegacyWhenMapTest extends _FreezedRuleTest {
+  static Map<String, Future<void> Function(_FreezedLegacyWhenMapTest)> get _allCases =>
+      caseSet<_FreezedLegacyWhenMapTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsEveryGeneratedPatternHelper': (t) => t._reportsEveryGeneratedPatternHelper(),
+          'test_reportsHelpersOnConfiguredFreezedAnnotation': (t) =>
+              t._reportsHelpersOnConfiguredFreezedAnnotation(),
+          'test_allowsSameNamedHelpersOnNonFreezedTypes': (t) =>
+              t._allowsSameNamedHelpersOnNonFreezedTypes(),
+          'test_allowsUnrelatedMethodNamedWhen': (t) => t._allowsUnrelatedMethodNamedWhen(),
+          'test_allowsBareMocktailWhenCall': (t) => t._allowsBareMocktailWhenCall(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('freezed_annotation').addFile('lib/freezed_annotation.dart', r'''
@@ -421,7 +486,25 @@ void main() {
   }
 }
 
-final class FreezedRequiredValueClassTest extends _FreezedRuleTest {
+final class _FreezedRequiredValueClassTest extends _FreezedRuleTest {
+  static Map<String, Future<void> Function(_FreezedRequiredValueClassTest)> get _allCases =>
+      caseSet<_FreezedRequiredValueClassTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsNonFreezedHiveTypeDataModel': (t) => t._allowsNonFreezedHiveTypeDataModel(),
+          'test_allowsStaticCodecNamespaceInDataModels': (t) =>
+              t._allowsStaticCodecNamespaceInDataModels(),
+          'test_reportsDataModelWithUnresolvedHiveTypeLookalike': (t) =>
+              t._reportsDataModelWithUnresolvedHiveTypeLookalike(),
+          'test_reportsEquatableDataModel': (t) => t._reportsEquatableDataModel(),
+          'test_allowsFreezedDomainEntity': (t) => t._allowsFreezedDomainEntity(),
+          'test_allowsFreezedDataModel': (t) => t._allowsFreezedDataModel(),
+          'test_allowsDomainInterfaceContracts': (t) => t._allowsDomainInterfaceContracts(),
+          'test_allowsNonModelDataClassOutsideModelsFolder': (t) =>
+              t._allowsNonModelDataClassOutsideModelsFolder(),
+        },
+      );
+
   @override
   String get ruleName => 'freezed_required_value_class';
   @override
@@ -626,7 +709,19 @@ class UserDatasource {
   }
 }
 
-final class UseFreezedInsteadOfImmutableTest extends _FreezedRuleTest {
+final class _UseFreezedInsteadOfImmutableTest extends _FreezedRuleTest {
+  static Map<String, Future<void> Function(_UseFreezedInsteadOfImmutableTest)> get _allCases =>
+      caseSet<_UseFreezedInsteadOfImmutableTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsUnfreezedStateClass': (t) => t._reportsUnfreezedStateClass(),
+          'test_allowsSameNamedNonFreezedUnfreezedAnnotation': (t) =>
+              t._allowsSameNamedNonFreezedUnfreezedAnnotation(),
+          'test_allowsImmutableTextInComments': (t) => t._allowsImmutableTextInComments(),
+          'test_allowsImmutableInTests': (t) => t._allowsImmutableInTests(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('freezed_annotation').addFile('lib/freezed_annotation.dart', r'''
@@ -706,7 +801,16 @@ class TestUserState {
   }
 }
 
-final class FreezedOneClassPerFileTest extends _FreezedRuleTest {
+final class _FreezedOneClassPerFileTest extends _FreezedRuleTest {
+  static Map<String, Future<void> Function(_FreezedOneClassPerFileTest)> get _allCases =>
+      caseSet<_FreezedOneClassPerFileTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsSingleFreezedClassPerFile': (t) => t._allowsSingleFreezedClassPerFile(),
+          'test_allowsMultipleNonFreezedClasses': (t) => t._allowsMultipleNonFreezedClasses(),
+        },
+      );
+
   @override
   String get ruleName => 'freezed_one_class_per_file';
   @override
@@ -782,110 +886,49 @@ class UserFilters {
 }
 
 void _defineSourceScannerRulesPart04Tests() {
-  analysisRuleSuite<RiverpodKeepaliveFamilyTest>(
+  analysisRuleSuite<_RiverpodKeepaliveFamilyTest>(
     'RiverpodKeepaliveFamilyTest',
-    RiverpodKeepaliveFamilyTest.new,
-    {
-      'test_allowsNearbyRequiredFieldsAndMethods': (t) => t._allowsNearbyRequiredFieldsAndMethods(),
-      'test_reportsRefFamilyParameter': (t) => t._reportsRefFamilyParameter(),
-      'test_allowsKeepAliveProviderWithoutFamilyArgument': (t) =>
-          t._allowsKeepAliveProviderWithoutFamilyArgument(),
-      'test_allowsFamilyProviderAfterKeepAliveProviderBody': (t) =>
-          t._allowsFamilyProviderAfterKeepAliveProviderBody(),
-      'test_allowsKeepAliveClassProviderWithoutBuildArgument': (t) =>
-          t._allowsKeepAliveClassProviderWithoutBuildArgument(),
-      'test_reportsMultilineKeepAliveFamilyAnnotation': (t) =>
-          t._reportsMultilineKeepAliveFamilyAnnotation(),
-      'test_reportsKeepAliveClassBuildFamily': (t) => t._reportsKeepAliveClassBuildFamily(),
-      'test_allowsTickerModeKeepAliveWorkaround': (t) => t._allowsTickerModeKeepAliveWorkaround(),
-      'test_allowsDocumentedWorkaroundNoteOnAnnotationLine': (t) =>
-          t._allowsDocumentedWorkaroundNoteOnAnnotationLine(),
-      'test_reportsFamilyBesideNeighbourWorkaroundNote': (t) =>
-          t._reportsFamilyBesideNeighbourWorkaroundNote(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodKeepaliveFamilyTest.new,
+    _RiverpodKeepaliveFamilyTest._allCases,
   );
-  analysisRuleSuite<DartStaticNamespaceTest>(
+  analysisRuleSuite<_DartStaticNamespaceTest>(
     'DartStaticNamespaceTest',
-    DartStaticNamespaceTest.new,
-    {
-      'test_allowsPrivateConstructorSingletonWithInstanceMembers': (t) =>
-          t._allowsPrivateConstructorSingletonWithInstanceMembers(),
-      'test_allowsPrivateConstructorWithFactoryAndInstanceMembers': (t) =>
-          t._allowsPrivateConstructorWithFactoryAndInstanceMembers(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _DartStaticNamespaceTest.new,
+    _DartStaticNamespaceTest._allCases,
   );
-  analysisRuleSuite<RecordUseOutsideFfiTest>(
+  analysisRuleSuite<_RecordUseOutsideFfiTest>(
     'RecordUseOutsideFfiTest',
-    RecordUseOutsideFfiTest.new,
-    {
-      'test_allowsFfiBinding': (t) => t._allowsFfiBinding(),
-      'test_allowsNonMetaRecordUse': (t) => t._allowsNonMetaRecordUse(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RecordUseOutsideFfiTest.new,
+    _RecordUseOutsideFfiTest._allCases,
   );
-  analysisRuleSuite<FreezedPerClassExplicitToJsonTest>(
+  analysisRuleSuite<_FreezedPerClassExplicitToJsonTest>(
     'FreezedPerClassExplicitToJsonTest',
-    FreezedPerClassExplicitToJsonTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _FreezedPerClassExplicitToJsonTest.new,
+    _FreezedPerClassExplicitToJsonTest._allCases,
   );
-  analysisRuleSuite<FreezedToJsonWithFromJsonTest>(
+  analysisRuleSuite<_FreezedToJsonWithFromJsonTest>(
     'FreezedToJsonWithFromJsonTest',
-    FreezedToJsonWithFromJsonTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _FreezedToJsonWithFromJsonTest.new,
+    _FreezedToJsonWithFromJsonTest._allCases,
   );
-  analysisRuleSuite<FreezedLegacyWhenMapTest>(
+  analysisRuleSuite<_FreezedLegacyWhenMapTest>(
     'FreezedLegacyWhenMapTest',
-    FreezedLegacyWhenMapTest.new,
-    {
-      'test_reportsEveryGeneratedPatternHelper': (t) => t._reportsEveryGeneratedPatternHelper(),
-      'test_reportsHelpersOnConfiguredFreezedAnnotation': (t) =>
-          t._reportsHelpersOnConfiguredFreezedAnnotation(),
-      'test_allowsSameNamedHelpersOnNonFreezedTypes': (t) =>
-          t._allowsSameNamedHelpersOnNonFreezedTypes(),
-      'test_allowsUnrelatedMethodNamedWhen': (t) => t._allowsUnrelatedMethodNamedWhen(),
-      'test_allowsBareMocktailWhenCall': (t) => t._allowsBareMocktailWhenCall(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _FreezedLegacyWhenMapTest.new,
+    _FreezedLegacyWhenMapTest._allCases,
   );
-  analysisRuleSuite<FreezedRequiredValueClassTest>(
+  analysisRuleSuite<_FreezedRequiredValueClassTest>(
     'FreezedRequiredValueClassTest',
-    FreezedRequiredValueClassTest.new,
-    {
-      'test_allowsNonFreezedHiveTypeDataModel': (t) => t._allowsNonFreezedHiveTypeDataModel(),
-      'test_allowsStaticCodecNamespaceInDataModels': (t) =>
-          t._allowsStaticCodecNamespaceInDataModels(),
-      'test_reportsDataModelWithUnresolvedHiveTypeLookalike': (t) =>
-          t._reportsDataModelWithUnresolvedHiveTypeLookalike(),
-      'test_reportsEquatableDataModel': (t) => t._reportsEquatableDataModel(),
-      'test_allowsFreezedDomainEntity': (t) => t._allowsFreezedDomainEntity(),
-      'test_allowsFreezedDataModel': (t) => t._allowsFreezedDataModel(),
-      'test_allowsDomainInterfaceContracts': (t) => t._allowsDomainInterfaceContracts(),
-      'test_allowsNonModelDataClassOutsideModelsFolder': (t) =>
-          t._allowsNonModelDataClassOutsideModelsFolder(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _FreezedRequiredValueClassTest.new,
+    _FreezedRequiredValueClassTest._allCases,
   );
-  analysisRuleSuite<UseFreezedInsteadOfImmutableTest>(
+  analysisRuleSuite<_UseFreezedInsteadOfImmutableTest>(
     'UseFreezedInsteadOfImmutableTest',
-    UseFreezedInsteadOfImmutableTest.new,
-    {
-      'test_reportsUnfreezedStateClass': (t) => t._reportsUnfreezedStateClass(),
-      'test_allowsSameNamedNonFreezedUnfreezedAnnotation': (t) =>
-          t._allowsSameNamedNonFreezedUnfreezedAnnotation(),
-      'test_allowsImmutableTextInComments': (t) => t._allowsImmutableTextInComments(),
-      'test_allowsImmutableInTests': (t) => t._allowsImmutableInTests(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _UseFreezedInsteadOfImmutableTest.new,
+    _UseFreezedInsteadOfImmutableTest._allCases,
   );
-  analysisRuleSuite<FreezedOneClassPerFileTest>(
+  analysisRuleSuite<_FreezedOneClassPerFileTest>(
     'FreezedOneClassPerFileTest',
-    FreezedOneClassPerFileTest.new,
-    {
-      'test_allowsSingleFreezedClassPerFile': (t) => t._allowsSingleFreezedClassPerFile(),
-      'test_allowsMultipleNonFreezedClasses': (t) => t._allowsMultipleNonFreezedClasses(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _FreezedOneClassPerFileTest.new,
+    _FreezedOneClassPerFileTest._allCases,
   );
 }

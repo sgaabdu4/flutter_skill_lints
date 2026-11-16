@@ -4,24 +4,30 @@ import 'package:flutter_skill_lints/src/rules/avoid_flutter_host_driver_imports.
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidFlutterHostDriverImportsTest>(
+  analysisRuleSuite<_AvoidFlutterHostDriverImportsTest>(
     'AvoidFlutterHostDriverImportsTest',
-    AvoidFlutterHostDriverImportsTest.new,
-    {
-      'test_reportsFlutterUiImport_lint': (t) => t._reportsFlutterUiImportLint(),
-      'test_reportsAppImport_lint': (t) => t._reportsAppImportLint(),
-      'test_reportsTargetDriverExtensionImport_lint': (t) =>
-          t._reportsTargetDriverExtensionImportLint(),
-      'test_reportsTransitiveFlutterUiImport_lint': (t) =>
-          t._reportsTransitiveFlutterUiImportLint(),
-      'test_allowsHostDriverImports_noLint': (t) => t._allowsHostDriverImportsNoLint(),
-      'test_ignoresTargetIntegrationTestFile_noLint': (t) =>
-          t._ignoresTargetIntegrationTestFileNoLint(),
-    },
+    _AvoidFlutterHostDriverImportsTest.new,
+    _AvoidFlutterHostDriverImportsTest._allCases,
   );
 }
 
-final class AvoidFlutterHostDriverImportsTest extends AnalysisRuleTest {
+final class _AvoidFlutterHostDriverImportsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidFlutterHostDriverImportsTest)> get _allCases =>
+      caseSet<_AvoidFlutterHostDriverImportsTest>(
+        parent: const {},
+        own: {
+          'test_reportsFlutterUiImport_lint': (t) => t._reportsFlutterUiImportLint(),
+          'test_reportsAppImport_lint': (t) => t._reportsAppImportLint(),
+          'test_reportsTargetDriverExtensionImport_lint': (t) =>
+              t._reportsTargetDriverExtensionImportLint(),
+          'test_reportsTransitiveFlutterUiImport_lint': (t) =>
+              t._reportsTransitiveFlutterUiImportLint(),
+          'test_allowsHostDriverImports_noLint': (t) => t._allowsHostDriverImportsNoLint(),
+          'test_ignoresTargetIntegrationTestFile_noLint': (t) =>
+              t._ignoresTargetIntegrationTestFileNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidFlutterHostDriverImports();

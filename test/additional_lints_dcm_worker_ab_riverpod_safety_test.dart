@@ -9,44 +9,25 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidAssigningNotifiersTest>(
+  analysisRuleSuite<_AvoidAssigningNotifiersTest>(
     'AvoidAssigningNotifiersTest',
-    AvoidAssigningNotifiersTest.new,
-    {
-      'test_refReadNotifierAssignedToLocal_lint': (t) => t._refReadNotifierAssignedToLocalLint(),
-      'test_refWatchNotifierAssignedToField_lint': (t) => t._refWatchNotifierAssignedToFieldLint(),
-      'test_directNotifierCall_noLint': (t) => t._directNotifierCallNoLint(),
-    },
+    _AvoidAssigningNotifiersTest.new,
+    _AvoidAssigningNotifiersTest._allCases,
   );
-  analysisRuleSuite<AvoidCallingNotifierMembersInsideBuildTest>(
+  analysisRuleSuite<_AvoidCallingNotifierMembersInsideBuildTest>(
     'AvoidCallingNotifierMembersInsideBuildTest',
-    AvoidCallingNotifierMembersInsideBuildTest.new,
-    {
-      'test_consumerWidgetBuildNotifierCall_lint': (t) => t._consumerWidgetBuildNotifierCallLint(),
-      'test_consumerStateBuildNotifierCall_lint': (t) => t._consumerStateBuildNotifierCallLint(),
-      'test_callbackInsideBuild_noLint': (t) => t._callbackInsideBuildNoLint(),
-    },
+    _AvoidCallingNotifierMembersInsideBuildTest.new,
+    _AvoidCallingNotifierMembersInsideBuildTest._allCases,
   );
-  analysisRuleSuite<AvoidNullableAsyncValuePatternTest>(
+  analysisRuleSuite<_AvoidNullableAsyncValuePatternTest>(
     'AvoidNullableAsyncValuePatternTest',
-    AvoidNullableAsyncValuePatternTest.new,
-    {
-      'test_asyncValueNullableValuePattern_lint': (t) => t._asyncValueNullableValuePatternLint(),
-      'test_asyncDataPattern_noLint': (t) => t._asyncDataPatternNoLint(),
-      'test_unrelatedValuePattern_noLint': (t) => t._unrelatedValuePatternNoLint(),
-    },
+    _AvoidNullableAsyncValuePatternTest.new,
+    _AvoidNullableAsyncValuePatternTest._allCases,
   );
-  analysisRuleSuite<AvoidUnnecessaryConsumerWidgetsTest>(
+  analysisRuleSuite<_AvoidUnnecessaryConsumerWidgetsTest>(
     'AvoidUnnecessaryConsumerWidgetsTest',
-    AvoidUnnecessaryConsumerWidgetsTest.new,
-    {
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_providerFreePageUnderScreens_noLint': (t) => t._providerFreePageUnderScreensNoLint(),
-      'test_unusedRefOutsideScreens_lint': (t) => t._unusedRefOutsideScreensLint(),
-      'test_privateConsumerWidgetUnderScreens_lint': (t) =>
-          t._privateConsumerWidgetUnderScreensLint(),
-      'test_pageReadingRefUnderScreens_noLint': (t) => t._pageReadingRefUnderScreensNoLint(),
-    },
+    _AvoidUnnecessaryConsumerWidgetsTest.new,
+    _AvoidUnnecessaryConsumerWidgetsTest._allCases,
   );
 }
 
@@ -152,7 +133,19 @@ abstract class HookConsumerState<T extends Widget> extends ConsumerState<T> {}
   }
 }
 
-final class AvoidAssigningNotifiersTest extends _RiverpodSafetyRuleTest {
+final class _AvoidAssigningNotifiersTest extends _RiverpodSafetyRuleTest {
+  static Map<String, Future<void> Function(_AvoidAssigningNotifiersTest)> get _allCases =>
+      caseSet<_AvoidAssigningNotifiersTest>(
+        parent: const {},
+        own: {
+          'test_refReadNotifierAssignedToLocal_lint': (t) =>
+              t._refReadNotifierAssignedToLocalLint(),
+          'test_refWatchNotifierAssignedToField_lint': (t) =>
+              t._refWatchNotifierAssignedToFieldLint(),
+          'test_directNotifierCall_noLint': (t) => t._directNotifierCallNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidAssigningNotifiers();
@@ -215,7 +208,17 @@ void update(WidgetRef ref) {
   }
 }
 
-final class AvoidCallingNotifierMembersInsideBuildTest extends _RiverpodSafetyRuleTest {
+final class _AvoidCallingNotifierMembersInsideBuildTest extends _RiverpodSafetyRuleTest {
+  static Map<String, Future<void> Function(_AvoidCallingNotifierMembersInsideBuildTest)>
+  get _allCases => caseSet<_AvoidCallingNotifierMembersInsideBuildTest>(
+    parent: const {},
+    own: {
+      'test_consumerWidgetBuildNotifierCall_lint': (t) => t._consumerWidgetBuildNotifierCallLint(),
+      'test_consumerStateBuildNotifierCall_lint': (t) => t._consumerStateBuildNotifierCallLint(),
+      'test_callbackInsideBuild_noLint': (t) => t._callbackInsideBuildNoLint(),
+    },
+  );
+
   @override
   void setUp() {
     rule = AvoidCallingNotifierMembersInsideBuild();
@@ -297,7 +300,18 @@ class Host extends ConsumerWidget {
   }
 }
 
-final class AvoidNullableAsyncValuePatternTest extends _RiverpodSafetyRuleTest {
+final class _AvoidNullableAsyncValuePatternTest extends _RiverpodSafetyRuleTest {
+  static Map<String, Future<void> Function(_AvoidNullableAsyncValuePatternTest)> get _allCases =>
+      caseSet<_AvoidNullableAsyncValuePatternTest>(
+        parent: const {},
+        own: {
+          'test_asyncValueNullableValuePattern_lint': (t) =>
+              t._asyncValueNullableValuePatternLint(),
+          'test_asyncDataPattern_noLint': (t) => t._asyncDataPatternNoLint(),
+          'test_unrelatedValuePattern_noLint': (t) => t._unrelatedValuePatternNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNullableAsyncValuePattern();
@@ -349,7 +363,21 @@ String label(Box<String> box) {
   }
 }
 
-final class AvoidUnnecessaryConsumerWidgetsTest extends _RiverpodSafetyRuleTest {
+final class _AvoidUnnecessaryConsumerWidgetsTest extends _RiverpodSafetyRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnnecessaryConsumerWidgetsTest)> get _allCases =>
+      caseSet<_AvoidUnnecessaryConsumerWidgetsTest>(
+        parent: const {},
+        own: {
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_providerFreePageUnderScreens_noLint': (t) =>
+              t._providerFreePageUnderScreensNoLint(),
+          'test_unusedRefOutsideScreens_lint': (t) => t._unusedRefOutsideScreensLint(),
+          'test_privateConsumerWidgetUnderScreens_lint': (t) =>
+              t._privateConsumerWidgetUnderScreensLint(),
+          'test_pageReadingRefUnderScreens_noLint': (t) => t._pageReadingRefUnderScreensNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnnecessaryConsumerWidgets();

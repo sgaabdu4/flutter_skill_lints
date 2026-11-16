@@ -6,38 +6,37 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/no_empty_block.da
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidUnnecessaryEnumArgumentsTest>(
+  analysisRuleSuite<_AvoidUnnecessaryEnumArgumentsTest>(
     'AvoidUnnecessaryEnumArgumentsTest',
-    AvoidUnnecessaryEnumArgumentsTest.new,
-    {
-      'test_namedEnumArgumentMatchingDefault_lint': (t) =>
-          t._namedEnumArgumentMatchingDefaultLint(),
-      'test_namedEnumArgumentDifferentFromDefault_noLint': (t) =>
-          t._namedEnumArgumentDifferentFromDefaultNoLint(),
-      'test_namedEnumArgumentWithoutDefault_noLint': (t) =>
-          t._namedEnumArgumentWithoutDefaultNoLint(),
-    },
+    _AvoidUnnecessaryEnumArgumentsTest.new,
+    _AvoidUnnecessaryEnumArgumentsTest._allCases,
   );
-  analysisRuleSuite<NoBooleanLiteralCompareTest>(
+  analysisRuleSuite<_NoBooleanLiteralCompareTest>(
     'NoBooleanLiteralCompareTest',
-    NoBooleanLiteralCompareTest.new,
-    {
-      'test_boolEqualsTrue_lint': (t) => t._boolEqualsTrueLint(),
-      'test_falseNotEqualsBool_lint': (t) => t._falseNotEqualsBoolLint(),
-      'test_nullableBoolEqualsTrue_noLint': (t) => t._nullableBoolEqualsTrueNoLint(),
-      'test_boolVariableComparison_noLint': (t) => t._boolVariableComparisonNoLint(),
-    },
+    _NoBooleanLiteralCompareTest.new,
+    _NoBooleanLiteralCompareTest._allCases,
   );
-  analysisRuleSuite<NoEmptyBlockTest>('NoEmptyBlockTest', NoEmptyBlockTest.new, {
-    'test_emptyIfBlock_lint': (t) => t._emptyIfBlockLint(),
-    'test_emptyCatchBlock_lint': (t) => t._emptyCatchBlockLint(),
-    'test_emptyCallbackBody_noLint': (t) => t._emptyCallbackBodyNoLint(),
-    'test_emptyOverrideBody_noLint': (t) => t._emptyOverrideBodyNoLint(),
-    'test_nonEmptyBlock_noLint': (t) => t._nonEmptyBlockNoLint(),
-  });
+  analysisRuleSuite<_NoEmptyBlockTest>(
+    'NoEmptyBlockTest',
+    _NoEmptyBlockTest.new,
+    _NoEmptyBlockTest._allCases,
+  );
 }
 
-final class AvoidUnnecessaryEnumArgumentsTest extends AnalysisRuleTest {
+final class _AvoidUnnecessaryEnumArgumentsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnnecessaryEnumArgumentsTest)> get _allCases =>
+      caseSet<_AvoidUnnecessaryEnumArgumentsTest>(
+        parent: const {},
+        own: {
+          'test_namedEnumArgumentMatchingDefault_lint': (t) =>
+              t._namedEnumArgumentMatchingDefaultLint(),
+          'test_namedEnumArgumentDifferentFromDefault_noLint': (t) =>
+              t._namedEnumArgumentDifferentFromDefaultNoLint(),
+          'test_namedEnumArgumentWithoutDefault_noLint': (t) =>
+              t._namedEnumArgumentWithoutDefaultNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnnecessaryEnumArguments();
@@ -85,7 +84,18 @@ void f() {
   }
 }
 
-final class NoBooleanLiteralCompareTest extends AnalysisRuleTest {
+final class _NoBooleanLiteralCompareTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_NoBooleanLiteralCompareTest)> get _allCases =>
+      caseSet<_NoBooleanLiteralCompareTest>(
+        parent: const {},
+        own: {
+          'test_boolEqualsTrue_lint': (t) => t._boolEqualsTrueLint(),
+          'test_falseNotEqualsBool_lint': (t) => t._falseNotEqualsBoolLint(),
+          'test_nullableBoolEqualsTrue_noLint': (t) => t._nullableBoolEqualsTrueNoLint(),
+          'test_boolVariableComparison_noLint': (t) => t._boolVariableComparisonNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = NoBooleanLiteralCompare();
@@ -134,7 +144,19 @@ bool f() => left == right;
   }
 }
 
-final class NoEmptyBlockTest extends AnalysisRuleTest {
+final class _NoEmptyBlockTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_NoEmptyBlockTest)> get _allCases =>
+      caseSet<_NoEmptyBlockTest>(
+        parent: const {},
+        own: {
+          'test_emptyIfBlock_lint': (t) => t._emptyIfBlockLint(),
+          'test_emptyCatchBlock_lint': (t) => t._emptyCatchBlockLint(),
+          'test_emptyCallbackBody_noLint': (t) => t._emptyCallbackBodyNoLint(),
+          'test_emptyOverrideBody_noLint': (t) => t._emptyOverrideBodyNoLint(),
+          'test_nonEmptyBlock_noLint': (t) => t._nonEmptyBlockNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = NoEmptyBlock();

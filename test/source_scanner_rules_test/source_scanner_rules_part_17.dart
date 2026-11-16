@@ -1,6 +1,12 @@
 part of '../source_scanner_rules_test.dart';
 
-final class DialogWidgetReadOnlyAllowedTest extends _DialogRuleTest {
+final class _DialogWidgetReadOnlyAllowedTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_DialogWidgetReadOnlyAllowedTest)> get _allCases =>
+      caseSet<_DialogWidgetReadOnlyAllowedTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   @override
   String get ruleName => 'dialog_widget_subscribes_to_mutable_provider';
   @override
@@ -26,7 +32,13 @@ class ReadOnlyDialog extends ConsumerWidget {
   }
 }
 
-final class DialogPopThenStateMutationOfContextVariantTest extends _DialogRuleTest {
+final class _DialogPopThenStateMutationOfContextVariantTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_DialogPopThenStateMutationOfContextVariantTest)>
+  get _allCases => caseSet<_DialogPopThenStateMutationOfContextVariantTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {'test_allowsPopNoFollowUpInBody': (t) => t._allowsPopNoFollowUpInBody()},
+  );
+
   @override
   String get ruleName => 'dialog_button_pop_then_state_mutation';
   @override
@@ -61,7 +73,13 @@ class EditDialog extends ConsumerWidget {
   }
 }
 
-final class SelectUnstableRecordNamedFieldsTest extends _DialogRuleTest {
+final class _SelectUnstableRecordNamedFieldsTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_SelectUnstableRecordNamedFieldsTest)> get _allCases =>
+      caseSet<_SelectUnstableRecordNamedFieldsTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_allowsSelectReturnsScalarField': (t) => t._allowsSelectReturnsScalarField()},
+      );
+
   @override
   String get ruleName => 'select_returns_unstable_record_identity';
   @override
@@ -92,7 +110,13 @@ class DetailScreen {
   }
 }
 
-final class SelectAllowsStableRecordMapMethodTest extends _DialogRuleTest {
+final class _SelectAllowsStableRecordMapMethodTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_SelectAllowsStableRecordMapMethodTest)> get _allCases =>
+      caseSet<_SelectAllowsStableRecordMapMethodTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   @override
   String get ruleName => 'select_returns_unstable_record_identity';
   @override
@@ -113,7 +137,10 @@ class Allowed {
   }
 }
 
-final class BuildAssignsThisFieldTest extends _DialogRuleTest {
+final class _BuildAssignsThisFieldTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_BuildAssignsThisFieldTest)> get _allCases =>
+      caseSet<_BuildAssignsThisFieldTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'build_method_assigns_to_field';
   @override
@@ -133,7 +160,13 @@ class Reader extends ConsumerWidget {
 ''';
 }
 
-final class BuildAllowsAssignmentInsideClosureTest extends _DialogRuleTest {
+final class _BuildAllowsAssignmentInsideClosureTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_BuildAllowsAssignmentInsideClosureTest)>
+  get _allCases => caseSet<_BuildAllowsAssignmentInsideClosureTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+
   @override
   String get ruleName => 'build_method_assigns_to_field';
   @override
@@ -161,7 +194,10 @@ class CallbackOwner extends ConsumerWidget {
   }
 }
 
-final class WidgetTeardownAwaitWithGapTest extends _DialogRuleTest {
+final class _WidgetTeardownAwaitWithGapTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_WidgetTeardownAwaitWithGapTest)> get _allCases =>
+      caseSet<_WidgetTeardownAwaitWithGapTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'widget_calls_notifier_teardown_after_await';
   @override
@@ -182,7 +218,13 @@ class ConfirmDialog extends ConsumerWidget {
 ''';
 }
 
-final class WidgetTeardownAllowsNonNotifierClearTest extends _DialogRuleTest {
+final class _WidgetTeardownAllowsNonNotifierClearTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_WidgetTeardownAllowsNonNotifierClearTest)>
+  get _allCases => caseSet<_WidgetTeardownAllowsNonNotifierClearTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+
   @override
   String get ruleName => 'widget_calls_notifier_teardown_after_await';
   @override
@@ -209,7 +251,13 @@ class TextOwner extends ConsumerWidget {
   }
 }
 
-final class PopScopeBypassPopWithFallbackVariantTest extends _DialogRuleTest {
+final class _PopScopeBypassPopWithFallbackVariantTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_PopScopeBypassPopWithFallbackVariantTest)>
+  get _allCases => caseSet<_PopScopeBypassPopWithFallbackVariantTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {},
+  );
+
   @override
   String get ruleName => 'popscope_bypass_uses_go_not_pop';
   @override
@@ -231,7 +279,16 @@ Object showDialog(Object c, {required Object builder}) => Object();
 ''';
 }
 
-final class ModalHelperShowGeneralDialogTest extends _DialogRuleTest {
+final class _ModalHelperShowGeneralDialogTest extends _DialogRuleTest {
+  static Map<String, Future<void> Function(_ModalHelperShowGeneralDialogTest)> get _allCases =>
+      caseSet<_ModalHelperShowGeneralDialogTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsBareShowDialogNotInHelperPosition': (t) =>
+              t._allowsBareShowDialogNotInHelperPosition(),
+        },
+      );
+
   @override
   void setUp() {
     _addTestingNavigationPackages();
@@ -267,7 +324,13 @@ Future<T?> openHelp<T>(BuildContext context) => showDialog<T>(
   }
 }
 
-final class SyncSaveAllAllowsLengthGuardTest extends _RuntimeBugRuleTest {
+final class _SyncSaveAllAllowsLengthGuardTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_SyncSaveAllAllowsLengthGuardTest)> get _allCases =>
+      caseSet<_SyncSaveAllAllowsLengthGuardTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   @override
   String get ruleName => 'sync_save_all_no_dirty_guard';
   @override
@@ -288,7 +351,13 @@ class GuardedByLength {
   }
 }
 
-final class SyncSaveAllAllowsOuterDirtyGuardTest extends _RuntimeBugRuleTest {
+final class _SyncSaveAllAllowsOuterDirtyGuardTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_SyncSaveAllAllowsOuterDirtyGuardTest)> get _allCases =>
+      caseSet<_SyncSaveAllAllowsOuterDirtyGuardTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   @override
   String get ruleName => 'sync_save_all_no_dirty_guard';
   @override
@@ -311,7 +380,13 @@ class OuterDirty {
   }
 }
 
-final class NotifierPersistenceDelayedAllowedTest extends _RuntimeBugRuleTest {
+final class _NotifierPersistenceDelayedAllowedTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_NotifierPersistenceDelayedAllowedTest)> get _allCases =>
+      caseSet<_NotifierPersistenceDelayedAllowedTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   @override
   String get ruleName => 'notifier_persistence_no_debounce';
   @override
@@ -333,7 +408,10 @@ class DraftStateNotifier extends Notifier {
   }
 }
 
-final class WebViewVideoPlayerNoGateTest extends _RuntimeBugRuleTest {
+final class _WebViewVideoPlayerNoGateTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_WebViewVideoPlayerNoGateTest)> get _allCases =>
+      caseSet<_WebViewVideoPlayerNoGateTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'webview_init_in_build_no_gate';
   @override
@@ -351,7 +429,13 @@ class VideoCard extends ConsumerWidget {
 ''';
 }
 
-final class WebViewAllowsUserOpenedGateTest extends _RuntimeBugRuleTest {
+final class _WebViewAllowsUserOpenedGateTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_WebViewAllowsUserOpenedGateTest)> get _allCases =>
+      caseSet<_WebViewAllowsUserOpenedGateTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   @override
   String get ruleName => 'webview_init_in_build_no_gate';
   @override
@@ -377,7 +461,10 @@ class GatedVideoCard extends ConsumerWidget {
   }
 }
 
-final class KeepAliveWatchesPostsCollectionTest extends _RuntimeBugRuleTest {
+final class _KeepAliveWatchesPostsCollectionTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_KeepAliveWatchesPostsCollectionTest)> get _allCases =>
+      caseSet<_KeepAliveWatchesPostsCollectionTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'keepalive_watches_unbounded_collection';
   @override
@@ -394,7 +481,10 @@ Object feedFeed(Ref ref) {
 ''';
 }
 
-final class DatasourceRemoteSixGettersTest extends _RuntimeBugRuleTest {
+final class _DatasourceRemoteSixGettersTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_DatasourceRemoteSixGettersTest)> get _allCases =>
+      caseSet<_DatasourceRemoteSixGettersTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'datasource_missing_batch_loader';
   @override
@@ -412,7 +502,13 @@ abstract class SettingsRemoteDatasource {
 ''';
 }
 
-final class DatasourceAllowsListReturnGettersTest extends _RuntimeBugRuleTest {
+final class _DatasourceAllowsListReturnGettersTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_DatasourceAllowsListReturnGettersTest)> get _allCases =>
+      caseSet<_DatasourceAllowsListReturnGettersTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   @override
   String get ruleName => 'datasource_missing_batch_loader';
   @override
@@ -435,7 +531,10 @@ abstract class TagsLocalDatasource {
   }
 }
 
-final class NotifierZeroValueAmountNoGuardTest extends _RuntimeBugRuleTest {
+final class _NotifierZeroValueAmountNoGuardTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_NotifierZeroValueAmountNoGuardTest)> get _allCases =>
+      caseSet<_NotifierZeroValueAmountNoGuardTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'notifier_zero_value_save_no_guard';
   @override
@@ -451,7 +550,10 @@ class EntryForm {
 ''';
 }
 
-final class NotifierParamRequiresVoBytesTest extends _RuntimeBugRuleTest {
+final class _NotifierParamRequiresVoBytesTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_NotifierParamRequiresVoBytesTest)> get _allCases =>
+      caseSet<_NotifierParamRequiresVoBytesTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'notifier_param_requires_value_object';
   @override
@@ -468,7 +570,13 @@ class UploadForm {
 ''';
 }
 
-final class NotifierParamAllowsNonUnitStringTest extends _RuntimeBugRuleTest {
+final class _NotifierParamAllowsNonUnitStringTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_NotifierParamAllowsNonUnitStringTest)> get _allCases =>
+      caseSet<_NotifierParamAllowsNonUnitStringTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   @override
   String get ruleName => 'notifier_param_requires_value_object';
   @override
@@ -490,7 +598,10 @@ class NameForm {
   }
 }
 
-final class TextFieldCupertinoNoDebounceTest extends _RuntimeBugRuleTest {
+final class _TextFieldCupertinoNoDebounceTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_TextFieldCupertinoNoDebounceTest)> get _allCases =>
+      caseSet<_TextFieldCupertinoNoDebounceTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'text_field_on_changed_no_debounce';
   @override
@@ -509,7 +620,13 @@ class SearchPanel {
 ''';
 }
 
-final class TextFieldAllowsDebouncerReferenceTest extends _RuntimeBugRuleTest {
+final class _TextFieldAllowsDebouncerReferenceTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_TextFieldAllowsDebouncerReferenceTest)> get _allCases =>
+      caseSet<_TextFieldAllowsDebouncerReferenceTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   @override
   String get ruleName => 'text_field_on_changed_no_debounce';
   @override
@@ -537,7 +654,10 @@ class DebouncedSearch {
   }
 }
 
-final class SliderRangeSliderNoDebounceTest extends _RuntimeBugRuleTest {
+final class _SliderRangeSliderNoDebounceTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_SliderRangeSliderNoDebounceTest)> get _allCases =>
+      caseSet<_SliderRangeSliderNoDebounceTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'slider_on_changed_no_debounce';
   @override
@@ -557,134 +677,124 @@ class FilterPanel {
 }
 
 void _defineSourceScannerRulesPart17Tests() {
-  analysisRuleSuite<DialogWidgetReadOnlyAllowedTest>(
+  analysisRuleSuite<_DialogWidgetReadOnlyAllowedTest>(
     'DialogWidgetReadOnlyAllowedTest',
-    DialogWidgetReadOnlyAllowedTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _DialogWidgetReadOnlyAllowedTest.new,
+    _DialogWidgetReadOnlyAllowedTest._allCases,
   );
-  analysisRuleSuite<DialogPopThenStateMutationOfContextVariantTest>(
+  analysisRuleSuite<_DialogPopThenStateMutationOfContextVariantTest>(
     'DialogPopThenStateMutationOfContextVariantTest',
-    DialogPopThenStateMutationOfContextVariantTest.new,
-    {
-      'test_allowsPopNoFollowUpInBody': (t) => t._allowsPopNoFollowUpInBody(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _DialogPopThenStateMutationOfContextVariantTest.new,
+    _DialogPopThenStateMutationOfContextVariantTest._allCases,
   );
-  analysisRuleSuite<SelectUnstableRecordNamedFieldsTest>(
+  analysisRuleSuite<_SelectUnstableRecordNamedFieldsTest>(
     'SelectUnstableRecordNamedFieldsTest',
-    SelectUnstableRecordNamedFieldsTest.new,
-    {
-      'test_allowsSelectReturnsScalarField': (t) => t._allowsSelectReturnsScalarField(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _SelectUnstableRecordNamedFieldsTest.new,
+    _SelectUnstableRecordNamedFieldsTest._allCases,
   );
-  analysisRuleSuite<SelectAllowsStableRecordMapMethodTest>(
+  analysisRuleSuite<_SelectAllowsStableRecordMapMethodTest>(
     'SelectAllowsStableRecordMapMethodTest',
-    SelectAllowsStableRecordMapMethodTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _SelectAllowsStableRecordMapMethodTest.new,
+    _SelectAllowsStableRecordMapMethodTest._allCases,
   );
-  analysisRuleSuite<BuildAssignsThisFieldTest>(
+  analysisRuleSuite<_BuildAssignsThisFieldTest>(
     'BuildAssignsThisFieldTest',
-    BuildAssignsThisFieldTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _BuildAssignsThisFieldTest.new,
+    _BuildAssignsThisFieldTest._allCases,
   );
-  analysisRuleSuite<BuildAllowsAssignmentInsideClosureTest>(
+  analysisRuleSuite<_BuildAllowsAssignmentInsideClosureTest>(
     'BuildAllowsAssignmentInsideClosureTest',
-    BuildAllowsAssignmentInsideClosureTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _BuildAllowsAssignmentInsideClosureTest.new,
+    _BuildAllowsAssignmentInsideClosureTest._allCases,
   );
-  analysisRuleSuite<WidgetTeardownAwaitWithGapTest>(
+  analysisRuleSuite<_WidgetTeardownAwaitWithGapTest>(
     'WidgetTeardownAwaitWithGapTest',
-    WidgetTeardownAwaitWithGapTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _WidgetTeardownAwaitWithGapTest.new,
+    _WidgetTeardownAwaitWithGapTest._allCases,
   );
-  analysisRuleSuite<WidgetTeardownAllowsNonNotifierClearTest>(
+  analysisRuleSuite<_WidgetTeardownAllowsNonNotifierClearTest>(
     'WidgetTeardownAllowsNonNotifierClearTest',
-    WidgetTeardownAllowsNonNotifierClearTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _WidgetTeardownAllowsNonNotifierClearTest.new,
+    _WidgetTeardownAllowsNonNotifierClearTest._allCases,
   );
-  analysisRuleSuite<PopScopeBypassPopWithFallbackVariantTest>(
+  analysisRuleSuite<_PopScopeBypassPopWithFallbackVariantTest>(
     'PopScopeBypassPopWithFallbackVariantTest',
-    PopScopeBypassPopWithFallbackVariantTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _PopScopeBypassPopWithFallbackVariantTest.new,
+    _PopScopeBypassPopWithFallbackVariantTest._allCases,
   );
-  analysisRuleSuite<ModalHelperShowGeneralDialogTest>(
+  analysisRuleSuite<_ModalHelperShowGeneralDialogTest>(
     'ModalHelperShowGeneralDialogTest',
-    ModalHelperShowGeneralDialogTest.new,
-    {
-      'test_allowsBareShowDialogNotInHelperPosition': (t) =>
-          t._allowsBareShowDialogNotInHelperPosition(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ModalHelperShowGeneralDialogTest.new,
+    _ModalHelperShowGeneralDialogTest._allCases,
   );
-  analysisRuleSuite<SyncSaveAllAllowsLengthGuardTest>(
+  analysisRuleSuite<_SyncSaveAllAllowsLengthGuardTest>(
     'SyncSaveAllAllowsLengthGuardTest',
-    SyncSaveAllAllowsLengthGuardTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _SyncSaveAllAllowsLengthGuardTest.new,
+    _SyncSaveAllAllowsLengthGuardTest._allCases,
   );
-  analysisRuleSuite<SyncSaveAllAllowsOuterDirtyGuardTest>(
+  analysisRuleSuite<_SyncSaveAllAllowsOuterDirtyGuardTest>(
     'SyncSaveAllAllowsOuterDirtyGuardTest',
-    SyncSaveAllAllowsOuterDirtyGuardTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _SyncSaveAllAllowsOuterDirtyGuardTest.new,
+    _SyncSaveAllAllowsOuterDirtyGuardTest._allCases,
   );
-  analysisRuleSuite<NotifierPersistenceDelayedAllowedTest>(
+  analysisRuleSuite<_NotifierPersistenceDelayedAllowedTest>(
     'NotifierPersistenceDelayedAllowedTest',
-    NotifierPersistenceDelayedAllowedTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _NotifierPersistenceDelayedAllowedTest.new,
+    _NotifierPersistenceDelayedAllowedTest._allCases,
   );
-  analysisRuleSuite<WebViewVideoPlayerNoGateTest>(
+  analysisRuleSuite<_WebViewVideoPlayerNoGateTest>(
     'WebViewVideoPlayerNoGateTest',
-    WebViewVideoPlayerNoGateTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _WebViewVideoPlayerNoGateTest.new,
+    _WebViewVideoPlayerNoGateTest._allCases,
   );
-  analysisRuleSuite<WebViewAllowsUserOpenedGateTest>(
+  analysisRuleSuite<_WebViewAllowsUserOpenedGateTest>(
     'WebViewAllowsUserOpenedGateTest',
-    WebViewAllowsUserOpenedGateTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _WebViewAllowsUserOpenedGateTest.new,
+    _WebViewAllowsUserOpenedGateTest._allCases,
   );
-  analysisRuleSuite<KeepAliveWatchesPostsCollectionTest>(
+  analysisRuleSuite<_KeepAliveWatchesPostsCollectionTest>(
     'KeepAliveWatchesPostsCollectionTest',
-    KeepAliveWatchesPostsCollectionTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _KeepAliveWatchesPostsCollectionTest.new,
+    _KeepAliveWatchesPostsCollectionTest._allCases,
   );
-  analysisRuleSuite<DatasourceRemoteSixGettersTest>(
+  analysisRuleSuite<_DatasourceRemoteSixGettersTest>(
     'DatasourceRemoteSixGettersTest',
-    DatasourceRemoteSixGettersTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _DatasourceRemoteSixGettersTest.new,
+    _DatasourceRemoteSixGettersTest._allCases,
   );
-  analysisRuleSuite<DatasourceAllowsListReturnGettersTest>(
+  analysisRuleSuite<_DatasourceAllowsListReturnGettersTest>(
     'DatasourceAllowsListReturnGettersTest',
-    DatasourceAllowsListReturnGettersTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _DatasourceAllowsListReturnGettersTest.new,
+    _DatasourceAllowsListReturnGettersTest._allCases,
   );
-  analysisRuleSuite<NotifierZeroValueAmountNoGuardTest>(
+  analysisRuleSuite<_NotifierZeroValueAmountNoGuardTest>(
     'NotifierZeroValueAmountNoGuardTest',
-    NotifierZeroValueAmountNoGuardTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _NotifierZeroValueAmountNoGuardTest.new,
+    _NotifierZeroValueAmountNoGuardTest._allCases,
   );
-  analysisRuleSuite<NotifierParamRequiresVoBytesTest>(
+  analysisRuleSuite<_NotifierParamRequiresVoBytesTest>(
     'NotifierParamRequiresVoBytesTest',
-    NotifierParamRequiresVoBytesTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _NotifierParamRequiresVoBytesTest.new,
+    _NotifierParamRequiresVoBytesTest._allCases,
   );
-  analysisRuleSuite<NotifierParamAllowsNonUnitStringTest>(
+  analysisRuleSuite<_NotifierParamAllowsNonUnitStringTest>(
     'NotifierParamAllowsNonUnitStringTest',
-    NotifierParamAllowsNonUnitStringTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _NotifierParamAllowsNonUnitStringTest.new,
+    _NotifierParamAllowsNonUnitStringTest._allCases,
   );
-  analysisRuleSuite<TextFieldCupertinoNoDebounceTest>(
+  analysisRuleSuite<_TextFieldCupertinoNoDebounceTest>(
     'TextFieldCupertinoNoDebounceTest',
-    TextFieldCupertinoNoDebounceTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _TextFieldCupertinoNoDebounceTest.new,
+    _TextFieldCupertinoNoDebounceTest._allCases,
   );
-  analysisRuleSuite<TextFieldAllowsDebouncerReferenceTest>(
+  analysisRuleSuite<_TextFieldAllowsDebouncerReferenceTest>(
     'TextFieldAllowsDebouncerReferenceTest',
-    TextFieldAllowsDebouncerReferenceTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _TextFieldAllowsDebouncerReferenceTest.new,
+    _TextFieldAllowsDebouncerReferenceTest._allCases,
   );
-  analysisRuleSuite<SliderRangeSliderNoDebounceTest>(
+  analysisRuleSuite<_SliderRangeSliderNoDebounceTest>(
     'SliderRangeSliderNoDebounceTest',
-    SliderRangeSliderNoDebounceTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _SliderRangeSliderNoDebounceTest.new,
+    _SliderRangeSliderNoDebounceTest._allCases,
   );
 }

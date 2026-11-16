@@ -1,6 +1,54 @@
 part of '../source_scanner_rules_test.dart';
 
-final class DateTimeNowRequiresTimezoneIntentTest extends _UiRuleTest {
+final class _DateTimeNowRequiresTimezoneIntentTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_DateTimeNowRequiresTimezoneIntentTest)> get _allCases =>
+      caseSet<_DateTimeNowRequiresTimezoneIntentTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsUtcIntentOutsideExtensionBoundary': (t) =>
+              t._reportsUtcIntentOutsideExtensionBoundary(),
+          'test_reportsTimestampOutsideExtensionBoundary': (t) =>
+              t._reportsTimestampOutsideExtensionBoundary(),
+          'test_reportsLocalIntentAcrossLinesOutsideExtensionBoundary': (t) =>
+              t._reportsLocalIntentAcrossLinesOutsideExtensionBoundary(),
+          'test_allowsDateTimeXNowUtcForPersistedTimestamp': (t) =>
+              t._allowsDateTimeXNowUtcForPersistedTimestamp(),
+          'test_reportsLocalNowForPersistedTimestamp': (t) =>
+              t._reportsLocalNowForPersistedTimestamp(),
+          'test_reportsMultilineLocalNowForPersistedTimestamp': (t) =>
+              t._reportsMultilineLocalNowForPersistedTimestamp(),
+          'test_reportsDateTimeNowToLocalForPersistedTimestamp': (t) =>
+              t._reportsDateTimeNowToLocalForPersistedTimestamp(),
+          'test_reportsInlineCurrentDayBoundary': (t) => t._reportsInlineCurrentDayBoundary(),
+          'test_reportsInlineCurrentUtcDayBoundary': (t) => t._reportsInlineCurrentUtcDayBoundary(),
+          'test_allowsNamedCurrentDayBoundaryHelper': (t) =>
+              t._allowsNamedCurrentDayBoundaryHelper(),
+          'test_reportsInlineCurrentDateWindow': (t) => t._reportsInlineCurrentDateWindow(),
+          'test_reportsInlineCurrentCalendarDateWindow': (t) =>
+              t._reportsInlineCurrentCalendarDateWindow(),
+          'test_reportsMultilineInlineCurrentDateWindow': (t) =>
+              t._reportsMultilineInlineCurrentDateWindow(),
+          'test_reportsInlineCurrentDateWindowFromStartOfDay': (t) =>
+              t._reportsInlineCurrentDateWindowFromStartOfDay(),
+          'test_reportsEpochIntentOutsideExtensionBoundary': (t) =>
+              t._reportsEpochIntentOutsideExtensionBoundary(),
+          'test_reportsInterpolatedEpochIntentOutsideExtensionBoundary': (t) =>
+              t._reportsInterpolatedEpochIntentOutsideExtensionBoundary(),
+          'test_allowsRawStringThatMentionsDateTimeNow': (t) =>
+              t._allowsRawStringThatMentionsDateTimeNow(),
+          'test_allowsDateTimeXEpochIntent': (t) => t._allowsDateTimeXEpochIntent(),
+          'test_allowsDateTimeExtensionCurrentBoundary': (t) =>
+              t._allowsDateTimeExtensionCurrentBoundary(),
+          'test_allowsSkillDateTimeXStaticNowHelpers': (t) =>
+              t._allowsSkillDateTimeXStaticNowHelpers(),
+          'test_reportsStaticNowOutsideDateTimeExtension': (t) =>
+              t._reportsStaticNowOutsideDateTimeExtension(),
+          'test_reportsRawNowInsideDateTimeExtensionHelper': (t) =>
+              t._reportsRawNowInsideDateTimeExtensionHelper(),
+          'test_allowsTests': (t) => t._allowsTests(),
+        },
+      );
+
   @override
   String get ruleName => 'datetime_now_requires_timezone_intent';
   @override
@@ -280,7 +328,20 @@ extension DateTimeExtensions on DateTime {
   }
 }
 
-final class AdHocIntlFormatTest extends _UiRuleTest {
+final class _AdHocIntlFormatTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_AdHocIntlFormatTest)> get _allCases =>
+      caseSet<_AdHocIntlFormatTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsNumberFormatInWidgetMethod': (t) => t._reportsNumberFormatInWidgetMethod(),
+          'test_reportsDateFormatInNonPrimitiveExtension': (t) =>
+              t._reportsDateFormatInNonPrimitiveExtension(),
+          'test_allowsSkillPrimitiveExtensions': (t) => t._allowsSkillPrimitiveExtensions(),
+          'test_allowsNonIntlFormatter': (t) => t._allowsNonIntlFormatter(),
+          'test_allowsTests': (t) => t._allowsTests(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('intl').addFile('lib/intl.dart', r'''
@@ -383,7 +444,18 @@ String expectedLabel(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
   }
 }
 
-final class InlineNumClampTest extends _UiRuleTest {
+final class _InlineNumClampTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_InlineNumClampTest)> get _allCases =>
+      caseSet<_InlineNumClampTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsBatchBoundClamp': (t) => t._reportsBatchBoundClamp(),
+          'test_allowsSkillNumExtension': (t) => t._allowsSkillNumExtension(),
+          'test_allowsNonNumClamp': (t) => t._allowsNonNumClamp(),
+          'test_allowsTests': (t) => t._allowsTests(),
+        },
+      );
+
   @override
   String get ruleName => 'inline_num_clamp';
   @override
@@ -438,7 +510,17 @@ TextScaler bounded(TextScaler scaler) => scaler.clamp(maxScaleFactor: 2);
   }
 }
 
-final class PerfBuildWorkTest extends _UiRuleTest {
+final class _PerfBuildWorkTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_PerfBuildWorkTest)> get _allCases =>
+      caseSet<_PerfBuildWorkTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsSkillSortInWidgetAndStateBuild': (t) =>
+              t._reportsSkillSortInWidgetAndStateBuild(),
+          'test_allowsNotifierBuild': (t) => t._allowsNotifierBuild(),
+        },
+      );
+
   @override
   String get ruleName => 'perf_build_work';
   @override
@@ -516,7 +598,16 @@ class TodosNotifier extends _$TodosNotifier {
   }
 }
 
-final class PerfListviewChildrenTest extends _UiRuleTest {
+final class _PerfListviewChildrenTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_PerfListviewChildrenTest)> get _allCases =>
+      caseSet<_PerfListviewChildrenTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsWrappedDynamicChildren': (t) => t._reportsWrappedDynamicChildren(),
+          'test_allowsStaticChildren': (t) => t._allowsStaticChildren(),
+        },
+      );
+
   @override
   String get ruleName => 'perf_listview_children';
   @override
@@ -555,79 +646,29 @@ ListView other() => ListView(children: [header, if (header.isEmpty) 'empty']);
 }
 
 void _defineSourceScannerRulesPart07Tests() {
-  analysisRuleSuite<DateTimeNowRequiresTimezoneIntentTest>(
+  analysisRuleSuite<_DateTimeNowRequiresTimezoneIntentTest>(
     'DateTimeNowRequiresTimezoneIntentTest',
-    DateTimeNowRequiresTimezoneIntentTest.new,
-    {
-      'test_reportsUtcIntentOutsideExtensionBoundary': (t) =>
-          t._reportsUtcIntentOutsideExtensionBoundary(),
-      'test_reportsTimestampOutsideExtensionBoundary': (t) =>
-          t._reportsTimestampOutsideExtensionBoundary(),
-      'test_reportsLocalIntentAcrossLinesOutsideExtensionBoundary': (t) =>
-          t._reportsLocalIntentAcrossLinesOutsideExtensionBoundary(),
-      'test_allowsDateTimeXNowUtcForPersistedTimestamp': (t) =>
-          t._allowsDateTimeXNowUtcForPersistedTimestamp(),
-      'test_reportsLocalNowForPersistedTimestamp': (t) => t._reportsLocalNowForPersistedTimestamp(),
-      'test_reportsMultilineLocalNowForPersistedTimestamp': (t) =>
-          t._reportsMultilineLocalNowForPersistedTimestamp(),
-      'test_reportsDateTimeNowToLocalForPersistedTimestamp': (t) =>
-          t._reportsDateTimeNowToLocalForPersistedTimestamp(),
-      'test_reportsInlineCurrentDayBoundary': (t) => t._reportsInlineCurrentDayBoundary(),
-      'test_reportsInlineCurrentUtcDayBoundary': (t) => t._reportsInlineCurrentUtcDayBoundary(),
-      'test_allowsNamedCurrentDayBoundaryHelper': (t) => t._allowsNamedCurrentDayBoundaryHelper(),
-      'test_reportsInlineCurrentDateWindow': (t) => t._reportsInlineCurrentDateWindow(),
-      'test_reportsInlineCurrentCalendarDateWindow': (t) =>
-          t._reportsInlineCurrentCalendarDateWindow(),
-      'test_reportsMultilineInlineCurrentDateWindow': (t) =>
-          t._reportsMultilineInlineCurrentDateWindow(),
-      'test_reportsInlineCurrentDateWindowFromStartOfDay': (t) =>
-          t._reportsInlineCurrentDateWindowFromStartOfDay(),
-      'test_reportsEpochIntentOutsideExtensionBoundary': (t) =>
-          t._reportsEpochIntentOutsideExtensionBoundary(),
-      'test_reportsInterpolatedEpochIntentOutsideExtensionBoundary': (t) =>
-          t._reportsInterpolatedEpochIntentOutsideExtensionBoundary(),
-      'test_allowsRawStringThatMentionsDateTimeNow': (t) =>
-          t._allowsRawStringThatMentionsDateTimeNow(),
-      'test_allowsDateTimeXEpochIntent': (t) => t._allowsDateTimeXEpochIntent(),
-      'test_allowsDateTimeExtensionCurrentBoundary': (t) =>
-          t._allowsDateTimeExtensionCurrentBoundary(),
-      'test_allowsSkillDateTimeXStaticNowHelpers': (t) => t._allowsSkillDateTimeXStaticNowHelpers(),
-      'test_reportsStaticNowOutsideDateTimeExtension': (t) =>
-          t._reportsStaticNowOutsideDateTimeExtension(),
-      'test_reportsRawNowInsideDateTimeExtensionHelper': (t) =>
-          t._reportsRawNowInsideDateTimeExtensionHelper(),
-      'test_allowsTests': (t) => t._allowsTests(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _DateTimeNowRequiresTimezoneIntentTest.new,
+    _DateTimeNowRequiresTimezoneIntentTest._allCases,
   );
-  analysisRuleSuite<AdHocIntlFormatTest>('AdHocIntlFormatTest', AdHocIntlFormatTest.new, {
-    'test_reportsNumberFormatInWidgetMethod': (t) => t._reportsNumberFormatInWidgetMethod(),
-    'test_reportsDateFormatInNonPrimitiveExtension': (t) =>
-        t._reportsDateFormatInNonPrimitiveExtension(),
-    'test_allowsSkillPrimitiveExtensions': (t) => t._allowsSkillPrimitiveExtensions(),
-    'test_allowsNonIntlFormatter': (t) => t._allowsNonIntlFormatter(),
-    'test_allowsTests': (t) => t._allowsTests(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<InlineNumClampTest>('InlineNumClampTest', InlineNumClampTest.new, {
-    'test_reportsBatchBoundClamp': (t) => t._reportsBatchBoundClamp(),
-    'test_allowsSkillNumExtension': (t) => t._allowsSkillNumExtension(),
-    'test_allowsNonNumClamp': (t) => t._allowsNonNumClamp(),
-    'test_allowsTests': (t) => t._allowsTests(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<PerfBuildWorkTest>('PerfBuildWorkTest', PerfBuildWorkTest.new, {
-    'test_reportsSkillSortInWidgetAndStateBuild': (t) => t._reportsSkillSortInWidgetAndStateBuild(),
-    'test_allowsNotifierBuild': (t) => t._allowsNotifierBuild(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<PerfListviewChildrenTest>(
+  analysisRuleSuite<_AdHocIntlFormatTest>(
+    'AdHocIntlFormatTest',
+    _AdHocIntlFormatTest.new,
+    _AdHocIntlFormatTest._allCases,
+  );
+  analysisRuleSuite<_InlineNumClampTest>(
+    'InlineNumClampTest',
+    _InlineNumClampTest.new,
+    _InlineNumClampTest._allCases,
+  );
+  analysisRuleSuite<_PerfBuildWorkTest>(
+    'PerfBuildWorkTest',
+    _PerfBuildWorkTest.new,
+    _PerfBuildWorkTest._allCases,
+  );
+  analysisRuleSuite<_PerfListviewChildrenTest>(
     'PerfListviewChildrenTest',
-    PerfListviewChildrenTest.new,
-    {
-      'test_reportsWrappedDynamicChildren': (t) => t._reportsWrappedDynamicChildren(),
-      'test_allowsStaticChildren': (t) => t._allowsStaticChildren(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _PerfListviewChildrenTest.new,
+    _PerfListviewChildrenTest._allCases,
   );
 }

@@ -6,31 +6,15 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<L10nStringConcatenationTest>(
+  analysisRuleSuite<_L10nStringConcatenationTest>(
     'L10nStringConcatenationTest',
-    L10nStringConcatenationTest.new,
-    {
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_reportsPlusConcatenation': (t) => t._reportsPlusConcatenation(),
-      'test_reportsInterpolationWithOtherText': (t) => t._reportsInterpolationWithOtherText(),
-      'test_allowsPlaceholderMessage': (t) => t._allowsPlaceholderMessage(),
-      'test_allowsConcatenationWithoutLocalizedStrings': (t) =>
-          t._allowsConcatenationWithoutLocalizedStrings(),
-      'test_allowsLookalikeClassWithoutDelegate': (t) => t._allowsLookalikeClassWithoutDelegate(),
-    },
+    _L10nStringConcatenationTest.new,
+    _L10nStringConcatenationTest._allCases,
   );
-  analysisRuleSuite<L10nNotifierLocalizedCopyTest>(
+  analysisRuleSuite<_L10nNotifierLocalizedCopyTest>(
     'L10nNotifierLocalizedCopyTest',
-    L10nNotifierLocalizedCopyTest.new,
-    {
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_reportsCopyReturnedFromBuildAndAssignedToState': (t) =>
-          t._reportsCopyReturnedFromBuildAndAssignedToState(),
-      'test_reportsAsyncDataAndLabelledStateCopy': (t) => t._reportsAsyncDataAndLabelledStateCopy(),
-      'test_reportsLocalizedReadInNotifier': (t) => t._reportsLocalizedReadInNotifier(),
-      'test_allowsSemanticState': (t) => t._allowsSemanticState(),
-      'test_allowsCopyOutsideNotifiers': (t) => t._allowsCopyOutsideNotifiers(),
-    },
+    _L10nNotifierLocalizedCopyTest.new,
+    _L10nNotifierLocalizedCopyTest._allCases,
   );
 }
 
@@ -84,7 +68,22 @@ final class AsyncData<T> {
   }
 }
 
-final class L10nStringConcatenationTest extends _L10nRuleTest {
+final class _L10nStringConcatenationTest extends _L10nRuleTest {
+  static Map<String, Future<void> Function(_L10nStringConcatenationTest)> get _allCases =>
+      caseSet<_L10nStringConcatenationTest>(
+        parent: const {},
+        own: {
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_reportsPlusConcatenation': (t) => t._reportsPlusConcatenation(),
+          'test_reportsInterpolationWithOtherText': (t) => t._reportsInterpolationWithOtherText(),
+          'test_allowsPlaceholderMessage': (t) => t._allowsPlaceholderMessage(),
+          'test_allowsConcatenationWithoutLocalizedStrings': (t) =>
+              t._allowsConcatenationWithoutLocalizedStrings(),
+          'test_allowsLookalikeClassWithoutDelegate': (t) =>
+              t._allowsLookalikeClassWithoutDelegate(),
+        },
+      );
+
   @override
   void setUp() {
     rule = L10nStringConcatenation();
@@ -147,7 +146,22 @@ String label(AppLocalizations l10n) => l10n.title + '!';
   }
 }
 
-final class L10nNotifierLocalizedCopyTest extends _L10nRuleTest {
+final class _L10nNotifierLocalizedCopyTest extends _L10nRuleTest {
+  static Map<String, Future<void> Function(_L10nNotifierLocalizedCopyTest)> get _allCases =>
+      caseSet<_L10nNotifierLocalizedCopyTest>(
+        parent: const {},
+        own: {
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_reportsCopyReturnedFromBuildAndAssignedToState': (t) =>
+              t._reportsCopyReturnedFromBuildAndAssignedToState(),
+          'test_reportsAsyncDataAndLabelledStateCopy': (t) =>
+              t._reportsAsyncDataAndLabelledStateCopy(),
+          'test_reportsLocalizedReadInNotifier': (t) => t._reportsLocalizedReadInNotifier(),
+          'test_allowsSemanticState': (t) => t._allowsSemanticState(),
+          'test_allowsCopyOutsideNotifiers': (t) => t._allowsCopyOutsideNotifiers(),
+        },
+      );
+
   @override
   void setUp() {
     rule = L10nNotifierLocalizedCopy();

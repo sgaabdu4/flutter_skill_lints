@@ -4,18 +4,24 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/use_existing_dest
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<UseExistingDestructuringTest>(
+  analysisRuleSuite<_UseExistingDestructuringTest>(
     'UseExistingDestructuringTest',
-    UseExistingDestructuringTest.new,
-    {
-      'test_allowsGeneratedFreezedCopyWithButReportsDataField': (t) =>
-          t._allowsGeneratedFreezedCopyWithButReportsDataField(),
-      'test_reportsOrdinaryGetterNamedCopyWith': (t) => t._reportsOrdinaryGetterNamedCopyWith(),
-    },
+    _UseExistingDestructuringTest.new,
+    _UseExistingDestructuringTest._allCases,
   );
 }
 
-final class UseExistingDestructuringTest extends AnalysisRuleTest {
+final class _UseExistingDestructuringTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_UseExistingDestructuringTest)> get _allCases =>
+      caseSet<_UseExistingDestructuringTest>(
+        parent: const {},
+        own: {
+          'test_allowsGeneratedFreezedCopyWithButReportsDataField': (t) =>
+              t._allowsGeneratedFreezedCopyWithButReportsDataField(),
+          'test_reportsOrdinaryGetterNamedCopyWith': (t) => t._reportsOrdinaryGetterNamedCopyWith(),
+        },
+      );
+
   @override
   void setUp() {
     rule = UseExistingDestructuring();

@@ -6,30 +6,34 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_futu
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidFutureIgnoreTest>('AvoidFutureIgnoreTest', AvoidFutureIgnoreTest.new, {
-    'test_futureIgnore_lint': (t) => t._futureIgnoreLint(),
-    'test_nonFutureIgnore_noLint': (t) => t._nonFutureIgnoreNoLint(),
-    'test_unawaitedFuture_noLint': (t) => t._unawaitedFutureNoLint(),
-  });
-  analysisRuleSuite<AvoidFutureToStringTest>(
-    'AvoidFutureToStringTest',
-    AvoidFutureToStringTest.new,
-    {
-      'test_futureToString_lint': (t) => t._futureToStringLint(),
-      'test_futureInterpolation_lint': (t) => t._futureInterpolationLint(),
-      'test_nonFutureToString_noLint': (t) => t._nonFutureToStringNoLint(),
-      'test_nonFutureInterpolation_noLint': (t) => t._nonFutureInterpolationNoLint(),
-    },
+  analysisRuleSuite<_AvoidFutureIgnoreTest>(
+    'AvoidFutureIgnoreTest',
+    _AvoidFutureIgnoreTest.new,
+    _AvoidFutureIgnoreTest._allCases,
   );
-  analysisRuleSuite<AvoidNestedFuturesTest>('AvoidNestedFuturesTest', AvoidNestedFuturesTest.new, {
-    'test_futureOfFuture_lint': (t) => t._futureOfFutureLint(),
-    'test_nestedFutureInGeneric_lint': (t) => t._nestedFutureInGenericLint(),
-    'test_userTypeNamedFuture_noLint': (t) => t._userTypeNamedFutureNoLint(),
-    'test_flatFuture_noLint': (t) => t._flatFutureNoLint(),
-  });
+  analysisRuleSuite<_AvoidFutureToStringTest>(
+    'AvoidFutureToStringTest',
+    _AvoidFutureToStringTest.new,
+    _AvoidFutureToStringTest._allCases,
+  );
+  analysisRuleSuite<_AvoidNestedFuturesTest>(
+    'AvoidNestedFuturesTest',
+    _AvoidNestedFuturesTest.new,
+    _AvoidNestedFuturesTest._allCases,
+  );
 }
 
-final class AvoidFutureIgnoreTest extends AnalysisRuleTest {
+final class _AvoidFutureIgnoreTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidFutureIgnoreTest)> get _allCases =>
+      caseSet<_AvoidFutureIgnoreTest>(
+        parent: const {},
+        own: {
+          'test_futureIgnore_lint': (t) => t._futureIgnoreLint(),
+          'test_nonFutureIgnore_noLint': (t) => t._nonFutureIgnoreNoLint(),
+          'test_unawaitedFuture_noLint': (t) => t._unawaitedFutureNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidFutureIgnore();
@@ -77,7 +81,18 @@ void f() {
   }
 }
 
-final class AvoidFutureToStringTest extends AnalysisRuleTest {
+final class _AvoidFutureToStringTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidFutureToStringTest)> get _allCases =>
+      caseSet<_AvoidFutureToStringTest>(
+        parent: const {},
+        own: {
+          'test_futureToString_lint': (t) => t._futureToStringLint(),
+          'test_futureInterpolation_lint': (t) => t._futureInterpolationLint(),
+          'test_nonFutureToString_noLint': (t) => t._nonFutureToStringNoLint(),
+          'test_nonFutureInterpolation_noLint': (t) => t._nonFutureInterpolationNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidFutureToString();
@@ -117,7 +132,18 @@ String f(int value) => '$value';
   }
 }
 
-final class AvoidNestedFuturesTest extends AnalysisRuleTest {
+final class _AvoidNestedFuturesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNestedFuturesTest)> get _allCases =>
+      caseSet<_AvoidNestedFuturesTest>(
+        parent: const {},
+        own: {
+          'test_futureOfFuture_lint': (t) => t._futureOfFutureLint(),
+          'test_nestedFutureInGeneric_lint': (t) => t._nestedFutureInGenericLint(),
+          'test_userTypeNamedFuture_noLint': (t) => t._userTypeNamedFutureNoLint(),
+          'test_flatFuture_noLint': (t) => t._flatFutureNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNestedFutures();

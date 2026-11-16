@@ -1,6 +1,21 @@
 part of '../source_scanner_rules_test.dart';
 
-final class DomainCustomCopyWithTest extends _ValueObjectRuleTest {
+final class _DomainCustomCopyWithTest extends _ValueObjectRuleTest {
+  static Map<String, Future<void> Function(_DomainCustomCopyWithTest)> get _allCases =>
+      caseSet<_DomainCustomCopyWithTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsCopyWithCallSite': (t) => t._allowsCopyWithCallSite(),
+          'test_allowsCopyWithOutsideDomain': (t) => t._allowsCopyWithOutsideDomain(),
+          'test_allowsCopyWithCommentInDomain': (t) => t._allowsCopyWithCommentInDomain(),
+          'test_allowsCopyWithInGeneratedMixin': (t) => t._allowsCopyWithInGeneratedMixin(),
+          'test_reportsGenericCopyWith': (t) => t._reportsGenericCopyWith(),
+          'test_reportsAbstractCopyWithSignature': (t) => t._reportsAbstractCopyWithSignature(),
+          'test_allowsCopyWithInExtensionOutsideClass': (t) =>
+              t._allowsCopyWithInExtensionOutsideClass(),
+        },
+      );
+
   @override
   String get ruleName => 'domain_custom_copy_with';
   @override
@@ -122,7 +137,22 @@ extension UserCopy on User {
   }
 }
 
-final class FreezedDisableMapWhenRequiredTest extends _ValueObjectRuleTest {
+final class _FreezedDisableMapWhenRequiredTest extends _ValueObjectRuleTest {
+  static Map<String, Future<void> Function(_FreezedDisableMapWhenRequiredTest)> get _allCases =>
+      caseSet<_FreezedDisableMapWhenRequiredTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsFullOptOut': (t) => t._allowsFullOptOut(),
+          'test_allowsDotShorthandOptOut': (t) => t._allowsDotShorthandOptOut(),
+          'test_reportsPartialOptOutMissingWhen': (t) => t._reportsPartialOptOutMissingWhen(),
+          'test_reportsPartialOptOutMissingMap': (t) => t._reportsPartialOptOutMissingMap(),
+          'test_allowsNonSealedFreezedClass': (t) => t._allowsNonSealedFreezedClass(),
+          'test_allowsOutsideValueObjectsPath': (t) => t._allowsOutsideValueObjectsPath(),
+          'test_allowsMultilineFullOptOut': (t) => t._allowsMultilineFullOptOut(),
+          'test_allowsNoFreezedAnnotation': (t) => t._allowsNoFreezedAnnotation(),
+        },
+      );
+
   @override
   String get ruleName => 'freezed_disable_map_when_required';
   @override
@@ -304,7 +334,24 @@ abstract class _HivePersistenceRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => hivePersistenceSourceRules;
 }
 
-final class UnvalidatedPersistedMapCastTest extends _HivePersistenceRuleTest {
+final class _UnvalidatedPersistedMapCastTest extends _HivePersistenceRuleTest {
+  static Map<String, Future<void> Function(_UnvalidatedPersistedMapCastTest)> get _allCases =>
+      caseSet<_UnvalidatedPersistedMapCastTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsCheckedMapNormalization': (t) => t._allowsCheckedMapNormalization(),
+          'test_allowsJsonBoundaryCastOutsidePersistencePath': (t) =>
+              t._allowsJsonBoundaryCastOutsidePersistencePath(),
+          'test_allowsRemoteDatasourceJsonCast': (t) => t._allowsRemoteDatasourceJsonCast(),
+          'test_allowsJsonDecoderInDatasourcesFolder': (t) =>
+              t._allowsJsonDecoderInDatasourcesFolder(),
+          'test_allowsJsonDecodedCacheValueInHiveLibrary': (t) =>
+              t._allowsJsonDecodedCacheValueInHiveLibrary(),
+          'test_reportsHiveValuesLoopCast': (t) => t._reportsHiveValuesLoopCast(),
+          'test_reportsLocalDatasourceMapCast': (t) => t._reportsLocalDatasourceMapCast(),
+        },
+      );
+
   @override
   String get ruleName => 'avoid_unvalidated_persisted_map_cast';
   @override
@@ -459,7 +506,16 @@ Object? readStoredValue(Box<Object?> box) {
   }
 }
 
-final class HiveFlutterImportTest extends _HivePersistenceRuleTest {
+final class _HiveFlutterImportTest extends _HivePersistenceRuleTest {
+  static Map<String, Future<void> Function(_HiveFlutterImportTest)> get _allCases =>
+      caseSet<_HiveFlutterImportTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsHiveCeFlutterImportInLib': (t) => t._allowsHiveCeFlutterImportInLib(),
+          'test_allowsHiveCeImportInTests': (t) => t._allowsHiveCeImportInTests(),
+        },
+      );
+
   @override
   String get ruleName => 'use_hive_ce_flutter_import';
   @override
@@ -520,7 +576,21 @@ Future<void> initTempStorage() async {
   }
 }
 
-final class HiveFieldNoVoTypeTest extends _HivePersistenceRuleTest {
+final class _HiveFieldNoVoTypeTest extends _HivePersistenceRuleTest {
+  static Map<String, Future<void> Function(_HiveFieldNoVoTypeTest)> get _allCases =>
+      caseSet<_HiveFieldNoVoTypeTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsPrimitiveTypedParams': (t) => t._allowsPrimitiveTypedParams(),
+          'test_reportsImportedVoNotInBaselineList': (t) => t._reportsImportedVoNotInBaselineList(),
+          'test_allowsVoTypeOutsideDataModelsPath': (t) => t._allowsVoTypeOutsideDataModelsPath(),
+          'test_reportsNullableVoParam': (t) => t._reportsNullableVoParam(),
+          'test_reportsVoInsideListGeneric': (t) => t._reportsVoInsideListGeneric(),
+          'test_reportsVoInsideMapGeneric': (t) => t._reportsVoInsideMapGeneric(),
+          'test_reportsMultiVoFromShowClause': (t) => t._reportsMultiVoFromShowClause(),
+        },
+      );
+
   @override
   String get ruleName => 'hive_field_no_vo_type';
   @override
@@ -748,65 +818,29 @@ abstract class _DialogRuleTest extends _SourceRuleTest {
 }
 
 void _defineSourceScannerRulesPart13Tests() {
-  analysisRuleSuite<DomainCustomCopyWithTest>(
+  analysisRuleSuite<_DomainCustomCopyWithTest>(
     'DomainCustomCopyWithTest',
-    DomainCustomCopyWithTest.new,
-    {
-      'test_allowsCopyWithCallSite': (t) => t._allowsCopyWithCallSite(),
-      'test_allowsCopyWithOutsideDomain': (t) => t._allowsCopyWithOutsideDomain(),
-      'test_allowsCopyWithCommentInDomain': (t) => t._allowsCopyWithCommentInDomain(),
-      'test_allowsCopyWithInGeneratedMixin': (t) => t._allowsCopyWithInGeneratedMixin(),
-      'test_reportsGenericCopyWith': (t) => t._reportsGenericCopyWith(),
-      'test_reportsAbstractCopyWithSignature': (t) => t._reportsAbstractCopyWithSignature(),
-      'test_allowsCopyWithInExtensionOutsideClass': (t) =>
-          t._allowsCopyWithInExtensionOutsideClass(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _DomainCustomCopyWithTest.new,
+    _DomainCustomCopyWithTest._allCases,
   );
-  analysisRuleSuite<FreezedDisableMapWhenRequiredTest>(
+  analysisRuleSuite<_FreezedDisableMapWhenRequiredTest>(
     'FreezedDisableMapWhenRequiredTest',
-    FreezedDisableMapWhenRequiredTest.new,
-    {
-      'test_allowsFullOptOut': (t) => t._allowsFullOptOut(),
-      'test_allowsDotShorthandOptOut': (t) => t._allowsDotShorthandOptOut(),
-      'test_reportsPartialOptOutMissingWhen': (t) => t._reportsPartialOptOutMissingWhen(),
-      'test_reportsPartialOptOutMissingMap': (t) => t._reportsPartialOptOutMissingMap(),
-      'test_allowsNonSealedFreezedClass': (t) => t._allowsNonSealedFreezedClass(),
-      'test_allowsOutsideValueObjectsPath': (t) => t._allowsOutsideValueObjectsPath(),
-      'test_allowsMultilineFullOptOut': (t) => t._allowsMultilineFullOptOut(),
-      'test_allowsNoFreezedAnnotation': (t) => t._allowsNoFreezedAnnotation(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _FreezedDisableMapWhenRequiredTest.new,
+    _FreezedDisableMapWhenRequiredTest._allCases,
   );
-  analysisRuleSuite<UnvalidatedPersistedMapCastTest>(
+  analysisRuleSuite<_UnvalidatedPersistedMapCastTest>(
     'UnvalidatedPersistedMapCastTest',
-    UnvalidatedPersistedMapCastTest.new,
-    {
-      'test_allowsCheckedMapNormalization': (t) => t._allowsCheckedMapNormalization(),
-      'test_allowsJsonBoundaryCastOutsidePersistencePath': (t) =>
-          t._allowsJsonBoundaryCastOutsidePersistencePath(),
-      'test_allowsRemoteDatasourceJsonCast': (t) => t._allowsRemoteDatasourceJsonCast(),
-      'test_allowsJsonDecoderInDatasourcesFolder': (t) => t._allowsJsonDecoderInDatasourcesFolder(),
-      'test_allowsJsonDecodedCacheValueInHiveLibrary': (t) =>
-          t._allowsJsonDecodedCacheValueInHiveLibrary(),
-      'test_reportsHiveValuesLoopCast': (t) => t._reportsHiveValuesLoopCast(),
-      'test_reportsLocalDatasourceMapCast': (t) => t._reportsLocalDatasourceMapCast(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _UnvalidatedPersistedMapCastTest.new,
+    _UnvalidatedPersistedMapCastTest._allCases,
   );
-  analysisRuleSuite<HiveFlutterImportTest>('HiveFlutterImportTest', HiveFlutterImportTest.new, {
-    'test_allowsHiveCeFlutterImportInLib': (t) => t._allowsHiveCeFlutterImportInLib(),
-    'test_allowsHiveCeImportInTests': (t) => t._allowsHiveCeImportInTests(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<HiveFieldNoVoTypeTest>('HiveFieldNoVoTypeTest', HiveFieldNoVoTypeTest.new, {
-    'test_allowsPrimitiveTypedParams': (t) => t._allowsPrimitiveTypedParams(),
-    'test_reportsImportedVoNotInBaselineList': (t) => t._reportsImportedVoNotInBaselineList(),
-    'test_allowsVoTypeOutsideDataModelsPath': (t) => t._allowsVoTypeOutsideDataModelsPath(),
-    'test_reportsNullableVoParam': (t) => t._reportsNullableVoParam(),
-    'test_reportsVoInsideListGeneric': (t) => t._reportsVoInsideListGeneric(),
-    'test_reportsVoInsideMapGeneric': (t) => t._reportsVoInsideMapGeneric(),
-    'test_reportsMultiVoFromShowClause': (t) => t._reportsMultiVoFromShowClause(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
+  analysisRuleSuite<_HiveFlutterImportTest>(
+    'HiveFlutterImportTest',
+    _HiveFlutterImportTest.new,
+    _HiveFlutterImportTest._allCases,
+  );
+  analysisRuleSuite<_HiveFieldNoVoTypeTest>(
+    'HiveFieldNoVoTypeTest',
+    _HiveFieldNoVoTypeTest.new,
+    _HiveFieldNoVoTypeTest._allCases,
+  );
 }

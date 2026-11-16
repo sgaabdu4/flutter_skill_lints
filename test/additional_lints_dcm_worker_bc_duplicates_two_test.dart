@@ -8,37 +8,34 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidDuplicateInitializersTest>(
+  analysisRuleSuite<_AvoidDuplicateInitializersTest>(
     'AvoidDuplicateInitializersTest',
-    AvoidDuplicateInitializersTest.new,
-    {
-      'test_duplicateFieldInitializer_lint': (t) => t._duplicateFieldInitializerLint(),
-      'test_distinctFieldInitializers_noLint': (t) => t._distinctFieldInitializersNoLint(),
-      'test_severity_error': (t) => t._severityError(),
-    },
+    _AvoidDuplicateInitializersTest.new,
+    _AvoidDuplicateInitializersTest._allCases,
   );
-  analysisRuleSuite<AvoidDuplicateMixinsTest>(
+  analysisRuleSuite<_AvoidDuplicateMixinsTest>(
     'AvoidDuplicateMixinsTest',
-    AvoidDuplicateMixinsTest.new,
-    {
-      'test_duplicateMixin_lint': (t) => t._duplicateMixinLint(),
-      'test_distinctMixins_noLint': (t) => t._distinctMixinsNoLint(),
-      'test_severity_error': (t) => t._severityError(),
-    },
+    _AvoidDuplicateMixinsTest.new,
+    _AvoidDuplicateMixinsTest._allCases,
   );
-  analysisRuleSuite<AvoidDuplicatePatternsTest>(
+  analysisRuleSuite<_AvoidDuplicatePatternsTest>(
     'AvoidDuplicatePatternsTest',
-    AvoidDuplicatePatternsTest.new,
-    {
-      'test_duplicateLiteralAlternative_lint': (t) => t._duplicateLiteralAlternativeLint(),
-      'test_duplicateIdentifierAlternative_lint': (t) => t._duplicateIdentifierAlternativeLint(),
-      'test_nonConstantIdentifierPatterns_noLint': (t) => t._nonConstantIdentifierPatternsNoLint(),
-      'test_severity_error': (t) => t._severityError(),
-    },
+    _AvoidDuplicatePatternsTest.new,
+    _AvoidDuplicatePatternsTest._allCases,
   );
 }
 
-final class AvoidDuplicateInitializersTest extends AnalysisRuleTest {
+final class _AvoidDuplicateInitializersTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidDuplicateInitializersTest)> get _allCases =>
+      caseSet<_AvoidDuplicateInitializersTest>(
+        parent: const {},
+        own: {
+          'test_duplicateFieldInitializer_lint': (t) => t._duplicateFieldInitializerLint(),
+          'test_distinctFieldInitializers_noLint': (t) => t._distinctFieldInitializersNoLint(),
+          'test_severity_error': (t) => t._severityError(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidDuplicateInitializers();
@@ -76,7 +73,17 @@ class User {
   }
 }
 
-final class AvoidDuplicateMixinsTest extends AnalysisRuleTest {
+final class _AvoidDuplicateMixinsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidDuplicateMixinsTest)> get _allCases =>
+      caseSet<_AvoidDuplicateMixinsTest>(
+        parent: const {},
+        own: {
+          'test_duplicateMixin_lint': (t) => t._duplicateMixinLint(),
+          'test_distinctMixins_noLint': (t) => t._distinctMixinsNoLint(),
+          'test_severity_error': (t) => t._severityError(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidDuplicateMixins();
@@ -108,7 +115,20 @@ class User with First, Second {}
   }
 }
 
-final class AvoidDuplicatePatternsTest extends AnalysisRuleTest {
+final class _AvoidDuplicatePatternsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidDuplicatePatternsTest)> get _allCases =>
+      caseSet<_AvoidDuplicatePatternsTest>(
+        parent: const {},
+        own: {
+          'test_duplicateLiteralAlternative_lint': (t) => t._duplicateLiteralAlternativeLint(),
+          'test_duplicateIdentifierAlternative_lint': (t) =>
+              t._duplicateIdentifierAlternativeLint(),
+          'test_nonConstantIdentifierPatterns_noLint': (t) =>
+              t._nonConstantIdentifierPatternsNoLint(),
+          'test_severity_error': (t) => t._severityError(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidDuplicatePatterns();

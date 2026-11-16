@@ -1,6 +1,18 @@
 part of '../source_scanner_rules_test.dart';
 
-final class WidgetInfraDependencyBoundaryTest extends _UiRuleTest {
+final class _WidgetInfraDependencyBoundaryTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_WidgetInfraDependencyBoundaryTest)> get _allCases =>
+      caseSet<_WidgetInfraDependencyBoundaryTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsInfraField': (t) => t._reportsInfraField(),
+          'test_reportsTypedConstructorParam': (t) => t._reportsTypedConstructorParam(),
+          'test_reportsLocalInfraConstructor': (t) => t._reportsLocalInfraConstructor(),
+          'test_allowsInfraWiringOutsideUiFiles': (t) => t._allowsInfraWiringOutsideUiFiles(),
+          'test_allowsPrimitiveWidgetProps': (t) => t._allowsPrimitiveWidgetProps(),
+        },
+      );
+
   @override
   String get ruleName => 'widget_infra_dependency_boundary';
   @override
@@ -91,7 +103,21 @@ class Avatar extends StatelessWidget {
   }
 }
 
-final class WidgetTopLevelFunctionBoundaryTest extends _UiRuleTest {
+final class _WidgetTopLevelFunctionBoundaryTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_WidgetTopLevelFunctionBoundaryTest)> get _allCases =>
+      caseSet<_WidgetTopLevelFunctionBoundaryTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_reportsPrivateTopLevelHelper': (t) => t._reportsPrivateTopLevelHelper(),
+          'test_allowsResolvedPreviewFunction': (t) => t._allowsResolvedPreviewFunction(),
+          'test_reportsFunctionUnderLookalikePreviewAnnotation': (t) =>
+              t._reportsFunctionUnderLookalikePreviewAnnotation(),
+          'test_allowsStaticClassApi': (t) => t._allowsStaticClassApi(),
+          'test_allowsProviderFiles': (t) => t._allowsProviderFiles(),
+        },
+      );
+
   @override
   String get ruleName => 'widget_top_level_function_boundary';
 
@@ -161,7 +187,16 @@ Future<void> createSquad(BuildContext context, WidgetRef ref) async {}
   }
 }
 
-final class WidgetActionsNamespaceBoundaryTest extends _UiRuleTest {
+final class _WidgetActionsNamespaceBoundaryTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_WidgetActionsNamespaceBoundaryTest)> get _allCases =>
+      caseSet<_WidgetActionsNamespaceBoundaryTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsCoordinatorActionNamespace': (t) => t._allowsCoordinatorActionNamespace(),
+          'test_allowsRenderOnlyWidgetActions': (t) => t._allowsRenderOnlyWidgetActions(),
+        },
+      );
+
   @override
   String get ruleName => 'widget_actions_namespace_boundary';
   @override
@@ -196,7 +231,16 @@ abstract final class EmptySquadActions {
   }
 }
 
-final class StorageClearPreservesMigrationStateTest extends _RuntimeBugRuleTest {
+final class _StorageClearPreservesMigrationStateTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_StorageClearPreservesMigrationStateTest)>
+  get _allCases => caseSet<_StorageClearPreservesMigrationStateTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_allowsHardClear': (t) => t._allowsHardClear(),
+      'test_allowsNonStorageBoundaryClass': (t) => t._allowsNonStorageBoundaryClass(),
+    },
+  );
+
   @override
   String get ruleName => 'storage_clear_preserves_migration_state';
   @override
@@ -236,7 +280,13 @@ class MemoryCache {
 }
 
 /// A `;`-terminated constructor has no body; the scanner must not extend its span over the following method (networking.md repository shape).
-final class DestructiveFailureAfterConstConstructorTest extends _RuntimeBugRuleTest {
+final class _DestructiveFailureAfterConstConstructorTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_DestructiveFailureAfterConstConstructorTest)>
+  get _allCases => caseSet<_DestructiveFailureAfterConstConstructorTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {},
+  );
+
   @override
   String get ruleName => 'destructive_failure_logged_before_reconcile';
   @override
@@ -261,53 +311,29 @@ class AccountRepository {
 }
 
 void _defineSourceScannerRulesPart24Tests() {
-  analysisRuleSuite<WidgetInfraDependencyBoundaryTest>(
+  analysisRuleSuite<_WidgetInfraDependencyBoundaryTest>(
     'WidgetInfraDependencyBoundaryTest',
-    WidgetInfraDependencyBoundaryTest.new,
-    {
-      'test_reportsInfraField': (t) => t._reportsInfraField(),
-      'test_reportsTypedConstructorParam': (t) => t._reportsTypedConstructorParam(),
-      'test_reportsLocalInfraConstructor': (t) => t._reportsLocalInfraConstructor(),
-      'test_allowsInfraWiringOutsideUiFiles': (t) => t._allowsInfraWiringOutsideUiFiles(),
-      'test_allowsPrimitiveWidgetProps': (t) => t._allowsPrimitiveWidgetProps(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _WidgetInfraDependencyBoundaryTest.new,
+    _WidgetInfraDependencyBoundaryTest._allCases,
   );
-  analysisRuleSuite<WidgetTopLevelFunctionBoundaryTest>(
+  analysisRuleSuite<_WidgetTopLevelFunctionBoundaryTest>(
     'WidgetTopLevelFunctionBoundaryTest',
-    WidgetTopLevelFunctionBoundaryTest.new,
-    {
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_reportsPrivateTopLevelHelper': (t) => t._reportsPrivateTopLevelHelper(),
-      'test_allowsResolvedPreviewFunction': (t) => t._allowsResolvedPreviewFunction(),
-      'test_reportsFunctionUnderLookalikePreviewAnnotation': (t) =>
-          t._reportsFunctionUnderLookalikePreviewAnnotation(),
-      'test_allowsStaticClassApi': (t) => t._allowsStaticClassApi(),
-      'test_allowsProviderFiles': (t) => t._allowsProviderFiles(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _WidgetTopLevelFunctionBoundaryTest.new,
+    _WidgetTopLevelFunctionBoundaryTest._allCases,
   );
-  analysisRuleSuite<WidgetActionsNamespaceBoundaryTest>(
+  analysisRuleSuite<_WidgetActionsNamespaceBoundaryTest>(
     'WidgetActionsNamespaceBoundaryTest',
-    WidgetActionsNamespaceBoundaryTest.new,
-    {
-      'test_allowsCoordinatorActionNamespace': (t) => t._allowsCoordinatorActionNamespace(),
-      'test_allowsRenderOnlyWidgetActions': (t) => t._allowsRenderOnlyWidgetActions(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _WidgetActionsNamespaceBoundaryTest.new,
+    _WidgetActionsNamespaceBoundaryTest._allCases,
   );
-  analysisRuleSuite<DestructiveFailureAfterConstConstructorTest>(
+  analysisRuleSuite<_DestructiveFailureAfterConstConstructorTest>(
     'DestructiveFailureAfterConstConstructorTest',
-    DestructiveFailureAfterConstConstructorTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _DestructiveFailureAfterConstConstructorTest.new,
+    _DestructiveFailureAfterConstConstructorTest._allCases,
   );
-  analysisRuleSuite<StorageClearPreservesMigrationStateTest>(
+  analysisRuleSuite<_StorageClearPreservesMigrationStateTest>(
     'StorageClearPreservesMigrationStateTest',
-    StorageClearPreservesMigrationStateTest.new,
-    {
-      'test_allowsHardClear': (t) => t._allowsHardClear(),
-      'test_allowsNonStorageBoundaryClass': (t) => t._allowsNonStorageBoundaryClass(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _StorageClearPreservesMigrationStateTest.new,
+    _StorageClearPreservesMigrationStateTest._allCases,
   );
 }

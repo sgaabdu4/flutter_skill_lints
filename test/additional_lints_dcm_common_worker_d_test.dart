@@ -6,41 +6,36 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_referencing
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidAssigningToStaticFieldTest>(
+  analysisRuleSuite<_AvoidAssigningToStaticFieldTest>(
     'AvoidAssigningToStaticFieldTest',
-    AvoidAssigningToStaticFieldTest.new,
-    {
-      'test_instanceFieldAssignment_noLint': (t) => t._instanceFieldAssignmentNoLint(),
-      'test_staticFieldAssignment_lint': (t) => t._staticFieldAssignmentLint(),
-      'test_staticFieldIncrement_lint': (t) => t._staticFieldIncrementLint(),
-      'test_visibleForTestingStaticAssignment_noLint': (t) =>
-          t._visibleForTestingStaticAssignmentNoLint(),
-    },
+    _AvoidAssigningToStaticFieldTest.new,
+    _AvoidAssigningToStaticFieldTest._allCases,
   );
-  analysisRuleSuite<AvoidReferencingDiscardedVariablesTest>(
+  analysisRuleSuite<_AvoidReferencingDiscardedVariablesTest>(
     'AvoidReferencingDiscardedVariablesTest',
-    AvoidReferencingDiscardedVariablesTest.new,
-    {
-      'test_discardedVariableDeclarationOnly_noLint': (t) =>
-          t._discardedVariableDeclarationOnlyNoLint(),
-      'test_namedVariableReference_noLint': (t) => t._namedVariableReferenceNoLint(),
-      'test_referencedDiscardedVariable_lint': (t) => t._referencedDiscardedVariableLint(),
-      'test_privateNamedConstructorReferences_noLint': (t) =>
-          t._privateNamedConstructorReferencesNoLint(),
-    },
+    _AvoidReferencingDiscardedVariablesTest.new,
+    _AvoidReferencingDiscardedVariablesTest._allCases,
   );
-  analysisRuleSuite<AvoidBannedAnnotationsTest>(
+  analysisRuleSuite<_AvoidBannedAnnotationsTest>(
     'AvoidBannedAnnotationsTest',
-    AvoidBannedAnnotationsTest.new,
-    {
-      'test_deprecatedConstantAnnotation_lint': (t) => t._deprecatedConstantAnnotationLint(),
-      'test_deprecatedConstructorAnnotation_lint': (t) => t._deprecatedConstructorAnnotationLint(),
-      'test_overrideAnnotation_noLint': (t) => t._overrideAnnotationNoLint(),
-    },
+    _AvoidBannedAnnotationsTest.new,
+    _AvoidBannedAnnotationsTest._allCases,
   );
 }
 
-final class AvoidAssigningToStaticFieldTest extends AnalysisRuleTest {
+final class _AvoidAssigningToStaticFieldTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidAssigningToStaticFieldTest)> get _allCases =>
+      caseSet<_AvoidAssigningToStaticFieldTest>(
+        parent: const {},
+        own: {
+          'test_instanceFieldAssignment_noLint': (t) => t._instanceFieldAssignmentNoLint(),
+          'test_staticFieldAssignment_lint': (t) => t._staticFieldAssignmentLint(),
+          'test_staticFieldIncrement_lint': (t) => t._staticFieldIncrementLint(),
+          'test_visibleForTestingStaticAssignment_noLint': (t) =>
+              t._visibleForTestingStaticAssignmentNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidAssigningToStaticField();
@@ -107,7 +102,20 @@ class Counter {
   }
 }
 
-final class AvoidReferencingDiscardedVariablesTest extends AnalysisRuleTest {
+final class _AvoidReferencingDiscardedVariablesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidReferencingDiscardedVariablesTest)>
+  get _allCases => caseSet<_AvoidReferencingDiscardedVariablesTest>(
+    parent: const {},
+    own: {
+      'test_discardedVariableDeclarationOnly_noLint': (t) =>
+          t._discardedVariableDeclarationOnlyNoLint(),
+      'test_namedVariableReference_noLint': (t) => t._namedVariableReferenceNoLint(),
+      'test_referencedDiscardedVariable_lint': (t) => t._referencedDiscardedVariableLint(),
+      'test_privateNamedConstructorReferences_noLint': (t) =>
+          t._privateNamedConstructorReferencesNoLint(),
+    },
+  );
+
   @override
   void setUp() {
     rule = AvoidReferencingDiscardedVariables();
@@ -159,7 +167,18 @@ Message create() => Message._('hello');
   }
 }
 
-final class AvoidBannedAnnotationsTest extends AnalysisRuleTest {
+final class _AvoidBannedAnnotationsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidBannedAnnotationsTest)> get _allCases =>
+      caseSet<_AvoidBannedAnnotationsTest>(
+        parent: const {},
+        own: {
+          'test_deprecatedConstantAnnotation_lint': (t) => t._deprecatedConstantAnnotationLint(),
+          'test_deprecatedConstructorAnnotation_lint': (t) =>
+              t._deprecatedConstructorAnnotationLint(),
+          'test_overrideAnnotation_noLint': (t) => t._overrideAnnotationNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidBannedAnnotations();

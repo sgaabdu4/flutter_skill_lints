@@ -6,40 +6,36 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidDuplicateCollectionElementsTest>(
+  analysisRuleSuite<_AvoidDuplicateCollectionElementsTest>(
     'AvoidDuplicateCollectionElementsTest',
-    AvoidDuplicateCollectionElementsTest.new,
-    {
-      'test_constListDuplicateLiteral_lint': (t) => t._constListDuplicateLiteralLint(),
-      'test_constListDuplicateString_lint': (t) => t._constListDuplicateStringLint(),
-      'test_runtimeListDuplicateLiteral_noLint': (t) => t._runtimeListDuplicateLiteralNoLint(),
-      'test_constCollectionDistinctElements_noLint': (t) =>
-          t._constCollectionDistinctElementsNoLint(),
-    },
+    _AvoidDuplicateCollectionElementsTest.new,
+    _AvoidDuplicateCollectionElementsTest._allCases,
   );
-  analysisRuleSuite<AvoidMixingNamedAndPositionalFieldsTest>(
+  analysisRuleSuite<_AvoidMixingNamedAndPositionalFieldsTest>(
     'AvoidMixingNamedAndPositionalFieldsTest',
-    AvoidMixingNamedAndPositionalFieldsTest.new,
-    {
-      'test_recordLiteralMixedFields_lint': (t) => t._recordLiteralMixedFieldsLint(),
-      'test_recordTypeMixedFields_lint': (t) => t._recordTypeMixedFieldsLint(),
-      'test_namedOnlyRecord_noLint': (t) => t._namedOnlyRecordNoLint(),
-      'test_positionalOnlyRecord_noLint': (t) => t._positionalOnlyRecordNoLint(),
-    },
+    _AvoidMixingNamedAndPositionalFieldsTest.new,
+    _AvoidMixingNamedAndPositionalFieldsTest._allCases,
   );
-  analysisRuleSuite<AvoidUnnecessaryDigitSeparatorsTest>(
+  analysisRuleSuite<_AvoidUnnecessaryDigitSeparatorsTest>(
     'AvoidUnnecessaryDigitSeparatorsTest',
-    AvoidUnnecessaryDigitSeparatorsTest.new,
-    {
-      'test_shortIntegerWithSeparator_lint': (t) => t._shortIntegerWithSeparatorLint(),
-      'test_shortFractionWithSeparator_lint': (t) => t._shortFractionWithSeparatorLint(),
-      'test_groupedLargeNumber_noLint': (t) => t._groupedLargeNumberNoLint(),
-      'test_plainShortNumber_noLint': (t) => t._plainShortNumberNoLint(),
-    },
+    _AvoidUnnecessaryDigitSeparatorsTest.new,
+    _AvoidUnnecessaryDigitSeparatorsTest._allCases,
   );
 }
 
-final class AvoidDuplicateCollectionElementsTest extends AnalysisRuleTest {
+final class _AvoidDuplicateCollectionElementsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidDuplicateCollectionElementsTest)> get _allCases =>
+      caseSet<_AvoidDuplicateCollectionElementsTest>(
+        parent: const {},
+        own: {
+          'test_constListDuplicateLiteral_lint': (t) => t._constListDuplicateLiteralLint(),
+          'test_constListDuplicateString_lint': (t) => t._constListDuplicateStringLint(),
+          'test_runtimeListDuplicateLiteral_noLint': (t) => t._runtimeListDuplicateLiteralNoLint(),
+          'test_constCollectionDistinctElements_noLint': (t) =>
+              t._constCollectionDistinctElementsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidDuplicateCollectionElements();
@@ -76,7 +72,18 @@ const labels = {'ready': 1, 'done': 2};
   }
 }
 
-final class AvoidMixingNamedAndPositionalFieldsTest extends AnalysisRuleTest {
+final class _AvoidMixingNamedAndPositionalFieldsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidMixingNamedAndPositionalFieldsTest)>
+  get _allCases => caseSet<_AvoidMixingNamedAndPositionalFieldsTest>(
+    parent: const {},
+    own: {
+      'test_recordLiteralMixedFields_lint': (t) => t._recordLiteralMixedFieldsLint(),
+      'test_recordTypeMixedFields_lint': (t) => t._recordTypeMixedFieldsLint(),
+      'test_namedOnlyRecord_noLint': (t) => t._namedOnlyRecordNoLint(),
+      'test_positionalOnlyRecord_noLint': (t) => t._positionalOnlyRecordNoLint(),
+    },
+  );
+
   @override
   void setUp() {
     rule = AvoidMixingNamedAndPositionalFields();
@@ -116,7 +123,18 @@ final user = ('Ada', 10);
   }
 }
 
-final class AvoidUnnecessaryDigitSeparatorsTest extends AnalysisRuleTest {
+final class _AvoidUnnecessaryDigitSeparatorsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnnecessaryDigitSeparatorsTest)> get _allCases =>
+      caseSet<_AvoidUnnecessaryDigitSeparatorsTest>(
+        parent: const {},
+        own: {
+          'test_shortIntegerWithSeparator_lint': (t) => t._shortIntegerWithSeparatorLint(),
+          'test_shortFractionWithSeparator_lint': (t) => t._shortFractionWithSeparatorLint(),
+          'test_groupedLargeNumber_noLint': (t) => t._groupedLargeNumberNoLint(),
+          'test_plainShortNumber_noLint': (t) => t._plainShortNumberNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnnecessaryDigitSeparators();

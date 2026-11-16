@@ -1,6 +1,48 @@
 part of '../additional_lints_false_positive_test.dart';
 
-final class UseExistingVariableFalsePositiveTest extends _AdditionalLintRuleTest {
+final class _UseExistingVariableFalsePositiveTest extends _AdditionalLintRuleTest {
+  static Map<String, Future<void> Function(_UseExistingVariableFalsePositiveTest)> get _allCases =>
+      caseSet<_UseExistingVariableFalsePositiveTest>(
+        parent: const {},
+        own: {
+          'test_allowsIndependentAllocations': (t) => t._allowsIndependentAllocations(),
+          'test_allowsIndependentShorthandAllocations': (t) =>
+              t._allowsIndependentShorthandAllocations(),
+          'test_constantCreationStillReports': (t) => t._constantCreationStillReports(),
+          'test_writeTargetsAreNotRepeatedReads': (t) => t._writeTargetsAreNotRepeatedReads(),
+          'test_indexAssignmentIsNotRepeatedRead': (t) => t._indexAssignmentIsNotRepeatedRead(),
+          'test_nullAssertedReadStillReports': (t) => t._nullAssertedReadStillReports(),
+          'test_assignmentRightHandReadStillReports': (t) =>
+              t._assignmentRightHandReadStillReports(),
+          'test_allowsRepeatedEffectfulReads': (t) => t._allowsRepeatedEffectfulReads(),
+          'test_allowsRepeatedStatefulGettersAndIndexReads': (t) =>
+              t._allowsRepeatedStatefulGettersAndIndexReads(),
+          'test_allowsRepeatedUnqualifiedGetterReads': (t) =>
+              t._allowsRepeatedUnqualifiedGetterReads(),
+          'test_allowsRepeatedOverloadedOperators': (t) => t._allowsRepeatedOverloadedOperators(),
+          'test_reportsPureBuiltInBooleanAndNullCoalescingDuplicates': (t) =>
+              t._reportsPureBuiltInBooleanAndNullCoalescingDuplicates(),
+          'test_allowsRepeatedOverloadedUnaryOperators': (t) =>
+              t._allowsRepeatedOverloadedUnaryOperators(),
+          'test_allowsFreshReadAfterAwaitInInitializer': (t) =>
+              t._allowsFreshReadAfterAwaitInInitializer(),
+          'test_allowsReadAfterEffectWithinInitializer': (t) =>
+              t._allowsReadAfterEffectWithinInitializer(),
+          'test_reportsPureReadBeforeEffectWithinInitializer': (t) =>
+              t._reportsPureReadBeforeEffectWithinInitializer(),
+          'test_awaitOrderPreservesFreshReads': (t) => t._awaitOrderPreservesFreshReads(),
+          'test_expressionArgumentOrderRespectsMutation': (t) =>
+              t._expressionArgumentOrderRespectsMutation(),
+          'test_assignmentOrderRespectsMutation': (t) => t._assignmentOrderRespectsMutation(),
+          'test_multipleDeclarationsDoNotReuseValueAcrossEffect': (t) =>
+              t._multipleDeclarationsDoNotReuseValueAcrossEffect(),
+          'test_reportsPureDuplicateExpression': (t) => t._reportsPureDuplicateExpression(),
+          'test_allowsDuplicateExpressionAfterMutation': (t) =>
+              t._allowsDuplicateExpressionAfterMutation(),
+          'test_allowsFreshCollectionRecorders': (t) => t._allowsFreshCollectionRecorders(),
+        },
+      );
+
   Future<void> _allowsIndependentAllocations() async {
     for (final (index, expression) in ['Completer<int>()', 'Box()', 'Box.create()'].indexed) {
       final path = '$testPackageLibPath/creation_$index.dart';
@@ -375,43 +417,9 @@ void run() {
 }
 
 void _defineUseExistingVariableCasesTests() {
-  analysisRuleSuite<UseExistingVariableFalsePositiveTest>(
+  analysisRuleSuite<_UseExistingVariableFalsePositiveTest>(
     'UseExistingVariableFalsePositiveTest',
-    UseExistingVariableFalsePositiveTest.new,
-    {
-      'test_allowsIndependentAllocations': (t) => t._allowsIndependentAllocations(),
-      'test_allowsIndependentShorthandAllocations': (t) =>
-          t._allowsIndependentShorthandAllocations(),
-      'test_constantCreationStillReports': (t) => t._constantCreationStillReports(),
-      'test_writeTargetsAreNotRepeatedReads': (t) => t._writeTargetsAreNotRepeatedReads(),
-      'test_indexAssignmentIsNotRepeatedRead': (t) => t._indexAssignmentIsNotRepeatedRead(),
-      'test_nullAssertedReadStillReports': (t) => t._nullAssertedReadStillReports(),
-      'test_assignmentRightHandReadStillReports': (t) => t._assignmentRightHandReadStillReports(),
-      'test_allowsRepeatedEffectfulReads': (t) => t._allowsRepeatedEffectfulReads(),
-      'test_allowsRepeatedStatefulGettersAndIndexReads': (t) =>
-          t._allowsRepeatedStatefulGettersAndIndexReads(),
-      'test_allowsRepeatedUnqualifiedGetterReads': (t) => t._allowsRepeatedUnqualifiedGetterReads(),
-      'test_allowsRepeatedOverloadedOperators': (t) => t._allowsRepeatedOverloadedOperators(),
-      'test_reportsPureBuiltInBooleanAndNullCoalescingDuplicates': (t) =>
-          t._reportsPureBuiltInBooleanAndNullCoalescingDuplicates(),
-      'test_allowsRepeatedOverloadedUnaryOperators': (t) =>
-          t._allowsRepeatedOverloadedUnaryOperators(),
-      'test_allowsFreshReadAfterAwaitInInitializer': (t) =>
-          t._allowsFreshReadAfterAwaitInInitializer(),
-      'test_allowsReadAfterEffectWithinInitializer': (t) =>
-          t._allowsReadAfterEffectWithinInitializer(),
-      'test_reportsPureReadBeforeEffectWithinInitializer': (t) =>
-          t._reportsPureReadBeforeEffectWithinInitializer(),
-      'test_awaitOrderPreservesFreshReads': (t) => t._awaitOrderPreservesFreshReads(),
-      'test_expressionArgumentOrderRespectsMutation': (t) =>
-          t._expressionArgumentOrderRespectsMutation(),
-      'test_assignmentOrderRespectsMutation': (t) => t._assignmentOrderRespectsMutation(),
-      'test_multipleDeclarationsDoNotReuseValueAcrossEffect': (t) =>
-          t._multipleDeclarationsDoNotReuseValueAcrossEffect(),
-      'test_reportsPureDuplicateExpression': (t) => t._reportsPureDuplicateExpression(),
-      'test_allowsDuplicateExpressionAfterMutation': (t) =>
-          t._allowsDuplicateExpressionAfterMutation(),
-      'test_allowsFreshCollectionRecorders': (t) => t._allowsFreshCollectionRecorders(),
-    },
+    _UseExistingVariableFalsePositiveTest.new,
+    _UseExistingVariableFalsePositiveTest._allCases,
   );
 }

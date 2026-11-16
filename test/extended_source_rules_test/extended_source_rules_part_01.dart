@@ -5,7 +5,19 @@ abstract class _ServicesExtendedRuleTest extends _ExtendedSourceRuleTest {
   List<ScannerRule> get rules => servicesExtendedSourceRules;
 }
 
-final class ServiceStaticSideEffectTest extends _ServicesExtendedRuleTest {
+final class _ServiceStaticSideEffectTest extends _ServicesExtendedRuleTest {
+  static Map<String, Future<void> Function(_ServiceStaticSideEffectTest)> get _allCases =>
+      caseSet<_ServiceStaticSideEffectTest>(
+        parent: _ExtendedSourceRuleTest._allCases,
+        own: {
+          'test_allowsTinyDirectSdkFacade': (t) => t._allowsTinyDirectSdkFacade(),
+          'test_allowsStaticTestHelperInTests': (t) => t._allowsStaticTestHelperInTests(),
+          'test_reportsDataReturningStaticFacade': (t) => t._reportsDataReturningStaticFacade(),
+          'test_reportsPublicStaticGetter': (t) => t._reportsPublicStaticGetter(),
+          'test_reportsOverbuiltDebugBackendFacade': (t) => t._reportsOverbuiltDebugBackendFacade(),
+        },
+      );
+
   @override
   String get ruleName => 'service_static_side_effect';
   @override
@@ -95,7 +107,16 @@ abstract final class AnalyticsLog {
   }
 }
 
-final class ServiceRandomPerCallTest extends _ServicesExtendedRuleTest {
+final class _ServiceRandomPerCallTest extends _ServicesExtendedRuleTest {
+  static Map<String, Future<void> Function(_ServiceRandomPerCallTest)> get _allCases =>
+      caseSet<_ServiceRandomPerCallTest>(
+        parent: _ExtendedSourceRuleTest._allCases,
+        own: {
+          'test_reportsTopLevelFunctionAndClosure': (t) => t._reportsTopLevelFunctionAndClosure(),
+          'test_allowsHoistedModuleAndStaticRandom': (t) => t._allowsHoistedModuleAndStaticRandom(),
+        },
+      );
+
   @override
   String get ruleName => 'service_random_per_call';
   @override
@@ -147,7 +168,18 @@ Duration jitter() => Duration(milliseconds: _rng.nextInt(100));
   }
 }
 
-final class HiddenDependencyFallbackTest extends _ServicesExtendedRuleTest {
+final class _HiddenDependencyFallbackTest extends _ServicesExtendedRuleTest {
+  static Map<String, Future<void> Function(_HiddenDependencyFallbackTest)> get _allCases =>
+      caseSet<_HiddenDependencyFallbackTest>(
+        parent: _ExtendedSourceRuleTest._allCases,
+        own: {
+          'test_reportsRepositoryFallback': (t) => t._reportsRepositoryFallback(),
+          'test_reportsFunctionDependencyFallback': (t) => t._reportsFunctionDependencyFallback(),
+          'test_allowsNullableDomainValueFallback': (t) => t._allowsNullableDomainValueFallback(),
+          'test_allowsFallbacksInTests': (t) => t._allowsFallbacksInTests(),
+        },
+      );
+
   @override
   String get ruleName => 'hidden_dependency_fallback';
   @override
@@ -212,7 +244,33 @@ void main() {
   }
 }
 
-final class ImplicitNullFallbackTest extends _ServicesExtendedRuleTest {
+final class _ImplicitNullFallbackTest extends _ServicesExtendedRuleTest {
+  static Map<String, Future<void> Function(_ImplicitNullFallbackTest)> get _allCases =>
+      caseSet<_ImplicitNullFallbackTest>(
+        parent: _ExtendedSourceRuleTest._allCases,
+        own: {
+          'test_allowsSkillPrimitiveBoolAndNumFallbacks': (t) =>
+              t._allowsSkillPrimitiveBoolAndNumFallbacks(),
+          'test_reportsEmptyStringAndCollectionFallbacks': (t) =>
+              t._reportsEmptyStringAndCollectionFallbacks(),
+          'test_reportsChainedPrimitiveFallback': (t) => t._reportsChainedPrimitiveFallback(),
+          'test_reportsNullableCallbackToStringFallback': (t) =>
+              t._reportsNullableCallbackToStringFallback(),
+          'test_allowsCopyWithFallback': (t) => t._allowsCopyWithFallback(),
+          'test_allowsThrowFallback': (t) => t._allowsThrowFallback(),
+          'test_allowsFallbacksInTests': (t) => t._allowsFallbacksInTests(),
+          'test_reportsNativeParseAndEditorFallbacks': (t) =>
+              t._reportsNativeParseAndEditorFallbacks(),
+          'test_reportsRequiredStringWireFieldFromNullableEntity': (t) =>
+              t._reportsRequiredStringWireFieldFromNullableEntity(),
+          'test_reportsLookalikeNativeBoundaries': (t) => t._reportsLookalikeNativeBoundaries(),
+          'test_reportsMappingOutsideTheWireFactory': (t) =>
+              t._reportsMappingOutsideTheWireFactory(),
+          'test_reportsFirstFallbackWhenSeveralShareALine': (t) =>
+              t._reportsFirstFallbackWhenSeveralShareALine(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('flutter').addFile('lib/widgets.dart', r'''
@@ -444,7 +502,10 @@ String label(String? value, String? name) { int.tryParse(value ?? ''); return na
   }
 }
 
-final class FireForgetInTestsTest extends _ServicesExtendedRuleTest {
+final class _FireForgetInTestsTest extends _ServicesExtendedRuleTest {
+  static Map<String, Future<void> Function(_FireForgetInTestsTest)> get _allCases =>
+      caseSet<_FireForgetInTestsTest>(parent: _ExtendedSourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'fire_forget_in_tests';
   @override
@@ -456,63 +517,29 @@ final class FireForgetInTestsTest extends _ServicesExtendedRuleTest {
 }
 
 void _defineExtendedSourceRulesPart01Tests() {
-  analysisRuleSuite<ServiceStaticSideEffectTest>(
+  analysisRuleSuite<_ServiceStaticSideEffectTest>(
     'ServiceStaticSideEffectTest',
-    ServiceStaticSideEffectTest.new,
-    {
-      'test_allowsTinyDirectSdkFacade': (t) => t._allowsTinyDirectSdkFacade(),
-      'test_allowsStaticTestHelperInTests': (t) => t._allowsStaticTestHelperInTests(),
-      'test_reportsDataReturningStaticFacade': (t) => t._reportsDataReturningStaticFacade(),
-      'test_reportsPublicStaticGetter': (t) => t._reportsPublicStaticGetter(),
-      'test_reportsOverbuiltDebugBackendFacade': (t) => t._reportsOverbuiltDebugBackendFacade(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ServiceStaticSideEffectTest.new,
+    _ServiceStaticSideEffectTest._allCases,
   );
-  analysisRuleSuite<ServiceRandomPerCallTest>(
+  analysisRuleSuite<_ServiceRandomPerCallTest>(
     'ServiceRandomPerCallTest',
-    ServiceRandomPerCallTest.new,
-    {
-      'test_reportsTopLevelFunctionAndClosure': (t) => t._reportsTopLevelFunctionAndClosure(),
-      'test_allowsHoistedModuleAndStaticRandom': (t) => t._allowsHoistedModuleAndStaticRandom(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ServiceRandomPerCallTest.new,
+    _ServiceRandomPerCallTest._allCases,
   );
-  analysisRuleSuite<HiddenDependencyFallbackTest>(
+  analysisRuleSuite<_HiddenDependencyFallbackTest>(
     'HiddenDependencyFallbackTest',
-    HiddenDependencyFallbackTest.new,
-    {
-      'test_reportsRepositoryFallback': (t) => t._reportsRepositoryFallback(),
-      'test_reportsFunctionDependencyFallback': (t) => t._reportsFunctionDependencyFallback(),
-      'test_allowsNullableDomainValueFallback': (t) => t._allowsNullableDomainValueFallback(),
-      'test_allowsFallbacksInTests': (t) => t._allowsFallbacksInTests(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _HiddenDependencyFallbackTest.new,
+    _HiddenDependencyFallbackTest._allCases,
   );
-  analysisRuleSuite<ImplicitNullFallbackTest>(
+  analysisRuleSuite<_ImplicitNullFallbackTest>(
     'ImplicitNullFallbackTest',
-    ImplicitNullFallbackTest.new,
-    {
-      'test_allowsSkillPrimitiveBoolAndNumFallbacks': (t) =>
-          t._allowsSkillPrimitiveBoolAndNumFallbacks(),
-      'test_reportsEmptyStringAndCollectionFallbacks': (t) =>
-          t._reportsEmptyStringAndCollectionFallbacks(),
-      'test_reportsChainedPrimitiveFallback': (t) => t._reportsChainedPrimitiveFallback(),
-      'test_reportsNullableCallbackToStringFallback': (t) =>
-          t._reportsNullableCallbackToStringFallback(),
-      'test_allowsCopyWithFallback': (t) => t._allowsCopyWithFallback(),
-      'test_allowsThrowFallback': (t) => t._allowsThrowFallback(),
-      'test_allowsFallbacksInTests': (t) => t._allowsFallbacksInTests(),
-      'test_reportsNativeParseAndEditorFallbacks': (t) => t._reportsNativeParseAndEditorFallbacks(),
-      'test_reportsRequiredStringWireFieldFromNullableEntity': (t) =>
-          t._reportsRequiredStringWireFieldFromNullableEntity(),
-      'test_reportsLookalikeNativeBoundaries': (t) => t._reportsLookalikeNativeBoundaries(),
-      'test_reportsMappingOutsideTheWireFactory': (t) => t._reportsMappingOutsideTheWireFactory(),
-      'test_reportsFirstFallbackWhenSeveralShareALine': (t) =>
-          t._reportsFirstFallbackWhenSeveralShareALine(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ImplicitNullFallbackTest.new,
+    _ImplicitNullFallbackTest._allCases,
   );
-  analysisRuleSuite<FireForgetInTestsTest>('FireForgetInTestsTest', FireForgetInTestsTest.new, {
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
+  analysisRuleSuite<_FireForgetInTestsTest>(
+    'FireForgetInTestsTest',
+    _FireForgetInTestsTest.new,
+    _FireForgetInTestsTest._allCases,
+  );
 }

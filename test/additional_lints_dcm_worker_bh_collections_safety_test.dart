@@ -19,44 +19,36 @@ extension IterableSafetyTestX<T> on Iterable<T> {
 ''';
 
 void main() {
-  analysisRuleSuite<AvoidUnsafeReduceTest>('AvoidUnsafeReduceTest', AvoidUnsafeReduceTest.new, {
-    'test_emptyLiteral_lint': (t) => t._emptyLiteralLint(),
-    'test_guardedByEmptyEarlyReturn_noLint': (t) => t._guardedByEmptyEarlyReturnNoLint(),
-    'test_guardedByIfCondition_noLint': (t) => t._guardedByIfConditionNoLint(),
-    'test_iterableWithoutGuard_lint': (t) => t._iterableWithoutGuardLint(),
-    'test_severity_info': (t) => t._severityInfo(),
-  });
-  analysisRuleSuite<AvoidUnsafeCollectionMethodsTest>(
-    'AvoidUnsafeCollectionMethodsTest',
-    AvoidUnsafeCollectionMethodsTest.new,
-    {
-      'test_adjacentResolvedLengthAssertionProvesFirstAndSingle': (t) =>
-          t._adjacentResolvedLengthAssertionProvesFirstAndSingle(),
-      'test_mutationAliasAwaitAndUnrelatedExpectInvalidateLengthProof': (t) =>
-          t._mutationAliasAwaitAndUnrelatedExpectInvalidateLengthProof(),
-      'test_emptyLiteralFirst_lint': (t) => t._emptyLiteralFirstLint(),
-      'test_guardedSingle_noLint': (t) => t._guardedSingleNoLint(),
-      'test_testFileFirstAndSingle_noLint': (t) => t._testFileFirstAndSingleNoLint(),
-      'test_productionToStringFirst_lint': (t) => t._productionToStringFirstLint(),
-      'test_iterableFirstWithoutGuard_lint': (t) => t._iterableFirstWithoutGuardLint(),
-      'test_iterableSingleWithoutGuard_lint': (t) => t._iterableSingleWithoutGuardLint(),
-      'test_lengthCheck_keptConservative_lint': (t) => t._lengthCheckKeptConservativeLint(),
-      'test_severity_info': (t) => t._severityInfo(),
-    },
+  analysisRuleSuite<_AvoidUnsafeReduceTest>(
+    'AvoidUnsafeReduceTest',
+    _AvoidUnsafeReduceTest.new,
+    _AvoidUnsafeReduceTest._allCases,
   );
-  analysisRuleSuite<AvoidSlowCollectionMethodsTest>(
+  analysisRuleSuite<_AvoidUnsafeCollectionMethodsTest>(
+    'AvoidUnsafeCollectionMethodsTest',
+    _AvoidUnsafeCollectionMethodsTest.new,
+    _AvoidUnsafeCollectionMethodsTest._allCases,
+  );
+  analysisRuleSuite<_AvoidSlowCollectionMethodsTest>(
     'AvoidSlowCollectionMethodsTest',
-    AvoidSlowCollectionMethodsTest.new,
-    {
-      'test_whereIsEmpty_lint': (t) => t._whereIsEmptyLint(),
-      'test_whereIsNotEmpty_lint': (t) => t._whereIsNotEmptyLint(),
-      'test_directAny_noLint': (t) => t._directAnyNoLint(),
-      'test_severity_info': (t) => t._severityInfo(),
-    },
+    _AvoidSlowCollectionMethodsTest.new,
+    _AvoidSlowCollectionMethodsTest._allCases,
   );
 }
 
-final class AvoidUnsafeReduceTest extends AnalysisRuleTest {
+final class _AvoidUnsafeReduceTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnsafeReduceTest)> get _allCases =>
+      caseSet<_AvoidUnsafeReduceTest>(
+        parent: const {},
+        own: {
+          'test_emptyLiteral_lint': (t) => t._emptyLiteralLint(),
+          'test_guardedByEmptyEarlyReturn_noLint': (t) => t._guardedByEmptyEarlyReturnNoLint(),
+          'test_guardedByIfCondition_noLint': (t) => t._guardedByIfConditionNoLint(),
+          'test_iterableWithoutGuard_lint': (t) => t._iterableWithoutGuardLint(),
+          'test_severity_info': (t) => t._severityInfo(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnsafeReduce();
@@ -122,7 +114,26 @@ int f(Iterable<int> values) {
   }
 }
 
-final class AvoidUnsafeCollectionMethodsTest extends AnalysisRuleTest {
+final class _AvoidUnsafeCollectionMethodsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnsafeCollectionMethodsTest)> get _allCases =>
+      caseSet<_AvoidUnsafeCollectionMethodsTest>(
+        parent: const {},
+        own: {
+          'test_adjacentResolvedLengthAssertionProvesFirstAndSingle': (t) =>
+              t._adjacentResolvedLengthAssertionProvesFirstAndSingle(),
+          'test_mutationAliasAwaitAndUnrelatedExpectInvalidateLengthProof': (t) =>
+              t._mutationAliasAwaitAndUnrelatedExpectInvalidateLengthProof(),
+          'test_emptyLiteralFirst_lint': (t) => t._emptyLiteralFirstLint(),
+          'test_guardedSingle_noLint': (t) => t._guardedSingleNoLint(),
+          'test_testFileFirstAndSingle_noLint': (t) => t._testFileFirstAndSingleNoLint(),
+          'test_productionToStringFirst_lint': (t) => t._productionToStringFirstLint(),
+          'test_iterableFirstWithoutGuard_lint': (t) => t._iterableFirstWithoutGuardLint(),
+          'test_iterableSingleWithoutGuard_lint': (t) => t._iterableSingleWithoutGuardLint(),
+          'test_lengthCheck_keptConservative_lint': (t) => t._lengthCheckKeptConservativeLint(),
+          'test_severity_info': (t) => t._severityInfo(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnsafeCollectionMethods();
@@ -325,7 +336,18 @@ int f(List<int> values) {
   }
 }
 
-final class AvoidSlowCollectionMethodsTest extends AnalysisRuleTest {
+final class _AvoidSlowCollectionMethodsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidSlowCollectionMethodsTest)> get _allCases =>
+      caseSet<_AvoidSlowCollectionMethodsTest>(
+        parent: const {},
+        own: {
+          'test_whereIsEmpty_lint': (t) => t._whereIsEmptyLint(),
+          'test_whereIsNotEmpty_lint': (t) => t._whereIsNotEmptyLint(),
+          'test_directAny_noLint': (t) => t._directAnyNoLint(),
+          'test_severity_info': (t) => t._severityInfo(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidSlowCollectionMethods();

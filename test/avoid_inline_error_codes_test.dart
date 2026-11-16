@@ -4,23 +4,29 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_inline_erro
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidInlineErrorCodesTest>(
+  analysisRuleSuite<_AvoidInlineErrorCodesTest>(
     'AvoidInlineErrorCodesTest',
-    AvoidInlineErrorCodesTest.new,
-    {
-      'test_reportsInlineErrorAndStatusCodeComparisons': (t) =>
-          t._reportsInlineErrorAndStatusCodeComparisons(),
-      'test_allowsExceptionCodeRetryClassificationOnly': (t) =>
-          t._allowsExceptionCodeRetryClassificationOnly(),
-      'test_allowsNamedCodeOwnerComparisons': (t) => t._allowsNamedCodeOwnerComparisons(),
-      'test_allowsDedicatedCodeOwnerFiles': (t) => t._allowsDedicatedCodeOwnerFiles(),
-      'test_allowsNonStatusCodeNumericComparisons': (t) =>
-          t._allowsNonStatusCodeNumericComparisons(),
-    },
+    _AvoidInlineErrorCodesTest.new,
+    _AvoidInlineErrorCodesTest._allCases,
   );
 }
 
-final class AvoidInlineErrorCodesTest extends AnalysisRuleTest {
+final class _AvoidInlineErrorCodesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidInlineErrorCodesTest)> get _allCases =>
+      caseSet<_AvoidInlineErrorCodesTest>(
+        parent: const {},
+        own: {
+          'test_reportsInlineErrorAndStatusCodeComparisons': (t) =>
+              t._reportsInlineErrorAndStatusCodeComparisons(),
+          'test_allowsExceptionCodeRetryClassificationOnly': (t) =>
+              t._allowsExceptionCodeRetryClassificationOnly(),
+          'test_allowsNamedCodeOwnerComparisons': (t) => t._allowsNamedCodeOwnerComparisons(),
+          'test_allowsDedicatedCodeOwnerFiles': (t) => t._allowsDedicatedCodeOwnerFiles(),
+          'test_allowsNonStatusCodeNumericComparisons': (t) =>
+              t._allowsNonStatusCodeNumericComparisons(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidInlineErrorCodes();

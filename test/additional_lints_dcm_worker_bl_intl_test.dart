@@ -8,40 +8,37 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<PreferNumberFormatTest>('PreferNumberFormatTest', PreferNumberFormatTest.new, {
-    'test_severity_info': (t) => t._severityInfo(),
-    'test_decimalPattern_lint': (t) => t._decimalPatternLint(),
-    'test_percentPattern_lint': (t) => t._percentPatternLint(),
-    'test_scientificPattern_lint': (t) => t._scientificPatternLint(),
-    'test_customPattern_noLint': (t) => t._customPatternNoLint(),
-    'test_namedConstructor_noLint': (t) => t._namedConstructorNoLint(),
-  });
-  analysisRuleSuite<PreferProvidingIntlDescriptionTest>(
-    'PreferProvidingIntlDescriptionTest',
-    PreferProvidingIntlDescriptionTest.new,
-    {
-      'test_severity_info': (t) => t._severityInfo(),
-      'test_missingDesc_lint': (t) => t._missingDescLint(),
-      'test_nullDesc_lint': (t) => t._nullDescLint(),
-      'test_descProvided_noLint': (t) => t._descProvidedNoLint(),
-      'test_otherIntlMethod_noLint': (t) => t._otherIntlMethodNoLint(),
-    },
+  analysisRuleSuite<_PreferNumberFormatTest>(
+    'PreferNumberFormatTest',
+    _PreferNumberFormatTest.new,
+    _PreferNumberFormatTest._allCases,
   );
-  analysisRuleSuite<PreferProvidingIntlExamplesTest>(
+  analysisRuleSuite<_PreferProvidingIntlDescriptionTest>(
+    'PreferProvidingIntlDescriptionTest',
+    _PreferProvidingIntlDescriptionTest.new,
+    _PreferProvidingIntlDescriptionTest._allCases,
+  );
+  analysisRuleSuite<_PreferProvidingIntlExamplesTest>(
     'PreferProvidingIntlExamplesTest',
-    PreferProvidingIntlExamplesTest.new,
-    {
-      'test_severity_info': (t) => t._severityInfo(),
-      'test_placeholdersWithoutExamples_lint': (t) => t._placeholdersWithoutExamplesLint(),
-      'test_placeholdersWithEmptyExamples_lint': (t) => t._placeholdersWithEmptyExamplesLint(),
-      'test_placeholdersWithExamples_noLint': (t) => t._placeholdersWithExamplesNoLint(),
-      'test_emptyPlaceholders_noLint': (t) => t._emptyPlaceholdersNoLint(),
-      'test_nonLiteralPlaceholders_noLint': (t) => t._nonLiteralPlaceholdersNoLint(),
-    },
+    _PreferProvidingIntlExamplesTest.new,
+    _PreferProvidingIntlExamplesTest._allCases,
   );
 }
 
-final class PreferNumberFormatTest extends AnalysisRuleTest {
+final class _PreferNumberFormatTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferNumberFormatTest)> get _allCases =>
+      caseSet<_PreferNumberFormatTest>(
+        parent: const {},
+        own: {
+          'test_severity_info': (t) => t._severityInfo(),
+          'test_decimalPattern_lint': (t) => t._decimalPatternLint(),
+          'test_percentPattern_lint': (t) => t._percentPatternLint(),
+          'test_scientificPattern_lint': (t) => t._scientificPatternLint(),
+          'test_customPattern_noLint': (t) => t._customPatternNoLint(),
+          'test_namedConstructor_noLint': (t) => t._namedConstructorNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferNumberFormat();
@@ -119,7 +116,19 @@ void f() {
   }
 }
 
-final class PreferProvidingIntlDescriptionTest extends AnalysisRuleTest {
+final class _PreferProvidingIntlDescriptionTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferProvidingIntlDescriptionTest)> get _allCases =>
+      caseSet<_PreferProvidingIntlDescriptionTest>(
+        parent: const {},
+        own: {
+          'test_severity_info': (t) => t._severityInfo(),
+          'test_missingDesc_lint': (t) => t._missingDescLint(),
+          'test_nullDesc_lint': (t) => t._nullDescLint(),
+          'test_descProvided_noLint': (t) => t._descProvidedNoLint(),
+          'test_otherIntlMethod_noLint': (t) => t._otherIntlMethodNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferProvidingIntlDescription();
@@ -175,7 +184,20 @@ String f() => Intl.plural(1);
   }
 }
 
-final class PreferProvidingIntlExamplesTest extends AnalysisRuleTest {
+final class _PreferProvidingIntlExamplesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferProvidingIntlExamplesTest)> get _allCases =>
+      caseSet<_PreferProvidingIntlExamplesTest>(
+        parent: const {},
+        own: {
+          'test_severity_info': (t) => t._severityInfo(),
+          'test_placeholdersWithoutExamples_lint': (t) => t._placeholdersWithoutExamplesLint(),
+          'test_placeholdersWithEmptyExamples_lint': (t) => t._placeholdersWithEmptyExamplesLint(),
+          'test_placeholdersWithExamples_noLint': (t) => t._placeholdersWithExamplesNoLint(),
+          'test_emptyPlaceholders_noLint': (t) => t._emptyPlaceholdersNoLint(),
+          'test_nonLiteralPlaceholders_noLint': (t) => t._nonLiteralPlaceholdersNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferProvidingIntlExamples();

@@ -4,58 +4,35 @@ import 'package:flutter_skill_lints/src/rules/layout_diagnostics_rules.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidPositionedOutsideStackTest>(
+  analysisRuleSuite<_AvoidPositionedOutsideStackTest>(
     'AvoidPositionedOutsideStackTest',
-    AvoidPositionedOutsideStackTest.new,
-    {
-      'test_positionedUnderColumnPaddingOrList_lint': (t) =>
-          t._positionedUnderColumnPaddingOrListLint(),
-      'test_positionedInStackOrUnprovenParent_noLint': (t) =>
-          t._positionedInStackOrUnprovenParentNoLint(),
-    },
+    _AvoidPositionedOutsideStackTest.new,
+    _AvoidPositionedOutsideStackTest._allCases,
   );
-  analysisRuleSuite<AvoidUnboundedListInColumnTest>(
+  analysisRuleSuite<_AvoidUnboundedListInColumnTest>(
     'AvoidUnboundedListInColumnTest',
-    AvoidUnboundedListInColumnTest.new,
-    {
-      'test_verticalListDirectlyInColumn_lint': (t) => t._verticalListDirectlyInColumnLint(),
-      'test_constrainedOrOtherAxisLists_noLint': (t) => t._constrainedOrOtherAxisListsNoLint(),
-    },
+    _AvoidUnboundedListInColumnTest.new,
+    _AvoidUnboundedListInColumnTest._allCases,
   );
-  analysisRuleSuite<AvoidUnboundedTextFieldInRowTest>(
+  analysisRuleSuite<_AvoidUnboundedTextFieldInRowTest>(
     'AvoidUnboundedTextFieldInRowTest',
-    AvoidUnboundedTextFieldInRowTest.new,
-    {
-      'test_textFieldDirectlyInRow_lint': (t) => t._textFieldDirectlyInRowLint(),
-      'test_constrainedOrVerticalTextField_noLint': (t) =>
-          t._constrainedOrVerticalTextFieldNoLint(),
-    },
+    _AvoidUnboundedTextFieldInRowTest.new,
+    _AvoidUnboundedTextFieldInRowTest._allCases,
   );
-  analysisRuleSuite<AvoidListInSingleChildScrollViewTest>(
+  analysisRuleSuite<_AvoidListInSingleChildScrollViewTest>(
     'AvoidListInSingleChildScrollViewTest',
-    AvoidListInSingleChildScrollViewTest.new,
-    {
-      'test_sameAxisListInScrollView_lint': (t) => t._sameAxisListInScrollViewLint(),
-      'test_slivers_crossAxis_andUnprovenNesting_noLint': (t) =>
-          t._sliversCrossAxisAndUnprovenNestingNoLint(),
-    },
+    _AvoidListInSingleChildScrollViewTest.new,
+    _AvoidListInSingleChildScrollViewTest._allCases,
   );
-  analysisRuleSuite<AvoidOrientationLayoutTest>(
+  analysisRuleSuite<_AvoidOrientationLayoutTest>(
     'AvoidOrientationLayoutTest',
-    AvoidOrientationLayoutTest.new,
-    {
-      'test_orientationLayoutBranches_lint': (t) => t._orientationLayoutBranchesLint(),
-      'test_availableSpaceAndLookalikes_noLint': (t) => t._availableSpaceAndLookalikesNoLint(),
-    },
+    _AvoidOrientationLayoutTest.new,
+    _AvoidOrientationLayoutTest._allCases,
   );
-  analysisRuleSuite<AvoidClipRRectContainerTest>(
+  analysisRuleSuite<_AvoidClipRRectContainerTest>(
     'AvoidClipRRectContainerTest',
-    AvoidClipRRectContainerTest.new,
-    {
-      'test_clipRRectAroundContainer_lint': (t) => t._clipRRectAroundContainerLint(),
-      'test_containerRadiusOrOtherClippedChild_noLint': (t) =>
-          t._containerRadiusOrOtherClippedChildNoLint(),
-    },
+    _AvoidClipRRectContainerTest.new,
+    _AvoidClipRRectContainerTest._allCases,
   );
 }
 
@@ -197,7 +174,18 @@ class LayoutBuilder extends StatelessWidget {
   }
 }
 
-final class AvoidPositionedOutsideStackTest extends _LayoutRuleTest {
+final class _AvoidPositionedOutsideStackTest extends _LayoutRuleTest {
+  static Map<String, Future<void> Function(_AvoidPositionedOutsideStackTest)> get _allCases =>
+      caseSet<_AvoidPositionedOutsideStackTest>(
+        parent: const {},
+        own: {
+          'test_positionedUnderColumnPaddingOrList_lint': (t) =>
+              t._positionedUnderColumnPaddingOrListLint(),
+          'test_positionedInStackOrUnprovenParent_noLint': (t) =>
+              t._positionedInStackOrUnprovenParentNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidPositionedOutsideStack();
@@ -231,7 +219,16 @@ Widget builder() => ListView.builder(itemBuilder: (context, index) => const Posi
   }
 }
 
-final class AvoidUnboundedListInColumnTest extends _LayoutRuleTest {
+final class _AvoidUnboundedListInColumnTest extends _LayoutRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnboundedListInColumnTest)> get _allCases =>
+      caseSet<_AvoidUnboundedListInColumnTest>(
+        parent: const {},
+        own: {
+          'test_verticalListDirectlyInColumn_lint': (t) => t._verticalListDirectlyInColumnLint(),
+          'test_constrainedOrOtherAxisLists_noLint': (t) => t._constrainedOrOtherAxisListsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnboundedListInColumn();
@@ -268,7 +265,17 @@ Widget dynamicDirection(Axis axis) => Flex(direction: axis, children: const [Lis
   }
 }
 
-final class AvoidUnboundedTextFieldInRowTest extends _LayoutRuleTest {
+final class _AvoidUnboundedTextFieldInRowTest extends _LayoutRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnboundedTextFieldInRowTest)> get _allCases =>
+      caseSet<_AvoidUnboundedTextFieldInRowTest>(
+        parent: const {},
+        own: {
+          'test_textFieldDirectlyInRow_lint': (t) => t._textFieldDirectlyInRowLint(),
+          'test_constrainedOrVerticalTextField_noLint': (t) =>
+              t._constrainedOrVerticalTextFieldNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnboundedTextFieldInRow();
@@ -301,7 +308,17 @@ Widget column() => const Column(children: [TextField()]);
   }
 }
 
-final class AvoidListInSingleChildScrollViewTest extends _LayoutRuleTest {
+final class _AvoidListInSingleChildScrollViewTest extends _LayoutRuleTest {
+  static Map<String, Future<void> Function(_AvoidListInSingleChildScrollViewTest)> get _allCases =>
+      caseSet<_AvoidListInSingleChildScrollViewTest>(
+        parent: const {},
+        own: {
+          'test_sameAxisListInScrollView_lint': (t) => t._sameAxisListInScrollViewLint(),
+          'test_slivers_crossAxis_andUnprovenNesting_noLint': (t) =>
+              t._sliversCrossAxisAndUnprovenNestingNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidListInSingleChildScrollView();
@@ -343,7 +360,16 @@ Widget standalone() => const ListView();
   }
 }
 
-final class AvoidOrientationLayoutTest extends _LayoutRuleTest {
+final class _AvoidOrientationLayoutTest extends _LayoutRuleTest {
+  static Map<String, Future<void> Function(_AvoidOrientationLayoutTest)> get _allCases =>
+      caseSet<_AvoidOrientationLayoutTest>(
+        parent: const {},
+        own: {
+          'test_orientationLayoutBranches_lint': (t) => t._orientationLayoutBranchesLint(),
+          'test_availableSpaceAndLookalikes_noLint': (t) => t._availableSpaceAndLookalikesNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidOrientationLayout();
@@ -387,7 +413,17 @@ int photoOrientation(Photo photo) => photo.orientation;
   }
 }
 
-final class AvoidClipRRectContainerTest extends _LayoutRuleTest {
+final class _AvoidClipRRectContainerTest extends _LayoutRuleTest {
+  static Map<String, Future<void> Function(_AvoidClipRRectContainerTest)> get _allCases =>
+      caseSet<_AvoidClipRRectContainerTest>(
+        parent: const {},
+        own: {
+          'test_clipRRectAroundContainer_lint': (t) => t._clipRRectAroundContainerLint(),
+          'test_containerRadiusOrOtherClippedChild_noLint': (t) =>
+              t._containerRadiusOrOtherClippedChildNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidClipRRectContainer();

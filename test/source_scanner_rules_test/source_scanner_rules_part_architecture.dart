@@ -5,7 +5,26 @@ abstract class _ArchitectureRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => architectureSourceRules;
 }
 
-final class ArchDomainImportTest extends _ArchitectureRuleTest {
+final class _ArchDomainImportTest extends _ArchitectureRuleTest {
+  static Map<String, Future<void> Function(_ArchDomainImportTest)> get _allCases =>
+      caseSet<_ArchDomainImportTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsFreezedAnnotationDomainEntity': (t) =>
+              t._allowsFreezedAnnotationDomainEntity(),
+          'test_allowsDomainToDomainPackageImport': (t) => t._allowsDomainToDomainPackageImport(),
+          'test_allowsMirroredDomainTestFlutterImport': (t) =>
+              t._allowsMirroredDomainTestFlutterImport(),
+          'test_reportsCoreConstantsImportFromDomain': (t) =>
+              t._reportsCoreConstantsImportFromDomain(),
+          'test_reportsDartIoImportFromDomain': (t) => t._reportsDartIoImportFromDomain(),
+          'test_reportsRelativeCoreExtensionImportFromDomain': (t) =>
+              t._reportsRelativeCoreExtensionImportFromDomain(),
+          'test_allowsRelativeDomainAndPureDartImports': (t) =>
+              t._allowsRelativeDomainAndPureDartImports(),
+        },
+      );
+
   @override
   String get ruleName => 'arch_domain_import';
   @override
@@ -165,7 +184,22 @@ final class Run {}
   }
 }
 
-final class ArchStorageSdkImportTest extends _ArchitectureRuleTest {
+final class _ArchStorageSdkImportTest extends _ArchitectureRuleTest {
+  static Map<String, Future<void> Function(_ArchStorageSdkImportTest)> get _allCases =>
+      caseSet<_ArchStorageSdkImportTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsStorageSdkImportsInScreensRepositoriesAndServices': (t) =>
+              t._reportsStorageSdkImportsInScreensRepositoriesAndServices(),
+          'test_allowsStorageSdkImportsInLocalDatasourcesAndMixins': (t) =>
+              t._allowsStorageSdkImportsInLocalDatasourcesAndMixins(),
+          'test_allowsOnlyHttpConstantsAndExceptions': (t) =>
+              t._allowsOnlyHttpConstantsAndExceptions(),
+          'test_reportsBroadHiddenAndMixedIoImports': (t) =>
+              t._reportsBroadHiddenAndMixedIoImports(),
+        },
+      );
+
   @override
   void setUp() {
     super.setUp();
@@ -264,7 +298,10 @@ import 'dart:io'$combinator;
   }
 }
 
-final class ArchDomainSerializationTest extends _ArchitectureRuleTest {
+final class _ArchDomainSerializationTest extends _ArchitectureRuleTest {
+  static Map<String, Future<void> Function(_ArchDomainSerializationTest)> get _allCases =>
+      caseSet<_ArchDomainSerializationTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'arch_domain_serialization';
   @override
@@ -278,34 +315,19 @@ final class ArchDomainSerializationTest extends _ArchitectureRuleTest {
 }
 
 void _defineSourceScannerRulesPartArchitectureTests() {
-  analysisRuleSuite<ArchDomainImportTest>('ArchDomainImportTest', ArchDomainImportTest.new, {
-    'test_allowsFreezedAnnotationDomainEntity': (t) => t._allowsFreezedAnnotationDomainEntity(),
-    'test_allowsDomainToDomainPackageImport': (t) => t._allowsDomainToDomainPackageImport(),
-    'test_allowsMirroredDomainTestFlutterImport': (t) => t._allowsMirroredDomainTestFlutterImport(),
-    'test_reportsCoreConstantsImportFromDomain': (t) => t._reportsCoreConstantsImportFromDomain(),
-    'test_reportsDartIoImportFromDomain': (t) => t._reportsDartIoImportFromDomain(),
-    'test_reportsRelativeCoreExtensionImportFromDomain': (t) =>
-        t._reportsRelativeCoreExtensionImportFromDomain(),
-    'test_allowsRelativeDomainAndPureDartImports': (t) =>
-        t._allowsRelativeDomainAndPureDartImports(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<ArchStorageSdkImportTest>(
-    'ArchStorageSdkImportTest',
-    ArchStorageSdkImportTest.new,
-    {
-      'test_reportsStorageSdkImportsInScreensRepositoriesAndServices': (t) =>
-          t._reportsStorageSdkImportsInScreensRepositoriesAndServices(),
-      'test_allowsStorageSdkImportsInLocalDatasourcesAndMixins': (t) =>
-          t._allowsStorageSdkImportsInLocalDatasourcesAndMixins(),
-      'test_allowsOnlyHttpConstantsAndExceptions': (t) => t._allowsOnlyHttpConstantsAndExceptions(),
-      'test_reportsBroadHiddenAndMixedIoImports': (t) => t._reportsBroadHiddenAndMixedIoImports(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+  analysisRuleSuite<_ArchDomainImportTest>(
+    'ArchDomainImportTest',
+    _ArchDomainImportTest.new,
+    _ArchDomainImportTest._allCases,
   );
-  analysisRuleSuite<ArchDomainSerializationTest>(
+  analysisRuleSuite<_ArchStorageSdkImportTest>(
+    'ArchStorageSdkImportTest',
+    _ArchStorageSdkImportTest.new,
+    _ArchStorageSdkImportTest._allCases,
+  );
+  analysisRuleSuite<_ArchDomainSerializationTest>(
     'ArchDomainSerializationTest',
-    ArchDomainSerializationTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _ArchDomainSerializationTest.new,
+    _ArchDomainSerializationTest._allCases,
   );
 }

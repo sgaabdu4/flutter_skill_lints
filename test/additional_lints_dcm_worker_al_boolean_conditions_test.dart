@@ -7,56 +7,42 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_contradicto
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidBitwiseOperatorsWithBooleansTest>(
+  analysisRuleSuite<_AvoidBitwiseOperatorsWithBooleansTest>(
     'AvoidBitwiseOperatorsWithBooleansTest',
-    AvoidBitwiseOperatorsWithBooleansTest.new,
-    {
-      'test_ampersandWithBools_lint': (t) => t._ampersandWithBoolsLint(),
-      'test_barWithBools_lint': (t) => t._barWithBoolsLint(),
-      'test_caretWithBools_lint': (t) => t._caretWithBoolsLint(),
-      'test_logicalOperators_noLint': (t) => t._logicalOperatorsNoLint(),
-      'test_intBitwiseOperators_noLint': (t) => t._intBitwiseOperatorsNoLint(),
-      'test_customOperatorReturnBool_noLint': (t) => t._customOperatorReturnBoolNoLint(),
-    },
+    _AvoidBitwiseOperatorsWithBooleansTest.new,
+    _AvoidBitwiseOperatorsWithBooleansTest._allCases,
   );
-  analysisRuleSuite<AvoidConditionsWithBooleanLiteralsTest>(
+  analysisRuleSuite<_AvoidConditionsWithBooleanLiteralsTest>(
     'AvoidConditionsWithBooleanLiteralsTest',
-    AvoidConditionsWithBooleanLiteralsTest.new,
-    {
-      'test_whileTrueLoop_noLint': (t) => t._whileTrueLoopNoLint(),
-      'test_doWhileTrueLoop_noLint': (t) => t._doWhileTrueLoopNoLint(),
-      'test_doWhileFalseLoop_lint': (t) => t._doWhileFalseLoopLint(),
-      'test_whileTrueCombinedCondition_lint': (t) => t._whileTrueCombinedConditionLint(),
-      'test_ifTrueCondition_lint': (t) => t._ifTrueConditionLint(),
-      'test_logicalConditionLiteral_lint': (t) => t._logicalConditionLiteralLint(),
-      'test_conditionalExpressionLiteral_lint': (t) => t._conditionalExpressionLiteralLint(),
-      'test_nullableBoolComparison_noLint': (t) => t._nullableBoolComparisonNoLint(),
-      'test_booleanLiteralArgument_noLint': (t) => t._booleanLiteralArgumentNoLint(),
-    },
+    _AvoidConditionsWithBooleanLiteralsTest.new,
+    _AvoidConditionsWithBooleanLiteralsTest._allCases,
   );
-  analysisRuleSuite<AvoidConstantAssertConditionsTest>(
+  analysisRuleSuite<_AvoidConstantAssertConditionsTest>(
     'AvoidConstantAssertConditionsTest',
-    AvoidConstantAssertConditionsTest.new,
-    {
-      'test_assertBoolLiteral_lint': (t) => t._assertBoolLiteralLint(),
-      'test_assertConstantComparison_lint': (t) => t._assertConstantComparisonLint(),
-      'test_assertConstIdentifier_lint': (t) => t._assertConstIdentifierLint(),
-      'test_assertRuntimeCondition_noLint': (t) => t._assertRuntimeConditionNoLint(),
-      'test_assertRuntimeComparison_noLint': (t) => t._assertRuntimeComparisonNoLint(),
-    },
+    _AvoidConstantAssertConditionsTest.new,
+    _AvoidConstantAssertConditionsTest._allCases,
   );
-  analysisRuleSuite<AvoidContradictoryExpressionsTest>(
+  analysisRuleSuite<_AvoidContradictoryExpressionsTest>(
     'AvoidContradictoryExpressionsTest',
-    AvoidContradictoryExpressionsTest.new,
-    {
-      'test_distinctReceiversCanOverlap_noLint': (t) => t._distinctReceiversCanOverlapNoLint(),
-      'test_sameReceiverContradiction_lint': (t) => t._sameReceiverContradictionLint(),
-      'test_distinctNestedReceivers_noLint': (t) => t._distinctNestedReceiversNoLint(),
-    },
+    _AvoidContradictoryExpressionsTest.new,
+    _AvoidContradictoryExpressionsTest._allCases,
   );
 }
 
-final class AvoidBitwiseOperatorsWithBooleansTest extends AnalysisRuleTest {
+final class _AvoidBitwiseOperatorsWithBooleansTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidBitwiseOperatorsWithBooleansTest)> get _allCases =>
+      caseSet<_AvoidBitwiseOperatorsWithBooleansTest>(
+        parent: const {},
+        own: {
+          'test_ampersandWithBools_lint': (t) => t._ampersandWithBoolsLint(),
+          'test_barWithBools_lint': (t) => t._barWithBoolsLint(),
+          'test_caretWithBools_lint': (t) => t._caretWithBoolsLint(),
+          'test_logicalOperators_noLint': (t) => t._logicalOperatorsNoLint(),
+          'test_intBitwiseOperators_noLint': (t) => t._intBitwiseOperatorsNoLint(),
+          'test_customOperatorReturnBool_noLint': (t) => t._customOperatorReturnBoolNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidBitwiseOperatorsWithBooleans();
@@ -112,7 +98,23 @@ bool both(Flag left, Flag right) => left & right;
   }
 }
 
-final class AvoidConditionsWithBooleanLiteralsTest extends AnalysisRuleTest {
+final class _AvoidConditionsWithBooleanLiteralsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidConditionsWithBooleanLiteralsTest)>
+  get _allCases => caseSet<_AvoidConditionsWithBooleanLiteralsTest>(
+    parent: const {},
+    own: {
+      'test_whileTrueLoop_noLint': (t) => t._whileTrueLoopNoLint(),
+      'test_doWhileTrueLoop_noLint': (t) => t._doWhileTrueLoopNoLint(),
+      'test_doWhileFalseLoop_lint': (t) => t._doWhileFalseLoopLint(),
+      'test_whileTrueCombinedCondition_lint': (t) => t._whileTrueCombinedConditionLint(),
+      'test_ifTrueCondition_lint': (t) => t._ifTrueConditionLint(),
+      'test_logicalConditionLiteral_lint': (t) => t._logicalConditionLiteralLint(),
+      'test_conditionalExpressionLiteral_lint': (t) => t._conditionalExpressionLiteralLint(),
+      'test_nullableBoolComparison_noLint': (t) => t._nullableBoolComparisonNoLint(),
+      'test_booleanLiteralArgument_noLint': (t) => t._booleanLiteralArgumentNoLint(),
+    },
+  );
+
   @override
   void setUp() {
     rule = AvoidConditionsWithBooleanLiterals();
@@ -221,7 +223,19 @@ int value(bool ready) {
   }
 }
 
-final class AvoidConstantAssertConditionsTest extends AnalysisRuleTest {
+final class _AvoidConstantAssertConditionsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidConstantAssertConditionsTest)> get _allCases =>
+      caseSet<_AvoidConstantAssertConditionsTest>(
+        parent: const {},
+        own: {
+          'test_assertBoolLiteral_lint': (t) => t._assertBoolLiteralLint(),
+          'test_assertConstantComparison_lint': (t) => t._assertConstantComparisonLint(),
+          'test_assertConstIdentifier_lint': (t) => t._assertConstIdentifierLint(),
+          'test_assertRuntimeCondition_noLint': (t) => t._assertRuntimeConditionNoLint(),
+          'test_assertRuntimeComparison_noLint': (t) => t._assertRuntimeComparisonNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidConstantAssertConditions();
@@ -276,7 +290,17 @@ void f(int value) {
   }
 }
 
-final class AvoidContradictoryExpressionsTest extends AnalysisRuleTest {
+final class _AvoidContradictoryExpressionsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidContradictoryExpressionsTest)> get _allCases =>
+      caseSet<_AvoidContradictoryExpressionsTest>(
+        parent: const {},
+        own: {
+          'test_distinctReceiversCanOverlap_noLint': (t) => t._distinctReceiversCanOverlapNoLint(),
+          'test_sameReceiverContradiction_lint': (t) => t._sameReceiverContradictionLint(),
+          'test_distinctNestedReceivers_noLint': (t) => t._distinctNestedReceiversNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidContradictoryExpressions();

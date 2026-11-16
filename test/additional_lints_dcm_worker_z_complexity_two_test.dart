@@ -6,37 +6,37 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_long_functi
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidComplexConditionsTest>(
+  analysisRuleSuite<_AvoidComplexConditionsTest>(
     'AvoidComplexConditionsTest',
-    AvoidComplexConditionsTest.new,
-    {
-      'test_fiveLogicalOperands_lint_maxFourOperands': (t) =>
-          t._fiveLogicalOperandsLintMaxFourOperands(),
-      'test_fourLogicalOperands_noLint_maxFourOperands': (t) =>
-          t._fourLogicalOperandsNoLintMaxFourOperands(),
-      'test_nonConditionExpression_noLint': (t) => t._nonConditionExpressionNoLint(),
-      'test_whenClause_lint': (t) => t._whenClauseLint(),
-    },
+    _AvoidComplexConditionsTest.new,
+    _AvoidComplexConditionsTest._allCases,
   );
-  analysisRuleSuite<AvoidLongFilesTest>('AvoidLongFilesTest', AvoidLongFilesTest.new, {
-    'test_fileOverSixHundredLines_lint': (t) => t._fileOverSixHundredLinesLint(),
-    'test_fileAtSixHundredLines_noLint': (t) => t._fileAtSixHundredLinesNoLint(),
-    'test_generatedLocalizationOverSixHundredLines_noLint': (t) =>
-        t._generatedLocalizationOverSixHundredLinesNoLint(),
-  });
-  analysisRuleSuite<AvoidLongFunctionsTest>('AvoidLongFunctionsTest', AvoidLongFunctionsTest.new, {
-    'test_functionOverEightyLines_lint': (t) => t._functionOverEightyLinesLint(),
-    'test_functionAtEightyLines_noLint': (t) => t._functionAtEightyLinesNoLint(),
-    'test_expressionBody_noLint': (t) => t._expressionBodyNoLint(),
-    'test_longTestMain_noLint': (t) => t._longTestMainNoLint(),
-    'test_longTestGroupCallback_noLint': (t) => t._longTestGroupCallbackNoLint(),
-    'test_longTestCallback_noLint': (t) => t._longTestCallbackNoLint(),
-    'test_longTestRegistrationHelper_noLint': (t) => t._longTestRegistrationHelperNoLint(),
-    'test_longTestHelperFunction_lint': (t) => t._longTestHelperFunctionLint(),
-  });
+  analysisRuleSuite<_AvoidLongFilesTest>(
+    'AvoidLongFilesTest',
+    _AvoidLongFilesTest.new,
+    _AvoidLongFilesTest._allCases,
+  );
+  analysisRuleSuite<_AvoidLongFunctionsTest>(
+    'AvoidLongFunctionsTest',
+    _AvoidLongFunctionsTest.new,
+    _AvoidLongFunctionsTest._allCases,
+  );
 }
 
-final class AvoidComplexConditionsTest extends AnalysisRuleTest {
+final class _AvoidComplexConditionsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidComplexConditionsTest)> get _allCases =>
+      caseSet<_AvoidComplexConditionsTest>(
+        parent: const {},
+        own: {
+          'test_fiveLogicalOperands_lint_maxFourOperands': (t) =>
+              t._fiveLogicalOperandsLintMaxFourOperands(),
+          'test_fourLogicalOperands_noLint_maxFourOperands': (t) =>
+              t._fourLogicalOperandsNoLintMaxFourOperands(),
+          'test_nonConditionExpression_noLint': (t) => t._nonConditionExpressionNoLint(),
+          'test_whenClause_lint': (t) => t._whenClauseLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidComplexConditions();
@@ -94,7 +94,18 @@ String label(Object value, bool a, bool b, bool c, bool d, bool e) {
   }
 }
 
-final class AvoidLongFilesTest extends AnalysisRuleTest {
+final class _AvoidLongFilesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidLongFilesTest)> get _allCases =>
+      caseSet<_AvoidLongFilesTest>(
+        parent: const {},
+        own: {
+          'test_fileOverSixHundredLines_lint': (t) => t._fileOverSixHundredLinesLint(),
+          'test_fileAtSixHundredLines_noLint': (t) => t._fileAtSixHundredLinesNoLint(),
+          'test_generatedLocalizationOverSixHundredLines_noLint': (t) =>
+              t._generatedLocalizationOverSixHundredLinesNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidLongFiles();
@@ -119,7 +130,22 @@ final class AvoidLongFilesTest extends AnalysisRuleTest {
   }
 }
 
-final class AvoidLongFunctionsTest extends AnalysisRuleTest {
+final class _AvoidLongFunctionsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidLongFunctionsTest)> get _allCases =>
+      caseSet<_AvoidLongFunctionsTest>(
+        parent: const {},
+        own: {
+          'test_functionOverEightyLines_lint': (t) => t._functionOverEightyLinesLint(),
+          'test_functionAtEightyLines_noLint': (t) => t._functionAtEightyLinesNoLint(),
+          'test_expressionBody_noLint': (t) => t._expressionBodyNoLint(),
+          'test_longTestMain_noLint': (t) => t._longTestMainNoLint(),
+          'test_longTestGroupCallback_noLint': (t) => t._longTestGroupCallbackNoLint(),
+          'test_longTestCallback_noLint': (t) => t._longTestCallbackNoLint(),
+          'test_longTestRegistrationHelper_noLint': (t) => t._longTestRegistrationHelperNoLint(),
+          'test_longTestHelperFunction_lint': (t) => t._longTestHelperFunctionLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidLongFunctions();

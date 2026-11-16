@@ -6,40 +6,36 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_correct_js
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<PreferCorrectJsonCastsTest>(
+  analysisRuleSuite<_PreferCorrectJsonCastsTest>(
     'PreferCorrectJsonCastsTest',
-    PreferCorrectJsonCastsTest.new,
-    {
-      'test_jsonListStringCast_lint': (t) => t._jsonListStringCastLint(),
-      'test_jsonMapStringValueCast_lint': (t) => t._jsonMapStringValueCastLint(),
-      'test_jsonScalarCast_noLint': (t) => t._jsonScalarCastNoLint(),
-      'test_jsonDynamicCollectionCast_noLint': (t) => t._jsonDynamicCollectionCastNoLint(),
-      'test_nonJsonMapCast_noLint': (t) => t._nonJsonMapCastNoLint(),
-    },
+    _PreferCorrectJsonCastsTest.new,
+    _PreferCorrectJsonCastsTest._allCases,
   );
-  analysisRuleSuite<AvoidUnnecessaryNullableReturnTypeTest>(
+  analysisRuleSuite<_AvoidUnnecessaryNullableReturnTypeTest>(
     'AvoidUnnecessaryNullableReturnTypeTest',
-    AvoidUnnecessaryNullableReturnTypeTest.new,
-    {
-      'test_expressionBodyNonNull_lint': (t) => t._expressionBodyNonNullLint(),
-      'test_blockBodyAllReturnsNonNull_lint': (t) => t._blockBodyAllReturnsNonNullLint(),
-      'test_nullableReturnPath_noLint': (t) => t._nullableReturnPathNoLint(),
-      'test_nullableExpressionPath_noLint': (t) => t._nullableExpressionPathNoLint(),
-      'test_override_noLint': (t) => t._overrideNoLint(),
-    },
+    _AvoidUnnecessaryNullableReturnTypeTest.new,
+    _AvoidUnnecessaryNullableReturnTypeTest._allCases,
   );
-  analysisRuleSuite<AvoidNullableToStringTest>(
+  analysisRuleSuite<_AvoidNullableToStringTest>(
     'AvoidNullableToStringTest',
-    AvoidNullableToStringTest.new,
-    {
-      'test_nullableTarget_lint': (t) => t._nullableTargetLint(),
-      'test_nonNullableTarget_noLint': (t) => t._nonNullableTargetNoLint(),
-      'test_promotedNullableTarget_noLint': (t) => t._promotedNullableTargetNoLint(),
-    },
+    _AvoidNullableToStringTest.new,
+    _AvoidNullableToStringTest._allCases,
   );
 }
 
-final class PreferCorrectJsonCastsTest extends AnalysisRuleTest {
+final class _PreferCorrectJsonCastsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferCorrectJsonCastsTest)> get _allCases =>
+      caseSet<_PreferCorrectJsonCastsTest>(
+        parent: const {},
+        own: {
+          'test_jsonListStringCast_lint': (t) => t._jsonListStringCastLint(),
+          'test_jsonMapStringValueCast_lint': (t) => t._jsonMapStringValueCastLint(),
+          'test_jsonScalarCast_noLint': (t) => t._jsonScalarCastNoLint(),
+          'test_jsonDynamicCollectionCast_noLint': (t) => t._jsonDynamicCollectionCastNoLint(),
+          'test_nonJsonMapCast_noLint': (t) => t._nonJsonMapCastNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferCorrectJsonCasts();
@@ -98,7 +94,19 @@ List<String> read(Map<String, List<String>> cache) {
   }
 }
 
-final class AvoidUnnecessaryNullableReturnTypeTest extends AnalysisRuleTest {
+final class _AvoidUnnecessaryNullableReturnTypeTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnnecessaryNullableReturnTypeTest)>
+  get _allCases => caseSet<_AvoidUnnecessaryNullableReturnTypeTest>(
+    parent: const {},
+    own: {
+      'test_expressionBodyNonNull_lint': (t) => t._expressionBodyNonNullLint(),
+      'test_blockBodyAllReturnsNonNull_lint': (t) => t._blockBodyAllReturnsNonNullLint(),
+      'test_nullableReturnPath_noLint': (t) => t._nullableReturnPathNoLint(),
+      'test_nullableExpressionPath_noLint': (t) => t._nullableExpressionPathNoLint(),
+      'test_override_noLint': (t) => t._overrideNoLint(),
+    },
+  );
+
   @override
   void setUp() {
     rule = AvoidUnnecessaryNullableReturnType();
@@ -164,7 +172,17 @@ class Child extends Base {
   }
 }
 
-final class AvoidNullableToStringTest extends AnalysisRuleTest {
+final class _AvoidNullableToStringTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNullableToStringTest)> get _allCases =>
+      caseSet<_AvoidNullableToStringTest>(
+        parent: const {},
+        own: {
+          'test_nullableTarget_lint': (t) => t._nullableTargetLint(),
+          'test_nonNullableTarget_noLint': (t) => t._nonNullableTargetNoLint(),
+          'test_promotedNullableTarget_noLint': (t) => t._promotedNullableTargetNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNullableToString();

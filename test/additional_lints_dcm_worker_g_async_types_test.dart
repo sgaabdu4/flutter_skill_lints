@@ -6,36 +6,34 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_stre
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidNestedFuturesTest>('AvoidNestedFuturesTest', AvoidNestedFuturesTest.new, {
-    'test_futureOfFuture_lint': (t) => t._futureOfFutureLint(),
-    'test_userTypeNamedFuture_noLint': (t) => t._userTypeNamedFutureNoLint(),
-    'test_valueFuture_noLint': (t) => t._valueFutureNoLint(),
-  });
-  analysisRuleSuite<AvoidNestedStreamsAndFuturesTest>(
-    'AvoidNestedStreamsAndFuturesTest',
-    AvoidNestedStreamsAndFuturesTest.new,
-    {
-      'test_futureOfStream_lint': (t) => t._futureOfStreamLint(),
-      'test_streamOfFuture_lint': (t) => t._streamOfFutureLint(),
-      'test_streamOfStream_lint': (t) => t._streamOfStreamLint(),
-      'test_futureOfFuture_noLint': (t) => t._futureOfFutureNoLint(),
-      'test_flatAsyncTypes_noLint': (t) => t._flatAsyncTypesNoLint(),
-    },
+  analysisRuleSuite<_AvoidNestedFuturesTest>(
+    'AvoidNestedFuturesTest',
+    _AvoidNestedFuturesTest.new,
+    _AvoidNestedFuturesTest._allCases,
   );
-  analysisRuleSuite<AvoidMissingCompleterStackTraceTest>(
+  analysisRuleSuite<_AvoidNestedStreamsAndFuturesTest>(
+    'AvoidNestedStreamsAndFuturesTest',
+    _AvoidNestedStreamsAndFuturesTest.new,
+    _AvoidNestedStreamsAndFuturesTest._allCases,
+  );
+  analysisRuleSuite<_AvoidMissingCompleterStackTraceTest>(
     'AvoidMissingCompleterStackTraceTest',
-    AvoidMissingCompleterStackTraceTest.new,
-    {
-      'test_completeErrorWithoutStackTrace_lint': (t) => t._completeErrorWithoutStackTraceLint(),
-      'test_cascadeCompleteErrorWithoutStackTrace_lint': (t) =>
-          t._cascadeCompleteErrorWithoutStackTraceLint(),
-      'test_completeErrorWithStackTrace_noLint': (t) => t._completeErrorWithStackTraceNoLint(),
-      'test_unrelatedCompleteError_noLint': (t) => t._unrelatedCompleteErrorNoLint(),
-    },
+    _AvoidMissingCompleterStackTraceTest.new,
+    _AvoidMissingCompleterStackTraceTest._allCases,
   );
 }
 
-final class AvoidNestedFuturesTest extends AnalysisRuleTest {
+final class _AvoidNestedFuturesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNestedFuturesTest)> get _allCases =>
+      caseSet<_AvoidNestedFuturesTest>(
+        parent: const {},
+        own: {
+          'test_futureOfFuture_lint': (t) => t._futureOfFutureLint(),
+          'test_userTypeNamedFuture_noLint': (t) => t._userTypeNamedFutureNoLint(),
+          'test_valueFuture_noLint': (t) => t._valueFutureNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNestedFutures();
@@ -69,7 +67,19 @@ Future<int> loadValue() async => 1;
   }
 }
 
-final class AvoidNestedStreamsAndFuturesTest extends AnalysisRuleTest {
+final class _AvoidNestedStreamsAndFuturesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNestedStreamsAndFuturesTest)> get _allCases =>
+      caseSet<_AvoidNestedStreamsAndFuturesTest>(
+        parent: const {},
+        own: {
+          'test_futureOfStream_lint': (t) => t._futureOfStreamLint(),
+          'test_streamOfFuture_lint': (t) => t._streamOfFutureLint(),
+          'test_streamOfStream_lint': (t) => t._streamOfStreamLint(),
+          'test_futureOfFuture_noLint': (t) => t._futureOfFutureNoLint(),
+          'test_flatAsyncTypes_noLint': (t) => t._flatAsyncTypesNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNestedStreamsAndFutures();
@@ -127,7 +137,20 @@ Stream<int> loadValues() async* {
   }
 }
 
-final class AvoidMissingCompleterStackTraceTest extends AnalysisRuleTest {
+final class _AvoidMissingCompleterStackTraceTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidMissingCompleterStackTraceTest)> get _allCases =>
+      caseSet<_AvoidMissingCompleterStackTraceTest>(
+        parent: const {},
+        own: {
+          'test_completeErrorWithoutStackTrace_lint': (t) =>
+              t._completeErrorWithoutStackTraceLint(),
+          'test_cascadeCompleteErrorWithoutStackTrace_lint': (t) =>
+              t._cascadeCompleteErrorWithoutStackTraceLint(),
+          'test_completeErrorWithStackTrace_noLint': (t) => t._completeErrorWithStackTraceNoLint(),
+          'test_unrelatedCompleteError_noLint': (t) => t._unrelatedCompleteErrorNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidMissingCompleterStackTrace();

@@ -4,23 +4,29 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/use_context_is_cu
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<UseContextIsCurrentModalRouteTest>(
+  analysisRuleSuite<_UseContextIsCurrentModalRouteTest>(
     'UseContextIsCurrentModalRouteTest',
-    UseContextIsCurrentModalRouteTest.new,
-    {
-      'test_directStaticCheck_lint': (t) => t._directStaticCheckLint(),
-      'test_directLookupPropertyCheck_lint': (t) => t._directLookupPropertyCheckLint(),
-      'test_localRoutePropertyCheck_lint': (t) => t._localRoutePropertyCheckLint(),
-      'test_nonCurrentModalRouteUse_noLint': (t) => t._nonCurrentModalRouteUseNoLint(),
-      'test_contextExtensionOwner_noLint': (t) => t._contextExtensionOwnerNoLint(),
-      'test_skillBuildContextExtensionsOwner_noLint': (t) =>
-          t._skillBuildContextExtensionsOwnerNoLint(),
-      'test_otherExtensionsFile_lint': (t) => t._otherExtensionsFileLint(),
-    },
+    _UseContextIsCurrentModalRouteTest.new,
+    _UseContextIsCurrentModalRouteTest._allCases,
   );
 }
 
-class UseContextIsCurrentModalRouteTest extends AnalysisRuleTest {
+class _UseContextIsCurrentModalRouteTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_UseContextIsCurrentModalRouteTest)> get _allCases =>
+      caseSet<_UseContextIsCurrentModalRouteTest>(
+        parent: const {},
+        own: {
+          'test_directStaticCheck_lint': (t) => t._directStaticCheckLint(),
+          'test_directLookupPropertyCheck_lint': (t) => t._directLookupPropertyCheckLint(),
+          'test_localRoutePropertyCheck_lint': (t) => t._localRoutePropertyCheckLint(),
+          'test_nonCurrentModalRouteUse_noLint': (t) => t._nonCurrentModalRouteUseNoLint(),
+          'test_contextExtensionOwner_noLint': (t) => t._contextExtensionOwnerNoLint(),
+          'test_skillBuildContextExtensionsOwner_noLint': (t) =>
+              t._skillBuildContextExtensionsOwnerNoLint(),
+          'test_otherExtensionsFile_lint': (t) => t._otherExtensionsFileLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = UseContextIsCurrentModalRoute();

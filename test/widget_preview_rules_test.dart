@@ -6,36 +6,20 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<WidgetPreviewImportLeakTest>(
+  analysisRuleSuite<_WidgetPreviewImportLeakTest>(
     'WidgetPreviewImportLeakTest',
-    WidgetPreviewImportLeakTest.new,
-    {
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_allowsPreviewOnlyFile': (t) => t._allowsPreviewOnlyFile(),
-      'test_reportsImportInProductionWidgetFile': (t) => t._reportsImportInProductionWidgetFile(),
-      'test_reportsPreviewNextToProductionWidget': (t) => t._reportsPreviewNextToProductionWidget(),
-    },
+    _WidgetPreviewImportLeakTest.new,
+    _WidgetPreviewImportLeakTest._allCases,
   );
-  analysisRuleSuite<WidgetPreviewPlatformDependencyTest>(
+  analysisRuleSuite<_WidgetPreviewPlatformDependencyTest>(
     'WidgetPreviewPlatformDependencyTest',
-    WidgetPreviewPlatformDependencyTest.new,
-    {
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_reportsIoHiveDioAndChannels': (t) => t._reportsIoHiveDioAndChannels(),
-      'test_allowsFakesInPreview': (t) => t._allowsFakesInPreview(),
-      'test_allowsPlatformUseOutsidePreview': (t) => t._allowsPlatformUseOutsidePreview(),
-    },
+    _WidgetPreviewPlatformDependencyTest.new,
+    _WidgetPreviewPlatformDependencyTest._allCases,
   );
-  analysisRuleSuite<WidgetPreviewScreenTest>(
+  analysisRuleSuite<_WidgetPreviewScreenTest>(
     'WidgetPreviewScreenTest',
-    WidgetPreviewScreenTest.new,
-    {
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_reportsPreviewDeclaredInScreensLibrary': (t) =>
-          t._reportsPreviewDeclaredInScreensLibrary(),
-      'test_reportsPreviewConstructingScreen': (t) => t._reportsPreviewConstructingScreen(),
-      'test_allowsPreviewOfPresentationWidget': (t) => t._allowsPreviewOfPresentationWidget(),
-    },
+    _WidgetPreviewScreenTest.new,
+    _WidgetPreviewScreenTest._allCases,
   );
 }
 
@@ -94,7 +78,20 @@ abstract final class Hive {
   }
 }
 
-final class WidgetPreviewImportLeakTest extends _WidgetPreviewRuleTest {
+final class _WidgetPreviewImportLeakTest extends _WidgetPreviewRuleTest {
+  static Map<String, Future<void> Function(_WidgetPreviewImportLeakTest)> get _allCases =>
+      caseSet<_WidgetPreviewImportLeakTest>(
+        parent: const {},
+        own: {
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_allowsPreviewOnlyFile': (t) => t._allowsPreviewOnlyFile(),
+          'test_reportsImportInProductionWidgetFile': (t) =>
+              t._reportsImportInProductionWidgetFile(),
+          'test_reportsPreviewNextToProductionWidget': (t) =>
+              t._reportsPreviewNextToProductionWidget(),
+        },
+      );
+
   @override
   void setUp() {
     rule = WidgetPreviewImportLeak();
@@ -160,7 +157,18 @@ Widget orderCardPreview() => const OrderCard();
   }
 }
 
-final class WidgetPreviewPlatformDependencyTest extends _WidgetPreviewRuleTest {
+final class _WidgetPreviewPlatformDependencyTest extends _WidgetPreviewRuleTest {
+  static Map<String, Future<void> Function(_WidgetPreviewPlatformDependencyTest)> get _allCases =>
+      caseSet<_WidgetPreviewPlatformDependencyTest>(
+        parent: const {},
+        own: {
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_reportsIoHiveDioAndChannels': (t) => t._reportsIoHiveDioAndChannels(),
+          'test_allowsFakesInPreview': (t) => t._allowsFakesInPreview(),
+          'test_allowsPlatformUseOutsidePreview': (t) => t._allowsPlatformUseOutsidePreview(),
+        },
+      );
+
   @override
   void setUp() {
     rule = WidgetPreviewPlatformDependency();
@@ -230,7 +238,19 @@ class OrderDatasource {
   }
 }
 
-final class WidgetPreviewScreenTest extends _WidgetPreviewRuleTest {
+final class _WidgetPreviewScreenTest extends _WidgetPreviewRuleTest {
+  static Map<String, Future<void> Function(_WidgetPreviewScreenTest)> get _allCases =>
+      caseSet<_WidgetPreviewScreenTest>(
+        parent: const {},
+        own: {
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_reportsPreviewDeclaredInScreensLibrary': (t) =>
+              t._reportsPreviewDeclaredInScreensLibrary(),
+          'test_reportsPreviewConstructingScreen': (t) => t._reportsPreviewConstructingScreen(),
+          'test_allowsPreviewOfPresentationWidget': (t) => t._allowsPreviewOfPresentationWidget(),
+        },
+      );
+
   String get screenPath =>
       '$testPackageLibPath/features/orders/presentation/screens/orders_screen.dart';
 

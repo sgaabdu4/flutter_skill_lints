@@ -1,6 +1,19 @@
 part of '../source_scanner_rules_test.dart';
 
-final class RiverpodSelectArrowSyntaxTest extends _RiverpodRuleTest {
+final class _RiverpodSelectArrowSyntaxTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodSelectArrowSyntaxTest)> get _allCases =>
+      caseSet<_RiverpodSelectArrowSyntaxTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsArrowSelect': (t) => t._allowsArrowSelect(),
+          'test_allowsNonRiverpodSelectApi': (t) => t._allowsNonRiverpodSelectApi(),
+          'test_allowsUnrelatedSelectNearRefWatch': (t) => t._allowsUnrelatedSelectNearRefWatch(),
+          'test_reportsTypedBlockSelect': (t) => t._reportsTypedBlockSelect(),
+          'test_reportsTrailingCommaBlockSelect': (t) => t._reportsTrailingCommaBlockSelect(),
+          'test_reportsMultilineBlockSelect': (t) => t._reportsMultilineBlockSelect(),
+        },
+      );
+
   @override
   String get ruleName => 'riverpod_select_arrow_syntax';
   @override
@@ -202,17 +215,9 @@ class TodoTitle {
 }
 
 void _defineSourceScannerRulesPartRiverpodSelectTests() {
-  analysisRuleSuite<RiverpodSelectArrowSyntaxTest>(
+  analysisRuleSuite<_RiverpodSelectArrowSyntaxTest>(
     'RiverpodSelectArrowSyntaxTest',
-    RiverpodSelectArrowSyntaxTest.new,
-    {
-      'test_allowsArrowSelect': (t) => t._allowsArrowSelect(),
-      'test_allowsNonRiverpodSelectApi': (t) => t._allowsNonRiverpodSelectApi(),
-      'test_allowsUnrelatedSelectNearRefWatch': (t) => t._allowsUnrelatedSelectNearRefWatch(),
-      'test_reportsTypedBlockSelect': (t) => t._reportsTypedBlockSelect(),
-      'test_reportsTrailingCommaBlockSelect': (t) => t._reportsTrailingCommaBlockSelect(),
-      'test_reportsMultilineBlockSelect': (t) => t._reportsMultilineBlockSelect(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodSelectArrowSyntaxTest.new,
+    _RiverpodSelectArrowSyntaxTest._allCases,
   );
 }

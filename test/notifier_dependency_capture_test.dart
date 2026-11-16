@@ -4,85 +4,91 @@ import 'package:flutter_skill_lints/src/rules/notifier_source_rules.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<NotifierDependencyCaptureTest>(
+  analysisRuleSuite<_NotifierDependencyCaptureTest>(
     'NotifierDependencyCaptureTest',
-    NotifierDependencyCaptureTest.new,
-    {
-      'test_allowsResolvedOperationCapturedBeforeMutation': (t) =>
-          t._allowsResolvedOperationCapturedBeforeMutation(),
-      'test_allowsResolvedRepositoryCapturedBeforeMutation': (t) =>
-          t._allowsResolvedRepositoryCapturedBeforeMutation(),
-      'test_allowsRepositoryGetterCapturedBeforeMutation': (t) =>
-          t._allowsRepositoryGetterCapturedBeforeMutation(),
-      'test_allowsRepositoryReturnedBySynchronousHelper': (t) =>
-          t._allowsRepositoryReturnedBySynchronousHelper(),
-      'test_allowsProviderReadHelperAtAwaitAndAfterMountedGuard': (t) =>
-          t._allowsProviderReadHelperAtAwaitAndAfterMountedGuard(),
-      'test_reportsProviderReadHelperAfterUnguardedAwait': (t) =>
-          t._reportsProviderReadHelperAfterUnguardedAwait(),
-      'test_allowsNullableRepositoryReturnedByAwaitedHelperWhenPromoted': (t) =>
-          t._allowsNullableRepositoryReturnedByAwaitedHelperWhenPromoted(),
-      'test_allowsRepositoryCapturedFromFinalTypedRecordPattern': (t) =>
-          t._allowsRepositoryCapturedFromFinalTypedRecordPattern(),
-      'test_allowsOperationThroughCapturedTypedRecordField': (t) =>
-          t._allowsOperationThroughCapturedTypedRecordField(),
-      'test_reportsUnusedAwaitedRepositoryAcquisition': (t) =>
-          t._reportsUnusedAwaitedRepositoryAcquisition(),
-      'test_reportsMutableRepositoryReturnedByHelper': (t) =>
-          t._reportsMutableRepositoryReturnedByHelper(),
-      'test_reportsRepositoryCaptureStoredInDynamicLocal': (t) =>
-          t._reportsRepositoryCaptureStoredInDynamicLocal(),
-      'test_reportsLateRepositoryReturnedByHelper': (t) =>
-          t._reportsLateRepositoryReturnedByHelper(),
-      'test_reportsLateRepositoryCaptureAfterUnrelatedAwait': (t) =>
-          t._reportsLateRepositoryCaptureAfterUnrelatedAwait(),
-      'test_reportsSecondRepositoryAcquiredAfterMutation': (t) =>
-          t._reportsSecondRepositoryAcquiredAfterMutation(),
-      'test_reportsNullableRepositoryWithoutGuardedOperation': (t) =>
-          t._reportsNullableRepositoryWithoutGuardedOperation(),
-      'test_reportsNullableRepositoryForcedAtOperation': (t) =>
-          t._reportsNullableRepositoryForcedAtOperation(),
-      'test_reportsClassGetterThatLooksLikeRecordResourceCapture': (t) =>
-          t._reportsClassGetterThatLooksLikeRecordResourceCapture(),
-      'test_reportsUnusedTypedRecordCapture': (t) => t._reportsUnusedTypedRecordCapture(),
-      'test_reportsSecondRepositoryGetterUsedAfterBoundary': (t) =>
-          t._reportsSecondRepositoryGetterUsedAfterBoundary(),
-      'test_reportsCapturedGetterReevaluatedAfterBoundary': (t) =>
-          t._reportsCapturedGetterReevaluatedAfterBoundary(),
-      'test_allowsNotifierOperationCapturedBeforeMutation': (t) =>
-          t._allowsNotifierOperationCapturedBeforeMutation(),
-      'test_allowsScalarProviderReadAfterMutationBoundary': (t) =>
-          t._allowsScalarProviderReadAfterMutationBoundary(),
-      'test_scalarProviderReadAloneDoesNotNeedDependencyCapture': (t) =>
-          t._scalarProviderReadAloneDoesNotNeedDependencyCapture(),
-      'test_allowsAnotherProviderReadAfterCapturedOperation': (t) =>
-          t._allowsAnotherProviderReadAfterCapturedOperation(),
-      'test_allowsSkillSaveReadAfterStateWrite': (t) => t._allowsSkillSaveReadAfterStateWrite(),
-      'test_allowsSkillOptimisticUpdateAndGuardedReads': (t) =>
-          t._allowsSkillOptimisticUpdateAndGuardedReads(),
-      'test_allowsExplicitThisStateWriteBeforeDirectRead': (t) =>
-          t._allowsExplicitThisStateWriteBeforeDirectRead(),
-      'test_reportsNullableUninitializedRepository': (t) =>
-          t._reportsNullableUninitializedRepository(),
-      'test_reportsNullableRepositoryUsedAlongsideCapture': (t) =>
-          t._reportsNullableRepositoryUsedAlongsideCapture(),
-      'test_allowsDirectHelperInitializationBeforeMutation': (t) =>
-          t._allowsDirectHelperInitializationBeforeMutation(),
-      'test_rejectsHelperAssignmentToSameNamedFieldOnOtherObject': (t) =>
-          t._rejectsHelperAssignmentToSameNamedFieldOnOtherObject(),
-      'test_rejectsRepositoryResetAfterHelperInitialization': (t) =>
-          t._rejectsRepositoryResetAfterHelperInitialization(),
-      'test_reportsFakeEnsureHelperWithoutInitialization': (t) =>
-          t._reportsFakeEnsureHelperWithoutInitialization(),
-      'test_reportsConditionalPathWithoutGuaranteedInitialization': (t) =>
-          t._reportsConditionalPathWithoutGuaranteedInitialization(),
-      'test_doesNotTrustAppDefinedRefWithRiverpodName': (t) =>
-          t._doesNotTrustAppDefinedRefWithRiverpodName(),
-    },
+    _NotifierDependencyCaptureTest.new,
+    _NotifierDependencyCaptureTest._allCases,
   );
 }
 
-final class NotifierDependencyCaptureTest extends AnalysisRuleTest {
+final class _NotifierDependencyCaptureTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_NotifierDependencyCaptureTest)> get _allCases =>
+      caseSet<_NotifierDependencyCaptureTest>(
+        parent: const {},
+        own: {
+          'test_allowsResolvedOperationCapturedBeforeMutation': (t) =>
+              t._allowsResolvedOperationCapturedBeforeMutation(),
+          'test_allowsResolvedRepositoryCapturedBeforeMutation': (t) =>
+              t._allowsResolvedRepositoryCapturedBeforeMutation(),
+          'test_allowsRepositoryGetterCapturedBeforeMutation': (t) =>
+              t._allowsRepositoryGetterCapturedBeforeMutation(),
+          'test_allowsRepositoryReturnedBySynchronousHelper': (t) =>
+              t._allowsRepositoryReturnedBySynchronousHelper(),
+          'test_allowsProviderReadHelperAtAwaitAndAfterMountedGuard': (t) =>
+              t._allowsProviderReadHelperAtAwaitAndAfterMountedGuard(),
+          'test_reportsProviderReadHelperAfterUnguardedAwait': (t) =>
+              t._reportsProviderReadHelperAfterUnguardedAwait(),
+          'test_allowsNullableRepositoryReturnedByAwaitedHelperWhenPromoted': (t) =>
+              t._allowsNullableRepositoryReturnedByAwaitedHelperWhenPromoted(),
+          'test_allowsRepositoryCapturedFromFinalTypedRecordPattern': (t) =>
+              t._allowsRepositoryCapturedFromFinalTypedRecordPattern(),
+          'test_allowsOperationThroughCapturedTypedRecordField': (t) =>
+              t._allowsOperationThroughCapturedTypedRecordField(),
+          'test_reportsUnusedAwaitedRepositoryAcquisition': (t) =>
+              t._reportsUnusedAwaitedRepositoryAcquisition(),
+          'test_reportsMutableRepositoryReturnedByHelper': (t) =>
+              t._reportsMutableRepositoryReturnedByHelper(),
+          'test_reportsRepositoryCaptureStoredInDynamicLocal': (t) =>
+              t._reportsRepositoryCaptureStoredInDynamicLocal(),
+          'test_reportsLateRepositoryReturnedByHelper': (t) =>
+              t._reportsLateRepositoryReturnedByHelper(),
+          'test_reportsLateRepositoryCaptureAfterUnrelatedAwait': (t) =>
+              t._reportsLateRepositoryCaptureAfterUnrelatedAwait(),
+          'test_reportsSecondRepositoryAcquiredAfterMutation': (t) =>
+              t._reportsSecondRepositoryAcquiredAfterMutation(),
+          'test_reportsNullableRepositoryWithoutGuardedOperation': (t) =>
+              t._reportsNullableRepositoryWithoutGuardedOperation(),
+          'test_reportsNullableRepositoryForcedAtOperation': (t) =>
+              t._reportsNullableRepositoryForcedAtOperation(),
+          'test_reportsClassGetterThatLooksLikeRecordResourceCapture': (t) =>
+              t._reportsClassGetterThatLooksLikeRecordResourceCapture(),
+          'test_reportsUnusedTypedRecordCapture': (t) => t._reportsUnusedTypedRecordCapture(),
+          'test_reportsSecondRepositoryGetterUsedAfterBoundary': (t) =>
+              t._reportsSecondRepositoryGetterUsedAfterBoundary(),
+          'test_reportsCapturedGetterReevaluatedAfterBoundary': (t) =>
+              t._reportsCapturedGetterReevaluatedAfterBoundary(),
+          'test_allowsNotifierOperationCapturedBeforeMutation': (t) =>
+              t._allowsNotifierOperationCapturedBeforeMutation(),
+          'test_allowsScalarProviderReadAfterMutationBoundary': (t) =>
+              t._allowsScalarProviderReadAfterMutationBoundary(),
+          'test_scalarProviderReadAloneDoesNotNeedDependencyCapture': (t) =>
+              t._scalarProviderReadAloneDoesNotNeedDependencyCapture(),
+          'test_allowsAnotherProviderReadAfterCapturedOperation': (t) =>
+              t._allowsAnotherProviderReadAfterCapturedOperation(),
+          'test_allowsSkillSaveReadAfterStateWrite': (t) => t._allowsSkillSaveReadAfterStateWrite(),
+          'test_allowsSkillOptimisticUpdateAndGuardedReads': (t) =>
+              t._allowsSkillOptimisticUpdateAndGuardedReads(),
+          'test_allowsExplicitThisStateWriteBeforeDirectRead': (t) =>
+              t._allowsExplicitThisStateWriteBeforeDirectRead(),
+          'test_reportsNullableUninitializedRepository': (t) =>
+              t._reportsNullableUninitializedRepository(),
+          'test_reportsNullableRepositoryUsedAlongsideCapture': (t) =>
+              t._reportsNullableRepositoryUsedAlongsideCapture(),
+          'test_allowsDirectHelperInitializationBeforeMutation': (t) =>
+              t._allowsDirectHelperInitializationBeforeMutation(),
+          'test_rejectsHelperAssignmentToSameNamedFieldOnOtherObject': (t) =>
+              t._rejectsHelperAssignmentToSameNamedFieldOnOtherObject(),
+          'test_rejectsRepositoryResetAfterHelperInitialization': (t) =>
+              t._rejectsRepositoryResetAfterHelperInitialization(),
+          'test_reportsFakeEnsureHelperWithoutInitialization': (t) =>
+              t._reportsFakeEnsureHelperWithoutInitialization(),
+          'test_reportsConditionalPathWithoutGuaranteedInitialization': (t) =>
+              t._reportsConditionalPathWithoutGuaranteedInitialization(),
+          'test_doesNotTrustAppDefinedRefWithRiverpodName': (t) =>
+              t._doesNotTrustAppDefinedRefWithRiverpodName(),
+        },
+      );
+
   static const _ruleName = 'notifier_ensure_deps';
 
   @override

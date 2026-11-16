@@ -4,30 +4,36 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_local_contr
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidLocalContractKeyConstantsTest>(
+  analysisRuleSuite<_AvoidLocalContractKeyConstantsTest>(
     'AvoidLocalContractKeyConstantsTest',
-    AvoidLocalContractKeyConstantsTest.new,
-    {
-      'test_reportsNotifierLocalKeyConstants': (t) => t._reportsNotifierLocalKeyConstants(),
-      'test_reportsNotifierLocalKeyRegistryConstants': (t) =>
-          t._reportsNotifierLocalKeyRegistryConstants(),
-      'test_reportsRepositoryLocalActionConstants': (t) =>
-          t._reportsRepositoryLocalActionConstants(),
-      'test_allowsDedicatedKeysOwner': (t) => t._allowsDedicatedKeysOwner(),
-      'test_allowsDedicatedRequestOwner': (t) => t._allowsDedicatedRequestOwner(),
-      'test_allowsDedicatedFeatureConstantsOwnerInNotifierPath': (t) =>
-          t._allowsDedicatedFeatureConstantsOwnerInNotifierPath(),
-      'test_allowsFeatureConstantsFolder': (t) => t._allowsFeatureConstantsFolder(),
-      'test_reportsContractConstantsHiddenInNonOwnerClassInNotifierPath': (t) =>
-          t._reportsContractConstantsHiddenInNonOwnerClassInNotifierPath(),
-      'test_allowsStorageKeysAndApiPathsOwners': (t) => t._allowsStorageKeysAndApiPathsOwners(),
-      'test_reportsRepositoryLocalStorageKey': (t) => t._reportsRepositoryLocalStorageKey(),
-      'test_allowsNonContractLocalConstants': (t) => t._allowsNonContractLocalConstants(),
-    },
+    _AvoidLocalContractKeyConstantsTest.new,
+    _AvoidLocalContractKeyConstantsTest._allCases,
   );
 }
 
-final class AvoidLocalContractKeyConstantsTest extends AnalysisRuleTest {
+final class _AvoidLocalContractKeyConstantsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidLocalContractKeyConstantsTest)> get _allCases =>
+      caseSet<_AvoidLocalContractKeyConstantsTest>(
+        parent: const {},
+        own: {
+          'test_reportsNotifierLocalKeyConstants': (t) => t._reportsNotifierLocalKeyConstants(),
+          'test_reportsNotifierLocalKeyRegistryConstants': (t) =>
+              t._reportsNotifierLocalKeyRegistryConstants(),
+          'test_reportsRepositoryLocalActionConstants': (t) =>
+              t._reportsRepositoryLocalActionConstants(),
+          'test_allowsDedicatedKeysOwner': (t) => t._allowsDedicatedKeysOwner(),
+          'test_allowsDedicatedRequestOwner': (t) => t._allowsDedicatedRequestOwner(),
+          'test_allowsDedicatedFeatureConstantsOwnerInNotifierPath': (t) =>
+              t._allowsDedicatedFeatureConstantsOwnerInNotifierPath(),
+          'test_allowsFeatureConstantsFolder': (t) => t._allowsFeatureConstantsFolder(),
+          'test_reportsContractConstantsHiddenInNonOwnerClassInNotifierPath': (t) =>
+              t._reportsContractConstantsHiddenInNonOwnerClassInNotifierPath(),
+          'test_allowsStorageKeysAndApiPathsOwners': (t) => t._allowsStorageKeysAndApiPathsOwners(),
+          'test_reportsRepositoryLocalStorageKey': (t) => t._reportsRepositoryLocalStorageKey(),
+          'test_allowsNonContractLocalConstants': (t) => t._allowsNonContractLocalConstants(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidLocalContractKeyConstants();

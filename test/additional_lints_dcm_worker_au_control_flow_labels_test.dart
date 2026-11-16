@@ -8,53 +8,34 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidContinueTest>('AvoidContinueTest', AvoidContinueTest.new, {
-    'test_continueStatement_lint': (t) => t._continueStatementLint(),
-    'test_loopWithoutContinue_noLint': (t) => t._loopWithoutContinueNoLint(),
-    'test_severity_info': (t) => t._severityInfo(),
-  });
-  analysisRuleSuite<AvoidLabelsTest>('AvoidLabelsTest', AvoidLabelsTest.new, {
-    'test_labeledStatement_lint': (t) => t._labeledStatementLint(),
-    'test_labeledBreak_lint': (t) => t._labeledBreakLint(),
-    'test_labeledContinue_lint': (t) => t._labeledContinueLint(),
-    'test_unlabeledBreakAndContinue_noLint': (t) => t._unlabeledBreakAndContinueNoLint(),
-    'test_severity_error': (t) => t._severityError(),
-  });
-  analysisRuleSuite<AvoidLocalFunctionsTest>(
+  analysisRuleSuite<_AvoidContinueTest>(
+    'AvoidContinueTest',
+    _AvoidContinueTest.new,
+    _AvoidContinueTest._allCases,
+  );
+  analysisRuleSuite<_AvoidLabelsTest>(
+    'AvoidLabelsTest',
+    _AvoidLabelsTest.new,
+    _AvoidLabelsTest._allCases,
+  );
+  analysisRuleSuite<_AvoidLocalFunctionsTest>(
     'AvoidLocalFunctionsTest',
-    AvoidLocalFunctionsTest.new,
-    {
-      'test_localFunction_lint': (t) => t._localFunctionLint(),
-      'test_topLevelFunction_noLint': (t) => t._topLevelFunctionNoLint(),
-      'test_anonymousFunction_noLint': (t) => t._anonymousFunctionNoLint(),
-      'test_identityGuardedCallback_noLint': (t) => t._identityGuardedCallbackNoLint(),
-      'test_invertedIdentityGuard_lint': (t) => t._invertedIdentityGuardLint(),
-      'test_parenthesizedConjunctiveIdentityGuard_noLint': (t) =>
-          t._parenthesizedConjunctiveIdentityGuardNoLint(),
-      'test_effectfulConjunctiveIdentityGuard_lint': (t) =>
-          t._effectfulConjunctiveIdentityGuardLint(),
-      'test_effectfulStatementBeforeCleanup_lint': (t) => t._effectfulStatementBeforeCleanupLint(),
-      'test_disjunctiveIdentityGuard_lint': (t) => t._disjunctiveIdentityGuardLint(),
-      'test_coreIdenticalGuard_noLint': (t) => t._coreIdenticalGuardNoLint(),
-      'test_staticAndNestedInstanceCallbackSlots_noLint': (t) =>
-          t._staticAndNestedInstanceCallbackSlotsNoLint(),
-      'test_callbackWithoutCleanupIdentity_lint': (t) => t._callbackWithoutCleanupIdentityLint(),
-      'test_comparisonOutsideCleanup_lint': (t) => t._comparisonOutsideCleanupLint(),
-      'test_cleanupChecksDifferentSlot_lint': (t) => t._cleanupChecksDifferentSlotLint(),
-      'test_cleanupChecksDifferentReceiver_lint': (t) => t._cleanupChecksDifferentReceiverLint(),
-      'test_identityComparisonWithoutCleanupWrite_lint': (t) =>
-          t._identityComparisonWithoutCleanupWriteLint(),
-      'test_identityGuardWithNoOpSlotWrite_lint': (t) => t._identityGuardWithNoOpSlotWriteLint(),
-      'test_identityGuardWithUnrelatedConditionalWrite_lint': (t) =>
-          t._identityGuardWithUnrelatedConditionalWriteLint(),
-      'test_shadowedCallbackName_lint': (t) => t._shadowedCallbackNameLint(),
-      'test_unrelatedIdenticalMethod_lint': (t) => t._unrelatedIdenticalMethodLint(),
-      'test_severity_info': (t) => t._severityInfo(),
-    },
+    _AvoidLocalFunctionsTest.new,
+    _AvoidLocalFunctionsTest._allCases,
   );
 }
 
-final class AvoidContinueTest extends AnalysisRuleTest {
+final class _AvoidContinueTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidContinueTest)> get _allCases =>
+      caseSet<_AvoidContinueTest>(
+        parent: const {},
+        own: {
+          'test_continueStatement_lint': (t) => t._continueStatementLint(),
+          'test_loopWithoutContinue_noLint': (t) => t._loopWithoutContinueNoLint(),
+          'test_severity_info': (t) => t._severityInfo(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidContinue();
@@ -91,7 +72,19 @@ void f(List<int> values) {
   }
 }
 
-final class AvoidLabelsTest extends AnalysisRuleTest {
+final class _AvoidLabelsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidLabelsTest)> get _allCases =>
+      caseSet<_AvoidLabelsTest>(
+        parent: const {},
+        own: {
+          'test_labeledStatement_lint': (t) => t._labeledStatementLint(),
+          'test_labeledBreak_lint': (t) => t._labeledBreakLint(),
+          'test_labeledContinue_lint': (t) => t._labeledContinueLint(),
+          'test_unlabeledBreakAndContinue_noLint': (t) => t._unlabeledBreakAndContinueNoLint(),
+          'test_severity_error': (t) => t._severityError(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidLabels();
@@ -164,7 +157,44 @@ void f(List<int> values) {
   }
 }
 
-final class AvoidLocalFunctionsTest extends AnalysisRuleTest {
+final class _AvoidLocalFunctionsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidLocalFunctionsTest)> get _allCases =>
+      caseSet<_AvoidLocalFunctionsTest>(
+        parent: const {},
+        own: {
+          'test_localFunction_lint': (t) => t._localFunctionLint(),
+          'test_topLevelFunction_noLint': (t) => t._topLevelFunctionNoLint(),
+          'test_anonymousFunction_noLint': (t) => t._anonymousFunctionNoLint(),
+          'test_identityGuardedCallback_noLint': (t) => t._identityGuardedCallbackNoLint(),
+          'test_invertedIdentityGuard_lint': (t) => t._invertedIdentityGuardLint(),
+          'test_parenthesizedConjunctiveIdentityGuard_noLint': (t) =>
+              t._parenthesizedConjunctiveIdentityGuardNoLint(),
+          'test_effectfulConjunctiveIdentityGuard_lint': (t) =>
+              t._effectfulConjunctiveIdentityGuardLint(),
+          'test_effectfulStatementBeforeCleanup_lint': (t) =>
+              t._effectfulStatementBeforeCleanupLint(),
+          'test_disjunctiveIdentityGuard_lint': (t) => t._disjunctiveIdentityGuardLint(),
+          'test_coreIdenticalGuard_noLint': (t) => t._coreIdenticalGuardNoLint(),
+          'test_staticAndNestedInstanceCallbackSlots_noLint': (t) =>
+              t._staticAndNestedInstanceCallbackSlotsNoLint(),
+          'test_callbackWithoutCleanupIdentity_lint': (t) =>
+              t._callbackWithoutCleanupIdentityLint(),
+          'test_comparisonOutsideCleanup_lint': (t) => t._comparisonOutsideCleanupLint(),
+          'test_cleanupChecksDifferentSlot_lint': (t) => t._cleanupChecksDifferentSlotLint(),
+          'test_cleanupChecksDifferentReceiver_lint': (t) =>
+              t._cleanupChecksDifferentReceiverLint(),
+          'test_identityComparisonWithoutCleanupWrite_lint': (t) =>
+              t._identityComparisonWithoutCleanupWriteLint(),
+          'test_identityGuardWithNoOpSlotWrite_lint': (t) =>
+              t._identityGuardWithNoOpSlotWriteLint(),
+          'test_identityGuardWithUnrelatedConditionalWrite_lint': (t) =>
+              t._identityGuardWithUnrelatedConditionalWriteLint(),
+          'test_shadowedCallbackName_lint': (t) => t._shadowedCallbackNameLint(),
+          'test_unrelatedIdenticalMethod_lint': (t) => t._unrelatedIdenticalMethodLint(),
+          'test_severity_info': (t) => t._severityInfo(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidLocalFunctions();

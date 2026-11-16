@@ -6,6 +6,7 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.dart';
 
 /// Fix that removes the wrapping Padding widget and moves the padding value to the child widget's padding parameter.
 class AvoidWrappingInPaddingFix extends ResolvedCorrectionProducer {
@@ -25,7 +26,7 @@ class AvoidWrappingInPaddingFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final target = _paddingTarget(node);
+    final target = _paddingTarget(reportedConstructorName(node));
     if (target == null) return;
     final replacement = _paddingReplacement(target.argumentList);
     if (replacement == null) return;

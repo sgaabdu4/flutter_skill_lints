@@ -6,6 +6,7 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
 import 'package:flutter_skill_lints/src/additional_lints/correction_producer_utils.dart';
+import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.dart';
 
 /// Fix that replaces Align(alignment: center) with Center.
 class PreferCenterOverAlignFix extends SingleLocationCorrectionProducer {
@@ -19,7 +20,7 @@ class PreferCenterOverAlignFix extends SingleLocationCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
+    final targetNode = reportedConstructorName(node);
     if (targetNode is! ConstructorName) return;
 
     final instanceCreation = targetNode.parent;

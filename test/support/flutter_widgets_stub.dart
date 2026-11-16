@@ -150,6 +150,23 @@ extension WidgetListSeparator on List<Widget> {
   List<Widget> separatedBy(Widget separator) => this;
 }
 
+class Animation<T> {
+  const Animation();
+}
+
+class AlwaysStoppedAnimation<T> extends Animation<T> {
+  const AlwaysStoppedAnimation(T value);
+}
+
+class Image extends Widget {
+  const Image({super.key, Animation<double>? opacity, String? semanticLabel});
+  const Image.network(String src, {super.key, Animation<double>? opacity});
+}
+
+class GestureDetector extends Widget {
+  const GestureDetector({super.key, void Function()? onTap, void Function()? onLongPress, Widget? child});
+}
+
 class Text extends Widget {
   const Text(String data, {super.key});
 }

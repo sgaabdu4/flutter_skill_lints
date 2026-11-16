@@ -9,9 +9,20 @@
   because a project that lists the removed rules by name needs a change; move
   the `^0.14` pin to `^0.15.0` when ready.
 - Remove `strings_hardcoded`. `avoid_hardcoded_strings` now owns hardcoded UI
-  strings and also reports a literal passed as `title`, `label`, `tooltip`,
-  `hintText`, `helperText` or `errorText` to any function or method call, which
-  only `strings_hardcoded` caught before. Use `avoid_hardcoded_strings`.
+  strings. It also reports a literal passed as a label argument (`title`,
+  `label`, `tooltip`, `hintText`, `helperText`, `errorText` and the other
+  user-facing names) in every call shape: call, constructor, dot shorthand,
+  enum constant, `super(...)`, `this(...)` and a function-typed value. The
+  callee must be UI, decided by its resolved type: declared in Flutter UI
+  (`package:flutter/` except foundation, services and scheduler, plus
+  `material_ui` and `cupertino_ui`), a widget or `State` member, returning a
+  widget, taking a `BuildContext`, an extension on `BuildContext` or a widget,
+  or a constructor in a file that imports Flutter UI. The rule checks every
+  file that is not a test, generated or `l10n` file, but a call outside `lib/`
+  (`bin/`, `tool/`, `hook/`) is reported only when the callee is UI. Calls such
+  as `debugPrintStack(label: ...)`, an analytics `track(label: ...)` and a
+  constructor of a plain class in a file with no Flutter import are not
+  reported. Use `avoid_hardcoded_strings`.
 - Change the correction messages of `avoid_dynamic_except_json_maps` and
   `save_all_full_collection_after_subset_mutation`. They told users to add an
   ignore. They now name the real fix.
@@ -23,6 +34,27 @@
 - Report loads and `state` reads inside `then`, `catchError` and `whenComplete`
   callbacks chained on a microtask, a cascade on it, and a load passed as an
   `onError` callback, in `avoid_sync_notifier_state_read`.
+- Add the diagnostic `avoid_provider_turn_hop` to the same rule. A provider body
+  (`@riverpod` function, sync or async, or a classic `Provider((ref) { ... })`),
+  and any closure in it, must not hop a zero-delay turn. It reports
+  `Future.microtask`, `scheduleMicrotask`, `Future(...)`, `Timer.run`,
+  `Timer(...)` and `Future.delayed(...)` with `Duration.zero` or a literal
+  `Duration` under one millisecond, `then`, `catchError` or `whenComplete` on
+  an already completed future (`Future.value`, `Future.sync`, also through a
+  local variable, parentheses or a cascade), and a call to a top-level helper in
+  the same file whose body holds one of these. It reports the hop itself, not
+  the callback, and also when the hop is awaited or returned. A real delay (a
+  `Duration` of one millisecond or more, or a non-constant `Duration`) is not
+  reported. A helper that calls another helper that hops is not followed.
+  Return the value from the provider, or start the work from the event that
+  causes it. This replaces the unreleased `avoid_provider_deferred_state_work`,
+  which judged the callback instead of the hop.
+- Known false reports in `avoid_hardcoded_strings`: a literal passed as
+  `message:` to a private method of a widget class (such as
+  `_record(message: ...)`), and a literal passed as `data:` to a widget
+  constructor such as `Draggable`.
+- Add `test/registration_completeness_test.dart`, which fails when a case file
+  does not run or a test class does not take the cases of its base class.
 
 ## [0.14.0] - 2026-11-15
 

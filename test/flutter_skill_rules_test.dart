@@ -19,16 +19,21 @@ import 'package:flutter_skill_lints/src/rules/use_unawaited_for_fire_and_forget_
 import 'package:test/test.dart';
 
 import 'analysis_rule_suite.dart';
+import 'provider_turn_hop_rows.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_01.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_01_b.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_02.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_02_b.dart';
+part 'flutter_skill_rules_test/flutter_skill_rules_part_02_c.dart';
+part 'flutter_skill_rules_test/flutter_skill_rules_part_03.dart';
 
 void main() {
   _defineFlutterSkillRulesPart01Tests();
   _defineFlutterSkillRulesPart01BTests();
   _defineFlutterSkillRulesPart02Tests();
+  _defineFlutterSkillRulesPart02CTests();
   _defineFlutterSkillRulesPart02BTests();
+  _defineFlutterSkillRulesPart03Tests();
 }
 
 abstract class _FlutterSkillRuleTest extends AnalysisRuleTest {
@@ -57,7 +62,8 @@ abstract class _FlutterSkillRuleTest extends AnalysisRuleTest {
   }
 
   void _addFlutterPackage() {
-    newPackage('flutter').addFile('lib/widgets.dart', r'''
+    newPackage('flutter')
+      ..addFile('lib/widgets.dart', r'''
 class BuildContext {
   bool get mounted => true;
   bool canPop() => true;
@@ -94,6 +100,10 @@ abstract class State<T extends StatefulWidget> {
   BuildContext get context => BuildContext();
   bool get mounted => true;
 }
+''')
+      ..addFile('lib/foundation.dart', "export 'src/foundation/compute.dart';\n")
+      ..addFile('lib/src/foundation/compute.dart', r'''
+Future<R> compute<M, R>(R Function(M message) callback, M message) async => callback(message);
 ''');
   }
 

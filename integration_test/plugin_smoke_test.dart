@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
+import '../test/provider_turn_hop_rows.dart';
+
 void main() {
   test('loads canonical configuration with riverpod_lint in a real Flutter analysis server run', () async {
     final packageRoot = Directory.current.absolute.path;
@@ -22,6 +24,8 @@ dependencies:
   riverpod_annotation: 4.0.7
   freezed_annotation: 3.1.0
   sentry_flutter: 9.30.1
+  data:
+    path: packages/data
 
 dev_dependencies:
   build_runner: ^2.5.0
@@ -266,6 +270,18 @@ void sentryOptionsOutsideBuilder(SentryFlutterOptions options) {
   options.maxBreadcrumbs = 0;
 }
 ''');
+
+      await _writeFile(
+        '${app.path}/packages/data/pubspec.yaml',
+        'name: data\npublish_to: none\nenvironment:\n  sdk: ^3.13.0\n',
+      );
+      await _writeFile(
+        '${app.path}/packages/data/lib/data.dart',
+        'class Repo {\n  Future<void> load() async {}\n}\n',
+      );
+      for (final row in providerTurnHopRows) {
+        await _writeFile('${app.path}/lib/rows/${row.id}.dart', row.source);
+      }
 
       await _writeFile('${app.path}/lib/resolved_contexts.dart', r'''
 import 'package:flutter/widgets.dart';
@@ -597,6 +613,14 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
         );
       }
       expect(output, contains('riverpod_select_identity_forbidden'));
+      for (final row in providerTurnHopRows) {
+        final lines = [
+          for (final line in output.split('\n'))
+            if (line.contains('avoid_provider_turn_hop'))
+              ?RegExp('rows/${row.id}\\.dart:(\\d+):').firstMatch(line)?.group(1),
+        ];
+        expect(lines.map(int.parse).toList()..sort(), [...row.hopLines]..sort(), reason: row.id);
+      }
       final contexts = output.split('\n').where((line) => line.contains('resolved_contexts.dart'));
       expect(contexts.where((line) => line.contains('avoid_missing_interpolation')), isEmpty);
       expect(

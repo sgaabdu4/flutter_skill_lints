@@ -109,7 +109,8 @@ void main() {
           'riverpod_read_init_state',
           'avoid_sync_notifier_state_read',
         }.contains(rule.name))
-          for (final code in rule.diagnosticCodes) '${code.correctionMessage}',
+          for (final code in rule.diagnosticCodes)
+            if (code.lowerCaseName != 'avoid_provider_turn_hop') '${code.correctionMessage}',
     ];
 
     expect(messages, hasLength(2));
@@ -475,7 +476,7 @@ void main() {
 }
 
 const _enabledFlutterSkillRuleCount = 228;
-const _enabledFlutterSkillDiagnosticCount = 236;
+const _enabledFlutterSkillDiagnosticCount = 237;
 const _enabledAdditionalRuleCount = 273;
 
 const _modelSkillErrorDiagnostics = [

@@ -6,6 +6,8 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_correct_te
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_unique_test_names.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
+import 'support/mocktail_stub.dart';
+
 void main() {
   defineReflectiveSuite(() {
     defineReflectiveTests(MissingTestAssertionTest);
@@ -24,23 +26,7 @@ final class MissingTestAssertionTest extends AnalysisRuleTest {
     newPackage('fake_async').addFile('lib/fake_async.dart', r'''
 void fakeAsync(void Function(Object clock) body) { body(Object()); }
 ''');
-    final mocktail = newPackage('mocktail');
-    mocktail.addFile('lib/mocktail.dart', "export 'src/mocktail.dart';");
-    mocktail.addFile('lib/src/mocktail.dart', r'''
-final class VerificationResult {
-  void called(int count) {}
-}
-
-typedef Verify = VerificationResult Function<T>(T Function() invocation);
-typedef VerifyInOrder = List<VerificationResult> Function<T>(List<T Function()> invocations);
-
-Verify _makeVerify(bool never) => <T>(T Function() invocation) => VerificationResult();
-VerifyInOrder _makeVerifyInOrder() => <T>(List<T Function()> invocations) => [];
-
-Verify get verify => _makeVerify(false);
-Verify get verifyNever => _makeVerify(true);
-VerifyInOrder get verifyInOrder => _makeVerifyInOrder();
-''');
+    addMocktail(this);
     final mockito = newPackage('mockito');
     mockito.addFile('lib/mockito.dart', r'''
 export 'src/mock.dart' show verify, verifyInOrder, verifyNever;

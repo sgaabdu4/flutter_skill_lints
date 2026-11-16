@@ -42,12 +42,6 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
       return;
     }
 
-    // Pattern 3: List.generate() — MethodInvocation
-    if (targetNode is MethodInvocation && targetNode.methodName.name == 'generate') {
-      await _fixListGenerate(builder, targetNode);
-      return;
-    }
-
     // Pattern 3: List<Widget>.generate() — InstanceCreationExpression
     if (targetNode is InstanceCreationExpression) {
       await _fixListGenerateInstance(builder, targetNode);
@@ -95,19 +89,6 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
       builder.addSimpleReplacement(
         range.node(spread),
         'for (final ${source.parameter} in ${source.iterable}) ${source.expression}',
-      );
-    });
-  }
-
-  /// Fix: `List.generate(n, (i) => expr)` → `[for (var i = 0; i < n; i++) expr]`
-  Future<void> _fixListGenerate(ChangeBuilder builder, MethodInvocation node) async {
-    final source = _generateSource(node.argumentList);
-    if (source == null) return;
-
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
-        range.node(node),
-        '[for (var ${source.parameter} = 0; ${source.parameter} < ${source.count}; ${source.parameter}++) ${source.expression}]',
       );
     });
   }

@@ -61,11 +61,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       _checkFold(node);
       return;
     }
-
-    if (methodName == 'generate') {
-      _checkListGenerate(node);
-      return;
-    }
   }
 
   @override
@@ -108,27 +103,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final args = target.argumentList.arguments;
     if (args.isEmpty) return;
     if (args.first is! FunctionExpression) return;
-
-    rule.reportAtNode(node);
-  }
-
-  /// Pattern 3: `List.generate(n, (i) => ...)` without type args
-  void _checkListGenerate(MethodInvocation node) {
-    final target = node.target;
-    if (target is! SimpleIdentifier) return;
-    if (target.name != 'List') return;
-
-    // Verify it resolves to dart:core List
-    final element = target.element;
-    if (element == null) return;
-    final library = element.library;
-    if (library == null || !library.identifier.startsWith('dart:core')) return;
-    if (!_isWidgetCollection(node.staticType)) return;
-    if (!_isGrowable(node.argumentList)) return;
-
-    final args = node.argumentList.arguments;
-    if (args.length < 2) return;
-    if (args[1] is! FunctionExpression) return;
 
     rule.reportAtNode(node);
   }

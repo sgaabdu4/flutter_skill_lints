@@ -104,7 +104,7 @@ final class PreferExpectLaterTest extends AnalysisRuleTest {
 
   Future<void> _expectReported(String parameter) async {
     final source =
-        "import 'dart:async';\n$_expectStub\nabstract class Slow implements Future<int> {}\n'
+        "import 'dart:async';\n$_expectStub\nabstract class Slow implements Future<int> {}\n"
         'void f($parameter) {\n  expect(value, 1);\n}\n';
     await assertDiagnostics(source, [lint(source.indexOf('expect(value'), 'expect'.length)]);
   }

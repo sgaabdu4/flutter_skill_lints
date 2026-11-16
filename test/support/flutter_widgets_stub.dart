@@ -198,6 +198,14 @@ class ListView extends Widget {
   const ListView({super.key, bool shrinkWrap = false, List<Widget> children = const []});
 }
 
+class TextSpan {
+  const TextSpan({String? text});
+}
+
+class RichText extends Widget {
+  const RichText({super.key, required TextSpan text, int? maxLines});
+}
+
 class Text extends Widget {
   const Text(String data, {super.key});
 }

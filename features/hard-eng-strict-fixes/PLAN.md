@@ -20,7 +20,7 @@ Authority: The owner asked for this fix wave and a draft PR first. The coordinat
 
 ## Acceptance + steps
 
-- [x] N/A — the proof is the whole-project pass of HE-COMMENT-LINES, which must list no `comment block` hit in `lib/` or `test/`.
+- [x] N/A — the proof is the whole-project pass of the comment-lines rule, which must list no `comment block` hit in `lib/` or `test/`.
 - [x] `integration_test/plugin_smoke_test.dart::loads canonical configuration with riverpod_lint in a real Flutter analysis server run` has no `skip:` and runs in the Flutter smoke job without a flag.
 - [x] N/A — the proof is dart-decimate 0.0.76, which must report no `unused-class-member`.
 - [x] N/A — the proof is dart-decimate 0.0.76 with `max_crap` 30, which must report no `high-crap-score`; the new tests are the work, not the proof.

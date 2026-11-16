@@ -1,6 +1,6 @@
 # Pass the strict Hard Eng rules in flutter_skill_lints
 
-Status: Draft
+Status: Ready
 
 ## Outcome + scope
 

@@ -172,7 +172,11 @@ final _anyPattern = RegExp(r'''^\s*['"]?[\w-]+['"]?\s*:\s*['"]?any['"]?\s*(?:#.*
 
 final _manyLintsPattern = RegExp(r'(^|\n)\s*many_lints\s*:');
 
-final _includePattern = RegExp(r'''^include\s*:\s*['"]?([^'"\s#]+)''', multiLine: true);
+final _includeBlockPattern = RegExp(
+  r'^include\s*:[ \t]*(?:\[([^\]]*)\]|([^\s#\[][^\n#]*))?[ \t]*(?:#.*)?\n?((?:[ \t]+-[^\n]*\n?)*)',
+  multiLine: true,
+);
+final _includeItemPattern = RegExp(r'''['"]?([^'",\s#]+)''');
 
 const _riverpodPackages = ['flutter_riverpod', 'hooks_riverpod', 'riverpod', 'riverpod_annotation'];
 
@@ -277,14 +281,30 @@ final class _ProjectConfigScanner {
   String? _readWithIncludes(File file, Set<String> visited) {
     final own = _read(file);
     if (own == null || !visited.add(file.path)) return own;
-    final include = _includePattern.firstMatch(own)?.group(1);
-    if (include == null || include.startsWith('package:')) return own;
     final context = root.provider.pathContext;
-    final included = _readWithIncludes(
-      root.provider.getFile(context.normalize(context.join(file.parent.path, include))),
-      visited,
-    );
-    return included == null ? own : '$included\n$own';
+    final texts = [
+      for (final include in _includePaths(own))
+        if (!include.startsWith('package:'))
+          _readWithIncludes(
+            root.provider.getFile(context.normalize(context.join(file.parent.path, include))),
+            visited,
+          ),
+    ].nonNulls;
+    return [...texts, own].join('\n');
+  }
+
+  Iterable<String> _includePaths(String text) sync* {
+    final match = _includeBlockPattern.firstMatch(text);
+    if (match == null) return;
+    final listText = [
+      match.group(1) ?? match.group(2) ?? '',
+      ...(match.group(3) ?? '').split('\n').map((line) => line.replaceFirst(RegExp(r'^\s*-'), '')),
+    ];
+    for (final part in listText) {
+      for (final item in _includeItemPattern.allMatches(part)) {
+        yield item.group(1)!;
+      }
+    }
   }
 
   bool _dependsOnRiverpod(String pubspecText) =>
@@ -552,13 +572,15 @@ Iterable<String> _filePaths(Folder folder) sync* {
   for (final child in children) {
     if (child is File) {
       yield child.path;
-    } else if (child is Folder && !_skippedFolders.contains(child.shortName)) {
+    } else if (child is Folder && !_isSkippedFolder(child.shortName)) {
       yield* _filePaths(child);
     }
   }
 }
 
-const _skippedFolders = {'.dart_tool', '.git', 'build', 'node_modules'};
+const _skippedFolders = {'build', 'node_modules', 'Pods'};
+
+bool _isSkippedFolder(String name) => name.startsWith('.') || _skippedFolders.contains(name);
 
 bool _isDartSource(String path) {
   if (!path.endsWith('.dart')) return false;

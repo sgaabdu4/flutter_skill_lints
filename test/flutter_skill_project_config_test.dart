@@ -58,6 +58,10 @@ final class _FlutterSkillProjectConfigTest extends AnalysisRuleTest {
           'test_followsIncludedParentOptionsFile': (t) => t._followsIncludedParentOptionsFile(),
           'test_reportsGapsInsideIncludedOptionsFile': (t) =>
               t._reportsGapsInsideIncludedOptionsFile(),
+          'test_followsListFormInclude': (t) => t._followsListFormInclude(),
+          'test_allowsMissingArbExcludeWhenArbFilesAreInToolFolders': (t) =>
+              t._allowsMissingArbExcludeWhenArbFilesAreInToolFolders(),
+          'test_followsFlowListInclude': (t) => t._followsFlowListInclude(),
         },
       );
 
@@ -650,6 +654,53 @@ dependencies:
     newFile('$testPackageRootPath/analysis_options.yaml', 'include: base_options.yaml\n');
 
     await assertDiagnostics('void main() {}', [projectLint('cfg_required_lints')]);
+  }
+
+  Future<void> _followsListFormInclude() async {
+    newFile(
+      '$testPackageRootPath/base_options.yaml',
+      _canonicalOptions.replaceAll('    - avoid_print\n', ''),
+    );
+    newFile('$testPackageRootPath/extra_options.yaml', 'linter:\n  rules:\n    - avoid_print\n');
+    newFile(
+      '$testPackageRootPath/analysis_options.yaml',
+      'include:\n  - base_options.yaml\n  - extra_options.yaml\n',
+    );
+
+    await assertNoDiagnostics('void main() {}');
+  }
+
+  Future<void> _followsFlowListInclude() async {
+    newFile(
+      '$testPackageRootPath/base_options.yaml',
+      _canonicalOptions.replaceAll('    - avoid_print\n', ''),
+    );
+    newFile('$testPackageRootPath/extra_options.yaml', 'linter:\n  rules:\n    - avoid_print\n');
+    newFile(
+      '$testPackageRootPath/analysis_options.yaml',
+      'include: [base_options.yaml, extra_options.yaml]\n',
+    );
+
+    await assertNoDiagnostics('void main() {}');
+  }
+
+  Future<void> _allowsMissingArbExcludeWhenArbFilesAreInToolFolders() async {
+    for (final folder in [
+      '.fvm/flutter_sdk/packages/flutter_tools',
+      'ios/.symlinks/plugins/some_plugin',
+      '.pub-cache/hosted/some_package',
+      'ios/Pods/SomePod',
+      'android/.gradle/caches',
+      'macos/Pods/SomePod',
+    ]) {
+      newFile('$testPackageRootPath/$folder/app_en.arb', '{}');
+    }
+    newFile(
+      '$testPackageRootPath/analysis_options.yaml',
+      _canonicalOptions.replaceAll('    - "**/*.arb"\n', ''),
+    );
+
+    await assertNoDiagnostics('void main() {}');
   }
 
   void _writeCanonicalAnalysisOptions() {

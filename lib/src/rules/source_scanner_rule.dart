@@ -216,14 +216,6 @@ final _contextL10nL10nEndLinePattern = RegExp(r'\bcontext\s*\.\s*l10n\s*$');
 
 final _contextL10nPattern = RegExp(r'\bcontext\s*\.\s*l10n\s*\.');
 
-final _titleLabelTooltipPattern = RegExp(
-  r'''\b(?:title|label|tooltip|hintText|helperText|errorText)\s*:\s*['"][^'"]+['"]''',
-);
-
-final _textTooltipSemanticsPattern = RegExp(
-  r'''\b(?:Text|Tooltip|Semantics)\s*\(\s*['"][^'"]+['"]''',
-);
-
 final _initialLocationPattern = RegExp(r'''\binitialLocation\s*:\s*r?['"]''');
 
 final _routerRouterGoNamedPattern = RegExp(
@@ -333,12 +325,6 @@ final class SourceScannerContext {
       }
     }
     return null;
-  }
-
-  bool hasHardcodedUiString(String code) {
-    if (path.contains('/l10n/')) return false;
-    if (isTestFile) return false;
-    return _textTooltipSemanticsPattern.hasMatch(code) || _titleLabelTooltipPattern.hasMatch(code);
   }
 
   int? directContextL10nColumn(int lineIndex) {

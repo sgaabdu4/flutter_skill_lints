@@ -71,6 +71,19 @@ void main() {
     expect(deferring, isEmpty);
   });
 
+  test('hardcoded UI strings have one owner rule', () {
+    final registry = _RecordingPluginRegistry('flutter_skill_lints');
+
+    FlutterSkillLintsPlugin().register(registry);
+
+    final names = {
+      for (final rule in registry.warningRules.values)
+        for (final code in rule.diagnosticCodes) code.lowerCaseName,
+    };
+    expect(names, contains('avoid_hardcoded_strings'));
+    expect(names, isNot(contains('strings_hardcoded')));
+  });
+
   test('no correction message tells users to add an ignore', () {
     final registry = _RecordingPluginRegistry('flutter_skill_lints');
 
@@ -461,8 +474,8 @@ void main() {
   });
 }
 
-const _enabledFlutterSkillRuleCount = 229;
-const _enabledFlutterSkillDiagnosticCount = 237;
+const _enabledFlutterSkillRuleCount = 228;
+const _enabledFlutterSkillDiagnosticCount = 236;
 const _enabledAdditionalRuleCount = 273;
 
 const _modelSkillErrorDiagnostics = [

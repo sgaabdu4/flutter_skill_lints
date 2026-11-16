@@ -270,11 +270,10 @@ Run the full repository gate:
 python3 .hooks/hard-eng.py check
 ```
 
-Integration smoke test (creates a temporary Flutter app, gated):
+Integration smoke test (creates a temporary Flutter app, outside the default `dart test` run):
 
 ```bash
-RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart \
-  --reporter expanded
+dart test integration_test/plugin_smoke_test.dart --reporter expanded
 ```
 
 ## Release

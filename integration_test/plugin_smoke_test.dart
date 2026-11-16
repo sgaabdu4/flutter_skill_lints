@@ -1,21 +1,14 @@
-@Tags(['integration'])
-library;
-
 import 'dart:io';
 
 import 'package:test/test.dart';
 
 void main() {
-  final shouldRun = Platform.environment['RUN_FLUTTER_PLUGIN_SMOKE'] == '1';
+  test('loads canonical configuration with riverpod_lint in a real Flutter analysis server run', () async {
+    final packageRoot = Directory.current.absolute.path;
+    final app = await Directory.systemTemp.createTemp('flutter_skill_lints_smoke_');
 
-  test(
-    'loads canonical configuration with riverpod_lint in a real Flutter analysis server run',
-    () async {
-      final packageRoot = Directory.current.absolute.path;
-      final app = await Directory.systemTemp.createTemp('flutter_skill_lints_smoke_');
-
-      try {
-        await _writeFile('${app.path}/pubspec.yaml', r'''
+    try {
+      await _writeFile('${app.path}/pubspec.yaml', r'''
 name: flutter_skill_lints_smoke
 publish_to: none
 
@@ -34,15 +27,15 @@ dev_dependencies:
   build_runner: ^2.5.0
   freezed: 4.0.2
 ''');
-        final analysisOptionsPath = '${app.path}/analysis_options.yaml';
-        await _writeFile(analysisOptionsPath, _analysisOptions(packageRoot));
-        await Directory('${app.path}/lib').create(recursive: true);
-        await Directory('${app.path}/lib/features/history/presentation/notifiers')
-            .create(recursive: true);
-        await Directory('${app.path}/lib/features/content/presentation/widgets')
-            .create(recursive: true);
-        await Directory('${app.path}/lib/features/content/repositories').create(recursive: true);
-        await _writeFile('${app.path}/lib/main.dart', r'''
+      final analysisOptionsPath = '${app.path}/analysis_options.yaml';
+      await _writeFile(analysisOptionsPath, _analysisOptions(packageRoot));
+      await Directory('${app.path}/lib').create(recursive: true);
+      await Directory('${app.path}/lib/features/history/presentation/notifiers')
+          .create(recursive: true);
+      await Directory('${app.path}/lib/features/content/presentation/widgets')
+          .create(recursive: true);
+      await Directory('${app.path}/lib/features/content/repositories').create(recursive: true);
+      await _writeFile('${app.path}/lib/main.dart', r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -96,9 +89,9 @@ class _DemoSheetState extends ConsumerState<_DemoSheet> {
   }
 }
 ''');
-        await _writeFile(
-          '${app.path}/lib/features/history/presentation/notifiers/history_calendar_notifier.dart',
-          r'''
+      await _writeFile(
+        '${app.path}/lib/features/history/presentation/notifiers/history_calendar_notifier.dart',
+        r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 @riverpod
@@ -106,14 +99,14 @@ class HistoryCalendarNotifier {
   Object build() => Object();
 }
 ''',
-        );
-        await _writeFile(
-          '${app.path}/lib/features/content/repositories/content_repository.dart',
-          'abstract interface class ContentRepository {}',
-        );
-        await _writeFile(
-          '${app.path}/lib/features/content/presentation/widgets/content_view.dart',
-          r'''
+      );
+      await _writeFile(
+        '${app.path}/lib/features/content/repositories/content_repository.dart',
+        'abstract interface class ContentRepository {}',
+      );
+      await _writeFile(
+        '${app.path}/lib/features/content/presentation/widgets/content_view.dart',
+        r'''
 import 'package:flutter/widgets.dart';
 
 import '../../repositories/content_repository.dart';
@@ -151,9 +144,9 @@ class _ContentViewState extends State<ContentView> {
   }
 }
 ''',
-        );
+      );
 
-        await _writeFile('${app.path}/lib/watch_boundaries.dart', r'''
+      await _writeFile('${app.path}/lib/watch_boundaries.dart', r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -195,7 +188,7 @@ class AsyncView extends ConsumerWidget {
 }
 ''');
 
-        await _writeFile('${app.path}/lib/atomic_update_boundaries.dart', r'''
+      await _writeFile('${app.path}/lib/atomic_update_boundaries.dart', r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -254,7 +247,7 @@ class ProgressNotifier extends Notifier<ProgressState> {
 }
 ''');
 
-        await _writeFile('${app.path}/lib/sentry_mutation_boundaries.dart', r'''
+      await _writeFile('${app.path}/lib/sentry_mutation_boundaries.dart', r'''
 import 'dart:async';
 
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -274,7 +267,7 @@ void sentryOptionsOutsideBuilder(SentryFlutterOptions options) {
 }
 ''');
 
-        await _writeFile('${app.path}/lib/resolved_contexts.dart', r'''
+      await _writeFile('${app.path}/lib/resolved_contexts.dart', r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -314,7 +307,7 @@ class LifecycleViewState extends State<LifecycleView> with LifecycleMixin<Lifecy
 }
 ''');
 
-        await _writeFile('${app.path}/lib/mutation_boundaries.dart', r'''
+      await _writeFile('${app.path}/lib/mutation_boundaries.dart', r'''
 import 'package:flutter/widgets.dart';
 class MutationView extends StatefulWidget {
   const MutationView({super.key});
@@ -334,7 +327,7 @@ class MutationViewState extends State<MutationView> {
 }
 ''');
 
-        await _writeFile('${app.path}/lib/initialization_boundaries.dart', r'''
+      await _writeFile('${app.path}/lib/initialization_boundaries.dart', r'''
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -401,7 +394,7 @@ Widget invalidLayout() => Padding(
 Axis defaultAxis() => Axis.horizontal;
 ''');
 
-        await _writeFile('${app.path}/lib/expression_boundaries.dart', r'''
+      await _writeFile('${app.path}/lib/expression_boundaries.dart', r'''
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Point { int value = 1; }
@@ -435,7 +428,7 @@ class FormView extends ConsumerWidget {
 }
 ''');
 
-        await _writeFile('${app.path}/lib/audit_notifier.dart', r'''
+      await _writeFile('${app.path}/lib/audit_notifier.dart', r'''
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 final auditProvider = NotifierProvider<AuditNotifier, String>(AuditNotifier.new);
@@ -447,7 +440,7 @@ class AuditNotifier extends Notifier<String> {
   void forward(String value) { unawaited(fetch(value)); }
 }
 ''');
-        await _writeFile('${app.path}/lib/audit_boundaries.dart', r'''
+      await _writeFile('${app.path}/lib/audit_boundaries.dart', r'''
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -500,7 +493,7 @@ class StartupState extends ConsumerState<StartupView> {
 }
 ''');
 
-        await _writeFile('${app.path}/lib/family_boundaries.dart', r'''
+      await _writeFile('${app.path}/lib/family_boundaries.dart', r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 class Payload {
   const Payload({required this.value});
@@ -517,7 +510,7 @@ class SingleNotifier {
 }
 ''');
 
-        await _writeFile('${app.path}/lib/null_container_boundaries.dart', r'''
+      await _writeFile('${app.path}/lib/null_container_boundaries.dart', r'''
 import 'package:flutter/widgets.dart';
 Widget explicitNull() => Container(padding: null, child: Expanded(child: const SizedBox()));
 Widget unknown(dynamic padding) => Container(padding: padding, child: Expanded(child: const SizedBox()));
@@ -525,230 +518,220 @@ Widget nullableBound<T extends EdgeInsetsGeometry?>(T padding) => Container(padd
 Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(padding: padding, child: Expanded(child: const SizedBox()));
 ''');
 
-        final pubGet = await _run('flutter', ['pub', 'get'], app);
-        expect(
-          pubGet.exitCode,
-          0,
-          reason: 'flutter pub get failed:\n${pubGet.stdout}\n${pubGet.stderr}',
-        );
+      final pubGet = await _run('flutter', ['pub', 'get'], app);
+      expect(
+        pubGet.exitCode,
+        0,
+        reason: 'flutter pub get failed:\n${pubGet.stdout}\n${pubGet.stderr}',
+      );
 
-        final build = await _run('dart', ['run', 'build_runner', 'build'], app);
-        expect(
-          build.exitCode,
-          0,
-          reason: 'Freezed generation failed:\n${build.stdout}\n${build.stderr}',
-        );
+      final build = await _run('dart', ['run', 'build_runner', 'build'], app);
+      expect(
+        build.exitCode,
+        0,
+        reason: 'Freezed generation failed:\n${build.stdout}\n${build.stderr}',
+      );
 
-        final analyze = await _run('dart', ['analyze'], app);
-        final output = '${analyze.stdout}\n${analyze.stderr}';
+      final analyze = await _run('dart', ['analyze'], app);
+      final output = '${analyze.stdout}\n${analyze.stderr}';
 
-        // core-stack.md:60 names avoid_null_bang; a bang reports once.
-        expect(output, isNot(contains('avoid_non_null_assertion')));
-        expect(output, contains('avoid_null_bang'));
-        expect(output, contains('avoid_ref_read_inside_build'));
-        expect(output, contains('missing_provider_scope'));
-        expect(output, contains('prefer_single_widget_per_file'));
-        expect(output, contains('prefer_type_over_var'));
-        expect(output, contains('riverpod_feature_notifier_keepalive'));
-        expect(output, contains('presentation_widget_navigation_forbidden'));
-        expect(output, contains('presentation_widget_controller_state'));
-        final catches = output
-            .split('\n')
-            .where((line) => line.contains('widget_try_catch_boundary'));
-        expect(catches, hasLength(1));
-        expect(catches.single, contains('content_view.dart:24:'));
+      // core-stack.md:60 names avoid_null_bang; a bang reports once.
+      expect(output, isNot(contains('avoid_non_null_assertion')));
+      expect(output, contains('avoid_null_bang'));
+      expect(output, contains('avoid_ref_read_inside_build'));
+      expect(output, contains('missing_provider_scope'));
+      expect(output, contains('prefer_single_widget_per_file'));
+      expect(output, contains('prefer_type_over_var'));
+      expect(output, contains('riverpod_feature_notifier_keepalive'));
+      expect(output, contains('presentation_widget_navigation_forbidden'));
+      expect(output, contains('presentation_widget_controller_state'));
+      final catches = output
+          .split('\n')
+          .where((line) => line.contains('widget_try_catch_boundary'));
+      expect(catches, hasLength(1));
+      expect(catches.single, contains('content_view.dart:24:'));
 
-        expect(output, contains('presentation_widget_infrastructure_dependency'));
-        expect(output, contains('prefer_dot_shorthands'));
-        final broadWatches = output
-            .split('\n')
-            .where((line) => line.contains('riverpod_watch_no_select'));
-        expect(broadWatches, hasLength(1));
-        // performance.md:76: whole-watch field reads report; computed collections and scalars do not.
-        expect(broadWatches.single, contains('watch_boundaries.dart:20:'));
-        final atomicUpdates = output
-            .split('\n')
-            .where(
-              (line) =>
-                  line.contains('atomic_update_boundaries.dart') &&
-                  line.contains('require_atomic_async_updates'),
-            );
-        expect(atomicUpdates, hasLength(1), reason: output);
-        for (final lineNumber in [38]) {
-          expect(
-            atomicUpdates.any(
-              (line) => line.contains('atomic_update_boundaries.dart:$lineNumber:'),
-            ),
-            isTrue,
-            reason: output,
+      expect(output, contains('presentation_widget_infrastructure_dependency'));
+      expect(output, contains('prefer_dot_shorthands'));
+      final broadWatches = output
+          .split('\n')
+          .where((line) => line.contains('riverpod_watch_no_select'));
+      expect(broadWatches, hasLength(1));
+      // performance.md:76: whole-watch field reads report; computed collections and scalars do not.
+      expect(broadWatches.single, contains('watch_boundaries.dart:20:'));
+      final atomicUpdates = output
+          .split('\n')
+          .where(
+            (line) =>
+                line.contains('atomic_update_boundaries.dart') &&
+                line.contains('require_atomic_async_updates'),
           );
-        }
-        final sentryMutations = output
-            .split('\n')
-            .where(
-              (line) =>
-                  line.contains('sentry_mutation_boundaries.dart') &&
-                  line.contains('avoid_mutating_parameters'),
-            );
-        expect(sentryMutations, hasLength(3), reason: output);
+      expect(atomicUpdates, hasLength(1), reason: output);
+      for (final lineNumber in [38]) {
         expect(
-          sentryMutations.any((line) => line.contains('sentry_mutation_boundaries.dart:7:')),
-          isFalse,
+          atomicUpdates.any((line) => line.contains('atomic_update_boundaries.dart:$lineNumber:')),
+          isTrue,
           reason: output,
         );
-        for (final lineNumber in [8, 10, 16]) {
+      }
+      final sentryMutations = output
+          .split('\n')
+          .where(
+            (line) =>
+                line.contains('sentry_mutation_boundaries.dart') &&
+                line.contains('avoid_mutating_parameters'),
+          );
+      expect(sentryMutations, hasLength(3), reason: output);
+      expect(
+        sentryMutations.any((line) => line.contains('sentry_mutation_boundaries.dart:7:')),
+        isFalse,
+        reason: output,
+      );
+      for (final lineNumber in [8, 10, 16]) {
+        expect(
+          sentryMutations.any(
+            (line) => line.contains('sentry_mutation_boundaries.dart:$lineNumber:'),
+          ),
+          isTrue,
+          reason: output,
+        );
+      }
+      expect(output, contains('riverpod_select_identity_forbidden'));
+      final contexts = output.split('\n').where((line) => line.contains('resolved_contexts.dart'));
+      expect(contexts.where((line) => line.contains('avoid_missing_interpolation')), isEmpty);
+      expect(
+        contexts.where((line) => line.contains('avoid_unnecessary_stateful_widgets')),
+        isEmpty,
+      );
+      final callbacks = contexts.where((line) => line.contains('avoid_ref_watch_outside_build'));
+      expect(callbacks, hasLength(1));
+      expect(callbacks.single, contains('resolved_contexts.dart:8:'));
+      // Fixture lint findings are expected errors; only other errors (compile failures) fail here.
+      const contextLints = {
+        'avoid_magic_literals',
+        'avoid_returning_widgets',
+        'avoid_throw',
+        'prefer_dot_shorthands',
+        'strings_hardcoded',
+      };
+      expect(
+        contexts.where(
+          (line) =>
+              line.trimLeft().startsWith('error -') &&
+              !contextLints.any((code) => line.trimRight().endsWith(' - $code')),
+        ),
+        isEmpty,
+      );
+
+      final mutations = output
+          .split('\n')
+          .where(
+            (line) =>
+                line.contains('mutation_boundaries.dart') &&
+                line.contains('build_calls_mutating_instance_method'),
+          );
+      expect(mutations, hasLength(1));
+      expect(mutations.single, contains('mutation_boundaries.dart:14:'));
+
+      final initialization = output
+          .split('\n')
+          .where((line) => line.contains('initialization_boundaries.dart'));
+      for (final code in [
+        'avoid_unassigned_late_fields',
+        'avoid_disposing_late_fields',
+        'avoid_undisposed_instances',
+        'avoid_flexible_outside_flex',
+        'avoid_unassigned_local_variable',
+      ]) {
+        expect(initialization.where((line) => line.contains(code)), hasLength(1), reason: code);
+      }
+
+      final expressions = output
+          .split('\n')
+          .where((line) => line.contains('expression_boundaries.dart'));
+      for (final code in [
+        'use_existing_variable',
+        'avoid_contradictory_expressions',
+        'text_field_on_changed_no_debounce',
+      ]) {
+        expect(expressions.where((line) => line.contains(code)), hasLength(1), reason: code);
+      }
+
+      final audit = output.split('\n').where((line) => line.contains('audit_boundaries.dart'));
+      for (final entry in {
+        'text_field_on_changed_no_debounce': [11, 12],
+        'avoid_flexible_outside_flex': [14, 15],
+        'use_existing_variable': [28],
+        'riverpod_read_init_state': [41, 42, 43, 44],
+        'avoid_frame_deferral': [44, 45],
+      }.entries) {
+        final findings = audit.where((line) => line.contains(entry.key));
+        expect(findings, hasLength(entry.value.length), reason: '${entry.key}\n$output');
+        for (final lineNumber in entry.value) {
           expect(
-            sentryMutations.any(
-              (line) => line.contains('sentry_mutation_boundaries.dart:$lineNumber:'),
-            ),
+            findings.any((line) => line.contains('audit_boundaries.dart:$lineNumber:')),
             isTrue,
-            reason: output,
           );
         }
-        expect(output, contains('riverpod_select_identity_forbidden'));
-        final contexts = output
-            .split('\n')
-            .where((line) => line.contains('resolved_contexts.dart'));
-        expect(contexts.where((line) => line.contains('avoid_missing_interpolation')), isEmpty);
-        expect(
-          contexts.where((line) => line.contains('avoid_unnecessary_stateful_widgets')),
-          isEmpty,
-        );
-        final callbacks = contexts.where((line) => line.contains('avoid_ref_watch_outside_build'));
-        expect(callbacks, hasLength(1));
-        expect(callbacks.single, contains('resolved_contexts.dart:8:'));
-        // Fixture lint findings are expected errors; only other errors (compile failures) fail here.
-        const contextLints = {
-          'avoid_magic_literals',
-          'avoid_returning_widgets',
-          'avoid_throw',
-          'prefer_dot_shorthands',
-          'strings_hardcoded',
-        };
-        expect(
-          contexts.where(
-            (line) =>
-                line.trimLeft().startsWith('error -') &&
-                !contextLints.any((code) => line.trimRight().endsWith(' - $code')),
-          ),
-          isEmpty,
-        );
-
-        final mutations = output
-            .split('\n')
-            .where(
-              (line) =>
-                  line.contains('mutation_boundaries.dart') &&
-                  line.contains('build_calls_mutating_instance_method'),
-            );
-        expect(mutations, hasLength(1));
-        expect(mutations.single, contains('mutation_boundaries.dart:14:'));
-
-        final initialization = output
-            .split('\n')
-            .where((line) => line.contains('initialization_boundaries.dart'));
-        for (final code in [
-          'avoid_unassigned_late_fields',
-          'avoid_disposing_late_fields',
-          'avoid_undisposed_instances',
-          'avoid_flexible_outside_flex',
-          'avoid_unassigned_local_variable',
-        ]) {
-          expect(initialization.where((line) => line.contains(code)), hasLength(1), reason: code);
-        }
-
-        final expressions = output
-            .split('\n')
-            .where((line) => line.contains('expression_boundaries.dart'));
-        for (final code in [
-          'use_existing_variable',
-          'avoid_contradictory_expressions',
-          'text_field_on_changed_no_debounce',
-        ]) {
-          expect(expressions.where((line) => line.contains(code)), hasLength(1), reason: code);
-        }
-
-        final audit = output.split('\n').where((line) => line.contains('audit_boundaries.dart'));
-        for (final entry in {
-          'text_field_on_changed_no_debounce': [11, 12],
-          'avoid_flexible_outside_flex': [14, 15],
-          'use_existing_variable': [28],
-          'riverpod_read_init_state': [41, 42, 43, 44],
-          'avoid_frame_deferral': [44, 45],
-        }.entries) {
-          final findings = audit.where((line) => line.contains(entry.key));
-          expect(findings, hasLength(entry.value.length), reason: '${entry.key}\n$output');
-          for (final lineNumber in entry.value) {
-            expect(
-              findings.any((line) => line.contains('audit_boundaries.dart:$lineNumber:')),
-              isTrue,
-            );
-          }
-        }
-        expect(
-          audit.where(
-            (line) =>
-                line.trimLeft().startsWith('error -') &&
-                !line.contains('riverpod_read_init_state') &&
-                !line.contains('avoid_frame_deferral') &&
-                !line.contains('avoid_flexible_outside_flex') &&
-                !line.contains('text_field_on_changed_no_debounce'),
-          ),
-          isEmpty,
-        );
-
-        final families = output
-            .split('\n')
-            .where((line) => line.contains('family_boundaries.dart'));
-        final keptFamilies = families.where((line) => line.contains('riverpod_keepalive_family'));
-        expect(keptFamilies, hasLength(1));
-        expect(keptFamilies.single, contains('family_boundaries.dart:8:'));
-        expect(
-          families.where(
-            (line) =>
-                line.trimLeft().startsWith('error -') &&
-                !line.contains('riverpod_keepalive_family'),
-          ),
-          isEmpty,
-        );
-
-        final nullableContainers = output
-            .split('\n')
-            .where((line) => line.contains('null_container_boundaries.dart'));
-        final invalidContainers = nullableContainers.where(
-          (line) => line.contains('avoid_flexible_outside_flex'),
-        );
-        expect(invalidContainers, hasLength(1));
-        expect(invalidContainers.single, contains('null_container_boundaries.dart:5:'));
-        expect(invalidContainers.single.trimLeft(), startsWith('error -'));
-        expect(
-          nullableContainers.where(
-            (line) =>
-                line.trimLeft().startsWith('error -') &&
-                !line.contains('avoid_flexible_outside_flex') &&
-                // The fixture's top-level widget functions are its own shape.
-                !line.contains('avoid_returning_widgets'),
-          ),
-          isEmpty,
-        );
-
-        expect(output, isNot(contains('deprecated_lint')));
-        expect(output, isNot(contains('server.pluginError')));
-
-        await _writeFile(analysisOptionsPath, _analysisOptionsWithDeprecatedLint(packageRoot));
-        final deprecatedLintAnalyze = await _run('dart', ['analyze'], app);
-        final deprecatedLintOutput =
-            '${deprecatedLintAnalyze.stdout}\n${deprecatedLintAnalyze.stderr}';
-
-        expect(deprecatedLintOutput, contains('avoid_private_typedef_functions'));
-        expect(deprecatedLintOutput, contains('deprecated_lint'));
-      } finally {
-        await app.delete(recursive: true);
       }
-    },
-    skip: shouldRun ? false : 'Set RUN_FLUTTER_PLUGIN_SMOKE=1 to run.',
-    timeout: const Timeout(Duration(minutes: 5)),
-  );
+      expect(
+        audit.where(
+          (line) =>
+              line.trimLeft().startsWith('error -') &&
+              !line.contains('riverpod_read_init_state') &&
+              !line.contains('avoid_frame_deferral') &&
+              !line.contains('avoid_flexible_outside_flex') &&
+              !line.contains('text_field_on_changed_no_debounce'),
+        ),
+        isEmpty,
+      );
+
+      final families = output.split('\n').where((line) => line.contains('family_boundaries.dart'));
+      final keptFamilies = families.where((line) => line.contains('riverpod_keepalive_family'));
+      expect(keptFamilies, hasLength(1));
+      expect(keptFamilies.single, contains('family_boundaries.dart:8:'));
+      expect(
+        families.where(
+          (line) =>
+              line.trimLeft().startsWith('error -') && !line.contains('riverpod_keepalive_family'),
+        ),
+        isEmpty,
+      );
+
+      final nullableContainers = output
+          .split('\n')
+          .where((line) => line.contains('null_container_boundaries.dart'));
+      final invalidContainers = nullableContainers.where(
+        (line) => line.contains('avoid_flexible_outside_flex'),
+      );
+      expect(invalidContainers, hasLength(1));
+      expect(invalidContainers.single, contains('null_container_boundaries.dart:5:'));
+      expect(invalidContainers.single.trimLeft(), startsWith('error -'));
+      expect(
+        nullableContainers.where(
+          (line) =>
+              line.trimLeft().startsWith('error -') &&
+              !line.contains('avoid_flexible_outside_flex') &&
+              // The fixture's top-level widget functions are its own shape.
+              !line.contains('avoid_returning_widgets'),
+        ),
+        isEmpty,
+      );
+
+      expect(output, isNot(contains('deprecated_lint')));
+      expect(output, isNot(contains('server.pluginError')));
+
+      await _writeFile(analysisOptionsPath, _analysisOptionsWithDeprecatedLint(packageRoot));
+      final deprecatedLintAnalyze = await _run('dart', ['analyze'], app);
+      final deprecatedLintOutput =
+          '${deprecatedLintAnalyze.stdout}\n${deprecatedLintAnalyze.stderr}';
+
+      expect(deprecatedLintOutput, contains('avoid_private_typedef_functions'));
+      expect(deprecatedLintOutput, contains('deprecated_lint'));
+    } finally {
+      await app.delete(recursive: true);
+    }
+  }, timeout: const Timeout(Duration(minutes: 5)));
 }
 
 String _analysisOptions(String packageRoot) =>

@@ -76,7 +76,7 @@ jobs:
         run: dart test --reporter expanded
 
       - name: Run real analyzer-server smoke
-        run: RUN_FLUTTER_PLUGIN_SMOKE=1 dart test test/integration_plugin_smoke_test.dart --reporter expanded
+        run: dart test integration_test/plugin_smoke_test.dart --reporter expanded
 
   publish:
     name: Publish to pub.dev

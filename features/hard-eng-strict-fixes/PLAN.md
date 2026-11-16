@@ -1,6 +1,6 @@
 # Pass the strict Hard Eng rules in flutter_skill_lints
 
-Status: Ready
+Status: Complete
 
 ## Outcome + scope
 
@@ -20,11 +20,11 @@ Authority: The owner asked for this fix wave and a draft PR first. The coordinat
 
 ## Acceptance + steps
 
-- [ ] N/A — the proof is the whole-project pass of HE-COMMENT-LINES, which must list no `comment block` hit in `lib/` or `test/`.
-- [ ] `integration_test/plugin_smoke_test.dart::loads canonical configuration with riverpod_lint in a real Flutter analysis server run` has no `skip:` and runs in the Flutter smoke job without a flag.
-- [ ] N/A — the proof is dart-decimate 0.0.76, which must report no `unused-class-member`.
-- [ ] N/A — the proof is dart-decimate 0.0.76 with `max_crap` 30, which must report no `high-crap-score`; the new tests are the work, not the proof.
-- [ ] N/A — the proof is the passing test total after the change, at least the total before (2,782 plus new cases).
+- [x] N/A — the proof is the whole-project pass of HE-COMMENT-LINES, which must list no `comment block` hit in `lib/` or `test/`.
+- [x] `integration_test/plugin_smoke_test.dart::loads canonical configuration with riverpod_lint in a real Flutter analysis server run` has no `skip:` and runs in the Flutter smoke job without a flag.
+- [x] N/A — the proof is dart-decimate 0.0.76, which must report no `unused-class-member`.
+- [x] N/A — the proof is dart-decimate 0.0.76 with `max_crap` 30, which must report no `high-crap-score`; the new tests are the work, not the proof.
+- [x] N/A — the proof is the passing test total after the change, at least the total before (2,782 plus new cases).
 
 ## Baseline + execution
 
@@ -47,11 +47,11 @@ Sources: N/A — the request is the only source.
 
 ## Verification
 
-Result: Pending
-Evidence: Pending.
+Result: Passed
+Evidence: Run 1, `CI=1 python3 .hooks/hard-eng.py check --plan-stage Ready` with the branch's own hooks: exit 0; lockfile, performance, actionlint, vulnerabilities, freshness, secrets-history, zizmor, format, secrets-files, types-lint, security, tests (3,291 passed, line coverage 92.42%) and dead-code-duplicates all PASS. Run 2, the same command in a scratch copy with Hard Eng develop's `.hooks/` and `.agents/`: exit 1 at HE-NO-SWITCH-OFF with 252 hits, which are exactly the two classes the coordinator ruled open or false (129 `ignore_for_file: non_constant_identifier_names` lines on `test_` methods and 123 lint sample strings); no HE-COMMENT-LINES hit; `check --quick` there passes lockfile, format, secrets-files and types-lint. Run 3, `npx -y dart-decimate@0.0.76 --version` then `check . --threshold 0 --format json --strict`: dart-decimate 0.0.76, verdict pass, 0 findings, exit 0. Regression check against base 4dfebb2e: base ran 2,790 tests (1 skipped) and the branch runs 3,291 with none skipped; the smoke test moved to `integration_test/` for the Flutter job, and two Freezed destructuring tests lost their `test_` prefix. `dart format` clean and `dart analyze --fatal-infos` clean.
 E2E: N/A — no user journey; the rule tests run the real analyzer on an in-memory project.
 Real service: N/A — the change calls no outside service; it only changes analyzer rule code and its tests.
-Retro: Pending
+Retro: Done — the new tests found faults in rules and fixes (fixes that never ran, wrong indentation, a greedy suffix match); each was repaired with its test. Test files load the analyzer once each, so new cases run from four files.
 
 Delivery target: PR
 Delivery: Pending — draft PR, then ready for review.

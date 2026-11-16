@@ -6,6 +6,7 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.dart';
 
 /// Fix that moves opacity from Opacity wrapper to Image's opacity parameter.
 class AvoidIncorrectImageOpacityFix extends ResolvedCorrectionProducer {
@@ -29,7 +30,7 @@ class AvoidIncorrectImageOpacityFix extends ResolvedCorrectionProducer {
     final Expression opacityCreation;
     final NodeList<Argument> arguments;
 
-    final targetNode = node;
+    final targetNode = reportedConstructorName(node);
     if (targetNode is ConstructorName && targetNode.parent is InstanceCreationExpression) {
       final ice = targetNode.parent! as InstanceCreationExpression;
       opacityCreation = ice;

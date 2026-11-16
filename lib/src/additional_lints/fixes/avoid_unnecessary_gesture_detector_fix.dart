@@ -6,6 +6,7 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.dart';
 
 /// Fix that removes the unnecessary GestureDetector and replaces it with its child widget.
 class AvoidUnnecessaryGestureDetectorFix extends ResolvedCorrectionProducer {
@@ -25,7 +26,7 @@ class AvoidUnnecessaryGestureDetectorFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
+    final targetNode = reportedConstructorName(node);
 
     // The reported node can be ConstructorName or SimpleIdentifier
     final Expression gestureDetectorExpr;

@@ -1,6 +1,15 @@
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:test/test.dart';
 
+Map<String, Future<void> Function(T)> caseSet<T extends AnalysisRuleTest>({
+  required Map<String, Future<void> Function(Never)> parent,
+  required Map<String, Future<void> Function(T)> own,
+}) => {
+  for (final entry in parent.entries)
+    entry.key: entry.value as Future<void> Function(T),
+  ...own,
+};
+
 void analysisRuleSuite<T extends AnalysisRuleTest>(
   String name,
   T Function() create,

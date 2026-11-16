@@ -79,7 +79,7 @@ List<LocalVariableElement> _recordPatternResourceBindings(
 
 bool _isResolvedRecordCaptureSource(Expression expression, Block block) {
   if (_isResolvedRecordCaptureExpression(expression)) return true;
-  final element = _localVariableReadElement(expression, block);
+  final element = _localVariableReadElement(expression);
   if (element == null) return false;
   for (final statement in block.statements.whereType<VariableDeclarationStatement>()) {
     if (statement.end > expression.offset ||
@@ -109,28 +109,10 @@ Expression? _recordPatternValue(PatternVariableDeclaration declaration) {
   return expressions.length == 1 ? expressions.single : null;
 }
 
-final _localVariableReadElementPattern = RegExp(r'^[A-Za-z_$][A-Za-z0-9_$]*$');
-
-LocalVariableElement? _localVariableReadElement(Expression expression, Block block) {
-  if (expression is SimpleIdentifier) {
-    final element = expression.element;
-    return element is LocalVariableElement ? element : null;
-  }
-  final name = expression.toSource();
-  if (!_localVariableReadElementPattern.hasMatch(name)) return null;
-  final candidates = <LocalVariableElement>{};
-  for (final statement in block.statements.whereType<VariableDeclarationStatement>()) {
-    if (statement.end > expression.offset || statement.variables.keyword?.lexeme != 'final') {
-      continue;
-    }
-    for (final variable in statement.variables.variables) {
-      final element = variable.declaredFragment?.element;
-      if (variable.name.lexeme == name && element is LocalVariableElement) {
-        candidates.add(element);
-      }
-    }
-  }
-  return candidates.length == 1 ? candidates.single : null;
+LocalVariableElement? _localVariableReadElement(Expression expression) {
+  if (expression is! SimpleIdentifier) return null;
+  final element = expression.element;
+  return element is LocalVariableElement ? element : null;
 }
 
 bool _hasRepositoryOrServiceRecordField(RecordType type) => type.namedFields.any(
@@ -176,7 +158,7 @@ bool _hasUsedCapturedDependency(LocalVariableElement element, Block block, int b
   for (final statement in block.statements.whereType<PatternVariableDeclarationStatement>()) {
     final value = _recordPatternValue(statement.declaration);
     if (value == null ||
-        _localVariableReadElement(value, block) != element ||
+        _localVariableReadElement(value) != element ||
         !_isResolvedRecordCaptureSource(value, block)) {
       continue;
     }

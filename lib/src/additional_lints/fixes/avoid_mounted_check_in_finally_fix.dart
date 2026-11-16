@@ -41,7 +41,7 @@ class AvoidMountedCheckInFinallyFix extends ResolvedCorrectionProducer {
     if (trailing.isEmpty) return; // no statements to guard — refuse fix.
 
     final content = unitResult.content;
-    final blockIndent = _lineIndent(content, parent.offset);
+    final blockIndent = _lineIndent(content, ifNode.offset);
     final innerIndent = '$blockIndent  ';
 
     final body = trailing

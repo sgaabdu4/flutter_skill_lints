@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_identical_exception_handling_blocks.dart';
@@ -7,18 +5,91 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_try_
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_only_rethrow.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_throw.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidNestedTryStatementsTest);
-    defineReflectiveTests(AvoidIdenticalExceptionHandlingBlocksTest);
-    defineReflectiveTests(AvoidThrowTest);
-    defineReflectiveTests(AvoidOnlyRethrowTest);
+  analysisRuleSuite<AvoidNestedTryStatementsTest>(
+    'AvoidNestedTryStatementsTest',
+    AvoidNestedTryStatementsTest.new,
+    {
+      'test_tryInsideTryBody_lint': (t) => t._tryInsideTryBodyLint(),
+      'test_tryInsideCatch_lint': (t) => t._tryInsideCatchLint(),
+      'test_tryInsideLocalFunction_noLint': (t) => t._tryInsideLocalFunctionNoLint(),
+      'test_sequentialTryStatements_noLint': (t) => t._sequentialTryStatementsNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidIdenticalExceptionHandlingBlocksTest>(
+    'AvoidIdenticalExceptionHandlingBlocksTest',
+    AvoidIdenticalExceptionHandlingBlocksTest.new,
+    {
+      'test_identicalCatchBodies_lintSecondBody': (t) => t._identicalCatchBodiesLintSecondBody(),
+      'test_identicalCatchBodiesWithDifferentWhitespace_lintSecondBody': (t) =>
+          t._identicalCatchBodiesWithDifferentWhitespaceLintSecondBody(),
+      'test_differentCatchBodies_noLint': (t) => t._differentCatchBodiesNoLint(),
+      'test_emptyCatchBodies_noLint': (t) => t._emptyCatchBodiesNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidThrowTest>('AvoidThrowTest', AvoidThrowTest.new, {
+    'test_severity_error': (t) async => t._severityError(),
+    'test_scopedProviderOverrideStub_noLint': (t) => t._scopedProviderOverrideStubNoLint(),
+    'test_nonScopedOrNonStubProviderThrow_lint': (t) => t._nonScopedOrNonStubProviderThrowLint(),
+    'test_throwStatement_lint': (t) => t._throwStatementLint(),
+    'test_throwExpressionBody_lint': (t) => t._throwExpressionBodyLint(),
+    'test_documentedParserFormatException_noLint': (t) =>
+        t._documentedParserFormatExceptionNoLint(),
+    'test_typedExceptionSubtypeOutsidePresentation_noLint': (t) =>
+        t._typedExceptionSubtypeOutsidePresentationNoLint(),
+    'test_baseExceptionErrorsAndUntypedValues_lint': (t) =>
+        t._baseExceptionErrorsAndUntypedValuesLint(),
+    'test_nonExceptionFormatExceptionLookalike_lint': (t) =>
+        t._nonExceptionFormatExceptionLookalikeLint(),
+    'test_widgetAndStateBuildStillReportTypedThrows': (t) =>
+        t._widgetAndStateBuildStillReportTypedThrows(),
+    'test_widgetHelperMethodStillReportsTypedThrow': (t) =>
+        t._widgetHelperMethodStillReportsTypedThrow(),
+    'test_sameUnitFlutterCallbackFunctionAndGenericTearoffsStillReport': (t) =>
+        t._sameUnitFlutterCallbackFunctionAndGenericTearoffsStillReport(),
+    'test_resolvedWidgetCallbackAndDeferredThrowStillReport': (t) =>
+        t._resolvedWidgetCallbackAndDeferredThrowStillReport(),
+    'test_lookalikeWidgetCallbackDoesNotCreateUiBoundary': (t) =>
+        t._lookalikeWidgetCallbackDoesNotCreateUiBoundary(),
+    'test_genericErrorCallbackDoesNotHideUntypedThrow': (t) =>
+        t._genericErrorCallbackDoesNotHideUntypedThrow(),
+    'test_actualRiverpodNotifierMutationStillReportsTypedThrow': (t) =>
+        t._actualRiverpodNotifierMutationStillReportsTypedThrow(),
+    'test_codegenRiverpodNotifierTypedThrow_lint': (t) =>
+        t._codegenRiverpodNotifierTypedThrowLint(),
+    'test_datasourceTypedThrowNextToCodegenNotifier_noLint': (t) =>
+        t._datasourceTypedThrowNextToCodegenNotifierNoLint(),
+    'test_validatedValueObjectArgumentGuard_noLint': (t) =>
+        t._validatedValueObjectArgumentGuardNoLint(),
+    'test_valueObjectExtractedGuardHelper_noLint': (t) =>
+        t._valueObjectExtractedGuardHelperNoLint(),
+    'test_guardHelperOutsideContract_lint': (t) => t._guardHelperOutsideContractLint(),
+    'test_unrelatedThrowInValueObject_stillReports': (t) =>
+        t._unrelatedThrowInValueObjectStillReports(),
+    'test_valueObjectGuardThroughFinalParameterLocal_noLint': (t) =>
+        t._valueObjectGuardThroughFinalParameterLocalNoLint(),
+    'test_valueObjectGuardThroughNonFinalOrUnrelatedLocal_lint': (t) =>
+        t._valueObjectGuardThroughNonFinalOrUnrelatedLocalLint(),
+    'test_coreThrowWithStackTraceUntypedValue_lint': (t) =>
+        t._coreThrowWithStackTraceUntypedValueLint(),
+    'test_coreThrowWithStackTracePropagationAndTypedFailure_noLint': (t) =>
+        t._coreThrowWithStackTracePropagationAndTypedFailureNoLint(),
+    'test_coreThrowWithStackTraceInPresentation_lint': (t) =>
+        t._coreThrowWithStackTraceInPresentationLint(),
+    'test_nonCoreThrowWithStackTrace_noLint': (t) => t._nonCoreThrowWithStackTraceNoLint(),
+    'test_rethrow_noLint': (t) => t._rethrowNoLint(),
+    'test_generatedLocalizationThrow_noLint': (t) => t._generatedLocalizationThrowNoLint(),
+  });
+  analysisRuleSuite<AvoidOnlyRethrowTest>('AvoidOnlyRethrowTest', AvoidOnlyRethrowTest.new, {
+    'test_trailingRethrowOnlyCatch_lint': (t) => t._trailingRethrowOnlyCatchLint(),
+    'test_rethrowOnlyCatchBeforeFinally_lint': (t) => t._rethrowOnlyCatchBeforeFinallyLint(),
+    'test_skillDataLayerCatches_noLint': (t) => t._skillDataLayerCatchesNoLint(),
   });
 }
 
-@reflectiveTest
 final class AvoidNestedTryStatementsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -26,7 +97,7 @@ final class AvoidNestedTryStatementsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_tryInsideTryBody_lint() async {
+  Future<void> _tryInsideTryBodyLint() async {
     const source = r'''
 void f() {
   try {
@@ -47,7 +118,7 @@ void f() {
     await assertDiagnostics(source, [lint(offset, end - offset)]);
   }
 
-  Future<void> test_tryInsideCatch_lint() async {
+  Future<void> _tryInsideCatchLint() async {
     const source = r'''
 void f() {
   try {
@@ -66,7 +137,7 @@ void f() {
     await assertDiagnostics(source, [lint(offset, end - offset)]);
   }
 
-  Future<void> test_tryInsideLocalFunction_noLint() async {
+  Future<void> _tryInsideLocalFunctionNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   try {
@@ -82,7 +153,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_sequentialTryStatements_noLint() async {
+  Future<void> _sequentialTryStatementsNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   try {
@@ -97,7 +168,6 @@ void f() {
   }
 }
 
-@reflectiveTest
 final class AvoidIdenticalExceptionHandlingBlocksTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -105,7 +175,7 @@ final class AvoidIdenticalExceptionHandlingBlocksTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_identicalCatchBodies_lintSecondBody() async {
+  Future<void> _identicalCatchBodiesLintSecondBody() async {
     const source = r'''
 void f() {
   try {
@@ -132,7 +202,7 @@ class StateFailure implements Exception {}
     ]);
   }
 
-  Future<void> test_identicalCatchBodiesWithDifferentWhitespace_lintSecondBody() async {
+  Future<void> _identicalCatchBodiesWithDifferentWhitespaceLintSecondBody() async {
     const source = r'''
 void f() {
   try {
@@ -161,7 +231,7 @@ class StateFailure implements Exception {}
     ]);
   }
 
-  Future<void> test_differentCatchBodies_noLint() async {
+  Future<void> _differentCatchBodiesNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   try {
@@ -179,7 +249,7 @@ class StateFailure implements Exception {}
 ''');
   }
 
-  Future<void> test_emptyCatchBodies_noLint() async {
+  Future<void> _emptyCatchBodiesNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   try {
@@ -196,7 +266,6 @@ class StateFailure implements Exception {}
   }
 }
 
-@reflectiveTest
 final class AvoidThrowTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -279,11 +348,11 @@ const riverpod = Riverpod();
 ''');
   }
 
-  void test_severity_error() {
+  void _severityError() {
     expect(AvoidThrow.code.severity, DiagnosticSeverity.ERROR);
   }
 
-  Future<void> test_scopedProviderOverrideStub_noLint() async {
+  Future<void> _scopedProviderOverrideStubNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -292,7 +361,7 @@ Future<int> scopedValue(Ref ref) => throw UnimplementedError();
 ''');
   }
 
-  Future<void> test_nonScopedOrNonStubProviderThrow_lint() async {
+  Future<void> _nonScopedOrNonStubProviderThrowLint() async {
     newFile('$testPackageLibPath/local_riverpod.dart', r'''
 final class Riverpod {
   const Riverpod({List<Object>? dependencies});
@@ -339,7 +408,7 @@ Future<int> localAnnotation(Ref ref) => throw UnimplementedError('local');
     ]);
   }
 
-  Future<void> test_throwStatement_lint() async {
+  Future<void> _throwStatementLint() async {
     const source = r'''
 void f() {
   throw 'failed';
@@ -349,7 +418,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('throw'), "throw 'failed'".length)]);
   }
 
-  Future<void> test_throwExpressionBody_lint() async {
+  Future<void> _throwExpressionBodyLint() async {
     const source = r'''
 Never f() => throw 'failed';
 ''';
@@ -357,7 +426,7 @@ Never f() => throw 'failed';
     await assertDiagnostics(source, [lint(source.indexOf('throw'), "throw 'failed'".length)]);
   }
 
-  Future<void> test_documentedParserFormatException_noLint() async {
+  Future<void> _documentedParserFormatExceptionNoLint() async {
     await assertNoDiagnostics(r'''
 Map<String, dynamic> parsePayload(String body) {
   final Object? decoded = body;
@@ -367,7 +436,7 @@ Map<String, dynamic> parsePayload(String body) {
 ''');
   }
 
-  Future<void> test_typedExceptionSubtypeOutsidePresentation_noLint() async {
+  Future<void> _typedExceptionSubtypeOutsidePresentationNoLint() async {
     await assertNoDiagnostics(r'''
 final class RepositoryFailure implements Exception {
   const RepositoryFailure();
@@ -377,7 +446,7 @@ Never fail() => throw const RepositoryFailure();
 ''');
   }
 
-  Future<void> test_baseExceptionErrorsAndUntypedValues_lint() async {
+  Future<void> _baseExceptionErrorsAndUntypedValuesLint() async {
     const source = r'''
 void baseException() => throw Exception('base');
 final class FatalFailure extends Error {}
@@ -397,7 +466,7 @@ void stringFailure() => throw 'failure';
     ]);
   }
 
-  Future<void> test_nonExceptionFormatExceptionLookalike_lint() async {
+  Future<void> _nonExceptionFormatExceptionLookalikeLint() async {
     const source = r'''
 final class FormatException {
   const FormatException();
@@ -411,7 +480,7 @@ Never decode() => throw const FormatException();
     ]);
   }
 
-  Future<void> test_widgetAndStateBuildStillReportTypedThrows() async {
+  Future<void> _widgetAndStateBuildStillReportTypedThrows() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -438,7 +507,7 @@ final class PayloadState extends State<Object> {
     ]);
   }
 
-  Future<void> test_widgetHelperMethodStillReportsTypedThrow() async {
+  Future<void> _widgetHelperMethodStillReportsTypedThrow() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -455,7 +524,7 @@ final class PayloadWidget extends StatelessWidget {
     ]);
   }
 
-  Future<void> test_sameUnitFlutterCallbackFunctionAndGenericTearoffsStillReport() async {
+  Future<void> _sameUnitFlutterCallbackFunctionAndGenericTearoffsStillReport() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -507,7 +576,7 @@ void registerCallbacks(StateController controller, PayloadState state) {
     ]);
   }
 
-  Future<void> test_resolvedWidgetCallbackAndDeferredThrowStillReport() async {
+  Future<void> _resolvedWidgetCallbackAndDeferredThrowStillReport() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -532,7 +601,7 @@ void registerAction() {
     ]);
   }
 
-  Future<void> test_lookalikeWidgetCallbackDoesNotCreateUiBoundary() async {
+  Future<void> _lookalikeWidgetCallbackDoesNotCreateUiBoundary() async {
     await assertNoDiagnostics(r'''
 class FakeTextButton {
   const FakeTextButton({void Function()? onPressed});
@@ -544,7 +613,7 @@ void registerAction() {
 ''');
   }
 
-  Future<void> test_genericErrorCallbackDoesNotHideUntypedThrow() async {
+  Future<void> _genericErrorCallbackDoesNotHideUntypedThrow() async {
     const source = r'''
 void registerFailureHandler() {
   Future<void>.value().catchError((Object error) => throw error);
@@ -554,7 +623,7 @@ void registerFailureHandler() {
     await assertDiagnostics(source, [lint(source.indexOf('throw error'), 'throw error'.length)]);
   }
 
-  Future<void> test_actualRiverpodNotifierMutationStillReportsTypedThrow() async {
+  Future<void> _actualRiverpodNotifierMutationStillReportsTypedThrow() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -574,7 +643,7 @@ final class CounterNotifier extends Notifier<int> {
     ]);
   }
 
-  Future<void> test_codegenRiverpodNotifierTypedThrow_lint() async {
+  Future<void> _codegenRiverpodNotifierTypedThrowLint() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -596,7 +665,7 @@ class P86Form extends _$P86Form {
     ]);
   }
 
-  Future<void> test_datasourceTypedThrowNextToCodegenNotifier_noLint() async {
+  Future<void> _datasourceTypedThrowNextToCodegenNotifierNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -616,7 +685,7 @@ class P86Form extends _$P86Form {
 ''');
   }
 
-  Future<void> test_validatedValueObjectArgumentGuard_noLint() async {
+  Future<void> _validatedValueObjectArgumentGuardNoLint() async {
     final path = '$testPackageLibPath/features/items/domain/values/required_text.dart';
     newFile(path, r'''
 final class RequiredText {
@@ -634,7 +703,7 @@ final class RequiredText {
     await assertNoDiagnosticsInFile(path);
   }
 
-  Future<void> test_valueObjectExtractedGuardHelper_noLint() async {
+  Future<void> _valueObjectExtractedGuardHelperNoLint() async {
     final path = '$testPackageLibPath/core/domain/values/distance.dart';
     newFile(path, r'''
 final class Distance {
@@ -654,7 +723,7 @@ final class Distance {
     await assertNoDiagnosticsInFile(path);
   }
 
-  Future<void> test_guardHelperOutsideContract_lint() async {
+  Future<void> _guardHelperOutsideContractLint() async {
     final path = '$testPackageLibPath/core/domain/values/distance.dart';
     const source = r'''
 final class Distance {
@@ -691,7 +760,7 @@ final class Distance {
     ]);
   }
 
-  Future<void> test_unrelatedThrowInValueObject_stillReports() async {
+  Future<void> _unrelatedThrowInValueObjectStillReports() async {
     final path = '$testPackageLibPath/features/items/domain/values/required_text.dart';
     const source = r'''
 final class RequiredText {
@@ -708,7 +777,7 @@ final class RequiredText {
     ]);
   }
 
-  Future<void> test_valueObjectGuardThroughFinalParameterLocal_noLint() async {
+  Future<void> _valueObjectGuardThroughFinalParameterLocalNoLint() async {
     final path = '$testPackageLibPath/features/profile/domain/values/display_name.dart';
     newFile(path, r'''
 final class DisplayName {
@@ -727,7 +796,7 @@ final class DisplayName {
     await assertNoDiagnosticsInFile(path);
   }
 
-  Future<void> test_valueObjectGuardThroughNonFinalOrUnrelatedLocal_lint() async {
+  Future<void> _valueObjectGuardThroughNonFinalOrUnrelatedLocalLint() async {
     final path = '$testPackageLibPath/features/profile/domain/values/display_name.dart';
     const source = r'''
 final class DisplayName {
@@ -782,7 +851,7 @@ final class DisplayName {
     ]);
   }
 
-  Future<void> test_coreThrowWithStackTraceUntypedValue_lint() async {
+  Future<void> _coreThrowWithStackTraceUntypedValueLint() async {
     const source = r'''
 void throughApi() => Error.throwWithStackTrace('invalid', StackTrace.current);
 
@@ -819,7 +888,7 @@ void freshError(void Function() operation) {
     ]);
   }
 
-  Future<void> test_coreThrowWithStackTracePropagationAndTypedFailure_noLint() async {
+  Future<void> _coreThrowWithStackTracePropagationAndTypedFailureNoLint() async {
     await assertNoDiagnostics(r'''
 final class RepositoryException implements Exception {
   const RepositoryException();
@@ -843,7 +912,7 @@ void translate(void Function() operation) {
 ''');
   }
 
-  Future<void> test_coreThrowWithStackTraceInPresentation_lint() async {
+  Future<void> _coreThrowWithStackTraceInPresentationLint() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -866,7 +935,7 @@ final class CounterNotifier extends Notifier<int> {
     ]);
   }
 
-  Future<void> test_nonCoreThrowWithStackTrace_noLint() async {
+  Future<void> _nonCoreThrowWithStackTraceNoLint() async {
     newFile('$testPackageLibPath/other_errors.dart', r'''
 class Error {
   external static void throwWithStackTrace(Object error, StackTrace stackTrace);
@@ -879,7 +948,7 @@ void report() => other.Error.throwWithStackTrace('invalid', StackTrace.current);
 ''');
   }
 
-  Future<void> test_rethrow_noLint() async {
+  Future<void> _rethrowNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   try {
@@ -891,7 +960,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_generatedLocalizationThrow_noLint() async {
+  Future<void> _generatedLocalizationThrowNoLint() async {
     final filePath = '$testPackageLibPath/l10n/app_localizations.dart';
     newFile(filePath, "Never lookup() => throw 'missing';");
 
@@ -899,7 +968,6 @@ void f() {
   }
 }
 
-@reflectiveTest
 final class AvoidOnlyRethrowTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -907,7 +975,7 @@ final class AvoidOnlyRethrowTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_trailingRethrowOnlyCatch_lint() async {
+  Future<void> _trailingRethrowOnlyCatchLint() async {
     const source = r'''
 Future<void> load() async {
   try {
@@ -921,7 +989,7 @@ Future<void> load() async {
     await assertDiagnostics(source, [lint(source.indexOf(clause), clause.length)]);
   }
 
-  Future<void> test_rethrowOnlyCatchBeforeFinally_lint() async {
+  Future<void> _rethrowOnlyCatchBeforeFinallyLint() async {
     const source = r'''
 Future<void> load() async {
   try {
@@ -938,7 +1006,7 @@ Future<void> load() async {
   }
 
   /// Datasource catches the skill allows (networking.md:30-43, hive-persistence.md:72, state-management-lifecycle.md:69-72). An earlier rethrow-only clause keeps its error type out of a later catch.
-  Future<void> test_skillDataLayerCatches_noLint() async {
+  Future<void> _skillDataLayerCatchesNoLint() async {
     await assertNoDiagnostics(r'''
 class AppException implements Exception {
   const AppException(this.code);

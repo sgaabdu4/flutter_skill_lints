@@ -1,17 +1,40 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_single_child_column_or_row.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_correct_static_icon_provider.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_extracting_callbacks.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidSingleChildColumnOrRowTest);
-    defineReflectiveTests(PreferExtractingCallbacksTest);
-    defineReflectiveTests(PreferCorrectStaticIconProviderTest);
-  });
+  analysisRuleSuite<AvoidSingleChildColumnOrRowTest>(
+    'AvoidSingleChildColumnOrRowTest',
+    AvoidSingleChildColumnOrRowTest.new,
+    {
+      'test_columnWithSingleChild_lint': (t) => t._columnWithSingleChildLint(),
+      'test_rowWithSingleChild_lint': (t) => t._rowWithSingleChildLint(),
+      'test_columnWithTwoChildren_noLint': (t) => t._columnWithTwoChildrenNoLint(),
+      'test_conditionalChild_noLint': (t) => t._conditionalChildNoLint(),
+    },
+  );
+  analysisRuleSuite<PreferExtractingCallbacksTest>(
+    'PreferExtractingCallbacksTest',
+    PreferExtractingCallbacksTest.new,
+    {
+      'test_blockCallbackWithTwoStatements_lint': (t) => t._blockCallbackWithTwoStatementsLint(),
+      'test_callbackWithControlFlow_lint': (t) => t._callbackWithControlFlowLint(),
+      'test_trivialExpressionCallback_noLint': (t) => t._trivialExpressionCallbackNoLint(),
+      'test_callbackReference_noLint': (t) => t._callbackReferenceNoLint(),
+    },
+  );
+  analysisRuleSuite<PreferCorrectStaticIconProviderTest>(
+    'PreferCorrectStaticIconProviderTest',
+    PreferCorrectStaticIconProviderTest.new,
+    {
+      'test_topLevelIconDataConstant_lint': (t) => t._topLevelIconDataConstantLint(),
+      'test_staticProviderIconData_noLint': (t) => t._staticProviderIconDataNoLint(),
+      'test_nonIconDataConstant_noLint': (t) => t._nonIconDataConstantNoLint(),
+    },
+  );
 }
 
 abstract class _FlutterRuleTest extends AnalysisRuleTest {
@@ -52,7 +75,6 @@ class IconData {
   }
 }
 
-@reflectiveTest
 final class AvoidSingleChildColumnOrRowTest extends _FlutterRuleTest {
   @override
   void setUp() {
@@ -60,7 +82,7 @@ final class AvoidSingleChildColumnOrRowTest extends _FlutterRuleTest {
     super.setUp();
   }
 
-  Future<void> test_columnWithSingleChild_lint() async {
+  Future<void> _columnWithSingleChildLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -72,7 +94,7 @@ Widget build() {
     await assertDiagnostics(source, [lint(source.indexOf('Column'), 'Column'.length)]);
   }
 
-  Future<void> test_rowWithSingleChild_lint() async {
+  Future<void> _rowWithSingleChildLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -84,7 +106,7 @@ Widget build() {
     await assertDiagnostics(source, [lint(source.indexOf('Row'), 'Row'.length)]);
   }
 
-  Future<void> test_columnWithTwoChildren_noLint() async {
+  Future<void> _columnWithTwoChildrenNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -94,7 +116,7 @@ Widget build() {
 ''');
   }
 
-  Future<void> test_conditionalChild_noLint() async {
+  Future<void> _conditionalChildNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -105,7 +127,6 @@ Widget build(bool show) {
   }
 }
 
-@reflectiveTest
 final class PreferExtractingCallbacksTest extends _FlutterRuleTest {
   @override
   void setUp() {
@@ -113,7 +134,7 @@ final class PreferExtractingCallbacksTest extends _FlutterRuleTest {
     super.setUp();
   }
 
-  Future<void> test_blockCallbackWithTwoStatements_lint() async {
+  Future<void> _blockCallbackWithTwoStatementsLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -136,7 +157,7 @@ Widget build() {
     ]);
   }
 
-  Future<void> test_callbackWithControlFlow_lint() async {
+  Future<void> _callbackWithControlFlowLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -157,7 +178,7 @@ Widget build(bool enabled) {
     ]);
   }
 
-  Future<void> test_trivialExpressionCallback_noLint() async {
+  Future<void> _trivialExpressionCallbackNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -172,7 +193,7 @@ Widget build() {
 ''');
   }
 
-  Future<void> test_callbackReference_noLint() async {
+  Future<void> _callbackReferenceNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -188,7 +209,6 @@ Widget build() {
   }
 }
 
-@reflectiveTest
 final class PreferCorrectStaticIconProviderTest extends _FlutterRuleTest {
   @override
   void setUp() {
@@ -196,7 +216,7 @@ final class PreferCorrectStaticIconProviderTest extends _FlutterRuleTest {
     super.setUp();
   }
 
-  Future<void> test_topLevelIconDataConstant_lint() async {
+  Future<void> _topLevelIconDataConstantLint() async {
     const source = r'''
 import 'package:flutter/widgets/icon_data.dart';
 
@@ -206,7 +226,7 @@ const IconData appAdd = IconData(0xe001, fontFamily: 'AppIcons');
     await assertDiagnostics(source, [lint(source.indexOf('appAdd'), 'appAdd'.length)]);
   }
 
-  Future<void> test_staticProviderIconData_noLint() async {
+  Future<void> _staticProviderIconDataNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets/icon_data.dart';
 
@@ -216,7 +236,7 @@ abstract final class AppIcons {
 ''');
   }
 
-  Future<void> test_nonIconDataConstant_noLint() async {
+  Future<void> _nonIconDataConstantNoLint() async {
     await assertNoDiagnostics(r'''
 const int codePoint = 0xe001;
 ''');

@@ -1,20 +1,37 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'dart:math' as math;
 
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/material_source_rules.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(WidgetMaterialBoundaryTest);
-    defineReflectiveTests(AtomWidgetLayerDependencyTest);
-  });
+  analysisRuleSuite<WidgetMaterialBoundaryTest>(
+    'WidgetMaterialBoundaryTest',
+    WidgetMaterialBoundaryTest.new,
+    {
+      'test_reportsCoreOrganismMaterialSurface': (t) => t._reportsCoreOrganismMaterialSurface(),
+      'test_reportsCoreOrganismInkWellSurface': (t) => t._reportsCoreOrganismInkWellSurface(),
+      'test_reportsCoreMoleculeInkSurface': (t) => t._reportsCoreMoleculeInkSurface(),
+      'test_reportsFeatureWidgetMaterialSurface': (t) => t._reportsFeatureWidgetMaterialSurface(),
+      'test_allowsAtomMaterialOwner': (t) => t._allowsAtomMaterialOwner(),
+      'test_allowsAppShellMaterialOwner': (t) => t._allowsAppShellMaterialOwner(),
+      'test_allowsTests': (t) => t._allowsTests(),
+    },
+  );
+  analysisRuleSuite<AtomWidgetLayerDependencyTest>(
+    'AtomWidgetLayerDependencyTest',
+    AtomWidgetLayerDependencyTest.new,
+    {
+      'test_reportsAtomImportingFeaturePresentationWidget': (t) =>
+          t._reportsAtomImportingFeaturePresentationWidget(),
+      'test_reportsAtomImportingMolecule': (t) => t._reportsAtomImportingMolecule(),
+      'test_allowsAtomImportingAtom': (t) => t._allowsAtomImportingAtom(),
+    },
+  );
 }
 
-@reflectiveTest
 final class WidgetMaterialBoundaryTest extends AnalysisRuleTest {
   static const _ruleName = 'widget_material_boundary';
 
@@ -32,7 +49,7 @@ final class WidgetMaterialBoundaryTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsCoreOrganismMaterialSurface() async {
+  Future<void> _reportsCoreOrganismMaterialSurface() async {
     final filePath = '$testPackageLibPath/core/widgets/organisms/dashboard/empty_workout_card.dart';
     final source = _withFlutterImport(r'''
 class EmptyWorkoutCardSurface extends StatelessWidget {
@@ -56,7 +73,7 @@ class EmptyWorkoutCardSurface extends StatelessWidget {
     ]);
   }
 
-  Future<void> test_reportsCoreOrganismInkWellSurface() async {
+  Future<void> _reportsCoreOrganismInkWellSurface() async {
     final filePath = '$testPackageLibPath/core/widgets/organisms/dashboard/empty_workout_card.dart';
     final source = _withFlutterImport(r'''
 class EmptyWorkoutCardSurface extends StatelessWidget {
@@ -74,7 +91,7 @@ class EmptyWorkoutCardSurface extends StatelessWidget {
     await assertDiagnosticsInFile(filePath, [_lintFor(source, 'InkWell(')]);
   }
 
-  Future<void> test_reportsCoreMoleculeInkSurface() async {
+  Future<void> _reportsCoreMoleculeInkSurface() async {
     final filePath = '$testPackageLibPath/core/widgets/molecules/mode_chip.dart';
     final source = _withFlutterImport(r'''
 class ModeChip extends StatelessWidget {
@@ -90,7 +107,7 @@ class ModeChip extends StatelessWidget {
     await assertDiagnosticsInFile(filePath, [_lintFor(source, 'Ink(')]);
   }
 
-  Future<void> test_reportsFeatureWidgetMaterialSurface() async {
+  Future<void> _reportsFeatureWidgetMaterialSurface() async {
     final filePath = '$testPackageLibPath/features/exercises/presentation/widgets/workout_row.dart';
     final source = _withFlutterImport(r'''
 class WorkoutRow extends StatelessWidget {
@@ -112,7 +129,7 @@ class WorkoutRow extends StatelessWidget {
     ]);
   }
 
-  Future<void> test_allowsAtomMaterialOwner() async {
+  Future<void> _allowsAtomMaterialOwner() async {
     final filePath = '$testPackageLibPath/core/widgets/atoms/bento_card_widget.dart';
     final source = _withFlutterImport(r'''
 class BentoCard extends StatelessWidget {
@@ -130,7 +147,7 @@ class BentoCard extends StatelessWidget {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsAppShellMaterialOwner() async {
+  Future<void> _allowsAppShellMaterialOwner() async {
     final filePath = '$testPackageLibPath/app.dart';
     final source = _withFlutterImport(r'''
 class App extends StatelessWidget {
@@ -146,7 +163,7 @@ class App extends StatelessWidget {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsTests() async {
+  Future<void> _allowsTests() async {
     const filePath = 'test/core/widgets/organisms/empty_workout_card_test.dart';
     final source = _withFlutterImport(r'''
 void main() {
@@ -203,7 +220,6 @@ class InkWell extends Widget {
   }
 }
 
-@reflectiveTest
 final class AtomWidgetLayerDependencyTest extends AnalysisRuleTest {
   static const _ruleName = 'atom_widget_layer_dependency';
 
@@ -213,7 +229,7 @@ final class AtomWidgetLayerDependencyTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsAtomImportingFeaturePresentationWidget() async {
+  Future<void> _reportsAtomImportingFeaturePresentationWidget() async {
     final importedPath =
         '$testPackageLibPath/features/exercises/presentation/widgets/workout_row.dart';
     newFile(importedPath, 'class WorkoutRow {}');
@@ -234,7 +250,7 @@ class WorkoutRowSurface {
     ]);
   }
 
-  Future<void> test_reportsAtomImportingMolecule() async {
+  Future<void> _reportsAtomImportingMolecule() async {
     final importedPath = '$testPackageLibPath/core/widgets/molecules/mode_chip.dart';
     newFile(importedPath, 'class ModeChip {}');
 
@@ -252,7 +268,7 @@ class ModeChipSurface {
     await assertDiagnosticsInFile(filePath, [_lintFor(source, "import '../molecules", _ruleName)]);
   }
 
-  Future<void> test_allowsAtomImportingAtom() async {
+  Future<void> _allowsAtomImportingAtom() async {
     final importedPath = '$testPackageLibPath/core/widgets/atoms/app_text.dart';
     newFile(importedPath, 'class AppText {}');
 

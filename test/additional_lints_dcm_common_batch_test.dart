@@ -1,24 +1,46 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_adjacent_strings.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_empty_spread.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_future_ignore.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_labels.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_local_functions.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidAdjacentStringsTest);
-    defineReflectiveTests(AvoidEmptySpreadTest);
-    defineReflectiveTests(AvoidFutureIgnoreTest);
-    defineReflectiveTests(AvoidLabelsTest);
-    defineReflectiveTests(AvoidLocalFunctionsTest);
+  analysisRuleSuite<AvoidAdjacentStringsTest>(
+    'AvoidAdjacentStringsTest',
+    AvoidAdjacentStringsTest.new,
+    {
+      'test_adjacentStringLiterals_lint': (t) => t._adjacentStringLiteralsLint(),
+      'test_singleStringLiteral_noLint': (t) => t._singleStringLiteralNoLint(),
+      'test_generatedLocalizationAdjacentStrings_noLint': (t) =>
+          t._generatedLocalizationAdjacentStringsNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidEmptySpreadTest>('AvoidEmptySpreadTest', AvoidEmptySpreadTest.new, {
+    'test_emptyListSpread_lint': (t) => t._emptyListSpreadLint(),
+    'test_emptySetSpread_lint': (t) => t._emptySetSpreadLint(),
+    'test_nonEmptySpread_noLint': (t) => t._nonEmptySpreadNoLint(),
   });
+  analysisRuleSuite<AvoidFutureIgnoreTest>('AvoidFutureIgnoreTest', AvoidFutureIgnoreTest.new, {
+    'test_futureIgnore_lint': (t) => t._futureIgnoreLint(),
+    'test_nonFutureIgnore_noLint': (t) => t._nonFutureIgnoreNoLint(),
+  });
+  analysisRuleSuite<AvoidLabelsTest>('AvoidLabelsTest', AvoidLabelsTest.new, {
+    'test_labeledStatement_lint': (t) => t._labeledStatementLint(),
+    'test_unlabeledLoop_noLint': (t) => t._unlabeledLoopNoLint(),
+  });
+  analysisRuleSuite<AvoidLocalFunctionsTest>(
+    'AvoidLocalFunctionsTest',
+    AvoidLocalFunctionsTest.new,
+    {
+      'test_localFunction_lint': (t) => t._localFunctionLint(),
+      'test_topLevelFunction_noLint': (t) => t._topLevelFunctionNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidAdjacentStringsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -26,7 +48,7 @@ final class AvoidAdjacentStringsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_adjacentStringLiterals_lint() async {
+  Future<void> _adjacentStringLiteralsLint() async {
     const source = r'''
 const message = 'hello ' 'world';
 ''';
@@ -34,13 +56,13 @@ const message = 'hello ' 'world';
     await assertDiagnostics(source, [lint(source.indexOf("'hello '"), "'hello ' 'world'".length)]);
   }
 
-  Future<void> test_singleStringLiteral_noLint() async {
+  Future<void> _singleStringLiteralNoLint() async {
     await assertNoDiagnostics(r'''
 const message = 'hello world';
 ''');
   }
 
-  Future<void> test_generatedLocalizationAdjacentStrings_noLint() async {
+  Future<void> _generatedLocalizationAdjacentStringsNoLint() async {
     final filePath = '$testPackageLibPath/l10n/app_localizations.dart';
     newFile(filePath, "const message = 'hello ' 'world';");
 
@@ -48,7 +70,6 @@ const message = 'hello world';
   }
 }
 
-@reflectiveTest
 final class AvoidEmptySpreadTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -56,7 +77,7 @@ final class AvoidEmptySpreadTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_emptyListSpread_lint() async {
+  Future<void> _emptyListSpreadLint() async {
     const source = r'''
 const values = [1, ...[], 2];
 ''';
@@ -64,7 +85,7 @@ const values = [1, ...[], 2];
     await assertDiagnostics(source, [lint(source.indexOf('...[]'), '...[]'.length)]);
   }
 
-  Future<void> test_emptySetSpread_lint() async {
+  Future<void> _emptySetSpreadLint() async {
     const source = r'''
 const values = {1, ...<int>{}, 2};
 ''';
@@ -72,14 +93,13 @@ const values = {1, ...<int>{}, 2};
     await assertDiagnostics(source, [lint(source.indexOf('...<int>{}'), '...<int>{}'.length)]);
   }
 
-  Future<void> test_nonEmptySpread_noLint() async {
+  Future<void> _nonEmptySpreadNoLint() async {
     await assertNoDiagnostics(r'''
 const values = [1, ...[2], 3];
 ''');
   }
 }
 
-@reflectiveTest
 final class AvoidFutureIgnoreTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -87,7 +107,7 @@ final class AvoidFutureIgnoreTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_futureIgnore_lint() async {
+  Future<void> _futureIgnoreLint() async {
     const source = r'''
 Future<void> load() async {}
 
@@ -103,7 +123,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.lastIndexOf('ignore'), 'ignore'.length)]);
   }
 
-  Future<void> test_nonFutureIgnore_noLint() async {
+  Future<void> _nonFutureIgnoreNoLint() async {
     await assertNoDiagnostics(r'''
 class Task {
   void ignore() {}
@@ -116,7 +136,6 @@ void f(Task task) {
   }
 }
 
-@reflectiveTest
 final class AvoidLabelsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -124,7 +143,7 @@ final class AvoidLabelsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_labeledStatement_lint() async {
+  Future<void> _labeledStatementLint() async {
     const source = r'''
 void f() {
   outer:
@@ -139,7 +158,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('outer:'), 'outer:'.length)]);
   }
 
-  Future<void> test_unlabeledLoop_noLint() async {
+  Future<void> _unlabeledLoopNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   for (var i = 0; i < 3; i++) {
@@ -152,7 +171,6 @@ void f() {
   }
 }
 
-@reflectiveTest
 final class AvoidLocalFunctionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -160,7 +178,7 @@ final class AvoidLocalFunctionsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_localFunction_lint() async {
+  Future<void> _localFunctionLint() async {
     const source = r'''
 void f() {
   int normalize(int value) => value.abs();
@@ -171,7 +189,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('normalize'), 'normalize'.length)]);
   }
 
-  Future<void> test_topLevelFunction_noLint() async {
+  Future<void> _topLevelFunctionNoLint() async {
     await assertNoDiagnostics(r'''
 int normalize(int value) => value.abs();
 

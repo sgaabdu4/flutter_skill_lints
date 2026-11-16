@@ -1,23 +1,84 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'dart:math' as math;
 
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/flutter_optimization_source_rules.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(FlutterKeyCreatedInBuildTest);
-    defineReflectiveTests(FlutterUniqueOrGlobalKeyTest);
-    defineReflectiveTests(FlutterOpacityWidgetTest);
-    defineReflectiveTests(FlutterSaveLayerFilterTest);
-    defineReflectiveTests(FlutterClipSaveLayerTest);
-    defineReflectiveTests(FlutterIntrinsicLayoutTest);
-    defineReflectiveTests(FlutterAnimatedBuilderChildTest);
-    defineReflectiveTests(FlutterWidgetOperatorEqualsTest);
-  });
+  analysisRuleSuite<FlutterKeyCreatedInBuildTest>(
+    'FlutterKeyCreatedInBuildTest',
+    FlutterKeyCreatedInBuildTest.new,
+    {
+      'test_allowsStableFieldKey': (t) => t._allowsStableFieldKey(),
+      'test_reportsKeyLocalInBuild': (t) => t._reportsKeyLocalInBuild(),
+    },
+  );
+  analysisRuleSuite<FlutterUniqueOrGlobalKeyTest>(
+    'FlutterUniqueOrGlobalKeyTest',
+    FlutterUniqueOrGlobalKeyTest.new,
+    {
+      'test_allowsValueKey': (t) => t._allowsValueKey(),
+      'test_reportsGlobalKey': (t) => t._reportsGlobalKey(),
+      'test_allowsGlobalKeyInKeyRegistry': (t) => t._allowsGlobalKeyInKeyRegistry(),
+      'test_allowsTypedStateAccessGlobalKey': (t) => t._allowsTypedStateAccessGlobalKey(),
+      'test_allowsRepaintBoundaryCaptureGlobalKey': (t) =>
+          t._allowsRepaintBoundaryCaptureGlobalKey(),
+      'test_allowsGlobalKeyInTests': (t) => t._allowsGlobalKeyInTests(),
+      'test_reportsUniqueKey': (t) => t._reportsUniqueKey(),
+    },
+  );
+  analysisRuleSuite<FlutterOpacityWidgetTest>(
+    'FlutterOpacityWidgetTest',
+    FlutterOpacityWidgetTest.new,
+    {
+      'test_allowsFadeTransition': (t) => t._allowsFadeTransition(),
+      'test_reportsOpacity': (t) => t._reportsOpacity(),
+    },
+  );
+  analysisRuleSuite<FlutterSaveLayerFilterTest>(
+    'FlutterSaveLayerFilterTest',
+    FlutterSaveLayerFilterTest.new,
+    {
+      'test_allowsContainerWithoutFilter': (t) => t._allowsContainerWithoutFilter(),
+      'test_reportsColorFiltered': (t) => t._reportsColorFiltered(),
+      'test_reportsShaderMask': (t) => t._reportsShaderMask(),
+    },
+  );
+  analysisRuleSuite<FlutterClipSaveLayerTest>(
+    'FlutterClipSaveLayerTest',
+    FlutterClipSaveLayerTest.new,
+    {
+      'test_allowsAntiAliasClip': (t) => t._allowsAntiAliasClip(),
+      'test_reportsAntiAliasWithSaveLayer': (t) => t._reportsAntiAliasWithSaveLayer(),
+    },
+  );
+  analysisRuleSuite<FlutterIntrinsicLayoutTest>(
+    'FlutterIntrinsicLayoutTest',
+    FlutterIntrinsicLayoutTest.new,
+    {
+      'test_allowsSizedBox': (t) => t._allowsSizedBox(),
+      'test_reportsIntrinsicHeight': (t) => t._reportsIntrinsicHeight(),
+      'test_reportsIntrinsicWidth': (t) => t._reportsIntrinsicWidth(),
+    },
+  );
+  analysisRuleSuite<FlutterAnimatedBuilderChildTest>(
+    'FlutterAnimatedBuilderChildTest',
+    FlutterAnimatedBuilderChildTest.new,
+    {
+      'test_allowsChildParameter': (t) => t._allowsChildParameter(),
+      'test_reportsMissingChildParameter': (t) => t._reportsMissingChildParameter(),
+    },
+  );
+  analysisRuleSuite<FlutterWidgetOperatorEqualsTest>(
+    'FlutterWidgetOperatorEqualsTest',
+    FlutterWidgetOperatorEqualsTest.new,
+    {
+      'test_allowsNonWidgetEquality': (t) => t._allowsNonWidgetEquality(),
+      'test_reportsStatelessWidgetEquality': (t) => t._reportsStatelessWidgetEquality(),
+    },
+  );
 }
 
 abstract class _FlutterOptimizationRuleTest extends AnalysisRuleTest {
@@ -146,12 +207,11 @@ class RepaintBoundary extends Widget {
   }
 }
 
-@reflectiveTest
 final class FlutterKeyCreatedInBuildTest extends _FlutterOptimizationRuleTest {
   @override
   String get ruleName => 'flutter_key_created_in_build';
 
-  Future<void> test_allowsStableFieldKey() async {
+  Future<void> _allowsStableFieldKey() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 
@@ -168,7 +228,7 @@ class Tile extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_reportsKeyLocalInBuild() async {
+  Future<void> _reportsKeyLocalInBuild() async {
     await assertReports(r'''
 import 'package:flutter/widgets.dart';
 
@@ -185,12 +245,11 @@ class Tile extends StatelessWidget {
   }
 }
 
-@reflectiveTest
 final class FlutterUniqueOrGlobalKeyTest extends _FlutterOptimizationRuleTest {
   @override
   String get ruleName => 'flutter_unique_or_global_key';
 
-  Future<void> test_allowsValueKey() async {
+  Future<void> _allowsValueKey() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 
@@ -198,7 +257,7 @@ final rowKey = ValueKey('row');
 ''');
   }
 
-  Future<void> test_reportsGlobalKey() async {
+  Future<void> _reportsGlobalKey() async {
     await assertReports(r'''
 import 'package:flutter/widgets.dart';
 
@@ -206,7 +265,7 @@ final rowKey = GlobalKey();
 ''', 'GlobalKey');
   }
 
-  Future<void> test_allowsGlobalKeyInKeyRegistry() async {
+  Future<void> _allowsGlobalKeyInKeyRegistry() async {
     await assertAllowsInFile('$testPackageLibPath/core/navigation/app_widget_keys.dart', r'''
 import 'package:flutter/widgets.dart';
 
@@ -216,7 +275,7 @@ abstract final class AppWidgetKeys {
 ''');
   }
 
-  Future<void> test_allowsTypedStateAccessGlobalKey() async {
+  Future<void> _allowsTypedStateAccessGlobalKey() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 
@@ -226,7 +285,7 @@ abstract final class SnackBarUtils {
 ''');
   }
 
-  Future<void> test_allowsRepaintBoundaryCaptureGlobalKey() async {
+  Future<void> _allowsRepaintBoundaryCaptureGlobalKey() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 
@@ -238,7 +297,7 @@ class SharePreviewSheet {
 ''');
   }
 
-  Future<void> test_allowsGlobalKeyInTests() async {
+  Future<void> _allowsGlobalKeyInTests() async {
     final filePath = '$testPackageRootPath/test/core/mixins/lifecycle_mixin_test.dart';
     newFile(
       filePath,
@@ -253,7 +312,7 @@ final missingKey = GlobalKey(debugLabel: 'missing-target');
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsUniqueKey() async {
+  Future<void> _reportsUniqueKey() async {
     await assertReports(r'''
 import 'package:flutter/widgets.dart';
 
@@ -262,12 +321,11 @@ final rowKey = UniqueKey();
   }
 }
 
-@reflectiveTest
 final class FlutterOpacityWidgetTest extends _FlutterOptimizationRuleTest {
   @override
   String get ruleName => 'flutter_opacity_widget';
 
-  Future<void> test_allowsFadeTransition() async {
+  Future<void> _allowsFadeTransition() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 
@@ -275,7 +333,7 @@ final widget = FadeTransition(opacity: animation, child: child);
 ''');
   }
 
-  Future<void> test_reportsOpacity() async {
+  Future<void> _reportsOpacity() async {
     await assertReports(r'''
 import 'package:flutter/widgets.dart';
 
@@ -284,12 +342,11 @@ final widget = Opacity(opacity: 0.5, child: child);
   }
 }
 
-@reflectiveTest
 final class FlutterSaveLayerFilterTest extends _FlutterOptimizationRuleTest {
   @override
   String get ruleName => 'flutter_save_layer_filter';
 
-  Future<void> test_allowsContainerWithoutFilter() async {
+  Future<void> _allowsContainerWithoutFilter() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 
@@ -297,7 +354,7 @@ final widget = Widget();
 ''');
   }
 
-  Future<void> test_reportsColorFiltered() async {
+  Future<void> _reportsColorFiltered() async {
     await assertReports(r'''
 import 'package:flutter/widgets.dart';
 
@@ -305,7 +362,7 @@ final widget = ColorFiltered(colorFilter: filter, child: child);
 ''', 'ColorFiltered');
   }
 
-  Future<void> test_reportsShaderMask() async {
+  Future<void> _reportsShaderMask() async {
     await assertReports(r'''
 import 'package:flutter/widgets.dart';
 
@@ -314,12 +371,11 @@ final widget = ShaderMask(shaderCallback: shader, child: child);
   }
 }
 
-@reflectiveTest
 final class FlutterClipSaveLayerTest extends _FlutterOptimizationRuleTest {
   @override
   String get ruleName => 'flutter_clip_save_layer';
 
-  Future<void> test_allowsAntiAliasClip() async {
+  Future<void> _allowsAntiAliasClip() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 
@@ -327,7 +383,7 @@ final widget = ClipRRect(clipBehavior: Clip.antiAlias, child: child);
 ''');
   }
 
-  Future<void> test_reportsAntiAliasWithSaveLayer() async {
+  Future<void> _reportsAntiAliasWithSaveLayer() async {
     await assertReports(r'''
 import 'package:flutter/widgets.dart';
 
@@ -339,12 +395,11 @@ final widget = ClipRRect(
   }
 }
 
-@reflectiveTest
 final class FlutterIntrinsicLayoutTest extends _FlutterOptimizationRuleTest {
   @override
   String get ruleName => 'flutter_intrinsic_layout';
 
-  Future<void> test_allowsSizedBox() async {
+  Future<void> _allowsSizedBox() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 
@@ -352,7 +407,7 @@ final widget = SizedBox(height: 72, child: child);
 ''');
   }
 
-  Future<void> test_reportsIntrinsicHeight() async {
+  Future<void> _reportsIntrinsicHeight() async {
     await assertReports(r'''
 import 'package:flutter/widgets.dart';
 
@@ -360,7 +415,7 @@ final widget = IntrinsicHeight(child: child);
 ''', 'IntrinsicHeight');
   }
 
-  Future<void> test_reportsIntrinsicWidth() async {
+  Future<void> _reportsIntrinsicWidth() async {
     await assertReports(r'''
 import 'package:flutter/widgets.dart';
 
@@ -369,12 +424,11 @@ final widget = IntrinsicWidth(child: child);
   }
 }
 
-@reflectiveTest
 final class FlutterAnimatedBuilderChildTest extends _FlutterOptimizationRuleTest {
   @override
   String get ruleName => 'flutter_animated_builder_child';
 
-  Future<void> test_allowsChildParameter() async {
+  Future<void> _allowsChildParameter() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 
@@ -386,7 +440,7 @@ final widget = AnimatedBuilder(
 ''');
   }
 
-  Future<void> test_reportsMissingChildParameter() async {
+  Future<void> _reportsMissingChildParameter() async {
     await assertReports(r'''
 import 'package:flutter/widgets.dart';
 
@@ -398,12 +452,11 @@ final widget = AnimatedBuilder(
   }
 }
 
-@reflectiveTest
 final class FlutterWidgetOperatorEqualsTest extends _FlutterOptimizationRuleTest {
   @override
   String get ruleName => 'flutter_widget_operator_equals';
 
-  Future<void> test_allowsNonWidgetEquality() async {
+  Future<void> _allowsNonWidgetEquality() async {
     await assertAllows(r'''
 class Model {
   @override
@@ -412,7 +465,7 @@ class Model {
 ''');
   }
 
-  Future<void> test_reportsStatelessWidgetEquality() async {
+  Future<void> _reportsStatelessWidgetEquality() async {
     await assertReports(r'''
 import 'package:flutter/widgets.dart';
 

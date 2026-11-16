@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class WidgetTryCatchBoundaryTest extends _UiRuleTest {
   @override
   String get ruleName => 'widget_try_catch_boundary';
@@ -26,7 +23,7 @@ class TodoScreen extends ConsumerWidget {
 }
 ''';
 
-  Future<void> test_allowsCleanupWithoutCatching() async {
+  Future<void> _allowsCleanupWithoutCatching() async {
     await assertAllows(r'''
 class TodoScreen extends Widget {
   Future<void> save() async {
@@ -40,7 +37,7 @@ class TodoScreen extends Widget {
 ''', path: path);
   }
 
-  Future<void> test_reportsNestedCatchInsideCleanup() async {
+  Future<void> _reportsNestedCatchInsideCleanup() async {
     final analyzedSource = _analyzedSource(r'''
 class TodoScreen extends Widget {
   Future<void> save() async {
@@ -58,7 +55,7 @@ class TodoScreen extends Widget {
     ]);
   }
 
-  Future<void> test_allowsTryCatchInNotifier() async {
+  Future<void> _allowsTryCatchInNotifier() async {
     await assertAllows(r'''
 class TodosNotifier {
   Future<void> save() async {
@@ -72,7 +69,7 @@ class TodosNotifier {
 ''', path: '$testPackageLibPath/features/todos/presentation/notifiers/todos_notifier.dart');
   }
 
-  Future<void> test_reportsTryCatchInWidgetFileHelperClass() async {
+  Future<void> _reportsTryCatchInWidgetFileHelperClass() async {
     final analyzedSource = _analyzedSource(r'''
 class TodoBackend {
   Future<void> save() async {
@@ -88,7 +85,6 @@ class TodoBackend {
   }
 }
 
-@reflectiveTest
 final class WidgetAwaitsNotifierResultTest extends _UiRuleTest {
   @override
   String get ruleName => 'widget_awaits_notifier_result';
@@ -109,7 +105,7 @@ class _TodoScreenState extends State<TodoScreen> {
 }
 ''';
 
-  Future<void> test_allowsAwaitedDialogBeforeSynchronousNotifierDispatch() async {
+  Future<void> _allowsAwaitedDialogBeforeSynchronousNotifierDispatch() async {
     await assertAllows(r'''
 class ConsumerWidget extends Widget {}
 Future<T?> showDialog<T>() async => null;
@@ -124,7 +120,7 @@ class ConfirmScreen extends ConsumerWidget {
 ''', path: path);
   }
 
-  Future<void> test_reportsMultilineAwaitedNotifierResult() async {
+  Future<void> _reportsMultilineAwaitedNotifierResult() async {
     final analyzedSource = _analyzedSource(r'''
 class ConsumerState<T> extends Widget {}
 class TodoScreen {}
@@ -146,7 +142,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'await ref', ruleName)]);
   }
 
-  Future<void> test_reportsIfAwaitedNotifierResult() async {
+  Future<void> _reportsIfAwaitedNotifierResult() async {
     final analyzedSource = _analyzedSource(r'''
 class ConsumerWidget extends Widget {}
 
@@ -163,7 +159,7 @@ class TodoScreen extends ConsumerWidget {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'await ref', ruleName)]);
   }
 
-  Future<void> test_reportsNotifierThenResultBranch() async {
+  Future<void> _reportsNotifierThenResultBranch() async {
     final analyzedSource = _analyzedSource(r'''
 class ConsumerWidget extends Widget {}
 
@@ -182,7 +178,7 @@ class TodoScreen extends ConsumerWidget {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'ref.read', ruleName)]);
   }
 
-  Future<void> test_reportsMultilineNotifierThenResultBranch() async {
+  Future<void> _reportsMultilineNotifierThenResultBranch() async {
     final analyzedSource = _analyzedSource(r'''
 class ConsumerState<T> extends Widget {}
 class TodoScreen {}
@@ -205,7 +201,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'ref', ruleName)]);
   }
 
-  Future<void> test_allowsNavigatorThenWithoutNotifierResult() async {
+  Future<void> _allowsNavigatorThenWithoutNotifierResult() async {
     await assertAllows(r'''
 class ConsumerWidget extends Widget {}
 
@@ -221,7 +217,7 @@ class TodoScreen extends ConsumerWidget {
 ''', path: path);
   }
 
-  Future<void> test_allowsDispatchWithoutResultBranch() async {
+  Future<void> _allowsDispatchWithoutResultBranch() async {
     await assertAllows(r'''
 class ConsumerWidget extends Widget {}
 
@@ -234,7 +230,6 @@ class TodoScreen extends ConsumerWidget {
   }
 }
 
-@reflectiveTest
 final class WidgetLocalMutationFlagTest extends _UiRuleTest {
   @override
   String get ruleName => 'widget_local_mutation_flag';
@@ -256,7 +251,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
 }
 ''';
 
-  Future<void> test_reportsGetterBackedNotifierMutation() async {
+  Future<void> _reportsGetterBackedNotifierMutation() async {
     final analyzedSource = _analyzedSource(r'''
 class ConsumerState<T> extends Widget {}
 class ExercisePickerDraftNotifier {
@@ -280,7 +275,7 @@ class WorkoutDraftScreenState extends ConsumerState<WorkoutDraftScreen> {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, '_isSubmitting', ruleName)]);
   }
 
-  Future<void> test_allowsUiOnlyBusyFlag() async {
+  Future<void> _allowsUiOnlyBusyFlag() async {
     await assertAllows(r'''
 class State<T> extends Widget {}
 class StoreButton {}
@@ -295,7 +290,7 @@ class _StoreButtonState extends State<StoreButton> {
 ''');
   }
 
-  Future<void> test_allowsNotifierOwnedSavingStateWatch() async {
+  Future<void> _allowsNotifierOwnedSavingStateWatch() async {
     await assertAllows(r'''
 class ConsumerWidget extends Widget {}
 
@@ -309,7 +304,6 @@ class SaveButton extends ConsumerWidget {
   }
 }
 
-@reflectiveTest
 final class WidgetDerivedCollectionLogicTest extends _UiRuleTest {
   @override
   String get ruleName => 'widget_derived_collection_logic';
@@ -333,7 +327,7 @@ class _ExerciseListState extends State<ExerciseList> {
 }
 ''';
 
-  Future<void> test_allowsComputedProviderCollectionLogic() async {
+  Future<void> _allowsComputedProviderCollectionLogic() async {
     await assertAllows(r'''
 List<Exercise> filteredExercises(Ref ref) {
   final items = ref.watch(exercisesProvider);
@@ -342,7 +336,7 @@ List<Exercise> filteredExercises(Ref ref) {
 ''', path: '$testPackageLibPath/features/exercises/presentation/notifiers/exercise_filters.dart');
   }
 
-  Future<void> test_reportsDataNamespaceCollectionLogic() async {
+  Future<void> _reportsDataNamespaceCollectionLogic() async {
     final analyzedSource = _analyzedSource(r'''
 abstract final class ExerciseListData {
   static List<Exercise> filteredExercises(List<Exercise> items) {
@@ -355,7 +349,7 @@ abstract final class ExerciseListData {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, '.where', ruleName)]);
   }
 
-  Future<void> test_reportsDataNamespaceLoopCollectionLogic() async {
+  Future<void> _reportsDataNamespaceLoopCollectionLogic() async {
     final analyzedSource = _analyzedSource(r'''
 abstract final class ExerciseListData {
   static List<String> names(List<Exercise> items) {
@@ -372,7 +366,7 @@ abstract final class ExerciseListData {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, '.add', ruleName)]);
   }
 
-  Future<void> test_reportsExpressionBodiedPrivateHelper() async {
+  Future<void> _reportsExpressionBodiedPrivateHelper() async {
     final analyzedSource = _analyzedSource(r'''
 class StatefulWidget extends Widget {}
 class State<T> extends Widget {}
@@ -388,7 +382,7 @@ class _ExerciseListState extends State<ExerciseList> {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, '.where', ruleName)]);
   }
 
-  Future<void> test_reportsWrappedExpressionBodiedDataNamespaceHelper() async {
+  Future<void> _reportsWrappedExpressionBodiedDataNamespaceHelper() async {
     final analyzedSource = _analyzedSource(r'''
 abstract final class ExerciseListData {
   static List<Exercise> visible(List<Exercise> items) =>
@@ -400,7 +394,7 @@ abstract final class ExerciseListData {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, '.where', ruleName)]);
   }
 
-  Future<void> test_allowsExpressionBodiedHelperWithoutCollectionWork() async {
+  Future<void> _allowsExpressionBodiedHelperWithoutCollectionWork() async {
     await assertAllows(r'''
 class StatefulWidget extends Widget {}
 class State<T> extends Widget {}
@@ -413,7 +407,7 @@ class _ExerciseListState extends State<ExerciseList> {
 ''', path: path);
   }
 
-  Future<void> test_reportsTopLevelDerivedCollection() async {
+  Future<void> _reportsTopLevelDerivedCollection() async {
     final analyzedSource = _analyzedSource(r'''
 final _visibleExercises = Exercise.values
     .where((exercise) => exercise.isVisible)
@@ -427,7 +421,6 @@ final _visibleExercises = Exercise.values
   }
 }
 
-@reflectiveTest
 final class A11yTextScaleClampTest extends _UiRuleTest {
   @override
   String get ruleName => 'a11y_text_scale_clamp';
@@ -441,7 +434,6 @@ final class A11yTextScaleClampTest extends _UiRuleTest {
   String get source => 'final scaler = TextScaler.linear(1);';
 }
 
-@reflectiveTest
 final class AppShellBootstrapSideEffectsTest extends _UiRuleTest {
   @override
   String get ruleName => 'app_shell_bootstrap_side_effects';
@@ -465,7 +457,7 @@ class MyApp extends ConsumerWidget {
 }
 ''';
 
-  Future<void> test_allowsDeclarativeAppShell() async {
+  Future<void> _allowsDeclarativeAppShell() async {
     await assertAllows(r'''
 class ConsumerWidget extends Widget {}
 
@@ -482,7 +474,7 @@ class MyApp extends ConsumerWidget {
 ''', path: '$testPackageLibPath/app.dart');
   }
 
-  Future<void> test_allowsBootstrapWidgetListeners() async {
+  Future<void> _allowsBootstrapWidgetListeners() async {
     await assertAllows(r'''
 class ConsumerWidget extends Widget {}
 
@@ -500,7 +492,7 @@ class AppBootstrap extends ConsumerWidget {
 ''', path: '$testPackageLibPath/core/bootstrap/app_bootstrap.dart');
   }
 
-  Future<void> test_allowsFeatureWidgetListeners() async {
+  Future<void> _allowsFeatureWidgetListeners() async {
     await assertAllows(r'''
 class ConsumerWidget extends Widget {}
 
@@ -512,4 +504,78 @@ class AccountScreen extends ConsumerWidget {
 }
 ''', path: '$testPackageLibPath/features/account/presentation/screens/account_screen.dart');
   }
+}
+
+void _defineSourceScannerRulesPart06Tests() {
+  analysisRuleSuite<WidgetTryCatchBoundaryTest>(
+    'WidgetTryCatchBoundaryTest',
+    WidgetTryCatchBoundaryTest.new,
+    {
+      'test_allowsCleanupWithoutCatching': (t) => t._allowsCleanupWithoutCatching(),
+      'test_reportsNestedCatchInsideCleanup': (t) => t._reportsNestedCatchInsideCleanup(),
+      'test_allowsTryCatchInNotifier': (t) => t._allowsTryCatchInNotifier(),
+      'test_reportsTryCatchInWidgetFileHelperClass': (t) =>
+          t._reportsTryCatchInWidgetFileHelperClass(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<WidgetAwaitsNotifierResultTest>(
+    'WidgetAwaitsNotifierResultTest',
+    WidgetAwaitsNotifierResultTest.new,
+    {
+      'test_allowsAwaitedDialogBeforeSynchronousNotifierDispatch': (t) =>
+          t._allowsAwaitedDialogBeforeSynchronousNotifierDispatch(),
+      'test_reportsMultilineAwaitedNotifierResult': (t) =>
+          t._reportsMultilineAwaitedNotifierResult(),
+      'test_reportsIfAwaitedNotifierResult': (t) => t._reportsIfAwaitedNotifierResult(),
+      'test_reportsNotifierThenResultBranch': (t) => t._reportsNotifierThenResultBranch(),
+      'test_reportsMultilineNotifierThenResultBranch': (t) =>
+          t._reportsMultilineNotifierThenResultBranch(),
+      'test_allowsNavigatorThenWithoutNotifierResult': (t) =>
+          t._allowsNavigatorThenWithoutNotifierResult(),
+      'test_allowsDispatchWithoutResultBranch': (t) => t._allowsDispatchWithoutResultBranch(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<WidgetLocalMutationFlagTest>(
+    'WidgetLocalMutationFlagTest',
+    WidgetLocalMutationFlagTest.new,
+    {
+      'test_reportsGetterBackedNotifierMutation': (t) => t._reportsGetterBackedNotifierMutation(),
+      'test_allowsUiOnlyBusyFlag': (t) => t._allowsUiOnlyBusyFlag(),
+      'test_allowsNotifierOwnedSavingStateWatch': (t) => t._allowsNotifierOwnedSavingStateWatch(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<WidgetDerivedCollectionLogicTest>(
+    'WidgetDerivedCollectionLogicTest',
+    WidgetDerivedCollectionLogicTest.new,
+    {
+      'test_allowsComputedProviderCollectionLogic': (t) =>
+          t._allowsComputedProviderCollectionLogic(),
+      'test_reportsDataNamespaceCollectionLogic': (t) => t._reportsDataNamespaceCollectionLogic(),
+      'test_reportsDataNamespaceLoopCollectionLogic': (t) =>
+          t._reportsDataNamespaceLoopCollectionLogic(),
+      'test_reportsExpressionBodiedPrivateHelper': (t) => t._reportsExpressionBodiedPrivateHelper(),
+      'test_reportsWrappedExpressionBodiedDataNamespaceHelper': (t) =>
+          t._reportsWrappedExpressionBodiedDataNamespaceHelper(),
+      'test_allowsExpressionBodiedHelperWithoutCollectionWork': (t) =>
+          t._allowsExpressionBodiedHelperWithoutCollectionWork(),
+      'test_reportsTopLevelDerivedCollection': (t) => t._reportsTopLevelDerivedCollection(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<A11yTextScaleClampTest>('A11yTextScaleClampTest', A11yTextScaleClampTest.new, {
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<AppShellBootstrapSideEffectsTest>(
+    'AppShellBootstrapSideEffectsTest',
+    AppShellBootstrapSideEffectsTest.new,
+    {
+      'test_allowsDeclarativeAppShell': (t) => t._allowsDeclarativeAppShell(),
+      'test_allowsBootstrapWidgetListeners': (t) => t._allowsBootstrapWidgetListeners(),
+      'test_allowsFeatureWidgetListeners': (t) => t._allowsFeatureWidgetListeners(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

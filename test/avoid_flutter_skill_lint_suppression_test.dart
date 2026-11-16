@@ -1,16 +1,20 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_flutter_skill_lint_suppression.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidFlutterSkillLintSuppressionTest);
-  });
+  analysisRuleSuite<AvoidFlutterSkillLintSuppressionTest>(
+    'AvoidFlutterSkillLintSuppressionTest',
+    AvoidFlutterSkillLintSuppressionTest.new,
+    {
+      'test_reportsFileIgnoreForMagicLiterals': (t) => t._reportsFileIgnoreForMagicLiterals(),
+      'test_reportsLineIgnoreForContractKeys': (t) => t._reportsLineIgnoreForContractKeys(),
+      'test_allowsAnalyzerIgnores': (t) => t._allowsAnalyzerIgnores(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidFlutterSkillLintSuppressionTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -18,7 +22,7 @@ final class AvoidFlutterSkillLintSuppressionTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsFileIgnoreForMagicLiterals() async {
+  Future<void> _reportsFileIgnoreForMagicLiterals() async {
     const source = r'''
 // ignore_for_file: avoid_magic_literals
 Object? read(Map<String, Object?> data) => data['active-workout'];
@@ -29,7 +33,7 @@ Object? read(Map<String, Object?> data) => data['active-workout'];
     ]);
   }
 
-  Future<void> test_reportsLineIgnoreForContractKeys() async {
+  Future<void> _reportsLineIgnoreForContractKeys() async {
     const source = r'''
 // ignore: avoid_local_contract_key_constants
 class ActiveWorkoutNotifier {
@@ -42,7 +46,7 @@ class ActiveWorkoutNotifier {
     ]);
   }
 
-  Future<void> test_allowsAnalyzerIgnores() async {
+  Future<void> _allowsAnalyzerIgnores() async {
     await assertNoDiagnostics(r'''
 // ignore_for_file: implementation_imports, non_constant_identifier_names
 void main() {}

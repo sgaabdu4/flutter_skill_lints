@@ -1,20 +1,34 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_future_ignore.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_future_tostring.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_futures.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidFutureIgnoreTest);
-    defineReflectiveTests(AvoidFutureToStringTest);
-    defineReflectiveTests(AvoidNestedFuturesTest);
+  analysisRuleSuite<AvoidFutureIgnoreTest>('AvoidFutureIgnoreTest', AvoidFutureIgnoreTest.new, {
+    'test_futureIgnore_lint': (t) => t._futureIgnoreLint(),
+    'test_nonFutureIgnore_noLint': (t) => t._nonFutureIgnoreNoLint(),
+    'test_unawaitedFuture_noLint': (t) => t._unawaitedFutureNoLint(),
+  });
+  analysisRuleSuite<AvoidFutureToStringTest>(
+    'AvoidFutureToStringTest',
+    AvoidFutureToStringTest.new,
+    {
+      'test_futureToString_lint': (t) => t._futureToStringLint(),
+      'test_futureInterpolation_lint': (t) => t._futureInterpolationLint(),
+      'test_nonFutureToString_noLint': (t) => t._nonFutureToStringNoLint(),
+      'test_nonFutureInterpolation_noLint': (t) => t._nonFutureInterpolationNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidNestedFuturesTest>('AvoidNestedFuturesTest', AvoidNestedFuturesTest.new, {
+    'test_futureOfFuture_lint': (t) => t._futureOfFutureLint(),
+    'test_nestedFutureInGeneric_lint': (t) => t._nestedFutureInGenericLint(),
+    'test_userTypeNamedFuture_noLint': (t) => t._userTypeNamedFutureNoLint(),
+    'test_flatFuture_noLint': (t) => t._flatFutureNoLint(),
   });
 }
 
-@reflectiveTest
 final class AvoidFutureIgnoreTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +36,7 @@ final class AvoidFutureIgnoreTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_futureIgnore_lint() async {
+  Future<void> _futureIgnoreLint() async {
     const source = r'''
 Future<void> save() async {}
 
@@ -38,7 +52,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.lastIndexOf('ignore'), 'ignore'.length)]);
   }
 
-  Future<void> test_nonFutureIgnore_noLint() async {
+  Future<void> _nonFutureIgnoreNoLint() async {
     await assertNoDiagnostics(r'''
 class Ignorable {
   void ignore() {}
@@ -50,7 +64,7 @@ void f(Ignorable value) {
 ''');
   }
 
-  Future<void> test_unawaitedFuture_noLint() async {
+  Future<void> _unawaitedFutureNoLint() async {
     await assertNoDiagnostics(r'''
 import 'dart:async';
 
@@ -63,7 +77,6 @@ void f() {
   }
 }
 
-@reflectiveTest
 final class AvoidFutureToStringTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -71,7 +84,7 @@ final class AvoidFutureToStringTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_futureToString_lint() async {
+  Future<void> _futureToStringLint() async {
     const source = r'''
 Future<int> load() async => 1;
 
@@ -81,7 +94,7 @@ String f() => load().toString();
     await assertDiagnostics(source, [lint(source.indexOf('toString'), 'toString'.length)]);
   }
 
-  Future<void> test_futureInterpolation_lint() async {
+  Future<void> _futureInterpolationLint() async {
     const source = r'''
 Future<int> load() async => 1;
 
@@ -91,20 +104,19 @@ String f() => '${load()}';
     await assertDiagnostics(source, [lint(source.lastIndexOf('load()'), 'load()'.length)]);
   }
 
-  Future<void> test_nonFutureToString_noLint() async {
+  Future<void> _nonFutureToStringNoLint() async {
     await assertNoDiagnostics(r'''
 String f(Object value) => value.toString();
 ''');
   }
 
-  Future<void> test_nonFutureInterpolation_noLint() async {
+  Future<void> _nonFutureInterpolationNoLint() async {
     await assertNoDiagnostics(r'''
 String f(int value) => '$value';
 ''');
   }
 }
 
-@reflectiveTest
 final class AvoidNestedFuturesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -112,7 +124,7 @@ final class AvoidNestedFuturesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_futureOfFuture_lint() async {
+  Future<void> _futureOfFutureLint() async {
     const source = r'''
 Future<Future<int>> loadValue() async => Future<int>.value(1);
 ''';
@@ -122,7 +134,7 @@ Future<Future<int>> loadValue() async => Future<int>.value(1);
     ]);
   }
 
-  Future<void> test_nestedFutureInGeneric_lint() async {
+  Future<void> _nestedFutureInGenericLint() async {
     const source = r'''
 Future<List<Future<int>>> loadValues() async => <Future<int>>[];
 ''';
@@ -132,7 +144,7 @@ Future<List<Future<int>>> loadValues() async => <Future<int>>[];
     ]);
   }
 
-  Future<void> test_userTypeNamedFuture_noLint() async {
+  Future<void> _userTypeNamedFutureNoLint() async {
     await assertNoDiagnostics(r'''
 class Future<T> {
   const Future();
@@ -142,7 +154,7 @@ Future<Future<int>> loadValue() => const Future<Future<int>>();
 ''');
   }
 
-  Future<void> test_flatFuture_noLint() async {
+  Future<void> _flatFutureNoLint() async {
     await assertNoDiagnostics(r'''
 Future<int> loadValue() async => 1;
 ''');

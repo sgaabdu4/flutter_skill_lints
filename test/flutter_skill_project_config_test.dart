@@ -1,16 +1,45 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/flutter_skill_project_config.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(FlutterSkillProjectConfigTest);
-  });
+  analysisRuleSuite<FlutterSkillProjectConfigTest>(
+    'FlutterSkillProjectConfigTest',
+    FlutterSkillProjectConfigTest.new,
+    {
+      'test_reportsProjectConfigGaps': (t) => t._reportsProjectConfigGaps(),
+      'test_reportsBuildYamlExplicitToJsonGap': (t) => t._reportsBuildYamlExplicitToJsonGap(),
+      'test_reportsFlutterAppMissingDeterministicE2eEntrypoint': (t) =>
+          t._reportsFlutterAppMissingDeterministicE2eEntrypoint(),
+      'test_allowsIntegrationTestWithoutDriverEntrypoint': (t) =>
+          t._allowsIntegrationTestWithoutDriverEntrypoint(),
+      'test_skipsProjectConfigDiagnosticsForNonAnchorFiles': (t) =>
+          t._skipsProjectConfigDiagnosticsForNonAnchorFiles(),
+      'test_allowsFlutterAppWithDeterministicE2eEntrypoint': (t) =>
+          t._allowsFlutterAppWithDeterministicE2eEntrypoint(),
+      'test_allowsFlutterAppWithQualifiedDeterministicE2eEntrypoint': (t) =>
+          t._allowsFlutterAppWithQualifiedDeterministicE2eEntrypoint(),
+      'test_reportsProhibitedPubspecLintPackages': (t) => t._reportsProhibitedPubspecLintPackages(),
+      'test_allowsNestedFunctionAnalysisOptionsWithoutPluginBlock': (t) =>
+          t._allowsNestedFunctionAnalysisOptionsWithoutPluginBlock(),
+      'test_allowsFlutterSkillLintsLocalPluginPathSource': (t) =>
+          t._allowsFlutterSkillLintsLocalPluginPathSource(),
+      'test_reportsProhibitedOtherLocalPluginPathSources': (t) =>
+          t._reportsProhibitedOtherLocalPluginPathSources(),
+      'test_reportsCanonicalErrorAndLintGaps': (t) => t._reportsCanonicalErrorAndLintGaps(),
+      'test_reportsProhibitedLocalPluginGitSources': (t) =>
+          t._reportsProhibitedLocalPluginGitSources(),
+      'test_reportsProhibitedFlowStyleLocalPluginSources': (t) =>
+          t._reportsProhibitedFlowStyleLocalPluginSources(),
+      'test_reportsQuotedProhibitedAnalysisOptionPlugins': (t) =>
+          t._reportsQuotedProhibitedAnalysisOptionPlugins(),
+      'test_allowsCanonicalConfigWithoutDeprecatedLints': (t) =>
+          t._allowsCanonicalConfigWithoutDeprecatedLints(),
+    },
+  );
 }
 
-@reflectiveTest
 final class FlutterSkillProjectConfigTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -25,7 +54,7 @@ environment:
 
   T projectLint<T>(String name) => lint(0, 1, name: name) as T;
 
-  Future<void> test_reportsProjectConfigGaps() async {
+  Future<void> _reportsProjectConfigGaps() async {
     newFile('$testPackageRootPath/analysis_options.yaml', r'''
 plugins:
   flutter_skill_lints:
@@ -52,7 +81,7 @@ linter:
     ]);
   }
 
-  Future<void> test_reportsBuildYamlExplicitToJsonGap() async {
+  Future<void> _reportsBuildYamlExplicitToJsonGap() async {
     _writeCanonicalAnalysisOptions();
 
     await assertDiagnostics(
@@ -66,7 +95,7 @@ class User {
     );
   }
 
-  Future<void> test_reportsFlutterAppMissingDeterministicE2eEntrypoint() async {
+  Future<void> _reportsFlutterAppMissingDeterministicE2eEntrypoint() async {
     newFile('$testPackageRootPath/pubspec.yaml', r'''
 name: test
 environment:
@@ -84,7 +113,7 @@ void main() { FlutterDriver.connect(); }
     await assertDiagnostics('void main() {}', [projectLint('cfg_e2e_entrypoint')]);
   }
 
-  Future<void> test_allowsIntegrationTestWithoutDriverEntrypoint() async {
+  Future<void> _allowsIntegrationTestWithoutDriverEntrypoint() async {
     newFile('$testPackageRootPath/pubspec.yaml', r'''
 name: test
 environment:
@@ -104,7 +133,7 @@ void main() { IntegrationTestWidgetsFlutterBinding.ensureInitialized(); }
     await assertNoDiagnostics('void main() {}');
   }
 
-  Future<void> test_skipsProjectConfigDiagnosticsForNonAnchorFiles() async {
+  Future<void> _skipsProjectConfigDiagnosticsForNonAnchorFiles() async {
     newFile('$testPackageRootPath/pubspec.yaml', r'''
 name: test
 environment:
@@ -120,7 +149,7 @@ dependencies:
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsFlutterAppWithDeterministicE2eEntrypoint() async {
+  Future<void> _allowsFlutterAppWithDeterministicE2eEntrypoint() async {
     newFile('$testPackageRootPath/pubspec.yaml', r'''
 name: test
 environment:
@@ -145,7 +174,7 @@ Object App() => Object();
     await assertNoDiagnostics('void main() {}');
   }
 
-  Future<void> test_allowsFlutterAppWithQualifiedDeterministicE2eEntrypoint() async {
+  Future<void> _allowsFlutterAppWithQualifiedDeterministicE2eEntrypoint() async {
     newFile('$testPackageRootPath/pubspec.yaml', r'''
 name: test
 environment:
@@ -170,7 +199,7 @@ const _e2eOverrides = <Object>[];
     await assertNoDiagnostics('void main() {}');
   }
 
-  Future<void> test_reportsProhibitedPubspecLintPackages() async {
+  Future<void> _reportsProhibitedPubspecLintPackages() async {
     newFile('$testPackageRootPath/pubspec.yaml', r'''
 name: test
 environment:
@@ -182,7 +211,7 @@ dev_dependencies: {"custom_lint": ^0.8.1}
     await assertDiagnostics('void main() {}', [projectLint('cfg_prohibited_lint_plugins')]);
   }
 
-  Future<void> test_allowsNestedFunctionAnalysisOptionsWithoutPluginBlock() async {
+  Future<void> _allowsNestedFunctionAnalysisOptionsWithoutPluginBlock() async {
     _writeCanonicalAnalysisOptions();
     newFile('$testPackageRootPath/functions/shared/analysis_options.yaml', r'''
 linter:
@@ -195,7 +224,7 @@ linter:
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsFlutterSkillLintsLocalPluginPathSource() async {
+  Future<void> _allowsFlutterSkillLintsLocalPluginPathSource() async {
     newFile('$testPackageRootPath/analysis_options.yaml', r'''
 include: package:flutter_lints/flutter.yaml
 
@@ -250,7 +279,7 @@ linter:
     await assertNoDiagnostics('void main() {}');
   }
 
-  Future<void> test_reportsProhibitedOtherLocalPluginPathSources() async {
+  Future<void> _reportsProhibitedOtherLocalPluginPathSources() async {
     newFile('$testPackageRootPath/analysis_options.yaml', r'''
 include: package:flutter_lints/flutter.yaml
 
@@ -305,7 +334,7 @@ linter:
     await assertDiagnostics('void main() {}', [projectLint('cfg_prohibited_lint_plugins')]);
   }
 
-  Future<void> test_reportsCanonicalErrorAndLintGaps() async {
+  Future<void> _reportsCanonicalErrorAndLintGaps() async {
     newFile('$testPackageRootPath/analysis_options.yaml', r'''
 include: package:flutter_lints/flutter.yaml
 
@@ -343,7 +372,7 @@ linter:
     ]);
   }
 
-  Future<void> test_reportsProhibitedLocalPluginGitSources() async {
+  Future<void> _reportsProhibitedLocalPluginGitSources() async {
     newFile('$testPackageRootPath/analysis_options.yaml', r'''
 include: package:flutter_lints/flutter.yaml
 
@@ -399,7 +428,7 @@ linter:
     await assertDiagnostics('void main() {}', [projectLint('cfg_prohibited_lint_plugins')]);
   }
 
-  Future<void> test_reportsProhibitedFlowStyleLocalPluginSources() async {
+  Future<void> _reportsProhibitedFlowStyleLocalPluginSources() async {
     newFile('$testPackageRootPath/analysis_options.yaml', r'''
 include: package:flutter_lints/flutter.yaml
 
@@ -451,7 +480,7 @@ linter:
     await assertDiagnostics('void main() {}', [projectLint('cfg_analysis_options_canonical')]);
   }
 
-  Future<void> test_reportsQuotedProhibitedAnalysisOptionPlugins() async {
+  Future<void> _reportsQuotedProhibitedAnalysisOptionPlugins() async {
     newFile('$testPackageRootPath/analysis_options.yaml', r'''
 include: package:flutter_lints/flutter.yaml
 
@@ -506,7 +535,7 @@ linter:
     await assertDiagnostics('void main() {}', [projectLint('cfg_prohibited_lint_plugins')]);
   }
 
-  Future<void> test_allowsCanonicalConfigWithoutDeprecatedLints() async {
+  Future<void> _allowsCanonicalConfigWithoutDeprecatedLints() async {
     _writeCanonicalAnalysisOptions();
     newFile('$testPackageRootPath/build.yaml', r'''
 targets:

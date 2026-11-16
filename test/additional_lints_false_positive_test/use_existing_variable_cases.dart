@@ -1,10 +1,7 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../additional_lints_false_positive_test.dart';
 
-@reflectiveTest
 final class UseExistingVariableFalsePositiveTest extends _AdditionalLintRuleTest {
-  Future<void> test_allowsIndependentAllocations() async {
+  Future<void> _allowsIndependentAllocations() async {
     for (final (index, expression) in ['Completer<int>()', 'Box()', 'Box.create()'].indexed) {
       final path = '$testPackageLibPath/creation_$index.dart';
       newFile(path, '''
@@ -21,7 +18,7 @@ void run() {
     }
   }
 
-  Future<void> test_allowsIndependentShorthandAllocations() async {
+  Future<void> _allowsIndependentShorthandAllocations() async {
     await assertNoDiagnostics(r'''
 class Box { Box(); }
 void run() {
@@ -33,7 +30,7 @@ void run() {
 ''');
   }
 
-  Future<void> test_constantCreationStillReports() async {
+  Future<void> _constantCreationStillReports() async {
     const source = r'''
 class Box { const Box(); }
 void run() {
@@ -52,7 +49,7 @@ void run() {
     super.setUp();
   }
 
-  Future<void> test_writeTargetsAreNotRepeatedReads() async {
+  Future<void> _writeTargetsAreNotRepeatedReads() async {
     for (final (index, assignment) in [
       'box.value = 2',
       'box.value += 2',
@@ -72,7 +69,7 @@ void run(Box box) {
     }
   }
 
-  Future<void> test_indexAssignmentIsNotRepeatedRead() async {
+  Future<void> _indexAssignmentIsNotRepeatedRead() async {
     await assertNoDiagnostics(r'''
 void run(Map<String, int> cache) {
   final previous = cache['key'];
@@ -82,7 +79,7 @@ void run(Map<String, int> cache) {
 ''');
   }
 
-  Future<void> test_nullAssertedReadStillReports() async {
+  Future<void> _nullAssertedReadStillReports() async {
     const source = r'''
 class Box { int? value; }
 void run(Box box) {
@@ -95,7 +92,7 @@ void run(Box box) {
     await assertDiagnostics(source, [lint(source.indexOf('box.value!'), 9)]);
   }
 
-  Future<void> test_assignmentRightHandReadStillReports() async {
+  Future<void> _assignmentRightHandReadStillReports() async {
     const source = r'''
 class Box { int value = 1; }
 void run(Box box) {
@@ -107,7 +104,7 @@ void run(Box box) {
     await assertDiagnostics(source, [lint(source.indexOf('box.value +'), 9)]);
   }
 
-  Future<void> test_allowsRepeatedEffectfulReads() async {
+  Future<void> _allowsRepeatedEffectfulReads() async {
     await assertNoDiagnostics(r'''
 class Container {
   Object read(Object provider) => Object();
@@ -124,7 +121,7 @@ void run(Container container) {
 ''');
   }
 
-  Future<void> test_allowsRepeatedStatefulGettersAndIndexReads() async {
+  Future<void> _allowsRepeatedStatefulGettersAndIndexReads() async {
     await assertNoDiagnostics(r'''
 class Counter {
   int value = 0;
@@ -141,7 +138,7 @@ void run(Counter counter) {
 ''');
   }
 
-  Future<void> test_allowsRepeatedUnqualifiedGetterReads() async {
+  Future<void> _allowsRepeatedUnqualifiedGetterReads() async {
     await assertNoDiagnostics(r'''
 int counter = 0;
 int get value => ++counter;
@@ -153,7 +150,7 @@ void run() {
 ''');
   }
 
-  Future<void> test_allowsRepeatedOverloadedOperators() async {
+  Future<void> _allowsRepeatedOverloadedOperators() async {
     await assertNoDiagnostics(r'''
 class Counter {
   int calls = 0;
@@ -170,7 +167,7 @@ void run(Counter value, Counter other) {
 ''');
   }
 
-  Future<void> test_reportsPureBuiltInBooleanAndNullCoalescingDuplicates() async {
+  Future<void> _reportsPureBuiltInBooleanAndNullCoalescingDuplicates() async {
     const source = r'''
 void run(bool x, bool y, String? text, String fallback) {
   final first = x && y;
@@ -189,7 +186,7 @@ void run(bool x, bool y, String? text, String fallback) {
     ]);
   }
 
-  Future<void> test_allowsRepeatedOverloadedUnaryOperators() async {
+  Future<void> _allowsRepeatedOverloadedUnaryOperators() async {
     await assertNoDiagnostics(r'''
 class Counter {
   int calls = 0;
@@ -212,7 +209,7 @@ void run(Counter value) {
 ''');
   }
 
-  Future<void> test_allowsFreshReadAfterAwaitInInitializer() async {
+  Future<void> _allowsFreshReadAfterAwaitInInitializer() async {
     await assertNoDiagnostics(r'''
 class Container {
   int value = 0;
@@ -228,7 +225,7 @@ Future<void> run(Container container) async {
 ''');
   }
 
-  Future<void> test_allowsReadAfterEffectWithinInitializer() async {
+  Future<void> _allowsReadAfterEffectWithinInitializer() async {
     await assertNoDiagnostics(r'''
 class Counter {
   int value = 0;
@@ -242,7 +239,7 @@ void run(Counter counter) {
 ''');
   }
 
-  Future<void> test_reportsPureReadBeforeEffectWithinInitializer() async {
+  Future<void> _reportsPureReadBeforeEffectWithinInitializer() async {
     const source = r'''
 int increment() => 1;
 void run(int left, int right) {
@@ -254,7 +251,7 @@ void run(int left, int right) {
     await assertDiagnostics(source, [lint(source.lastIndexOf('left + right'), 12)]);
   }
 
-  Future<void> test_awaitOrderPreservesFreshReads() async {
+  Future<void> _awaitOrderPreservesFreshReads() async {
     const source = r'''
 class Counter { int value = 0; }
 Future<void> before(Counter counter) async {
@@ -273,7 +270,7 @@ Future<void> after(Counter counter) async {
     ]);
   }
 
-  Future<void> test_expressionArgumentOrderRespectsMutation() async {
+  Future<void> _expressionArgumentOrderRespectsMutation() async {
     const source = r'''
 class Counter { int value = 0; }
 int mutate(Counter counter) => ++counter.value;
@@ -292,7 +289,7 @@ void safe(Counter counter, int right) {
     await assertDiagnostics(source, [lint(source.lastIndexOf('counter.value + right'), 21)]);
   }
 
-  Future<void> test_assignmentOrderRespectsMutation() async {
+  Future<void> _assignmentOrderRespectsMutation() async {
     const source = r'''
 class Counter { int value = 0; }
 void sink(int first, int second) {}
@@ -317,7 +314,7 @@ void declarations(Counter counter, int right) {
     ]);
   }
 
-  Future<void> test_multipleDeclarationsDoNotReuseValueAcrossEffect() async {
+  Future<void> _multipleDeclarationsDoNotReuseValueAcrossEffect() async {
     await assertNoDiagnostics(r'''
 class Counter {
   int value = 0;
@@ -331,7 +328,7 @@ void run(Counter counter) {
 ''');
   }
 
-  Future<void> test_reportsPureDuplicateExpression() async {
+  Future<void> _reportsPureDuplicateExpression() async {
     const source = r'''
 void run(int value) {
   final initial = value + 1;
@@ -342,7 +339,7 @@ void run(int value) {
     await assertDiagnostics(source, [lint(source.lastIndexOf('value + 1'), 9)]);
   }
 
-  Future<void> test_allowsDuplicateExpressionAfterMutation() async {
+  Future<void> _allowsDuplicateExpressionAfterMutation() async {
     await assertNoDiagnostics(r'''
 class Container {
   Object read(Object provider) => Object();
@@ -363,7 +360,7 @@ void run(Container container, Notifier notifier) {
 ''');
   }
 
-  Future<void> test_allowsFreshCollectionRecorders() async {
+  Future<void> _allowsFreshCollectionRecorders() async {
     await assertNoDiagnostics(r'''
 void run() {
   final deletedIds = <String>[];
@@ -375,4 +372,46 @@ void run() {
 }
 ''');
   }
+}
+
+void _defineUseExistingVariableCasesTests() {
+  analysisRuleSuite<UseExistingVariableFalsePositiveTest>(
+    'UseExistingVariableFalsePositiveTest',
+    UseExistingVariableFalsePositiveTest.new,
+    {
+      'test_allowsIndependentAllocations': (t) => t._allowsIndependentAllocations(),
+      'test_allowsIndependentShorthandAllocations': (t) =>
+          t._allowsIndependentShorthandAllocations(),
+      'test_constantCreationStillReports': (t) => t._constantCreationStillReports(),
+      'test_writeTargetsAreNotRepeatedReads': (t) => t._writeTargetsAreNotRepeatedReads(),
+      'test_indexAssignmentIsNotRepeatedRead': (t) => t._indexAssignmentIsNotRepeatedRead(),
+      'test_nullAssertedReadStillReports': (t) => t._nullAssertedReadStillReports(),
+      'test_assignmentRightHandReadStillReports': (t) => t._assignmentRightHandReadStillReports(),
+      'test_allowsRepeatedEffectfulReads': (t) => t._allowsRepeatedEffectfulReads(),
+      'test_allowsRepeatedStatefulGettersAndIndexReads': (t) =>
+          t._allowsRepeatedStatefulGettersAndIndexReads(),
+      'test_allowsRepeatedUnqualifiedGetterReads': (t) => t._allowsRepeatedUnqualifiedGetterReads(),
+      'test_allowsRepeatedOverloadedOperators': (t) => t._allowsRepeatedOverloadedOperators(),
+      'test_reportsPureBuiltInBooleanAndNullCoalescingDuplicates': (t) =>
+          t._reportsPureBuiltInBooleanAndNullCoalescingDuplicates(),
+      'test_allowsRepeatedOverloadedUnaryOperators': (t) =>
+          t._allowsRepeatedOverloadedUnaryOperators(),
+      'test_allowsFreshReadAfterAwaitInInitializer': (t) =>
+          t._allowsFreshReadAfterAwaitInInitializer(),
+      'test_allowsReadAfterEffectWithinInitializer': (t) =>
+          t._allowsReadAfterEffectWithinInitializer(),
+      'test_reportsPureReadBeforeEffectWithinInitializer': (t) =>
+          t._reportsPureReadBeforeEffectWithinInitializer(),
+      'test_awaitOrderPreservesFreshReads': (t) => t._awaitOrderPreservesFreshReads(),
+      'test_expressionArgumentOrderRespectsMutation': (t) =>
+          t._expressionArgumentOrderRespectsMutation(),
+      'test_assignmentOrderRespectsMutation': (t) => t._assignmentOrderRespectsMutation(),
+      'test_multipleDeclarationsDoNotReuseValueAcrossEffect': (t) =>
+          t._multipleDeclarationsDoNotReuseValueAcrossEffect(),
+      'test_reportsPureDuplicateExpression': (t) => t._reportsPureDuplicateExpression(),
+      'test_allowsDuplicateExpressionAfterMutation': (t) =>
+          t._allowsDuplicateExpressionAfterMutation(),
+      'test_allowsFreshCollectionRecorders': (t) => t._allowsFreshCollectionRecorders(),
+    },
+  );
 }

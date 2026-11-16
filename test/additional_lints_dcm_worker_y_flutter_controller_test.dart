@@ -1,15 +1,38 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/always_pass_global_key.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_disposing_late_fields.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidDisposingLateFieldsTest);
-    defineReflectiveTests(AlwaysPassGlobalKeyTest);
-  });
+  analysisRuleSuite<AvoidDisposingLateFieldsTest>(
+    'AvoidDisposingLateFieldsTest',
+    AvoidDisposingLateFieldsTest.new,
+    {
+      'test_flutterInitStateAndDispose_noLint': (t) => t._flutterInitStateAndDisposeNoLint(),
+      'test_conditionalLifecycleDisposalStillReports_lint': (t) =>
+          t._conditionalLifecycleDisposalStillReportsLint(),
+      'test_lateFieldDisposed_lint': (t) => t._lateFieldDisposedLint(),
+      'test_thisPrefixedLateFieldDisposed_lint': (t) => t._thisPrefixedLateFieldDisposedLint(),
+      'test_lateInitializerCanBeDisposed_noLint': (t) => t._lateInitializerCanBeDisposedNoLint(),
+      'test_conditionalConstructorDoesNotProveDisposalSafe_lint': (t) =>
+          t._conditionalConstructorDoesNotProveDisposalSafeLint(),
+      'test_eagerFieldDisposed_noLint': (t) => t._eagerFieldDisposedNoLint(),
+      'test_lateFieldUsedOutsideDispose_noLint': (t) => t._lateFieldUsedOutsideDisposeNoLint(),
+    },
+  );
+  analysisRuleSuite<AlwaysPassGlobalKeyTest>(
+    'AlwaysPassGlobalKeyTest',
+    AlwaysPassGlobalKeyTest.new,
+    {
+      'test_globalKeyCreatedInBuild_lint': (t) => t._globalKeyCreatedInBuildLint(),
+      'test_globalKeyCreatedInWidgetConstructor_lint': (t) =>
+          t._globalKeyCreatedInWidgetConstructorLint(),
+      'test_globalKeyPassedThroughConstructor_noLint': (t) =>
+          t._globalKeyPassedThroughConstructorNoLint(),
+      'test_globalKeyCreatedOutsideWidget_noLint': (t) => t._globalKeyCreatedOutsideWidgetNoLint(),
+    },
+  );
 }
 
 abstract class _FlutterControllerRuleTest extends AnalysisRuleTest {
@@ -79,7 +102,6 @@ class DropdownButton<T> extends Widget {
   }
 }
 
-@reflectiveTest
 final class AvoidDisposingLateFieldsTest extends _FlutterControllerRuleTest {
   @override
   void setUp() {
@@ -87,7 +109,7 @@ final class AvoidDisposingLateFieldsTest extends _FlutterControllerRuleTest {
     super.setUp();
   }
 
-  Future<void> test_flutterInitStateAndDispose_noLint() async {
+  Future<void> _flutterInitStateAndDisposeNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 class Host extends State<StatefulWidget> {
@@ -107,7 +129,7 @@ class Host extends State<StatefulWidget> {
 ''');
   }
 
-  Future<void> test_conditionalLifecycleDisposalStillReports_lint() async {
+  Future<void> _conditionalLifecycleDisposalStillReportsLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 class Host extends State<StatefulWidget> {
@@ -128,7 +150,7 @@ class Host extends State<StatefulWidget> {
     await assertDiagnostics(source, [lint(source.indexOf('controller.dispose()'), 20)]);
   }
 
-  Future<void> test_lateFieldDisposed_lint() async {
+  Future<void> _lateFieldDisposedLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -146,7 +168,7 @@ class Host {
     ]);
   }
 
-  Future<void> test_thisPrefixedLateFieldDisposed_lint() async {
+  Future<void> _thisPrefixedLateFieldDisposedLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -164,7 +186,7 @@ class Host {
     ]);
   }
 
-  Future<void> test_lateInitializerCanBeDisposed_noLint() async {
+  Future<void> _lateInitializerCanBeDisposedNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 class Host {
@@ -174,7 +196,7 @@ class Host {
 ''');
   }
 
-  Future<void> test_conditionalConstructorDoesNotProveDisposalSafe_lint() async {
+  Future<void> _conditionalConstructorDoesNotProveDisposalSafeLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 class Host {
@@ -186,7 +208,7 @@ class Host {
     await assertDiagnostics(source, [lint(source.indexOf('controller.dispose()'), 20)]);
   }
 
-  Future<void> test_eagerFieldDisposed_noLint() async {
+  Future<void> _eagerFieldDisposedNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -200,7 +222,7 @@ class Host {
 ''');
   }
 
-  Future<void> test_lateFieldUsedOutsideDispose_noLint() async {
+  Future<void> _lateFieldUsedOutsideDisposeNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -215,7 +237,6 @@ class Host {
   }
 }
 
-@reflectiveTest
 final class AlwaysPassGlobalKeyTest extends _FlutterControllerRuleTest {
   @override
   void setUp() {
@@ -223,7 +244,7 @@ final class AlwaysPassGlobalKeyTest extends _FlutterControllerRuleTest {
     super.setUp();
   }
 
-  Future<void> test_globalKeyCreatedInBuild_lint() async {
+  Future<void> _globalKeyCreatedInBuildLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -240,7 +261,7 @@ class Host extends StatelessWidget {
     await assertDiagnostics(source, [lint(source.indexOf('GlobalKey()'), 'GlobalKey()'.length)]);
   }
 
-  Future<void> test_globalKeyCreatedInWidgetConstructor_lint() async {
+  Future<void> _globalKeyCreatedInWidgetConstructorLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -252,7 +273,7 @@ class Host extends Widget {
     await assertDiagnostics(source, [lint(source.indexOf('GlobalKey()'), 'GlobalKey()'.length)]);
   }
 
-  Future<void> test_globalKeyPassedThroughConstructor_noLint() async {
+  Future<void> _globalKeyPassedThroughConstructorNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -262,7 +283,7 @@ class Host extends Widget {
 ''');
   }
 
-  Future<void> test_globalKeyCreatedOutsideWidget_noLint() async {
+  Future<void> _globalKeyCreatedOutsideWidgetNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 

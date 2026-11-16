@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../persistence_crash_source_rules_test.dart';
 
 abstract class _HiveRuleTest extends _PersistenceCrashRuleTest {
@@ -56,12 +54,11 @@ abstract class Notifier<T> {
   void newLibFile(String name, String content) => newFile('$testPackageLibPath/$name', content);
 }
 
-@reflectiveTest
 final class HiveDuplicateFieldIdTest extends _HiveRuleTest {
   @override
   String get ruleName => 'hive_duplicate_field_id';
 
-  Future<void> test_reportsDuplicateField() async {
+  Future<void> _reportsDuplicateField() async {
     await assertRuleDiagnostic(r'''
 import 'package:hive_ce/hive_ce.dart';
 
@@ -76,7 +73,7 @@ class CacheEntry {
 ''', '@HiveField(0)\n  final String value');
   }
 
-  Future<void> test_allowsSameIndexesInSeparateHiveTypes() async {
+  Future<void> _allowsSameIndexesInSeparateHiveTypes() async {
     await assertRuleNoDiagnostics(r'''
 import 'package:hive_ce/hive_ce.dart';
 
@@ -101,12 +98,11 @@ class SecondEntry {
   }
 }
 
-@reflectiveTest
 final class HiveDuplicateTypeIdTest extends _HiveRuleTest {
   @override
   String get ruleName => 'hive_duplicate_type_id';
 
-  Future<void> test_reportsDuplicateTypeId() async {
+  Future<void> _reportsDuplicateTypeId() async {
     await assertRuleDiagnostic(r'''
 import 'package:hive_ce/hive_ce.dart';
 
@@ -118,7 +114,7 @@ class UserEntry {}
 ''', '@HiveType(typeId: 1)\nclass UserEntry');
   }
 
-  Future<void> test_reportsDuplicateWithImportedHiveType() async {
+  Future<void> _reportsDuplicateWithImportedHiveType() async {
     newLibFile('first_entry.dart', r'''
 import 'package:hive_ce/hive_ce.dart';
 
@@ -134,7 +130,7 @@ class SecondEntry {}
 ''', '@HiveType(typeId: 7)');
   }
 
-  Future<void> test_reportsDuplicatesJoinedThroughGeneratedRegistrar() async {
+  Future<void> _reportsDuplicatesJoinedThroughGeneratedRegistrar() async {
     _newCrossFileEntries(secondTypeId: 7);
     newLibFile('hive_registrar.g.dart', r'''
 import 'package:test/first_entry.dart';
@@ -147,7 +143,7 @@ void initializeStorage() {}
 ''', "import 'package:test/hive_registrar.g.dart';");
   }
 
-  Future<void> test_reportsDuplicatesJoinedByDirectImports() async {
+  Future<void> _reportsDuplicatesJoinedByDirectImports() async {
     _newCrossFileEntries(secondTypeId: 7);
     await assertRuleDiagnostic(r'''
 import 'package:test/first_entry.dart';
@@ -157,7 +153,7 @@ void initializeStorage() {}
 ''', "import 'package:test/second_entry.dart';");
   }
 
-  Future<void> test_leavesDeeperJoinToTheImportedLibrary() async {
+  Future<void> _leavesDeeperJoinToTheImportedLibrary() async {
     _newCrossFileEntries(secondTypeId: 7);
     newLibFile('entries.dart', r'''
 export 'package:test/first_entry.dart';
@@ -170,7 +166,7 @@ void initializeStorage() {}
 ''');
   }
 
-  Future<void> test_allowsDistinctTypeIdsAcrossFiles() async {
+  Future<void> _allowsDistinctTypeIdsAcrossFiles() async {
     _newCrossFileEntries(secondTypeId: 8);
     await assertRuleNoDiagnostics(r'''
 import 'package:test/first_entry.dart';
@@ -196,12 +192,11 @@ class SecondEntry {}
   }
 }
 
-@reflectiveTest
 final class HiveReservedTypeIdsMissingTest extends _HiveRuleTest {
   @override
   String get ruleName => 'hive_reserved_type_ids_missing';
 
-  Future<void> test_reportsMissingReservedTypeIds() async {
+  Future<void> _reportsMissingReservedTypeIds() async {
     await assertRuleDiagnostic(r'''
 import 'package:hive_ce/hive_ce.dart';
 
@@ -215,7 +210,7 @@ class User {}
 ''', '@GenerateAdapters');
   }
 
-  Future<void> test_reportsReservationThatOmitsTheHiveTypeId() async {
+  Future<void> _reportsReservationThatOmitsTheHiveTypeId() async {
     await assertRuleDiagnostic(r'''
 import 'package:hive_ce/hive_ce.dart';
 
@@ -229,7 +224,7 @@ class User {}
 ''', '@GenerateAdapters');
   }
 
-  Future<void> test_reservedTypeIdsPresent_noDiagnostic() async {
+  Future<void> _reservedTypeIdsPresentNoDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
 import 'package:hive_ce/hive_ce.dart';
 
@@ -247,7 +242,7 @@ class User {}
 ''');
   }
 
-  Future<void> test_reportsHiveTypeInAnotherFileOfTheRegistrationScope() async {
+  Future<void> _reportsHiveTypeInAnotherFileOfTheRegistrationScope() async {
     _newDocLayout(reservation: '');
     await assertRuleDiagnostic(r'''
 import 'package:test/cache_entry.dart';
@@ -257,7 +252,7 @@ void initializeStorage() {}
 ''', "import 'package:test/hive_adapters.dart';");
   }
 
-  Future<void> test_allowsReservedHiveTypeInAnotherFile() async {
+  Future<void> _allowsReservedHiveTypeInAnotherFile() async {
     _newDocLayout(reservation: ', reservedTypeIds: {0}');
     await assertRuleNoDiagnostics(r'''
 import 'package:test/cache_entry.dart';
@@ -285,12 +280,11 @@ void hiveAdapters() {}
   }
 }
 
-@reflectiveTest
 final class HiveTypeOnFreezedClassTest extends _HiveRuleTest {
   @override
   String get ruleName => 'hive_type_on_freezed_class';
 
-  Future<void> test_reportsHiveTypeOnFreezedClass() async {
+  Future<void> _reportsHiveTypeOnFreezedClass() async {
     await assertRuleDiagnostic(r'''
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hive_ce/hive_ce.dart';
@@ -301,7 +295,7 @@ class RunModel {}
 ''', '@HiveType(typeId: 31)');
   }
 
-  Future<void> test_allowsHiveTypeOnPlainClass() async {
+  Future<void> _allowsHiveTypeOnPlainClass() async {
     await assertRuleNoDiagnostics(r'''
 import 'package:hive_ce/hive_ce.dart';
 
@@ -316,12 +310,11 @@ class CacheEntry {
   }
 }
 
-@reflectiveTest
 final class HiveAdapterSpecDomainTypeTest extends _HiveRuleTest {
   @override
   String get ruleName => 'hive_adapter_spec_domain_type';
 
-  Future<void> test_reportsDomainEntitySpec() async {
+  Future<void> _reportsDomainEntitySpec() async {
     newLibFile('features/run/domain/entities/run.dart', 'class Run {}\n');
     await assertRuleDiagnostic(r'''
 import 'package:hive_ce/hive_ce.dart';
@@ -334,7 +327,7 @@ void hiveAdapters() {}
 ''', 'AdapterSpec<Run>()');
   }
 
-  Future<void> test_allowsDataModelSpec() async {
+  Future<void> _allowsDataModelSpec() async {
     newLibFile('features/run/data/models/run_model.dart', 'class RunModel {}\n');
     await assertRuleNoDiagnostics(r'''
 import 'package:hive_ce/hive_ce.dart';
@@ -348,12 +341,11 @@ void hiveAdapters() {}
   }
 }
 
-@reflectiveTest
 final class NotifierHiveAccessTest extends _HiveRuleTest {
   @override
   String get ruleName => 'notifier_hive_access';
 
-  Future<void> test_reportsHiveInNotifier() async {
+  Future<void> _reportsHiveInNotifier() async {
     await assertRuleDiagnostic(r'''
 import 'package:hive_ce/hive_ce.dart';
 import 'package:riverpod/riverpod.dart';
@@ -370,7 +362,7 @@ class CountNotifier extends Notifier<int> {
 ''', "Hive.openBox<int>('counts');");
   }
 
-  Future<void> test_allowsRepositoryNotifierAndHiveDatasource() async {
+  Future<void> _allowsRepositoryNotifierAndHiveDatasource() async {
     await assertRuleNoDiagnostics(r'''
 import 'package:hive_ce/hive_ce.dart';
 import 'package:riverpod/riverpod.dart';
@@ -403,12 +395,11 @@ class CountNotifier extends Notifier<int> {
   }
 }
 
-@reflectiveTest
 final class HiveTestCloseMissingTest extends _PersistenceCrashRuleTest {
   @override
   String get ruleName => 'hive_test_close_missing';
 
-  Future<void> test_reportsMissingCloseInTest() async {
+  Future<void> _reportsMissingCloseInTest() async {
     await assertRuleDiagnostic(
       r'''
 class Hive {
@@ -424,7 +415,7 @@ void setUpStorage() {
     );
   }
 
-  Future<void> test_closePresent_noDiagnostic() async {
+  Future<void> _closePresentNoDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
 class Hive {
   static void init(String path) {}
@@ -442,7 +433,6 @@ Future<void> tearDownStorage() async {
   }
 }
 
-@reflectiveTest
 final class FireAndForgetMissingCatchTest extends _PersistenceCrashRuleTest {
   @override
   String get ruleName => 'fire_and_forget_missing_catch';
@@ -454,7 +444,7 @@ final class FireAndForgetMissingCatchTest extends _PersistenceCrashRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsInlineAsyncMissingCatch() async {
+  Future<void> _reportsInlineAsyncMissingCatch() async {
     await assertRuleDiagnostic(r'''
 import 'dart:async';
 abstract interface class Client {
@@ -468,7 +458,7 @@ void mirror(Client client) {
 ''', 'unawaited(() async');
   }
 
-  Future<void> test_inlineAsyncWithCatch_noDiagnostic() async {
+  Future<void> _inlineAsyncWithCatchNoDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
 import 'dart:async';
 class Client {
@@ -487,7 +477,7 @@ void mirror(Client client) {
 ''');
   }
 
-  Future<void> test_calleeThatCatchesInternally_noDiagnostic() async {
+  Future<void> _calleeThatCatchesInternallyNoDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
 import 'dart:async';
 
@@ -507,7 +497,7 @@ void mirror(RemoteMirror remoteMirror) {
 ''');
   }
 
-  Future<void> test_reportsCalleeWithoutCatch() async {
+  Future<void> _reportsCalleeWithoutCatch() async {
     await assertRuleDiagnostic(r'''
 import 'dart:async';
 
@@ -521,7 +511,7 @@ void track() {
 ''', 'unawaited(trackUncaught');
   }
 
-  Future<void> test_resolvesCalleesInImportedLibraries() async {
+  Future<void> _resolvesCalleesInImportedLibraries() async {
     newFile('$testPackageLibPath/analytics.dart', r'''
 Future<void> trackEvent(String name) async {
   try {
@@ -547,7 +537,7 @@ void track() {
 ''', 'unawaited(trackUncaught');
   }
 
-  Future<void> test_emptyCalleeBody_noDiagnostic() async {
+  Future<void> _emptyCalleeBodyNoDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
 import 'dart:async';
 
@@ -566,7 +556,7 @@ void onResume() {
   }
 
   // riverpod-codegen.md Mutations: `run` records failures in the mutation state.
-  Future<void> test_mutationRunCallee_noDiagnostic() async {
+  Future<void> _mutationRunCalleeNoDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
 import 'dart:async';
 
@@ -585,7 +575,7 @@ class AddTodoScreen {
 ''');
   }
 
-  Future<void> test_reportsLocalMutationLookalike() async {
+  Future<void> _reportsLocalMutationLookalike() async {
     await assertRuleDiagnostic(r'''
 import 'dart:async';
 
@@ -604,7 +594,7 @@ void onPressed(Object ref) {
   }
 
   // modals-navigation.md: route futures complete with the popped result, not an error.
-  Future<void> test_navigationCallee_noDiagnostic() async {
+  Future<void> _navigationCalleeNoDiagnostic() async {
     newFile('$testPackageLibPath/core/extensions/context_extensions.dart', r'''
 import 'package:flutter/material.dart';
 
@@ -670,7 +660,7 @@ class CreateScreen {
   }
 
   // routing-app-shell.md: `maybePop` completes with whether a route was popped, not an error.
-  Future<void> test_maybePopCallee_noDiagnostic() async {
+  Future<void> _maybePopCalleeNoDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
 import 'dart:async';
 
@@ -687,7 +677,7 @@ class ShellScreen {
 ''');
   }
 
-  Future<void> test_reportsNavigationThenUncaughtRemoteWork() async {
+  Future<void> _reportsNavigationThenUncaughtRemoteWork() async {
     await assertRuleDiagnostic(r'''
 import 'dart:async';
 
@@ -715,7 +705,7 @@ class SyncScreen {
   }
 
   // lists-forms-workflows.md: `loadMore` delegates to `_loadPage`, which catches.
-  Future<void> test_calleeDelegatingToCatchingMethod_noDiagnostic() async {
+  Future<void> _calleeDelegatingToCatchingMethodNoDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
 import 'dart:async';
 
@@ -750,7 +740,7 @@ void onScroll(PaginatedNotifier notifier) {
   }
 
   // lists-forms-workflows.md:40-84: an imported notifier's loadMore awaits `_loadPage`, which catches.
-  Future<void> test_importedNotifierDelegatingToCatchingMethod_noDiagnostic() async {
+  Future<void> _importedNotifierDelegatingToCatchingMethodNoDiagnostic() async {
     newFile('$testPackageLibPath/paginated_notifier.dart', _paginatedNotifier);
     await assertRuleNoDiagnostics(r'''
 import 'dart:async';
@@ -764,7 +754,7 @@ void onScroll(PaginatedNotifier notifier) {
 ''');
   }
 
-  Future<void> test_reportsImportedNotifierDelegatingToUncaughtMethod() async {
+  Future<void> _reportsImportedNotifierDelegatingToUncaughtMethod() async {
     newFile('$testPackageLibPath/paginated_notifier.dart', _paginatedNotifier);
     await assertRuleDiagnostic(r'''
 import 'dart:async';
@@ -813,7 +803,7 @@ class PaginatedNotifier {
 }
 ''';
 
-  Future<void> test_reportsCalleeThrowingBeforeCaughtWork() async {
+  Future<void> _reportsCalleeThrowingBeforeCaughtWork() async {
     await assertRuleDiagnostic(r'''
 import 'dart:async';
 
@@ -836,7 +826,7 @@ void start() {
 ''', 'unawaited(checked');
   }
 
-  Future<void> test_guardedHelper_noDiagnostic() async {
+  Future<void> _guardedHelperNoDiagnostic() async {
     await assertRuleNoDiagnostics(r'''
 import 'dart:async';
 
@@ -917,4 +907,99 @@ extension GoRouterHelper on BuildContext {
 }
 ''');
   }
+}
+
+void _definePersistenceCrashSourceRulesPart01Tests() {
+  analysisRuleSuite<FireAndForgetMissingCatchTest>(
+    'FireAndForgetMissingCatchTest',
+    FireAndForgetMissingCatchTest.new,
+    {
+      'test_reportsInlineAsyncMissingCatch': (t) => t._reportsInlineAsyncMissingCatch(),
+      'test_inlineAsyncWithCatch_noDiagnostic': (t) => t._inlineAsyncWithCatchNoDiagnostic(),
+      'test_calleeThatCatchesInternally_noDiagnostic': (t) =>
+          t._calleeThatCatchesInternallyNoDiagnostic(),
+      'test_reportsCalleeWithoutCatch': (t) => t._reportsCalleeWithoutCatch(),
+      'test_resolvesCalleesInImportedLibraries': (t) => t._resolvesCalleesInImportedLibraries(),
+      'test_emptyCalleeBody_noDiagnostic': (t) => t._emptyCalleeBodyNoDiagnostic(),
+      'test_mutationRunCallee_noDiagnostic': (t) => t._mutationRunCalleeNoDiagnostic(),
+      'test_reportsLocalMutationLookalike': (t) => t._reportsLocalMutationLookalike(),
+      'test_navigationCallee_noDiagnostic': (t) => t._navigationCalleeNoDiagnostic(),
+      'test_maybePopCallee_noDiagnostic': (t) => t._maybePopCalleeNoDiagnostic(),
+      'test_reportsNavigationThenUncaughtRemoteWork': (t) =>
+          t._reportsNavigationThenUncaughtRemoteWork(),
+      'test_calleeDelegatingToCatchingMethod_noDiagnostic': (t) =>
+          t._calleeDelegatingToCatchingMethodNoDiagnostic(),
+      'test_importedNotifierDelegatingToCatchingMethod_noDiagnostic': (t) =>
+          t._importedNotifierDelegatingToCatchingMethodNoDiagnostic(),
+      'test_reportsImportedNotifierDelegatingToUncaughtMethod': (t) =>
+          t._reportsImportedNotifierDelegatingToUncaughtMethod(),
+      'test_reportsCalleeThrowingBeforeCaughtWork': (t) =>
+          t._reportsCalleeThrowingBeforeCaughtWork(),
+      'test_guardedHelper_noDiagnostic': (t) => t._guardedHelperNoDiagnostic(),
+    },
+  );
+  analysisRuleSuite<HiveDuplicateFieldIdTest>(
+    'HiveDuplicateFieldIdTest',
+    HiveDuplicateFieldIdTest.new,
+    {
+      'test_reportsDuplicateField': (t) => t._reportsDuplicateField(),
+      'test_allowsSameIndexesInSeparateHiveTypes': (t) => t._allowsSameIndexesInSeparateHiveTypes(),
+    },
+  );
+  analysisRuleSuite<HiveDuplicateTypeIdTest>(
+    'HiveDuplicateTypeIdTest',
+    HiveDuplicateTypeIdTest.new,
+    {
+      'test_reportsDuplicateTypeId': (t) => t._reportsDuplicateTypeId(),
+      'test_reportsDuplicateWithImportedHiveType': (t) => t._reportsDuplicateWithImportedHiveType(),
+      'test_reportsDuplicatesJoinedThroughGeneratedRegistrar': (t) =>
+          t._reportsDuplicatesJoinedThroughGeneratedRegistrar(),
+      'test_reportsDuplicatesJoinedByDirectImports': (t) =>
+          t._reportsDuplicatesJoinedByDirectImports(),
+      'test_leavesDeeperJoinToTheImportedLibrary': (t) => t._leavesDeeperJoinToTheImportedLibrary(),
+      'test_allowsDistinctTypeIdsAcrossFiles': (t) => t._allowsDistinctTypeIdsAcrossFiles(),
+    },
+  );
+  analysisRuleSuite<HiveReservedTypeIdsMissingTest>(
+    'HiveReservedTypeIdsMissingTest',
+    HiveReservedTypeIdsMissingTest.new,
+    {
+      'test_reportsMissingReservedTypeIds': (t) => t._reportsMissingReservedTypeIds(),
+      'test_reportsReservationThatOmitsTheHiveTypeId': (t) =>
+          t._reportsReservationThatOmitsTheHiveTypeId(),
+      'test_reservedTypeIdsPresent_noDiagnostic': (t) => t._reservedTypeIdsPresentNoDiagnostic(),
+      'test_reportsHiveTypeInAnotherFileOfTheRegistrationScope': (t) =>
+          t._reportsHiveTypeInAnotherFileOfTheRegistrationScope(),
+      'test_allowsReservedHiveTypeInAnotherFile': (t) => t._allowsReservedHiveTypeInAnotherFile(),
+    },
+  );
+  analysisRuleSuite<HiveTestCloseMissingTest>(
+    'HiveTestCloseMissingTest',
+    HiveTestCloseMissingTest.new,
+    {
+      'test_reportsMissingCloseInTest': (t) => t._reportsMissingCloseInTest(),
+      'test_closePresent_noDiagnostic': (t) => t._closePresentNoDiagnostic(),
+    },
+  );
+  analysisRuleSuite<HiveTypeOnFreezedClassTest>(
+    'HiveTypeOnFreezedClassTest',
+    HiveTypeOnFreezedClassTest.new,
+    {
+      'test_reportsHiveTypeOnFreezedClass': (t) => t._reportsHiveTypeOnFreezedClass(),
+      'test_allowsHiveTypeOnPlainClass': (t) => t._allowsHiveTypeOnPlainClass(),
+    },
+  );
+  analysisRuleSuite<HiveAdapterSpecDomainTypeTest>(
+    'HiveAdapterSpecDomainTypeTest',
+    HiveAdapterSpecDomainTypeTest.new,
+    {
+      'test_reportsDomainEntitySpec': (t) => t._reportsDomainEntitySpec(),
+      'test_allowsDataModelSpec': (t) => t._allowsDataModelSpec(),
+    },
+  );
+  analysisRuleSuite<NotifierHiveAccessTest>('NotifierHiveAccessTest', NotifierHiveAccessTest.new, {
+    'test_reportsHiveInNotifier': (t) => t._reportsHiveInNotifier(),
+    'test_allowsRepositoryNotifierAndHiveDatasource': (t) =>
+        t._allowsRepositoryNotifierAndHiveDatasource(),
+  });
 }

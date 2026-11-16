@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class WidgetInfraDependencyBoundaryTest extends _UiRuleTest {
   @override
   String get ruleName => 'widget_infra_dependency_boundary';
@@ -22,7 +19,7 @@ class Avatar extends StatelessWidget {
 }
 ''';
 
-  Future<void> test_reportsInfraField() async {
+  Future<void> _reportsInfraField() async {
     final analyzedSource = _analyzedSource(r'''
 class BaseCacheManager {}
 
@@ -39,7 +36,7 @@ class Avatar extends StatelessWidget {
     ]);
   }
 
-  Future<void> test_reportsTypedConstructorParam() async {
+  Future<void> _reportsTypedConstructorParam() async {
     final analyzedSource = _analyzedSource(r'''
 class UserService {}
 
@@ -54,7 +51,7 @@ class Avatar extends StatelessWidget {
     ]);
   }
 
-  Future<void> test_reportsLocalInfraConstructor() async {
+  Future<void> _reportsLocalInfraConstructor() async {
     final analyzedSource = _analyzedSource(r'''
 class DefaultCacheManager {}
 
@@ -72,7 +69,7 @@ class Avatar extends StatelessWidget {
     ]);
   }
 
-  Future<void> test_allowsInfraWiringOutsideUiFiles() async {
+  Future<void> _allowsInfraWiringOutsideUiFiles() async {
     await assertAllows(r'''
 class BaseCacheManager {}
 class DefaultCacheManager extends BaseCacheManager {}
@@ -81,7 +78,7 @@ final BaseCacheManager cacheManager = DefaultCacheManager();
 ''', path: '$testPackageLibPath/core/utils/cached_avatar_bytes_loader.dart');
   }
 
-  Future<void> test_allowsPrimitiveWidgetProps() async {
+  Future<void> _allowsPrimitiveWidgetProps() async {
     await assertAllows(r'''
 class Avatar extends StatelessWidget {
   final String seed;
@@ -94,12 +91,11 @@ class Avatar extends StatelessWidget {
   }
 }
 
-@reflectiveTest
 final class WidgetTopLevelFunctionBoundaryTest extends _UiRuleTest {
   @override
   String get ruleName => 'widget_top_level_function_boundary';
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
   }
 
@@ -114,7 +110,7 @@ final class WidgetTopLevelFunctionBoundaryTest extends _UiRuleTest {
 Future<void> createSquad(BuildContext context, WidgetRef ref) async {}
 ''';
 
-  Future<void> test_reportsPrivateTopLevelHelper() async {
+  Future<void> _reportsPrivateTopLevelHelper() async {
     final analyzedSource = _analyzedSource(r'''
 bool _canShowAction(Object state) => true;
 ''', addIgnorePrefix: addIgnorePrefix);
@@ -125,7 +121,7 @@ bool _canShowAction(Object state) => true;
     ]);
   }
 
-  Future<void> test_allowsResolvedPreviewFunction() async {
+  Future<void> _allowsResolvedPreviewFunction() async {
     await assertAllows(r'''
 import 'package:flutter/widget_previews.dart';
 
@@ -134,7 +130,7 @@ Widget squadActionsPreview() => SquadActionsBar();
 ''', path: path);
   }
 
-  Future<void> test_reportsFunctionUnderLookalikePreviewAnnotation() async {
+  Future<void> _reportsFunctionUnderLookalikePreviewAnnotation() async {
     final analyzedSource = _analyzedSource(r'''
 class Preview {
   const Preview({String? name});
@@ -150,7 +146,7 @@ Widget squadActionsPreview() => SquadActionsBar();
     ]);
   }
 
-  Future<void> test_allowsStaticClassApi() async {
+  Future<void> _allowsStaticClassApi() async {
     await assertAllows(r'''
 abstract final class SquadActions {
   static Future<void> createSquad(BuildContext context, WidgetRef ref) async {}
@@ -158,14 +154,13 @@ abstract final class SquadActions {
 ''', path: path);
   }
 
-  Future<void> test_allowsProviderFiles() async {
+  Future<void> _allowsProviderFiles() async {
     await assertAllows(r'''
 Future<void> createSquad(BuildContext context, WidgetRef ref) async {}
 ''', path: '$testPackageLibPath/features/social/presentation/notifiers/squad_actions.dart');
   }
 }
 
-@reflectiveTest
 final class WidgetActionsNamespaceBoundaryTest extends _UiRuleTest {
   @override
   String get ruleName => 'widget_actions_namespace_boundary';
@@ -182,7 +177,7 @@ abstract final class SquadActions {
 }
 ''';
 
-  Future<void> test_allowsCoordinatorActionNamespace() async {
+  Future<void> _allowsCoordinatorActionNamespace() async {
     await assertAllows(r'''
 abstract final class SquadActions {
   static Future<void> createSquad(BuildContext context, WidgetRef ref) async {
@@ -192,7 +187,7 @@ abstract final class SquadActions {
 ''', path: '$testPackageLibPath/features/social/presentation/coordinators/squad_actions.dart');
   }
 
-  Future<void> test_allowsRenderOnlyWidgetActions() async {
+  Future<void> _allowsRenderOnlyWidgetActions() async {
     await assertAllows(r'''
 abstract final class EmptySquadActions {
   static Widget iconButton(VoidCallback onTap) => IconButton(onPressed: onTap);
@@ -201,7 +196,6 @@ abstract final class EmptySquadActions {
   }
 }
 
-@reflectiveTest
 final class StorageClearPreservesMigrationStateTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'storage_clear_preserves_migration_state';
@@ -220,7 +214,7 @@ class SettingsLocalDatasource {
 }
 ''';
 
-  Future<void> test_allowsHardClear() async {
+  Future<void> _allowsHardClear() async {
     await assertAllows(r'''
 class SettingsLocalDatasource {
   Future<void> resetAll() async {
@@ -230,7 +224,7 @@ class SettingsLocalDatasource {
 ''');
   }
 
-  Future<void> test_allowsNonStorageBoundaryClass() async {
+  Future<void> _allowsNonStorageBoundaryClass() async {
     await assertAllows(r'''
 class MemoryCache {
   Future<void> resetAll() async {
@@ -242,7 +236,6 @@ class MemoryCache {
 }
 
 /// A `;`-terminated constructor has no body; the scanner must not extend its span over the following method (networking.md repository shape).
-@reflectiveTest
 final class DestructiveFailureAfterConstConstructorTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'destructive_failure_logged_before_reconcile';
@@ -265,4 +258,56 @@ class AccountRepository {
   }
 }
 ''';
+}
+
+void _defineSourceScannerRulesPart24Tests() {
+  analysisRuleSuite<WidgetInfraDependencyBoundaryTest>(
+    'WidgetInfraDependencyBoundaryTest',
+    WidgetInfraDependencyBoundaryTest.new,
+    {
+      'test_reportsInfraField': (t) => t._reportsInfraField(),
+      'test_reportsTypedConstructorParam': (t) => t._reportsTypedConstructorParam(),
+      'test_reportsLocalInfraConstructor': (t) => t._reportsLocalInfraConstructor(),
+      'test_allowsInfraWiringOutsideUiFiles': (t) => t._allowsInfraWiringOutsideUiFiles(),
+      'test_allowsPrimitiveWidgetProps': (t) => t._allowsPrimitiveWidgetProps(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<WidgetTopLevelFunctionBoundaryTest>(
+    'WidgetTopLevelFunctionBoundaryTest',
+    WidgetTopLevelFunctionBoundaryTest.new,
+    {
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_reportsPrivateTopLevelHelper': (t) => t._reportsPrivateTopLevelHelper(),
+      'test_allowsResolvedPreviewFunction': (t) => t._allowsResolvedPreviewFunction(),
+      'test_reportsFunctionUnderLookalikePreviewAnnotation': (t) =>
+          t._reportsFunctionUnderLookalikePreviewAnnotation(),
+      'test_allowsStaticClassApi': (t) => t._allowsStaticClassApi(),
+      'test_allowsProviderFiles': (t) => t._allowsProviderFiles(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<WidgetActionsNamespaceBoundaryTest>(
+    'WidgetActionsNamespaceBoundaryTest',
+    WidgetActionsNamespaceBoundaryTest.new,
+    {
+      'test_allowsCoordinatorActionNamespace': (t) => t._allowsCoordinatorActionNamespace(),
+      'test_allowsRenderOnlyWidgetActions': (t) => t._allowsRenderOnlyWidgetActions(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<DestructiveFailureAfterConstConstructorTest>(
+    'DestructiveFailureAfterConstConstructorTest',
+    DestructiveFailureAfterConstConstructorTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<StorageClearPreservesMigrationStateTest>(
+    'StorageClearPreservesMigrationStateTest',
+    StorageClearPreservesMigrationStateTest.new,
+    {
+      'test_allowsHardClear': (t) => t._allowsHardClear(),
+      'test_allowsNonStorageBoundaryClass': (t) => t._allowsNonStorageBoundaryClass(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

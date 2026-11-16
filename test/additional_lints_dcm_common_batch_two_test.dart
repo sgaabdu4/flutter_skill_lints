@@ -1,24 +1,70 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_double_slash_imports.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_enum_values_by_index.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_future_tostring.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_late_keyword.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_multi_assignment.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidDoubleSlashImportsTest);
-    defineReflectiveTests(AvoidEnumValuesByIndexTest);
-    defineReflectiveTests(AvoidFutureToStringTest);
-    defineReflectiveTests(AvoidLateKeywordTest);
-    defineReflectiveTests(AvoidMultiAssignmentTest);
+  analysisRuleSuite<AvoidDoubleSlashImportsTest>(
+    'AvoidDoubleSlashImportsTest',
+    AvoidDoubleSlashImportsTest.new,
+    {
+      'test_exportWithDoubleSlash_lint': (t) => t._exportWithDoubleSlashLint(),
+      'test_importWithDoubleSlash_lint': (t) => t._importWithDoubleSlashLint(),
+      'test_normalizedImport_noLint': (t) => t._normalizedImportNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidEnumValuesByIndexTest>(
+    'AvoidEnumValuesByIndexTest',
+    AvoidEnumValuesByIndexTest.new,
+    {
+      'test_enumValuesByIndex_lint': (t) => t._enumValuesByIndexLint(),
+      'test_importPrefixedEnumValuesByIndex_lint': (t) => t._importPrefixedEnumValuesByIndexLint(),
+      'test_enumTypeAliasValuesByIndex_lint': (t) => t._enumTypeAliasValuesByIndexLint(),
+      'test_importPrefixedEnumTypeAliasValuesByIndex_lint': (t) =>
+          t._importPrefixedEnumTypeAliasValuesByIndexLint(),
+      'test_enumValueDirect_noLint': (t) => t._enumValueDirectNoLint(),
+      'test_mapFieldNamedValuesByIndex_noLint': (t) => t._mapFieldNamedValuesByIndexNoLint(),
+      'test_nonEnumStaticValuesByIndex_noLint': (t) => t._nonEnumStaticValuesByIndexNoLint(),
+      'test_nonEnumTypeAliasValuesByIndex_noLint': (t) => t._nonEnumTypeAliasValuesByIndexNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidFutureToStringTest>(
+    'AvoidFutureToStringTest',
+    AvoidFutureToStringTest.new,
+    {
+      'test_futureToString_lint': (t) => t._futureToStringLint(),
+      'test_nonFutureToString_noLint': (t) => t._nonFutureToStringNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidLateKeywordTest>('AvoidLateKeywordTest', AvoidLateKeywordTest.new, {
+    'test_lateLocal_lint': (t) => t._lateLocalLint(),
+    'test_eagerLocal_noLint': (t) => t._eagerLocalNoLint(),
+    'test_lateInTestFile_noLint': (t) => t._lateInTestFileNoLint(),
+    'test_lateFinalStateField_noLint': (t) => t._lateFinalStateFieldNoLint(),
+    'test_lateFinalConsumerStateField_noLint': (t) => t._lateFinalConsumerStateFieldNoLint(),
+    'test_lateMutableStateField_noLint': (t) => t._lateMutableStateFieldNoLint(),
+    'test_lateMutableNonStateField_lint': (t) => t._lateMutableNonStateFieldLint(),
+    'test_lateFinalDerivedInstanceField_noLint': (t) => t._lateFinalDerivedInstanceFieldNoLint(),
+    'test_lateFinalFieldWithoutInitializer_lint': (t) => t._lateFinalFieldWithoutInitializerLint(),
+    'test_lateMutableFieldWithInitializer_lint': (t) => t._lateMutableFieldWithInitializerLint(),
+    'test_lateFinalStaticFieldWithInitializer_lint': (t) =>
+        t._lateFinalStaticFieldWithInitializerLint(),
+    'test_lateFinalLocalWithInitializer_lint': (t) => t._lateFinalLocalWithInitializerLint(),
   });
+  analysisRuleSuite<AvoidMultiAssignmentTest>(
+    'AvoidMultiAssignmentTest',
+    AvoidMultiAssignmentTest.new,
+    {
+      'test_chainedAssignment_lint': (t) => t._chainedAssignmentLint(),
+      'test_separateAssignments_noLint': (t) => t._separateAssignmentsNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidDoubleSlashImportsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -27,7 +73,7 @@ final class AvoidDoubleSlashImportsTest extends AnalysisRuleTest {
     newFile('$testPackageLibPath/src/models.dart', '');
   }
 
-  Future<void> test_exportWithDoubleSlash_lint() async {
+  Future<void> _exportWithDoubleSlashLint() async {
     const source = r'''
 // ignore_for_file: uri_does_not_exist
 
@@ -39,7 +85,7 @@ export 'src//models.dart';
     ]);
   }
 
-  Future<void> test_importWithDoubleSlash_lint() async {
+  Future<void> _importWithDoubleSlashLint() async {
     const source = r'''
 // ignore_for_file: uri_does_not_exist
 
@@ -51,7 +97,7 @@ import 'package:app/src//models.dart';
     ]);
   }
 
-  Future<void> test_normalizedImport_noLint() async {
+  Future<void> _normalizedImportNoLint() async {
     await assertNoDiagnostics(r'''
 // ignore_for_file: unused_import
 
@@ -60,7 +106,6 @@ import 'src/models.dart';
   }
 }
 
-@reflectiveTest
 final class AvoidEnumValuesByIndexTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -68,7 +113,7 @@ final class AvoidEnumValuesByIndexTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_enumValuesByIndex_lint() async {
+  Future<void> _enumValuesByIndexLint() async {
     const source = r'''
 enum Status { ready, done }
 
@@ -80,7 +125,7 @@ final status = Status.values[0];
     ]);
   }
 
-  Future<void> test_importPrefixedEnumValuesByIndex_lint() async {
+  Future<void> _importPrefixedEnumValuesByIndexLint() async {
     newFile('$testPackageLibPath/status.dart', 'enum Status { ready, done }');
     const source = r'''
 import 'status.dart' as model;
@@ -92,7 +137,7 @@ final status = model.Status.values[0];
     ]);
   }
 
-  Future<void> test_enumTypeAliasValuesByIndex_lint() async {
+  Future<void> _enumTypeAliasValuesByIndexLint() async {
     const source = r'''
 enum Status { ready, done }
 typedef StatusAlias = Status;
@@ -104,7 +149,7 @@ final status = StatusAlias.values[0];
     ]);
   }
 
-  Future<void> test_importPrefixedEnumTypeAliasValuesByIndex_lint() async {
+  Future<void> _importPrefixedEnumTypeAliasValuesByIndexLint() async {
     newFile('$testPackageLibPath/status.dart', '''
 enum Status { ready, done }
 typedef StatusAlias = Status;
@@ -119,7 +164,7 @@ final status = model.StatusAlias.values[0];
     ]);
   }
 
-  Future<void> test_enumValueDirect_noLint() async {
+  Future<void> _enumValueDirectNoLint() async {
     await assertNoDiagnostics(r'''
 enum Status { ready, done }
 
@@ -127,7 +172,7 @@ final status = Status.ready;
 ''');
   }
 
-  Future<void> test_mapFieldNamedValuesByIndex_noLint() async {
+  Future<void> _mapFieldNamedValuesByIndexNoLint() async {
     await assertNoDiagnostics(r'''
 final class MemoryStore {
   final Map<String, Object?> values = {};
@@ -137,7 +182,7 @@ Object? read(MemoryStore store) => store.values['key'];
 ''');
   }
 
-  Future<void> test_nonEnumStaticValuesByIndex_noLint() async {
+  Future<void> _nonEnumStaticValuesByIndexNoLint() async {
     await assertNoDiagnostics(r'''
 abstract final class Lookup {
   static const values = ['first'];
@@ -147,7 +192,7 @@ String read() => Lookup.values[0];
 ''');
   }
 
-  Future<void> test_nonEnumTypeAliasValuesByIndex_noLint() async {
+  Future<void> _nonEnumTypeAliasValuesByIndexNoLint() async {
     await assertNoDiagnostics(r'''
 abstract final class Lookup {
   static const values = ['first'];
@@ -159,7 +204,6 @@ String read() => LookupAlias.values[0];
   }
 }
 
-@reflectiveTest
 final class AvoidFutureToStringTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -167,7 +211,7 @@ final class AvoidFutureToStringTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_futureToString_lint() async {
+  Future<void> _futureToStringLint() async {
     const source = r'''
 Future<int> load() async => 1;
 
@@ -179,7 +223,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('toString'), 'toString'.length)]);
   }
 
-  Future<void> test_nonFutureToString_noLint() async {
+  Future<void> _nonFutureToStringNoLint() async {
     await assertNoDiagnostics(r'''
 void f(Object value) {
   value.toString();
@@ -188,7 +232,6 @@ void f(Object value) {
   }
 }
 
-@reflectiveTest
 final class AvoidLateKeywordTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -196,7 +239,7 @@ final class AvoidLateKeywordTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_lateLocal_lint() async {
+  Future<void> _lateLocalLint() async {
     const source = r'''
 void f() {
   late final int value;
@@ -210,7 +253,7 @@ void f() {
     await assertDiagnosticsInFile(path, [lint(source.indexOf('late'), 'late'.length)]);
   }
 
-  Future<void> test_eagerLocal_noLint() async {
+  Future<void> _eagerLocalNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   final value = 1;
@@ -219,7 +262,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_lateInTestFile_noLint() async {
+  Future<void> _lateInTestFileNoLint() async {
     const source = r'''
 void main() {
   late final int value;
@@ -233,7 +276,7 @@ void main() {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_lateFinalStateField_noLint() async {
+  Future<void> _lateFinalStateFieldNoLint() async {
     const source = r'''
 class State<T> {}
 class Widget {}
@@ -252,7 +295,7 @@ class ExampleState extends State<Widget> {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_lateFinalConsumerStateField_noLint() async {
+  Future<void> _lateFinalConsumerStateFieldNoLint() async {
     const source = r'''
 class ConsumerState<T> {}
 class Widget {}
@@ -271,7 +314,7 @@ class ExampleState extends ConsumerState<Widget> {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_lateMutableStateField_noLint() async {
+  Future<void> _lateMutableStateFieldNoLint() async {
     const source = r'''
 class State<T> {}
 class Widget {}
@@ -286,7 +329,7 @@ class ExampleState extends State<Widget> {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_lateMutableNonStateField_lint() async {
+  Future<void> _lateMutableNonStateFieldLint() async {
     const source = r'''
 class Cache {
   late int value;
@@ -298,7 +341,7 @@ class Cache {
     await assertDiagnosticsInFile(path, [lint(source.indexOf('late'), 'late'.length)]);
   }
 
-  Future<void> test_lateFinalDerivedInstanceField_noLint() async {
+  Future<void> _lateFinalDerivedInstanceFieldNoLint() async {
     const source = r'''
 class Item {
   const Item(this.groupId);
@@ -327,7 +370,7 @@ Map<String, List<Item>> _indexItemsByGroup(List<Item> items) {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_lateFinalFieldWithoutInitializer_lint() async {
+  Future<void> _lateFinalFieldWithoutInitializerLint() async {
     const source = r'''
 class Cache {
   late final int value;
@@ -339,7 +382,7 @@ class Cache {
     await assertDiagnosticsInFile(path, [lint(source.indexOf('late'), 'late'.length)]);
   }
 
-  Future<void> test_lateMutableFieldWithInitializer_lint() async {
+  Future<void> _lateMutableFieldWithInitializerLint() async {
     const source = r'''
 class Cache {
   late int value = _compute();
@@ -353,7 +396,7 @@ int _compute() => 1;
     await assertDiagnosticsInFile(path, [lint(source.indexOf('late'), 'late'.length)]);
   }
 
-  Future<void> test_lateFinalStaticFieldWithInitializer_lint() async {
+  Future<void> _lateFinalStaticFieldWithInitializerLint() async {
     const source = r'''
 class Cache {
   static late final int value = _compute();
@@ -367,7 +410,7 @@ int _compute() => 1;
     await assertDiagnosticsInFile(path, [lint(source.indexOf('late'), 'late'.length)]);
   }
 
-  Future<void> test_lateFinalLocalWithInitializer_lint() async {
+  Future<void> _lateFinalLocalWithInitializerLint() async {
     const source = r'''
 void f(int Function() compute) {
   late final value = compute();
@@ -381,7 +424,6 @@ void f(int Function() compute) {
   }
 }
 
-@reflectiveTest
 final class AvoidMultiAssignmentTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -389,7 +431,7 @@ final class AvoidMultiAssignmentTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_chainedAssignment_lint() async {
+  Future<void> _chainedAssignmentLint() async {
     const source = r'''
 void f() {
   var a = 0;
@@ -401,7 +443,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('a = b = 1'), 'a = b = 1'.length)]);
   }
 
-  Future<void> test_separateAssignments_noLint() async {
+  Future<void> _separateAssignmentsNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   var a = 0;

@@ -1,17 +1,44 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/check_for_equals_in_render_object_setters.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/keep_state_below_its_widget.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_widget_private_members.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(KeepStateBelowItsWidgetTest);
-    defineReflectiveTests(PreferWidgetPrivateMembersTest);
-    defineReflectiveTests(CheckForEqualsInRenderObjectSettersTest);
-  });
+  analysisRuleSuite<KeepStateBelowItsWidgetTest>(
+    'KeepStateBelowItsWidgetTest',
+    KeepStateBelowItsWidgetTest.new,
+    {
+      'test_stateBeforeWidget_lint': (t) => t._stateBeforeWidgetLint(),
+      'test_stateBelowWidget_noLint': (t) => t._stateBelowWidgetNoLint(),
+      'test_stateWithoutSameFileWidget_noLint': (t) => t._stateWithoutSameFileWidgetNoLint(),
+    },
+  );
+  analysisRuleSuite<PreferWidgetPrivateMembersTest>(
+    'PreferWidgetPrivateMembersTest',
+    PreferWidgetPrivateMembersTest.new,
+    {
+      'test_publicField_lint': (t) => t._publicFieldLint(),
+      'test_constructorBackedFinalField_noLint': (t) => t._constructorBackedFinalFieldNoLint(),
+      'test_constructorBackedDefaultFinalField_noLint': (t) =>
+          t._constructorBackedDefaultFinalFieldNoLint(),
+      'test_initializerListBackedFinalField_noLint': (t) =>
+          t._initializerListBackedFinalFieldNoLint(),
+      'test_constructorBackedMutableField_lint': (t) => t._constructorBackedMutableFieldLint(),
+      'test_publicMethod_lint': (t) => t._publicMethodLint(),
+      'test_privateAndFrameworkMembers_noLint': (t) => t._privateAndFrameworkMembersNoLint(),
+    },
+  );
+  analysisRuleSuite<CheckForEqualsInRenderObjectSettersTest>(
+    'CheckForEqualsInRenderObjectSettersTest',
+    CheckForEqualsInRenderObjectSettersTest.new,
+    {
+      'test_setterWithoutEqualityGuard_lint': (t) => t._setterWithoutEqualityGuardLint(),
+      'test_setterWithEqualityGuard_noLint': (t) => t._setterWithEqualityGuardNoLint(),
+      'test_nonInvalidatingSetter_noLint': (t) => t._nonInvalidatingSetterNoLint(),
+    },
+  );
 }
 
 abstract class _FlutterStructureRuleTest extends AnalysisRuleTest {
@@ -57,7 +84,6 @@ class RenderBox extends RenderObject {
   }
 }
 
-@reflectiveTest
 final class KeepStateBelowItsWidgetTest extends _FlutterStructureRuleTest {
   @override
   void setUp() {
@@ -65,7 +91,7 @@ final class KeepStateBelowItsWidgetTest extends _FlutterStructureRuleTest {
     super.setUp();
   }
 
-  Future<void> test_stateBeforeWidget_lint() async {
+  Future<void> _stateBeforeWidgetLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -81,7 +107,7 @@ class Counter extends StatefulWidget {
     ]);
   }
 
-  Future<void> test_stateBelowWidget_noLint() async {
+  Future<void> _stateBelowWidgetNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -93,7 +119,7 @@ class _CounterState extends State<Counter> {}
 ''');
   }
 
-  Future<void> test_stateWithoutSameFileWidget_noLint() async {
+  Future<void> _stateWithoutSameFileWidgetNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -102,7 +128,6 @@ class _GenericState extends State<StatefulWidget> {}
   }
 }
 
-@reflectiveTest
 final class PreferWidgetPrivateMembersTest extends _FlutterStructureRuleTest {
   @override
   void setUp() {
@@ -110,7 +135,7 @@ final class PreferWidgetPrivateMembersTest extends _FlutterStructureRuleTest {
     super.setUp();
   }
 
-  Future<void> test_publicField_lint() async {
+  Future<void> _publicFieldLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -124,7 +149,7 @@ class Counter extends StatelessWidget {
     await assertDiagnostics(source, [lint(source.indexOf('count'), 'count'.length)]);
   }
 
-  Future<void> test_constructorBackedFinalField_noLint() async {
+  Future<void> _constructorBackedFinalFieldNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -136,7 +161,7 @@ class Counter extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_constructorBackedDefaultFinalField_noLint() async {
+  Future<void> _constructorBackedDefaultFinalFieldNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -148,7 +173,7 @@ class Counter extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_initializerListBackedFinalField_noLint() async {
+  Future<void> _initializerListBackedFinalFieldNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -160,7 +185,7 @@ class Counter extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_constructorBackedMutableField_lint() async {
+  Future<void> _constructorBackedMutableFieldLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -174,7 +199,7 @@ class Counter extends StatelessWidget {
     await assertDiagnostics(source, [lint(source.indexOf('count;'), 'count'.length)]);
   }
 
-  Future<void> test_publicMethod_lint() async {
+  Future<void> _publicMethodLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -188,7 +213,7 @@ class Counter extends StatefulWidget {
     await assertDiagnostics(source, [lint(source.indexOf('reset'), 'reset'.length)]);
   }
 
-  Future<void> test_privateAndFrameworkMembers_noLint() async {
+  Future<void> _privateAndFrameworkMembersNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -206,7 +231,6 @@ class Counter extends StatelessWidget {
   }
 }
 
-@reflectiveTest
 final class CheckForEqualsInRenderObjectSettersTest extends _FlutterStructureRuleTest {
   @override
   void setUp() {
@@ -214,7 +238,7 @@ final class CheckForEqualsInRenderObjectSettersTest extends _FlutterStructureRul
     super.setUp();
   }
 
-  Future<void> test_setterWithoutEqualityGuard_lint() async {
+  Future<void> _setterWithoutEqualityGuardLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -231,7 +255,7 @@ class RenderCounter extends RenderBox {
     await assertDiagnostics(source, [lint(source.indexOf('count(int'), 'count'.length)]);
   }
 
-  Future<void> test_setterWithEqualityGuard_noLint() async {
+  Future<void> _setterWithEqualityGuardNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -247,7 +271,7 @@ class RenderCounter extends RenderBox {
 ''');
   }
 
-  Future<void> test_nonInvalidatingSetter_noLint() async {
+  Future<void> _nonInvalidatingSetterNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 

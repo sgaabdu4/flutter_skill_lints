@@ -1,20 +1,44 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_accessing_other_classes_private_members.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_names.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_types.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidAccessingOtherClassesPrivateMembersTest);
-    defineReflectiveTests(AvoidBannedNamesTest);
-    defineReflectiveTests(AvoidBannedTypesTest);
+  analysisRuleSuite<AvoidAccessingOtherClassesPrivateMembersTest>(
+    'AvoidAccessingOtherClassesPrivateMembersTest',
+    AvoidAccessingOtherClassesPrivateMembersTest.new,
+    {
+      'test_privateInstanceFieldFromOtherObject_lint': (t) =>
+          t._privateInstanceFieldFromOtherObjectLint(),
+      'test_privateStaticFieldFromOtherClass_lint': (t) =>
+          t._privateStaticFieldFromOtherClassLint(),
+      'test_privateMethodFromOtherObject_lint': (t) => t._privateMethodFromOtherObjectLint(),
+      'test_ownPrivateAccess_noLint': (t) => t._ownPrivateAccessNoLint(),
+      'test_publicMemberFromOtherObject_noLint': (t) => t._publicMemberFromOtherObjectNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidBannedNamesTest>('AvoidBannedNamesTest', AvoidBannedNamesTest.new, {
+    'test_placeholderLocalVariableName_lint': (t) => t._placeholderLocalVariableNameLint(),
+    'test_placeholderClassName_lint': (t) => t._placeholderClassNameLint(),
+    'test_placeholderParameterName_lint': (t) => t._placeholderParameterNameLint(),
+    'test_descriptiveNames_noLint': (t) => t._descriptiveNamesNoLint(),
+    'test_overrideMethodName_lintsBaseDeclarationOnly': (t) =>
+        t._overrideMethodNameLintsBaseDeclarationOnly(),
+  });
+  analysisRuleSuite<AvoidBannedTypesTest>('AvoidBannedTypesTest', AvoidBannedTypesTest.new, {
+    'test_dynamicParameter_lint': (t) => t._dynamicParameterLint(),
+    'test_dynamicReturnType_lint': (t) => t._dynamicReturnTypeLint(),
+    'test_listDynamic_lint': (t) => t._listDynamicLint(),
+    'test_jsonMapDynamicValue_noLint': (t) => t._jsonMapDynamicValueNoLint(),
+    'test_jsonMapLiteralDynamicValue_noLint': (t) => t._jsonMapLiteralDynamicValueNoLint(),
+    'test_nonJsonMapLiteralDynamic_lint': (t) => t._nonJsonMapLiteralDynamicLint(),
+    'test_generatedLocalizationDynamic_noLint': (t) => t._generatedLocalizationDynamicNoLint(),
+    'test_objectBoundary_noLint': (t) => t._objectBoundaryNoLint(),
   });
 }
 
-@reflectiveTest
 final class AvoidAccessingOtherClassesPrivateMembersTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +46,7 @@ final class AvoidAccessingOtherClassesPrivateMembersTest extends AnalysisRuleTes
     super.setUp();
   }
 
-  Future<void> test_privateInstanceFieldFromOtherObject_lint() async {
+  Future<void> _privateInstanceFieldFromOtherObjectLint() async {
     const source = r'''
 class User {
   final String _name = 'Ada';
@@ -36,7 +60,7 @@ class Presenter {
     await assertDiagnostics(source, [lint(source.indexOf('_name;'), '_name'.length)]);
   }
 
-  Future<void> test_privateStaticFieldFromOtherClass_lint() async {
+  Future<void> _privateStaticFieldFromOtherClassLint() async {
     const source = r'''
 class Cache {
   static final Object _store = Object();
@@ -48,7 +72,7 @@ Object read() => Cache._store;
     await assertDiagnostics(source, [lint(source.indexOf('_store;'), '_store'.length)]);
   }
 
-  Future<void> test_privateMethodFromOtherObject_lint() async {
+  Future<void> _privateMethodFromOtherObjectLint() async {
     const source = r'''
 class User {
   String _label() => 'Ada';
@@ -60,7 +84,7 @@ String read(User user) => user._label();
     await assertDiagnostics(source, [lint(source.indexOf('_label();'), '_label'.length)]);
   }
 
-  Future<void> test_ownPrivateAccess_noLint() async {
+  Future<void> _ownPrivateAccessNoLint() async {
     await assertNoDiagnostics(r'''
 class User {
   final String _name = 'Ada';
@@ -71,7 +95,7 @@ class User {
 ''');
   }
 
-  Future<void> test_publicMemberFromOtherObject_noLint() async {
+  Future<void> _publicMemberFromOtherObjectNoLint() async {
     await assertNoDiagnostics(r'''
 class User {
   final String name = 'Ada';
@@ -84,7 +108,6 @@ class Presenter {
   }
 }
 
-@reflectiveTest
 final class AvoidBannedNamesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -92,7 +115,7 @@ final class AvoidBannedNamesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_placeholderLocalVariableName_lint() async {
+  Future<void> _placeholderLocalVariableNameLint() async {
     const source = r'''
 void read() {
   final foo = 1;
@@ -103,7 +126,7 @@ void read() {
     await assertDiagnostics(source, [lint(source.indexOf('foo ='), 'foo'.length)]);
   }
 
-  Future<void> test_placeholderClassName_lint() async {
+  Future<void> _placeholderClassNameLint() async {
     const source = r'''
 class bar {}
 ''';
@@ -111,7 +134,7 @@ class bar {}
     await assertDiagnostics(source, [lint(source.indexOf('bar'), 'bar'.length)]);
   }
 
-  Future<void> test_placeholderParameterName_lint() async {
+  Future<void> _placeholderParameterNameLint() async {
     const source = r'''
 void read(String baz) {
   print(baz);
@@ -121,7 +144,7 @@ void read(String baz) {
     await assertDiagnostics(source, [lint(source.indexOf('baz)'), 'baz'.length)]);
   }
 
-  Future<void> test_descriptiveNames_noLint() async {
+  Future<void> _descriptiveNamesNoLint() async {
     await assertNoDiagnostics(r'''
 class UserPresenter {
   String title(String userName) => userName;
@@ -129,7 +152,7 @@ class UserPresenter {
 ''');
   }
 
-  Future<void> test_overrideMethodName_lintsBaseDeclarationOnly() async {
+  Future<void> _overrideMethodNameLintsBaseDeclarationOnly() async {
     const source = r'''
 class Base {
   void foo() {}
@@ -145,7 +168,6 @@ class Child extends Base {
   }
 }
 
-@reflectiveTest
 final class AvoidBannedTypesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -153,7 +175,7 @@ final class AvoidBannedTypesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_dynamicParameter_lint() async {
+  Future<void> _dynamicParameterLint() async {
     const source = r'''
 void read(dynamic value) {}
 ''';
@@ -161,7 +183,7 @@ void read(dynamic value) {}
     await assertDiagnostics(source, [lint(source.indexOf('dynamic'), 'dynamic'.length)]);
   }
 
-  Future<void> test_dynamicReturnType_lint() async {
+  Future<void> _dynamicReturnTypeLint() async {
     const source = r'''
 dynamic read() => 1;
 ''';
@@ -169,7 +191,7 @@ dynamic read() => 1;
     await assertDiagnostics(source, [lint(source.indexOf('dynamic'), 'dynamic'.length)]);
   }
 
-  Future<void> test_listDynamic_lint() async {
+  Future<void> _listDynamicLint() async {
     const source = r'''
 List<dynamic> read() => const [];
 ''';
@@ -177,14 +199,14 @@ List<dynamic> read() => const [];
     await assertDiagnostics(source, [lint(source.indexOf('dynamic'), 'dynamic'.length)]);
   }
 
-  Future<void> test_jsonMapDynamicValue_noLint() async {
+  Future<void> _jsonMapDynamicValueNoLint() async {
     await assertNoDiagnostics(r'''
 Map<String, dynamic> toJson() => {};
 ''');
   }
 
   // hive-persistence.md:56: `<String, dynamic>{}` is a JSON map literal.
-  Future<void> test_jsonMapLiteralDynamicValue_noLint() async {
+  Future<void> _jsonMapLiteralDynamicValueNoLint() async {
     await assertNoDiagnostics(r'''
 Map<String, dynamic> normalize() {
   final normalized = <String, dynamic>{};
@@ -193,7 +215,7 @@ Map<String, dynamic> normalize() {
 ''');
   }
 
-  Future<void> test_nonJsonMapLiteralDynamic_lint() async {
+  Future<void> _nonJsonMapLiteralDynamicLint() async {
     const source = r'''
 final byId = <int, dynamic>{};
 ''';
@@ -201,14 +223,14 @@ final byId = <int, dynamic>{};
     await assertDiagnostics(source, [lint(source.indexOf('dynamic'), 'dynamic'.length)]);
   }
 
-  Future<void> test_generatedLocalizationDynamic_noLint() async {
+  Future<void> _generatedLocalizationDynamicNoLint() async {
     final filePath = '$testPackageLibPath/l10n/app_localizations.dart';
     newFile(filePath, 'List<dynamic> delegates = <dynamic>[];');
 
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_objectBoundary_noLint() async {
+  Future<void> _objectBoundaryNoLint() async {
     await assertNoDiagnostics(r'''
 Object? read(Object? value) => value;
 ''');

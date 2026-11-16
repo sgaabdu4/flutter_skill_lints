@@ -1,12 +1,11 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_slow_collection_methods.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unsafe_collection_methods.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unsafe_reduce.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 const _iterableCore = r'''
 extension IterableSafetyTestX<T> on Iterable<T> {
@@ -20,14 +19,43 @@ extension IterableSafetyTestX<T> on Iterable<T> {
 ''';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidUnsafeReduceTest);
-    defineReflectiveTests(AvoidUnsafeCollectionMethodsTest);
-    defineReflectiveTests(AvoidSlowCollectionMethodsTest);
+  analysisRuleSuite<AvoidUnsafeReduceTest>('AvoidUnsafeReduceTest', AvoidUnsafeReduceTest.new, {
+    'test_emptyLiteral_lint': (t) => t._emptyLiteralLint(),
+    'test_guardedByEmptyEarlyReturn_noLint': (t) => t._guardedByEmptyEarlyReturnNoLint(),
+    'test_guardedByIfCondition_noLint': (t) => t._guardedByIfConditionNoLint(),
+    'test_iterableWithoutGuard_lint': (t) => t._iterableWithoutGuardLint(),
+    'test_severity_info': (t) => t._severityInfo(),
   });
+  analysisRuleSuite<AvoidUnsafeCollectionMethodsTest>(
+    'AvoidUnsafeCollectionMethodsTest',
+    AvoidUnsafeCollectionMethodsTest.new,
+    {
+      'test_adjacentResolvedLengthAssertionProvesFirstAndSingle': (t) =>
+          t._adjacentResolvedLengthAssertionProvesFirstAndSingle(),
+      'test_mutationAliasAwaitAndUnrelatedExpectInvalidateLengthProof': (t) =>
+          t._mutationAliasAwaitAndUnrelatedExpectInvalidateLengthProof(),
+      'test_emptyLiteralFirst_lint': (t) => t._emptyLiteralFirstLint(),
+      'test_guardedSingle_noLint': (t) => t._guardedSingleNoLint(),
+      'test_testFileFirstAndSingle_noLint': (t) => t._testFileFirstAndSingleNoLint(),
+      'test_productionToStringFirst_lint': (t) => t._productionToStringFirstLint(),
+      'test_iterableFirstWithoutGuard_lint': (t) => t._iterableFirstWithoutGuardLint(),
+      'test_iterableSingleWithoutGuard_lint': (t) => t._iterableSingleWithoutGuardLint(),
+      'test_lengthCheck_keptConservative_lint': (t) => t._lengthCheckKeptConservativeLint(),
+      'test_severity_info': (t) => t._severityInfo(),
+    },
+  );
+  analysisRuleSuite<AvoidSlowCollectionMethodsTest>(
+    'AvoidSlowCollectionMethodsTest',
+    AvoidSlowCollectionMethodsTest.new,
+    {
+      'test_whereIsEmpty_lint': (t) => t._whereIsEmptyLint(),
+      'test_whereIsNotEmpty_lint': (t) => t._whereIsNotEmptyLint(),
+      'test_directAny_noLint': (t) => t._directAnyNoLint(),
+      'test_severity_info': (t) => t._severityInfo(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidUnsafeReduceTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -35,7 +63,7 @@ final class AvoidUnsafeReduceTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_emptyLiteral_lint() async {
+  Future<void> _emptyLiteralLint() async {
     const source =
         _iterableCore +
         r'''
@@ -49,7 +77,7 @@ void f() {
     ]);
   }
 
-  Future<void> test_guardedByEmptyEarlyReturn_noLint() async {
+  Future<void> _guardedByEmptyEarlyReturnNoLint() async {
     await assertNoDiagnostics(
       _iterableCore +
           r'''
@@ -61,7 +89,7 @@ int f(List<int> values) {
     );
   }
 
-  Future<void> test_guardedByIfCondition_noLint() async {
+  Future<void> _guardedByIfConditionNoLint() async {
     await assertNoDiagnostics(
       _iterableCore +
           r'''
@@ -75,7 +103,7 @@ int f(List<int> values) {
     );
   }
 
-  Future<void> test_iterableWithoutGuard_lint() async {
+  Future<void> _iterableWithoutGuardLint() async {
     const source =
         _iterableCore +
         r'''
@@ -89,12 +117,11 @@ int f(Iterable<int> values) {
     ]);
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(AvoidUnsafeReduce.code.severity, DiagnosticSeverity.INFO);
   }
 }
 
-@reflectiveTest
 final class AvoidUnsafeCollectionMethodsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -109,7 +136,7 @@ export 'package:matcher/matcher.dart';
     super.setUp();
   }
 
-  Future<void> test_adjacentResolvedLengthAssertionProvesFirstAndSingle() async {
+  Future<void> _adjacentResolvedLengthAssertionProvesFirstAndSingle() async {
     await assertNoDiagnostics(
       r'''
 import 'package:flutter_test/flutter_test.dart';
@@ -126,7 +153,7 @@ void f(List<int> values) {
     );
   }
 
-  Future<void> test_mutationAliasAwaitAndUnrelatedExpectInvalidateLengthProof() async {
+  Future<void> _mutationAliasAwaitAndUnrelatedExpectInvalidateLengthProof() async {
     const source =
         r'''
 import 'package:flutter_test/flutter_test.dart';
@@ -186,7 +213,7 @@ int Function() deferred(List<int> values) {
     ]);
   }
 
-  Future<void> test_emptyLiteralFirst_lint() async {
+  Future<void> _emptyLiteralFirstLint() async {
     const source =
         _iterableCore +
         r'''
@@ -200,7 +227,7 @@ void f() {
     ]);
   }
 
-  Future<void> test_guardedSingle_noLint() async {
+  Future<void> _guardedSingleNoLint() async {
     await assertNoDiagnostics(
       _iterableCore +
           r'''
@@ -212,7 +239,7 @@ int f(List<int> values) {
     );
   }
 
-  Future<void> test_testFileFirstAndSingle_noLint() async {
+  Future<void> _testFileFirstAndSingleNoLint() async {
     final path = '$testPackageRootPath/test/products_test.dart';
     newFile(
       path,
@@ -232,7 +259,7 @@ void main() {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_productionToStringFirst_lint() async {
+  Future<void> _productionToStringFirstLint() async {
     const source =
         _iterableCore +
         r'''
@@ -250,7 +277,7 @@ class SaveAllRowsException {
     ]);
   }
 
-  Future<void> test_iterableFirstWithoutGuard_lint() async {
+  Future<void> _iterableFirstWithoutGuardLint() async {
     const source =
         _iterableCore +
         r'''
@@ -262,7 +289,7 @@ int f(Iterable<int> values) {
     await assertDiagnostics(source, [lint(source.indexOf('values.first'), 'values.first'.length)]);
   }
 
-  Future<void> test_iterableSingleWithoutGuard_lint() async {
+  Future<void> _iterableSingleWithoutGuardLint() async {
     const source =
         _iterableCore +
         r'''
@@ -276,7 +303,7 @@ int f(Iterable<int> values) {
     ]);
   }
 
-  Future<void> test_lengthCheck_keptConservative_lint() async {
+  Future<void> _lengthCheckKeptConservativeLint() async {
     const source =
         _iterableCore +
         r'''
@@ -293,12 +320,11 @@ int f(List<int> values) {
     ]);
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(AvoidUnsafeCollectionMethods.code.severity, DiagnosticSeverity.INFO);
   }
 }
 
-@reflectiveTest
 final class AvoidSlowCollectionMethodsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -306,7 +332,7 @@ final class AvoidSlowCollectionMethodsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_whereIsEmpty_lint() async {
+  Future<void> _whereIsEmptyLint() async {
     const source =
         _iterableCore +
         r'''
@@ -323,7 +349,7 @@ bool f(List<int> values) {
     ]);
   }
 
-  Future<void> test_whereIsNotEmpty_lint() async {
+  Future<void> _whereIsNotEmptyLint() async {
     const source =
         _iterableCore +
         r'''
@@ -340,7 +366,7 @@ bool f(List<int> values) {
     ]);
   }
 
-  Future<void> test_directAny_noLint() async {
+  Future<void> _directAnyNoLint() async {
     await assertNoDiagnostics(
       _iterableCore +
           r'''
@@ -351,7 +377,7 @@ bool f(List<int> values) {
     );
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(AvoidSlowCollectionMethods.code.severity, DiagnosticSeverity.INFO);
   }
 }

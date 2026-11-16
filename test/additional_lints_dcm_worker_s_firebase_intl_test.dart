@@ -1,20 +1,42 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/incorrect_firebase_event_name.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/incorrect_firebase_parameter_name.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_date_format.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(IncorrectFirebaseEventNameTest);
-    defineReflectiveTests(IncorrectFirebaseParameterNameTest);
-    defineReflectiveTests(PreferDateFormatTest);
+  analysisRuleSuite<IncorrectFirebaseEventNameTest>(
+    'IncorrectFirebaseEventNameTest',
+    IncorrectFirebaseEventNameTest.new,
+    {
+      'test_invalidLiteralName_lint': (t) => t._invalidLiteralNameLint(),
+      'test_positionalInvalidLiteralName_lint': (t) => t._positionalInvalidLiteralNameLint(),
+      'test_reservedLiteralName_lint': (t) => t._reservedLiteralNameLint(),
+      'test_validLiteralName_noLint': (t) => t._validLiteralNameNoLint(),
+      'test_nonLiteralName_noLint': (t) => t._nonLiteralNameNoLint(),
+    },
+  );
+  analysisRuleSuite<IncorrectFirebaseParameterNameTest>(
+    'IncorrectFirebaseParameterNameTest',
+    IncorrectFirebaseParameterNameTest.new,
+    {
+      'test_invalidLiteralParameterName_lint': (t) => t._invalidLiteralParameterNameLint(),
+      'test_reservedLiteralParameterName_lint': (t) => t._reservedLiteralParameterNameLint(),
+      'test_validLiteralParameterNames_noLint': (t) => t._validLiteralParameterNamesNoLint(),
+      'test_nonLiteralParameters_noLint': (t) => t._nonLiteralParametersNoLint(),
+    },
+  );
+  analysisRuleSuite<PreferDateFormatTest>('PreferDateFormatTest', PreferDateFormatTest.new, {
+    'test_textDateTimeToString_lint': (t) => t._textDateTimeToStringLint(),
+    'test_textInterpolationDateTimeToString_lint': (t) =>
+        t._textInterpolationDateTimeToStringLint(),
+    'test_textSpanDateTimeToString_lint': (t) => t._textSpanDateTimeToStringLint(),
+    'test_logDateTimeToString_noLint': (t) => t._logDateTimeToStringNoLint(),
+    'test_textNonDateTimeToString_noLint': (t) => t._textNonDateTimeToStringNoLint(),
   });
 }
 
-@reflectiveTest
 final class IncorrectFirebaseEventNameTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +44,7 @@ final class IncorrectFirebaseEventNameTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_invalidLiteralName_lint() async {
+  Future<void> _invalidLiteralNameLint() async {
     const source = r'''
 class Analytics {
   void logEvent({required String name, Map<String, Object?>? parameters}) {}
@@ -38,7 +60,7 @@ void f(Analytics analytics) {
     ]);
   }
 
-  Future<void> test_positionalInvalidLiteralName_lint() async {
+  Future<void> _positionalInvalidLiteralNameLint() async {
     const source = r'''
 class Analytics {
   void logEvent(String name) {}
@@ -52,7 +74,7 @@ void f(Analytics analytics) {
     await assertDiagnostics(source, [lint(source.indexOf("'1_checkout'"), "'1_checkout'".length)]);
   }
 
-  Future<void> test_reservedLiteralName_lint() async {
+  Future<void> _reservedLiteralNameLint() async {
     const source = r'''
 class Analytics {
   void logEvent({required String name}) {}
@@ -68,7 +90,7 @@ void f(Analytics analytics) {
     ]);
   }
 
-  Future<void> test_validLiteralName_noLint() async {
+  Future<void> _validLiteralNameNoLint() async {
     await assertNoDiagnostics(r'''
 class Analytics {
   void logEvent({required String name, Map<String, Object?>? parameters}) {}
@@ -80,7 +102,7 @@ void f(Analytics analytics) {
 ''');
   }
 
-  Future<void> test_nonLiteralName_noLint() async {
+  Future<void> _nonLiteralNameNoLint() async {
     await assertNoDiagnostics(r'''
 class Analytics {
   void logEvent({required String name}) {}
@@ -93,7 +115,6 @@ void f(Analytics analytics, String eventName) {
   }
 }
 
-@reflectiveTest
 final class IncorrectFirebaseParameterNameTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -101,7 +122,7 @@ final class IncorrectFirebaseParameterNameTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_invalidLiteralParameterName_lint() async {
+  Future<void> _invalidLiteralParameterNameLint() async {
     const source = r'''
 class Analytics {
   void logEvent({required String name, Map<String, Object?>? parameters}) {}
@@ -118,7 +139,7 @@ void f(Analytics analytics) {
     await assertDiagnostics(source, [lint(source.indexOf("'item-id'"), "'item-id'".length)]);
   }
 
-  Future<void> test_reservedLiteralParameterName_lint() async {
+  Future<void> _reservedLiteralParameterNameLint() async {
     const source = r'''
 class Analytics {
   void logEvent({required String name, Map<String, Object?>? parameters}) {}
@@ -135,7 +156,7 @@ void f(Analytics analytics) {
     await assertDiagnostics(source, [lint(source.indexOf("'ga_session'"), "'ga_session'".length)]);
   }
 
-  Future<void> test_validLiteralParameterNames_noLint() async {
+  Future<void> _validLiteralParameterNamesNoLint() async {
     await assertNoDiagnostics(r'''
 class Analytics {
   void logEvent({required String name, Map<String, Object?>? parameters}) {}
@@ -150,7 +171,7 @@ void f(Analytics analytics) {
 ''');
   }
 
-  Future<void> test_nonLiteralParameters_noLint() async {
+  Future<void> _nonLiteralParametersNoLint() async {
     await assertNoDiagnostics(r'''
 class Analytics {
   void logEvent({required String name, Map<String, Object?>? parameters}) {}
@@ -163,7 +184,6 @@ void f(Analytics analytics, Map<String, Object?> params) {
   }
 }
 
-@reflectiveTest
 final class PreferDateFormatTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -171,7 +191,7 @@ final class PreferDateFormatTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_textDateTimeToString_lint() async {
+  Future<void> _textDateTimeToStringLint() async {
     const source = r'''
 class Text {
   const Text(String value);
@@ -183,7 +203,7 @@ Text f(DateTime createdAt) => Text(createdAt.toString());
     await assertDiagnostics(source, [lint(source.indexOf('toString'), 'toString'.length)]);
   }
 
-  Future<void> test_textInterpolationDateTimeToString_lint() async {
+  Future<void> _textInterpolationDateTimeToStringLint() async {
     const source = r'''
 class Text {
   const Text(String value);
@@ -195,7 +215,7 @@ Text f(DateTime createdAt) => Text('Created ${createdAt.toString()}');
     await assertDiagnostics(source, [lint(source.indexOf('toString'), 'toString'.length)]);
   }
 
-  Future<void> test_textSpanDateTimeToString_lint() async {
+  Future<void> _textSpanDateTimeToStringLint() async {
     const source = r'''
 class TextSpan {
   const TextSpan({String? text});
@@ -207,7 +227,7 @@ TextSpan f(DateTime createdAt) => TextSpan(text: createdAt.toString());
     await assertDiagnostics(source, [lint(source.indexOf('toString'), 'toString'.length)]);
   }
 
-  Future<void> test_logDateTimeToString_noLint() async {
+  Future<void> _logDateTimeToStringNoLint() async {
     await assertNoDiagnostics(r'''
 void f(DateTime createdAt) {
   print(createdAt.toString());
@@ -215,7 +235,7 @@ void f(DateTime createdAt) {
 ''');
   }
 
-  Future<void> test_textNonDateTimeToString_noLint() async {
+  Future<void> _textNonDateTimeToStringNoLint() async {
     await assertNoDiagnostics(r'''
 class Text {
   const Text(String value);

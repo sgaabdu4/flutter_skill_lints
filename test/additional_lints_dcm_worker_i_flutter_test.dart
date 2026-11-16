@@ -1,17 +1,48 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary_safe_area.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary_type_assertions.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_using_list_view.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(PreferUsingListViewTest);
-    defineReflectiveTests(AvoidUnnecessarySafeAreaTest);
-    defineReflectiveTests(AvoidUnnecessaryTypeAssertionsTest);
-  });
+  analysisRuleSuite<PreferUsingListViewTest>(
+    'PreferUsingListViewTest',
+    PreferUsingListViewTest.new,
+    {
+      'test_verticalScrollViewWrappingDynamicColumn_lint': (t) =>
+          t._verticalScrollViewWrappingDynamicColumnLint(),
+      'test_horizontalScrollViewWrappingDynamicRow_lint': (t) =>
+          t._horizontalScrollViewWrappingDynamicRowLint(),
+      'test_verticalScrollViewWrappingSizedBox_noLint': (t) =>
+          t._verticalScrollViewWrappingSizedBoxNoLint(),
+      'test_verticalScrollViewWrappingFixedColumn_noLint': (t) =>
+          t._verticalScrollViewWrappingFixedColumnNoLint(),
+      'test_horizontalScrollViewWrappingColumn_noLint': (t) =>
+          t._horizontalScrollViewWrappingColumnNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidUnnecessarySafeAreaTest>(
+    'AvoidUnnecessarySafeAreaTest',
+    AvoidUnnecessarySafeAreaTest.new,
+    {
+      'test_allEdgesDisabled_lint': (t) => t._allEdgesDisabledLint(),
+      'test_nestedSafeArea_lint': (t) => t._nestedSafeAreaLint(),
+      'test_defaultSafeArea_noLint': (t) => t._defaultSafeAreaNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidUnnecessaryTypeAssertionsTest>(
+    'AvoidUnnecessaryTypeAssertionsTest',
+    AvoidUnnecessaryTypeAssertionsTest.new,
+    {
+      'test_isSameType_lint': (t) => t._isSameTypeLint(),
+      'test_asSameType_lint': (t) => t._asSameTypeLint(),
+      'test_isObjectFromNonNullableValue_lint': (t) => t._isObjectFromNonNullableValueLint(),
+      'test_nullableIsNonNullable_noLint': (t) => t._nullableIsNonNullableNoLint(),
+      'test_downcast_noLint': (t) => t._downcastNoLint(),
+      'test_negatedIsCheck_noLint': (t) => t._negatedIsCheckNoLint(),
+    },
+  );
 }
 
 abstract class _FlutterRuleTest extends AnalysisRuleTest {
@@ -61,7 +92,6 @@ class SafeArea extends Widget {
   }
 }
 
-@reflectiveTest
 final class PreferUsingListViewTest extends _FlutterRuleTest {
   @override
   void setUp() {
@@ -69,7 +99,7 @@ final class PreferUsingListViewTest extends _FlutterRuleTest {
     super.setUp();
   }
 
-  Future<void> test_verticalScrollViewWrappingDynamicColumn_lint() async {
+  Future<void> _verticalScrollViewWrappingDynamicColumnLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -85,7 +115,7 @@ Widget build(List<Widget> children) {
     ]);
   }
 
-  Future<void> test_horizontalScrollViewWrappingDynamicRow_lint() async {
+  Future<void> _horizontalScrollViewWrappingDynamicRowLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -102,7 +132,7 @@ Widget build(List<Widget> children) {
     ]);
   }
 
-  Future<void> test_verticalScrollViewWrappingSizedBox_noLint() async {
+  Future<void> _verticalScrollViewWrappingSizedBoxNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -112,7 +142,7 @@ Widget build() {
 ''');
   }
 
-  Future<void> test_verticalScrollViewWrappingFixedColumn_noLint() async {
+  Future<void> _verticalScrollViewWrappingFixedColumnNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -127,7 +157,7 @@ Widget build() {
 ''');
   }
 
-  Future<void> test_horizontalScrollViewWrappingColumn_noLint() async {
+  Future<void> _horizontalScrollViewWrappingColumnNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -141,7 +171,6 @@ Widget build() {
   }
 }
 
-@reflectiveTest
 final class AvoidUnnecessarySafeAreaTest extends _FlutterRuleTest {
   @override
   void setUp() {
@@ -149,7 +178,7 @@ final class AvoidUnnecessarySafeAreaTest extends _FlutterRuleTest {
     super.setUp();
   }
 
-  Future<void> test_allEdgesDisabled_lint() async {
+  Future<void> _allEdgesDisabledLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -167,7 +196,7 @@ Widget build() {
     await assertDiagnostics(source, [lint(source.indexOf('SafeArea'), 'SafeArea'.length)]);
   }
 
-  Future<void> test_nestedSafeArea_lint() async {
+  Future<void> _nestedSafeAreaLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -179,7 +208,7 @@ Widget build() {
     await assertDiagnostics(source, [lint(source.indexOf('SafeArea'), 'SafeArea'.length)]);
   }
 
-  Future<void> test_defaultSafeArea_noLint() async {
+  Future<void> _defaultSafeAreaNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -190,7 +219,6 @@ Widget build() {
   }
 }
 
-@reflectiveTest
 final class AvoidUnnecessaryTypeAssertionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -198,7 +226,7 @@ final class AvoidUnnecessaryTypeAssertionsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_isSameType_lint() async {
+  Future<void> _isSameTypeLint() async {
     const source = r'''
 // ignore_for_file: unnecessary_type_check
 
@@ -210,7 +238,7 @@ bool check(String value) => value is String;
     ]);
   }
 
-  Future<void> test_asSameType_lint() async {
+  Future<void> _asSameTypeLint() async {
     const source = r'''
 // ignore_for_file: unnecessary_cast
 
@@ -222,7 +250,7 @@ String cast(String value) => value as String;
     ]);
   }
 
-  Future<void> test_isObjectFromNonNullableValue_lint() async {
+  Future<void> _isObjectFromNonNullableValueLint() async {
     const source = r'''
 // ignore_for_file: unnecessary_type_check
 
@@ -234,19 +262,19 @@ bool check(String value) => value is Object;
     ]);
   }
 
-  Future<void> test_nullableIsNonNullable_noLint() async {
+  Future<void> _nullableIsNonNullableNoLint() async {
     await assertNoDiagnostics(r'''
 bool check(String? value) => value is String;
 ''');
   }
 
-  Future<void> test_downcast_noLint() async {
+  Future<void> _downcastNoLint() async {
     await assertNoDiagnostics(r'''
 String cast(Object value) => value as String;
 ''');
   }
 
-  Future<void> test_negatedIsCheck_noLint() async {
+  Future<void> _negatedIsCheckNoLint() async {
     await assertNoDiagnostics(r'''
 // ignore_for_file: unnecessary_type_check
 

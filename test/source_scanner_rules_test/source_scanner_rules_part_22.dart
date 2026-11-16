@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class DomainEntityPrimitiveFactoryTest extends _ValueObjectRuleTest {
   @override
   String get ruleName => 'domain_entity_primitive_factory';
@@ -41,7 +38,7 @@ class _User implements User {
 }
 ''';
 
-  Future<void> test_allowsAnonymousFreezedRedirect() async {
+  Future<void> _allowsAnonymousFreezedRedirect() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import
@@ -60,7 +57,7 @@ class _User implements User {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsNamedFactoryInValueObjectsPath() async {
+  Future<void> _allowsNamedFactoryInValueObjectsPath() async {
     final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import
@@ -81,7 +78,7 @@ class _Meters implements Distance {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsNamedFactoryInDataPath() async {
+  Future<void> _allowsNamedFactoryInDataPath() async {
     final filePath = '$testPackageLibPath/features/users/data/models/user_model.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import
@@ -101,7 +98,7 @@ class _UserModel implements UserModel {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsPrivateNamedFactory() async {
+  Future<void> _allowsPrivateNamedFactory() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import
@@ -121,7 +118,7 @@ class _User implements User {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsClassWithoutFreezedAnnotation() async {
+  Future<void> _allowsClassWithoutFreezedAnnotation() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     newFile(filePath, r'''
 class User {
@@ -133,7 +130,7 @@ class User {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsFromJsonFactoryInDomain() async {
+  Future<void> _allowsFromJsonFactoryInDomain() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_method, redirect_to_invalid_function_type
@@ -154,7 +151,7 @@ class _User implements User {
   }
 
   // Issue #38: a redirecting union case carrying a primitive declares a variant; it converts nothing.
-  Future<void> test_allowsNamedUnionCaseCarryingPrimitive() async {
+  Future<void> _allowsNamedUnionCaseCarryingPrimitive() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     const source = r'''
 // ignore_for_file: uri_does_not_exist, unused_import, redirect_to_invalid_function_type
@@ -179,7 +176,7 @@ class _EmptyUser implements User {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsParameterlessFreezedUnionVariants() async {
+  Future<void> _allowsParameterlessFreezedUnionVariants() async {
     final filePath = '$testPackageLibPath/features/users/domain/backend_failure.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import, redirect_to_invalid_function_type
@@ -200,7 +197,7 @@ class AuthFailure implements BackendFailure {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsMultilineAndValueObjectVariants() async {
+  Future<void> _allowsMultilineAndValueObjectVariants() async {
     final filePath = '$testPackageLibPath/features/users/domain/backend_failure.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import, redirect_to_invalid_function_type
@@ -222,7 +219,7 @@ class InvalidFailure implements BackendFailure {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsNullableDiagnosticPayloadOnExceptionUnion() async {
+  Future<void> _allowsNullableDiagnosticPayloadOnExceptionUnion() async {
     final filePath = '$testPackageLibPath/core/domain/backend_failure.dart';
     newFile(filePath, r'''
 // ignore_for_file: redirect_to_invalid_function_type
@@ -255,7 +252,7 @@ class AuthFailure implements BackendFailure {
   }
 
   // Issue #64: exception union cases may carry required or optional primitives.
-  Future<void> test_allowsExceptionUnionCasesCarryingPrimitives() async {
+  Future<void> _allowsExceptionUnionCasesCarryingPrimitives() async {
     final filePath = '$testPackageLibPath/core/domain/backend_failure.dart';
     const source = r'''
 // ignore_for_file: redirect_to_invalid_function_type
@@ -275,7 +272,7 @@ class TextFailure implements BackendFailure { const TextFailure({this.statusCode
   }
 
   // Issues #38/#64: union cases are allowed; body factories that take primitives still report.
-  Future<void> test_reportsBodyFactoriesBesideUnionCases() async {
+  Future<void> _reportsBodyFactoriesBesideUnionCases() async {
     final filePath = '$testPackageLibPath/core/domain/backend_failure.dart';
     const source = r'''
 // ignore_for_file: redirect_to_invalid_function_type
@@ -304,7 +301,7 @@ class PositionalFailure implements BackendFailure { const PositionalFailure([thi
   }
 
   // Issue #38: data unions outside Exception hierarchies are also union cases.
-  Future<void> test_allowsNonExceptionUnionCaseCarryingPrimitive() async {
+  Future<void> _allowsNonExceptionUnionCaseCarryingPrimitive() async {
     final filePath = '$testPackageLibPath/core/domain/result.dart';
     const source = r'''
 // ignore_for_file: redirect_to_invalid_function_type
@@ -324,7 +321,7 @@ class EmptyResult implements Result { const EmptyResult(); }
   }
 
   // Issues #38/#64: the skill's AppError (state-management-lifecycle.md:126-135) verbatim in core/domain.
-  Future<void> test_allowsSkillAppErrorUnion() async {
+  Future<void> _allowsSkillAppErrorUnion() async {
     final filePath = '$testPackageLibPath/core/domain/app_error.dart';
     newFile(filePath, r'''
 // ignore_for_file: redirect_to_invalid_function_type
@@ -352,7 +349,7 @@ class UnexpectedError implements AppError { const UnexpectedError(this.error); f
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsBodyFactoryOnDataUnion() async {
+  Future<void> _reportsBodyFactoryOnDataUnion() async {
     final filePath = '$testPackageLibPath/core/domain/result.dart';
     const source = r'''
 // ignore_for_file: redirect_to_invalid_function_type
@@ -407,7 +404,6 @@ $parameters
 ''';
 }
 
-@reflectiveTest
 final class DomainRawRequiredStringTest extends _DomainEntityParameterRuleTest {
   @override
   String get ruleName => 'domain_raw_required_string';
@@ -418,7 +414,7 @@ final class DomainRawRequiredStringTest extends _DomainEntityParameterRuleTest {
   @override
   String get source => entity('    required String title,\n    required DateTime createdAt,');
 
-  Future<void> test_reportsEveryRawStringAroundAnnotatedParameters() async {
+  Future<void> _reportsEveryRawStringAroundAnnotatedParameters() async {
     final source = entity(
       '    required String id,\n    @Default(0) int stock,\n    required String description,',
     );
@@ -430,14 +426,14 @@ final class DomainRawRequiredStringTest extends _DomainEntityParameterRuleTest {
     ]);
   }
 
-  Future<void> test_reportsNonConstRedirectingFactory() async {
+  Future<void> _reportsNonConstRedirectingFactory() async {
     final source = entity('    required String label,').replaceFirst('const factory', 'factory');
     newFile(path, source);
 
     await assertDiagnosticsInFile(path, [compatLint(source, 'String label,', ruleName)]);
   }
 
-  Future<void> test_reportsUnmarkedStringBesideHiveFieldSlots() async {
+  Future<void> _reportsUnmarkedStringBesideHiveFieldSlots() async {
     final source = entity(
       '    /// HiveField(0)\n    required String id,\n    required String nickname,',
     );
@@ -446,7 +442,7 @@ final class DomainRawRequiredStringTest extends _DomainEntityParameterRuleTest {
     await assertDiagnosticsInFile(path, [compatLint(source, 'String nickname,', ruleName)]);
   }
 
-  Future<void> test_allowsValueObjectsOptionalTextAndNamedUnionFactories() async {
+  Future<void> _allowsValueObjectsOptionalTextAndNamedUnionFactories() async {
     await assertAllows(
       '''
 ${entity('    required ProductId id,\n    String? note,\n    required List<String> tags,')}
@@ -460,7 +456,7 @@ sealed class AppError {
     );
   }
 
-  Future<void> test_allowsDataModelsAndValueObjects() async {
+  Future<void> _allowsDataModelsAndValueObjects() async {
     final source = entity('    required String title,');
     await assertAllows(
       source,
@@ -475,7 +471,6 @@ sealed class AppError {
   }
 }
 
-@reflectiveTest
 final class DomainUnitPrimitiveTest extends _DomainEntityParameterRuleTest {
   @override
   String get ruleName => 'domain_unit_primitive';
@@ -486,7 +481,7 @@ final class DomainUnitPrimitiveTest extends _DomainEntityParameterRuleTest {
   @override
   String get source => entity('    required int lengthCm,\n    required DateTime createdAt,');
 
-  Future<void> test_reportsDefaultedAndNullableUnitNumbers() async {
+  Future<void> _reportsDefaultedAndNullableUnitNumbers() async {
     final source = entity(
       '    @Default(0) int discountPercent,\n    double? weightKg,\n    num price,',
     );
@@ -499,7 +494,7 @@ final class DomainUnitPrimitiveTest extends _DomainEntityParameterRuleTest {
     ]);
   }
 
-  Future<void> test_allowsShippedHiveEntityLockedSlots() async {
+  Future<void> _allowsShippedHiveEntityLockedSlots() async {
     await assertAllows(
       entity('    required String id,\n    /// HiveField(1)\n    required double distanceMeters,'),
       path: path,
@@ -507,7 +502,7 @@ final class DomainUnitPrimitiveTest extends _DomainEntityParameterRuleTest {
     );
   }
 
-  Future<void> test_reportsNonConstFactoryAndUnmarkedHiveNeighbour() async {
+  Future<void> _reportsNonConstFactoryAndUnmarkedHiveNeighbour() async {
     final source = entity(
       '    /// HiveField(1)\n    required double distanceMeters,\n    required double weightKg,',
     ).replaceFirst('const factory', 'factory');
@@ -516,7 +511,7 @@ final class DomainUnitPrimitiveTest extends _DomainEntityParameterRuleTest {
     await assertDiagnosticsInFile(path, [compatLint(source, 'double weightKg,', ruleName)]);
   }
 
-  Future<void> test_allowsCountsAndTypedUnits() async {
+  Future<void> _allowsCountsAndTypedUnits() async {
     await assertAllows(
       entity(
         '    required int quantity,\n    required int items,\n    required Duration duration,',
@@ -525,4 +520,63 @@ final class DomainUnitPrimitiveTest extends _DomainEntityParameterRuleTest {
       addIgnorePrefix: false,
     );
   }
+}
+
+void _defineSourceScannerRulesPart22Tests() {
+  analysisRuleSuite<DomainEntityPrimitiveFactoryTest>(
+    'DomainEntityPrimitiveFactoryTest',
+    DomainEntityPrimitiveFactoryTest.new,
+    {
+      'test_allowsAnonymousFreezedRedirect': (t) => t._allowsAnonymousFreezedRedirect(),
+      'test_allowsNamedFactoryInValueObjectsPath': (t) => t._allowsNamedFactoryInValueObjectsPath(),
+      'test_allowsNamedFactoryInDataPath': (t) => t._allowsNamedFactoryInDataPath(),
+      'test_allowsPrivateNamedFactory': (t) => t._allowsPrivateNamedFactory(),
+      'test_allowsClassWithoutFreezedAnnotation': (t) => t._allowsClassWithoutFreezedAnnotation(),
+      'test_allowsFromJsonFactoryInDomain': (t) => t._allowsFromJsonFactoryInDomain(),
+      'test_allowsNamedUnionCaseCarryingPrimitive': (t) =>
+          t._allowsNamedUnionCaseCarryingPrimitive(),
+      'test_allowsParameterlessFreezedUnionVariants': (t) =>
+          t._allowsParameterlessFreezedUnionVariants(),
+      'test_allowsMultilineAndValueObjectVariants': (t) =>
+          t._allowsMultilineAndValueObjectVariants(),
+      'test_allowsNullableDiagnosticPayloadOnExceptionUnion': (t) =>
+          t._allowsNullableDiagnosticPayloadOnExceptionUnion(),
+      'test_allowsExceptionUnionCasesCarryingPrimitives': (t) =>
+          t._allowsExceptionUnionCasesCarryingPrimitives(),
+      'test_reportsBodyFactoriesBesideUnionCases': (t) => t._reportsBodyFactoriesBesideUnionCases(),
+      'test_allowsNonExceptionUnionCaseCarryingPrimitive': (t) =>
+          t._allowsNonExceptionUnionCaseCarryingPrimitive(),
+      'test_allowsSkillAppErrorUnion': (t) => t._allowsSkillAppErrorUnion(),
+      'test_reportsBodyFactoryOnDataUnion': (t) => t._reportsBodyFactoryOnDataUnion(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<DomainRawRequiredStringTest>(
+    'DomainRawRequiredStringTest',
+    DomainRawRequiredStringTest.new,
+    {
+      'test_reportsEveryRawStringAroundAnnotatedParameters': (t) =>
+          t._reportsEveryRawStringAroundAnnotatedParameters(),
+      'test_reportsNonConstRedirectingFactory': (t) => t._reportsNonConstRedirectingFactory(),
+      'test_reportsUnmarkedStringBesideHiveFieldSlots': (t) =>
+          t._reportsUnmarkedStringBesideHiveFieldSlots(),
+      'test_allowsValueObjectsOptionalTextAndNamedUnionFactories': (t) =>
+          t._allowsValueObjectsOptionalTextAndNamedUnionFactories(),
+      'test_allowsDataModelsAndValueObjects': (t) => t._allowsDataModelsAndValueObjects(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<DomainUnitPrimitiveTest>(
+    'DomainUnitPrimitiveTest',
+    DomainUnitPrimitiveTest.new,
+    {
+      'test_reportsDefaultedAndNullableUnitNumbers': (t) =>
+          t._reportsDefaultedAndNullableUnitNumbers(),
+      'test_allowsShippedHiveEntityLockedSlots': (t) => t._allowsShippedHiveEntityLockedSlots(),
+      'test_reportsNonConstFactoryAndUnmarkedHiveNeighbour': (t) =>
+          t._reportsNonConstFactoryAndUnmarkedHiveNeighbour(),
+      'test_allowsCountsAndTypedUnits': (t) => t._allowsCountsAndTypedUnits(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

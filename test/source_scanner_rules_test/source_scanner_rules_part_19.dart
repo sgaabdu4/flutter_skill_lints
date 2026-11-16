@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class ArchInterfaceContractTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'arch_interface_contract';
@@ -17,7 +14,7 @@ final class ArchInterfaceContractTest extends _ArchitectureRuleTest {
   @override
   String get source => 'class UserDatasource {}';
 
-  Future<void> test_allowsResolvedImportedInterface() async {
+  Future<void> _allowsResolvedImportedInterface() async {
     newFile(
       '$testPackageLibPath/features/items/domain/repositories/items_repository.dart',
       'abstract interface class IItemsRepository {}',
@@ -31,7 +28,7 @@ class ItemsRepository implements IItemsRepository {}
     await assertNoDiagnosticsInFile(path);
   }
 
-  Future<void> test_reportsSecondClassWithoutInterface() async {
+  Future<void> _reportsSecondClassWithoutInterface() async {
     final path = '$testPackageLibPath/features/items/data/repositories/items_repository.dart';
     const source = r'''
 abstract interface class IItemsRepository {}
@@ -42,21 +39,20 @@ class MissingRepository {}
     await assertDiagnosticsInFile(path, [compatLint(source, 'abstract interface class', ruleName)]);
   }
 
-  Future<void> test_reportsConcreteInterfaceClassWithoutContract() async {
+  Future<void> _reportsConcreteInterfaceClassWithoutContract() async {
     final path = '$testPackageLibPath/features/items/data/repositories/items_repository.dart';
     const source = 'interface class PublicRepository {}';
     newFile(path, source);
     await assertDiagnosticsInFile(path, [compatLint(source, 'interface class', ruleName)]);
   }
 
-  Future<void> test_allowsAbstractInterfaceContractDeclaration() async {
+  Future<void> _allowsAbstractInterfaceContractDeclaration() async {
     final path = '$testPackageLibPath/features/items/domain/repositories/items_repository.dart';
     newFile(path, 'abstract interface class IItemsRepository {}');
     await assertNoDiagnosticsInFile(path);
   }
 }
 
-@reflectiveTest
 final class ArchRepositoryGeneratedExtendsTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'arch_repository_generated_extends';
@@ -69,7 +65,7 @@ abstract class _$OrderRepository {}
 class OrderRepository extends _$OrderRepository {}
 ''';
 
-  Future<void> test_allowsRepositoryInterfaceImplementation() async {
+  Future<void> _allowsRepositoryInterfaceImplementation() async {
     await assertAllows(r'''
 abstract interface class IOrderRepository {}
 
@@ -77,7 +73,7 @@ class HiveOrderRepository implements IOrderRepository {}
 ''');
   }
 
-  Future<void> test_allowsGeneratedNotifierClasses() async {
+  Future<void> _allowsGeneratedNotifierClasses() async {
     await assertAllows(r'''
 abstract class _$OrderRepositoryNotifier {}
 
@@ -85,7 +81,7 @@ class OrderRepositoryNotifier extends _$OrderRepositoryNotifier {}
 ''');
   }
 
-  Future<void> test_allowsRiverpodGeneratedProviderClass() async {
+  Future<void> _allowsRiverpodGeneratedProviderClass() async {
     await assertAllows(r'''
 const riverpod = Object();
 
@@ -97,7 +93,6 @@ class OrderRepository extends _$OrderRepository {}
   }
 }
 
-@reflectiveTest
 final class ArchConcreteDependencyTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'arch_concrete_dependency';
@@ -130,7 +125,7 @@ abstract interface class IOrderRepository {}
 class HiveOrderRepository implements IOrderRepository {}
 ''';
 
-  Future<void> test_reportsProviderReturningConcreteRepository() async {
+  Future<void> _reportsProviderReturningConcreteRepository() async {
     final filePath = '$testPackageLibPath/features/orders/repositories/order_repository.dart';
     const source =
         '''
@@ -149,7 +144,7 @@ Future<HiveOrderRepository> asyncOrderRepository(Ref ref) async => HiveOrderRepo
     ]);
   }
 
-  Future<void> test_allowsProviderReturningRepositoryInterface() async {
+  Future<void> _allowsProviderReturningRepositoryInterface() async {
     await assertAllows('''
 $_providerPrelude
 @Riverpod(keepAlive: true)
@@ -161,7 +156,6 @@ Future<IOrderRepository> asyncOrderRepository(Ref ref) async => HiveOrderReposit
   }
 }
 
-@reflectiveTest
 final class RiverpodWidgetRefOutsideWidgetTest extends _RiverpodRuleTest {
   @override
   void setUp() {
@@ -204,7 +198,7 @@ class CartSyncService {
 }
 ''';
 
-  Future<void> test_reportsServiceMethodParameter() async {
+  Future<void> _reportsServiceMethodParameter() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -215,7 +209,7 @@ class CheckoutService {
     await assertDiagnostics(source, [compatLint(source, 'WidgetRef ref)', ruleName)]);
   }
 
-  Future<void> test_allowsWidgetsStatesAndMixinsOnState() async {
+  Future<void> _allowsWidgetsStatesAndMixinsOnState() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -241,12 +235,11 @@ extension CartRef on WidgetRef {
 ''', addIgnorePrefix: false);
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(rule.diagnosticCodes.single.severity, DiagnosticSeverity.ERROR);
   }
 }
 
-@reflectiveTest
 final class RiverpodGeneratedProviderAliasTest extends _RiverpodRuleTest {
   @override
   void setUp() {
@@ -271,7 +264,7 @@ final cartProvider = CartProvider._();
 final cartAliasProvider = cartProvider;
 ''';
 
-  Future<void> test_reportsGetterStaticAndFamilyAliases() async {
+  Future<void> _reportsGetterStaticAndFamilyAliases() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -303,7 +296,7 @@ final firstItemProvider = itemProvider('first');
     ]);
   }
 
-  Future<void> test_allowsGeneratedDeclarationsLocalsAndManualProviders() async {
+  Future<void> _allowsGeneratedDeclarationsLocalsAndManualProviders() async {
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -321,12 +314,11 @@ int read() {
 ''', addIgnorePrefix: false);
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(rule.diagnosticCodes.single.severity, DiagnosticSeverity.ERROR);
   }
 }
 
-@reflectiveTest
 final class ServiceProviderWatchDependencyTest extends _ServicesExtendedRuleTest {
   @override
   void setUp() {
@@ -407,7 +399,7 @@ INotificationService notificationService(Ref ref) {
 }
 ''';
 
-  Future<void> test_reportsRepositoryFactoryWatch() async {
+  Future<void> _reportsRepositoryFactoryWatch() async {
     const source = r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -430,7 +422,7 @@ IAuthLocalDatasource authLocalDatasource(Ref ref) {
     ]);
   }
 
-  Future<void> test_allowsCollectionProjectionNamedQueue() async {
+  Future<void> _allowsCollectionProjectionNamedQueue() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -451,7 +443,7 @@ QueueProjection selectedItemsQueue(Ref ref) {
 ''');
   }
 
-  Future<void> test_allowsCollectionProjectionWhoseElementLooksLikeService() async {
+  Future<void> _allowsCollectionProjectionWhoseElementLooksLikeService() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -479,7 +471,7 @@ List<ItemService> filteredItemServices(Ref ref) {
 ''');
   }
 
-  Future<void> test_reportsTypedStableServiceWatchWithGenericFactoryName() async {
+  Future<void> _reportsTypedStableServiceWatchWithGenericFactoryName() async {
     const source = r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -504,7 +496,7 @@ IQueueService createQueue(Ref ref) => QueueService(ref.watch(clientProvider));
     ]);
   }
 
-  Future<void> test_reportsGenericInfrastructureReturnType() async {
+  Future<void> _reportsGenericInfrastructureReturnType() async {
     const source = r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -528,7 +520,7 @@ IRepository<Item> repository(Ref ref) => Repository<Item>(ref.watch(clientProvid
     ]);
   }
 
-  Future<void> test_reportsQualifiedInfrastructureReturnTypeThroughFuture() async {
+  Future<void> _reportsQualifiedInfrastructureReturnTypeThroughFuture() async {
     const source = r'''
 import 'package:sdk/sdk.dart' as sdk;
 
@@ -551,7 +543,7 @@ Future<sdk.Repository<int>> repository(Ref ref) async {
     ]);
   }
 
-  Future<void> test_reportsAppwriteTablesAndAccountServicesByResolvedBase() async {
+  Future<void> _reportsAppwriteTablesAndAccountServicesByResolvedBase() async {
     const source = r'''
 import 'package:appwrite/appwrite.dart' as appwrite;
 
@@ -578,7 +570,7 @@ Future<appwrite.Account> appwriteAccount(Ref ref) async {
     ]);
   }
 
-  Future<void> test_allowsLocalServiceBaseLookalike() async {
+  Future<void> _allowsLocalServiceBaseLookalike() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -596,7 +588,7 @@ TablesDB localTablesDB(Ref ref) => TablesDB(ref.watch(clientProvider));
 ''');
   }
 
-  Future<void> test_doesNotUnwrapUserDefinedFutureName() async {
+  Future<void> _doesNotUnwrapUserDefinedFutureName() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -618,7 +610,7 @@ Future<IRepository<int>> projectedValue(Ref ref) {
 ''');
   }
 
-  Future<void> test_allowsReadDependency() async {
+  Future<void> _allowsReadDependency() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -637,7 +629,7 @@ INotificationService notificationService(Ref ref) {
 ''');
   }
 
-  Future<void> test_allowsComputedProviderWatch() async {
+  Future<void> _allowsComputedProviderWatch() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -652,7 +644,7 @@ int selectedCount(Ref ref) {
 ''');
   }
 
-  Future<void> test_allowsWatchedReactiveCredentialState() async {
+  Future<void> _allowsWatchedReactiveCredentialState() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -674,7 +666,7 @@ IApiService apiService(Ref ref) => ApiService(ref.watch(credentialProvider));
 ''');
   }
 
-  Future<void> test_allowsClientRebuiltFromLiveConfig() async {
+  Future<void> _allowsClientRebuiltFromLiveConfig() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -702,7 +694,7 @@ Future<ApiClient> apiClient(Ref ref) async {
 ''');
   }
 
-  Future<void> test_reportsStableClientWatchBesideReactiveCredential() async {
+  Future<void> _reportsStableClientWatchBesideReactiveCredential() async {
     const source = r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -731,7 +723,7 @@ IApiService apiService(Ref ref) =>
     ]);
   }
 
-  Future<void> test_reportsStableDependencyValuesThroughAsyncWrappers() async {
+  Future<void> _reportsStableDependencyValuesThroughAsyncWrappers() async {
     const source = r'''
 import 'package:appwrite/appwrite.dart' as appwrite;
 import 'package:riverpod/riverpod.dart';
@@ -764,7 +756,7 @@ IAuthRepository authRepository(Ref ref) =>
     ]);
   }
 
-  Future<void> test_reportsNotifierMembersWatchingStableInfrastructure() async {
+  Future<void> _reportsNotifierMembersWatchingStableInfrastructure() async {
     const source = r'''
 import 'package:riverpod/src/framework.dart';
 
@@ -790,7 +782,7 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
     ]);
   }
 
-  Future<void> test_allowsNotifierBuildWatchingStateAndConfig() async {
+  Future<void> _allowsNotifierBuildWatchingStateAndConfig() async {
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod/src/framework.dart';
@@ -816,7 +808,7 @@ class CheckoutNotifier extends Notifier<int> {
 ''');
   }
 
-  Future<void> test_allowsNotifierPersistStorageWatch() async {
+  Future<void> _allowsNotifierPersistStorageWatch() async {
     await assertAllows(r'''
 import 'package:riverpod/src/framework.dart';
 
@@ -832,7 +824,7 @@ class TodosNotifier extends AsyncNotifier<List<Todo>> {
 ''');
   }
 
-  Future<void> test_allowsLookalikeNotifierBase() async {
+  Future<void> _allowsLookalikeNotifierBase() async {
     await assertAllows(r'''
 import 'package:riverpod/src/framework.dart';
 
@@ -848,4 +840,98 @@ class ProductsNotifier extends AnyNotifier {
 }
 ''');
   }
+}
+
+void _defineSourceScannerRulesPart19Tests() {
+  analysisRuleSuite<RiverpodGeneratedProviderAliasTest>(
+    'RiverpodGeneratedProviderAliasTest',
+    RiverpodGeneratedProviderAliasTest.new,
+    {
+      'test_reportsGetterStaticAndFamilyAliases': (t) => t._reportsGetterStaticAndFamilyAliases(),
+      'test_allowsGeneratedDeclarationsLocalsAndManualProviders': (t) =>
+          t._allowsGeneratedDeclarationsLocalsAndManualProviders(),
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodWidgetRefOutsideWidgetTest>(
+    'RiverpodWidgetRefOutsideWidgetTest',
+    RiverpodWidgetRefOutsideWidgetTest.new,
+    {
+      'test_reportsServiceMethodParameter': (t) => t._reportsServiceMethodParameter(),
+      'test_allowsWidgetsStatesAndMixinsOnState': (t) => t._allowsWidgetsStatesAndMixinsOnState(),
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ArchInterfaceContractTest>(
+    'ArchInterfaceContractTest',
+    ArchInterfaceContractTest.new,
+    {
+      'test_allowsResolvedImportedInterface': (t) => t._allowsResolvedImportedInterface(),
+      'test_reportsSecondClassWithoutInterface': (t) => t._reportsSecondClassWithoutInterface(),
+      'test_reportsConcreteInterfaceClassWithoutContract': (t) =>
+          t._reportsConcreteInterfaceClassWithoutContract(),
+      'test_allowsAbstractInterfaceContractDeclaration': (t) =>
+          t._allowsAbstractInterfaceContractDeclaration(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ArchRepositoryGeneratedExtendsTest>(
+    'ArchRepositoryGeneratedExtendsTest',
+    ArchRepositoryGeneratedExtendsTest.new,
+    {
+      'test_allowsRepositoryInterfaceImplementation': (t) =>
+          t._allowsRepositoryInterfaceImplementation(),
+      'test_allowsGeneratedNotifierClasses': (t) => t._allowsGeneratedNotifierClasses(),
+      'test_allowsRiverpodGeneratedProviderClass': (t) => t._allowsRiverpodGeneratedProviderClass(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ArchConcreteDependencyTest>(
+    'ArchConcreteDependencyTest',
+    ArchConcreteDependencyTest.new,
+    {
+      'test_reportsProviderReturningConcreteRepository': (t) =>
+          t._reportsProviderReturningConcreteRepository(),
+      'test_allowsProviderReturningRepositoryInterface': (t) =>
+          t._allowsProviderReturningRepositoryInterface(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ServiceProviderWatchDependencyTest>(
+    'ServiceProviderWatchDependencyTest',
+    ServiceProviderWatchDependencyTest.new,
+    {
+      'test_reportsRepositoryFactoryWatch': (t) => t._reportsRepositoryFactoryWatch(),
+      'test_allowsCollectionProjectionNamedQueue': (t) => t._allowsCollectionProjectionNamedQueue(),
+      'test_allowsCollectionProjectionWhoseElementLooksLikeService': (t) =>
+          t._allowsCollectionProjectionWhoseElementLooksLikeService(),
+      'test_reportsTypedStableServiceWatchWithGenericFactoryName': (t) =>
+          t._reportsTypedStableServiceWatchWithGenericFactoryName(),
+      'test_reportsGenericInfrastructureReturnType': (t) =>
+          t._reportsGenericInfrastructureReturnType(),
+      'test_reportsQualifiedInfrastructureReturnTypeThroughFuture': (t) =>
+          t._reportsQualifiedInfrastructureReturnTypeThroughFuture(),
+      'test_reportsAppwriteTablesAndAccountServicesByResolvedBase': (t) =>
+          t._reportsAppwriteTablesAndAccountServicesByResolvedBase(),
+      'test_allowsLocalServiceBaseLookalike': (t) => t._allowsLocalServiceBaseLookalike(),
+      'test_doesNotUnwrapUserDefinedFutureName': (t) => t._doesNotUnwrapUserDefinedFutureName(),
+      'test_allowsReadDependency': (t) => t._allowsReadDependency(),
+      'test_allowsComputedProviderWatch': (t) => t._allowsComputedProviderWatch(),
+      'test_allowsWatchedReactiveCredentialState': (t) => t._allowsWatchedReactiveCredentialState(),
+      'test_allowsClientRebuiltFromLiveConfig': (t) => t._allowsClientRebuiltFromLiveConfig(),
+      'test_reportsStableClientWatchBesideReactiveCredential': (t) =>
+          t._reportsStableClientWatchBesideReactiveCredential(),
+      'test_reportsStableDependencyValuesThroughAsyncWrappers': (t) =>
+          t._reportsStableDependencyValuesThroughAsyncWrappers(),
+      'test_reportsNotifierMembersWatchingStableInfrastructure': (t) =>
+          t._reportsNotifierMembersWatchingStableInfrastructure(),
+      'test_allowsNotifierBuildWatchingStateAndConfig': (t) =>
+          t._allowsNotifierBuildWatchingStateAndConfig(),
+      'test_allowsNotifierPersistStorageWatch': (t) => t._allowsNotifierPersistStorageWatch(),
+      'test_allowsLookalikeNotifierBase': (t) => t._allowsLookalikeNotifierBase(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

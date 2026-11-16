@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_public_notifier_properties.dart';
@@ -7,14 +5,47 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_ref_inside_
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_immutable_provider_arguments.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_notifier_suffix.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(PreferImmutableProviderArgumentsTest);
-    defineReflectiveTests(AvoidPublicNotifierPropertiesTest);
-    defineReflectiveTests(AvoidRefInsideStateDisposeTest);
-    defineReflectiveTests(UseNotifierSuffixTest);
+  analysisRuleSuite<PreferImmutableProviderArgumentsTest>(
+    'PreferImmutableProviderArgumentsTest',
+    PreferImmutableProviderArgumentsTest.new,
+    {
+      'test_functionProviderListArgument_lint': (t) => t._functionProviderListArgumentLint(),
+      'test_notifierBuildMutableArgument_lint': (t) => t._notifierBuildMutableArgumentLint(),
+      'test_functionProviderImmutableArguments_noLint': (t) =>
+          t._functionProviderImmutableArgumentsNoLint(),
+      'test_notifierBuildImmutableArgument_noLint': (t) =>
+          t._notifierBuildImmutableArgumentNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidPublicNotifierPropertiesTest>(
+    'AvoidPublicNotifierPropertiesTest',
+    AvoidPublicNotifierPropertiesTest.new,
+    {
+      'test_publicFieldAndGetter_lint': (t) => t._publicFieldAndGetterLint(),
+      'test_privatePropertiesAndPublicMethods_noLint': (t) =>
+          t._privatePropertiesAndPublicMethodsNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidRefInsideStateDisposeTest>(
+    'AvoidRefInsideStateDisposeTest',
+    AvoidRefInsideStateDisposeTest.new,
+    {
+      'test_refReadInDispose_lint': (t) => t._refReadInDisposeLint(),
+      'test_privateSubscriptionCloseInDispose_noLint': (t) =>
+          t._privateSubscriptionCloseInDisposeNoLint(),
+    },
+  );
+  analysisRuleSuite<UseNotifierSuffixTest>('UseNotifierSuffixTest', UseNotifierSuffixTest.new, {
+    'test_generatedBaseWithoutSuffix_lint': (t) => t._generatedBaseWithoutSuffixLint(),
+    'test_annotatedClassBeforeCodegen_lint': (t) => t._annotatedClassBeforeCodegenLint(),
+    'test_manualNotifierWithoutSuffix_lint': (t) => t._manualNotifierWithoutSuffixLint(),
+    'test_suffixedNotifiersAndNonNotifiers_noLint': (t) =>
+        t._suffixedNotifiersAndNonNotifiersNoLint(),
+    'test_severityIsError': (t) => t._severityIsError(),
   });
 }
 
@@ -104,7 +135,6 @@ abstract class HookConsumerState<T extends Widget> extends ConsumerState<Consume
   }
 }
 
-@reflectiveTest
 final class PreferImmutableProviderArgumentsTest extends _RiverpodContractRuleTest {
   @override
   void setUp() {
@@ -112,7 +142,7 @@ final class PreferImmutableProviderArgumentsTest extends _RiverpodContractRuleTe
     super.setUp();
   }
 
-  Future<void> test_functionProviderListArgument_lint() async {
+  Future<void> _functionProviderListArgumentLint() async {
     const source = r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -123,7 +153,7 @@ int total(Ref ref, List<int> ids) => ids.length;
     await assertDiagnostics(source, [lint(source.indexOf('ids'), 'ids'.length)]);
   }
 
-  Future<void> test_notifierBuildMutableArgument_lint() async {
+  Future<void> _notifierBuildMutableArgumentLint() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -135,7 +165,7 @@ class SearchNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lint(source.indexOf('filters'), 'filters'.length)]);
   }
 
-  Future<void> test_functionProviderImmutableArguments_noLint() async {
+  Future<void> _functionProviderImmutableArgumentsNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -151,7 +181,7 @@ int total(Ref ref, String id, int page, Filter filter, ({String id}) record) {
 ''');
   }
 
-  Future<void> test_notifierBuildImmutableArgument_noLint() async {
+  Future<void> _notifierBuildImmutableArgumentNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -167,7 +197,6 @@ class SearchNotifier extends Notifier<int> {
   }
 }
 
-@reflectiveTest
 final class AvoidPublicNotifierPropertiesTest extends _RiverpodContractRuleTest {
   @override
   void setUp() {
@@ -175,7 +204,7 @@ final class AvoidPublicNotifierPropertiesTest extends _RiverpodContractRuleTest 
     super.setUp();
   }
 
-  Future<void> test_publicFieldAndGetter_lint() async {
+  Future<void> _publicFieldAndGetterLint() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -193,7 +222,7 @@ class SearchNotifier extends Notifier<int> {
     ]);
   }
 
-  Future<void> test_privatePropertiesAndPublicMethods_noLint() async {
+  Future<void> _privatePropertiesAndPublicMethodsNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -211,7 +240,6 @@ class SearchNotifier extends Notifier<int> {
   }
 }
 
-@reflectiveTest
 final class AvoidRefInsideStateDisposeTest extends _RiverpodContractRuleTest {
   @override
   void setUp() {
@@ -219,7 +247,7 @@ final class AvoidRefInsideStateDisposeTest extends _RiverpodContractRuleTest {
     super.setUp();
   }
 
-  Future<void> test_refReadInDispose_lint() async {
+  Future<void> _refReadInDisposeLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -243,7 +271,7 @@ class HostState extends ConsumerState<ConsumerStatefulWidget> {
     ]);
   }
 
-  Future<void> test_privateSubscriptionCloseInDispose_noLint() async {
+  Future<void> _privateSubscriptionCloseInDisposeNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -268,7 +296,6 @@ class HostState extends ConsumerState<ConsumerStatefulWidget> {
   }
 }
 
-@reflectiveTest
 final class UseNotifierSuffixTest extends _RiverpodContractRuleTest {
   @override
   void setUp() {
@@ -276,7 +303,7 @@ final class UseNotifierSuffixTest extends _RiverpodContractRuleTest {
     super.setUp();
   }
 
-  Future<void> test_generatedBaseWithoutSuffix_lint() async {
+  Future<void> _generatedBaseWithoutSuffixLint() async {
     newFile('$testPackageLibPath/test.g.dart', r'''
 part of 'test.dart';
 
@@ -292,7 +319,7 @@ class Basket extends _$Basket {}
     await assertDiagnostics(source, [lint(source.indexOf('Basket extends'), 'Basket'.length)]);
   }
 
-  Future<void> test_annotatedClassBeforeCodegen_lint() async {
+  Future<void> _annotatedClassBeforeCodegenLint() async {
     const source = r'''
 // ignore_for_file: extends_non_class
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -303,7 +330,7 @@ class Basket extends _$Basket {}
     await assertDiagnostics(source, [lint(source.indexOf('Basket extends'), 'Basket'.length)]);
   }
 
-  Future<void> test_manualNotifierWithoutSuffix_lint() async {
+  Future<void> _manualNotifierWithoutSuffixLint() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -312,7 +339,7 @@ class Counter extends Notifier<int> {}
     await assertDiagnostics(source, [lint(source.indexOf('Counter'), 'Counter'.length)]);
   }
 
-  Future<void> test_suffixedNotifiersAndNonNotifiers_noLint() async {
+  Future<void> _suffixedNotifiersAndNonNotifiersNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart' show $Notifier;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -329,7 +356,7 @@ class Basket {}
 ''');
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(UseNotifierSuffix.code.severity, DiagnosticSeverity.ERROR);
   }
 }

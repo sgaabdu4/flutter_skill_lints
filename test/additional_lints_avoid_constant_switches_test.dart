@@ -1,14 +1,32 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_constant_switches.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() => defineReflectiveTests(AvoidConstantSwitchesTest));
+  analysisRuleSuite<AvoidConstantSwitchesTest>(
+    'AvoidConstantSwitchesTest',
+    AvoidConstantSwitchesTest.new,
+    {
+      'test_switchStatementOnIntLiteral': (t) => t._switchStatementOnIntLiteral(),
+      'test_switchStatementOnStringLiteral': (t) => t._switchStatementOnStringLiteral(),
+      'test_switchStatementOnConstVariable': (t) => t._switchStatementOnConstVariable(),
+      'test_switchStatementOnStaticConstField': (t) => t._switchStatementOnStaticConstField(),
+      'test_switchExpressionOnIntLiteral': (t) => t._switchExpressionOnIntLiteral(),
+      'test_switchExpressionOnConstVariable': (t) => t._switchExpressionOnConstVariable(),
+      'test_switchStatementOnBoolLiteral': (t) => t._switchStatementOnBoolLiteral(),
+      'test_switchStatementOnNegativeNumber': (t) => t._switchStatementOnNegativeNumber(),
+      'test_switchStatementOnParameter_noLint': (t) => t._switchStatementOnParameterNoLint(),
+      'test_switchExpressionOnParameter_noLint': (t) => t._switchExpressionOnParameterNoLint(),
+      'test_switchStatementOnMethodCall_noLint': (t) => t._switchStatementOnMethodCallNoLint(),
+      'test_switchStatementOnNonConstFinal_noLint': (t) =>
+          t._switchStatementOnNonConstFinalNoLint(),
+      'test_switchStatementOnPropertyAccess_noLint': (t) =>
+          t._switchStatementOnPropertyAccessNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 class AvoidConstantSwitchesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -16,7 +34,7 @@ class AvoidConstantSwitchesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_switchStatementOnIntLiteral() async {
+  Future<void> _switchStatementOnIntLiteral() async {
     await assertDiagnostics(
       r'''
 void f() {
@@ -30,7 +48,7 @@ void f() {
     );
   }
 
-  Future<void> test_switchStatementOnStringLiteral() async {
+  Future<void> _switchStatementOnStringLiteral() async {
     await assertDiagnostics(
       r'''
 void f() {
@@ -44,7 +62,7 @@ void f() {
     );
   }
 
-  Future<void> test_switchStatementOnConstVariable() async {
+  Future<void> _switchStatementOnConstVariable() async {
     await assertDiagnostics(
       r'''
 const x = 10;
@@ -59,7 +77,7 @@ void f() {
     );
   }
 
-  Future<void> test_switchStatementOnStaticConstField() async {
+  Future<void> _switchStatementOnStaticConstField() async {
     await assertDiagnostics(
       r'''
 abstract final class Config {
@@ -78,7 +96,7 @@ void f() {
     );
   }
 
-  Future<void> test_switchExpressionOnIntLiteral() async {
+  Future<void> _switchExpressionOnIntLiteral() async {
     await assertDiagnostics(
       r'''
 void f() {
@@ -92,7 +110,7 @@ void f() {
     );
   }
 
-  Future<void> test_switchExpressionOnConstVariable() async {
+  Future<void> _switchExpressionOnConstVariable() async {
     await assertDiagnostics(
       r'''
 const val = 'a';
@@ -107,7 +125,7 @@ void f() {
     );
   }
 
-  Future<void> test_switchStatementOnBoolLiteral() async {
+  Future<void> _switchStatementOnBoolLiteral() async {
     await assertDiagnostics(
       r'''
 void f() {
@@ -123,7 +141,7 @@ void f() {
     );
   }
 
-  Future<void> test_switchStatementOnNegativeNumber() async {
+  Future<void> _switchStatementOnNegativeNumber() async {
     await assertDiagnostics(
       r'''
 void f() {
@@ -139,7 +157,7 @@ void f() {
     );
   }
 
-  Future<void> test_switchStatementOnParameter_noLint() async {
+  Future<void> _switchStatementOnParameterNoLint() async {
     await assertNoDiagnostics(r'''
 void f(int x) {
   switch (x) {
@@ -150,7 +168,7 @@ void f(int x) {
 ''');
   }
 
-  Future<void> test_switchExpressionOnParameter_noLint() async {
+  Future<void> _switchExpressionOnParameterNoLint() async {
     await assertNoDiagnostics(r'''
 String f(int x) {
   return switch (x) {
@@ -161,7 +179,7 @@ String f(int x) {
 ''');
   }
 
-  Future<void> test_switchStatementOnMethodCall_noLint() async {
+  Future<void> _switchStatementOnMethodCallNoLint() async {
     await assertNoDiagnostics(r'''
 int getValue() => 1;
 void f() {
@@ -173,7 +191,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_switchStatementOnNonConstFinal_noLint() async {
+  Future<void> _switchStatementOnNonConstFinalNoLint() async {
     await assertNoDiagnostics(r'''
 void f(int x) {
   final y = x + 1;
@@ -185,7 +203,7 @@ void f(int x) {
 ''');
   }
 
-  Future<void> test_switchStatementOnPropertyAccess_noLint() async {
+  Future<void> _switchStatementOnPropertyAccessNoLint() async {
     await assertNoDiagnostics(r'''
 void f(List<int> list) {
   switch (list.length) {

@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class RouterGoRouterOfTest extends _RouterRuleTest {
   @override
   String get ruleName => 'router_gorouter_of';
@@ -15,7 +12,7 @@ void open(context) {
 }
 ''';
 
-  Future<void> test_reportsGoCall() async {
+  Future<void> _reportsGoCall() async {
     final analyzedSource = _analyzedSource(r'''
 void open(context) {
   GoRouter.of(context).go('/home');
@@ -27,7 +24,7 @@ void open(context) {
     ]);
   }
 
-  Future<void> test_reportsPushNamed() async {
+  Future<void> _reportsPushNamed() async {
     final analyzedSource = _analyzedSource(r'''
 void open(context) {
   GoRouter.of(context).pushNamed('detail');
@@ -39,7 +36,7 @@ void open(context) {
     ]);
   }
 
-  Future<void> test_reportsTypedGenericPush() async {
+  Future<void> _reportsTypedGenericPush() async {
     final analyzedSource = _analyzedSource(r'''
 void open(context) {
   GoRouter.of(context).push<bool>('/detail');
@@ -51,7 +48,7 @@ void open(context) {
     ]);
   }
 
-  Future<void> test_allowsTypedRoutePush() async {
+  Future<void> _allowsTypedRoutePush() async {
     await assertAllows(r'''
 class ActiveItemRoute {
   const ActiveItemRoute();
@@ -64,7 +61,7 @@ void open(context) {
 ''');
   }
 
-  Future<void> test_reportsGoRouterOfInsideCoreRouter() async {
+  Future<void> _reportsGoRouterOfInsideCoreRouter() async {
     final analyzedSource = _analyzedSource(r'''
 class GoRouter {
   static GoRouter of(Object context) => GoRouter();
@@ -83,7 +80,7 @@ void open(context) {
     ]);
   }
 
-  Future<void> test_reportsMultilineGoRouterOfPush() async {
+  Future<void> _reportsMultilineGoRouterOfPush() async {
     final analyzedSource = _analyzedSource(r'''
 void open(context) {
   GoRouter
@@ -96,7 +93,6 @@ void open(context) {
   }
 }
 
-@reflectiveTest
 final class RouterUntypedNavigatorPushTest extends _RouterRuleTest {
   @override
   String get ruleName => 'router_untyped_navigator_push';
@@ -121,7 +117,7 @@ void open(context) {
 }
 ''';
 
-  Future<void> test_reportsCupertinoPageRoute() async {
+  Future<void> _reportsCupertinoPageRoute() async {
     final analyzedSource = _analyzedSource(r'''
 class Navigator {
   static Navigator of(Object context) => Navigator();
@@ -142,7 +138,7 @@ void open(context) {
     ]);
   }
 
-  Future<void> test_reportsPageRouteBuilder() async {
+  Future<void> _reportsPageRouteBuilder() async {
     final analyzedSource = _analyzedSource(r'''
 class Navigator {
   static Navigator of(Object context) => Navigator();
@@ -163,7 +159,7 @@ void open(context) {
     ]);
   }
 
-  Future<void> test_reportsPushReplacement() async {
+  Future<void> _reportsPushReplacement() async {
     final analyzedSource = _analyzedSource(r'''
 class Navigator {
   static Navigator of(Object context) => Navigator();
@@ -186,7 +182,7 @@ void open(context) {
     ]);
   }
 
-  Future<void> test_reportsPushAndRemoveUntil() async {
+  Future<void> _reportsPushAndRemoveUntil() async {
     final analyzedSource = _analyzedSource(r'''
 class Navigator {
   static Navigator of(Object context) => Navigator();
@@ -210,7 +206,7 @@ void open(context) {
     ]);
   }
 
-  Future<void> test_allowsNavigatorPop() async {
+  Future<void> _allowsNavigatorPop() async {
     await assertAllows(r'''
 class Navigator {
   static Navigator of(Object context) => Navigator();
@@ -223,7 +219,7 @@ void close(context) {
 ''');
   }
 
-  Future<void> test_allowsTypedRoutePush() async {
+  Future<void> _allowsTypedRoutePush() async {
     await assertAllows(r'''
 class ActiveItemRoute {
   const ActiveItemRoute();
@@ -237,7 +233,6 @@ void open(context) {
   }
 }
 
-@reflectiveTest
 final class RouterContextNavigationExtensionTest extends _RouterRuleTest {
   @override
   void setUp() {
@@ -265,7 +260,7 @@ extension ProductNavigationX on BuildContext {
 }
 ''';
 
-  Future<void> test_allowsBottomSheetExtension() async {
+  Future<void> _allowsBottomSheetExtension() async {
     await assertAllows(r'''
 class BuildContext {}
 
@@ -275,7 +270,7 @@ extension BottomSheetX on BuildContext {
 ''');
   }
 
-  Future<void> test_allowsTypedFallbackContextExtension() async {
+  Future<void> _allowsTypedFallbackContextExtension() async {
     await assertAllows(r'''
 class BuildContext {}
 
@@ -293,7 +288,7 @@ extension ContextNavigationX on BuildContext {
 ''');
   }
 
-  Future<void> test_reportsTypedFallbackContextExtensionWithoutPopIfCan() async {
+  Future<void> _reportsTypedFallbackContextExtensionWithoutPopIfCan() async {
     final analyzedSource = _analyzedSource(r'''
 class BuildContext {}
 
@@ -313,7 +308,7 @@ extension ContextNavigationX on BuildContext {
     ]);
   }
 
-  Future<void> test_reportsMultilineContextExtensionDeclaration() async {
+  Future<void> _reportsMultilineContextExtensionDeclaration() async {
     final analyzedSource = _analyzedSource(r'''
 class BuildContext {}
 
@@ -335,7 +330,7 @@ extension ProductNavigationX
     ]);
   }
 
-  Future<void> test_reportsPrefixedContextExtensionDeclaration() async {
+  Future<void> _reportsPrefixedContextExtensionDeclaration() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:flutter/widgets.dart' as widgets;
 
@@ -356,7 +351,7 @@ extension ProductNavigationX on widgets.BuildContext {
     ]);
   }
 
-  Future<void> test_reportsContextExtensionCallingTopLevelFallbackHelper() async {
+  Future<void> _reportsContextExtensionCallingTopLevelFallbackHelper() async {
     final analyzedSource = _analyzedSource(r'''
 class BuildContext {}
 
@@ -378,7 +373,7 @@ extension ContextNavigationX on BuildContext {
     ]);
   }
 
-  Future<void> test_reportsRouteVariableContextExtension() async {
+  Future<void> _reportsRouteVariableContextExtension() async {
     final analyzedSource = _analyzedSource(r'''
 class BuildContext {}
 
@@ -400,7 +395,7 @@ extension ProductNavigationX on BuildContext {
     ]);
   }
 
-  Future<void> test_allowsNonNavigationContextExtension() async {
+  Future<void> _allowsNonNavigationContextExtension() async {
     await assertAllows(r'''
 class BuildContext {}
 
@@ -410,7 +405,7 @@ extension ContextThemeX on BuildContext {
 ''');
   }
 
-  Future<void> test_allowsTopLevelFallbackHelperAfterContextExtension() async {
+  Future<void> _allowsTopLevelFallbackHelperAfterContextExtension() async {
     await assertAllows(r'''
 class BuildContext {}
 
@@ -431,7 +426,7 @@ void popWithFallback<T>(BuildContext context, GoRouteData fallbackRoute, [T? res
 ''');
   }
 
-  Future<void> test_reportsStringFallbackThroughGoRouterHelper() async {
+  Future<void> _reportsStringFallbackThroughGoRouterHelper() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
@@ -450,7 +445,7 @@ extension PopOrGoPathX on BuildContext {
     ]);
   }
 
-  Future<void> test_reportsStringPushThroughGoRouterInExtension() async {
+  Future<void> _reportsStringPushThroughGoRouterInExtension() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
@@ -465,7 +460,7 @@ extension OpenPathX on BuildContext {
     ]);
   }
 
-  Future<void> test_allowsSkillGoRouterPopX() async {
+  Future<void> _allowsSkillGoRouterPopX() async {
     await assertAllows(r'''
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -490,7 +485,7 @@ extension GoRouterPopX on BuildContext {
 ''');
   }
 
-  Future<void> test_allowsSameNamedLocalExtensionMethod() async {
+  Future<void> _allowsSameNamedLocalExtensionMethod() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 
@@ -502,7 +497,6 @@ extension LocalGoX on BuildContext {
   }
 }
 
-@reflectiveTest
 final class RouterNavigationWrapperApiTest extends _RouterRuleTest {
   @override
   String get ruleName => 'router_navigation_wrapper_api';
@@ -513,7 +507,7 @@ final class RouterNavigationWrapperApiTest extends _RouterRuleTest {
 class FeatureNavigationCoordinator {}
 ''';
 
-  Future<void> test_reportsPrivateNavigationCoordinatorImplementation() async {
+  Future<void> _reportsPrivateNavigationCoordinatorImplementation() async {
     final analyzedSource = _analyzedSource(r'''
 final class _FeatureNavigationCoordinator {}
 ''', addIgnorePrefix: addIgnorePrefix);
@@ -523,7 +517,7 @@ final class _FeatureNavigationCoordinator {}
     ]);
   }
 
-  Future<void> test_reportsFeatureNavigationInterface() async {
+  Future<void> _reportsFeatureNavigationInterface() async {
     final analyzedSource = _analyzedSource(r'''
 abstract interface class FeatureNavigation {}
 ''', addIgnorePrefix: addIgnorePrefix);
@@ -533,7 +527,7 @@ abstract interface class FeatureNavigation {}
     ]);
   }
 
-  Future<void> test_reportsFeatureNavigationCoordinator() async {
+  Future<void> _reportsFeatureNavigationCoordinator() async {
     final analyzedSource = _analyzedSource(r'''
 final class ProductNavigationCoordinator {}
 ''', addIgnorePrefix: addIgnorePrefix);
@@ -543,7 +537,7 @@ final class ProductNavigationCoordinator {}
     ]);
   }
 
-  Future<void> test_reportsRouteWrapperFunctionCall() async {
+  Future<void> _reportsRouteWrapperFunctionCall() async {
     final analyzedSource = _analyzedSource(r'''
 void open(router) {
   navigateToHomeRoute(router);
@@ -555,7 +549,7 @@ void open(router) {
     ]);
   }
 
-  Future<void> test_reportsRouteWrapperFunctionDeclaration() async {
+  Future<void> _reportsRouteWrapperFunctionDeclaration() async {
     final analyzedSource = _analyzedSource(r'''
 void navigateToHomeRoute(router) {}
 ''', addIgnorePrefix: addIgnorePrefix);
@@ -564,4 +558,70 @@ void navigateToHomeRoute(router) {}
       compatLint(analyzedSource, 'navigateToHomeRoute', ruleName),
     ]);
   }
+}
+
+void _defineSourceScannerRulesPart09Tests() {
+  analysisRuleSuite<RouterGoRouterOfTest>('RouterGoRouterOfTest', RouterGoRouterOfTest.new, {
+    'test_reportsGoCall': (t) => t._reportsGoCall(),
+    'test_reportsPushNamed': (t) => t._reportsPushNamed(),
+    'test_reportsTypedGenericPush': (t) => t._reportsTypedGenericPush(),
+    'test_allowsTypedRoutePush': (t) => t._allowsTypedRoutePush(),
+    'test_reportsGoRouterOfInsideCoreRouter': (t) => t._reportsGoRouterOfInsideCoreRouter(),
+    'test_reportsMultilineGoRouterOfPush': (t) => t._reportsMultilineGoRouterOfPush(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<RouterUntypedNavigatorPushTest>(
+    'RouterUntypedNavigatorPushTest',
+    RouterUntypedNavigatorPushTest.new,
+    {
+      'test_reportsCupertinoPageRoute': (t) => t._reportsCupertinoPageRoute(),
+      'test_reportsPageRouteBuilder': (t) => t._reportsPageRouteBuilder(),
+      'test_reportsPushReplacement': (t) => t._reportsPushReplacement(),
+      'test_reportsPushAndRemoveUntil': (t) => t._reportsPushAndRemoveUntil(),
+      'test_allowsNavigatorPop': (t) => t._allowsNavigatorPop(),
+      'test_allowsTypedRoutePush': (t) => t._allowsTypedRoutePush(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RouterContextNavigationExtensionTest>(
+    'RouterContextNavigationExtensionTest',
+    RouterContextNavigationExtensionTest.new,
+    {
+      'test_allowsBottomSheetExtension': (t) => t._allowsBottomSheetExtension(),
+      'test_allowsTypedFallbackContextExtension': (t) => t._allowsTypedFallbackContextExtension(),
+      'test_reportsTypedFallbackContextExtensionWithoutPopIfCan': (t) =>
+          t._reportsTypedFallbackContextExtensionWithoutPopIfCan(),
+      'test_reportsMultilineContextExtensionDeclaration': (t) =>
+          t._reportsMultilineContextExtensionDeclaration(),
+      'test_reportsPrefixedContextExtensionDeclaration': (t) =>
+          t._reportsPrefixedContextExtensionDeclaration(),
+      'test_reportsContextExtensionCallingTopLevelFallbackHelper': (t) =>
+          t._reportsContextExtensionCallingTopLevelFallbackHelper(),
+      'test_reportsRouteVariableContextExtension': (t) => t._reportsRouteVariableContextExtension(),
+      'test_allowsNonNavigationContextExtension': (t) => t._allowsNonNavigationContextExtension(),
+      'test_allowsTopLevelFallbackHelperAfterContextExtension': (t) =>
+          t._allowsTopLevelFallbackHelperAfterContextExtension(),
+      'test_reportsStringFallbackThroughGoRouterHelper': (t) =>
+          t._reportsStringFallbackThroughGoRouterHelper(),
+      'test_reportsStringPushThroughGoRouterInExtension': (t) =>
+          t._reportsStringPushThroughGoRouterInExtension(),
+      'test_allowsSkillGoRouterPopX': (t) => t._allowsSkillGoRouterPopX(),
+      'test_allowsSameNamedLocalExtensionMethod': (t) => t._allowsSameNamedLocalExtensionMethod(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RouterNavigationWrapperApiTest>(
+    'RouterNavigationWrapperApiTest',
+    RouterNavigationWrapperApiTest.new,
+    {
+      'test_reportsPrivateNavigationCoordinatorImplementation': (t) =>
+          t._reportsPrivateNavigationCoordinatorImplementation(),
+      'test_reportsFeatureNavigationInterface': (t) => t._reportsFeatureNavigationInterface(),
+      'test_reportsFeatureNavigationCoordinator': (t) => t._reportsFeatureNavigationCoordinator(),
+      'test_reportsRouteWrapperFunctionCall': (t) => t._reportsRouteWrapperFunctionCall(),
+      'test_reportsRouteWrapperFunctionDeclaration': (t) =>
+          t._reportsRouteWrapperFunctionDeclaration(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

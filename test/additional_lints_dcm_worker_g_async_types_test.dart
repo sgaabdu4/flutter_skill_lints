@@ -1,20 +1,40 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missing_completer_stack_trace.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_futures.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_streams_and_futures.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidNestedFuturesTest);
-    defineReflectiveTests(AvoidNestedStreamsAndFuturesTest);
-    defineReflectiveTests(AvoidMissingCompleterStackTraceTest);
+  analysisRuleSuite<AvoidNestedFuturesTest>('AvoidNestedFuturesTest', AvoidNestedFuturesTest.new, {
+    'test_futureOfFuture_lint': (t) => t._futureOfFutureLint(),
+    'test_userTypeNamedFuture_noLint': (t) => t._userTypeNamedFutureNoLint(),
+    'test_valueFuture_noLint': (t) => t._valueFutureNoLint(),
   });
+  analysisRuleSuite<AvoidNestedStreamsAndFuturesTest>(
+    'AvoidNestedStreamsAndFuturesTest',
+    AvoidNestedStreamsAndFuturesTest.new,
+    {
+      'test_futureOfStream_lint': (t) => t._futureOfStreamLint(),
+      'test_streamOfFuture_lint': (t) => t._streamOfFutureLint(),
+      'test_streamOfStream_lint': (t) => t._streamOfStreamLint(),
+      'test_futureOfFuture_noLint': (t) => t._futureOfFutureNoLint(),
+      'test_flatAsyncTypes_noLint': (t) => t._flatAsyncTypesNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidMissingCompleterStackTraceTest>(
+    'AvoidMissingCompleterStackTraceTest',
+    AvoidMissingCompleterStackTraceTest.new,
+    {
+      'test_completeErrorWithoutStackTrace_lint': (t) => t._completeErrorWithoutStackTraceLint(),
+      'test_cascadeCompleteErrorWithoutStackTrace_lint': (t) =>
+          t._cascadeCompleteErrorWithoutStackTraceLint(),
+      'test_completeErrorWithStackTrace_noLint': (t) => t._completeErrorWithStackTraceNoLint(),
+      'test_unrelatedCompleteError_noLint': (t) => t._unrelatedCompleteErrorNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidNestedFuturesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +42,7 @@ final class AvoidNestedFuturesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_futureOfFuture_lint() async {
+  Future<void> _futureOfFutureLint() async {
     const source = r'''
 Future<Future<int>> loadValue() async => Future<int>.value(1);
 ''';
@@ -32,7 +52,7 @@ Future<Future<int>> loadValue() async => Future<int>.value(1);
     ]);
   }
 
-  Future<void> test_userTypeNamedFuture_noLint() async {
+  Future<void> _userTypeNamedFutureNoLint() async {
     await assertNoDiagnostics(r'''
 class Future<T> {
   const Future();
@@ -42,14 +62,13 @@ Future<Future<int>> loadValue() => const Future<Future<int>>();
 ''');
   }
 
-  Future<void> test_valueFuture_noLint() async {
+  Future<void> _valueFutureNoLint() async {
     await assertNoDiagnostics(r'''
 Future<int> loadValue() async => 1;
 ''');
   }
 }
 
-@reflectiveTest
 final class AvoidNestedStreamsAndFuturesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -57,7 +76,7 @@ final class AvoidNestedStreamsAndFuturesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_futureOfStream_lint() async {
+  Future<void> _futureOfStreamLint() async {
     const source = r'''
 Future<Stream<int>> loadValues() async => Stream<int>.fromIterable(const <int>[]);
 ''';
@@ -67,7 +86,7 @@ Future<Stream<int>> loadValues() async => Stream<int>.fromIterable(const <int>[]
     ]);
   }
 
-  Future<void> test_streamOfFuture_lint() async {
+  Future<void> _streamOfFutureLint() async {
     const source = r'''
 Stream<Future<int>> loadValues() async* {
   yield Future<int>.value(1);
@@ -79,7 +98,7 @@ Stream<Future<int>> loadValues() async* {
     ]);
   }
 
-  Future<void> test_streamOfStream_lint() async {
+  Future<void> _streamOfStreamLint() async {
     const source = r'''
 Stream<Stream<int>> loadValues() async* {
   yield Stream<int>.fromIterable(const <int>[]);
@@ -91,13 +110,13 @@ Stream<Stream<int>> loadValues() async* {
     ]);
   }
 
-  Future<void> test_futureOfFuture_noLint() async {
+  Future<void> _futureOfFutureNoLint() async {
     await assertNoDiagnostics(r'''
 Future<Future<int>> loadValue() async => Future<int>.value(1);
 ''');
   }
 
-  Future<void> test_flatAsyncTypes_noLint() async {
+  Future<void> _flatAsyncTypesNoLint() async {
     await assertNoDiagnostics(r'''
 Future<int> loadValue() async => 1;
 
@@ -108,7 +127,6 @@ Stream<int> loadValues() async* {
   }
 }
 
-@reflectiveTest
 final class AvoidMissingCompleterStackTraceTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -116,7 +134,7 @@ final class AvoidMissingCompleterStackTraceTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_completeErrorWithoutStackTrace_lint() async {
+  Future<void> _completeErrorWithoutStackTraceLint() async {
     const source = r'''
 import 'dart:async';
 
@@ -131,7 +149,7 @@ void fail(Object error) {
     ]);
   }
 
-  Future<void> test_cascadeCompleteErrorWithoutStackTrace_lint() async {
+  Future<void> _cascadeCompleteErrorWithoutStackTraceLint() async {
     const source = r'''
 import 'dart:async';
 
@@ -145,7 +163,7 @@ void fail(Object error) {
     ]);
   }
 
-  Future<void> test_completeErrorWithStackTrace_noLint() async {
+  Future<void> _completeErrorWithStackTraceNoLint() async {
     await assertNoDiagnostics(r'''
 import 'dart:async';
 
@@ -156,7 +174,7 @@ void fail(Object error, StackTrace stackTrace) {
 ''');
   }
 
-  Future<void> test_unrelatedCompleteError_noLint() async {
+  Future<void> _unrelatedCompleteErrorNoLint() async {
     await assertNoDiagnostics(r'''
 class Reporter {
   void completeError(Object error) {}

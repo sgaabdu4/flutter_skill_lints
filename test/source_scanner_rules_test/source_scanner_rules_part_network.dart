@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
 abstract class _NetworkRuleTest extends _DataCrashRuleTest {
@@ -170,7 +168,6 @@ class ProductRepository implements IProductRepository {
   }
 }
 
-@reflectiveTest
 final class NetworkHttpCallInWidgetOrNotifierTest extends _NetworkRuleTest {
   @override
   String get ruleName => 'network_http_call_in_widget_or_notifier';
@@ -195,7 +192,7 @@ class ProductScreen extends StatelessWidget {
 }
 ''';
 
-  Future<void> test_reportsNotifierClientCalls() async {
+  Future<void> _reportsNotifierClientCalls() async {
     const source = r'''
 import 'dart:io';
 
@@ -226,7 +223,7 @@ class ProductNotifier extends Notifier<int> {
     ]);
   }
 
-  Future<void> test_reportsStateCallOnHttpServiceWrapper() async {
+  Future<void> _reportsStateCallOnHttpServiceWrapper() async {
     addHttpService();
     const source = r'''
 import 'package:flutter/widgets.dart';
@@ -253,7 +250,7 @@ class _ProductPanelState extends State<ProductPanel> {
     ]);
   }
 
-  Future<void> test_allowsRepositoryDatasourceHttpChain() async {
+  Future<void> _allowsRepositoryDatasourceHttpChain() async {
     addProductChain();
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
@@ -274,7 +271,6 @@ class ProductNotifier extends AnyNotifier<int> {
   }
 }
 
-@reflectiveTest
 final class DatasourceConcreteHttpClientTest extends _NetworkRuleTest {
   @override
   String get ruleName => 'datasource_concrete_http_client';
@@ -293,7 +289,7 @@ class ProductRemoteDatasource {
 }
 ''';
 
-  Future<void> test_reportsConcreteClientsAndWrappers() async {
+  Future<void> _reportsConcreteClientsAndWrappers() async {
     addHttpService();
     const source = r'''
 import 'package:http/http.dart' as http;
@@ -316,7 +312,7 @@ class OrderApi implements IOrderRemoteDataSource {
     ]);
   }
 
-  Future<void> test_allowsHttpServiceInterface() async {
+  Future<void> _allowsHttpServiceInterface() async {
     addProductChain();
     await assertNoDiagnosticsInFile(
       '$testPackageLibPath/features/products/data/product_remote_datasource.dart',
@@ -325,7 +321,6 @@ class OrderApi implements IOrderRemoteDataSource {
   }
 }
 
-@reflectiveTest
 final class NetworkFailureNullFallbackTest extends _NetworkRuleTest {
   @override
   void setUp() {
@@ -363,7 +358,7 @@ class ProductLookupRepository {
 }
 ''';
 
-  Future<void> test_reportsEmptyCollectionFallbacks() async {
+  Future<void> _reportsEmptyCollectionFallbacks() async {
     const source = r'''
 import 'package:dio/dio.dart';
 import 'package:test/core/network/http_service.dart';
@@ -399,7 +394,7 @@ class OrderRemoteDatasource {
     ]);
   }
 
-  Future<void> test_allowsTypedAbsenceAndClassifiedStatus() async {
+  Future<void> _allowsTypedAbsenceAndClassifiedStatus() async {
     await assertAllows(r'''
 import 'package:dio/dio.dart';
 import 'package:test/features/products/data/product_remote_datasource.dart';
@@ -431,7 +426,7 @@ class ProductLookupRepository {
 ''', path: path);
   }
 
-  Future<void> test_allowsLocalPersistenceRecovery() async {
+  Future<void> _allowsLocalPersistenceRecovery() async {
     await assertAllows(r'''
 import 'package:hive_ce/hive_ce.dart';
 
@@ -452,7 +447,6 @@ class ProductLocalDatasource {
   }
 }
 
-@reflectiveTest
 final class NetworkSecretInWidgetTest extends _NetworkRuleTest {
   @override
   String get ruleName => 'network_secret_in_widget';
@@ -474,7 +468,7 @@ class ProductCard extends StatelessWidget {
 }
 ''';
 
-  Future<void> test_reportsAuthorizationHeaderAndBaseUrlInState() async {
+  Future<void> _reportsAuthorizationHeaderAndBaseUrlInState() async {
     const source = r'''
 import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
@@ -505,7 +499,7 @@ class _ProductPanelState extends State<ProductPanel> {
     ]);
   }
 
-  Future<void> test_allowsInfrastructureAuthAndPlainWidgetLinks() async {
+  Future<void> _allowsInfrastructureAuthAndPlainWidgetLinks() async {
     await assertAllows(r'''
 import 'package:dio/dio.dart';
 
@@ -532,7 +526,6 @@ class HelpLink extends StatelessWidget {
   }
 }
 
-@reflectiveTest
 final class NetworkRawHttpFailureInWidgetOrNotifierTest extends _NetworkRuleTest {
   @override
   String get ruleName => 'network_raw_http_failure_in_widget_or_notifier';
@@ -562,7 +555,7 @@ class ProductNotifier extends Notifier<int> {
 }
 ''';
 
-  Future<void> test_reportsStatusReadsAndRawTypeTests() async {
+  Future<void> _reportsStatusReadsAndRawTypeTests() async {
     const source = r'''
 import 'dart:io';
 
@@ -612,7 +605,7 @@ class _ProductPanelState extends State<ProductPanel> {
     ]);
   }
 
-  Future<void> test_allowsTypedFailuresAndDatasourceClassification() async {
+  Future<void> _allowsTypedFailuresAndDatasourceClassification() async {
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -653,4 +646,58 @@ class ProductRemoteDatasource {
 }
 ''', path: '$testPackageLibPath/features/products/data/product_remote_datasource.dart');
   }
+}
+
+void _defineSourceScannerRulesPartNetworkTests() {
+  analysisRuleSuite<NetworkHttpCallInWidgetOrNotifierTest>(
+    'NetworkHttpCallInWidgetOrNotifierTest',
+    NetworkHttpCallInWidgetOrNotifierTest.new,
+    {
+      'test_reportsNotifierClientCalls': (t) => t._reportsNotifierClientCalls(),
+      'test_reportsStateCallOnHttpServiceWrapper': (t) => t._reportsStateCallOnHttpServiceWrapper(),
+      'test_allowsRepositoryDatasourceHttpChain': (t) => t._allowsRepositoryDatasourceHttpChain(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<DatasourceConcreteHttpClientTest>(
+    'DatasourceConcreteHttpClientTest',
+    DatasourceConcreteHttpClientTest.new,
+    {
+      'test_reportsConcreteClientsAndWrappers': (t) => t._reportsConcreteClientsAndWrappers(),
+      'test_allowsHttpServiceInterface': (t) => t._allowsHttpServiceInterface(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<NetworkFailureNullFallbackTest>(
+    'NetworkFailureNullFallbackTest',
+    NetworkFailureNullFallbackTest.new,
+    {
+      'test_reportsEmptyCollectionFallbacks': (t) => t._reportsEmptyCollectionFallbacks(),
+      'test_allowsTypedAbsenceAndClassifiedStatus': (t) =>
+          t._allowsTypedAbsenceAndClassifiedStatus(),
+      'test_allowsLocalPersistenceRecovery': (t) => t._allowsLocalPersistenceRecovery(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<NetworkSecretInWidgetTest>(
+    'NetworkSecretInWidgetTest',
+    NetworkSecretInWidgetTest.new,
+    {
+      'test_reportsAuthorizationHeaderAndBaseUrlInState': (t) =>
+          t._reportsAuthorizationHeaderAndBaseUrlInState(),
+      'test_allowsInfrastructureAuthAndPlainWidgetLinks': (t) =>
+          t._allowsInfrastructureAuthAndPlainWidgetLinks(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<NetworkRawHttpFailureInWidgetOrNotifierTest>(
+    'NetworkRawHttpFailureInWidgetOrNotifierTest',
+    NetworkRawHttpFailureInWidgetOrNotifierTest.new,
+    {
+      'test_reportsStatusReadsAndRawTypeTests': (t) => t._reportsStatusReadsAndRawTypeTests(),
+      'test_allowsTypedFailuresAndDatasourceClassification': (t) =>
+          t._allowsTypedFailuresAndDatasourceClassification(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

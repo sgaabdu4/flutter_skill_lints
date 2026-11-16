@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
 abstract class _PresentationWidgetRuleTest extends _SourceRuleTest {
@@ -76,7 +74,6 @@ class NavigatorState extends State<Navigator> {
   }
 }
 
-@reflectiveTest
 final class PresentationWidgetNavigationForbiddenTest extends _PresentationWidgetRuleTest {
   @override
   String get ruleName => 'presentation_widget_navigation_forbidden';
@@ -91,7 +88,7 @@ void open(BuildContext context, Route<void> route) {
 }
 ''';
 
-  Future<void> test_reportsGoRouterImports() async {
+  Future<void> _reportsGoRouterImports() async {
     final analyzedSource = _analyzedSource(
       "import 'package:go_router/go_router.dart';",
       addIgnorePrefix: addIgnorePrefix,
@@ -103,7 +100,7 @@ void open(BuildContext context, Route<void> route) {
     ]);
   }
 
-  Future<void> test_reportsGenericNavigatorPushes() async {
+  Future<void> _reportsGenericNavigatorPushes() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:flutter/widgets.dart';
 
@@ -118,7 +115,7 @@ void open(BuildContext context, Route<void> route) {
     ]);
   }
 
-  Future<void> test_reportsTypedRouteNavigation() async {
+  Future<void> _reportsTypedRouteNavigation() async {
     newFile('$testPackageLibPath/features/orders/orders_destination.dart', r'''
 import 'package:go_router/go_router.dart';
 
@@ -143,7 +140,7 @@ void open(BuildContext context) {
     ]);
   }
 
-  Future<void> test_reportsGoRouterContextNavigation() async {
+  Future<void> _reportsGoRouterContextNavigation() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
@@ -160,7 +157,7 @@ void close(BuildContext context) {
     ]);
   }
 
-  Future<void> test_reportsWorkAfterModalPop() async {
+  Future<void> _reportsWorkAfterModalPop() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:flutter/widgets.dart';
 
@@ -176,7 +173,7 @@ void close(BuildContext context, void Function() onClosed) {
     ]);
   }
 
-  Future<void> test_allowsLocalModalDismissal() async {
+  Future<void> _allowsLocalModalDismissal() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 
@@ -203,7 +200,7 @@ final class ConfirmDialog extends StatelessWidget {
 ''', path: path);
   }
 
-  Future<void> test_allowsTypedCallbacks() async {
+  Future<void> _allowsTypedCallbacks() async {
     await assertAllows(r'''
 final class ContentView extends StatelessWidget {
   const ContentView({required this.onBack, required this.onItemTap});
@@ -214,7 +211,7 @@ final class ContentView extends StatelessWidget {
 ''', path: path);
   }
 
-  Future<void> test_allowsNavigationInScreens() async {
+  Future<void> _allowsNavigationInScreens() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 
@@ -225,7 +222,6 @@ void open(BuildContext context, Route<void> route) {
   }
 }
 
-@reflectiveTest
 final class PresentationWidgetControllerStateTest extends _PresentationWidgetRuleTest {
   static const _header = r'''
 import 'package:flutter/widgets.dart';
@@ -255,7 +251,7 @@ class _ContentViewState extends State<ContentView> {
     super.setUp();
   }
 
-  Future<void> test_reportsDomainRecordUnderAnyName() async {
+  Future<void> _reportsDomainRecordUnderAnyName() async {
     final analyzedSource = _analyzedSource('''
 $_header
 class _ContentViewState extends State<ContentView> {
@@ -271,7 +267,7 @@ class _ContentViewState extends State<ContentView> {
     ]);
   }
 
-  Future<void> test_reportsProviderSnapshot() async {
+  Future<void> _reportsProviderSnapshot() async {
     final analyzedSource = _analyzedSource('''
 $_header
 class _ContentViewState extends State<ContentView> {
@@ -285,7 +281,7 @@ class _ContentViewState extends State<ContentView> {
     ]);
   }
 
-  Future<void> test_reportsAsyncWorkflowFlag() async {
+  Future<void> _reportsAsyncWorkflowFlag() async {
     final analyzedSource = _analyzedSource('''
 $_header
 class _ContentViewState extends State<ContentView> {
@@ -303,7 +299,7 @@ class _ContentViewState extends State<ContentView> {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'bool _busy', ruleName)]);
   }
 
-  Future<void> test_allowsUiLifecycleState() async {
+  Future<void> _allowsUiLifecycleState() async {
     await assertAllows('''
 $_header
 class _ContentViewState extends State<ContentView> {
@@ -326,7 +322,7 @@ class _ContentViewState extends State<ContentView> {
 ''', path: path);
   }
 
-  Future<void> test_allowsControllerStateInScreens() async {
+  Future<void> _allowsControllerStateInScreens() async {
     await assertAllows('''
 $_header
 class _ContentScreenState extends State<ContentView> {
@@ -337,7 +333,6 @@ class _ContentScreenState extends State<ContentView> {
   }
 }
 
-@reflectiveTest
 final class PresentationWidgetInfrastructureDependencyTest extends _PresentationWidgetRuleTest {
   @override
   String get ruleName => 'presentation_widget_infrastructure_dependency';
@@ -350,7 +345,7 @@ import 'package:http/http.dart';
 final client = Client();
 ''';
 
-  Future<void> test_reportsRepositoryImports() async {
+  Future<void> _reportsRepositoryImports() async {
     final analyzedSource = _analyzedSource(r'''
 import '../../repositories/content_repository.dart';
 
@@ -363,7 +358,7 @@ final ContentRepository repository = ContentRepository();
     ]);
   }
 
-  Future<void> test_reportsStorageSdkImports() async {
+  Future<void> _reportsStorageSdkImports() async {
     final analyzedSource = _analyzedSource(r'''
 // ignore_for_file: uri_does_not_exist
 import 'dart:io';
@@ -379,7 +374,7 @@ import 'package:path_provider/path_provider.dart';
     ]);
   }
 
-  Future<void> test_reportsProviderReads() async {
+  Future<void> _reportsProviderReads() async {
     final analyzedSource = _analyzedSource(r'''
 void build(WidgetRef ref) {
   ref.read(contentNotifierProvider.notifier).save();
@@ -390,7 +385,7 @@ void build(WidgetRef ref) {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'ref.read', ruleName)]);
   }
 
-  Future<void> test_allowsInfrastructureInScreens() async {
+  Future<void> _allowsInfrastructureInScreens() async {
     await assertAllows(r'''
 void build(WidgetRef ref) {
   ref.read(contentNotifierProvider.notifier).save();
@@ -399,7 +394,6 @@ void build(WidgetRef ref) {
   }
 }
 
-@reflectiveTest
 final class NotifierLocalDependencyCacheTest extends _NotifierRuleTest {
   @override
   void setUp() {
@@ -440,7 +434,7 @@ class ThingNotifier extends Notifier<int> {
 }
 ''';
 
-  Future<void> test_reportsServiceCache() async {
+  Future<void> _reportsServiceCache() async {
     const source = r'''
 class Notifier<T> {}
 
@@ -457,7 +451,7 @@ class ThingNotifier extends Notifier<int> {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '_service', ruleName)]);
   }
 
-  Future<void> test_allowsStatelessProviderHelper() async {
+  Future<void> _allowsStatelessProviderHelper() async {
     await assertAllows(r'''
 class Ref {
   T read<T>(Object provider) => throw UnimplementedError();
@@ -475,7 +469,7 @@ class ThingNotifier {
   }
 
   /// async-mutations.md:45: an inferred or lazily assigned provider read is a cache too.
-  Future<void> test_reportsInferredAndAssignedProviderReads() async {
+  Future<void> _reportsInferredAndAssignedProviderReads() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -504,7 +498,7 @@ class ProductNotifier extends Notifier<int> {
     ]);
   }
 
-  Future<void> test_allowsValueReadsConstructedClientsAndRefFields() async {
+  Future<void> _allowsValueReadsConstructedClientsAndRefFields() async {
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -526,7 +520,7 @@ class ProductNotifier extends Notifier<int> {
 ''');
   }
 
-  Future<void> test_allowsLifecycleResourceField() async {
+  Future<void> _allowsLifecycleResourceField() async {
     await assertAllows(r'''
 class Notifier<T> {}
 class Timer {}
@@ -538,4 +532,59 @@ class ThingNotifier extends Notifier<int> {
 }
 ''');
   }
+}
+
+void _defineSourceScannerRulesPart20Tests() {
+  analysisRuleSuite<NotifierLocalDependencyCacheTest>(
+    'NotifierLocalDependencyCacheTest',
+    NotifierLocalDependencyCacheTest.new,
+    {
+      'test_reportsServiceCache': (t) => t._reportsServiceCache(),
+      'test_allowsStatelessProviderHelper': (t) => t._allowsStatelessProviderHelper(),
+      'test_reportsInferredAndAssignedProviderReads': (t) =>
+          t._reportsInferredAndAssignedProviderReads(),
+      'test_allowsValueReadsConstructedClientsAndRefFields': (t) =>
+          t._allowsValueReadsConstructedClientsAndRefFields(),
+      'test_allowsLifecycleResourceField': (t) => t._allowsLifecycleResourceField(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<PresentationWidgetNavigationForbiddenTest>(
+    'PresentationWidgetNavigationForbiddenTest',
+    PresentationWidgetNavigationForbiddenTest.new,
+    {
+      'test_reportsGoRouterImports': (t) => t._reportsGoRouterImports(),
+      'test_reportsGenericNavigatorPushes': (t) => t._reportsGenericNavigatorPushes(),
+      'test_reportsTypedRouteNavigation': (t) => t._reportsTypedRouteNavigation(),
+      'test_reportsGoRouterContextNavigation': (t) => t._reportsGoRouterContextNavigation(),
+      'test_reportsWorkAfterModalPop': (t) => t._reportsWorkAfterModalPop(),
+      'test_allowsLocalModalDismissal': (t) => t._allowsLocalModalDismissal(),
+      'test_allowsTypedCallbacks': (t) => t._allowsTypedCallbacks(),
+      'test_allowsNavigationInScreens': (t) => t._allowsNavigationInScreens(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<PresentationWidgetControllerStateTest>(
+    'PresentationWidgetControllerStateTest',
+    PresentationWidgetControllerStateTest.new,
+    {
+      'test_reportsDomainRecordUnderAnyName': (t) => t._reportsDomainRecordUnderAnyName(),
+      'test_reportsProviderSnapshot': (t) => t._reportsProviderSnapshot(),
+      'test_reportsAsyncWorkflowFlag': (t) => t._reportsAsyncWorkflowFlag(),
+      'test_allowsUiLifecycleState': (t) => t._allowsUiLifecycleState(),
+      'test_allowsControllerStateInScreens': (t) => t._allowsControllerStateInScreens(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<PresentationWidgetInfrastructureDependencyTest>(
+    'PresentationWidgetInfrastructureDependencyTest',
+    PresentationWidgetInfrastructureDependencyTest.new,
+    {
+      'test_reportsRepositoryImports': (t) => t._reportsRepositoryImports(),
+      'test_reportsStorageSdkImports': (t) => t._reportsStorageSdkImports(),
+      'test_reportsProviderReads': (t) => t._reportsProviderReads(),
+      'test_allowsInfrastructureInScreens': (t) => t._allowsInfrastructureInScreens(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

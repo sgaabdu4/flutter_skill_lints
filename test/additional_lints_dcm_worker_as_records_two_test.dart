@@ -1,22 +1,58 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_one_field_records.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_positional_record_field_access.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_positional_record_fields.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_redundant_positional_field_name.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidOneFieldRecordsTest);
-    defineReflectiveTests(AvoidPositionalRecordFieldsTest);
-    defineReflectiveTests(AvoidPositionalRecordFieldAccessTest);
-    defineReflectiveTests(AvoidRedundantPositionalFieldNameTest);
-  });
+  analysisRuleSuite<AvoidOneFieldRecordsTest>(
+    'AvoidOneFieldRecordsTest',
+    AvoidOneFieldRecordsTest.new,
+    {
+      'test_oneNamedFieldLiteral_lint': (t) => t._oneNamedFieldLiteralLint(),
+      'test_onePositionalFieldType_lint': (t) => t._onePositionalFieldTypeLint(),
+      'test_parenthesizedExpression_noLint': (t) => t._parenthesizedExpressionNoLint(),
+      'test_twoFieldRecords_noLint': (t) => t._twoFieldRecordsNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidPositionalRecordFieldsTest>(
+    'AvoidPositionalRecordFieldsTest',
+    AvoidPositionalRecordFieldsTest.new,
+    {
+      'test_positionalLiteral_lint': (t) => t._positionalLiteralLint(),
+      'test_skillPositionalPairAndWildcardDestructuring_noLint': (t) =>
+          t._skillPositionalPairAndWildcardDestructuringNoLint(),
+      'test_threePositionalFieldsBoundToVariable_lint': (t) =>
+          t._threePositionalFieldsBoundToVariableLint(),
+      'test_positionalType_lint': (t) => t._positionalTypeLint(),
+      'test_namedRecord_noLint': (t) => t._namedRecordNoLint(),
+      'test_sdkFutureRecordWait_noLint': (t) => t._sdkFutureRecordWaitNoLint(),
+      'test_unrelatedWaitGetter_stillReports': (t) => t._unrelatedWaitGetterStillReports(),
+    },
+  );
+  analysisRuleSuite<AvoidPositionalRecordFieldAccessTest>(
+    'AvoidPositionalRecordFieldAccessTest',
+    AvoidPositionalRecordFieldAccessTest.new,
+    {
+      'test_prefixedIdentifier_lint': (t) => t._prefixedIdentifierLint(),
+      'test_propertyAccess_lint': (t) => t._propertyAccessLint(),
+      'test_namedRecordAccess_noLint': (t) => t._namedRecordAccessNoLint(),
+      'test_nonRecordDollarGetter_noLint': (t) => t._nonRecordDollarGetterNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidRedundantPositionalFieldNameTest>(
+    'AvoidRedundantPositionalFieldNameTest',
+    AvoidRedundantPositionalFieldNameTest.new,
+    {
+      'test_positionalFieldName_lint': (t) => t._positionalFieldNameLint(),
+      'test_namedFields_noLint': (t) => t._namedFieldsNoLint(),
+      'test_unnamedPositionalFields_noLint': (t) => t._unnamedPositionalFieldsNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidOneFieldRecordsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -24,7 +60,7 @@ final class AvoidOneFieldRecordsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_oneNamedFieldLiteral_lint() async {
+  Future<void> _oneNamedFieldLiteralLint() async {
     const source = r'''
 void f() {
   final value = (id: 1);
@@ -35,7 +71,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('(id: 1)'), '(id: 1)'.length)]);
   }
 
-  Future<void> test_onePositionalFieldType_lint() async {
+  Future<void> _onePositionalFieldTypeLint() async {
     const source = r'''
 typedef IdRecord = (int,);
 ''';
@@ -43,7 +79,7 @@ typedef IdRecord = (int,);
     await assertDiagnostics(source, [lint(source.indexOf('(int,)'), '(int,)'.length)]);
   }
 
-  Future<void> test_parenthesizedExpression_noLint() async {
+  Future<void> _parenthesizedExpressionNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   final value = (1);
@@ -52,7 +88,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_twoFieldRecords_noLint() async {
+  Future<void> _twoFieldRecordsNoLint() async {
     await assertNoDiagnostics(r'''
 typedef PointRecord = ({int x, int y});
 
@@ -64,7 +100,6 @@ void f() {
   }
 }
 
-@reflectiveTest
 final class AvoidPositionalRecordFieldsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -72,7 +107,7 @@ final class AvoidPositionalRecordFieldsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_positionalLiteral_lint() async {
+  Future<void> _positionalLiteralLint() async {
     const source = r'''
 void f() {
   final value = ('calendar', true, 3);
@@ -87,7 +122,7 @@ void f() {
     ]);
   }
 
-  Future<void> test_skillPositionalPairAndWildcardDestructuring_noLint() async {
+  Future<void> _skillPositionalPairAndWildcardDestructuringNoLint() async {
     await assertNoDiagnostics(r'''
 (String, int) userInfo() => ('Alice', 30);
 
@@ -101,7 +136,7 @@ int wildcards(String id, String sku) {
 ''');
   }
 
-  Future<void> test_threePositionalFieldsBoundToVariable_lint() async {
+  Future<void> _threePositionalFieldsBoundToVariableLint() async {
     const source = r'''
 (String, int, bool) profile() => throw 'todo';
 ''';
@@ -113,7 +148,7 @@ int wildcards(String id, String sku) {
     ]);
   }
 
-  Future<void> test_positionalType_lint() async {
+  Future<void> _positionalTypeLint() async {
     const source = r'''
 typedef PreferencesProjection = (bool?, bool?, bool?);
 ''';
@@ -128,7 +163,7 @@ typedef PreferencesProjection = (bool?, bool?, bool?);
     ]);
   }
 
-  Future<void> test_namedRecord_noLint() async {
+  Future<void> _namedRecordNoLint() async {
     await assertNoDiagnostics(r'''
 typedef PreferencesProjection = ({bool? calendar, bool? loggedExercises, bool? recentSessions});
 
@@ -139,7 +174,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_sdkFutureRecordWait_noLint() async {
+  Future<void> _sdkFutureRecordWaitNoLint() async {
     final asyncPath = '$dartSdkPath/lib/async/async.dart';
     newFile(asyncPath, '''
 ${getFile(asyncPath).readAsStringSync()}
@@ -156,7 +191,7 @@ Future<void> load() async {
 ''');
   }
 
-  Future<void> test_unrelatedWaitGetter_stillReports() async {
+  Future<void> _unrelatedWaitGetterStillReports() async {
     const source = r'''
 extension FakeWait on (int, String, bool) {
   int get wait => $1;
@@ -177,7 +212,6 @@ void load() {
   }
 }
 
-@reflectiveTest
 final class AvoidPositionalRecordFieldAccessTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -185,7 +219,7 @@ final class AvoidPositionalRecordFieldAccessTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_prefixedIdentifier_lint() async {
+  Future<void> _prefixedIdentifierLint() async {
     const source = r'''
 void f((int, String) value) {
   print(value.$1);
@@ -195,7 +229,7 @@ void f((int, String) value) {
     await assertDiagnostics(source, [lint(source.indexOf(r'$1'), r'$1'.length)]);
   }
 
-  Future<void> test_propertyAccess_lint() async {
+  Future<void> _propertyAccessLint() async {
     const source = r'''
 void f((int, String) value) {
   print((value).$2);
@@ -205,7 +239,7 @@ void f((int, String) value) {
     await assertDiagnostics(source, [lint(source.indexOf(r'$2'), r'$2'.length)]);
   }
 
-  Future<void> test_namedRecordAccess_noLint() async {
+  Future<void> _namedRecordAccessNoLint() async {
     await assertNoDiagnostics(r'''
 void f(({int id, String label}) value) {
   print(value.id);
@@ -213,7 +247,7 @@ void f(({int id, String label}) value) {
 ''');
   }
 
-  Future<void> test_nonRecordDollarGetter_noLint() async {
+  Future<void> _nonRecordDollarGetterNoLint() async {
     await assertNoDiagnostics(r'''
 class Value {
   int get $1 => 1;
@@ -226,7 +260,6 @@ void f(Value value) {
   }
 }
 
-@reflectiveTest
 final class AvoidRedundantPositionalFieldNameTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -234,7 +267,7 @@ final class AvoidRedundantPositionalFieldNameTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_positionalFieldName_lint() async {
+  Future<void> _positionalFieldNameLint() async {
     const source = r'''
 typedef PointRecord = (int x, int y);
 ''';
@@ -245,13 +278,13 @@ typedef PointRecord = (int x, int y);
     ]);
   }
 
-  Future<void> test_namedFields_noLint() async {
+  Future<void> _namedFieldsNoLint() async {
     await assertNoDiagnostics(r'''
 typedef PointRecord = ({int x, int y});
 ''');
   }
 
-  Future<void> test_unnamedPositionalFields_noLint() async {
+  Future<void> _unnamedPositionalFieldsNoLint() async {
     await assertNoDiagnostics(r'''
 typedef PointRecord = (int, int);
 ''');

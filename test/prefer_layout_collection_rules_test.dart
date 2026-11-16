@@ -1,15 +1,53 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_for_loop_in_children.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_spacing.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(PreferSpacingLayoutTest);
-    defineReflectiveTests(PreferForLoopWidgetListTest);
-  });
+  analysisRuleSuite<PreferSpacingLayoutTest>(
+    'PreferSpacingLayoutTest',
+    PreferSpacingLayoutTest.new,
+    {
+      'test_uniformInteriorSeparators_lint': (t) => t._uniformInteriorSeparatorsLint(),
+      'test_verticalInteriorSeparator_lint': (t) => t._verticalInteriorSeparatorLint(),
+      'test_skillSingleGapAndSpaceBetweenGaps_noLint': (t) =>
+          t._skillSingleGapAndSpaceBetweenGapsNoLint(),
+      'test_constantTokenWithCenterAlignment_lint': (t) =>
+          t._constantTokenWithCenterAlignmentLint(),
+      'test_dotShorthandAndConstAlias_lint': (t) => t._dotShorthandAndConstAliasLint(),
+      'test_missingLeadingTrailingOrInteriorSeparator_noLint': (t) =>
+          t._missingLeadingTrailingOrInteriorSeparatorNoLint(),
+      'test_axisAndConditionalChildren_noLint': (t) => t._axisAndConditionalChildrenNoLint(),
+      'test_distributedEdgesAndEvaluatedGapExpressions_noLint': (t) =>
+          t._distributedEdgesAndEvaluatedGapExpressionsNoLint(),
+      'test_realFlutterSizedBoxAndLiteralFlexAxis_lint': (t) =>
+          t._realFlutterSizedBoxAndLiteralFlexAxisLint(),
+      'test_localSizedBoxLookalike_noLint': (t) => t._localSizedBoxLookalikeNoLint(),
+      'test_axisGetterLookalike_noLint': (t) => t._axisGetterLookalikeNoLint(),
+    },
+  );
+  analysisRuleSuite<PreferForLoopWidgetListTest>(
+    'PreferForLoopWidgetListTest',
+    PreferForLoopWidgetListTest.new,
+    {
+      'test_numericDataTransforms_noLint': (t) => t._numericDataTransformsNoLint(),
+      'test_flutterWidgetTransforms_lint': (t) => t._flutterWidgetTransformsLint(),
+      'test_localWidgetLookalike_noLint': (t) => t._localWidgetLookalikeNoLint(),
+      'test_filteredReorderedAndAccumulatorDependentFolds_noLint': (t) =>
+          t._filteredReorderedAndAccumulatorDependentFoldsNoLint(),
+      'test_immutableFoldAndFixedLengthCollections_noLint': (t) =>
+          t._immutableFoldAndFixedLengthCollectionsNoLint(),
+      'test_explicitGrowableCollections_lint': (t) => t._explicitGrowableCollectionsLint(),
+      'test_cascadeAppendOnceFold_lint': (t) => t._cascadeAppendOnceFoldLint(),
+      'test_blockReturnCascadeAppendOnceFold_lint': (t) =>
+          t._blockReturnCascadeAppendOnceFoldLint(),
+      'test_customMapMethodReturningFlutterWidgets_noLint': (t) =>
+          t._customMapMethodReturningFlutterWidgetsNoLint(),
+      'test_customListGenerateReturningFlutterWidgets_noLint': (t) =>
+          t._customListGenerateReturningFlutterWidgetsNoLint(),
+    },
+  );
 }
 
 abstract class _FlutterWidgetRuleTest extends AnalysisRuleTest {
@@ -60,7 +98,6 @@ class Flex extends Widget {
   }
 }
 
-@reflectiveTest
 final class PreferSpacingLayoutTest extends _FlutterWidgetRuleTest {
   @override
   void setUp() {
@@ -68,7 +105,7 @@ final class PreferSpacingLayoutTest extends _FlutterWidgetRuleTest {
     super.setUp();
   }
 
-  Future<void> test_uniformInteriorSeparators_lint() async {
+  Future<void> _uniformInteriorSeparatorsLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -82,7 +119,7 @@ Widget build() => const Row(children: [
     ]);
   }
 
-  Future<void> test_verticalInteriorSeparator_lint() async {
+  Future<void> _verticalInteriorSeparatorLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -94,7 +131,7 @@ Widget build() => const Column(children: [Text('a'), SizedBox(height: 8), Text('
     ]);
   }
 
-  Future<void> test_skillSingleGapAndSpaceBetweenGaps_noLint() async {
+  Future<void> _skillSingleGapAndSpaceBetweenGapsNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -110,7 +147,7 @@ Widget spaced() => const Row(
 ''');
   }
 
-  Future<void> test_constantTokenWithCenterAlignment_lint() async {
+  Future<void> _constantTokenWithCenterAlignmentLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -126,7 +163,7 @@ Widget build() => const Row(
     ]);
   }
 
-  Future<void> test_dotShorthandAndConstAlias_lint() async {
+  Future<void> _dotShorthandAndConstAliasLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -150,7 +187,7 @@ Widget flex() => const Flex(
     ]);
   }
 
-  Future<void> test_missingLeadingTrailingOrInteriorSeparator_noLint() async {
+  Future<void> _missingLeadingTrailingOrInteriorSeparatorNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -163,7 +200,7 @@ Widget mixed() => const Row(children: [Text('a'), SizedBox(width: 8), Text('b'),
 ''');
   }
 
-  Future<void> test_axisAndConditionalChildren_noLint() async {
+  Future<void> _axisAndConditionalChildrenNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -185,7 +222,7 @@ Widget loop(List<String> labels) => Row(children: [
 ''');
   }
 
-  Future<void> test_distributedEdgesAndEvaluatedGapExpressions_noLint() async {
+  Future<void> _distributedEdgesAndEvaluatedGapExpressionsNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -217,7 +254,7 @@ Widget getterGap(Gap gap) => Row(children: [
 ''');
   }
 
-  Future<void> test_realFlutterSizedBoxAndLiteralFlexAxis_lint() async {
+  Future<void> _realFlutterSizedBoxAndLiteralFlexAxisLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart' as f;
 
@@ -232,7 +269,7 @@ f.Widget build() => const f.Flex(
     ]);
   }
 
-  Future<void> test_localSizedBoxLookalike_noLint() async {
+  Future<void> _localSizedBoxLookalikeNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart' as f;
 
@@ -244,7 +281,7 @@ f.Widget build() => const f.Row(children: [f.Text('a'), SizedBox(width: 8), f.Te
 ''');
   }
 
-  Future<void> test_axisGetterLookalike_noLint() async {
+  Future<void> _axisGetterLookalikeNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart' as f;
 
@@ -260,7 +297,6 @@ f.Widget build(AxisHolder holder) => f.Flex(
   }
 }
 
-@reflectiveTest
 final class PreferForLoopWidgetListTest extends _FlutterWidgetRuleTest {
   @override
   void setUp() {
@@ -268,7 +304,7 @@ final class PreferForLoopWidgetListTest extends _FlutterWidgetRuleTest {
     super.setUp();
   }
 
-  Future<void> test_numericDataTransforms_noLint() async {
+  Future<void> _numericDataTransformsNoLint() async {
     await assertNoDiagnostics(r'''
 List<int> mapped(List<int> values) => values.map((value) => value * 2).toList();
 List<int> folded(List<int> values) => values.fold<List<int>>(
@@ -280,7 +316,7 @@ List<int> spread(List<int> values) => <int>[...values.map((value) => value * 2)]
 ''');
   }
 
-  Future<void> test_flutterWidgetTransforms_lint() async {
+  Future<void> _flutterWidgetTransformsLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart' as f;
 
@@ -313,7 +349,7 @@ List<f.Widget> spread(List<int> values) => <f.Widget>[...values.map((value) => f
     ]);
   }
 
-  Future<void> test_localWidgetLookalike_noLint() async {
+  Future<void> _localWidgetLookalikeNoLint() async {
     await assertNoDiagnostics(r'''
 class Widget {
   const Widget();
@@ -322,7 +358,7 @@ List<Widget> build(List<int> values) => values.map((value) => const Widget()).to
 ''');
   }
 
-  Future<void> test_filteredReorderedAndAccumulatorDependentFolds_noLint() async {
+  Future<void> _filteredReorderedAndAccumulatorDependentFoldsNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart' as f;
 
@@ -344,7 +380,7 @@ List<f.Widget> accumulated(List<int> values) => values.fold<List<f.Widget>>(
 ''');
   }
 
-  Future<void> test_immutableFoldAndFixedLengthCollections_noLint() async {
+  Future<void> _immutableFoldAndFixedLengthCollectionsNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart' as f;
 
@@ -366,7 +402,7 @@ List<f.Widget> dynamicTypedGenerate(bool growable) =>
 ''');
   }
 
-  Future<void> test_explicitGrowableCollections_lint() async {
+  Future<void> _explicitGrowableCollectionsLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart' as f;
 
@@ -384,7 +420,7 @@ List<f.Widget> typedGenerated() =>
     ]);
   }
 
-  Future<void> test_cascadeAppendOnceFold_lint() async {
+  Future<void> _cascadeAppendOnceFoldLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart' as f;
 
@@ -397,7 +433,7 @@ List<f.Widget> build(List<int> values) => values.fold<List<f.Widget>>(
     ]);
   }
 
-  Future<void> test_blockReturnCascadeAppendOnceFold_lint() async {
+  Future<void> _blockReturnCascadeAppendOnceFoldLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart' as f;
 
@@ -415,7 +451,7 @@ List<f.Widget> build(List<int> values) => values.fold<List<f.Widget>>(
     ]);
   }
 
-  Future<void> test_customMapMethodReturningFlutterWidgets_noLint() async {
+  Future<void> _customMapMethodReturningFlutterWidgetsNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart' as f;
 
@@ -427,7 +463,7 @@ List<f.Widget> build(Values values) => values.map((value) => f.Text('$value')).t
 ''');
   }
 
-  Future<void> test_customListGenerateReturningFlutterWidgets_noLint() async {
+  Future<void> _customListGenerateReturningFlutterWidgetsNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart' as f;
 

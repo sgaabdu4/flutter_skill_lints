@@ -1,16 +1,25 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_inline_error_codes.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidInlineErrorCodesTest);
-  });
+  analysisRuleSuite<AvoidInlineErrorCodesTest>(
+    'AvoidInlineErrorCodesTest',
+    AvoidInlineErrorCodesTest.new,
+    {
+      'test_reportsInlineErrorAndStatusCodeComparisons': (t) =>
+          t._reportsInlineErrorAndStatusCodeComparisons(),
+      'test_allowsExceptionCodeRetryClassificationOnly': (t) =>
+          t._allowsExceptionCodeRetryClassificationOnly(),
+      'test_allowsNamedCodeOwnerComparisons': (t) => t._allowsNamedCodeOwnerComparisons(),
+      'test_allowsDedicatedCodeOwnerFiles': (t) => t._allowsDedicatedCodeOwnerFiles(),
+      'test_allowsNonStatusCodeNumericComparisons': (t) =>
+          t._allowsNonStatusCodeNumericComparisons(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidInlineErrorCodesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -18,7 +27,7 @@ final class AvoidInlineErrorCodesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsInlineErrorAndStatusCodeComparisons() async {
+  Future<void> _reportsInlineErrorAndStatusCodeComparisons() async {
     const source = r'''
 bool notFound(AppwriteException e) => e.code == 404;
 bool serverError(Response response) => response.statusCode >= 500;
@@ -44,7 +53,7 @@ class Response {
     ]);
   }
 
-  Future<void> test_allowsExceptionCodeRetryClassificationOnly() async {
+  Future<void> _allowsExceptionCodeRetryClassificationOnly() async {
     const source = r'''
 bool shouldRetry(Object e) {
   if (e is AppwriteException) return e.code == 429 || e.code == 503;
@@ -79,7 +88,7 @@ class Payload {
     ]);
   }
 
-  Future<void> test_allowsNamedCodeOwnerComparisons() async {
+  Future<void> _allowsNamedCodeOwnerComparisons() async {
     await assertNoDiagnostics(r'''
 bool notFound(AppwriteException e) => e.code == AppwriteErrorCodes.notFound;
 
@@ -95,7 +104,7 @@ class AppwriteException {
 ''');
   }
 
-  Future<void> test_allowsDedicatedCodeOwnerFiles() async {
+  Future<void> _allowsDedicatedCodeOwnerFiles() async {
     final filePath = '$testPackageLibPath/core/errors/app_error_codes.dart';
     newFile(filePath, r'''
 abstract final class AppErrorCodes {
@@ -107,7 +116,7 @@ abstract final class AppErrorCodes {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsNonStatusCodeNumericComparisons() async {
+  Future<void> _allowsNonStatusCodeNumericComparisons() async {
     await assertNoDiagnostics(r'''
 bool isKilometer(double distanceMeters) => distanceMeters >= 1000;
 bool isLastCalendarRow(int row) => row < 6;

@@ -1,20 +1,34 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_exports.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_file_names.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_imports.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidBannedImportsTest);
-    defineReflectiveTests(AvoidBannedExportsTest);
-    defineReflectiveTests(AvoidBannedFileNamesTest);
+  analysisRuleSuite<AvoidBannedImportsTest>('AvoidBannedImportsTest', AvoidBannedImportsTest.new, {
+    'test_stateManagementImport_lint': (t) => t._stateManagementImportLint(),
+    'test_lintPluginImport_lint': (t) => t._lintPluginImportLint(),
+    'test_allowedAppImports_noLint': (t) => t._allowedAppImportsNoLint(),
+    'test_bannedImportOutsideLib_noLint': (t) => t._bannedImportOutsideLibNoLint(),
   });
+  analysisRuleSuite<AvoidBannedExportsTest>('AvoidBannedExportsTest', AvoidBannedExportsTest.new, {
+    'test_stateManagementExport_lint': (t) => t._stateManagementExportLint(),
+    'test_customLintExport_lint': (t) => t._customLintExportLint(),
+    'test_allowedExports_noLint': (t) => t._allowedExportsNoLint(),
+  });
+  analysisRuleSuite<AvoidBannedFileNamesTest>(
+    'AvoidBannedFileNamesTest',
+    AvoidBannedFileNamesTest.new,
+    {
+      'test_uppercaseBasename_lint': (t) => t._uppercaseBasenameLint(),
+      'test_spaceInBasename_lint': (t) => t._spaceInBasenameLint(),
+      'test_snakeCaseBasename_noLint': (t) => t._snakeCaseBasenameNoLint(),
+      'test_generatedBasename_noLint': (t) => t._generatedBasenameNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidBannedImportsTest extends _BannedArchitectureRuleTest {
   @override
   void setUp() {
@@ -22,7 +36,7 @@ final class AvoidBannedImportsTest extends _BannedArchitectureRuleTest {
     super.setUp();
   }
 
-  Future<void> test_stateManagementImport_lint() async {
+  Future<void> _stateManagementImportLint() async {
     const source = r'''
 // ignore_for_file: unused_import
 
@@ -41,7 +55,7 @@ void main() {}
     ]);
   }
 
-  Future<void> test_lintPluginImport_lint() async {
+  Future<void> _lintPluginImportLint() async {
     const source = r'''
 // ignore_for_file: unused_import
 
@@ -60,7 +74,7 @@ void main() {}
     ]);
   }
 
-  Future<void> test_allowedAppImports_noLint() async {
+  Future<void> _allowedAppImportsNoLint() async {
     const source = r'''
 // ignore_for_file: unused_import
 
@@ -77,7 +91,7 @@ void main() {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_bannedImportOutsideLib_noLint() async {
+  Future<void> _bannedImportOutsideLibNoLint() async {
     const source = r'''
 // ignore_for_file: unused_import
 
@@ -92,7 +106,6 @@ void main() {}
   }
 }
 
-@reflectiveTest
 final class AvoidBannedExportsTest extends _BannedArchitectureRuleTest {
   @override
   void setUp() {
@@ -100,7 +113,7 @@ final class AvoidBannedExportsTest extends _BannedArchitectureRuleTest {
     super.setUp();
   }
 
-  Future<void> test_stateManagementExport_lint() async {
+  Future<void> _stateManagementExportLint() async {
     const source = r'''
 export 'package:flutter_bloc/flutter_bloc.dart';
 ''';
@@ -115,7 +128,7 @@ export 'package:flutter_bloc/flutter_bloc.dart';
     ]);
   }
 
-  Future<void> test_customLintExport_lint() async {
+  Future<void> _customLintExportLint() async {
     const source = r'''
 export 'package:custom_lint_builder/custom_lint_builder.dart';
 ''';
@@ -130,7 +143,7 @@ export 'package:custom_lint_builder/custom_lint_builder.dart';
     ]);
   }
 
-  Future<void> test_allowedExports_noLint() async {
+  Future<void> _allowedExportsNoLint() async {
     const source = r'''
 export 'src/app_theme.dart';
 export 'package:flutter/widgets.dart';
@@ -161,7 +174,6 @@ abstract class _BannedArchitectureRuleTest extends AnalysisRuleTest {
   }
 }
 
-@reflectiveTest
 final class AvoidBannedFileNamesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -169,7 +181,7 @@ final class AvoidBannedFileNamesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_uppercaseBasename_lint() async {
+  Future<void> _uppercaseBasenameLint() async {
     const source = r'''
 class UserProfile {}
 ''';
@@ -179,7 +191,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, [lint(0, 'class'.length)]);
   }
 
-  Future<void> test_spaceInBasename_lint() async {
+  Future<void> _spaceInBasenameLint() async {
     const source = r'''
 class UserProfile {}
 ''';
@@ -189,7 +201,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, [lint(0, 'class'.length)]);
   }
 
-  Future<void> test_snakeCaseBasename_noLint() async {
+  Future<void> _snakeCaseBasenameNoLint() async {
     const source = r'''
 class UserProfile {}
 ''';
@@ -199,7 +211,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_generatedBasename_noLint() async {
+  Future<void> _generatedBasenameNoLint() async {
     const source = r'''
 class UserProfile {}
 ''';

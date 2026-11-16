@@ -1,20 +1,41 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_complex_conditions.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_long_files.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_long_functions.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidComplexConditionsTest);
-    defineReflectiveTests(AvoidLongFilesTest);
-    defineReflectiveTests(AvoidLongFunctionsTest);
+  analysisRuleSuite<AvoidComplexConditionsTest>(
+    'AvoidComplexConditionsTest',
+    AvoidComplexConditionsTest.new,
+    {
+      'test_fiveLogicalOperands_lint_maxFourOperands': (t) =>
+          t._fiveLogicalOperandsLintMaxFourOperands(),
+      'test_fourLogicalOperands_noLint_maxFourOperands': (t) =>
+          t._fourLogicalOperandsNoLintMaxFourOperands(),
+      'test_nonConditionExpression_noLint': (t) => t._nonConditionExpressionNoLint(),
+      'test_whenClause_lint': (t) => t._whenClauseLint(),
+    },
+  );
+  analysisRuleSuite<AvoidLongFilesTest>('AvoidLongFilesTest', AvoidLongFilesTest.new, {
+    'test_fileOverSixHundredLines_lint': (t) => t._fileOverSixHundredLinesLint(),
+    'test_fileAtSixHundredLines_noLint': (t) => t._fileAtSixHundredLinesNoLint(),
+    'test_generatedLocalizationOverSixHundredLines_noLint': (t) =>
+        t._generatedLocalizationOverSixHundredLinesNoLint(),
+  });
+  analysisRuleSuite<AvoidLongFunctionsTest>('AvoidLongFunctionsTest', AvoidLongFunctionsTest.new, {
+    'test_functionOverEightyLines_lint': (t) => t._functionOverEightyLinesLint(),
+    'test_functionAtEightyLines_noLint': (t) => t._functionAtEightyLinesNoLint(),
+    'test_expressionBody_noLint': (t) => t._expressionBodyNoLint(),
+    'test_longTestMain_noLint': (t) => t._longTestMainNoLint(),
+    'test_longTestGroupCallback_noLint': (t) => t._longTestGroupCallbackNoLint(),
+    'test_longTestCallback_noLint': (t) => t._longTestCallbackNoLint(),
+    'test_longTestRegistrationHelper_noLint': (t) => t._longTestRegistrationHelperNoLint(),
+    'test_longTestHelperFunction_lint': (t) => t._longTestHelperFunctionLint(),
   });
 }
 
-@reflectiveTest
 final class AvoidComplexConditionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +43,7 @@ final class AvoidComplexConditionsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_fiveLogicalOperands_lint_maxFourOperands() async {
+  Future<void> _fiveLogicalOperandsLintMaxFourOperands() async {
     const source = r'''
 bool allowed(bool a, bool b, bool c, bool d, bool e) {
   if (a && b && c && d && e) {
@@ -37,7 +58,7 @@ bool allowed(bool a, bool b, bool c, bool d, bool e) {
     await assertDiagnostics(source, [lint(source.indexOf(condition), condition.length)]);
   }
 
-  Future<void> test_fourLogicalOperands_noLint_maxFourOperands() async {
+  Future<void> _fourLogicalOperandsNoLintMaxFourOperands() async {
     await assertNoDiagnostics(r'''
 bool allowed(bool a, bool b, bool c, bool d) {
   if (a && b && c && d) {
@@ -49,7 +70,7 @@ bool allowed(bool a, bool b, bool c, bool d) {
 ''');
   }
 
-  Future<void> test_nonConditionExpression_noLint() async {
+  Future<void> _nonConditionExpressionNoLint() async {
     await assertNoDiagnostics(r'''
 bool allowed(bool a, bool b, bool c, bool d, bool e) {
   final combined = a && b && c && d && e;
@@ -58,7 +79,7 @@ bool allowed(bool a, bool b, bool c, bool d, bool e) {
 ''');
   }
 
-  Future<void> test_whenClause_lint() async {
+  Future<void> _whenClauseLint() async {
     const source = r'''
 String label(Object value, bool a, bool b, bool c, bool d, bool e) {
   return switch (value) {
@@ -73,7 +94,6 @@ String label(Object value, bool a, bool b, bool c, bool d, bool e) {
   }
 }
 
-@reflectiveTest
 final class AvoidLongFilesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -81,17 +101,17 @@ final class AvoidLongFilesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_fileOverSixHundredLines_lint() async {
+  Future<void> _fileOverSixHundredLinesLint() async {
     final source = _fileWithLines(AvoidLongFiles.maxLines + 1);
 
     await assertDiagnostics(source, [lint(0, 'void'.length)]);
   }
 
-  Future<void> test_fileAtSixHundredLines_noLint() async {
+  Future<void> _fileAtSixHundredLinesNoLint() async {
     await assertNoDiagnostics(_fileWithLines(AvoidLongFiles.maxLines));
   }
 
-  Future<void> test_generatedLocalizationOverSixHundredLines_noLint() async {
+  Future<void> _generatedLocalizationOverSixHundredLinesNoLint() async {
     final filePath = '$testPackageLibPath/l10n/app_localizations.dart';
     newFile(filePath, _fileWithLines(AvoidLongFiles.maxLines + 1));
 
@@ -99,7 +119,6 @@ final class AvoidLongFilesTest extends AnalysisRuleTest {
   }
 }
 
-@reflectiveTest
 final class AvoidLongFunctionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -107,7 +126,7 @@ final class AvoidLongFunctionsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_functionOverEightyLines_lint() async {
+  Future<void> _functionOverEightyLinesLint() async {
     final body = _statements(AvoidLongFunctions.maxLines - 1);
     final source =
         '''
@@ -119,7 +138,7 @@ $body
     await assertDiagnostics(source, [lint(source.indexOf('process'), 'process'.length)]);
   }
 
-  Future<void> test_functionAtEightyLines_noLint() async {
+  Future<void> _functionAtEightyLinesNoLint() async {
     final body = _statements(AvoidLongFunctions.maxLines - 2);
 
     await assertNoDiagnostics('''
@@ -129,13 +148,13 @@ $body
 ''');
   }
 
-  Future<void> test_expressionBody_noLint() async {
+  Future<void> _expressionBodyNoLint() async {
     await assertNoDiagnostics(r'''
 int process(int value) => value + 1;
 ''');
   }
 
-  Future<void> test_longTestMain_noLint() async {
+  Future<void> _longTestMainNoLint() async {
     final body = _statements(AvoidLongFunctions.maxLines);
     final source =
         '''
@@ -149,7 +168,7 @@ $body
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_longTestGroupCallback_noLint() async {
+  Future<void> _longTestGroupCallbackNoLint() async {
     final body = _statements(AvoidLongFunctions.maxLines);
     final source =
         '''
@@ -167,7 +186,7 @@ $body
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_longTestCallback_noLint() async {
+  Future<void> _longTestCallbackNoLint() async {
     final body = _statements(AvoidLongFunctions.maxLines);
     final source =
         '''
@@ -185,7 +204,7 @@ $body
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_longTestRegistrationHelper_noLint() async {
+  Future<void> _longTestRegistrationHelperNoLint() async {
     final body = _statements(AvoidLongFunctions.maxLines);
     final source =
         '''
@@ -207,7 +226,7 @@ void main() {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_longTestHelperFunction_lint() async {
+  Future<void> _longTestHelperFunctionLint() async {
     final body = _statements(AvoidLongFunctions.maxLines - 1);
     final source =
         '''

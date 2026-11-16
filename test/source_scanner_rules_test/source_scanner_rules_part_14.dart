@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class DialogWidgetSubscribesToMutableProviderTest extends _DialogRuleTest {
   @override
   String get ruleName => 'dialog_widget_subscribes_to_mutable_provider';
@@ -27,7 +24,7 @@ class ConfirmDialog extends ConsumerWidget {
 }
 ''';
 
-  Future<void> test_reportsMultilineWatchFromSkillNeverExample() async {
+  Future<void> _reportsMultilineWatchFromSkillNeverExample() async {
     final analyzedSource = _analyzedSource(_skillNeverConfirmDialog, addIgnorePrefix: true);
     final filePath = '$testPackageLibPath/features/confirm/presentation/confirm_dialog.dart';
     newFile(filePath, analyzedSource);
@@ -35,11 +32,11 @@ class ConfirmDialog extends ConsumerWidget {
     await assertDiagnosticsInFile(filePath, [compatLint(analyzedSource, 'ref.watch(\n', ruleName)]);
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
   }
 
-  Future<void> test_allowsNonDialogClass() async {
+  Future<void> _allowsNonDialogClass() async {
     await assertAllows(r'''
 class WidgetRef {
   Object watch(Object provider) => Object();
@@ -58,7 +55,7 @@ class DetailScreen extends ConsumerWidget {
 ''');
   }
 
-  Future<void> test_allowsDialogWithSnapshotPattern() async {
+  Future<void> _allowsDialogWithSnapshotPattern() async {
     await assertAllows(r'''
 class WidgetRef {
   Object watch(Object provider) => Object();
@@ -83,7 +80,7 @@ class ConfirmDialog extends ConsumerWidget {
 ''');
   }
 
-  Future<void> test_reportsConsumerStateSheetFromPath() async {
+  Future<void> _reportsConsumerStateSheetFromPath() async {
     const source = r'''
 class WidgetRef {
   Object watch(Object provider) => Object();
@@ -112,7 +109,6 @@ class _SessionSheetState extends ConsumerState<SessionSheet> {
   }
 }
 
-@reflectiveTest
 final class ModalHighFrequencyWatchNotLeafTest extends _DialogRuleTest {
   @override
   String get ruleName => 'modal_high_frequency_watch_not_leaf';
@@ -135,7 +131,7 @@ class SessionSheet extends ConsumerWidget {
 }
 ''';
 
-  Future<void> test_reportsMultilineSelect() async {
+  Future<void> _reportsMultilineSelect() async {
     const source = r'''
 class WidgetRef {
   Object watch(Object provider) => Object();
@@ -158,7 +154,7 @@ class SessionSheet extends ConsumerWidget {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'ref.watch(', ruleName)]);
   }
 
-  Future<void> test_allowsLeafNonModalClass() async {
+  Future<void> _allowsLeafNonModalClass() async {
     await assertAllows(r'''
 class WidgetRef {
   Object watch(Object provider) => Object();
@@ -177,7 +173,6 @@ class TimerControls extends ConsumerWidget {
   }
 }
 
-@reflectiveTest
 final class DialogButtonPopThenStateMutationTest extends _DialogRuleTest {
   @override
   void setUp() {
@@ -209,7 +204,7 @@ class ConfirmDialog extends ConsumerWidget {
 }
 ''';
 
-  Future<void> test_allowsPopWithResultNoFollowUp() async {
+  Future<void> _allowsPopWithResultNoFollowUp() async {
     await assertAllows(r'''
 class Navigator {
   static Object of(Object context) => Object();
@@ -224,7 +219,7 @@ class ConfirmDialog extends ConsumerWidget {
 ''');
   }
 
-  Future<void> test_allowsPostPopInNonDialogClass() async {
+  Future<void> _allowsPostPopInNonDialogClass() async {
     await assertAllows(r'''
 class Navigator {
   static Object of(Object context) => Object();
@@ -244,7 +239,7 @@ class DetailScreen extends ConsumerWidget {
 ''');
   }
 
-  Future<void> test_reportsSecondPopAfterRootNavigatorPop() async {
+  Future<void> _reportsSecondPopAfterRootNavigatorPop() async {
     const source = r'''
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -263,7 +258,7 @@ class ConfirmDialog extends Widget {
     ]);
   }
 
-  Future<void> test_reportsTypedRoutePushAfterSheetPop() async {
+  Future<void> _reportsTypedRoutePushAfterSheetPop() async {
     const source = r'''
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -285,7 +280,7 @@ class MenuSheet extends Widget {
     ]);
   }
 
-  Future<void> test_allowsSeparateButtonPopsWithResults() async {
+  Future<void> _allowsSeparateButtonPopsWithResults() async {
     await assertAllows(r'''
 import 'package:flutter/material.dart';
 
@@ -300,7 +295,6 @@ class ChoiceSheet extends Widget {
   }
 }
 
-@reflectiveTest
 final class SelectReturnsUnstableRecordIdentityTest extends _DialogRuleTest {
   @override
   String get ruleName => 'select_returns_unstable_record_identity';
@@ -320,7 +314,7 @@ class Reader {
 }
 ''';
 
-  Future<void> test_reportsMultilineSelectFromSkillNeverExample() async {
+  Future<void> _reportsMultilineSelectFromSkillNeverExample() async {
     final analyzedSource = _analyzedSource(_skillNeverConfirmDialog, addIgnorePrefix: true);
     final filePath = '$testPackageLibPath/features/confirm/presentation/confirm_dialog.dart';
     newFile(filePath, analyzedSource);
@@ -334,7 +328,7 @@ class Reader {
     ]);
   }
 
-  Future<void> test_resolvedGettersDecideRecordFieldIdentity() async {
+  Future<void> _resolvedGettersDecideRecordFieldIdentity() async {
     const source = r'''
 class FormState {
   FormState({required this.isSaving, required this.tagsMap, required this.items});
@@ -371,11 +365,11 @@ class Reader {
     ]);
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
   }
 
-  Future<void> test_allowsPrimitiveSelect() async {
+  Future<void> _allowsPrimitiveSelect() async {
     await assertAllows(r'''
 class WidgetRef {
   Object watch(Object provider) => Object();
@@ -389,7 +383,7 @@ class Reader {
 ''');
   }
 
-  Future<void> test_allowsRecordOfStableFields() async {
+  Future<void> _allowsRecordOfStableFields() async {
     await assertAllows(r'''
 class WidgetRef {
   Object watch(Object provider) => Object();
@@ -404,7 +398,6 @@ class Reader {
   }
 }
 
-@reflectiveTest
 final class BuildMethodAssignsToFieldTest extends _DialogRuleTest {
   @override
   String get ruleName => 'build_method_assigns_to_field';
@@ -424,7 +417,7 @@ class ConfirmDialog extends ConsumerWidget {
 }
 ''';
 
-  Future<void> test_allowsLocalFinal() async {
+  Future<void> _allowsLocalFinal() async {
     await assertAllows(r'''
 class ConsumerWidget extends Widget {}
 
@@ -437,7 +430,7 @@ class ConfirmDialog extends ConsumerWidget {
 ''');
   }
 
-  Future<void> test_allowsAssignmentOutsideBuild() async {
+  Future<void> _allowsAssignmentOutsideBuild() async {
     await assertAllows(r'''
 class ConsumerWidget extends Widget {}
 
@@ -454,7 +447,6 @@ class ConfirmDialog extends ConsumerWidget {
   }
 }
 
-@reflectiveTest
 final class BuildCallsMutatingInstanceMethodTest extends _DialogRuleTest {
   @override
   String get ruleName => 'build_calls_mutating_instance_method';
@@ -479,7 +471,7 @@ class EditSheet extends ConsumerWidget {
 }
 ''';
 
-  Future<void> test_allowsArrowEventCallback() async {
+  Future<void> _allowsArrowEventCallback() async {
     await assertAllows(r'''
 class EditSheet extends Widget {
   Object? _cached;
@@ -493,7 +485,7 @@ class EditSheet extends Widget {
 ''');
   }
 
-  Future<void> test_reportsImmediateArrowInvocation() async {
+  Future<void> _reportsImmediateArrowInvocation() async {
     final source = _analyzedSource(r'''
 class EditSheet extends Widget {
   Object? _cached;
@@ -509,7 +501,7 @@ class EditSheet extends Widget {
     await assertDiagnostics(source, [compatLint(source, '_change(context)', ruleName)]);
   }
 
-  Future<void> test_reportsImmediateBlockInvocation() async {
+  Future<void> _reportsImmediateBlockInvocation() async {
     final source = _analyzedSource(r'''
 class EditSheet extends Widget {
   Object? _cached;
@@ -527,7 +519,7 @@ class EditSheet extends Widget {
     await assertDiagnostics(source, [compatLint(source, '_change(context)', ruleName)]);
   }
 
-  Future<void> test_reportsImmediateCallAfterCallbackOnSameLine() async {
+  Future<void> _reportsImmediateCallAfterCallbackOnSameLine() async {
     final source = _analyzedSource(r'''
 class EditSheet extends Widget {
   Object? _cached;
@@ -543,7 +535,7 @@ class EditSheet extends Widget {
     await assertDiagnostics(source, [compatLint(source, '_change(Object())', ruleName)]);
   }
 
-  Future<void> test_reportsImmediateCallInvocation() async {
+  Future<void> _reportsImmediateCallInvocation() async {
     final source = _analyzedSource(r'''
 class EditSheet extends Widget {
   Object? _cached;
@@ -559,7 +551,7 @@ class EditSheet extends Widget {
     await assertDiagnostics(source, [compatLint(source, '_change(context)', ruleName)]);
   }
 
-  Future<void> test_allowsPureHelperFromBuild() async {
+  Future<void> _allowsPureHelperFromBuild() async {
     await assertAllows(r'''
 class ConsumerWidget extends Widget {}
 
@@ -576,7 +568,7 @@ class EditSheet extends ConsumerWidget {
 ''');
   }
 
-  Future<void> test_reportsControllerPropertyMutation() async {
+  Future<void> _reportsControllerPropertyMutation() async {
     const source = r'''
 class ConsumerWidget extends Widget {}
 
@@ -600,7 +592,7 @@ class EditSheet extends ConsumerWidget {
     ]);
   }
 
-  Future<void> test_allowsMutatingHelperInsideMultilineCallback() async {
+  Future<void> _allowsMutatingHelperInsideMultilineCallback() async {
     await assertAllows(r'''
 class ConsumerWidget extends Widget {}
 
@@ -622,7 +614,6 @@ class EditSheet extends ConsumerWidget {
   }
 }
 
-@reflectiveTest
 final class WidgetCallsNotifierTeardownAfterAwaitTest extends _DialogRuleTest {
   @override
   String get ruleName => 'widget_calls_notifier_teardown_after_await';
@@ -645,7 +636,7 @@ class SubmitButton extends ConsumerWidget {
 }
 ''';
 
-  Future<void> test_allowsResetWithoutAwait() async {
+  Future<void> _allowsResetWithoutAwait() async {
     await assertAllows(r'''
 class WidgetRef {
   Object read(Object provider) => Object();
@@ -661,7 +652,7 @@ class SubmitButton extends ConsumerWidget {
 ''');
   }
 
-  Future<void> test_reportsGoNavigationChainedOffAwaitedMutation() async {
+  Future<void> _reportsGoNavigationChainedOffAwaitedMutation() async {
     final analyzedSource = _analyzedSource(r'''
 class WidgetRef {
   Object read(Object provider) => Object();
@@ -693,7 +684,7 @@ class SubmitButton extends ConsumerWidget {
     ]);
   }
 
-  Future<void> test_allowsNavigationNotChainedOffNotifierMutation() async {
+  Future<void> _allowsNavigationNotChainedOffNotifierMutation() async {
     await assertAllows(r'''
 class WidgetRef {
   Object read(Object provider) => Object();
@@ -738,7 +729,7 @@ class SubmitButton extends ConsumerWidget {
 ''');
   }
 
-  Future<void> test_allowsResetInsideNotifier() async {
+  Future<void> _allowsResetInsideNotifier() async {
     await assertAllows(r'''
 class WidgetRef {
   Object read(Object provider) => Object();
@@ -757,7 +748,6 @@ class FormNotifier extends Notifier {
   }
 }
 
-@reflectiveTest
 final class PopScopeBypassUsesGoNotPopTest extends _DialogRuleTest {
   @override
   String get ruleName => 'popscope_bypass_uses_go_not_pop';
@@ -778,7 +768,7 @@ class ConfirmScreen extends ConsumerWidget {
 }
 ''';
 
-  Future<void> test_allowsTypedRouteGo() async {
+  Future<void> _allowsTypedRouteGo() async {
     await assertAllows(r'''
 class DetailRoute {
   Object go(Object context) => Object();
@@ -794,7 +784,7 @@ class ConfirmScreen extends ConsumerWidget {
 ''');
   }
 
-  Future<void> test_allowsPopWithFallbackWithoutPrecedingModal() async {
+  Future<void> _allowsPopWithFallbackWithoutPrecedingModal() async {
     await assertAllows(r'''
 class ConsumerWidget extends Widget {}
 
@@ -812,7 +802,6 @@ abstract class _RuntimeBugRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => runtimeBugSourceRules;
 }
 
-@reflectiveTest
 final class ModalHelperRequiresRouteSettingsTest extends _DialogRuleTest {
   @override
   void setUp() {
@@ -834,7 +823,7 @@ Future<T?> openConfirm<T>(BuildContext context) => showDialog<T>(
 );
 ''';
 
-  Future<void> test_allowsWithRouteSettings() async {
+  Future<void> _allowsWithRouteSettings() async {
     await assertAllows(r'''
 import 'package:flutter/material.dart';
 
@@ -846,7 +835,7 @@ Future<T?> openConfirm<T>(BuildContext context) => showDialog<T>(
 ''');
   }
 
-  Future<void> test_allowsSheetWithRouteSettings() async {
+  Future<void> _allowsSheetWithRouteSettings() async {
     await assertAllows(r'''
 import 'package:flutter/material.dart';
 
@@ -858,7 +847,7 @@ Future<T?> openSheet<T>(BuildContext context) => showModalBottomSheet<T>(
 ''');
   }
 
-  Future<void> test_allowsSkillShowAppSheetHelperAndCallers() async {
+  Future<void> _allowsSkillShowAppSheetHelperAndCallers() async {
     await assertAllows(r'''
 import 'package:flutter/material.dart';
 
@@ -883,7 +872,7 @@ Future<void> openMenu(BuildContext context) async {
   }
 
   // context-ui.md:40-52: the skill's BuildContext extension helper and caller.
-  Future<void> test_allowsSkillModalContextExtension() async {
+  Future<void> _allowsSkillModalContextExtension() async {
     await assertAllows(r'''
 import 'package:flutter/material.dart';
 
@@ -938,3 +927,116 @@ class ConfirmDialog extends ConsumerWidget {
   }
 }
 ''';
+
+void _defineSourceScannerRulesPart14Tests() {
+  analysisRuleSuite<DialogWidgetSubscribesToMutableProviderTest>(
+    'DialogWidgetSubscribesToMutableProviderTest',
+    DialogWidgetSubscribesToMutableProviderTest.new,
+    {
+      'test_reportsMultilineWatchFromSkillNeverExample': (t) =>
+          t._reportsMultilineWatchFromSkillNeverExample(),
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_allowsNonDialogClass': (t) => t._allowsNonDialogClass(),
+      'test_allowsDialogWithSnapshotPattern': (t) => t._allowsDialogWithSnapshotPattern(),
+      'test_reportsConsumerStateSheetFromPath': (t) => t._reportsConsumerStateSheetFromPath(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ModalHighFrequencyWatchNotLeafTest>(
+    'ModalHighFrequencyWatchNotLeafTest',
+    ModalHighFrequencyWatchNotLeafTest.new,
+    {
+      'test_reportsMultilineSelect': (t) => t._reportsMultilineSelect(),
+      'test_allowsLeafNonModalClass': (t) => t._allowsLeafNonModalClass(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<DialogButtonPopThenStateMutationTest>(
+    'DialogButtonPopThenStateMutationTest',
+    DialogButtonPopThenStateMutationTest.new,
+    {
+      'test_allowsPopWithResultNoFollowUp': (t) => t._allowsPopWithResultNoFollowUp(),
+      'test_allowsPostPopInNonDialogClass': (t) => t._allowsPostPopInNonDialogClass(),
+      'test_reportsSecondPopAfterRootNavigatorPop': (t) =>
+          t._reportsSecondPopAfterRootNavigatorPop(),
+      'test_reportsTypedRoutePushAfterSheetPop': (t) => t._reportsTypedRoutePushAfterSheetPop(),
+      'test_allowsSeparateButtonPopsWithResults': (t) => t._allowsSeparateButtonPopsWithResults(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<SelectReturnsUnstableRecordIdentityTest>(
+    'SelectReturnsUnstableRecordIdentityTest',
+    SelectReturnsUnstableRecordIdentityTest.new,
+    {
+      'test_reportsMultilineSelectFromSkillNeverExample': (t) =>
+          t._reportsMultilineSelectFromSkillNeverExample(),
+      'test_resolvedGettersDecideRecordFieldIdentity': (t) =>
+          t._resolvedGettersDecideRecordFieldIdentity(),
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_allowsPrimitiveSelect': (t) => t._allowsPrimitiveSelect(),
+      'test_allowsRecordOfStableFields': (t) => t._allowsRecordOfStableFields(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<BuildMethodAssignsToFieldTest>(
+    'BuildMethodAssignsToFieldTest',
+    BuildMethodAssignsToFieldTest.new,
+    {
+      'test_allowsLocalFinal': (t) => t._allowsLocalFinal(),
+      'test_allowsAssignmentOutsideBuild': (t) => t._allowsAssignmentOutsideBuild(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<BuildCallsMutatingInstanceMethodTest>(
+    'BuildCallsMutatingInstanceMethodTest',
+    BuildCallsMutatingInstanceMethodTest.new,
+    {
+      'test_allowsArrowEventCallback': (t) => t._allowsArrowEventCallback(),
+      'test_reportsImmediateArrowInvocation': (t) => t._reportsImmediateArrowInvocation(),
+      'test_reportsImmediateBlockInvocation': (t) => t._reportsImmediateBlockInvocation(),
+      'test_reportsImmediateCallAfterCallbackOnSameLine': (t) =>
+          t._reportsImmediateCallAfterCallbackOnSameLine(),
+      'test_reportsImmediateCallInvocation': (t) => t._reportsImmediateCallInvocation(),
+      'test_allowsPureHelperFromBuild': (t) => t._allowsPureHelperFromBuild(),
+      'test_reportsControllerPropertyMutation': (t) => t._reportsControllerPropertyMutation(),
+      'test_allowsMutatingHelperInsideMultilineCallback': (t) =>
+          t._allowsMutatingHelperInsideMultilineCallback(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<WidgetCallsNotifierTeardownAfterAwaitTest>(
+    'WidgetCallsNotifierTeardownAfterAwaitTest',
+    WidgetCallsNotifierTeardownAfterAwaitTest.new,
+    {
+      'test_allowsResetWithoutAwait': (t) => t._allowsResetWithoutAwait(),
+      'test_reportsGoNavigationChainedOffAwaitedMutation': (t) =>
+          t._reportsGoNavigationChainedOffAwaitedMutation(),
+      'test_allowsNavigationNotChainedOffNotifierMutation': (t) =>
+          t._allowsNavigationNotChainedOffNotifierMutation(),
+      'test_allowsResetInsideNotifier': (t) => t._allowsResetInsideNotifier(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<PopScopeBypassUsesGoNotPopTest>(
+    'PopScopeBypassUsesGoNotPopTest',
+    PopScopeBypassUsesGoNotPopTest.new,
+    {
+      'test_allowsTypedRouteGo': (t) => t._allowsTypedRouteGo(),
+      'test_allowsPopWithFallbackWithoutPrecedingModal': (t) =>
+          t._allowsPopWithFallbackWithoutPrecedingModal(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ModalHelperRequiresRouteSettingsTest>(
+    'ModalHelperRequiresRouteSettingsTest',
+    ModalHelperRequiresRouteSettingsTest.new,
+    {
+      'test_allowsWithRouteSettings': (t) => t._allowsWithRouteSettings(),
+      'test_allowsSheetWithRouteSettings': (t) => t._allowsSheetWithRouteSettings(),
+      'test_allowsSkillShowAppSheetHelperAndCallers': (t) =>
+          t._allowsSkillShowAppSheetHelperAndCallers(),
+      'test_allowsSkillModalContextExtension': (t) => t._allowsSkillModalContextExtension(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+}

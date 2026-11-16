@@ -1,20 +1,40 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_inverted_boolean_checks.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_negations_in_equality_checks.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/no_equal_then_else.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidInvertedBooleanChecksTest);
-    defineReflectiveTests(AvoidNegationsInEqualityChecksTest);
-    defineReflectiveTests(NoEqualThenElseTest);
+  analysisRuleSuite<AvoidInvertedBooleanChecksTest>(
+    'AvoidInvertedBooleanChecksTest',
+    AvoidInvertedBooleanChecksTest.new,
+    {
+      'test_negatedEqualityCondition_lint': (t) => t._negatedEqualityConditionLint(),
+      'test_negatedIsCondition_lint': (t) => t._negatedIsConditionLint(),
+      'test_plainBooleanNegation_noLint': (t) => t._plainBooleanNegationNoLint(),
+      'test_negatedMethodCall_noLint': (t) => t._negatedMethodCallNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidNegationsInEqualityChecksTest>(
+    'AvoidNegationsInEqualityChecksTest',
+    AvoidNegationsInEqualityChecksTest.new,
+    {
+      'test_leftNegatedEquality_lint': (t) => t._leftNegatedEqualityLint(),
+      'test_rightNegatedInequality_lint': (t) => t._rightNegatedInequalityLint(),
+      'test_bothSidesNegated_noLint': (t) => t._bothSidesNegatedNoLint(),
+      'test_plainEquality_noLint': (t) => t._plainEqualityNoLint(),
+    },
+  );
+  analysisRuleSuite<NoEqualThenElseTest>('NoEqualThenElseTest', NoEqualThenElseTest.new, {
+    'test_conditionalSameExpressions_lint': (t) => t._conditionalSameExpressionsLint(),
+    'test_ifElseSameReturns_lint': (t) => t._ifElseSameReturnsLint(),
+    'test_conditionalDifferentExpressions_noLint': (t) =>
+        t._conditionalDifferentExpressionsNoLint(),
+    'test_ifElseIf_noLint': (t) => t._ifElseIfNoLint(),
   });
 }
 
-@reflectiveTest
 final class AvoidInvertedBooleanChecksTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +42,7 @@ final class AvoidInvertedBooleanChecksTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_negatedEqualityCondition_lint() async {
+  Future<void> _negatedEqualityConditionLint() async {
     const source = r'''
 bool same(int left, int right) {
   if (!(left == right)) {
@@ -37,7 +57,7 @@ bool same(int left, int right) {
     ]);
   }
 
-  Future<void> test_negatedIsCondition_lint() async {
+  Future<void> _negatedIsConditionLint() async {
     const source = r'''
 bool isText(Object value) {
   if (!(value is String)) {
@@ -52,20 +72,19 @@ bool isText(Object value) {
     ]);
   }
 
-  Future<void> test_plainBooleanNegation_noLint() async {
+  Future<void> _plainBooleanNegationNoLint() async {
     await assertNoDiagnostics(r'''
 bool missing(bool enabled) => !enabled;
 ''');
   }
 
-  Future<void> test_negatedMethodCall_noLint() async {
+  Future<void> _negatedMethodCallNoLint() async {
     await assertNoDiagnostics(r'''
 bool missing(String value) => !value.isEmpty;
 ''');
   }
 }
 
-@reflectiveTest
 final class AvoidNegationsInEqualityChecksTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -73,7 +92,7 @@ final class AvoidNegationsInEqualityChecksTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_leftNegatedEquality_lint() async {
+  Future<void> _leftNegatedEqualityLint() async {
     const source = r'''
 bool matches(bool ready, bool expected) => !ready == expected;
 ''';
@@ -83,7 +102,7 @@ bool matches(bool ready, bool expected) => !ready == expected;
     ]);
   }
 
-  Future<void> test_rightNegatedInequality_lint() async {
+  Future<void> _rightNegatedInequalityLint() async {
     const source = r'''
 bool differs(bool ready, bool expected) => ready != !expected;
 ''';
@@ -93,20 +112,19 @@ bool differs(bool ready, bool expected) => ready != !expected;
     ]);
   }
 
-  Future<void> test_bothSidesNegated_noLint() async {
+  Future<void> _bothSidesNegatedNoLint() async {
     await assertNoDiagnostics(r'''
 bool matches(bool left, bool right) => !left == !right;
 ''');
   }
 
-  Future<void> test_plainEquality_noLint() async {
+  Future<void> _plainEqualityNoLint() async {
     await assertNoDiagnostics(r'''
 bool matches(bool left, bool right) => left == right;
 ''');
   }
 }
 
-@reflectiveTest
 final class NoEqualThenElseTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -114,7 +132,7 @@ final class NoEqualThenElseTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_conditionalSameExpressions_lint() async {
+  Future<void> _conditionalSameExpressionsLint() async {
     const source = r'''
 int value(bool ready, int count) => ready ? count + 1 : count + 1;
 ''';
@@ -124,7 +142,7 @@ int value(bool ready, int count) => ready ? count + 1 : count + 1;
     ]);
   }
 
-  Future<void> test_ifElseSameReturns_lint() async {
+  Future<void> _ifElseSameReturnsLint() async {
     const source = r'''
 int value(bool ready, int count) {
   if (ready) {
@@ -140,13 +158,13 @@ int value(bool ready, int count) {
     ]);
   }
 
-  Future<void> test_conditionalDifferentExpressions_noLint() async {
+  Future<void> _conditionalDifferentExpressionsNoLint() async {
     await assertNoDiagnostics(r'''
 int value(bool ready, int count) => ready ? count + 1 : count - 1;
 ''');
   }
 
-  Future<void> test_ifElseIf_noLint() async {
+  Future<void> _ifElseIfNoLint() async {
     await assertNoDiagnostics(r'''
 int value(bool first, bool second) {
   if (first) {

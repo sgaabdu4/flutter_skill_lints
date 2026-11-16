@@ -1,20 +1,42 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_assignments_as_conditions.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_extensions_on_records.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_non_empty_constructor_bodies.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidAssignmentsAsConditionsTest);
-    defineReflectiveTests(AvoidExtensionsOnRecordsTest);
-    defineReflectiveTests(AvoidNonEmptyConstructorBodiesTest);
-  });
+  analysisRuleSuite<AvoidAssignmentsAsConditionsTest>(
+    'AvoidAssignmentsAsConditionsTest',
+    AvoidAssignmentsAsConditionsTest.new,
+    {
+      'test_assignmentInForCondition_lint': (t) => t._assignmentInForConditionLint(),
+      'test_assignmentInIfCondition_lint': (t) => t._assignmentInIfConditionLint(),
+      'test_assignmentStatement_noLint': (t) => t._assignmentStatementNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidExtensionsOnRecordsTest>(
+    'AvoidExtensionsOnRecordsTest',
+    AvoidExtensionsOnRecordsTest.new,
+    {
+      'test_namedRecordExtension_lint': (t) => t._namedRecordExtensionLint(),
+      'test_positionalRecordExtension_lint': (t) => t._positionalRecordExtensionLint(),
+      'test_valueTypeExtension_noLint': (t) => t._valueTypeExtensionNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidNonEmptyConstructorBodiesTest>(
+    'AvoidNonEmptyConstructorBodiesTest',
+    AvoidNonEmptyConstructorBodiesTest.new,
+    {
+      'test_emptyConstructorBody_noLint': (t) => t._emptyConstructorBodyNoLint(),
+      'test_initializerList_noLint': (t) => t._initializerListNoLint(),
+      'test_statementBody_lint': (t) => t._statementBodyLint(),
+      'test_freezedFactoryConstructorExpressionBody_noLint': (t) =>
+          t._freezedFactoryConstructorExpressionBodyNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidAssignmentsAsConditionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +44,7 @@ final class AvoidAssignmentsAsConditionsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_assignmentInForCondition_lint() async {
+  Future<void> _assignmentInForConditionLint() async {
     const source = r'''
 void f() {
   var keepGoing = true;
@@ -35,7 +57,7 @@ void f() {
     ]);
   }
 
-  Future<void> test_assignmentInIfCondition_lint() async {
+  Future<void> _assignmentInIfConditionLint() async {
     const source = r'''
 void f() {
   var ready = false;
@@ -48,7 +70,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('ready = true'), 'ready = true'.length)]);
   }
 
-  Future<void> test_assignmentStatement_noLint() async {
+  Future<void> _assignmentStatementNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   var ready = false;
@@ -61,7 +83,6 @@ void f() {
   }
 }
 
-@reflectiveTest
 final class AvoidExtensionsOnRecordsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -69,7 +90,7 @@ final class AvoidExtensionsOnRecordsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_namedRecordExtension_lint() async {
+  Future<void> _namedRecordExtensionLint() async {
     const source = r'''
 extension UserSummary on ({String name, int score}) {
   bool get hasScore => score > 0;
@@ -81,7 +102,7 @@ extension UserSummary on ({String name, int score}) {
     ]);
   }
 
-  Future<void> test_positionalRecordExtension_lint() async {
+  Future<void> _positionalRecordExtensionLint() async {
     const source = r'''
 extension PairMath on (int, int) {
   int get sum => $1 + $2;
@@ -91,7 +112,7 @@ extension PairMath on (int, int) {
     await assertDiagnostics(source, [lint(source.indexOf('(int, int)'), '(int, int)'.length)]);
   }
 
-  Future<void> test_valueTypeExtension_noLint() async {
+  Future<void> _valueTypeExtensionNoLint() async {
     await assertNoDiagnostics(r'''
 class Pair {
   const Pair(this.left, this.right);
@@ -107,7 +128,6 @@ extension PairMath on Pair {
   }
 }
 
-@reflectiveTest
 final class AvoidNonEmptyConstructorBodiesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -115,7 +135,7 @@ final class AvoidNonEmptyConstructorBodiesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_emptyConstructorBody_noLint() async {
+  Future<void> _emptyConstructorBodyNoLint() async {
     await assertNoDiagnostics(r'''
 class Session {
   Session() {}
@@ -123,7 +143,7 @@ class Session {
 ''');
   }
 
-  Future<void> test_initializerList_noLint() async {
+  Future<void> _initializerListNoLint() async {
     await assertNoDiagnostics(r'''
 class Session {
   Session(String id) : normalizedId = id;
@@ -133,7 +153,7 @@ class Session {
 ''');
   }
 
-  Future<void> test_statementBody_lint() async {
+  Future<void> _statementBodyLint() async {
     const source = r'''
 class Session {
   Session(String id) {
@@ -149,7 +169,7 @@ class Session {
     ]);
   }
 
-  Future<void> test_freezedFactoryConstructorExpressionBody_noLint() async {
+  Future<void> _freezedFactoryConstructorExpressionBodyNoLint() async {
     await assertNoDiagnostics(r'''
 class Freezed {
   const Freezed();

@@ -1,20 +1,38 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/match_lib_folder_structure.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_caret_version_syntax.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/pubspec_ordering.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(PubspecOrderingTest);
-    defineReflectiveTests(PreferCaretVersionSyntaxTest);
-    defineReflectiveTests(MatchLibFolderStructureTest);
+  analysisRuleSuite<PubspecOrderingTest>('PubspecOrderingTest', PubspecOrderingTest.new, {
+    'test_allowsOrderedPubspec_noLint': (t) => t._allowsOrderedPubspecNoLint(),
+    'test_outOfOrderTopLevelSection_lint': (t) => t._outOfOrderTopLevelSectionLint(),
+    'test_outOfOrderDependencies_lint': (t) => t._outOfOrderDependenciesLint(),
   });
+  analysisRuleSuite<PreferCaretVersionSyntaxTest>(
+    'PreferCaretVersionSyntaxTest',
+    PreferCaretVersionSyntaxTest.new,
+    {
+      'test_allowsCaretVersion_noLint': (t) => t._allowsCaretVersionNoLint(),
+      'test_caretEquivalentRange_lint': (t) => t._caretEquivalentRangeLint(),
+      'test_nonEquivalentRange_noLint': (t) => t._nonEquivalentRangeNoLint(),
+      'test_zeroMajorCaretEquivalentRange_lint': (t) => t._zeroMajorCaretEquivalentRangeLint(),
+    },
+  );
+  analysisRuleSuite<MatchLibFolderStructureTest>(
+    'MatchLibFolderStructureTest',
+    MatchLibFolderStructureTest.new,
+    {
+      'test_matchingTestPath_noLint': (t) => t._matchingTestPathNoLint(),
+      'test_mismatchedTestPath_lint': (t) => t._mismatchedTestPathLint(),
+      'test_nonLibTopLevelTestFolder_noLint': (t) => t._nonLibTopLevelTestFolderNoLint(),
+      'test_multiplePackageImports_noLint': (t) => t._multiplePackageImportsNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class PubspecOrderingTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -23,13 +41,13 @@ final class PubspecOrderingTest extends AnalysisRuleTest {
     newFile('$testPackageRootPath/lib/test.dart', 'library;');
   }
 
-  Future<void> test_allowsOrderedPubspec_noLint() async {
+  Future<void> _allowsOrderedPubspecNoLint() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec());
 
     await assertNoDiagnostics('library;');
   }
 
-  Future<void> test_outOfOrderTopLevelSection_lint() async {
+  Future<void> _outOfOrderTopLevelSectionLint() async {
     newFile(
       '$testPackageRootPath/pubspec.yaml',
       _pubspec(
@@ -45,7 +63,7 @@ environment:
     await assertDiagnostics('library;', [lint(0, 'library'.length)]);
   }
 
-  Future<void> test_outOfOrderDependencies_lint() async {
+  Future<void> _outOfOrderDependenciesLint() async {
     newFile(
       '$testPackageRootPath/pubspec.yaml',
       _pubspec(
@@ -82,7 +100,6 @@ $body
   }
 }
 
-@reflectiveTest
 final class PreferCaretVersionSyntaxTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -91,25 +108,25 @@ final class PreferCaretVersionSyntaxTest extends AnalysisRuleTest {
     newFile('$testPackageRootPath/lib/test.dart', 'library;');
   }
 
-  Future<void> test_allowsCaretVersion_noLint() async {
+  Future<void> _allowsCaretVersionNoLint() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec('^1.2.3'));
 
     await assertNoDiagnostics('library;');
   }
 
-  Future<void> test_caretEquivalentRange_lint() async {
+  Future<void> _caretEquivalentRangeLint() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec('">=1.2.3 <2.0.0"'));
 
     await assertDiagnostics('library;', [lint(0, 'library'.length)]);
   }
 
-  Future<void> test_nonEquivalentRange_noLint() async {
+  Future<void> _nonEquivalentRangeNoLint() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec('">=1.2.3 <3.0.0"'));
 
     await assertNoDiagnostics('library;');
   }
 
-  Future<void> test_zeroMajorCaretEquivalentRange_lint() async {
+  Future<void> _zeroMajorCaretEquivalentRangeLint() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec('">=0.2.3 <0.3.0"'));
 
     await assertDiagnostics('library;', [lint(0, 'library'.length)]);
@@ -126,7 +143,6 @@ dependencies:
   }
 }
 
-@reflectiveTest
 final class MatchLibFolderStructureTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -142,7 +158,7 @@ class UserProfile {}
 ''');
   }
 
-  Future<void> test_matchingTestPath_noLint() async {
+  Future<void> _matchingTestPathNoLint() async {
     const source = r'''
 import 'package:test/src/user_profile.dart';
 
@@ -156,7 +172,7 @@ const profile = UserProfile;
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_mismatchedTestPath_lint() async {
+  Future<void> _mismatchedTestPathLint() async {
     const source = r'''
 import 'package:test/src/user_profile.dart';
 
@@ -170,7 +186,7 @@ const profile = UserProfile;
     await assertDiagnosticsInFile(path, [lint(0, 'import'.length)]);
   }
 
-  Future<void> test_nonLibTopLevelTestFolder_noLint() async {
+  Future<void> _nonLibTopLevelTestFolderNoLint() async {
     const source = r'''
 import 'package:test/src/user_profile.dart';
 
@@ -184,7 +200,7 @@ const profile = UserProfile;
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_multiplePackageImports_noLint() async {
+  Future<void> _multiplePackageImportsNoLint() async {
     newFile('$testPackageRootPath/lib/src/user_avatar.dart', '''
 class UserAvatar {}
 ''');

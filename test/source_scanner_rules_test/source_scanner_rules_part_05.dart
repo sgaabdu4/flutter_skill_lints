@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class ArchWidgetPathTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'arch_widget_path';
@@ -15,7 +12,7 @@ final class ArchWidgetPathTest extends _ArchitectureRuleTest {
   @override
   String get source => 'class TodoWidget {}';
 
-  Future<void> test_allowsFeatureWidgetTestFiles() async {
+  Future<void> _allowsFeatureWidgetTestFiles() async {
     final filePath = '$testPackageRootPath/test/features/todos/widgets/todo_widget_test.dart';
     newFile(filePath, 'class TodoWidgetTest {}');
 
@@ -23,7 +20,6 @@ final class ArchWidgetPathTest extends _ArchitectureRuleTest {
   }
 }
 
-@reflectiveTest
 final class AtomicProviderAccessTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'atomic_provider_access';
@@ -38,7 +34,7 @@ void build(ref, provider) {
 }
 ''';
 
-  Future<void> test_reportsNavigationProviderRead() async {
+  Future<void> _reportsNavigationProviderRead() async {
     final analyzedSource = _analyzedSource(r'''
 void build(ref, context) {
   ref.read(featureNavigationCoordinatorProvider).present(context, NumberPickerModalRoute());
@@ -50,7 +46,7 @@ void build(ref, context) {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'ref.read', ruleName)]);
   }
 
-  Future<void> test_reportsSharedOrganismProviderWatch() async {
+  Future<void> _reportsSharedOrganismProviderWatch() async {
     final analyzedSource = _analyzedSource(r'''
 void build(ref, provider) {
   ref.watch(provider);
@@ -62,7 +58,7 @@ void build(ref, provider) {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'ref.watch', ruleName)]);
   }
 
-  Future<void> test_allowsProviderAccessInScreens() async {
+  Future<void> _allowsProviderAccessInScreens() async {
     await assertAllows(r'''
 void build(ref, provider) {
   ref.watch(provider);
@@ -71,7 +67,6 @@ void build(ref, provider) {
   }
 }
 
-@reflectiveTest
 final class AtomicPageConsumerWidgetTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'atomic_page_consumer_widget';
@@ -108,11 +103,11 @@ abstract class State<T extends StatefulWidget> {}
 ''');
   }
 
-  void test_reportsAsError() {
+  void _reportsAsError() {
     expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
   }
 
-  Future<void> test_reportsStatefulScreen() async {
+  Future<void> _reportsStatefulScreen() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:flutter/widgets.dart';
 
@@ -125,7 +120,7 @@ class OrdersScreen extends StatefulWidget {}
     ]);
   }
 
-  Future<void> test_allowsConsumerScreens() async {
+  Future<void> _allowsConsumerScreens() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -140,7 +135,7 @@ class _OrdersBody extends StatelessWidget {}
 ''', path: path);
   }
 
-  Future<void> test_allowsStatelessWidgetsOutsideScreens() async {
+  Future<void> _allowsStatelessWidgetsOutsideScreens() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 
@@ -149,7 +144,6 @@ class OrderTile extends StatelessWidget {}
   }
 }
 
-@reflectiveTest
 final class TypedIdRawIdTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'typed_id_raw_id';
@@ -167,7 +161,7 @@ class User {
 }
 ''';
 
-  Future<void> test_reportsFreezedRawIntIds() async {
+  Future<void> _reportsFreezedRawIntIds() async {
     const source = r'''
 // ignore_for_file: redirect_to_non_class
 class Order {
@@ -180,7 +174,7 @@ class Order {
     ]);
   }
 
-  Future<void> test_allowsTypedIdsAndSingleRawId() async {
+  Future<void> _allowsTypedIdsAndSingleRawId() async {
     await assertAllows(r'''
 // ignore_for_file: redirect_to_non_class
 extension type UserId(int value) {}
@@ -191,7 +185,6 @@ class Order {
   }
 }
 
-@reflectiveTest
 final class RecordsMapReturnTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'records_map_return';
@@ -202,7 +195,7 @@ final class RecordsMapReturnTest extends _ArchitectureRuleTest {
   @override
   String get source => 'Map<String, dynamic> coordinates() => {};';
 
-  Future<void> test_allowsToMapPayloadBoundary() async {
+  Future<void> _allowsToMapPayloadBoundary() async {
     await assertNoDiagnostics(r'''
 final class RestTimerActivityData {
   const RestTimerActivityData({
@@ -228,7 +221,6 @@ final class RestTimerActivityData {
   }
 }
 
-@reflectiveTest
 final class ObjectMapCastTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'avoid_object_map_cast';
@@ -241,7 +233,7 @@ void read(Object? value) {
 }
 ''';
 
-  Future<void> test_allowsObjectMapDeclarations() async {
+  Future<void> _allowsObjectMapDeclarations() async {
     await assertAllows(r'''
 void read(Map<String, Object?> payload) {
   payload['ok'];
@@ -249,7 +241,7 @@ void read(Map<String, Object?> payload) {
 ''');
   }
 
-  Future<void> test_allowsDynamicMapCasts() async {
+  Future<void> _allowsDynamicMapCasts() async {
     await assertAllows(r'''
 void read(Object? value) {
   final payload = value as Map<String, dynamic>;
@@ -263,7 +255,6 @@ abstract class _UiRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => uiSourceRules;
 }
 
-@reflectiveTest
 final class StyleRawTokenTest extends _UiRuleTest {
   @override
   String get ruleName => 'style_raw_token';
@@ -274,7 +265,7 @@ final class StyleRawTokenTest extends _UiRuleTest {
   @override
   String get source => 'final inset = EdgeInsets.all(8);';
 
-  void test_reportsAsError() {
+  void _reportsAsError() {
     expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
   }
 
@@ -284,7 +275,7 @@ final class StyleRawTokenTest extends _UiRuleTest {
   @override
   void _addFlutterPackage() {}
 
-  Future<void> test_reportsResolvedRawColors() async {
+  Future<void> _reportsResolvedRawColors() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -310,7 +301,7 @@ const rgbo = Color.fromRGBO(1, 2, 3, 0.5);
     ]);
   }
 
-  Future<void> test_reportsResolvedRawSizes() async {
+  Future<void> _reportsResolvedRawSizes() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:flutter/material.dart';
 
@@ -331,7 +322,7 @@ const side = BorderSide(width: 3);
     ]);
   }
 
-  Future<void> test_allowsTokenSizesAndUnrelatedPalettes() async {
+  Future<void> _allowsTokenSizesAndUnrelatedPalettes() async {
     await assertAllows(r'''
 import 'package:flutter/material.dart';
 
@@ -357,7 +348,7 @@ final unrelated = Palette.red;
 ''', path: '$testPackageLibPath/core/widgets/atoms/token_atom.dart');
   }
 
-  Future<void> test_allowsRawTokensInThemeDefinitions() async {
+  Future<void> _allowsRawTokensInThemeDefinitions() async {
     await assertAllows('''
 class Color {
   const Color(int value);
@@ -369,7 +360,7 @@ abstract final class AppTheme {
 ''', path: '$testPackageLibPath/core/theme/app_theme.dart');
   }
 
-  Future<void> test_allowsRawTokensInTests() async {
+  Future<void> _allowsRawTokensInTests() async {
     await assertAllows('''
 class EdgeInsets {
   const EdgeInsets.all(double value);
@@ -381,7 +372,7 @@ void main() {
 ''', path: '$testPackageRootPath/test/core/theme/app_theme_test.dart');
   }
 
-  Future<void> test_allowsDesignTokensWithDigits() async {
+  Future<void> _allowsDesignTokensWithDigits() async {
     await assertAllows('''
 abstract final class DesignTokens {
   static const spacing0 = 0.0;
@@ -403,7 +394,7 @@ final empty = SizedBox(height: DesignTokens.spacing0);
 ''');
   }
 
-  Future<void> test_allowsZeroAndDerivedGeometry() async {
+  Future<void> _allowsZeroAndDerivedGeometry() async {
     await assertAllows('''
 abstract final class DesignTokens {
   static const spacingSm = 8.0;
@@ -422,7 +413,7 @@ final pillRadius = Radius.circular(height / 2);
 ''');
   }
 
-  Future<void> test_allowsSwitchArmIndicesNearTokenConstructors() async {
+  Future<void> _allowsSwitchArmIndicesNearTokenConstructors() async {
     await assertAllows('''
 abstract final class DesignTokens {
   static const spacingSm = 8.0;
@@ -441,7 +432,7 @@ Object itemBuilder(int index) => switch (index) {
 ''');
   }
 
-  Future<void> test_allowsCollectionBoundArithmeticNearTokenConstructors() async {
+  Future<void> _allowsCollectionBoundArithmeticNearTokenConstructors() async {
     await assertAllows('''
 abstract final class DesignTokens {
   static const spacingLg = 16.0;
@@ -455,7 +446,7 @@ final padding = EdgeInsets.only(right: i < labels.length - 1 ? DesignTokens.spac
 ''');
   }
 
-  Future<void> test_allowsTokenNamesEndingInDigits() async {
+  Future<void> _allowsTokenNamesEndingInDigits() async {
     await assertAllows('''
 abstract final class Spacing {
   static const s8 = 8.0;
@@ -470,7 +461,7 @@ EdgeInsets padding(bool isExpanded) => EdgeInsets.all(isExpanded ? Spacing.s24 :
 ''');
   }
 
-  Future<void> test_allowsLiteralsOutsideTheStyleValue() async {
+  Future<void> _allowsLiteralsOutsideTheStyleValue() async {
     await assertAllows('''
 abstract final class Spacing {
   static const s8 = 8.0;
@@ -486,7 +477,7 @@ final spacer = SizedBox(height: Spacing.s8, child: Text('x', maxLines: 2));
 ''');
   }
 
-  Future<void> test_reportsRawLiteralOnWrappedArgumentLine() async {
+  Future<void> _reportsRawLiteralOnWrappedArgumentLine() async {
     final analyzedSource = _analyzedSource('''
 class EdgeInsets {
   const EdgeInsets.symmetric({double? horizontal});
@@ -502,7 +493,6 @@ final padding = EdgeInsets.symmetric(
   }
 }
 
-@reflectiveTest
 final class StyleRawTextStyleTest extends _UiRuleTest {
   @override
   String get ruleName => 'style_raw_text_style';
@@ -511,11 +501,11 @@ final class StyleRawTextStyleTest extends _UiRuleTest {
   @override
   String get source => 'final style = TextStyle();';
 
-  void test_reportsAsError() {
+  void _reportsAsError() {
     expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
   }
 
-  Future<void> test_allowsTextStyleInThemeDefinitions() async {
+  Future<void> _allowsTextStyleInThemeDefinitions() async {
     await assertAllows('''
 class TextStyle {
   const TextStyle({double? fontSize});
@@ -525,7 +515,7 @@ TextStyle appTextStyle({double fontSize = 14}) => TextStyle(fontSize: fontSize);
 ''', path: '$testPackageLibPath/core/theme/bento_tokens.dart');
   }
 
-  Future<void> test_allowsTextStyleInTests() async {
+  Future<void> _allowsTextStyleInTests() async {
     await assertAllows('''
 class TextStyle {
   const TextStyle({double? fontSize});
@@ -538,12 +528,11 @@ void main() {
   }
 }
 
-@reflectiveTest
 final class StringsHardcodedTest extends _UiRuleTest {
   @override
   String get ruleName => 'strings_hardcoded';
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
   }
 
@@ -560,7 +549,7 @@ class Text {
 final text = Text('Save');
 ''';
 
-  Future<void> test_reportsStringsDefinitionFiles() async {
+  Future<void> _reportsStringsDefinitionFiles() async {
     final filePath = '$testPackageLibPath/features/settings/settings_strings.dart';
     const source = r'''
 class Text {
@@ -576,7 +565,7 @@ final text = Text('Save');
     ]);
   }
 
-  Future<void> test_allowsSampleTextInsideResolvedPreview() async {
+  Future<void> _allowsSampleTextInsideResolvedPreview() async {
     await assertAllows(r'''
 import 'package:flutter/widget_previews.dart';
 
@@ -589,7 +578,7 @@ Text cardPreview() => Text('Suture Kit');
 ''', path: '$testPackageLibPath/features/probe/presentation/widgets/card_preview.dart');
   }
 
-  Future<void> test_reportsTextUnderLookalikePreviewAnnotation() async {
+  Future<void> _reportsTextUnderLookalikePreviewAnnotation() async {
     final filePath = '$testPackageLibPath/features/probe/presentation/widgets/card_preview.dart';
     final analyzedSource = _analyzedSource(r'''
 class Preview {
@@ -615,7 +604,7 @@ Text cardPreview() => Text('Suture Kit');
     ]);
   }
 
-  Future<void> test_allowsHardcodedLookingTextInsideDebugPrintWithParen() async {
+  Future<void> _allowsHardcodedLookingTextInsideDebugPrintWithParen() async {
     await assertAllows(r'''
 class Text {
   Text(String data);
@@ -628,12 +617,11 @@ void log() {
   }
 }
 
-@reflectiveTest
 final class L10nContextDirectAccessTest extends _UiRuleTest {
   @override
   String get ruleName => 'l10n_context_direct_access';
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
   }
 
@@ -650,7 +638,7 @@ void build(context) {
 }
 ''';
 
-  Future<void> test_allowsLocalBinding() async {
+  Future<void> _allowsLocalBinding() async {
     await assertAllows(r'''
 class Text {
   Text(String data);
@@ -663,7 +651,7 @@ void build(context) {
 ''');
   }
 
-  Future<void> test_reportsSplitAccess() async {
+  Future<void> _reportsSplitAccess() async {
     final analyzedSource = _analyzedSource(r'''
 class Text {
   Text(String data);
@@ -683,7 +671,7 @@ void build(context) {
     ]);
   }
 
-  Future<void> test_allowsTests() async {
+  Future<void> _allowsTests() async {
     final filePath = '$testPackageRootPath/test/widgets/delete_button_test.dart';
     newFile(
       filePath,
@@ -702,7 +690,6 @@ void build(context) {
   }
 }
 
-@reflectiveTest
 final class UiSnackbarBoundaryTest extends _UiRuleTest {
   @override
   String get ruleName => 'ui_snackbar_boundary';
@@ -735,7 +722,7 @@ abstract final class SnackBarUtils {
 ''';
 
   // context-ui.md:69: do not call SnackBarUtils.show... from notifiers.
-  Future<void> test_reportsCodegenNotifierSnackBarUtilsCall() async {
+  Future<void> _reportsCodegenNotifierSnackBarUtilsCall() async {
     final source = _analyzedSource('''
 import 'package:riverpod/riverpod.dart';
 
@@ -758,7 +745,7 @@ class ProfileNotifier extends _\$ProfileNotifier {
   }
 
   // context-ui.md:69: do not call SnackBarUtils.show... from repositories.
-  Future<void> test_reportsRepositorySnackBarUtilsCall() async {
+  Future<void> _reportsRepositorySnackBarUtilsCall() async {
     final source = _analyzedSource('''
 $_snackBarUtils
 final class ProfileRepositoryImpl {
@@ -776,7 +763,7 @@ final class ProfileRepositoryImpl {
     ]);
   }
 
-  Future<void> test_allowsNonSnackBarUtilsShowInNotifier() async {
+  Future<void> _allowsNonSnackBarUtilsShowInNotifier() async {
     await assertAllows('''
 import 'package:riverpod/riverpod.dart';
 
@@ -795,7 +782,7 @@ class ProfileNotifier extends _\$ProfileNotifier {
   }
 
   // context-ui.md:69: the UI helper may wrap SnackBarUtils.
-  Future<void> test_allowsUiHelperWrappingSnackBarUtils() async {
+  Future<void> _allowsUiHelperWrappingSnackBarUtils() async {
     await assertAllows('''
 $_snackBarUtils
 void showProfileSaveFailedSnackBar(String message) {
@@ -803,4 +790,100 @@ void showProfileSaveFailedSnackBar(String message) {
 }
 ''', path: '$testPackageLibPath/core/utils/profile_snack_bars.dart');
   }
+}
+
+void _defineSourceScannerRulesPart05Tests() {
+  analysisRuleSuite<ArchWidgetPathTest>('ArchWidgetPathTest', ArchWidgetPathTest.new, {
+    'test_allowsFeatureWidgetTestFiles': (t) => t._allowsFeatureWidgetTestFiles(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<AtomicProviderAccessTest>(
+    'AtomicProviderAccessTest',
+    AtomicProviderAccessTest.new,
+    {
+      'test_reportsNavigationProviderRead': (t) => t._reportsNavigationProviderRead(),
+      'test_reportsSharedOrganismProviderWatch': (t) => t._reportsSharedOrganismProviderWatch(),
+      'test_allowsProviderAccessInScreens': (t) => t._allowsProviderAccessInScreens(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<AtomicPageConsumerWidgetTest>(
+    'AtomicPageConsumerWidgetTest',
+    AtomicPageConsumerWidgetTest.new,
+    {
+      'test_reportsAsError': (t) async => t._reportsAsError(),
+      'test_reportsStatefulScreen': (t) => t._reportsStatefulScreen(),
+      'test_allowsConsumerScreens': (t) => t._allowsConsumerScreens(),
+      'test_allowsStatelessWidgetsOutsideScreens': (t) => t._allowsStatelessWidgetsOutsideScreens(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<TypedIdRawIdTest>('TypedIdRawIdTest', TypedIdRawIdTest.new, {
+    'test_reportsFreezedRawIntIds': (t) => t._reportsFreezedRawIntIds(),
+    'test_allowsTypedIdsAndSingleRawId': (t) => t._allowsTypedIdsAndSingleRawId(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<RecordsMapReturnTest>('RecordsMapReturnTest', RecordsMapReturnTest.new, {
+    'test_allowsToMapPayloadBoundary': (t) => t._allowsToMapPayloadBoundary(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<ObjectMapCastTest>('ObjectMapCastTest', ObjectMapCastTest.new, {
+    'test_allowsObjectMapDeclarations': (t) => t._allowsObjectMapDeclarations(),
+    'test_allowsDynamicMapCasts': (t) => t._allowsDynamicMapCasts(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<StyleRawTokenTest>('StyleRawTokenTest', StyleRawTokenTest.new, {
+    'test_reportsAsError': (t) async => t._reportsAsError(),
+    'test_reportsResolvedRawColors': (t) => t._reportsResolvedRawColors(),
+    'test_reportsResolvedRawSizes': (t) => t._reportsResolvedRawSizes(),
+    'test_allowsTokenSizesAndUnrelatedPalettes': (t) => t._allowsTokenSizesAndUnrelatedPalettes(),
+    'test_allowsRawTokensInThemeDefinitions': (t) => t._allowsRawTokensInThemeDefinitions(),
+    'test_allowsRawTokensInTests': (t) => t._allowsRawTokensInTests(),
+    'test_allowsDesignTokensWithDigits': (t) => t._allowsDesignTokensWithDigits(),
+    'test_allowsZeroAndDerivedGeometry': (t) => t._allowsZeroAndDerivedGeometry(),
+    'test_allowsSwitchArmIndicesNearTokenConstructors': (t) =>
+        t._allowsSwitchArmIndicesNearTokenConstructors(),
+    'test_allowsCollectionBoundArithmeticNearTokenConstructors': (t) =>
+        t._allowsCollectionBoundArithmeticNearTokenConstructors(),
+    'test_allowsTokenNamesEndingInDigits': (t) => t._allowsTokenNamesEndingInDigits(),
+    'test_allowsLiteralsOutsideTheStyleValue': (t) => t._allowsLiteralsOutsideTheStyleValue(),
+    'test_reportsRawLiteralOnWrappedArgumentLine': (t) =>
+        t._reportsRawLiteralOnWrappedArgumentLine(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<StyleRawTextStyleTest>('StyleRawTextStyleTest', StyleRawTextStyleTest.new, {
+    'test_reportsAsError': (t) async => t._reportsAsError(),
+    'test_allowsTextStyleInThemeDefinitions': (t) => t._allowsTextStyleInThemeDefinitions(),
+    'test_allowsTextStyleInTests': (t) => t._allowsTextStyleInTests(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<StringsHardcodedTest>('StringsHardcodedTest', StringsHardcodedTest.new, {
+    'test_severityIsError': (t) => t._severityIsError(),
+    'test_reportsStringsDefinitionFiles': (t) => t._reportsStringsDefinitionFiles(),
+    'test_allowsSampleTextInsideResolvedPreview': (t) => t._allowsSampleTextInsideResolvedPreview(),
+    'test_reportsTextUnderLookalikePreviewAnnotation': (t) =>
+        t._reportsTextUnderLookalikePreviewAnnotation(),
+    'test_allowsHardcodedLookingTextInsideDebugPrintWithParen': (t) =>
+        t._allowsHardcodedLookingTextInsideDebugPrintWithParen(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<L10nContextDirectAccessTest>(
+    'L10nContextDirectAccessTest',
+    L10nContextDirectAccessTest.new,
+    {
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_allowsLocalBinding': (t) => t._allowsLocalBinding(),
+      'test_reportsSplitAccess': (t) => t._reportsSplitAccess(),
+      'test_allowsTests': (t) => t._allowsTests(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<UiSnackbarBoundaryTest>('UiSnackbarBoundaryTest', UiSnackbarBoundaryTest.new, {
+    'test_reportsCodegenNotifierSnackBarUtilsCall': (t) =>
+        t._reportsCodegenNotifierSnackBarUtilsCall(),
+    'test_reportsRepositorySnackBarUtilsCall': (t) => t._reportsRepositorySnackBarUtilsCall(),
+    'test_allowsNonSnackBarUtilsShowInNotifier': (t) => t._allowsNonSnackBarUtilsShowInNotifier(),
+    'test_allowsUiHelperWrappingSnackBarUtils': (t) => t._allowsUiHelperWrappingSnackBarUtils(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
 }

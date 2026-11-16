@@ -1,16 +1,26 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_flutter_host_driver_imports.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidFlutterHostDriverImportsTest);
-  });
+  analysisRuleSuite<AvoidFlutterHostDriverImportsTest>(
+    'AvoidFlutterHostDriverImportsTest',
+    AvoidFlutterHostDriverImportsTest.new,
+    {
+      'test_reportsFlutterUiImport_lint': (t) => t._reportsFlutterUiImportLint(),
+      'test_reportsAppImport_lint': (t) => t._reportsAppImportLint(),
+      'test_reportsTargetDriverExtensionImport_lint': (t) =>
+          t._reportsTargetDriverExtensionImportLint(),
+      'test_reportsTransitiveFlutterUiImport_lint': (t) =>
+          t._reportsTransitiveFlutterUiImportLint(),
+      'test_allowsHostDriverImports_noLint': (t) => t._allowsHostDriverImportsNoLint(),
+      'test_ignoresTargetIntegrationTestFile_noLint': (t) =>
+          t._ignoresTargetIntegrationTestFileNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidFlutterHostDriverImportsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -34,7 +44,7 @@ environment:
     newFile('$testPackageRootPath/lib/app.dart', 'library;');
   }
 
-  Future<void> test_reportsFlutterUiImport_lint() async {
+  Future<void> _reportsFlutterUiImportLint() async {
     const source =
         "// ignore_for_file: uri_does_not_exist, unused_import\nimport 'package:flutter/widgets.dart';\n";
     final path = '$testPackageRootPath/test_driver/app_test.dart';
@@ -48,7 +58,7 @@ environment:
     ]);
   }
 
-  Future<void> test_reportsAppImport_lint() async {
+  Future<void> _reportsAppImportLint() async {
     const source =
         "// ignore_for_file: uri_does_not_exist, unused_import\nimport 'package:sample_app/app.dart';\n";
     final path = '$testPackageRootPath/test_driver/app_test.dart';
@@ -59,7 +69,7 @@ environment:
     ]);
   }
 
-  Future<void> test_reportsTargetDriverExtensionImport_lint() async {
+  Future<void> _reportsTargetDriverExtensionImportLint() async {
     const source =
         "// ignore_for_file: uri_does_not_exist, unused_import\nimport 'package:flutter_driver/driver_extension.dart';\n";
     final path = '$testPackageRootPath/test_driver/app_test.dart';
@@ -73,7 +83,7 @@ environment:
     ]);
   }
 
-  Future<void> test_reportsTransitiveFlutterUiImport_lint() async {
+  Future<void> _reportsTransitiveFlutterUiImportLint() async {
     const source = "// ignore_for_file: unused_import\nimport 'package:host_helper/helper.dart';\n";
     final path = '$testPackageRootPath/test_driver/app_test.dart';
     newFile(path, source);
@@ -81,7 +91,7 @@ environment:
     await assertDiagnosticsInFile(path, [lint(source.indexOf("import '"), 'import'.length)]);
   }
 
-  Future<void> test_allowsHostDriverImports_noLint() async {
+  Future<void> _allowsHostDriverImportsNoLint() async {
     const source = '''
 // ignore_for_file: uri_does_not_exist, unused_import
 import 'package:flutter_driver/flutter_driver.dart';
@@ -93,7 +103,7 @@ import 'package:integration_test/integration_test_driver.dart';
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_ignoresTargetIntegrationTestFile_noLint() async {
+  Future<void> _ignoresTargetIntegrationTestFileNoLint() async {
     const source =
         "// ignore_for_file: uri_does_not_exist, unused_import\nimport 'package:flutter/widgets.dart';\n";
     final path = '$testPackageRootPath/integration_test/app_test.dart';

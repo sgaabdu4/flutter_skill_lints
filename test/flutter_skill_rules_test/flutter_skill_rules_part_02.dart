@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../flutter_skill_rules_test.dart';
 
-@reflectiveTest
 final class AvoidRunZonedGuardedTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -10,7 +7,7 @@ final class AvoidRunZonedGuardedTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsDirectRunZonedGuardedCall() async {
+  Future<void> _reportsDirectRunZonedGuardedCall() async {
     const source = r'''
 R runZonedGuarded<R>(R Function() body, void Function(Object, StackTrace) onError) {
   return body();
@@ -23,7 +20,7 @@ void main() {
     await assertDiagnostics(source, [lintForLast(source, 'runZonedGuarded')]);
   }
 
-  Future<void> test_ignoresUserMethodWithSameName() async {
+  Future<void> _ignoresUserMethodWithSameName() async {
     await assertNoDiagnostics(r'''
 class Zone {
   void runZonedGuarded() {}
@@ -36,7 +33,6 @@ void main() {
   }
 }
 
-@reflectiveTest
 final class AvoidSilentRepositoryNullReturnTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -44,7 +40,7 @@ final class AvoidSilentRepositoryNullReturnTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsNullRepositoryReturn() async {
+  Future<void> _reportsNullRepositoryReturn() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -62,7 +58,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, '_repository == null')]);
   }
 
-  Future<void> test_allowsEnsureBeforeNullCheck() async {
+  Future<void> _allowsEnsureBeforeNullCheck() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -83,7 +79,6 @@ class TodosNotifier extends Notifier<int> {
   }
 }
 
-@reflectiveTest
 final class AvoidSyncNotifierStateReadTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -91,7 +86,7 @@ final class AvoidSyncNotifierStateReadTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsStateReadInSyncBuild() async {
+  Future<void> _reportsStateReadInSyncBuild() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -105,7 +100,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, 'state')]);
   }
 
-  Future<void> test_reportsPostfixIncrementOfStateInSyncBuild() async {
+  Future<void> _reportsPostfixIncrementOfStateInSyncBuild() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -120,7 +115,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, 'state')]);
   }
 
-  Future<void> test_reportsPrefixIncrementOfStateInSyncBuild() async {
+  Future<void> _reportsPrefixIncrementOfStateInSyncBuild() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -135,7 +130,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, 'state')]);
   }
 
-  Future<void> test_reportsThisStateIncrementInSyncBuild() async {
+  Future<void> _reportsThisStateIncrementInSyncBuild() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -150,7 +145,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, 'state')]);
   }
 
-  Future<void> test_reportsCompoundAssignmentOfStateInSyncBuild() async {
+  Future<void> _reportsCompoundAssignmentOfStateInSyncBuild() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -167,7 +162,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, 'state'), lint(second, 'state'.length)]);
   }
 
-  Future<void> test_reportsCascadeAndSuperStateReadsInSyncBuild() async {
+  Future<void> _reportsCascadeAndSuperStateReadsInSyncBuild() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -189,7 +184,7 @@ class TodosNotifier extends Notifier<int> {
     ]);
   }
 
-  Future<void> test_allowsPlainWriteOfStateInSyncBuild() async {
+  Future<void> _allowsPlainWriteOfStateInSyncBuild() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -204,7 +199,7 @@ class TodosNotifier extends Notifier<int> {
 ''');
   }
 
-  Future<void> test_reportsLoadAndStateReadInsideMicrotask() async {
+  Future<void> _reportsLoadAndStateReadInsideMicrotask() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -224,7 +219,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, '_loadTodos()'), lintFor(source, 'state')]);
   }
 
-  Future<void> test_allowsLocalVariableNamedStateInsideMicrotask() async {
+  Future<void> _allowsLocalVariableNamedStateInsideMicrotask() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -241,7 +236,7 @@ class TodosNotifier extends Notifier<int> {
 ''');
   }
 
-  Future<void> test_allowsStateOfAnotherObjectInsideMicrotask() async {
+  Future<void> _allowsStateOfAnotherObjectInsideMicrotask() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -262,7 +257,7 @@ class TodosNotifier extends Notifier<int> {
 ''');
   }
 
-  Future<void> test_reportsLoadInsideShorthandMicrotaskClosure() async {
+  Future<void> _reportsLoadInsideShorthandMicrotaskClosure() async {
     const source = r'''
 import 'dart:async';
 
@@ -281,7 +276,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, '_loadTodos()')]);
   }
 
-  Future<void> test_reportsLoadTearOffPassedToMicrotask() async {
+  Future<void> _reportsLoadTearOffPassedToMicrotask() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -298,7 +293,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, '_loadTodos')]);
   }
 
-  Future<void> test_reportsLoadTearOffPassedToShorthandMicrotask() async {
+  Future<void> _reportsLoadTearOffPassedToShorthandMicrotask() async {
     const source = r'''
 import 'dart:async';
 
@@ -317,7 +312,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, '_loadTodos')]);
   }
 
-  Future<void> test_reportsHelperThatReadsStateTransitively() async {
+  Future<void> _reportsHelperThatReadsStateTransitively() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -341,7 +336,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, '_prime()'), lintFor(source, '_warm()')]);
   }
 
-  Future<void> test_allowsHelpersThatOnlyWriteOrReadAfterAwait() async {
+  Future<void> _allowsHelpersThatOnlyWriteOrReadAfterAwait() async {
     await assertNoDiagnostics(r'''
 import 'dart:async';
 
@@ -370,12 +365,11 @@ class TodosNotifier extends Notifier<int> {
 ''');
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(AvoidSyncNotifierStateRead.code.severity, DiagnosticSeverity.ERROR);
   }
 }
 
-@reflectiveTest
 final class UseUnawaitedForFireAndForgetFuturesTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -383,7 +377,7 @@ final class UseUnawaitedForFireAndForgetFuturesTest extends _FlutterSkillRuleTes
     super.setUp();
   }
 
-  Future<void> test_reportsFutureDroppedFromVoidCallback() async {
+  Future<void> _reportsFutureDroppedFromVoidCallback() async {
     const source = r'''
 import 'dart:async';
 
@@ -403,7 +397,7 @@ void example() {
     await assertDiagnostics(source, [lintFor(source, 'showDialogBottomSheet<void>()')]);
   }
 
-  Future<void> test_reportsFutureDroppedFromNullableNamedVoidCallback() async {
+  Future<void> _reportsFutureDroppedFromNullableNamedVoidCallback() async {
     const source = r'''
 Future<void> trackTap() async {}
 
@@ -425,7 +419,7 @@ TextButton example() {
     await assertDiagnostics(source, [lintForLast(source, 'trackTap()')]);
   }
 
-  Future<void> test_allowsFutureFromNamedFutureCallback() async {
+  Future<void> _allowsFutureFromNamedFutureCallback() async {
     await assertNoDiagnostics(r'''
 Future<void> trackTap() async {}
 
@@ -445,7 +439,7 @@ AsyncButton example() {
 ''');
   }
 
-  Future<void> test_allowsUnawaitedFutureFromVoidCallback() async {
+  Future<void> _allowsUnawaitedFutureFromVoidCallback() async {
     await assertNoDiagnostics(r'''
 import 'dart:async';
 
@@ -463,7 +457,7 @@ void example() {
 ''');
   }
 
-  Future<void> test_allowsAwaitedFutureFromAsyncCallback() async {
+  Future<void> _allowsAwaitedFutureFromAsyncCallback() async {
     await assertNoDiagnostics(r'''
 typedef AsyncCallback = Future<void> Function();
 
@@ -480,7 +474,6 @@ void example() {
   }
 }
 
-@reflectiveTest
 final class UseRefMountedAfterAwaitTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -488,7 +481,7 @@ final class UseRefMountedAfterAwaitTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsRefAfterAwait() async {
+  Future<void> _reportsRefAfterAwait() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -507,7 +500,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, 'ref.read(provider)')]);
   }
 
-  Future<void> test_allowsGuardedRefAfterAwait() async {
+  Future<void> _allowsGuardedRefAfterAwait() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -526,7 +519,7 @@ class TodosNotifier extends Notifier<int> {
 ''');
   }
 
-  Future<void> test_allowsCompoundMountedAndRevisionGuard() async {
+  Future<void> _allowsCompoundMountedAndRevisionGuard() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 class TodosNotifier extends Notifier<int> {
@@ -543,7 +536,7 @@ class TodosNotifier extends Notifier<int> {
 ''');
   }
 
-  Future<void> test_shadowedDirectMountedGuardStillReports() async {
+  Future<void> _shadowedDirectMountedGuardStillReports() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 class FakeRef {
@@ -574,7 +567,7 @@ class TodosNotifier extends Notifier<int> {
     ]);
   }
 
-  Future<void> test_impureSuffixCanInvalidateMountedGuard() async {
+  Future<void> _impureSuffixCanInvalidateMountedGuard() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 class TodosNotifier extends Notifier<int> {
@@ -591,7 +584,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
   }
 
-  Future<void> test_lazyLocalSuffixCannotInvalidateMountedGuard() async {
+  Future<void> _lazyLocalSuffixCannotInvalidateMountedGuard() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 class TodosNotifier extends Notifier<int> {
@@ -609,7 +602,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
   }
 
-  Future<void> test_lazyStaticFieldSuffixCannotInvalidateMountedGuard() async {
+  Future<void> _lazyStaticFieldSuffixCannotInvalidateMountedGuard() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 class TodosNotifier extends Notifier<int> {
@@ -627,7 +620,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
   }
 
-  Future<void> test_overriddenFieldSuffixCannotInvalidateMountedGuard() async {
+  Future<void> _overriddenFieldSuffixCannotInvalidateMountedGuard() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 class TodosNotifier extends Notifier<int> {
@@ -648,7 +641,7 @@ class Child extends TodosNotifier {
     await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
   }
 
-  Future<void> test_awaitInSurvivingElseRequiresFreshGuard() async {
+  Future<void> _awaitInSurvivingElseRequiresFreshGuard() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 class TodosNotifier extends Notifier<int> {
@@ -665,7 +658,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
   }
 
-  Future<void> test_incompleteMountedGuardStillReports() async {
+  Future<void> _incompleteMountedGuardStillReports() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 class TodosNotifier extends Notifier<int> {
@@ -683,7 +676,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
   }
 
-  Future<void> test_mountedReturnBranchCannotUseStateBeforeReturn() async {
+  Future<void> _mountedReturnBranchCannotUseStateBeforeReturn() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 class TodosNotifier extends Notifier<int> {
@@ -702,7 +695,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
   }
 
-  Future<void> test_conjunctiveMountedGuardStillReports() async {
+  Future<void> _conjunctiveMountedGuardStillReports() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 class TodosNotifier extends Notifier<int> {
@@ -718,7 +711,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
   }
 
-  Future<void> test_allowsResolvedPrivateMountedHelper() async {
+  Future<void> _allowsResolvedPrivateMountedHelper() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 class TodosNotifier extends Notifier<int> {
@@ -736,7 +729,7 @@ class TodosNotifier extends Notifier<int> {
 ''');
   }
 
-  Future<void> test_revisionOnlyHelperStillReports() async {
+  Future<void> _revisionOnlyHelperStillReports() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 class TodosNotifier extends Notifier<int> {
@@ -755,7 +748,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
   }
 
-  Future<void> test_mixinOverriddenPrivateHelperStillReports() async {
+  Future<void> _mixinOverriddenPrivateHelperStillReports() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 class TodosNotifier extends Notifier<int> {
@@ -779,7 +772,7 @@ class Child extends TodosNotifier with UnsafeGuard {}
     await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
   }
 
-  Future<void> test_helperCannotTrustGettersOverloadsOrShadowedRef() async {
+  Future<void> _helperCannotTrustGettersOverloadsOrShadowedRef() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 class Value {
@@ -821,7 +814,7 @@ class TodosNotifier extends Notifier<int> {
     ]);
   }
 
-  Future<void> test_helperCannotTrustOverriddenRefGetter() async {
+  Future<void> _helperCannotTrustOverriddenRefGetter() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 class TodosNotifier extends Notifier<int> {
@@ -841,7 +834,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lint(source.indexOf('state = 1'), 5)]);
   }
 
-  Future<void> test_allowsSkillMountedGuardExamples() async {
+  Future<void> _allowsSkillMountedGuardExamples() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 class Repo {
@@ -907,7 +900,7 @@ class OrderNotifier extends Notifier<int> {
 ''');
   }
 
-  Future<void> test_reportsNestedAccessAfterAwait() async {
+  Future<void> _reportsNestedAccessAfterAwait() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 class OrderNotifier extends Notifier<int> {
@@ -952,7 +945,7 @@ class OrderNotifier extends Notifier<int> {
     ]);
   }
 
-  Future<void> test_reportsInlineLoopAndClosureAwaits() async {
+  Future<void> _reportsInlineLoopAndClosureAwaits() async {
     const source = r'''
 import 'dart:async';
 import 'package:riverpod/riverpod.dart';
@@ -987,4 +980,105 @@ class OrderNotifier extends Notifier<int> {
       lint(source.indexOf('state = value'), 5),
     ]);
   }
+}
+
+void _defineFlutterSkillRulesPart02Tests() {
+  analysisRuleSuite<UseRefMountedAfterAwaitTest>(
+    'UseRefMountedAfterAwaitTest',
+    UseRefMountedAfterAwaitTest.new,
+    {
+      'test_reportsRefAfterAwait': (t) => t._reportsRefAfterAwait(),
+      'test_allowsGuardedRefAfterAwait': (t) => t._allowsGuardedRefAfterAwait(),
+      'test_allowsCompoundMountedAndRevisionGuard': (t) =>
+          t._allowsCompoundMountedAndRevisionGuard(),
+      'test_shadowedDirectMountedGuardStillReports': (t) =>
+          t._shadowedDirectMountedGuardStillReports(),
+      'test_impureSuffixCanInvalidateMountedGuard': (t) =>
+          t._impureSuffixCanInvalidateMountedGuard(),
+      'test_lazyLocalSuffixCannotInvalidateMountedGuard': (t) =>
+          t._lazyLocalSuffixCannotInvalidateMountedGuard(),
+      'test_lazyStaticFieldSuffixCannotInvalidateMountedGuard': (t) =>
+          t._lazyStaticFieldSuffixCannotInvalidateMountedGuard(),
+      'test_overriddenFieldSuffixCannotInvalidateMountedGuard': (t) =>
+          t._overriddenFieldSuffixCannotInvalidateMountedGuard(),
+      'test_awaitInSurvivingElseRequiresFreshGuard': (t) =>
+          t._awaitInSurvivingElseRequiresFreshGuard(),
+      'test_incompleteMountedGuardStillReports': (t) => t._incompleteMountedGuardStillReports(),
+      'test_mountedReturnBranchCannotUseStateBeforeReturn': (t) =>
+          t._mountedReturnBranchCannotUseStateBeforeReturn(),
+      'test_conjunctiveMountedGuardStillReports': (t) => t._conjunctiveMountedGuardStillReports(),
+      'test_allowsResolvedPrivateMountedHelper': (t) => t._allowsResolvedPrivateMountedHelper(),
+      'test_revisionOnlyHelperStillReports': (t) => t._revisionOnlyHelperStillReports(),
+      'test_mixinOverriddenPrivateHelperStillReports': (t) =>
+          t._mixinOverriddenPrivateHelperStillReports(),
+      'test_helperCannotTrustGettersOverloadsOrShadowedRef': (t) =>
+          t._helperCannotTrustGettersOverloadsOrShadowedRef(),
+      'test_helperCannotTrustOverriddenRefGetter': (t) => t._helperCannotTrustOverriddenRefGetter(),
+      'test_allowsSkillMountedGuardExamples': (t) => t._allowsSkillMountedGuardExamples(),
+      'test_reportsNestedAccessAfterAwait': (t) => t._reportsNestedAccessAfterAwait(),
+      'test_reportsInlineLoopAndClosureAwaits': (t) => t._reportsInlineLoopAndClosureAwaits(),
+    },
+  );
+  analysisRuleSuite<AvoidRunZonedGuardedTest>(
+    'AvoidRunZonedGuardedTest',
+    AvoidRunZonedGuardedTest.new,
+    {
+      'test_reportsDirectRunZonedGuardedCall': (t) => t._reportsDirectRunZonedGuardedCall(),
+      'test_ignoresUserMethodWithSameName': (t) => t._ignoresUserMethodWithSameName(),
+    },
+  );
+  analysisRuleSuite<AvoidSilentRepositoryNullReturnTest>(
+    'AvoidSilentRepositoryNullReturnTest',
+    AvoidSilentRepositoryNullReturnTest.new,
+    {
+      'test_reportsNullRepositoryReturn': (t) => t._reportsNullRepositoryReturn(),
+      'test_allowsEnsureBeforeNullCheck': (t) => t._allowsEnsureBeforeNullCheck(),
+    },
+  );
+  analysisRuleSuite<AvoidSyncNotifierStateReadTest>(
+    'AvoidSyncNotifierStateReadTest',
+    AvoidSyncNotifierStateReadTest.new,
+    {
+      'test_reportsStateReadInSyncBuild': (t) => t._reportsStateReadInSyncBuild(),
+      'test_reportsPostfixIncrementOfStateInSyncBuild': (t) =>
+          t._reportsPostfixIncrementOfStateInSyncBuild(),
+      'test_reportsPrefixIncrementOfStateInSyncBuild': (t) =>
+          t._reportsPrefixIncrementOfStateInSyncBuild(),
+      'test_reportsThisStateIncrementInSyncBuild': (t) => t._reportsThisStateIncrementInSyncBuild(),
+      'test_reportsCompoundAssignmentOfStateInSyncBuild': (t) =>
+          t._reportsCompoundAssignmentOfStateInSyncBuild(),
+      'test_reportsCascadeAndSuperStateReadsInSyncBuild': (t) =>
+          t._reportsCascadeAndSuperStateReadsInSyncBuild(),
+      'test_allowsPlainWriteOfStateInSyncBuild': (t) => t._allowsPlainWriteOfStateInSyncBuild(),
+      'test_reportsLoadAndStateReadInsideMicrotask': (t) =>
+          t._reportsLoadAndStateReadInsideMicrotask(),
+      'test_allowsLocalVariableNamedStateInsideMicrotask': (t) =>
+          t._allowsLocalVariableNamedStateInsideMicrotask(),
+      'test_allowsStateOfAnotherObjectInsideMicrotask': (t) =>
+          t._allowsStateOfAnotherObjectInsideMicrotask(),
+      'test_reportsLoadInsideShorthandMicrotaskClosure': (t) =>
+          t._reportsLoadInsideShorthandMicrotaskClosure(),
+      'test_reportsLoadTearOffPassedToMicrotask': (t) => t._reportsLoadTearOffPassedToMicrotask(),
+      'test_reportsLoadTearOffPassedToShorthandMicrotask': (t) =>
+          t._reportsLoadTearOffPassedToShorthandMicrotask(),
+      'test_reportsHelperThatReadsStateTransitively': (t) =>
+          t._reportsHelperThatReadsStateTransitively(),
+      'test_allowsHelpersThatOnlyWriteOrReadAfterAwait': (t) =>
+          t._allowsHelpersThatOnlyWriteOrReadAfterAwait(),
+      'test_severityIsError': (t) => t._severityIsError(),
+    },
+  );
+  analysisRuleSuite<UseUnawaitedForFireAndForgetFuturesTest>(
+    'UseUnawaitedForFireAndForgetFuturesTest',
+    UseUnawaitedForFireAndForgetFuturesTest.new,
+    {
+      'test_reportsFutureDroppedFromVoidCallback': (t) => t._reportsFutureDroppedFromVoidCallback(),
+      'test_reportsFutureDroppedFromNullableNamedVoidCallback': (t) =>
+          t._reportsFutureDroppedFromNullableNamedVoidCallback(),
+      'test_allowsFutureFromNamedFutureCallback': (t) => t._allowsFutureFromNamedFutureCallback(),
+      'test_allowsUnawaitedFutureFromVoidCallback': (t) =>
+          t._allowsUnawaitedFutureFromVoidCallback(),
+      'test_allowsAwaitedFutureFromAsyncCallback': (t) => t._allowsAwaitedFutureFromAsyncCallback(),
+    },
+  );
 }

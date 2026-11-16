@@ -1,22 +1,61 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_bitwise_operators_with_booleans.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_conditions_with_boolean_literals.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_constant_assert_conditions.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_contradictory_expressions.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidBitwiseOperatorsWithBooleansTest);
-    defineReflectiveTests(AvoidConditionsWithBooleanLiteralsTest);
-    defineReflectiveTests(AvoidConstantAssertConditionsTest);
-    defineReflectiveTests(AvoidContradictoryExpressionsTest);
-  });
+  analysisRuleSuite<AvoidBitwiseOperatorsWithBooleansTest>(
+    'AvoidBitwiseOperatorsWithBooleansTest',
+    AvoidBitwiseOperatorsWithBooleansTest.new,
+    {
+      'test_ampersandWithBools_lint': (t) => t._ampersandWithBoolsLint(),
+      'test_barWithBools_lint': (t) => t._barWithBoolsLint(),
+      'test_caretWithBools_lint': (t) => t._caretWithBoolsLint(),
+      'test_logicalOperators_noLint': (t) => t._logicalOperatorsNoLint(),
+      'test_intBitwiseOperators_noLint': (t) => t._intBitwiseOperatorsNoLint(),
+      'test_customOperatorReturnBool_noLint': (t) => t._customOperatorReturnBoolNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidConditionsWithBooleanLiteralsTest>(
+    'AvoidConditionsWithBooleanLiteralsTest',
+    AvoidConditionsWithBooleanLiteralsTest.new,
+    {
+      'test_whileTrueLoop_noLint': (t) => t._whileTrueLoopNoLint(),
+      'test_doWhileTrueLoop_noLint': (t) => t._doWhileTrueLoopNoLint(),
+      'test_doWhileFalseLoop_lint': (t) => t._doWhileFalseLoopLint(),
+      'test_whileTrueCombinedCondition_lint': (t) => t._whileTrueCombinedConditionLint(),
+      'test_ifTrueCondition_lint': (t) => t._ifTrueConditionLint(),
+      'test_logicalConditionLiteral_lint': (t) => t._logicalConditionLiteralLint(),
+      'test_conditionalExpressionLiteral_lint': (t) => t._conditionalExpressionLiteralLint(),
+      'test_nullableBoolComparison_noLint': (t) => t._nullableBoolComparisonNoLint(),
+      'test_booleanLiteralArgument_noLint': (t) => t._booleanLiteralArgumentNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidConstantAssertConditionsTest>(
+    'AvoidConstantAssertConditionsTest',
+    AvoidConstantAssertConditionsTest.new,
+    {
+      'test_assertBoolLiteral_lint': (t) => t._assertBoolLiteralLint(),
+      'test_assertConstantComparison_lint': (t) => t._assertConstantComparisonLint(),
+      'test_assertConstIdentifier_lint': (t) => t._assertConstIdentifierLint(),
+      'test_assertRuntimeCondition_noLint': (t) => t._assertRuntimeConditionNoLint(),
+      'test_assertRuntimeComparison_noLint': (t) => t._assertRuntimeComparisonNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidContradictoryExpressionsTest>(
+    'AvoidContradictoryExpressionsTest',
+    AvoidContradictoryExpressionsTest.new,
+    {
+      'test_distinctReceiversCanOverlap_noLint': (t) => t._distinctReceiversCanOverlapNoLint(),
+      'test_sameReceiverContradiction_lint': (t) => t._sameReceiverContradictionLint(),
+      'test_distinctNestedReceivers_noLint': (t) => t._distinctNestedReceiversNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidBitwiseOperatorsWithBooleansTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -24,7 +63,7 @@ final class AvoidBitwiseOperatorsWithBooleansTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_ampersandWithBools_lint() async {
+  Future<void> _ampersandWithBoolsLint() async {
     const source = r'''
 bool both(bool left, bool right) => left & right;
 ''';
@@ -32,7 +71,7 @@ bool both(bool left, bool right) => left & right;
     await assertDiagnostics(source, [lint(source.indexOf('left & right'), 'left & right'.length)]);
   }
 
-  Future<void> test_barWithBools_lint() async {
+  Future<void> _barWithBoolsLint() async {
     const source = r'''
 bool either(bool left, bool right) => left | right;
 ''';
@@ -40,7 +79,7 @@ bool either(bool left, bool right) => left | right;
     await assertDiagnostics(source, [lint(source.indexOf('left | right'), 'left | right'.length)]);
   }
 
-  Future<void> test_caretWithBools_lint() async {
+  Future<void> _caretWithBoolsLint() async {
     const source = r'''
 bool different(bool left, bool right) => left ^ right;
 ''';
@@ -48,20 +87,20 @@ bool different(bool left, bool right) => left ^ right;
     await assertDiagnostics(source, [lint(source.indexOf('left ^ right'), 'left ^ right'.length)]);
   }
 
-  Future<void> test_logicalOperators_noLint() async {
+  Future<void> _logicalOperatorsNoLint() async {
     await assertNoDiagnostics(r'''
 bool both(bool left, bool right) => left && right;
 bool either(bool left, bool right) => left || right;
 ''');
   }
 
-  Future<void> test_intBitwiseOperators_noLint() async {
+  Future<void> _intBitwiseOperatorsNoLint() async {
     await assertNoDiagnostics(r'''
 int mask(int left, int right) => left & right;
 ''');
   }
 
-  Future<void> test_customOperatorReturnBool_noLint() async {
+  Future<void> _customOperatorReturnBoolNoLint() async {
     await assertNoDiagnostics(r'''
 final class Flag {
   const Flag();
@@ -73,7 +112,6 @@ bool both(Flag left, Flag right) => left & right;
   }
 }
 
-@reflectiveTest
 final class AvoidConditionsWithBooleanLiteralsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -81,7 +119,7 @@ final class AvoidConditionsWithBooleanLiteralsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_whileTrueLoop_noLint() async {
+  Future<void> _whileTrueLoopNoLint() async {
     await assertNoDiagnostics(r'''
 Future<int> retry(Future<int> Function() fn, int maxAttempts) async {
   var attempt = 0;
@@ -97,7 +135,7 @@ Future<int> retry(Future<int> Function() fn, int maxAttempts) async {
 ''');
   }
 
-  Future<void> test_doWhileTrueLoop_noLint() async {
+  Future<void> _doWhileTrueLoopNoLint() async {
     await assertNoDiagnostics(r'''
 void f(bool Function() done) {
   do {
@@ -107,7 +145,7 @@ void f(bool Function() done) {
 ''');
   }
 
-  Future<void> test_doWhileFalseLoop_lint() async {
+  Future<void> _doWhileFalseLoopLint() async {
     const source = r'''
 void f() {
   do {
@@ -119,7 +157,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('false'), 'false'.length)]);
   }
 
-  Future<void> test_whileTrueCombinedCondition_lint() async {
+  Future<void> _whileTrueCombinedConditionLint() async {
     const source = r'''
 void f(bool ready) {
   while (true && ready) {
@@ -131,7 +169,7 @@ void f(bool ready) {
     await assertDiagnostics(source, [lint(source.indexOf('true'), 'true'.length)]);
   }
 
-  Future<void> test_ifTrueCondition_lint() async {
+  Future<void> _ifTrueConditionLint() async {
     const source = r'''
 void f(List<int> values) {
   if (true) {
@@ -143,7 +181,7 @@ void f(List<int> values) {
     await assertDiagnostics(source, [lint(source.indexOf('true'), 'true'.length)]);
   }
 
-  Future<void> test_logicalConditionLiteral_lint() async {
+  Future<void> _logicalConditionLiteralLint() async {
     const source = r'''
 int value(bool ready) {
   if (ready && true) {
@@ -156,7 +194,7 @@ int value(bool ready) {
     await assertDiagnostics(source, [lint(source.indexOf('true'), 'true'.length)]);
   }
 
-  Future<void> test_conditionalExpressionLiteral_lint() async {
+  Future<void> _conditionalExpressionLiteralLint() async {
     const source = r'''
 int value(bool ready) => ready && true ? 1 : 0;
 ''';
@@ -164,13 +202,13 @@ int value(bool ready) => ready && true ? 1 : 0;
     await assertDiagnostics(source, [lint(source.indexOf('true'), 'true'.length)]);
   }
 
-  Future<void> test_nullableBoolComparison_noLint() async {
+  Future<void> _nullableBoolComparisonNoLint() async {
     await assertNoDiagnostics(r'''
 bool value(bool? ready) => ready == true;
 ''');
   }
 
-  Future<void> test_booleanLiteralArgument_noLint() async {
+  Future<void> _booleanLiteralArgumentNoLint() async {
     await assertNoDiagnostics(r'''
 bool isReady(bool value) => value;
 int value(bool ready) {
@@ -183,7 +221,6 @@ int value(bool ready) {
   }
 }
 
-@reflectiveTest
 final class AvoidConstantAssertConditionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -191,7 +228,7 @@ final class AvoidConstantAssertConditionsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_assertBoolLiteral_lint() async {
+  Future<void> _assertBoolLiteralLint() async {
     const source = r'''
 void f() {
   assert(true);
@@ -201,7 +238,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('true'), 'true'.length)]);
   }
 
-  Future<void> test_assertConstantComparison_lint() async {
+  Future<void> _assertConstantComparisonLint() async {
     const source = r'''
 void f() {
   assert(1 == 1);
@@ -211,7 +248,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('1 == 1'), '1 == 1'.length)]);
   }
 
-  Future<void> test_assertConstIdentifier_lint() async {
+  Future<void> _assertConstIdentifierLint() async {
     const source = r'''
 const ready = true;
 void f() {
@@ -222,7 +259,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('ready);'), 'ready'.length)]);
   }
 
-  Future<void> test_assertRuntimeCondition_noLint() async {
+  Future<void> _assertRuntimeConditionNoLint() async {
     await assertNoDiagnostics(r'''
 void f(bool ready) {
   assert(ready);
@@ -230,7 +267,7 @@ void f(bool ready) {
 ''');
   }
 
-  Future<void> test_assertRuntimeComparison_noLint() async {
+  Future<void> _assertRuntimeComparisonNoLint() async {
     await assertNoDiagnostics(r'''
 void f(int value) {
   assert(value > 0);
@@ -239,7 +276,6 @@ void f(int value) {
   }
 }
 
-@reflectiveTest
 final class AvoidContradictoryExpressionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -247,7 +283,7 @@ final class AvoidContradictoryExpressionsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_distinctReceiversCanOverlap_noLint() async {
+  Future<void> _distinctReceiversCanOverlapNoLint() async {
     await assertNoDiagnostics(r'''
 class Point { final int value; Point(this.value); }
 bool overlaps(Point start, Point end, Point otherStart, Point otherEnd) =>
@@ -255,7 +291,7 @@ bool overlaps(Point start, Point end, Point otherStart, Point otherEnd) =>
 ''');
   }
 
-  Future<void> test_sameReceiverContradiction_lint() async {
+  Future<void> _sameReceiverContradictionLint() async {
     const source = r'''
 class Point { final int value; Point(this.value); }
 bool impossible(Point point, int bound) => point.value < bound && point.value > bound;
@@ -264,7 +300,7 @@ bool impossible(Point point, int bound) => point.value < bound && point.value > 
     await assertDiagnostics(source, [lint(source.indexOf(expression), expression.length)]);
   }
 
-  Future<void> test_distinctNestedReceivers_noLint() async {
+  Future<void> _distinctNestedReceiversNoLint() async {
     await assertNoDiagnostics(r'''
 class Point { final int value; Point(this.value); }
 Point first() => Point(1);

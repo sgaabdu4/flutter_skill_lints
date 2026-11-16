@@ -1,20 +1,80 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_late_final_reassignment.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unassigned_fields.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unassigned_late_fields.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidLateFinalReassignmentTest);
-    defineReflectiveTests(AvoidUnassignedLateFieldsTest);
-    defineReflectiveTests(AvoidUnassignedFieldsTest);
-  });
+  analysisRuleSuite<AvoidLateFinalReassignmentTest>(
+    'AvoidLateFinalReassignmentTest',
+    AvoidLateFinalReassignmentTest.new,
+    {
+      'test_lateFinalFieldReassignmentInSameBody_lint': (t) =>
+          t._lateFinalFieldReassignmentInSameBodyLint(),
+      'test_constructorInitializersAndBodyReassignment_lint': (t) =>
+          t._constructorInitializersAndBodyReassignmentLint(),
+      'test_singleLateFinalAssignment_noLint': (t) => t._singleLateFinalAssignmentNoLint(),
+      'test_shadowingLocal_noLint': (t) => t._shadowingLocalNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidUnassignedLateFieldsTest>(
+    'AvoidUnassignedLateFieldsTest',
+    AvoidUnassignedLateFieldsTest.new,
+    {
+      'test_flutterInitStateAssignsField_noLint': (t) => t._flutterInitStateAssignsFieldNoLint(),
+      'test_explicitThisInitStateAssignsField_noLint': (t) =>
+          t._explicitThisInitStateAssignsFieldNoLint(),
+      'test_otherInstanceAssignmentStillReports_lint': (t) =>
+          t._otherInstanceAssignmentStillReportsLint(),
+      'test_asyncInitStateStillReports_lint': (t) => t._asyncInitStateStillReportsLint(),
+      'test_conditionalInitStateStillReports_lint': (t) =>
+          t._conditionalInitStateStillReportsLint(),
+      'test_earlyReturnBeforeAssignmentStillReports_lint': (t) =>
+          t._earlyReturnBeforeAssignmentStillReportsLint(),
+      'test_deferredInitStateStillReports_lint': (t) => t._deferredInitStateStillReportsLint(),
+      'test_shadowedLocalIsNotFieldInitialization_lint': (t) =>
+          t._shadowedLocalIsNotFieldInitializationLint(),
+      'test_nonFlutterLifecycleStillReports_lint': (t) => t._nonFlutterLifecycleStillReportsLint(),
+      'test_lateFieldWithoutConstructor_lint': (t) => t._lateFieldWithoutConstructorLint(),
+      'test_constructorMissesLateField_lint': (t) => t._constructorMissesLateFieldLint(),
+      'test_allConstructorsAssignLateField_noLint': (t) =>
+          t._allConstructorsAssignLateFieldNoLint(),
+      'test_requiredNamedLateFieldFormal_noLint': (t) => t._requiredNamedLateFieldFormalNoLint(),
+      'test_constructorMissesLateFieldAssignedByAnotherConstructor_lint': (t) =>
+          t._constructorMissesLateFieldAssignedByAnotherConstructorLint(),
+      'test_redirectingConstructorToLateFieldTarget_noLint': (t) =>
+          t._redirectingConstructorToLateFieldTargetNoLint(),
+      'test_lateFieldWithInitializer_noLint': (t) => t._lateFieldWithInitializerNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidUnassignedFieldsTest>(
+    'AvoidUnassignedFieldsTest',
+    AvoidUnassignedFieldsTest.new,
+    {
+      'test_nullableFieldWithoutConstructor_noLint': (t) =>
+          t._nullableFieldWithoutConstructorNoLint(),
+      'test_nonNullableFieldWithoutConstructor_lint': (t) =>
+          t._nonNullableFieldWithoutConstructorLint(),
+      'test_constructorMissesNullableField_noLint': (t) =>
+          t._constructorMissesNullableFieldNoLint(),
+      'test_constructorMissesNonNullableField_lint': (t) =>
+          t._constructorMissesNonNullableFieldLint(),
+      'test_allConstructorsAssignField_noLint': (t) => t._allConstructorsAssignFieldNoLint(),
+      'test_requiredNamedFieldFormal_noLint': (t) => t._requiredNamedFieldFormalNoLint(),
+      'test_optionalNamedFieldFormalWithDefault_noLint': (t) =>
+          t._optionalNamedFieldFormalWithDefaultNoLint(),
+      'test_constructorMissesFieldAssignedByAnotherConstructor_lint': (t) =>
+          t._constructorMissesFieldAssignedByAnotherConstructorLint(),
+      'test_redirectingConstructorToPrimary_noLint': (t) =>
+          t._redirectingConstructorToPrimaryNoLint(),
+      'test_redirectingConstructorToPrivateTarget_noLint': (t) =>
+          t._redirectingConstructorToPrivateTargetNoLint(),
+      'test_fieldWithInitializer_noLint': (t) => t._fieldWithInitializerNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidLateFinalReassignmentTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +82,7 @@ final class AvoidLateFinalReassignmentTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_lateFinalFieldReassignmentInSameBody_lint() async {
+  Future<void> _lateFinalFieldReassignmentInSameBodyLint() async {
     const source = r'''
 class Cache {
   late final Object value;
@@ -39,7 +99,7 @@ class Cache {
     ]);
   }
 
-  Future<void> test_constructorInitializersAndBodyReassignment_lint() async {
+  Future<void> _constructorInitializersAndBodyReassignmentLint() async {
     const source = r'''
 class Cache {
   late final Object value;
@@ -53,7 +113,7 @@ class Cache {
     await assertDiagnostics(source, [lint(source.lastIndexOf('value ='), 'value'.length)]);
   }
 
-  Future<void> test_singleLateFinalAssignment_noLint() async {
+  Future<void> _singleLateFinalAssignmentNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   late final Object value;
@@ -70,7 +130,7 @@ void build() {
 ''');
   }
 
-  Future<void> test_shadowingLocal_noLint() async {
+  Future<void> _shadowingLocalNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   late final Object value;
@@ -84,7 +144,6 @@ class Cache {
   }
 }
 
-@reflectiveTest
 final class AvoidUnassignedLateFieldsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -98,46 +157,46 @@ class State<T extends StatefulWidget> {
     super.setUp();
   }
 
-  Future<void> test_flutterInitStateAssignsField_noLint() async {
+  Future<void> _flutterInitStateAssignsFieldNoLint() async {
     await assertNoDiagnostics(_stateSource('value = Object();'));
   }
 
-  Future<void> test_explicitThisInitStateAssignsField_noLint() async {
+  Future<void> _explicitThisInitStateAssignsFieldNoLint() async {
     await assertNoDiagnostics(_stateSource('this.value = Object();'));
   }
 
-  Future<void> test_otherInstanceAssignmentStillReports_lint() async {
+  Future<void> _otherInstanceAssignmentStillReportsLint() async {
     final source = _stateSource('final other = Host(); other.value = Object();');
     await assertDiagnostics(source, [lint(source.indexOf('value;'), 5)]);
   }
 
-  Future<void> test_asyncInitStateStillReports_lint() async {
+  Future<void> _asyncInitStateStillReportsLint() async {
     final source = _stateSource('value = Object();')
         .replaceFirst('void initState() {', 'void initState() async {');
     await assertDiagnostics(source, [lint(source.indexOf('value;'), 5)]);
   }
 
-  Future<void> test_conditionalInitStateStillReports_lint() async {
+  Future<void> _conditionalInitStateStillReportsLint() async {
     final source = _stateSource('if (enabled) value = Object();');
     await assertDiagnostics(source, [lint(source.indexOf('value;'), 5)]);
   }
 
-  Future<void> test_earlyReturnBeforeAssignmentStillReports_lint() async {
+  Future<void> _earlyReturnBeforeAssignmentStillReportsLint() async {
     final source = _stateSource('if (enabled) return; value = Object();');
     await assertDiagnostics(source, [lint(source.indexOf('value;'), 5)]);
   }
 
-  Future<void> test_deferredInitStateStillReports_lint() async {
+  Future<void> _deferredInitStateStillReportsLint() async {
     final source = _stateSource('Future<void>.microtask(() { value = Object(); });');
     await assertDiagnostics(source, [lint(source.indexOf('value;'), 5)]);
   }
 
-  Future<void> test_shadowedLocalIsNotFieldInitialization_lint() async {
+  Future<void> _shadowedLocalIsNotFieldInitializationLint() async {
     final source = _stateSource('final value = Object(); print(value);');
     await assertDiagnostics(source, [lint(source.indexOf('value;'), 5)]);
   }
 
-  Future<void> test_nonFlutterLifecycleStillReports_lint() async {
+  Future<void> _nonFlutterLifecycleStillReportsLint() async {
     const source = r'''
 class State {}
 class Host extends State {
@@ -162,7 +221,7 @@ class Host extends State<StatefulWidget> {
 }
 ''';
 
-  Future<void> test_lateFieldWithoutConstructor_lint() async {
+  Future<void> _lateFieldWithoutConstructorLint() async {
     const source = r'''
 class Cache {
   late Object value;
@@ -172,7 +231,7 @@ class Cache {
     await assertDiagnostics(source, [lint(source.indexOf('value'), 'value'.length)]);
   }
 
-  Future<void> test_constructorMissesLateField_lint() async {
+  Future<void> _constructorMissesLateFieldLint() async {
     const source = r'''
 class Cache {
   late Object value;
@@ -184,7 +243,7 @@ class Cache {
     await assertDiagnostics(source, [lint(source.indexOf('value'), 'value'.length)]);
   }
 
-  Future<void> test_allConstructorsAssignLateField_noLint() async {
+  Future<void> _allConstructorsAssignLateFieldNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   late Object value;
@@ -196,7 +255,7 @@ class Cache {
 ''');
   }
 
-  Future<void> test_requiredNamedLateFieldFormal_noLint() async {
+  Future<void> _requiredNamedLateFieldFormalNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   late Object value;
@@ -206,7 +265,7 @@ class Cache {
 ''');
   }
 
-  Future<void> test_constructorMissesLateFieldAssignedByAnotherConstructor_lint() async {
+  Future<void> _constructorMissesLateFieldAssignedByAnotherConstructorLint() async {
     const source = r'''
 class Cache {
   late Object value;
@@ -220,7 +279,7 @@ class Cache {
     await assertDiagnostics(source, [lint(source.indexOf('value'), 'value'.length)]);
   }
 
-  Future<void> test_redirectingConstructorToLateFieldTarget_noLint() async {
+  Future<void> _redirectingConstructorToLateFieldTargetNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   late Object value;
@@ -232,7 +291,7 @@ class Cache {
 ''');
   }
 
-  Future<void> test_lateFieldWithInitializer_noLint() async {
+  Future<void> _lateFieldWithInitializerNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   late Object value = Object();
@@ -241,7 +300,6 @@ class Cache {
   }
 }
 
-@reflectiveTest
 final class AvoidUnassignedFieldsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -249,7 +307,7 @@ final class AvoidUnassignedFieldsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_nullableFieldWithoutConstructor_noLint() async {
+  Future<void> _nullableFieldWithoutConstructorNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   Object? value;
@@ -257,7 +315,7 @@ class Cache {
 ''');
   }
 
-  Future<void> test_nonNullableFieldWithoutConstructor_lint() async {
+  Future<void> _nonNullableFieldWithoutConstructorLint() async {
     const source = r'''
 // ignore_for_file: not_initialized_non_nullable_instance_field
 
@@ -269,7 +327,7 @@ class Cache {
     await assertDiagnostics(source, [lint(source.indexOf('value'), 'value'.length)]);
   }
 
-  Future<void> test_constructorMissesNullableField_noLint() async {
+  Future<void> _constructorMissesNullableFieldNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   Object? value;
@@ -279,7 +337,7 @@ class Cache {
 ''');
   }
 
-  Future<void> test_constructorMissesNonNullableField_lint() async {
+  Future<void> _constructorMissesNonNullableFieldLint() async {
     const source = r'''
 // ignore_for_file: not_initialized_non_nullable_instance_field
 
@@ -293,7 +351,7 @@ class Cache {
     await assertDiagnostics(source, [lint(source.indexOf('value'), 'value'.length)]);
   }
 
-  Future<void> test_allConstructorsAssignField_noLint() async {
+  Future<void> _allConstructorsAssignFieldNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   Object value;
@@ -305,7 +363,7 @@ class Cache {
 ''');
   }
 
-  Future<void> test_requiredNamedFieldFormal_noLint() async {
+  Future<void> _requiredNamedFieldFormalNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   Object value;
@@ -315,7 +373,7 @@ class Cache {
 ''');
   }
 
-  Future<void> test_optionalNamedFieldFormalWithDefault_noLint() async {
+  Future<void> _optionalNamedFieldFormalWithDefaultNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   int value;
@@ -325,7 +383,7 @@ class Cache {
 ''');
   }
 
-  Future<void> test_constructorMissesFieldAssignedByAnotherConstructor_lint() async {
+  Future<void> _constructorMissesFieldAssignedByAnotherConstructorLint() async {
     const source = r'''
 // ignore_for_file: not_initialized_non_nullable_instance_field
 
@@ -341,7 +399,7 @@ class Cache {
     await assertDiagnostics(source, [lint(source.indexOf('value'), 'value'.length)]);
   }
 
-  Future<void> test_redirectingConstructorToPrimary_noLint() async {
+  Future<void> _redirectingConstructorToPrimaryNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   Object value;
@@ -353,7 +411,7 @@ class Cache {
 ''');
   }
 
-  Future<void> test_redirectingConstructorToPrivateTarget_noLint() async {
+  Future<void> _redirectingConstructorToPrivateTargetNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   Object value;
@@ -365,7 +423,7 @@ class Cache {
 ''');
   }
 
-  Future<void> test_fieldWithInitializer_noLint() async {
+  Future<void> _fieldWithInitializerNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   Object? value = Object();

@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class RiverpodEventCounterSignalForbiddenTest extends _RiverpodRuleTest {
   @override
   String get ruleName => 'riverpod_event_counter_signal_forbidden';
@@ -30,7 +27,7 @@ class ChartShareSuccessSignal extends _$ChartShareSuccessSignal {
 }
 ''';
 
-  Future<void> test_reportsStatePlusOneVariant() async {
+  Future<void> _reportsStatePlusOneVariant() async {
     final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod();
@@ -59,7 +56,7 @@ class SaveSuccessEvent extends _$SaveSuccessEvent {
     ]);
   }
 
-  Future<void> test_reportsPayloadSignalProvider() async {
+  Future<void> _reportsPayloadSignalProvider() async {
     final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod();
@@ -86,7 +83,7 @@ class CreatedExerciseSignal extends _$CreatedExerciseSignal {
     ]);
   }
 
-  Future<void> test_reportsFunctionEventProvider() async {
+  Future<void> _reportsFunctionEventProvider() async {
     final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -104,7 +101,7 @@ Stream<String> notificationTapEvents(Ref ref) => Stream<String>.fromIterable(con
   }
 
   /// riverpod_generator drops the `Notifier` suffix: this is `snackbarEventProvider`.
-  Future<void> test_reportsNotifierSuffixedEventClassAndNestedGenericFunction() async {
+  Future<void> _reportsNotifierSuffixedEventClassAndNestedGenericFunction() async {
     final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod();
@@ -133,7 +130,7 @@ Future<List<int>> orderEvents(Ref ref) async => const <int>[];
     ]);
   }
 
-  Future<void> test_allowsEventNamesWithoutRiverpodAnnotation() async {
+  Future<void> _allowsEventNamesWithoutRiverpodAnnotation() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod();
@@ -149,7 +146,7 @@ Future<List<int>> orderEvents(Object ref) async => const <int>[];
 ''');
   }
 
-  Future<void> test_allowsPayloadStreamName() async {
+  Future<void> _allowsPayloadStreamName() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -162,7 +159,7 @@ Stream<String> notificationTapPayloads(Ref ref) => Stream<String>.fromIterable(c
 ''');
   }
 
-  Future<void> test_allowsOwningNotifierStateSerial() async {
+  Future<void> _allowsOwningNotifierStateSerial() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod();
@@ -197,7 +194,7 @@ class ChartShareNotifier extends _$ChartShareNotifier {
 ''');
   }
 
-  Future<void> test_allowsDomainCounterNotifier() async {
+  Future<void> _allowsDomainCounterNotifier() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod();
@@ -220,7 +217,7 @@ class RetryCounter extends _$RetryCounter {
 ''');
   }
 
-  Future<void> test_allowsDurableStatusNotifier() async {
+  Future<void> _allowsDurableStatusNotifier() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod();
@@ -246,7 +243,6 @@ class InitialSyncStatusNotifier extends _$InitialSyncStatusNotifier {
   }
 }
 
-@reflectiveTest
 final class RiverpodWatchNoSelectTest extends _RiverpodRuleTest {
   @override
   void setUp() {
@@ -298,7 +294,7 @@ class TodoList {
 }
 ''';
 
-  Future<void> test_allowsGeneratedNotifierBuildDependencies() async {
+  Future<void> _allowsGeneratedNotifierBuildDependencies() async {
     await assertAllows(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Riverpod {
@@ -315,7 +311,7 @@ class DerivedNotifier {
 ''');
   }
 
-  Future<void> test_allowsResolvedScalarResults() async {
+  Future<void> _allowsResolvedScalarResults() async {
     await assertAllows(r"""
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -344,7 +340,7 @@ class ScalarView {
 """);
   }
 
-  Future<void> test_reportsStructuredWatchBesideScalarOnSameLine() async {
+  Future<void> _reportsStructuredWatchBesideScalarOnSameLine() async {
     final analyzedSource = _analyzedSource(r"""
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -367,7 +363,7 @@ class MixedView {
     ]);
   }
 
-  Future<void> test_allowsMultilineFamilyProviderSelect() async {
+  Future<void> _allowsMultilineFamilyProviderSelect() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 final itemByIdProvider = ItemFamily();
@@ -404,7 +400,7 @@ class TodoList {
 ''');
   }
 
-  Future<void> test_allowsDirectWatchOfComputedProjectionProvider() async {
+  Future<void> _allowsDirectWatchOfComputedProjectionProvider() async {
     await assertAllows(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
@@ -469,7 +465,7 @@ class UserScreen {
 }
 ''';
 
-  Future<void> test_reportsFieldReadOfComputedProvider() async {
+  Future<void> _reportsFieldReadOfComputedProvider() async {
     final source = _userSummarySource.replaceFirst(
       'PROVIDER',
       r'final class UserProvider extends $FunctionalProvider<UserState> {}',
@@ -477,7 +473,7 @@ class UserScreen {
     await assertDiagnostics(source, [compatLint(source, 'ref.watch(userProvider)', ruleName)]);
   }
 
-  Future<void> test_reportsFieldReadOfNotifierProvider() async {
+  Future<void> _reportsFieldReadOfNotifierProvider() async {
     final source = _userSummarySource.replaceFirst(
       'PROVIDER',
       r'final class UserProvider extends $NotifierProvider<Object, UserState> {}',
@@ -486,7 +482,7 @@ class UserScreen {
   }
 
   // A notifier provider holds mutable state, whatever its name says.
-  Future<void> test_reportsProjectionNamedNotifierProvider() async {
+  Future<void> _reportsProjectionNamedNotifierProvider() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class TrainerSummary { String get title => ''; int get sets => 0; }
@@ -506,7 +502,7 @@ class TrainerCard {
     ]);
   }
 
-  Future<void> test_allowsWholeListAndDtoPassedToWidgets() async {
+  Future<void> _allowsWholeListAndDtoPassedToWidgets() async {
     await assertAllows(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -529,7 +525,7 @@ class View {
 ''');
   }
 
-  Future<void> test_allowsWholeValuesThroughLocalBindings() async {
+  Future<void> _allowsWholeValuesThroughLocalBindings() async {
     await assertAllows(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -566,7 +562,7 @@ class ProductSummary extends Widget {
 final productProvider = Source<ProductState>();
 ''';
 
-  Future<void> test_reportsWholeMultiFieldStateIntoAppWidget() async {
+  Future<void> _reportsWholeMultiFieldStateIntoAppWidget() async {
     final analyzedSource = _analyzedSource('''$_productStateWidget
 class ProductScreen {
   Widget build(WidgetRef ref) => ProductSummary(state: ref.watch(productProvider));
@@ -577,7 +573,7 @@ class ProductScreen {
     ]);
   }
 
-  Future<void> test_reportsWholeMultiFieldStateLocalIntoAppWidget() async {
+  Future<void> _reportsWholeMultiFieldStateLocalIntoAppWidget() async {
     final analyzedSource = _analyzedSource('''$_productStateWidget
 class ProductScreen {
   Widget build(WidgetRef ref) {
@@ -591,7 +587,7 @@ class ProductScreen {
     ]);
   }
 
-  Future<void> test_reportsFreezedStateIntoAppWidget() async {
+  Future<void> _reportsFreezedStateIntoAppWidget() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
@@ -617,7 +613,7 @@ class ProductScreen {
   }
 
   // riverpod-codegen.md:181 HistoryScreen and other whole view values stay clean.
-  Future<void> test_allowsWholeViewValuesIntoAppWidget() async {
+  Future<void> _allowsWholeViewValuesIntoAppWidget() async {
     await assertAllows(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
@@ -656,7 +652,7 @@ class HistoryScreen {
 ''');
   }
 
-  Future<void> test_allowsWholeValueIntoFrameworkWidget() async {
+  Future<void> _allowsWholeValueIntoFrameworkWidget() async {
     newFile(convertPath('/package/flutter/lib/material.dart'), r'''
 import 'widgets.dart';
 class MaterialApp extends Widget {
@@ -683,7 +679,7 @@ class MyApp {
 ''');
   }
 
-  Future<void> test_allowsWholeListIteration() async {
+  Future<void> _allowsWholeListIteration() async {
     await assertAllows(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -699,7 +695,7 @@ class ListView {
 ''');
   }
 
-  Future<void> test_reportsSelectingOneIndexedListItem() async {
+  Future<void> _reportsSelectingOneIndexedListItem() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -719,7 +715,7 @@ class ItemView {
   }
 
   // freezed-sealed.md:9 bans .when(); only the sealed switch is a whole-value use.
-  Future<void> test_reportsWholeAsyncValueWhenDispatch() async {
+  Future<void> _reportsWholeAsyncValueWhenDispatch() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -742,7 +738,7 @@ class AsyncView {
     ]);
   }
 
-  Future<void> test_reportsWholeDispatchOnSameNamedLocalAsyncValue() async {
+  Future<void> _reportsWholeDispatchOnSameNamedLocalAsyncValue() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -772,7 +768,7 @@ class AsyncView {
     ]);
   }
 
-  Future<void> test_allowsWholeAsyncStatusSwitch() async {
+  Future<void> _allowsWholeAsyncStatusSwitch() async {
     await assertAllows(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -791,7 +787,7 @@ class View {
 ''');
   }
 
-  Future<void> test_allowsSealedUnionVariantSwitch() async {
+  Future<void> _allowsSealedUnionVariantSwitch() async {
     await assertAllows(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -817,7 +813,7 @@ class View {
 ''');
   }
 
-  Future<void> test_allowsAsyncValueVariantDestructuring() async {
+  Future<void> _allowsAsyncValueVariantDestructuring() async {
     await assertAllows(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -839,7 +835,7 @@ class View {
 ''');
   }
 
-  Future<void> test_reportsSealedBaseTypeFieldPattern() async {
+  Future<void> _reportsSealedBaseTypeFieldPattern() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -855,7 +851,7 @@ class View {
     await assertDiagnostics(source, [compatLint(source, 'ref.watch(signInProvider)', ruleName)]);
   }
 
-  Future<void> test_reportsPartialObjectPatternSwitch() async {
+  Future<void> _reportsPartialObjectPatternSwitch() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -870,7 +866,7 @@ class View {
     await assertDiagnostics(source, [compatLint(source, 'ref.watch(profileProvider)', ruleName)]);
   }
 
-  Future<void> test_reportsPartialStateReads() async {
+  Future<void> _reportsPartialStateReads() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -891,7 +887,7 @@ class View {
     ]);
   }
 
-  Future<void> test_allowsMutationStateFlags() async {
+  Future<void> _allowsMutationStateFlags() async {
     await assertAllows(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 final removeTodoMutation = Mutation<void>();
@@ -901,7 +897,7 @@ class View {
 ''');
   }
 
-  Future<void> test_reportsLocalMutationStateLookalike() async {
+  Future<void> _reportsLocalMutationStateLookalike() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -916,7 +912,7 @@ class View {
     ]);
   }
 
-  Future<void> test_conditionalWholeListClearButPartialStateWarns() async {
+  Future<void> _conditionalWholeListClearButPartialStateWarns() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -935,7 +931,7 @@ class View {
     await assertDiagnostics(source, [compatLint(source, 'ref.watch(stateProvider)', ruleName)]);
   }
 
-  Future<void> test_reportsWatchSplitAcrossLines() async {
+  Future<void> _reportsWatchSplitAcrossLines() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Source<T> implements ProviderListenable<T> {}
@@ -952,7 +948,7 @@ class ProfileView {
     await assertDiagnostics(source, [compatLint(source, 'ref\n', ruleName)]);
   }
 
-  Future<void> test_allowsWatchOnNonRiverpodReceiver() async {
+  Future<void> _allowsWatchOnNonRiverpodReceiver() async {
     await assertAllows(r'''
 class Profile { String get name => 'name'; }
 class Watcher { Profile watch(Object source) => Profile(); }
@@ -961,4 +957,71 @@ class ProfileView {
 }
 ''');
   }
+}
+
+void _defineSourceScannerRulesPart02Tests() {
+  analysisRuleSuite<RiverpodEventCounterSignalForbiddenTest>(
+    'RiverpodEventCounterSignalForbiddenTest',
+    RiverpodEventCounterSignalForbiddenTest.new,
+    {
+      'test_reportsStatePlusOneVariant': (t) => t._reportsStatePlusOneVariant(),
+      'test_reportsPayloadSignalProvider': (t) => t._reportsPayloadSignalProvider(),
+      'test_reportsFunctionEventProvider': (t) => t._reportsFunctionEventProvider(),
+      'test_reportsNotifierSuffixedEventClassAndNestedGenericFunction': (t) =>
+          t._reportsNotifierSuffixedEventClassAndNestedGenericFunction(),
+      'test_allowsEventNamesWithoutRiverpodAnnotation': (t) =>
+          t._allowsEventNamesWithoutRiverpodAnnotation(),
+      'test_allowsPayloadStreamName': (t) => t._allowsPayloadStreamName(),
+      'test_allowsOwningNotifierStateSerial': (t) => t._allowsOwningNotifierStateSerial(),
+      'test_allowsDomainCounterNotifier': (t) => t._allowsDomainCounterNotifier(),
+      'test_allowsDurableStatusNotifier': (t) => t._allowsDurableStatusNotifier(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodWatchNoSelectTest>(
+    'RiverpodWatchNoSelectTest',
+    RiverpodWatchNoSelectTest.new,
+    {
+      'test_allowsGeneratedNotifierBuildDependencies': (t) =>
+          t._allowsGeneratedNotifierBuildDependencies(),
+      'test_allowsResolvedScalarResults': (t) => t._allowsResolvedScalarResults(),
+      'test_reportsStructuredWatchBesideScalarOnSameLine': (t) =>
+          t._reportsStructuredWatchBesideScalarOnSameLine(),
+      'test_allowsMultilineFamilyProviderSelect': (t) => t._allowsMultilineFamilyProviderSelect(),
+      'test_allowsDirectWatchOfComputedProjectionProvider': (t) =>
+          t._allowsDirectWatchOfComputedProjectionProvider(),
+      'test_reportsFieldReadOfComputedProvider': (t) => t._reportsFieldReadOfComputedProvider(),
+      'test_reportsFieldReadOfNotifierProvider': (t) => t._reportsFieldReadOfNotifierProvider(),
+      'test_reportsProjectionNamedNotifierProvider': (t) =>
+          t._reportsProjectionNamedNotifierProvider(),
+      'test_allowsWholeListAndDtoPassedToWidgets': (t) => t._allowsWholeListAndDtoPassedToWidgets(),
+      'test_allowsWholeValuesThroughLocalBindings': (t) =>
+          t._allowsWholeValuesThroughLocalBindings(),
+      'test_reportsWholeMultiFieldStateIntoAppWidget': (t) =>
+          t._reportsWholeMultiFieldStateIntoAppWidget(),
+      'test_reportsWholeMultiFieldStateLocalIntoAppWidget': (t) =>
+          t._reportsWholeMultiFieldStateLocalIntoAppWidget(),
+      'test_reportsFreezedStateIntoAppWidget': (t) => t._reportsFreezedStateIntoAppWidget(),
+      'test_allowsWholeViewValuesIntoAppWidget': (t) => t._allowsWholeViewValuesIntoAppWidget(),
+      'test_allowsWholeValueIntoFrameworkWidget': (t) => t._allowsWholeValueIntoFrameworkWidget(),
+      'test_allowsWholeListIteration': (t) => t._allowsWholeListIteration(),
+      'test_reportsSelectingOneIndexedListItem': (t) => t._reportsSelectingOneIndexedListItem(),
+      'test_reportsWholeAsyncValueWhenDispatch': (t) => t._reportsWholeAsyncValueWhenDispatch(),
+      'test_reportsWholeDispatchOnSameNamedLocalAsyncValue': (t) =>
+          t._reportsWholeDispatchOnSameNamedLocalAsyncValue(),
+      'test_allowsWholeAsyncStatusSwitch': (t) => t._allowsWholeAsyncStatusSwitch(),
+      'test_allowsSealedUnionVariantSwitch': (t) => t._allowsSealedUnionVariantSwitch(),
+      'test_allowsAsyncValueVariantDestructuring': (t) => t._allowsAsyncValueVariantDestructuring(),
+      'test_reportsSealedBaseTypeFieldPattern': (t) => t._reportsSealedBaseTypeFieldPattern(),
+      'test_reportsPartialObjectPatternSwitch': (t) => t._reportsPartialObjectPatternSwitch(),
+      'test_reportsPartialStateReads': (t) => t._reportsPartialStateReads(),
+      'test_allowsMutationStateFlags': (t) => t._allowsMutationStateFlags(),
+      'test_reportsLocalMutationStateLookalike': (t) => t._reportsLocalMutationStateLookalike(),
+      'test_conditionalWholeListClearButPartialStateWarns': (t) =>
+          t._conditionalWholeListClearButPartialStateWarns(),
+      'test_reportsWatchSplitAcrossLines': (t) => t._reportsWatchSplitAcrossLines(),
+      'test_allowsWatchOnNonRiverpodReceiver': (t) => t._allowsWatchOnNonRiverpodReceiver(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

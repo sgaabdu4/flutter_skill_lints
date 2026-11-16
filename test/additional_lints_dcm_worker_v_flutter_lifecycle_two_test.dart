@@ -1,17 +1,36 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_empty_setstate.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_inherited_widget_in_initstate.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_stateless_widget_initialized_fields.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidEmptySetstateTest);
-    defineReflectiveTests(AvoidInheritedWidgetInInitstateTest);
-    defineReflectiveTests(AvoidStatelessWidgetInitializedFieldsTest);
+  analysisRuleSuite<AvoidEmptySetstateTest>('AvoidEmptySetstateTest', AvoidEmptySetstateTest.new, {
+    'test_emptySetState_lint': (t) => t._emptySetStateLint(),
+    'test_setStateWithMutation_noLint': (t) => t._setStateWithMutationNoLint(),
+    'test_emptyCallbackOutsideState_noLint': (t) => t._emptyCallbackOutsideStateNoLint(),
   });
+  analysisRuleSuite<AvoidInheritedWidgetInInitstateTest>(
+    'AvoidInheritedWidgetInInitstateTest',
+    AvoidInheritedWidgetInInitstateTest.new,
+    {
+      'test_dependOnInheritedWidgetInInitState_lint': (t) =>
+          t._dependOnInheritedWidgetInInitStateLint(),
+      'test_dependOnInheritedWidgetInDidChangeDependencies_noLint': (t) =>
+          t._dependOnInheritedWidgetInDidChangeDependenciesNoLint(),
+      'test_unrelatedMethodNamedContext_noLint': (t) => t._unrelatedMethodNamedContextNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidStatelessWidgetInitializedFieldsTest>(
+    'AvoidStatelessWidgetInitializedFieldsTest',
+    AvoidStatelessWidgetInitializedFieldsTest.new,
+    {
+      'test_initializedInstanceField_lint': (t) => t._initializedInstanceFieldLint(),
+      'test_constructorInitializedField_noLint': (t) => t._constructorInitializedFieldNoLint(),
+      'test_staticInitializedField_noLint': (t) => t._staticInitializedFieldNoLint(),
+    },
+  );
 }
 
 abstract class _FlutterLifecycleRuleTest extends AnalysisRuleTest {
@@ -67,7 +86,6 @@ abstract class State<T extends StatefulWidget> {
   }
 }
 
-@reflectiveTest
 final class AvoidEmptySetstateTest extends _FlutterLifecycleRuleTest {
   @override
   void setUp() {
@@ -75,7 +93,7 @@ final class AvoidEmptySetstateTest extends _FlutterLifecycleRuleTest {
     super.setUp();
   }
 
-  Future<void> test_emptySetState_lint() async {
+  Future<void> _emptySetStateLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -91,7 +109,7 @@ class DemoState extends State<Demo> {
     await assertDiagnostics(source, [lint(source.indexOf('setState'), 'setState(() {})'.length)]);
   }
 
-  Future<void> test_setStateWithMutation_noLint() async {
+  Future<void> _setStateWithMutationNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -109,7 +127,7 @@ class DemoState extends State<Demo> {
 ''');
   }
 
-  Future<void> test_emptyCallbackOutsideState_noLint() async {
+  Future<void> _emptyCallbackOutsideStateNoLint() async {
     await assertNoDiagnostics(r'''
 void setState(void Function() fn) => fn();
 
@@ -120,7 +138,6 @@ void update() {
   }
 }
 
-@reflectiveTest
 final class AvoidInheritedWidgetInInitstateTest extends _FlutterLifecycleRuleTest {
   @override
   void setUp() {
@@ -128,7 +145,7 @@ final class AvoidInheritedWidgetInInitstateTest extends _FlutterLifecycleRuleTes
     super.setUp();
   }
 
-  Future<void> test_dependOnInheritedWidgetInInitState_lint() async {
+  Future<void> _dependOnInheritedWidgetInInitStateLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -155,7 +172,7 @@ class DemoState extends State<Demo> {
     ]);
   }
 
-  Future<void> test_dependOnInheritedWidgetInDidChangeDependencies_noLint() async {
+  Future<void> _dependOnInheritedWidgetInDidChangeDependenciesNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -175,7 +192,7 @@ class DemoState extends State<Demo> {
 ''');
   }
 
-  Future<void> test_unrelatedMethodNamedContext_noLint() async {
+  Future<void> _unrelatedMethodNamedContextNoLint() async {
     await assertNoDiagnostics(r'''
 class Context {
   void dependOnInheritedWidgetOfExactType<T>() {}
@@ -192,7 +209,6 @@ class Host {
   }
 }
 
-@reflectiveTest
 final class AvoidStatelessWidgetInitializedFieldsTest extends _FlutterLifecycleRuleTest {
   @override
   void setUp() {
@@ -200,7 +216,7 @@ final class AvoidStatelessWidgetInitializedFieldsTest extends _FlutterLifecycleR
     super.setUp();
   }
 
-  Future<void> test_initializedInstanceField_lint() async {
+  Future<void> _initializedInstanceFieldLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -212,7 +228,7 @@ class Tile extends StatelessWidget {
     await assertDiagnostics(source, [lint(source.indexOf('label'), 'label'.length)]);
   }
 
-  Future<void> test_constructorInitializedField_noLint() async {
+  Future<void> _constructorInitializedFieldNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -224,7 +240,7 @@ class Tile extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_staticInitializedField_noLint() async {
+  Future<void> _staticInitializedFieldNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 

@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'dart:math' as math;
 
 import 'package:analyzer/error/error.dart';
@@ -9,25 +7,78 @@ import 'package:flutter_skill_lints/src/rules/freezed_extended_source_rules.dart
 import 'package:flutter_skill_lints/src/rules/router_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/services_extended_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 part 'extended_source_rules_test/extended_source_rules_part_01.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(ArchModelMissingToEntityTest);
-    defineReflectiveTests(ArchRepositoryInlineEntityMappingTest);
-    defineReflectiveTests(ArchModelExtendsEntityTest);
-    defineReflectiveTests(ArchDomainJsonAnnotationTest);
-    defineReflectiveTests(FreezedMissingPrivateConstructorTest);
-    defineReflectiveTests(RouterImpureRedirectTest);
-    defineReflectiveTests(RouterShellTabPushTest);
-    defineReflectiveTests(ServiceStaticSideEffectTest);
-    defineReflectiveTests(ServiceRandomPerCallTest);
-    defineReflectiveTests(HiddenDependencyFallbackTest);
-    defineReflectiveTests(ImplicitNullFallbackTest);
-    defineReflectiveTests(FireForgetInTestsTest);
+  analysisRuleSuite<ArchModelMissingToEntityTest>(
+    'ArchModelMissingToEntityTest',
+    ArchModelMissingToEntityTest.new,
+    {
+      'test_allowsMapperExtensionInDataMappers': (t) => t._allowsMapperExtensionInDataMappers(),
+      'test_reportsMapperExtensionOnAnotherModel': (t) => t._reportsMapperExtensionOnAnotherModel(),
+      'test_allowsToDomainMapper': (t) => t._allowsToDomainMapper(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ArchRepositoryInlineEntityMappingTest>(
+    'ArchRepositoryInlineEntityMappingTest',
+    ArchRepositoryInlineEntityMappingTest.new,
+    {
+      'test_allowsToEntityAndEntitiesBuiltFromDomainInputs': (t) =>
+          t._allowsToEntityAndEntitiesBuiltFromDomainInputs(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ArchModelExtendsEntityTest>(
+    'ArchModelExtendsEntityTest',
+    ArchModelExtendsEntityTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<ArchDomainJsonAnnotationTest>(
+    'ArchDomainJsonAnnotationTest',
+    ArchDomainJsonAnnotationTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<FreezedMissingPrivateConstructorTest>(
+    'FreezedMissingPrivateConstructorTest',
+    FreezedMissingPrivateConstructorTest.new,
+    {
+      'test_factoryObjectPatternDoesNotRequirePrivateConstructor': (t) =>
+          t._factoryObjectPatternDoesNotRequirePrivateConstructor(),
+      'test_staticHelpersDoNotRequirePrivateConstructor': (t) =>
+          t._staticHelpersDoNotRequirePrivateConstructor(),
+      'test_customBlockGetterRequiresPrivateConstructor': (t) =>
+          t._customBlockGetterRequiresPrivateConstructor(),
+      'test_privateConstructorSupportsCustomMethod': (t) =>
+          t._privateConstructorSupportsCustomMethod(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RouterImpureRedirectTest>(
+    'RouterImpureRedirectTest',
+    RouterImpureRedirectTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<RouterShellTabPushTest>('RouterShellTabPushTest', RouterShellTabPushTest.new, {
+    'test_reportsInlineTabCallbackPush': (t) => t._reportsInlineTabCallbackPush(),
+    'test_reportsPushInMethodReferencedByTabCallback': (t) =>
+        t._reportsPushInMethodReferencedByTabCallback(),
+    'test_reportsTypedGoInBottomNavigationTap': (t) => t._reportsTypedGoInBottomNavigationTap(),
+    'test_reportsMixedTabCallbackOnce': (t) => t._reportsMixedTabCallbackOnce(),
+    'test_allowsSkillGoBranchTearOff': (t) => t._allowsSkillGoBranchTearOff(),
+    'test_allowsNonTabPushInShellClass': (t) => t._allowsNonTabPushInShellClass(),
+    'test_allowsTabPushWithoutShell': (t) => t._allowsTabPushWithoutShell(),
+    'test_allowsStandaloneRoutePushInFileWithShellRoute': (t) =>
+        t._allowsStandaloneRoutePushInFileWithShellRoute(),
+    'test_allowsRoutePushInSiblingCallbackWhenMethodUsesShell': (t) =>
+        t._allowsRoutePushInSiblingCallbackWhenMethodUsesShell(),
+    'test_allowsTypedGoFallbackWhenShellMissing': (t) => t._allowsTypedGoFallbackWhenShellMissing(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
   });
+  _defineExtendedSourceRulesPart01Tests();
 }
 
 abstract class _ExtendedSourceRuleTest extends AnalysisRuleTest {
@@ -57,7 +108,7 @@ abstract class _ExtendedSourceRuleTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsDiagnostic() async {
+  Future<void> _reportsDiagnostic() async {
     final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
     final filePath = path;
     if (filePath == null) {
@@ -124,7 +175,6 @@ abstract class _ArchitectureExtendedRuleTest extends _ExtendedSourceRuleTest {
   List<ScannerRule> get rules => architectureExtendedSourceRules;
 }
 
-@reflectiveTest
 final class ArchModelMissingToEntityTest extends _ArchitectureExtendedRuleTest {
   @override
   String get ruleName => 'arch_model_missing_to_entity';
@@ -144,7 +194,7 @@ final class WorkoutSetModel {
 }
 ''';
 
-  Future<void> test_allowsMapperExtensionInDataMappers() async {
+  Future<void> _allowsMapperExtensionInDataMappers() async {
     final modelPath = '$testPackageLibPath/features/workouts/data/models/workout_set_model.dart';
     newFile(modelPath, _modelSource);
     newFile('$testPackageLibPath/features/workouts/domain/entities/workout_set.dart', r'''
@@ -165,7 +215,7 @@ extension WorkoutSetMapper on WorkoutSetModel {
     await assertNoDiagnosticsInFile(modelPath);
   }
 
-  Future<void> test_reportsMapperExtensionOnAnotherModel() async {
+  Future<void> _reportsMapperExtensionOnAnotherModel() async {
     final modelPath = '$testPackageLibPath/features/workouts/data/models/workout_set_model.dart';
     newFile(modelPath, _modelSource);
     newFile('$testPackageLibPath/features/workouts/data/mappers/workout_set_mapper.dart', r'''
@@ -181,7 +231,7 @@ extension WorkoutSetMapper on OtherModel {
     ]);
   }
 
-  Future<void> test_allowsToDomainMapper() async {
+  Future<void> _allowsToDomainMapper() async {
     await assertAllows(r'''
 final class OrderModel {
   const OrderModel({required this.id});
@@ -192,7 +242,6 @@ final class OrderModel {
   }
 }
 
-@reflectiveTest
 final class ArchRepositoryInlineEntityMappingTest extends _ArchitectureExtendedRuleTest {
   @override
   String get ruleName => 'arch_repository_inline_entity_mapping';
@@ -245,7 +294,7 @@ final class ProductModel {
 ''');
   }
 
-  Future<void> test_allowsToEntityAndEntitiesBuiltFromDomainInputs() async {
+  Future<void> _allowsToEntityAndEntitiesBuiltFromDomainInputs() async {
     await assertAllows(
       r'''
 import '../data/models/product_model.dart';
@@ -263,7 +312,6 @@ final class ProductRepository {
   }
 }
 
-@reflectiveTest
 final class ArchModelExtendsEntityTest extends _ArchitectureExtendedRuleTest {
   @override
   String get ruleName => 'arch_model_extends_entity';
@@ -275,7 +323,6 @@ final class ArchModelExtendsEntityTest extends _ArchitectureExtendedRuleTest {
   String get needle => 'extends Item';
 }
 
-@reflectiveTest
 final class ArchDomainJsonAnnotationTest extends _ArchitectureExtendedRuleTest {
   @override
   String get ruleName => 'arch_domain_json_annotation';
@@ -300,7 +347,6 @@ abstract class _FreezedExtendedRuleTest extends _ExtendedSourceRuleTest {
   List<ScannerRule> get rules => freezedExtendedSourceRules;
 }
 
-@reflectiveTest
 final class FreezedMissingPrivateConstructorTest extends _FreezedExtendedRuleTest {
   @override
   String get ruleName => 'freezed_missing_private_constructor';
@@ -315,7 +361,7 @@ sealed class Order with _\$Order {
   @override
   String get needle => 'sealed class Order';
 
-  Future<void> test_factoryObjectPatternDoesNotRequirePrivateConstructor() async {
+  Future<void> _factoryObjectPatternDoesNotRequirePrivateConstructor() async {
     await assertAllows(r'''
 class OrderValue {
   const OrderValue(this.cents);
@@ -332,7 +378,7 @@ sealed class Order with _$Order {
 ''');
   }
 
-  Future<void> test_staticHelpersDoNotRequirePrivateConstructor() async {
+  Future<void> _staticHelpersDoNotRequirePrivateConstructor() async {
     await assertAllows(r'''
 @freezed
 sealed class Order with _$Order {
@@ -343,7 +389,7 @@ sealed class Order with _$Order {
 ''');
   }
 
-  Future<void> test_customBlockGetterRequiresPrivateConstructor() async {
+  Future<void> _customBlockGetterRequiresPrivateConstructor() async {
     final source = _analyzedSource(r'''
 @freezed
 sealed class Order with _$Order {
@@ -354,7 +400,7 @@ sealed class Order with _$Order {
     await assertDiagnostics(source, [compatLint(source, 'sealed class Order', ruleName)]);
   }
 
-  Future<void> test_privateConstructorSupportsCustomMethod() async {
+  Future<void> _privateConstructorSupportsCustomMethod() async {
     await assertAllows(r'''
 @freezed
 sealed class Order with _$Order {
@@ -371,7 +417,6 @@ abstract class _RouterExtendedRuleTest extends _ExtendedSourceRuleTest {
   List<ScannerRule> get rules => routerExtendedSourceRules;
 }
 
-@reflectiveTest
 final class RouterImpureRedirectTest extends _RouterExtendedRuleTest {
   @override
   String get ruleName => 'router_impure_redirect';
@@ -388,7 +433,6 @@ final router = GoRouter(
   String get needle => 'redirect:';
 }
 
-@reflectiveTest
 final class RouterShellTabPushTest extends _RouterExtendedRuleTest {
   @override
   String get ruleName => 'router_shell_tab_push';
@@ -450,7 +494,7 @@ class StatefulNavigationShell extends Widget {
     super.setUp();
   }
 
-  Future<void> test_reportsInlineTabCallbackPush() async {
+  Future<void> _reportsInlineTabCallbackPush() async {
     const source = '''
 import 'dart:async';
 
@@ -481,7 +525,7 @@ class AppShellInlineScaffold extends StatelessWidget {
     ]);
   }
 
-  Future<void> test_reportsPushInMethodReferencedByTabCallback() async {
+  Future<void> _reportsPushInMethodReferencedByTabCallback() async {
     const source = '''
 import 'dart:async';
 
@@ -518,7 +562,7 @@ class AppShellScaffold extends StatelessWidget {
     ]);
   }
 
-  Future<void> test_reportsTypedGoInBottomNavigationTap() async {
+  Future<void> _reportsTypedGoInBottomNavigationTap() async {
     const source = '''
 import 'dart:async';
 
@@ -551,7 +595,7 @@ class AppShellScaffold extends StatelessWidget {
     ]);
   }
 
-  Future<void> test_reportsMixedTabCallbackOnce() async {
+  Future<void> _reportsMixedTabCallbackOnce() async {
     const source = '''
 import 'dart:async';
 
@@ -584,7 +628,7 @@ class AppShellMixedScaffold extends StatelessWidget {
     ]);
   }
 
-  Future<void> test_allowsSkillGoBranchTearOff() async {
+  Future<void> _allowsSkillGoBranchTearOff() async {
     await assertAllows('''
 import 'dart:async';
 
@@ -611,7 +655,7 @@ class AppShellScaffold extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_allowsNonTabPushInShellClass() async {
+  Future<void> _allowsNonTabPushInShellClass() async {
     await assertAllows('''
 import 'dart:async';
 
@@ -635,7 +679,7 @@ class AppShellScaffold extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_allowsTabPushWithoutShell() async {
+  Future<void> _allowsTabPushWithoutShell() async {
     await assertAllows('''
 import 'dart:async';
 
@@ -657,7 +701,7 @@ class PlainTabs extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_allowsStandaloneRoutePushInFileWithShellRoute() async {
+  Future<void> _allowsStandaloneRoutePushInFileWithShellRoute() async {
     await assertAllows('''
 class MainShellRoute {
   final StatefulNavigationShell navigationShell;
@@ -671,7 +715,7 @@ class HostCard {
 ''');
   }
 
-  Future<void> test_allowsRoutePushInSiblingCallbackWhenMethodUsesShell() async {
+  Future<void> _allowsRoutePushInSiblingCallbackWhenMethodUsesShell() async {
     await assertAllows('''
 class HostCard {
   Widget build(BuildContext context) {
@@ -693,7 +737,7 @@ class HostCard {
 ''');
   }
 
-  Future<void> test_allowsTypedGoFallbackWhenShellMissing() async {
+  Future<void> _allowsTypedGoFallbackWhenShellMissing() async {
     await assertAllows('''
 class HostCard {
   void openPlan(BuildContext context) {

@@ -1,22 +1,57 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_any_version.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_dependency_overrides.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_publish_to_none.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidAnyVersionTest);
-    defineReflectiveTests(AvoidDependencyOverridesTest);
-    defineReflectiveTests(PreferPublishToNoneTest);
+  analysisRuleSuite<AvoidAnyVersionTest>('AvoidAnyVersionTest', AvoidAnyVersionTest.new, {
+    'test_allowsPinnedDependencies_noLint': (t) => t._allowsPinnedDependenciesNoLint(),
+    'test_reportsAnyInDependencies_lint': (t) => t._reportsAnyInDependenciesLint(),
+    'test_reportsQuotedAnyInDevDependencies_lint': (t) =>
+        t._reportsQuotedAnyInDevDependenciesLint(),
+    'test_allowsPathDependencyWithoutVersionAny_noLint': (t) =>
+        t._allowsPathDependencyWithoutVersionAnyNoLint(),
+    'test_usesErrorSeverity': (t) => t._usesErrorSeverity(),
   });
+  analysisRuleSuite<AvoidDependencyOverridesTest>(
+    'AvoidDependencyOverridesTest',
+    AvoidDependencyOverridesTest.new,
+    {
+      'test_allowsNoDependencyOverrides_noLint': (t) => t._allowsNoDependencyOverridesNoLint(),
+      'test_allowsEmptyDependencyOverrides_noLint': (t) =>
+          t._allowsEmptyDependencyOverridesNoLint(),
+      'test_allowsResolvedLockfileWithoutOverride_noLint': (t) =>
+          t._allowsResolvedLockfileWithoutOverrideNoLint(),
+      'test_reportsDependencyOverrides_lint': (t) => t._reportsDependencyOverridesLint(),
+      'test_reportsInlineDependencyOverrides_lint': (t) =>
+          t._reportsInlineDependencyOverridesLint(),
+      'test_allowsEmptyPubspecOverrides_noLint': (t) => t._allowsEmptyPubspecOverridesNoLint(),
+      'test_reportsPubspecOverrides_lint': (t) => t._reportsPubspecOverridesLint(),
+      'test_reportsAuditedPubspecOverride_lint': (t) => t._reportsAuditedPubspecOverrideLint(),
+      'test_reportsWorkspaceMemberOverride_lint': (t) => t._reportsWorkspaceMemberOverrideLint(),
+      'test_reportsWorkspaceGlobMemberOverride_lint': (t) =>
+          t._reportsWorkspaceGlobMemberOverrideLint(),
+      'test_usesErrorSeverity': (t) => t._usesErrorSeverity(),
+    },
+  );
+  analysisRuleSuite<PreferPublishToNoneTest>(
+    'PreferPublishToNoneTest',
+    PreferPublishToNoneTest.new,
+    {
+      'test_allowsPublishToNone_noLint': (t) => t._allowsPublishToNoneNoLint(),
+      'test_allowsMissingPublishTo_noLint': (t) => t._allowsMissingPublishToNoLint(),
+      'test_reportsNonNonePublishTarget_lint': (t) => t._reportsNonNonePublishTargetLint(),
+      'test_reportsQuotedNonNonePublishTarget_lint': (t) =>
+          t._reportsQuotedNonNonePublishTargetLint(),
+      'test_usesInfoSeverity': (t) => t._usesInfoSeverity(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidAnyVersionTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -25,13 +60,13 @@ final class AvoidAnyVersionTest extends AnalysisRuleTest {
     newFile('$testPackageRootPath/lib/test.dart', 'library;');
   }
 
-  Future<void> test_allowsPinnedDependencies_noLint() async {
+  Future<void> _allowsPinnedDependenciesNoLint() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec());
 
     await assertNoDiagnostics('library;');
   }
 
-  Future<void> test_reportsAnyInDependencies_lint() async {
+  Future<void> _reportsAnyInDependenciesLint() async {
     newFile(
       '$testPackageRootPath/pubspec.yaml',
       _pubspec(
@@ -47,7 +82,7 @@ dev_dependencies:
     await assertDiagnostics('library;', [lint(0, 'library'.length)]);
   }
 
-  Future<void> test_reportsQuotedAnyInDevDependencies_lint() async {
+  Future<void> _reportsQuotedAnyInDevDependenciesLint() async {
     newFile(
       '$testPackageRootPath/pubspec.yaml',
       _pubspec(
@@ -63,7 +98,7 @@ dev_dependencies:
     await assertDiagnostics('library;', [lint(0, 'library'.length)]);
   }
 
-  Future<void> test_allowsPathDependencyWithoutVersionAny_noLint() async {
+  Future<void> _allowsPathDependencyWithoutVersionAnyNoLint() async {
     newFile(
       '$testPackageRootPath/pubspec.yaml',
       _pubspec(
@@ -80,7 +115,7 @@ dev_dependencies:
     await assertNoDiagnostics('library;');
   }
 
-  Future<void> test_usesErrorSeverity() async {
+  Future<void> _usesErrorSeverity() async {
     expect(AvoidAnyVersion.code.severity, DiagnosticSeverity.ERROR);
   }
 
@@ -102,7 +137,6 @@ $dependencies
   }
 }
 
-@reflectiveTest
 final class AvoidDependencyOverridesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -111,13 +145,13 @@ final class AvoidDependencyOverridesTest extends AnalysisRuleTest {
     newFile('$testPackageRootPath/lib/test.dart', 'library;');
   }
 
-  Future<void> test_allowsNoDependencyOverrides_noLint() async {
+  Future<void> _allowsNoDependencyOverridesNoLint() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec());
 
     await assertNoDiagnostics('library;');
   }
 
-  Future<void> test_allowsEmptyDependencyOverrides_noLint() async {
+  Future<void> _allowsEmptyDependencyOverridesNoLint() async {
     newFile(
       '$testPackageRootPath/pubspec.yaml',
       _pubspec(
@@ -130,7 +164,7 @@ dependency_overrides: {}
     await assertNoDiagnostics('library;');
   }
 
-  Future<void> test_allowsResolvedLockfileWithoutOverride_noLint() async {
+  Future<void> _allowsResolvedLockfileWithoutOverrideNoLint() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec());
     newFile('$testPackageRootPath/pubspec.lock', '''
 packages:
@@ -148,7 +182,7 @@ sdks:
     await assertNoDiagnostics('library;');
   }
 
-  Future<void> test_reportsDependencyOverrides_lint() async {
+  Future<void> _reportsDependencyOverridesLint() async {
     newFile(
       '$testPackageRootPath/pubspec.yaml',
       _pubspec(
@@ -162,7 +196,7 @@ dependency_overrides:
     await assertDiagnostics('library;', [lint(0, 'library'.length)]);
   }
 
-  Future<void> test_reportsInlineDependencyOverrides_lint() async {
+  Future<void> _reportsInlineDependencyOverridesLint() async {
     newFile(
       '$testPackageRootPath/pubspec.yaml',
       _pubspec(
@@ -175,14 +209,14 @@ dependency_overrides: { analyzer: ^12.0.0 }
     await assertDiagnostics('library;', [lint(0, 'library'.length)]);
   }
 
-  Future<void> test_allowsEmptyPubspecOverrides_noLint() async {
+  Future<void> _allowsEmptyPubspecOverridesNoLint() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec());
     newFile('$testPackageRootPath/pubspec_overrides.yaml', 'dependency_overrides: {}\n');
 
     await assertNoDiagnostics('library;');
   }
 
-  Future<void> test_reportsPubspecOverrides_lint() async {
+  Future<void> _reportsPubspecOverridesLint() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec());
     newFile('$testPackageRootPath/pubspec_overrides.yaml', '''
 dependency_overrides:
@@ -192,7 +226,7 @@ dependency_overrides:
     await assertDiagnostics('library;', [lint(0, 'library'.length)]);
   }
 
-  Future<void> test_reportsAuditedPubspecOverride_lint() async {
+  Future<void> _reportsAuditedPubspecOverrideLint() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec());
     newFile('$testPackageRootPath/pubspec_overrides.yaml', '''
 dependency_overrides:
@@ -209,7 +243,7 @@ proof:
     await assertDiagnostics('library;', [lint(0, 'library'.length)]);
   }
 
-  Future<void> test_reportsWorkspaceMemberOverride_lint() async {
+  Future<void> _reportsWorkspaceMemberOverrideLint() async {
     newFile(
       '$testPackageRootPath/pubspec.yaml',
       _pubspec(workspace: 'workspace:\n  - packages/member'),
@@ -228,7 +262,7 @@ dependency_overrides:
     await assertDiagnostics('library;', [lint(0, 'library'.length)]);
   }
 
-  Future<void> test_reportsWorkspaceGlobMemberOverride_lint() async {
+  Future<void> _reportsWorkspaceGlobMemberOverrideLint() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec(workspace: 'workspace:\n  - packages/*'));
     newFile('$testPackageRootPath/packages/member/pubspec.yaml', '''
 name: member
@@ -244,7 +278,7 @@ dependency_overrides:
     await assertDiagnostics('library;', [lint(0, 'library'.length)]);
   }
 
-  Future<void> test_usesErrorSeverity() async {
+  Future<void> _usesErrorSeverity() async {
     expect(AvoidDependencyOverrides.code.severity, DiagnosticSeverity.ERROR);
   }
 
@@ -264,7 +298,6 @@ $overrides
   }
 }
 
-@reflectiveTest
 final class PreferPublishToNoneTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -273,19 +306,19 @@ final class PreferPublishToNoneTest extends AnalysisRuleTest {
     newFile('$testPackageRootPath/lib/test.dart', 'library;');
   }
 
-  Future<void> test_allowsPublishToNone_noLint() async {
+  Future<void> _allowsPublishToNoneNoLint() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec());
 
     await assertNoDiagnostics('library;');
   }
 
-  Future<void> test_allowsMissingPublishTo_noLint() async {
+  Future<void> _allowsMissingPublishToNoLint() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec(publishToLine: ''));
 
     await assertNoDiagnostics('library;');
   }
 
-  Future<void> test_reportsNonNonePublishTarget_lint() async {
+  Future<void> _reportsNonNonePublishTargetLint() async {
     newFile(
       '$testPackageRootPath/pubspec.yaml',
       _pubspec(publishToLine: 'publish_to: https://pub.dev'),
@@ -294,7 +327,7 @@ final class PreferPublishToNoneTest extends AnalysisRuleTest {
     await assertDiagnostics('library;', [lint(0, 'library'.length)]);
   }
 
-  Future<void> test_reportsQuotedNonNonePublishTarget_lint() async {
+  Future<void> _reportsQuotedNonNonePublishTargetLint() async {
     newFile(
       '$testPackageRootPath/pubspec.yaml',
       _pubspec(publishToLine: 'publish_to: "https://pub.dev" # public package'),
@@ -303,7 +336,7 @@ final class PreferPublishToNoneTest extends AnalysisRuleTest {
     await assertDiagnostics('library;', [lint(0, 'library'.length)]);
   }
 
-  Future<void> test_usesInfoSeverity() async {
+  Future<void> _usesInfoSeverity() async {
     expect(PreferPublishToNone.code.severity, DiagnosticSeverity.INFO);
   }
 

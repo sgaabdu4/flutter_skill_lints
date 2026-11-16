@@ -1,16 +1,32 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_local_contract_key_constants.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidLocalContractKeyConstantsTest);
-  });
+  analysisRuleSuite<AvoidLocalContractKeyConstantsTest>(
+    'AvoidLocalContractKeyConstantsTest',
+    AvoidLocalContractKeyConstantsTest.new,
+    {
+      'test_reportsNotifierLocalKeyConstants': (t) => t._reportsNotifierLocalKeyConstants(),
+      'test_reportsNotifierLocalKeyRegistryConstants': (t) =>
+          t._reportsNotifierLocalKeyRegistryConstants(),
+      'test_reportsRepositoryLocalActionConstants': (t) =>
+          t._reportsRepositoryLocalActionConstants(),
+      'test_allowsDedicatedKeysOwner': (t) => t._allowsDedicatedKeysOwner(),
+      'test_allowsDedicatedRequestOwner': (t) => t._allowsDedicatedRequestOwner(),
+      'test_allowsDedicatedFeatureConstantsOwnerInNotifierPath': (t) =>
+          t._allowsDedicatedFeatureConstantsOwnerInNotifierPath(),
+      'test_allowsFeatureConstantsFolder': (t) => t._allowsFeatureConstantsFolder(),
+      'test_reportsContractConstantsHiddenInNonOwnerClassInNotifierPath': (t) =>
+          t._reportsContractConstantsHiddenInNonOwnerClassInNotifierPath(),
+      'test_allowsStorageKeysAndApiPathsOwners': (t) => t._allowsStorageKeysAndApiPathsOwners(),
+      'test_reportsRepositoryLocalStorageKey': (t) => t._reportsRepositoryLocalStorageKey(),
+      'test_allowsNonContractLocalConstants': (t) => t._allowsNonContractLocalConstants(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidLocalContractKeyConstantsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -18,7 +34,7 @@ final class AvoidLocalContractKeyConstantsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsNotifierLocalKeyConstants() async {
+  Future<void> _reportsNotifierLocalKeyConstants() async {
     const source = r'''
 class ActiveWorkoutNotifier {
   static const _activeWorkoutIdKey = 'activeWorkoutId';
@@ -34,7 +50,7 @@ class ActiveWorkoutNotifier {
     ]);
   }
 
-  Future<void> test_reportsNotifierLocalKeyRegistryConstants() async {
+  Future<void> _reportsNotifierLocalKeyRegistryConstants() async {
     const source = r'''
 class ActiveWorkoutNotifier {
   static const _activeWorkoutIdKey = 'activeWorkoutId';
@@ -53,7 +69,7 @@ class ActiveWorkoutNotifier {
     ]);
   }
 
-  Future<void> test_reportsRepositoryLocalActionConstants() async {
+  Future<void> _reportsRepositoryLocalActionConstants() async {
     const source = r'''
 class SquadRepository {
   static const _actionKey = 'action';
@@ -69,7 +85,7 @@ class SquadRepository {
     ]);
   }
 
-  Future<void> test_allowsDedicatedKeysOwner() async {
+  Future<void> _allowsDedicatedKeysOwner() async {
     await assertNoDiagnostics(r'''
 abstract final class ActiveWorkoutDraftKeys {
   static const id = 'activeWorkoutId';
@@ -82,7 +98,7 @@ class ActiveWorkoutNotifier {
 ''');
   }
 
-  Future<void> test_allowsDedicatedRequestOwner() async {
+  Future<void> _allowsDedicatedRequestOwner() async {
     await assertNoDiagnostics(r'''
 abstract final class SquadRequest {
   static const actionKey = 'action';
@@ -97,7 +113,7 @@ class SquadRepository {
 ''');
   }
 
-  Future<void> test_allowsDedicatedFeatureConstantsOwnerInNotifierPath() async {
+  Future<void> _allowsDedicatedFeatureConstantsOwnerInNotifierPath() async {
     final filePath =
         '$testPackageLibPath/features/workouts/presentation/notifiers/workout_limits.dart';
     newFile(filePath, r'''
@@ -114,7 +130,7 @@ class WorkoutNotifier {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsFeatureConstantsFolder() async {
+  Future<void> _allowsFeatureConstantsFolder() async {
     final filePath = '$testPackageLibPath/features/workouts/constants/workout_constants.dart';
     newFile(filePath, r'''
 abstract final class WorkoutConstants {
@@ -126,7 +142,7 @@ abstract final class WorkoutConstants {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsContractConstantsHiddenInNonOwnerClassInNotifierPath() async {
+  Future<void> _reportsContractConstantsHiddenInNonOwnerClassInNotifierPath() async {
     final filePath =
         '$testPackageLibPath/features/workouts/presentation/notifiers/workout_helpers.dart';
     const source = r'''
@@ -139,7 +155,7 @@ abstract final class WorkoutHelpers {
     await assertDiagnosticsInFile(filePath, [lint(source.indexOf('draftKey'), 'draftKey'.length)]);
   }
 
-  Future<void> test_allowsStorageKeysAndApiPathsOwners() async {
+  Future<void> _allowsStorageKeysAndApiPathsOwners() async {
     final storageKeysPath = '$testPackageLibPath/core/constants/storage_keys.dart';
     newFile(storageKeysPath, r'''
 abstract final class StorageKeys {
@@ -158,7 +174,7 @@ abstract final class ApiPaths {
     await assertNoDiagnosticsInFile(apiPathsPath);
   }
 
-  Future<void> test_reportsRepositoryLocalStorageKey() async {
+  Future<void> _reportsRepositoryLocalStorageKey() async {
     const source = r'''
 class SettingsRepository {
   static const exerciseSyncDateKey = 'sync_date_exercises';
@@ -170,7 +186,7 @@ class SettingsRepository {
     ]);
   }
 
-  Future<void> test_allowsNonContractLocalConstants() async {
+  Future<void> _allowsNonContractLocalConstants() async {
     await assertNoDiagnostics(r'''
 class ActiveWorkoutNotifier {
   static const _emptyRoutineId = '';

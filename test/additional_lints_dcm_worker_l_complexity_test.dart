@@ -1,20 +1,57 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_if_with_many_branches.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_long_parameter_list.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_conditional_expressions.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidNestedConditionalExpressionsTest);
-    defineReflectiveTests(AvoidIfWithManyBranchesTest);
-    defineReflectiveTests(AvoidLongParameterListTest);
-  });
+  analysisRuleSuite<AvoidNestedConditionalExpressionsTest>(
+    'AvoidNestedConditionalExpressionsTest',
+    AvoidNestedConditionalExpressionsTest.new,
+    {
+      'test_thenBranchNestedConditional_lint': (t) => t._thenBranchNestedConditionalLint(),
+      'test_elseBranchNestedConditional_lint': (t) => t._elseBranchNestedConditionalLint(),
+      'test_separateConditionalExpressions_noLint': (t) =>
+          t._separateConditionalExpressionsNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidIfWithManyBranchesTest>(
+    'AvoidIfWithManyBranchesTest',
+    AvoidIfWithManyBranchesTest.new,
+    {
+      'test_fourBranches_lint_maxThreeBranches': (t) => t._fourBranchesLintMaxThreeBranches(),
+      'test_threeBranches_noLint_maxThreeBranches': (t) => t._threeBranchesNoLintMaxThreeBranches(),
+      'test_nestedSeparateIfChains_noLint': (t) => t._nestedSeparateIfChainsNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidLongParameterListTest>(
+    'AvoidLongParameterListTest',
+    AvoidLongParameterListTest.new,
+    {
+      'test_fiveFunctionParameters_lint_maxFourParameters': (t) =>
+          t._fiveFunctionParametersLintMaxFourParameters(),
+      'test_optionalNamedParametersNotCounted_noLint': (t) =>
+          t._optionalNamedParametersNotCountedNoLint(),
+      'test_fiveRequiredNamedAndPositionalParameters_lint': (t) =>
+          t._fiveRequiredNamedAndPositionalParametersLint(),
+      'test_fivePositionalWithOptionalPositionalParameters_lint': (t) =>
+          t._fivePositionalWithOptionalPositionalParametersLint(),
+      'test_fourFunctionParameters_noLint_maxFourParameters': (t) =>
+          t._fourFunctionParametersNoLintMaxFourParameters(),
+      'test_overrideMethodParameters_lintsBaseOnly': (t) =>
+          t._overrideMethodParametersLintsBaseOnly(),
+      'test_zoneSpecificationHandleUncaughtErrorCallback_noLint': (t) =>
+          t._zoneSpecificationHandleUncaughtErrorCallbackNoLint(),
+      'test_fiveConstructorParameters_lint_maxFourParameters': (t) =>
+          t._fiveConstructorParametersLintMaxFourParameters(),
+      'test_widgetConstructorParameters_noLint': (t) => t._widgetConstructorParametersNoLint(),
+      'test_freezedFactoryConstructorParameters_noLint': (t) =>
+          t._freezedFactoryConstructorParametersNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidNestedConditionalExpressionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +59,7 @@ final class AvoidNestedConditionalExpressionsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_thenBranchNestedConditional_lint() async {
+  Future<void> _thenBranchNestedConditionalLint() async {
     const source = r'''
 int choose(bool first, bool second) {
   return first ? (second ? 1 : 2) : 3;
@@ -34,7 +71,7 @@ int choose(bool first, bool second) {
     ]);
   }
 
-  Future<void> test_elseBranchNestedConditional_lint() async {
+  Future<void> _elseBranchNestedConditionalLint() async {
     const source = r'''
 int choose(bool first, bool second) {
   return first ? 1 : second ? 2 : 3;
@@ -46,7 +83,7 @@ int choose(bool first, bool second) {
     ]);
   }
 
-  Future<void> test_separateConditionalExpressions_noLint() async {
+  Future<void> _separateConditionalExpressionsNoLint() async {
     await assertNoDiagnostics(r'''
 int choose(bool first, bool second) {
   final firstValue = first ? 1 : 2;
@@ -57,7 +94,6 @@ int choose(bool first, bool second) {
   }
 }
 
-@reflectiveTest
 final class AvoidIfWithManyBranchesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -65,7 +101,7 @@ final class AvoidIfWithManyBranchesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_fourBranches_lint_maxThreeBranches() async {
+  Future<void> _fourBranchesLintMaxThreeBranches() async {
     const source = r'''
 String label(int value) {
   if (value == 0) {
@@ -83,7 +119,7 @@ String label(int value) {
     await assertDiagnostics(source, [lint(source.indexOf('if (value == 0)'), 'if'.length)]);
   }
 
-  Future<void> test_threeBranches_noLint_maxThreeBranches() async {
+  Future<void> _threeBranchesNoLintMaxThreeBranches() async {
     await assertNoDiagnostics(r'''
 String label(int value) {
   if (value == 0) {
@@ -97,7 +133,7 @@ String label(int value) {
 ''');
   }
 
-  Future<void> test_nestedSeparateIfChains_noLint() async {
+  Future<void> _nestedSeparateIfChainsNoLint() async {
     await assertNoDiagnostics(r'''
 String label(int value, bool verbose) {
   if (value == 0) {
@@ -114,7 +150,6 @@ String label(int value, bool verbose) {
   }
 }
 
-@reflectiveTest
 final class AvoidLongParameterListTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -123,7 +158,7 @@ final class AvoidLongParameterListTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_fiveFunctionParameters_lint_maxFourParameters() async {
+  Future<void> _fiveFunctionParametersLintMaxFourParameters() async {
     const source = r'''
 void configure(int a, int b, int c, int d, int e) {}
 ''';
@@ -132,7 +167,7 @@ void configure(int a, int b, int c, int d, int e) {}
     await assertDiagnostics(source, [lint(source.indexOf(parameterList), parameterList.length)]);
   }
 
-  Future<void> test_optionalNamedParametersNotCounted_noLint() async {
+  Future<void> _optionalNamedParametersNotCountedNoLint() async {
     await assertNoDiagnostics(r'''
 abstract final class Crash {
   static void error(
@@ -146,7 +181,7 @@ abstract final class Crash {
 ''');
   }
 
-  Future<void> test_fiveRequiredNamedAndPositionalParameters_lint() async {
+  Future<void> _fiveRequiredNamedAndPositionalParametersLint() async {
     const source = r'''
 void configure(int a, int b, int c, {required int d, required int e}) {}
 ''';
@@ -155,7 +190,7 @@ void configure(int a, int b, int c, {required int d, required int e}) {}
     await assertDiagnostics(source, [lint(source.indexOf(parameterList), parameterList.length)]);
   }
 
-  Future<void> test_fivePositionalWithOptionalPositionalParameters_lint() async {
+  Future<void> _fivePositionalWithOptionalPositionalParametersLint() async {
     const source = r'''
 void configure(int a, int b, int c, int d, [int e = 0]) {}
 ''';
@@ -164,13 +199,13 @@ void configure(int a, int b, int c, int d, [int e = 0]) {}
     await assertDiagnostics(source, [lint(source.indexOf(parameterList), parameterList.length)]);
   }
 
-  Future<void> test_fourFunctionParameters_noLint_maxFourParameters() async {
+  Future<void> _fourFunctionParametersNoLintMaxFourParameters() async {
     await assertNoDiagnostics(r'''
 void configure(int a, int b, int c, int d) {}
 ''');
   }
 
-  Future<void> test_overrideMethodParameters_lintsBaseOnly() async {
+  Future<void> _overrideMethodParametersLintsBaseOnly() async {
     const source = r'''
 class Base {
   void configure(int a, int b, int c, int d, int e) {}
@@ -186,7 +221,7 @@ class Derived extends Base {
     await assertDiagnostics(source, [lint(source.indexOf(parameterList), parameterList.length)]);
   }
 
-  Future<void> test_zoneSpecificationHandleUncaughtErrorCallback_noLint() async {
+  Future<void> _zoneSpecificationHandleUncaughtErrorCallbackNoLint() async {
     await assertNoDiagnostics(r'''
 class ZoneSpecification {
   ZoneSpecification({required Function handleUncaughtError});
@@ -202,7 +237,7 @@ void capture(List<Object> errors) {
 ''');
   }
 
-  Future<void> test_fiveConstructorParameters_lint_maxFourParameters() async {
+  Future<void> _fiveConstructorParametersLintMaxFourParameters() async {
     const source = r'''
 class Config {
   Config(int a, int b, int c, int d, int e);
@@ -213,7 +248,7 @@ class Config {
     await assertDiagnostics(source, [lint(source.indexOf(parameterList), parameterList.length)]);
   }
 
-  Future<void> test_widgetConstructorParameters_noLint() async {
+  Future<void> _widgetConstructorParametersNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -239,7 +274,7 @@ class Toolbar extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_freezedFactoryConstructorParameters_noLint() async {
+  Future<void> _freezedFactoryConstructorParametersNoLint() async {
     await assertNoDiagnostics(r'''
 class Freezed {
   const Freezed();

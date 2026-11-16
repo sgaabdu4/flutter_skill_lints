@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class RiverpodSelectArrowSyntaxTest extends _RiverpodRuleTest {
   @override
   String get ruleName => 'riverpod_select_arrow_syntax';
@@ -36,7 +33,7 @@ class TodoTitle {
 }
 ''';
 
-  Future<void> test_allowsArrowSelect() async {
+  Future<void> _allowsArrowSelect() async {
     await assertAllows(r'''
 class ProviderArg<T> {
   Object select(Object Function(T value) selector) => Object();
@@ -63,7 +60,7 @@ class TodoTitle {
 ''');
   }
 
-  Future<void> test_allowsNonRiverpodSelectApi() async {
+  Future<void> _allowsNonRiverpodSelectApi() async {
     await assertAllows(r'''
 class Query<T> {
   Object select(Object Function(T value) selector) => Object();
@@ -77,7 +74,7 @@ final selected = query.select((value) {
 ''');
   }
 
-  Future<void> test_allowsUnrelatedSelectNearRefWatch() async {
+  Future<void> _allowsUnrelatedSelectNearRefWatch() async {
     await assertAllows(r'''
 class Query<T> {
   Object select(Object Function(T value) selector) => Object();
@@ -102,7 +99,7 @@ class TodoTitle {
 ''');
   }
 
-  Future<void> test_reportsTypedBlockSelect() async {
+  Future<void> _reportsTypedBlockSelect() async {
     final analyzedSource = _analyzedSource(r'''
 class ProviderArg<T> {
   Object select(Object Function(T value) selector) => Object();
@@ -135,7 +132,7 @@ class TodoTitle {
     ]);
   }
 
-  Future<void> test_reportsTrailingCommaBlockSelect() async {
+  Future<void> _reportsTrailingCommaBlockSelect() async {
     final analyzedSource = _analyzedSource(r'''
 class ProviderArg<T> {
   Object select(Object Function(T value) selector) => Object();
@@ -168,7 +165,7 @@ class TodoTitle {
     ]);
   }
 
-  Future<void> test_reportsMultilineBlockSelect() async {
+  Future<void> _reportsMultilineBlockSelect() async {
     final analyzedSource = _analyzedSource(r'''
 class ProviderArg<T> {
   Object select(Object Function(T value) selector) => Object();
@@ -202,4 +199,20 @@ class TodoTitle {
 
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.select', ruleName)]);
   }
+}
+
+void _defineSourceScannerRulesPartRiverpodSelectTests() {
+  analysisRuleSuite<RiverpodSelectArrowSyntaxTest>(
+    'RiverpodSelectArrowSyntaxTest',
+    RiverpodSelectArrowSyntaxTest.new,
+    {
+      'test_allowsArrowSelect': (t) => t._allowsArrowSelect(),
+      'test_allowsNonRiverpodSelectApi': (t) => t._allowsNonRiverpodSelectApi(),
+      'test_allowsUnrelatedSelectNearRefWatch': (t) => t._allowsUnrelatedSelectNearRefWatch(),
+      'test_reportsTypedBlockSelect': (t) => t._reportsTypedBlockSelect(),
+      'test_reportsTrailingCommaBlockSelect': (t) => t._reportsTrailingCommaBlockSelect(),
+      'test_reportsMultilineBlockSelect': (t) => t._reportsMultilineBlockSelect(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

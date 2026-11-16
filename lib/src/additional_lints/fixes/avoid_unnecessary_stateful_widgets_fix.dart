@@ -46,10 +46,9 @@ class AvoidUnnecessaryStatefulWidgetsFix extends ResolvedCorrectionProducer {
   }
 
   static ({ClassDeclaration widgetClass, String widgetName})? _targetWidget(AstNode targetNode) {
-    if (targetNode is! SimpleIdentifier || targetNode.parent is! ClassDeclaration) return null;
-    final widgetClass = targetNode.parent! as ClassDeclaration;
-    if (widgetClass.extendsClause?.superclass == null) return null;
-    return (widgetClass: widgetClass, widgetName: targetNode.name);
+    final widgetClass = targetNode.thisOrAncestorOfType<ClassDeclaration>();
+    if (widgetClass == null || widgetClass.extendsClause?.superclass == null) return null;
+    return (widgetClass: widgetClass, widgetName: widgetClass.namePart.typeName.lexeme);
   }
 
   static String? _statelessClassSource(ClassDeclaration widgetClass, ClassDeclaration stateClass) {

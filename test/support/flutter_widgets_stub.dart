@@ -1,6 +1,8 @@
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 
 const flutterWidgetsStub = r'''
+const immutable = Object();
+
 class Key {
   const Key(String value);
 }
@@ -44,6 +46,7 @@ abstract class StatelessWidget extends Widget {
 
 abstract class StatefulWidget extends Widget {
   const StatefulWidget({super.key});
+  State createState() => throw UnimplementedError();
 }
 
 abstract class State<T extends StatefulWidget> {

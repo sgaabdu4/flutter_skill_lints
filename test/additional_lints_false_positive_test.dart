@@ -173,6 +173,9 @@ final class _AvoidReturningWidgetsFalsePositiveTest extends _AdditionalLintRuleT
       'test_allowsTestHelperReturningWidget': (t) => t._allowsTestHelperReturningWidget(),
       'test_allowsFrameworkBuilderOverride': (t) => t._allowsFrameworkBuilderOverride(),
       'test_allowsFrameworkBuilderCallbackMethod': (t) => t._allowsFrameworkBuilderCallbackMethod(),
+      'test_allowsMaterialRouteContentAndTransitionsOverrides': (t) =>
+          t._allowsMaterialRouteContentAndTransitionsOverrides(),
+      'test_reportsContentHelperWithoutOverride': (t) => t._reportsContentHelperWithoutOverride(),
     },
   );
 
@@ -327,6 +330,38 @@ class MainShellRoute {
   ) => const Widget();
 }
 ''');
+  }
+
+  Future<void> _allowsMaterialRouteContentAndTransitionsOverrides() async {
+    await assertNoDiagnostics(r'''
+// ignore_for_file: override_on_non_overriding_member
+import 'package:flutter/widgets.dart';
+
+class EditorRoute {
+  @override
+  Widget buildContent(BuildContext context) => const Widget();
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Object animation,
+    Object secondaryAnimation,
+    Widget child,
+  ) => child;
+}
+''');
+  }
+
+  Future<void> _reportsContentHelperWithoutOverride() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class EditorPanel {
+  Widget buildContent(BuildContext context) => const Widget();
+}
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf('buildContent'), 'buildContent'.length)]);
   }
 
   Future<void> _allowsFrameworkBuilderCallbackMethod() async {

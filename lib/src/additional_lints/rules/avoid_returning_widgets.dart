@@ -48,7 +48,13 @@ class _Visitor extends SimpleAstVisitor<void> {
   _Visitor(this.rule);
 
   static const _widgetChecker = TypeChecker.fromName('Widget', packageName: 'flutter');
-  static const _frameworkWidgetOverrideNames = {'builder', 'pageBuilder', 'buildPage'};
+  static const _frameworkWidgetOverrideNames = {
+    'builder',
+    'pageBuilder',
+    'buildPage',
+    'buildContent',
+    'buildTransitions',
+  };
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {

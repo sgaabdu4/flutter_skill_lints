@@ -18,7 +18,7 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
     code: const LintCode(
       'save_all_full_collection_after_subset_mutation',
       'saveAll rewrites a full collection after subset mutation.',
-      correctionMessage: 'Collect changed rows and call mergeAll/saveMany, or add an ignore comment when a full rewrite is intentional.',
+      correctionMessage: 'Collect changed rows and call mergeAll/saveMany.',
       severity: DiagnosticSeverity.ERROR,
     ),
     description: 'Flags `saveAll(fullCollection.map(Model.fromEntity).toList())` after mutating indexed rows of that same collection.',

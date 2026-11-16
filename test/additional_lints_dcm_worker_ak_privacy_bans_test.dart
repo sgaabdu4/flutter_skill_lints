@@ -1,7 +1,6 @@
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_accessing_other_classes_private_members.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_names.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_types.dart';
 
 import 'analysis_rule_suite.dart';
 
@@ -15,11 +14,6 @@ void main() {
     'AvoidBannedNamesTest',
     _AvoidBannedNamesTest.new,
     _AvoidBannedNamesTest._allCases,
-  );
-  analysisRuleSuite<_AvoidBannedTypesTest>(
-    'AvoidBannedTypesTest',
-    _AvoidBannedTypesTest.new,
-    _AvoidBannedTypesTest._allCases,
   );
 }
 
@@ -176,90 +170,5 @@ class Child extends Base {
 ''';
 
     await assertDiagnostics(source, [lint(source.indexOf('foo()'), 'foo'.length)]);
-  }
-}
-
-final class _AvoidBannedTypesTest extends AnalysisRuleTest {
-  static Map<String, Future<void> Function(_AvoidBannedTypesTest)> get _allCases =>
-      caseSet<_AvoidBannedTypesTest>(
-        parent: const {},
-        own: {
-          'test_dynamicParameter_lint': (t) => t._dynamicParameterLint(),
-          'test_dynamicReturnType_lint': (t) => t._dynamicReturnTypeLint(),
-          'test_listDynamic_lint': (t) => t._listDynamicLint(),
-          'test_jsonMapDynamicValue_noLint': (t) => t._jsonMapDynamicValueNoLint(),
-          'test_jsonMapLiteralDynamicValue_noLint': (t) => t._jsonMapLiteralDynamicValueNoLint(),
-          'test_nonJsonMapLiteralDynamic_lint': (t) => t._nonJsonMapLiteralDynamicLint(),
-          'test_generatedLocalizationDynamic_noLint': (t) =>
-              t._generatedLocalizationDynamicNoLint(),
-          'test_objectBoundary_noLint': (t) => t._objectBoundaryNoLint(),
-        },
-      );
-
-  @override
-  void setUp() {
-    rule = AvoidBannedTypes();
-    super.setUp();
-  }
-
-  Future<void> _dynamicParameterLint() async {
-    const source = r'''
-void read(dynamic value) {}
-''';
-
-    await assertDiagnostics(source, [lint(source.indexOf('dynamic'), 'dynamic'.length)]);
-  }
-
-  Future<void> _dynamicReturnTypeLint() async {
-    const source = r'''
-dynamic read() => 1;
-''';
-
-    await assertDiagnostics(source, [lint(source.indexOf('dynamic'), 'dynamic'.length)]);
-  }
-
-  Future<void> _listDynamicLint() async {
-    const source = r'''
-List<dynamic> read() => const [];
-''';
-
-    await assertDiagnostics(source, [lint(source.indexOf('dynamic'), 'dynamic'.length)]);
-  }
-
-  Future<void> _jsonMapDynamicValueNoLint() async {
-    await assertNoDiagnostics(r'''
-Map<String, dynamic> toJson() => {};
-''');
-  }
-
-  // hive-persistence.md:56: `<String, dynamic>{}` is a JSON map literal.
-  Future<void> _jsonMapLiteralDynamicValueNoLint() async {
-    await assertNoDiagnostics(r'''
-Map<String, dynamic> normalize() {
-  final normalized = <String, dynamic>{};
-  return normalized;
-}
-''');
-  }
-
-  Future<void> _nonJsonMapLiteralDynamicLint() async {
-    const source = r'''
-final byId = <int, dynamic>{};
-''';
-
-    await assertDiagnostics(source, [lint(source.indexOf('dynamic'), 'dynamic'.length)]);
-  }
-
-  Future<void> _generatedLocalizationDynamicNoLint() async {
-    final filePath = '$testPackageLibPath/l10n/app_localizations.dart';
-    newFile(filePath, 'List<dynamic> delegates = <dynamic>[];');
-
-    await assertNoDiagnosticsInFile(filePath);
-  }
-
-  Future<void> _objectBoundaryNoLint() async {
-    await assertNoDiagnostics(r'''
-Object? read(Object? value) => value;
-''');
   }
 }

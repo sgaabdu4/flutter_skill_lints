@@ -262,7 +262,6 @@ avoid_banned_exports
 avoid_banned_file_names
 avoid_banned_imports
 avoid_banned_names
-avoid_banned_types
 avoid_bitwise_operators_with_booleans
 avoid_border_all
 avoid_bottom_type_in_patterns

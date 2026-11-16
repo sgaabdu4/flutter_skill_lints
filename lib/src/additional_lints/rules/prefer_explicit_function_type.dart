@@ -6,28 +6,6 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 /// Warns when a `Function` type does not specify the return type and arguments.
-///
-/// Not specifying the return type and the list of arguments can lead to
-/// hard-to-spot bugs since the `Function` type effectively makes the
-/// declaration dynamic and disables type checks.
-///
-/// ## Example
-///
-/// ❌ Bad:
-/// ```dart
-/// class SomeWidget {
-///   final Function onTap;
-///   const SomeWidget(this.onTap);
-/// }
-/// ```
-///
-/// ✅ Good:
-/// ```dart
-/// class SomeWidget {
-///   final void Function() onTap;
-///   const SomeWidget(this.onTap);
-/// }
-/// ```
 class PreferExplicitFunctionType extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_explicit_function_type',
@@ -62,10 +40,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     // Check if the type name is 'Function'
     final typeName = node.name;
     if (typeName.lexeme != 'Function') return;
-
-    // If it's from dart:core and has no type arguments, it's the non-explicit form
-    // GenericFunctionType is used for explicit function types like `void Function()`
-    // NamedType with name 'Function' is the non-explicit form
 
     // Make sure this is actually the Function type from dart:core
     final element = node.element;

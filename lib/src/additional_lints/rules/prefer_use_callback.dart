@@ -6,9 +6,6 @@ import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart'
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when `useMemoized` is used to memoize a function expression.
-///
-/// `useCallback` is specifically designed for memoizing callbacks and is more
-/// semantically correct than wrapping a function in `useMemoized`.
 class PreferUseCallback extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_use_callback',

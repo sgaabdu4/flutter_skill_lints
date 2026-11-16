@@ -93,8 +93,7 @@ class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
     }
   }
 
-  /// Collects all [NamedType] identifier names used within [scope],
-  /// excluding the type parameters themselves.
+  /// Collects all [NamedType] identifier names used within [scope], excluding the type parameters themselves.
   Set<String> _collectNamedTypes(AstNode scope) {
     final names = <String>{};
     final visitor = _NamedTypeCollector(names);
@@ -118,8 +117,7 @@ class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
     return null;
   }
 
-  /// Finds all [NamedType] tokens within [scope] that reference the
-  /// type parameter named [name].
+  /// Finds all [NamedType] tokens within [scope] that reference the type parameter named [name].
   List<Token> _findUsages(AstNode scope, String name) {
     final usages = <Token>[];
     final visitor = _UsageFinder(name, usages);

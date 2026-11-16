@@ -5,8 +5,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/mounted_guard_utils.dart';
 
-/// Warns when one async function updates the same value on both sides of an
-/// await point.
+/// Warns when one async function updates the same value on both sides of an await point.
 final class RequireAtomicAsyncUpdates extends FunctionAndMethodDeclarationRule {
   static const LintCode code = LintCode(
     'require_atomic_async_updates',
@@ -100,8 +99,6 @@ final class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
     for (final assignment in assignments) {
-      // A notifier resumes with fresh `state` once `ref.mounted` is checked
-      // (skill: async-mutations.md loadMore/save).
       if (state.hasMountedGuardAfterAwait && _isRiverpodNotifierState(assignment)) continue;
       if (state.beforeAwait.containsKey(assignment.key)) reported.add(assignment.node);
     }

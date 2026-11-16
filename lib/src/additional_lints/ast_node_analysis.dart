@@ -36,13 +36,6 @@ bool isExpressionExactlyType(Expression expression, TypeChecker checker) {
 }
 
 /// Checks whether an instance creation uses only the specified named parameter.
-///
-/// Returns true when the [node] has:
-/// - Only one relevant named argument whose name equals [parameter]
-/// - The argument value is not a null literal and the argument type is not
-///   nullable (i.e. not `T?`)
-/// - No other arguments are present, except those explicitly listed in
-///   [ignoredParameters]
 bool isInstanceCreationExpressionOnlyUsingParameter(
   InstanceCreationExpression node, {
   required String parameter,
@@ -123,8 +116,6 @@ String? buildEveryReplacement(String collection, Expression predicate) {
 /// Extension on `Iterable` providing additional utility methods.
 extension IterableExtension<T> on Iterable<T> {
   /// Returns the first element satisfying [test], or `null` if none found.
-  ///
-  /// Unlike `Iterable.firstWhere`, this does not throw if no element matches.
   T? firstWhereOrNull(bool Function(T) test) {
     for (final element in this) {
       if (test(element)) return element;

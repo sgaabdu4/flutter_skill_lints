@@ -6,8 +6,7 @@ const notifierChecker = TypeChecker.any([
   TypeChecker.fromName('AsyncNotifier', packageName: 'riverpod'),
 ]);
 
-/// TypeChecker for every Riverpod notifier base, including Riverpod 3's
-/// `AnyNotifier` that generated `_$Name` classes extend through `$Notifier`.
+/// TypeChecker for every Riverpod notifier base, including Riverpod 3's `AnyNotifier` that generated `_$Name` classes extend through `$Notifier`.
 const anyNotifierChecker = TypeChecker.any([
   TypeChecker.fromName('AnyNotifier', packageName: 'riverpod'),
   notifierChecker,

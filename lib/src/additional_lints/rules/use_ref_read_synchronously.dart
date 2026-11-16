@@ -6,12 +6,7 @@ import 'package:flutter_skill_lints/src/additional_lints/async_guard_utils.dart'
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/riverpod_consumer_checkers.dart';
 
-/// Warns when `ref.read()` is called after an `await` point inside an async
-/// callback within a ConsumerWidget or ConsumerState build method without
-/// checking if the widget is still mounted.
-///
-/// After an `await`, the widget may have been unmounted, making `ref.read()`
-/// return stale or unintended state.
+/// Warns when `ref.read()` is called after an `await` point inside an async callback within a ConsumerWidget or ConsumerState build method without checking if the widget is still mounted.
 class UseRefReadSynchronously extends MethodDeclarationRule {
   static const LintCode code = LintCode(
     'use_ref_read_synchronously',
@@ -44,15 +39,12 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodDeclaration(MethodDeclaration node) {
     if (!isConsumerBuildMethod(node)) return;
 
-    // Find async callbacks inside the build method and check for ref.read
-    // after await points
     final finder = _AsyncCallbackFinder(rule);
     node.body.visitChildren(finder);
   }
 }
 
-/// Finds async function expressions (callbacks) inside the build method
-/// and checks each for `ref.read()` usage after `await` points.
+/// Finds async function expressions (callbacks) inside the build method and checks each for `ref.read()` usage after `await` points.
 class _AsyncCallbackFinder extends RecursiveAstVisitor<void> {
   final UseRefReadSynchronously rule;
 

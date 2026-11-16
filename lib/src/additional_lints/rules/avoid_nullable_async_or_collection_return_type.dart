@@ -3,10 +3,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/function_body_rule.dart';
 
 /// Avoids nullable Future, Stream, and collection return types.
-///
-/// Effective Dart recommends keeping async and collection containers
-/// non-nullable. Put nullability on the produced value when that is the
-/// semantic contract, or return an empty collection / explicit state.
 class AvoidNullableAsyncOrCollectionReturnType
     extends GeneratedFunctionAndMethodReturnTypeCheckRule {
   static const LintCode code = LintCode(

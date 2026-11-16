@@ -38,8 +38,6 @@ final class PreferDotShorthandsFix extends ResolvedCorrectionProducer {
       return;
     }
     final target = node;
-    // The rule reports named constructors only, so the type name is always
-    // followed by `.name` and removing it leaves the shorthand.
     final (prefix, explicitNew) = switch (target) {
       PrefixedIdentifier(:final prefix) => (prefix as AstNode, null),
       PropertyAccess(target: final prefix?) => (prefix, null),

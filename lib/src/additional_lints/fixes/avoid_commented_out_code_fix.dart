@@ -29,9 +29,6 @@ class AvoidCommentedOutCodeFix extends ResolvedCorrectionProducer {
     final content = unitResult.content;
     final end = offset + length;
 
-    // Extend the deletion range to include the entire line(s):
-    // - Walk backwards from offset to find the start of the line.
-    // - Walk forwards from end to include the trailing newline.
     var deleteStart = offset;
     while (deleteStart > 0 && content[deleteStart - 1] != '\n') {
       deleteStart--;

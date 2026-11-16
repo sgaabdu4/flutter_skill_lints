@@ -35,9 +35,6 @@ class AvoidDuplicateCascadesFix extends ResolvedCorrectionProducer {
 
     final content = unitResult.content;
 
-    // Determine the range to delete: from the end of the previous section
-    // (or cascade target) to the end of this section, to cleanly remove
-    // including any preceding whitespace/newlines.
     final int deleteStart;
     if (sectionIndex > 0) {
       deleteStart = sections[sectionIndex - 1].end;
@@ -46,9 +43,6 @@ class AvoidDuplicateCascadesFix extends ResolvedCorrectionProducer {
     }
     var deleteEnd = section.end;
 
-    // If this is the last section and there's a trailing semicolon right
-    // after, don't eat into it. But if there's whitespace between this
-    // section and the next, consume it.
     if (sectionIndex < sections.length - 1) {
       // Not the last section — just delete up to section end
       deleteEnd = section.end;

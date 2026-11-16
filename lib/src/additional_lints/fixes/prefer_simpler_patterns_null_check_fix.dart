@@ -5,8 +5,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that simplifies `!= null && final field` to `final field?`
-/// or removes the redundant `!= null &&` when a type annotation is present.
+/// Fix that simplifies `!= null && final field` to `final field?` or removes the redundant `!= null &&` when a type annotation is present.
 class PreferSimplerPatternsNullCheckFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.preferSimplerPatternsNullCheck',

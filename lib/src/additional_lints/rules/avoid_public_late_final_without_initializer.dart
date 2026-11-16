@@ -7,10 +7,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Avoids public `late final` fields without initializers.
-///
-/// A public field is part of the API contract. If it is uninitialized, users can
-/// observe a runtime initialization error. Prefer constructor initialization,
-/// a private lazily initialized field, or a `late final` with an initializer.
 class AvoidPublicLateFinalWithoutInitializer extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_public_late_final_without_initializer',

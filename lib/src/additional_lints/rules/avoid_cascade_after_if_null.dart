@@ -3,20 +3,7 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-/// Warns when a cascade expression follows an if-null (`??`) operator
-/// without parentheses, which can produce unexpected results due to
-/// operator precedence.
-///
-/// **Bad:**
-/// ```dart
-/// final cow = nullableCow ?? Cow()..moo();
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// final cow = (nullableCow ?? Cow())..moo();
-/// final cow = nullableCow ?? (Cow()..moo());
-/// ```
+/// Warns when a cascade expression follows an if-null (`??`) operator without parentheses, which can produce unexpected results due to operator precedence.
 class AvoidCascadeAfterIfNull extends CascadeExpressionCheckRule {
   static const LintCode code = LintCode(
     'avoid_cascade_after_if_null',

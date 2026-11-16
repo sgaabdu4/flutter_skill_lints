@@ -9,11 +9,6 @@ import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Reports Riverpod notifier classes that do not use the `Notifier` suffix.
-///
-/// Riverpod codegen strips the suffix when creating provider names, so the
-/// conventional `class FooNotifier extends _$FooNotifier` shape keeps generated
-/// providers predictable. Covers manual notifiers, generated `_$Foo` bases and
-/// `@riverpod` classes before code generation.
 class UseNotifierSuffix extends ClassSuffixValidator {
   static const LintCode code = LintCode(
     'use_notifier_suffix',

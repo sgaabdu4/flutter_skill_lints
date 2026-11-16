@@ -5,8 +5,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/enum_name_access.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-/// Suggests using `.byName()` instead of `.firstWhere((e) => e.name == value)`
-/// on enum values.
+/// Suggests using `.byName()` instead of `.firstWhere((e) => e.name == value)` on enum values.
 class PreferEnumsByName extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_enums_by_name',

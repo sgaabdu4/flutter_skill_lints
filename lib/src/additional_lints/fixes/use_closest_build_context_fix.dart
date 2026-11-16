@@ -7,8 +7,7 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Fix that renames the inner closure's BuildContext parameter to match the
-/// outer context name, so the closest BuildContext is used.
+/// Fix that renames the inner closure's BuildContext parameter to match the outer context name, so the closest BuildContext is used.
 class UseClosestBuildContextFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.useClosestBuildContext',
@@ -47,8 +46,7 @@ class UseClosestBuildContextFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Walk up the AST to find the nearest FunctionExpression ancestor
-  /// that has a BuildContext parameter.
+  /// Walk up the AST to find the nearest FunctionExpression ancestor that has a BuildContext parameter.
   FormalParameter? _findEnclosingBuildContextParam(AstNode node) {
     final function = _enclosingFunctionExpression(node);
     if (function == null) return null;

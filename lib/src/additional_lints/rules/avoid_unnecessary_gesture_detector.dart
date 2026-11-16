@@ -5,8 +5,7 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Warns when a `GestureDetector` widget is created without any event handler
-/// callbacks, making it functionally useless.
+/// Warns when a `GestureDetector` widget is created without any event handler callbacks, making it functionally useless.
 class AvoidUnnecessaryGestureDetector extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_gesture_detector',

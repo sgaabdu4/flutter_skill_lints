@@ -2,11 +2,6 @@ part of '../runtime_bug_source_rules.dart';
 
 final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   /// Sync writes must check a dirty list before pushing.
-  ///
-  /// Why: `saveAll` replaces the entire collection. Calling it inside a sync
-  /// loop without first checking the changed-row list rewrites every row on
-  /// every cycle and floods disk I/O. Guard with `if (changed.isEmpty) return`
-  /// (or equivalent) above the `saveAll` call.
   scannerRule(
     code: const LintCode(
       'sync_save_all_no_dirty_guard',
@@ -19,12 +14,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// `saveAll` must not rewrite a full collection after mutating a subset.
-  ///
-  /// Why: A dirty flag only proves *something* changed. If the method mutates
-  /// one or more indexed rows and then calls `saveAll(fullCollection.map(...))`,
-  /// it still rewrites every row. Keep a changed-row list and write only that
-  /// subset with `mergeAll` / `saveMany`, or document the full rewrite with an
-  /// ignore comment.
   scannerRule(
     code: const LintCode(
       'save_all_full_collection_after_subset_mutation',
@@ -37,11 +26,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// Collection getters must not allocate a fresh Map/List/Set on every access.
-  ///
-  /// Why: Getters are easy to call from `select`, build methods, and notifier
-  /// hot paths. Building a collection in the getter turns every access into an
-  /// O(n) allocation and breaks equality for records that contain the getter
-  /// result. Memoize immutable-state indexes or expose a computed provider.
   scannerRule(
     code: const LintCode(
       'collection_getter_allocates_each_access',
@@ -54,12 +38,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// Do not use Expando side tables as derived state caches.
-  ///
-  /// Why: Hot derived indexes should live in a computed provider or an
-  /// explicit service/repository cache. Non-const classes may own an instance
-  /// `late final` cache, but const Freezed state/entities cannot. A top-level
-  /// `Expando` side table creates a second invisible cache owner and hides
-  /// identity/lifetime semantics.
   scannerRule(
     code: const LintCode(
       'expando_derived_cache_forbidden',
@@ -80,13 +58,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// Single id lookups must use the shared Iterable lookup extension.
-  ///
-  /// Why: `items.indexBy((item) => item.id)[id]` or the skill's
-  /// `items.indexOfByKey((item) => item.id)[id]` spreads lookup mechanics
-  /// across call sites and allocates a map for a one-off read. Use
-  /// `lookupByKey` for one read; keep `indexOfByKey` for a cached index that is
-  /// reused (`final productsById = products.indexOfByKey(...)`,
-  /// collections-helpers.md).
   scannerRule(
     code: const LintCode(
       'ad_hoc_id_index_lookup',
@@ -108,13 +79,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// Repeated id lookups on hot paths must use an index instead of linear search.
-  ///
-  /// Why: `firstWhere`, `indexWhere`, or a hand-written `for` scan by `.id`
-  /// inside a loop, a collection-for, an iteration callback such as `map` or
-  /// `forEach`, a widget build path, or a getter repeats a full scan per
-  /// element, per frame, or per access. Pre-index by id with a Map and reuse
-  /// that lookup. A single lookup in a one-off method is not repeated and is not
-  /// reported.
   scannerRule(
     code: const LintCode(
       'linear_id_lookup_in_hot_path',
@@ -130,10 +94,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// Nested loops must not perform inner id lookups.
-  ///
-  /// Why: A loop over collection A that calls `indexWhere`/`firstWhere` on
-  /// collection B by id is O(a*b). Build `final byId = {for (final item in b)
-  /// item.id: item}` once, then read `byId[id]` inside the loop.
   scannerRule(
     code: const LintCode(
       'nested_linear_lookup_by_id',
@@ -149,15 +109,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// Appwrite client Function executions that may outlive the request must be async.
-  ///
-  /// Why: destructive, sync, import/export, migration, and generation Functions
-  /// can keep running after the client request times out. Calling
-  /// `createExecution(..., xasync: false)` (or omitting `xasync: true`) makes
-  /// the app wait on the function response and often surfaces a timeout even
-  /// when the backend operation succeeds. Async-start the Function, then
-  /// reconcile against the source of truth with bounded polling or a realtime
-  /// observer. A destructive/batch remote call passed `waitForCompletion: true`
-  /// blocks the client the same way.
   scannerRule(
     code: const LintCode(
       'appwrite_blocking_function_execution_in_client',
@@ -170,15 +121,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// Destructive failures must reconcile before reporting telemetry.
-  ///
-  /// Why: delete/remove/deactivate flows can time out or lose the client
-  /// connection after the backend has already completed. Reporting the caught
-  /// exception before checking whether the entity/account is gone creates false
-  /// Crashlytics/Sentry noise and may show a user-facing error for a successful
-  /// operation. Reconcile first; report only when the source of truth still
-  /// shows failure. A catch around async-started long-running work
-  /// (networking.md "Long-Running Remote Work") that reports and never
-  /// reconciles is flagged too.
   scannerRule(
     code: const LintCode(
       'destructive_failure_logged_before_reconcile',
@@ -200,10 +142,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// Reset/clear methods must not preserve migration and sentinel storage keys.
-  ///
-  /// Why: reset flows are hard wipes of app-owned local state. Preserving
-  /// version/install/migration markers around `.clear()` keeps compatibility
-  /// state alive and can hide data-shape mismatches that should be rejected.
   scannerRule(
     code: const LintCode(
       'storage_clear_preserves_migration_state',
@@ -219,11 +157,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// Notifier persistence must be debounced, not synchronous-per-mutation.
-  ///
-  /// Why: A draft persistence method that fires on every checkbox tap, expand,
-  /// or mode switch serializes the entire state on each call. 5 rapid user
-  /// actions = 5 full writes back-to-back. Wrap the persist in a `Timer` /
-  /// `Future.delayed` / `Debouncer` so bursts coalesce into one write.
   scannerRule(
     code: const LintCode(
       'notifier_persistence_no_debounce',
@@ -248,12 +181,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// Async notifier init/restore/load methods must guard stale writes.
-  ///
-  /// Why: A provider may start an async restore/load in the background while the
-  /// user triggers a mutation. If the old async operation writes `state` after
-  /// the mutation, it can overwrite the user-visible state and make navigation
-  /// or buttons appear slow/stuck. Capture a generation/request token before
-  /// the await and return when it is stale before writing `state`.
   scannerRule(
     code: const LintCode(
       'notifier_async_init_stale_state_write',
@@ -266,12 +193,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// Heavy widgets must not initialize in `build` without a user-action gate.
-  ///
-  /// Why: `InAppWebView`, `WebViewWidget`, video and audio players, and other
-  /// heavy natives perform network handshakes and platform-channel work on
-  /// mount. If the widget mounts every time a sheet opens, you pay that cost
-  /// even when the user never interacts. Gate construction behind a `bool`
-  /// triggered by an explicit user action.
   scannerRule(
     code: const LintCode(
       'webview_init_in_build_no_gate',
@@ -287,10 +208,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// `*Service` storage reads must be memoized.
-  ///
-  /// Why: A service whose async getter hits disk on every call multiplies I/O
-  /// across every screen entry. Cache results in a `Map<String, T>` field and
-  /// only read from storage on a miss.
   scannerRule(
     code: const LintCode(
       'service_storage_read_no_memo',
@@ -315,12 +232,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// `@Riverpod(keepAlive: true)` notifiers must not watch unbounded collections.
-  ///
-  /// Why: A `keepAlive` notifier lives for the session. If it derives state by
-  /// watching an unbounded collection getter (`logs`, `items`, `history`, …),
-  /// every entry in that collection is retained for the session, defeating the
-  /// auto-dispose memory benefit. Prefer auto-dispose or derive from a bounded
-  /// projection.
   scannerRule(
     code: const LintCode(
       'keepalive_watches_unbounded_collection',
@@ -333,10 +244,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart1 = [
   ),
 
   /// Datasource interfaces with many single-field getters need a batch loader.
-  ///
-  /// Why: An interface with 5+ async `getX()` / `isX()` methods forces every
-  /// screen that needs settings to fire N storage reads in series. Add a
-  /// `loadAll()` / `loadSettings()` aggregator that returns a single object.
   scannerRule(
     code: const LintCode(
       'datasource_missing_batch_loader',
@@ -493,9 +400,7 @@ void _scanBlockingFunctionExecutions(ScannerRuleReporter reporter, SourceScanner
   }
 }
 
-/// Long-running remote calls that make the client wait for backend completion
-/// (networking.md "Long-Running Remote Work"): a resolved `bool waitForCompletion`
-/// parameter passed `true` on a destructive/batch call or inside such a method.
+/// Long-running remote calls that make the client wait for backend completion (networking.md "Long-Running Remote Work"): a resolved `bool waitForCompletion` parameter passed `true` on a destructive/batch call or inside such a method.
 final class _CompletionWaitVisitor extends RecursiveAstVisitor<void> {
   final calls = <MethodInvocation>[];
 

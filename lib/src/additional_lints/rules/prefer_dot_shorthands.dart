@@ -10,8 +10,7 @@ import 'package:analyzer/dart/element/type_system.dart';
 import 'package:analyzer/dart/element/type_visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-/// Prefers Dart's dot shorthand for enum values, static members and named constructors
-/// whenever an existing context supplies the type. Unnamed constructor calls keep the type.
+/// Prefers Dart's dot shorthand for enum values, static members and named constructors whenever an existing context supplies the type. Unnamed constructor calls keep the type.
 final class PreferDotShorthands extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_dot_shorthands',

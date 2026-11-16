@@ -10,11 +10,6 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> notifierSourceRules = [
   /// Do not cache stable repositories/services in generated notifiers.
-  ///
-  /// Why: Riverpod provider caching is the dependency SSOT. A notifier-local
-  /// `_repository` / `_service` field creates a second lifecycle and commonly
-  /// leads to null short-circuits or stale dependencies. Resolve deps lazily
-  /// with `ref.read` through a stateless helper/mixin instead.
   scannerRule(
     code: const LintCode(
       'notifier_local_dependency_cache',
@@ -35,9 +30,6 @@ final List<ScannerRule> notifierSourceRules = [
   ),
 
   /// Mutation methods must resolve dependencies before writes or awaits.
-  ///
-  /// Why: Flags Notifier mutation methods that use repositories or provider reads without
-  /// capturing their operation in a final local before the first state write or await.
   scannerRule(
     code: const LintCode(
       'notifier_ensure_deps',
@@ -59,10 +51,6 @@ final List<ScannerRule> notifierSourceRules = [
   ),
 
   /// Do not store a Ref field in notifiers.
-  ///
-  /// Why: Generated notifiers already expose `ref` from their base class. A
-  /// stored `Ref` field duplicates it and can outlive the provider element that
-  /// owns it. Use the inherited `ref` directly.
   scannerRule(
     code: const LintCode(
       'notifier_stored_ref_field',
@@ -83,10 +71,6 @@ final List<ScannerRule> notifierSourceRules = [
   ),
 
   /// Keep ref.watch and ref.listen in a notifier's build().
-  ///
-  /// Why: Notifier methods read dependencies with ref.read. ref.watch belongs in
-  /// build() when the notifier rebuilds from another provider, and ref.listen
-  /// belongs in build() for side effects tied to provider changes.
   scannerRule(
     code: const LintCode(
       'notifier_watch_method',
@@ -113,10 +97,6 @@ final List<ScannerRule> notifierSourceRules = [
   ),
 
   /// Dispose notifier Timer fields with ref.onDispose.
-  ///
-  /// Why: performance.md requires timers owned by a notifier to be disposed via
-  /// `ref.onDispose()`. A `Timer` field in a notifier with no `ref.onDispose`
-  /// keeps firing after the provider is disposed.
   scannerRule(
     code: const LintCode(
       'notifier_timer_without_on_dispose',

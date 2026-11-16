@@ -5,8 +5,7 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 import 'package:flutter_skill_lints/src/additional_lints/correction_producer_utils.dart';
 
-/// Fix that replaces `useMemoized(() => callback, keys)` with
-/// `useCallback(callback, keys)`.
+/// Fix that replaces `useMemoized(() => callback, keys)` with `useCallback(callback, keys)`.
 class PreferUseCallbackFix extends SingleLocationCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.preferUseCallback',

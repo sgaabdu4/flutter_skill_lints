@@ -8,24 +8,6 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
 /// Warns when test matchers are used with incompatible types in `expect()`.
-///
-/// Using incorrect matchers can lead to tests that always pass (hiding bugs)
-/// or always fail (making the matcher redundant).
-///
-/// **Bad:**
-/// ```dart
-/// expect(42, isNull);         // int cannot be null
-/// expect(42, isEmpty);        // int has no isEmpty property
-/// expect('hello', isList);    // String is not a List
-/// expect(42, hasLength(1));   // int has no length property
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// expect([1, 2], isList);     // List is a List
-/// expect([1, 2], hasLength(2)); // List has length
-/// expect(null, isNull);       // nullable type with isNull
-/// ```
 class AvoidMisusedTestMatchers extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_misused_test_matchers',
@@ -54,8 +36,7 @@ enum _MatcherCategory {
   /// isNull, isNotNull — only meaningful on nullable types.
   nullability,
 
-  /// isEmpty, isNotEmpty — requires types with an isEmpty property
-  /// (String, Iterable, Map).
+  /// isEmpty, isNotEmpty — requires types with an isEmpty property (String, Iterable, Map).
   emptiness,
 
   /// isList — actual must be assignable to List.
@@ -64,8 +45,7 @@ enum _MatcherCategory {
   /// isMap — actual must be assignable to Map.
   isMap,
 
-  /// hasLength — requires types with a length property
-  /// (String, Iterable, Map).
+  /// hasLength — requires types with a length property (String, Iterable, Map).
   hasLength,
 
   /// isZero, isNaN, isPositive, isNegative — requires num types.
@@ -158,8 +138,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     return type.nullabilitySuffix == NullabilitySuffix.question || type is DynamicType;
   }
 
-  /// Returns true if the type has isEmpty/isNotEmpty
-  /// (String, Iterable, Map).
+  /// Returns true if the type has isEmpty/isNotEmpty (String, Iterable, Map).
   static bool _hasEmptinessProperty(DartType type) {
     if (type is! InterfaceType) return false;
     return _isOrSubtypeOf(type, 'Iterable') ||
@@ -179,8 +158,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     return _isOrSubtypeOf(type, 'Map');
   }
 
-  /// Returns true if the type has length property
-  /// (String, Iterable, Map).
+  /// Returns true if the type has length property (String, Iterable, Map).
   static bool _hasLengthProperty(DartType type) {
     if (type is! InterfaceType) return false;
     return _isOrSubtypeOf(type, 'Iterable') ||

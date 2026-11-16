@@ -6,10 +6,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when `mounted` is checked inside a `setState` callback.
-///
-/// Checking `mounted` inside `setState` is too late — if the widget has been
-/// disposed, `setState` itself will throw before the callback runs. The
-/// `mounted` check should be placed *before* calling `setState`.
 class AvoidMountedInSetstate extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_mounted_in_setstate',
@@ -87,8 +83,6 @@ class _MountedFinder extends RecursiveAstVisitor<void> {
   void visitSimpleIdentifier(SimpleIdentifier node) {
     // Bare `mounted` (inherited from State)
     if (node.name == 'mounted') {
-      // Exclude `context.mounted` which is handled by visitPrefixedIdentifier
-      // and property access which is handled by visitPropertyAccess
       final parent = node.parent;
       if (parent is PrefixedIdentifier && parent.identifier == node) return;
       if (parent is PropertyAccess && parent.propertyName == node) return;

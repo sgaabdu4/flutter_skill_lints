@@ -169,8 +169,7 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
     return (parameter: parameter.name?.lexeme ?? fallbackParameter, expression: body.toSource());
   }
 
-  /// Fix: `iterable.fold([], (list, e) { ... })` → `[for (final e in iterable) ...]`
-  /// Note: fold patterns are complex; only fix simple cases.
+  /// Fix: `iterable.fold([], (list, e) { ... })` → `[for (final e in iterable) ...]` Note: fold patterns are complex; only fix simple cases.
   Future<void> _fixFold(ChangeBuilder builder, MethodInvocation node) async {
     final iterable = node.target;
     if (iterable == null) return;
@@ -200,9 +199,7 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Tries to extract the expression from a fold callback body like:
-  /// `(list, e) { list.add(Expr(e)); return list; }`
-  /// Returns the source of the expression added, or null.
+  /// Tries to extract the expression from a fold callback body like: `(list, e) { list.add(Expr(e)); return list; }` Returns the source of the expression added, or null.
   static String? _extractFoldAddExpression(FunctionBody body) {
     if (body is! BlockFunctionBody) return null;
 

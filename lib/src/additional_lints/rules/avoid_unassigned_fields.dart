@@ -4,8 +4,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/unassigned_field_analysis.dart';
 
-/// Warns when an instance field is not assigned by each local generative
-/// constructor.
+/// Warns when an instance field is not assigned by each local generative constructor.
 final class AvoidUnassignedFields extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_unassigned_fields',

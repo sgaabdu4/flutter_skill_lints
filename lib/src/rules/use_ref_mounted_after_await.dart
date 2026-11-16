@@ -7,9 +7,6 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/mounted_guard_utils.dart';
 
 /// Don't use ref or state after an await in Notifier methods without checking ref.mounted.
-///
-/// Why: Requires ref.mounted guards after async gaps in Riverpod Notifier methods. Add 'if
-/// (!ref.mounted) return;' immediately after the await.
 final class UseRefMountedAfterAwait extends GeneratedMethodDeclarationCheckRule {
   static const LintCode code = LintCode(
     'use_ref_mounted_after_await',

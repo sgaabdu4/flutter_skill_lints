@@ -7,9 +7,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Suggests using `ConstrainedBox` instead of `Container` with only constraints.
-///
-/// The dedicated widget makes constraint intent explicit and avoids a generic
-/// `Container` when no decoration, padding, or color is needed.
 class PreferConstrainedBoxOverContainer extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'prefer_constrained_box_over_container',

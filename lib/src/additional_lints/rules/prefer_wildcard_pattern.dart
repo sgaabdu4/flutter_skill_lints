@@ -6,26 +6,6 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 /// Warns when `Object()` is used as a pattern instead of the wildcard `_`.
-///
-/// Using `Object()` without field destructuring is equivalent to `_` but less
-/// idiomatic. The wildcard pattern `_` is clearer and more concise for matching
-/// any value.
-///
-/// **BAD:**
-/// ```dart
-/// final value = switch (object) {
-///   WithField() => 'good',
-///   Object() => 'bad',
-/// };
-/// ```
-///
-/// **GOOD:**
-/// ```dart
-/// final value = switch (object) {
-///   WithField() => 'good',
-///   _ => 'good',
-/// };
-/// ```
 class PreferWildcardPattern extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_wildcard_pattern',

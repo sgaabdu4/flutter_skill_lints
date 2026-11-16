@@ -6,13 +6,7 @@ import 'package:flutter_skill_lints/src/additional_lints/disposal_utils.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when a widget State field that has a disposal method (`dispose`,
-/// `close`, or `cancel`) is not cleaned up in the `dispose()` method.
-///
-/// Disposable resources such as `AnimationController`, `TextEditingController`,
-/// `StreamController`, `StreamSubscription`, `FocusNode`, `Timer`, etc. must
-/// be properly disposed/closed/cancelled in `dispose()` to prevent memory
-/// leaks.
+/// Warns when a widget State field that has a disposal method (`dispose`, `close`, or `cancel`) is not cleaned up in the `dispose()` method.
 class DisposeFields extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'dispose_fields',

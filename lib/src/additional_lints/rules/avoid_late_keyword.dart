@@ -6,9 +6,6 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 /// Warns when a declaration uses the `late` keyword.
-///
-/// `State` fields and instance `late final` fields with an initializer (lazy
-/// derived values, as performance.md prescribes) are allowed.
 class AvoidLateKeyword extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_late_keyword',

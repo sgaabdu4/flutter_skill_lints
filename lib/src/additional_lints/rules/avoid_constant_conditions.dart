@@ -4,9 +4,6 @@ import 'package:flutter_skill_lints/src/additional_lints/constant_expression.dar
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a binary comparison has constant operands on both sides.
-///
-/// A condition like `10 == 11` or `SomeClass.value == '1'` always evaluates
-/// to the same result, which usually indicates a typo or a bug.
 class AvoidConstantConditions extends BinaryExpressionCheckRule {
   static const LintCode code = LintCode(
     'avoid_constant_conditions',

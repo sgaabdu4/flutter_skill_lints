@@ -6,9 +6,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when using `map.keys.contains(key)` instead of `map.containsKey(key)`.
-///
-/// `.keys.contains` iterates through all keys and is significantly slower
-/// than the built-in `containsKey` method.
 class AvoidMapKeysContains extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_map_keys_contains',

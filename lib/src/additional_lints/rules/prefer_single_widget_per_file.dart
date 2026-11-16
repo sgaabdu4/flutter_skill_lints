@@ -9,11 +9,6 @@ import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a file contains more than one top-level widget class.
-///
-/// One widget per file keeps imports, ownership, and test targets clear.
-/// In non-test code, public widgets marked `@visibleForTesting` are ignored
-/// because they intentionally expose internals for tests. Test files may keep
-/// private widget helpers without adding visibility annotations.
 class PreferSingleWidgetPerFile extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_single_widget_per_file',

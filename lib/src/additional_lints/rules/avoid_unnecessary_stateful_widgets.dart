@@ -6,8 +6,7 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when a StatefulWidget can be replaced with a StatelessWidget because
-/// its State class has no mutable state, lifecycle methods, or setState calls.
+/// Warns when a StatefulWidget can be replaced with a StatelessWidget because its State class has no mutable state, lifecycle methods, or setState calls.
 class AvoidUnnecessaryStatefulWidgets extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_stateful_widgets',
@@ -81,8 +80,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Checks if the State class has no mutable state, lifecycle methods, or
-  /// setState calls.
+  /// Checks if the State class has no mutable state, lifecycle methods, or setState calls.
   static bool _isUnnecessaryState(ClassDeclaration stateClass) {
     final body = stateClass.body;
     if (body is! BlockClassBody) return false;

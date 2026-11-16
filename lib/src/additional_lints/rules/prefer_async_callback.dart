@@ -4,22 +4,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when `Future<void> Function()` is used instead of `AsyncCallback`.
-///
-/// The `AsyncCallback` typedef from `package:flutter/foundation.dart` is a
-/// cleaner and more readable alternative to the verbose
-/// `Future<void> Function()` type annotation.
-///
-/// ## Example
-///
-/// ❌ Bad:
-/// ```dart
-/// void fn(Future<void> Function() callback) {}
-/// ```
-///
-/// ✅ Good:
-/// ```dart
-/// void fn(AsyncCallback callback) {}
-/// ```
 class PreferAsyncCallback extends GenericFunctionTypeCheckRule {
   static const LintCode code = LintCode(
     'prefer_async_callback',

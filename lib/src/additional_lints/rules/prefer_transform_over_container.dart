@@ -7,9 +7,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Suggests using `Transform` instead of `Container` with only `transform`.
-///
-/// The dedicated widget states the layout intent directly and avoids treating
-/// `Container` as a generic wrapper.
 class PreferTransformOverContainer extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'prefer_transform_over_container',

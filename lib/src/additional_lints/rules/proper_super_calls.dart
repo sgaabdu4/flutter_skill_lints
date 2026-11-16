@@ -4,16 +4,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Warns when `super` lifecycle methods are called in the wrong order
-/// inside a `State` subclass.
-///
-/// **Early-execution methods** (`initState`, `didUpdateWidget`, `activate`,
-/// `didChangeDependencies`, `reassemble`) must call `super` first.
-///
-/// **Late-execution methods** (`deactivate`, `dispose`) must call `super` last.
-///
-/// Calling `super` at the wrong position can lead to bugs where properties
-/// are not yet initialized or have already been disposed.
+/// Warns when `super` lifecycle methods are called in the wrong order inside a `State` subclass.
 class ProperSuperCalls extends MethodDeclarationRule {
   static const LintCode code = LintCode(
     'proper_super_calls',
@@ -99,8 +90,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Returns the index of the statement containing `super.<methodName>()`,
-  /// or -1 if not found.
+  /// Returns the index of the statement containing `super.<methodName>()`, or -1 if not found.
   static int _findSuperCallIndex(NodeList<Statement> statements, String methodName) {
     for (var i = 0; i < statements.length; i++) {
       if (_isSuperCall(statements[i], methodName)) return i;

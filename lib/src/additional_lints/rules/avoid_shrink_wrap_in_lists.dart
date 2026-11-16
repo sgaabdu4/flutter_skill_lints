@@ -6,10 +6,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when a `ListView` uses `shrinkWrap: true`.
-///
-/// Using `shrinkWrap` in lists is expensive performance-wise because the
-/// list must be fully laid out to determine its size. Prefer using slivers
-/// via `CustomScrollView` with `SliverList` for better performance.
 class AvoidShrinkWrapInLists extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_shrink_wrap_in_lists',

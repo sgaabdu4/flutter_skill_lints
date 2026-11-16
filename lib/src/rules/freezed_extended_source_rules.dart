@@ -4,9 +4,6 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> freezedExtendedSourceRules = [
   /// Freezed classes with custom members need a private constructor.
-  ///
-  /// Why: Flags Freezed classes with custom getters/methods but no private constructor. Add
-  /// const ClassName._(); before custom getters or methods.
   scannerRule(
     code: const LintCode(
       'freezed_missing_private_constructor',

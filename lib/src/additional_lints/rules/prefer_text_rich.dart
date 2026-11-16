@@ -6,9 +6,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when RichText is used instead of Text.rich.
-///
-/// RichText does not handle text scaling well. Prefer Text.rich
-/// for better accessibility support.
 class PreferTextRich extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_text_rich',

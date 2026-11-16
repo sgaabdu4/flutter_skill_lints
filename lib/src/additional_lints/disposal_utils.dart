@@ -34,11 +34,7 @@ MethodDeclaration? findDisposeMethod(BlockClassBody body) {
   return null;
 }
 
-/// Returns the expected cleanup method name for a type, or `null` if the
-/// type has no cleanup method.
-///
-/// Checks the type itself and all supertypes for methods named `dispose`,
-/// `close`, or `cancel` (in that priority order).
+/// Returns the expected cleanup method name for a type, or `null` if the type has no cleanup method.
 String? findCleanupMethod(DartType type) {
   if (type is! InterfaceType) return null;
 

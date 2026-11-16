@@ -7,10 +7,6 @@ import 'package:flutter_skill_lints/src/additional_lints/riverpod_consumer_check
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when `ref.watch()` is used outside a widget `build()` method.
-///
-/// `ref.watch` subscribes the current build to provider changes. Outside build
-/// it either has no rebuild target or creates a dependency in a callback/life
-/// cycle method where `ref.read` or `ref.listen` is the intended operation.
 class AvoidRefWatchOutsideBuild extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_ref_watch_outside_build',

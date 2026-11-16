@@ -4,13 +4,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/riverpod_consumer_checkers.dart';
 
-/// Warns when `ref.read()` is called inside a `build()` method of a
-/// Riverpod consumer widget or consumer state class.
-///
-/// `ref.read` reads the provider value once and does not listen for changes.
-/// Using it inside `build()` means the widget won't rebuild when the
-/// provider's value changes. Use `ref.watch()` instead, or move
-/// `ref.read()` into callbacks/user interactions that intentionally read once.
+/// Warns when `ref.read()` is called inside a `build()` method of a Riverpod consumer widget or consumer state class.
 class AvoidRefReadInsideBuild extends MethodDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_ref_read_inside_build',
@@ -50,9 +44,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 }
 
 /// Recursively searches for `ref.read(...)` calls inside a build body.
-///
-/// Stops at function boundaries (closures/lambdas) because `ref.read()`
-/// inside event handlers like `onPressed: () => ref.read(...)` is intentional.
 class _RefReadFinder extends RecursiveAstVisitor<void> {
   final AvoidRefReadInsideBuild rule;
 

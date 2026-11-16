@@ -3,8 +3,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Warns when a Future-producing expression statement is neither awaited nor
-/// otherwise handled.
+/// Warns when a Future-producing expression statement is neither awaited nor otherwise handled.
 final class AvoidMissedCalls extends ExpressionStatementCheckRule {
   static const LintCode code = LintCode(
     'avoid_missed_calls',

@@ -9,11 +9,6 @@ import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when a Flexible or Expanded widget is used outside a Flex widget.
-///
-/// Stateless and stateful widgets may compose the path to the Flex parent.
-/// Report only a proven incompatible render-object or scroll-view parent; a
-/// constructor's source nesting alone cannot establish an extracted widget's
-/// runtime parent.
 class AvoidFlexibleOutsideFlex extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_flexible_outside_flex',

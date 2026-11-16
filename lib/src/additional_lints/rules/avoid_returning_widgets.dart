@@ -11,17 +11,6 @@ import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a function, method, or getter returns a Widget or Widget collection.
-///
-/// Extracting widgets to helper methods is a Flutter anti-pattern because
-/// Flutter rebuilds the widget tree by calling the function every time,
-/// which prevents framework optimizations. Instead, extract widgets into
-/// separate widget classes.
-///
-/// The `build()` override method is exempted since it is the standard
-/// way to build widgets. Members of an extension on a resolved Widget
-/// collection (`extension WidgetListX on List<Widget>`) that return a Widget
-/// collection are collection utilities such as the skill's `separatedBy`
-/// (collections-helpers.md), not `_buildXxx()` helpers (performance.md:27).
 class AvoidReturningWidgets extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_returning_widgets',

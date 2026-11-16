@@ -4,8 +4,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Matches hook function names: starts with `use` (or `_use`) followed by
-/// an uppercase letter or digit (to avoid matching words like "user").
+/// Matches hook function names: starts with `use` (or `_use`) followed by an uppercase letter or digit (to avoid matching words like "user").
 final hookNameRegex = RegExp('^_?use[0-9A-Z]');
 
 const hookWidgetChecker = TypeChecker.any([

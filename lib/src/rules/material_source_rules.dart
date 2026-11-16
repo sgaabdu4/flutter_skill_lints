@@ -3,11 +3,6 @@ import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> materialSourceRules = [
   /// Random widgets must not create raw Material/Ink surfaces.
-  ///
-  /// Why: `Material`, `Ink`, and `InkWell` define surface, ink, clipping,
-  /// ripple, and tap policy. Keep that policy in app shell/theme/atoms/dedicated
-  /// primitives, not in arbitrary molecules, organisms, screens, dialogs, or
-  /// sheets.
   scannerRule(
     code: const LintCode(
       'widget_material_boundary',
@@ -31,10 +26,6 @@ final List<ScannerRule> materialSourceRules = [
   ),
 
   /// Atoms are the lowest widget layer and must not depend upward.
-  ///
-  /// Why: atoms may own Material/Ink policy, so they must be concrete,
-  /// self-contained primitives. Importing molecules, organisms, templates, or
-  /// feature presentation widgets turns the atom into a boundary bypass.
   scannerRule(
     code: const LintCode(
       'atom_widget_layer_dependency',

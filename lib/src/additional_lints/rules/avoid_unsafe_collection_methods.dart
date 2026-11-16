@@ -10,9 +10,6 @@ import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Reports `first` and `single` reads that can throw on empty iterables.
-///
-/// Test files are skipped: a `StateError` there fails the test, which is the
-/// intended outcome (testing.md reads `.first`/`.single` in expectations).
 class AvoidUnsafeCollectionMethods extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_unsafe_collection_methods',

@@ -7,9 +7,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Suggests using `Center` instead of `Align` with center alignment.
-///
-/// `Center` communicates the common centered-layout case directly and avoids a
-/// more general alignment wrapper.
 class PreferCenterOverAlign extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'prefer_center_over_align',

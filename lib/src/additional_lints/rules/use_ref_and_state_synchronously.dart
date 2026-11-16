@@ -7,11 +7,7 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/riverpod_type_checkers.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart' hide containsAwait;
 
-/// Warns when `ref` or `state` is accessed after an `await` point inside a
-/// Riverpod Notifier method without checking `ref.mounted`.
-///
-/// If the notifier is disposed before the async operation completes, accessing
-/// `ref` or `state` will throw an `UnmountedRefException`.
+/// Warns when `ref` or `state` is accessed after an `await` point inside a Riverpod Notifier method without checking `ref.mounted`.
 class UseRefAndStateSynchronously extends MethodDeclarationRule {
   static const LintCode code = LintCode(
     'use_ref_and_state_synchronously',
@@ -72,14 +68,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 }
 
 /// Finds `ref` and `state` usages in AST nodes.
-///
-/// Reports:
-/// - `ref.read(...)`, `ref.watch(...)`, `ref.listen(...)`, etc.
-/// - `ref.someProperty` (PrefixedIdentifier)
-/// - Bare `ref` identifier
-/// - `state = ...` assignment
-/// - `state.someProperty` access
-/// - Bare `state` identifier
 class _RefStateFinder extends RecursiveAstVisitor<void> {
   final UseRefAndStateSynchronously rule;
 
@@ -119,8 +107,6 @@ class _RefStateFinder extends RecursiveAstVisitor<void> {
       return;
     }
 
-    // Skip when part of a PrefixedIdentifier, PropertyAccess, or
-    // MethodInvocation (those visitors handle reporting instead)
     if (isExpressionTargetIdentifier(node)) return;
 
     rule.reportAtNode(node);

@@ -29,9 +29,6 @@ const _anyNotifierChecker = TypeChecker.any([
 const _asyncDataChecker = TypeChecker.fromName('AsyncData', packageName: 'riverpod');
 
 /// Whether [element] is an instance getter or method of the gen-l10n class.
-///
-/// The localizations class is identified by the gen-l10n fingerprint: it (or a
-/// supertype) declares a static `LocalizationsDelegate` field.
 bool _isLocalizedMember(Element? element) {
   if (element is! ExecutableElement || element.isStatic) return false;
   final owner = element.enclosingElement;
@@ -56,9 +53,6 @@ bool _isLocalizedRead(Expression expression) {
 }
 
 /// Use ARB placeholders instead of concatenating localized strings.
-///
-/// Why: localization.md requires placeholders for runtime values and forbids
-/// concatenating localized strings; word order differs between locales.
 final class L10nStringConcatenation extends AnalysisRule {
   static const LintCode code = LintCode(
     'l10n_string_concatenation',
@@ -117,13 +111,6 @@ final class _ConcatenationVisitor extends SimpleAstVisitor<void> {
 }
 
 /// Notifiers hold semantic state, not user-facing copy.
-///
-/// Why: localization.md forbids storing localized copy in notifiers; the UI
-/// renders copy from semantic state. Reports AppLocalizations reads inside
-/// Riverpod notifiers, and user-facing string literals returned from `build`
-/// or assigned to `state` (directly, through `AsyncData`, conditionals, or
-/// user-facing named arguments). Values that reach state indirectly through
-/// local variables or helper calls are not tracked.
 final class L10nNotifierLocalizedCopy extends AnalysisRule {
   static const LintCode code = LintCode(
     'l10n_notifier_localized_copy',

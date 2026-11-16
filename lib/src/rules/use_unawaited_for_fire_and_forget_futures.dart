@@ -4,12 +4,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Mark intentionally discarded callback Futures with unawaited.
-///
-/// Why: `discarded_futures` correctly flags `VoidCallback` bodies that create
-/// a `Future` and drop it. Wrap intentional fire-and-forget work in
-/// `unawaited(...)`. For reusable utilities, return `Future<void>` and await
-/// `Future.wait(...)` so callers can choose whether to await or explicitly
-/// launch the work in the background.
 final class UseUnawaitedForFireAndForgetFutures extends GeneratedExpressionStatementCheckRule {
   static const LintCode code = LintCode(
     'use_unawaited_for_fire_and_forget_futures',

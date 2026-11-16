@@ -5,8 +5,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Warns when RenderObject setters invalidate layout or paint without an
-/// equality guard.
+/// Warns when RenderObject setters invalidate layout or paint without an equality guard.
 final class CheckForEqualsInRenderObjectSetters extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'check_for_equals_in_render_object_setters',

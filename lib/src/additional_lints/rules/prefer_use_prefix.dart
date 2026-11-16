@@ -7,11 +7,7 @@ import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart'
 import 'package:flutter_skill_lints/src/additional_lints/hook_detection.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-/// Warns when a function that calls hooks does not follow the `use` prefix
-/// naming convention.
-///
-/// Custom hooks must start with `use` (or `_use` for private functions) so
-/// that the hooks framework and other lint rules can identify them as hooks.
+/// Warns when a function that calls hooks does not follow the `use` prefix naming convention.
 class PreferUsePrefix extends FunctionAndMethodDeclarationRule {
   static const LintCode code = LintCode(
     'prefer_use_prefix',

@@ -4,11 +4,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Warns when an outer BuildContext is used inside a nested builder callback
-/// that has its own BuildContext parameter available.
-///
-/// Using the closest context keeps inherited lookups and navigation tied to the
-/// subtree created by the builder.
+/// Warns when an outer BuildContext is used inside a nested builder callback that has its own BuildContext parameter available.
 class UseClosestBuildContext extends MethodDeclarationRule {
   static const LintCode code = LintCode(
     'use_closest_build_context',
@@ -76,8 +72,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Recursively searches for nested function expressions that have their own
-/// BuildContext parameter but where the outer context name is referenced.
+/// Recursively searches for nested function expressions that have their own BuildContext parameter but where the outer context name is referenced.
 class _NestedContextFinder extends RecursiveAstVisitor<void> {
   final UseClosestBuildContext rule;
   final String outerContextName;
@@ -100,8 +95,6 @@ class _NestedContextFinder extends RecursiveAstVisitor<void> {
     if (innerContextParam == null) return;
 
     final innerContextName = innerContextParam.name?.lexeme;
-    // If the inner param has the same name as the outer one, the outer is
-    // shadowed and can't be referenced — no issue.
     if (innerContextName == outerContextName) return;
     if (innerContextName == '_') return;
 
@@ -129,8 +122,6 @@ class _OuterContextUsageFinder extends RecursiveAstVisitor<void> {
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
     if (node.name == outerContextName) {
-      // Exclude when part of a PrefixedIdentifier or PropertyAccess
-      // (already handled by those visitors)
       final parent = node.parent;
       if (parent is PrefixedIdentifier && parent.prefix == node) {
         // This is the prefix — still a usage of the outer context
@@ -144,8 +135,6 @@ class _OuterContextUsageFinder extends RecursiveAstVisitor<void> {
     super.visitSimpleIdentifier(node);
   }
 
-  // Stop at further nested closures that have their own BuildContext param,
-  // to avoid false positives from deeper nesting levels
   @override
   void visitFunctionExpression(FunctionExpression node) {
     final parameters = node.parameters?.parameters;

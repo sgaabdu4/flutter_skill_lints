@@ -6,9 +6,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when an Image widget is wrapped in an Opacity widget.
-///
-/// The Image widget has a dedicated `opacity` parameter that is more
-/// efficient than wrapping the widget in an Opacity widget.
 class AvoidIncorrectImageOpacity extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_incorrect_image_opacity',

@@ -3,8 +3,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:flutter_skill_lints/src/additional_lints/correction_producer_utils.dart';
 
-/// Fix that adds `if (!ref.mounted) return;` before ref/state access after
-/// an async gap.
+/// Fix that adds `if (!ref.mounted) return;` before ref/state access after an async gap.
 class UseRefAndStateSynchronouslyFix extends SingleLocationCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.useRefAndStateSynchronously',

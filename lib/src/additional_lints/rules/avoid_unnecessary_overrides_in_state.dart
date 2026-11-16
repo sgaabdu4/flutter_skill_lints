@@ -6,8 +6,7 @@ import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart'
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when a `State` class contains method overrides that only call the
-/// super implementation without any additional logic.
+/// Warns when a `State` class contains method overrides that only call the super implementation without any additional logic.
 class AvoidUnnecessaryOverridesInState extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_overrides_in_state',

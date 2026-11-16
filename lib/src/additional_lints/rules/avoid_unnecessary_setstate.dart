@@ -6,16 +6,7 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when `setState` is called directly inside `initState`,
-/// `didUpdateWidget`, or `build` methods in a `State` subclass.
-///
-/// In `initState` and `didUpdateWidget`, calling `setState` is unnecessary
-/// because the framework will call `build` after these methods return anyway.
-/// In `build`, calling `setState` triggers an additional rebuild which causes
-/// performance issues.
-///
-/// For event handler callbacks (onPressed, onTap, etc.) inside `build`,
-/// `setState` is allowed since those run asynchronously.
+/// Warns when `setState` is called directly inside `initState`, `didUpdateWidget`, or `build` methods in a `State` subclass.
 class AvoidUnnecessarySetstate extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_setstate',
@@ -65,8 +56,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(node, arguments: [methodName]);
   }
 
-  /// Walks up the AST once to find both the nearest lifecycle method and
-  /// the enclosing class declaration, stopping at function boundaries.
+  /// Walks up the AST once to find both the nearest lifecycle method and the enclosing class declaration, stopping at function boundaries.
   static ({MethodDeclaration? method, ClassDeclaration? classDecl}) _findLifecycleMethodAndClass(
     AstNode node,
   ) {
@@ -87,28 +77,13 @@ class _Visitor extends SimpleAstVisitor<void> {
     return null;
   }
 
-  /// Checks whether the setState call is inside a closure that is passed
-  /// as a named argument (i.e., an event handler like onPressed, onTap).
-  ///
-  /// This allows patterns like:
-  /// ```dart
-  /// Widget build(BuildContext context) {
-  ///   return ElevatedButton(
-  ///     onPressed: () {
-  ///       setState(() { ... }); // OK — this is an event handler
-  ///     },
-  ///     child: Text('Press'),
-  ///   );
-  /// }
-  /// ```
+  /// Checks whether the setState call is inside a closure that is passed as a named argument (i.e., an event handler like onPressed, onTap).
   static bool _isInsideEventHandlerCallback(AstNode node) {
     AstNode? current = node.parent;
     while (current != null) {
       // If we hit a MethodDeclaration, we've exited the closure scope
       if (current is MethodDeclaration) return false;
 
-      // Check if we're inside a FunctionExpression that is the value of
-      // a NamedArgument (e.g., onPressed: () { ... })
       if (current is FunctionExpression) {
         final parent = current.parent;
         if (parent is NamedArgument) return true;

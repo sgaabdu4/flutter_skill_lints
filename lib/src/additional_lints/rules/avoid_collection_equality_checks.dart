@@ -7,13 +7,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when mutable collections are compared with `==` or `!=`.
-///
-/// Collections in Dart have no inherent deep equality — two lists, sets, or
-/// maps are only equal when they are the same instance. Comparing them with
-/// `==` almost never produces the intended result.
-///
-/// Use `DeepCollectionEquality().equals()` from the `collection` package or
-/// a type-specific equality helper instead.
 class AvoidCollectionEqualityChecks extends BinaryExpressionCheckRule {
   static const LintCode code = LintCode(
     'avoid_collection_equality_checks',

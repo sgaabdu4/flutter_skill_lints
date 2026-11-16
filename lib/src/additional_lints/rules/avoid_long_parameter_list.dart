@@ -8,11 +8,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when a parameter list has more than four positional or required
-/// parameters.
-///
-/// Optional named parameters are not counted: they are self-describing at the
-/// call site (for example `Crash.error(e, s, reason: ...)`).
+/// Warns when a parameter list has more than four positional or required parameters.
 class AvoidLongParameterList extends AnalysisRule {
   static const int maxParameters = 4;
 

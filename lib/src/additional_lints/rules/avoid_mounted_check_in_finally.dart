@@ -5,30 +5,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a `finally` block early-returns on a negated `mounted` check.
-///
-/// `return;` inside `finally` swallows any in-flight exception from the
-/// `try` body — the caller never sees it. Dart's built-in
-/// `control_flow_in_finally` lint catches the broad case; this rule
-/// targets the common Riverpod / Flutter shape and offers an auto-fix
-/// that rewrites the early-return into a guard around the trailing
-/// statements.
-///
-/// **Bad:**
-/// ```dart
-/// } finally {
-///   if (!ref.mounted) return;
-///   state = state.copyWith(isResetting: false);
-/// }
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// } finally {
-///   if (ref.mounted) {
-///     state = state.copyWith(isResetting: false);
-///   }
-/// }
-/// ```
 class AvoidMountedCheckInFinally extends TryStatementCheckRule {
   static const LintCode code = LintCode(
     'avoid_mounted_check_in_finally',
@@ -73,10 +49,7 @@ class _MountedReturnFinder extends RecursiveAstVisitor<void> {
   }
 
   @override
-  void visitTryStatement(TryStatement node) {
-    // Nested try/finally is handled by the outer visitor on its own
-    // dispatch — skip here to avoid double-reporting.
-  }
+  void visitTryStatement(TryStatement node) {}
 
   @override
   void visitIfStatement(IfStatement node) {

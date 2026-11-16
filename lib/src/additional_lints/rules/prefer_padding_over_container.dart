@@ -7,9 +7,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Suggests using `Padding` instead of `Container` with only padding or margin.
-///
-/// Dedicated layout widgets make spacing intent explicit and avoid a generic
-/// `Container` when decoration, constraints, or color are not needed.
 class PreferPaddingOverContainer extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'prefer_padding_over_container',

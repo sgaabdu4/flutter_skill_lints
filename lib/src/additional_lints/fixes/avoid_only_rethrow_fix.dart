@@ -6,10 +6,6 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 /// Fix that removes a redundant catch clause that only rethrows.
-///
-/// When the catch clause is the only one and there is no finally block,
-/// the entire try-catch is replaced with just the try body contents.
-/// Otherwise, only the catch clause is removed.
 class AvoidOnlyRethrowFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.avoidOnlyRethrow',

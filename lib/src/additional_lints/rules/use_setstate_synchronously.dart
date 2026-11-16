@@ -7,8 +7,7 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart' show isEnclosedClassAssignableTo;
 
-/// Warns when `setState()` is called after an async gap without a mounted
-/// guard.
+/// Warns when `setState()` is called after an async gap without a mounted guard.
 class UseSetstateSynchronously extends MethodDeclarationRule {
   static const LintCode code = LintCode(
     'use_setstate_synchronously',

@@ -5,9 +5,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a `Stream.listen()` call is not assigned to a variable.
-///
-/// Without storing the returned `StreamSubscription`, you cannot cancel it
-/// later, which may lead to memory leaks.
 class AvoidUnassignedStreamSubscriptions extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_unassigned_stream_subscriptions',
@@ -40,8 +37,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (returnType is! InterfaceType) return;
     if (!_isStreamSubscription(returnType)) return;
 
-    // Only flag if used as an expression statement (not assigned, not returned,
-    // not passed as an argument, etc.)
     if (node.parent is! ExpressionStatement) return;
 
     rule.reportAtNode(node);

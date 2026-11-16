@@ -7,10 +7,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Do not declare private widget classes.
-///
-/// Why: Private widget classes hide composition boundaries and make tests depend on file
-/// internals. Use public widget classes with @visibleForTesting for file-internal widgets,
-/// or move reused widgets to their own files. Private `State<T>` subclasses remain allowed.
 final class AvoidPrivateWidgetClasses extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_private_widget_classes',

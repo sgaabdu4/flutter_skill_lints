@@ -9,9 +9,6 @@ import 'package:flutter_skill_lints/src/additional_lints/hook_detection.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when hooks are used from deferred callbacks or repeated control flow.
-///
-/// This complements `avoid_conditional_hooks`: hooks must execute in the same
-/// order during each build, and callbacks run outside the build hook context.
 class AvoidMisusedHooks extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_misused_hooks',

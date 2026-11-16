@@ -6,8 +6,7 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-/// Requires nullable platform-specific plugin implementations to be resolved
-/// before their members are used.
+/// Requires nullable platform-specific plugin implementations to be resolved before their members are used.
 class ResolvePlatformSpecificImplementationBeforeUse extends AnalysisRule {
   static const LintCode code = LintCode(
     'resolve_platform_specific_implementation_before_use',

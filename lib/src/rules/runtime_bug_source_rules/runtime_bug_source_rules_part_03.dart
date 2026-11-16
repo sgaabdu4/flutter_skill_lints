@@ -26,8 +26,7 @@ void _reportOffsets(ScannerRuleReporter reporter, SourceScannerContext context, 
   }
 }
 
-/// Collects id lookups that run repeatedly: inside a loop, a collection-for,
-/// an iteration callback over a collection, or a widget build path.
+/// Collects id lookups that run repeatedly: inside a loop, a collection-for, an iteration callback over a collection, or a widget build path.
 final class _RepeatedIdLookupVisitor extends RecursiveAstVisitor<void> {
   final offsets = <int>[];
 
@@ -47,7 +46,6 @@ final class _RepeatedIdLookupVisitor extends RecursiveAstVisitor<void> {
 }
 
 /// Collects id lookups keyed by the variable of an enclosing for-in loop, e.g.
-/// `for (final change in changes) items.indexWhere((i) => i.id == change.itemId)`.
 final class _NestedIdLookupVisitor extends RecursiveAstVisitor<void> {
   final offsets = <int>[];
 
@@ -94,8 +92,7 @@ final class _ReferenceFinder extends RecursiveAstVisitor<void> {
   }
 }
 
-/// `items.firstWhere((item) => item.id == ...)` or `indexWhere` on an Iterable
-/// whose predicate compares the element's `id`.
+/// `items.firstWhere((item) => item.id == ...)` or `indexWhere` on an Iterable whose predicate compares the element's `id`.
 bool _isLinearIdLookup(MethodInvocation node) {
   final name = node.methodName.name;
   if (name != 'firstWhere' && name != 'indexWhere') return false;
@@ -111,7 +108,6 @@ bool _isLinearIdLookup(MethodInvocation node) {
 }
 
 /// A `for` loop whose body compares the loop item's `id`, e.g.
-/// `for (final item in items) { if (item.id == id) return item; }`.
 bool _isManualIdLookupLoop(ForLoopParts parts, Statement body) {
   final loopVariable = switch (parts) {
     ForEachPartsWithDeclaration(:final loopVariable) => loopVariable.declaredFragment?.element,
@@ -161,9 +157,7 @@ bool _isIdOf(Expression expression, Element? variable) {
   };
 }
 
-/// Walks from [node] to its enclosing declaration and reports whether it runs
-/// once per element of another collection, on every widget build, or on every
-/// getter access (debounce-gate-batch.md "Collection getters and id lookup").
+/// Walks from [node] to its enclosing declaration and reports whether it runs once per element of another collection, on every widget build, or on every getter access (debounce-gate-batch.md "Collection getters and id lookup").
 bool _runsRepeatedly(AstNode node) {
   AstNode child = node;
   for (var parent = node.parent; parent != null; child = parent, parent = parent.parent) {
@@ -190,8 +184,7 @@ bool _runsRepeatedly(AstNode node) {
   return false;
 }
 
-/// A positional callback passed to a collection method that invokes it once
-/// per element, such as `map`, `where`, `forEach`, `any` or `fold`.
+/// A positional callback passed to a collection method that invokes it once per element, such as `map`, `where`, `forEach`, `any` or `fold`.
 bool _isIterationCallback(FunctionExpression function) {
   final arguments = function.parent;
   final invocation = arguments?.parent;

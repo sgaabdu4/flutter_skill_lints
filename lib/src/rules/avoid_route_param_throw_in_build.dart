@@ -8,10 +8,6 @@ import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Don't throw from route-param lookups in build().
-///
-/// Why: Bans throwing lookups inside a Widget `build()`: `firstWhere` with a
-/// throwing or missing `orElse`, and a `throw` evaluated by the build itself.
-/// Use a nullable by-id provider and render fallback UI instead.
 final class AvoidRouteParamThrowInBuild extends GeneratedMethodInvocationCheckRule {
   static const LintCode code = LintCode(
     'avoid_route_param_throw_in_build',

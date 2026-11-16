@@ -6,8 +6,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that adds the accessed property to the existing destructuring pattern
-/// and replaces the property access with the destructured variable name.
+/// Fix that adds the accessed property to the existing destructuring pattern and replaces the property access with the destructured variable name.
 class UseExistingDestructuringFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.useExistingDestructuring',
@@ -70,8 +69,7 @@ class UseExistingDestructuringFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Finds the destructuring pattern for the given source variable in the
-  /// enclosing block.
+  /// Finds the destructuring pattern for the given source variable in the enclosing block.
   static DartPattern? _findDestructuringPattern(AstNode node, String sourceName) {
     // Walk up to find the enclosing Block
     AstNode? current = node.parent;

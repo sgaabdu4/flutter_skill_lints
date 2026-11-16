@@ -36,9 +36,35 @@ abstract class FixRuleTest extends AnalysisRuleTest {
       selectionOffset: diagnostic.offset,
       selectionLength: diagnostic.length,
     );
+    return _editedSource(source, file.path, create(context));
+  }
+
+  Future<String?> applyAssist(
+    String source,
+    FixFactory create, {
+    required int offset,
+    int length = 0,
+  }) async {
+    final file = newFile(testFilePath, source);
+    final unit = await resolveFile(file.path);
+    final libraryResult = await (await session).getResolvedLibrary(file.path);
+    final context = CorrectionProducerContext.createResolved(
+      libraryResult: libraryResult as ResolvedLibraryResult,
+      unitResult: unit,
+      selectionOffset: offset,
+      selectionLength: length,
+    );
+    return _editedSource(source, file.path, create(context));
+  }
+
+  Future<String?> _editedSource(
+    String source,
+    String path,
+    ResolvedCorrectionProducer producer,
+  ) async {
     final builder = ChangeBuilder(session: await session);
-    await create(context).compute(builder);
-    final edits = builder.sourceChange.getFileEdit(file.path)?.edits;
+    await producer.compute(builder);
+    final edits = builder.sourceChange.getFileEdit(path)?.edits;
     return edits == null ? null : SourceEdit.applySequence(source, edits);
   }
 

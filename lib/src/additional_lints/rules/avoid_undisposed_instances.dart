@@ -8,8 +8,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/disposal_utils.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-/// Warns when a local disposable instance is created and not cleaned up in the
-/// same function body.
+/// Warns when a local disposable instance is created and not cleaned up in the same function body.
 class AvoidUndisposedInstances extends FunctionAndMethodDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_undisposed_instances',

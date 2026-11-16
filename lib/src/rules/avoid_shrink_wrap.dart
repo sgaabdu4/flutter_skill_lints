@@ -7,9 +7,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Avoid shrinkWrap: true.
-///
-/// Why: Bans shrinkWrap: true because it forces expensive layout work. Use slivers or
-/// constrained layouts instead of shrinkWrap.
 final class AvoidShrinkWrap extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_shrink_wrap',

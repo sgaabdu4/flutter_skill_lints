@@ -7,8 +7,7 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
 
-/// Fix that removes the wrapping Padding widget and moves the padding value
-/// to the child widget's padding parameter.
+/// Fix that removes the wrapping Padding widget and moves the padding value to the child widget's padding parameter.
 class AvoidWrappingInPaddingFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.avoidWrappingInPadding',

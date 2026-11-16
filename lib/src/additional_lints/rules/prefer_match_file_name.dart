@@ -101,9 +101,7 @@ final class _NamedDeclaration {
 String _expectedFileNameForType(String typeName) =>
     _toSnakeCase(_normalizeMixedCaseWords(typeName));
 
-/// The skill names contract files like `i_order_repository.dart` for
-/// `abstract interface class IOrderRepository` (hive-persistence.md), so an `I` interface
-/// prefix maps to `i_`.
+/// The skill names contract files like `i_order_repository.dart` for `abstract interface class IOrderRepository` (hive-persistence.md), so an `I` interface prefix maps to `i_`.
 String? _interfaceFileName(_NamedDeclaration declaration) {
   final name = declaration.name;
   if (!declaration.isAbstractInterface || name.length < 2) return null;

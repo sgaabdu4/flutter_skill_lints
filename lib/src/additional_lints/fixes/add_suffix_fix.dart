@@ -46,16 +46,10 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
   }
 
   /// Strips a potentially misspelled suffix from [name].
-  ///
-  /// Checks trailing substrings of [name] (with length close to [suffix])
-  /// and removes them if they look like a typo of [suffix] based on
-  /// case-insensitive edit distance.
   static String _stripMisspelledSuffix(String name, String suffix) {
     final suffixLower = suffix.toLowerCase();
     final suffixLen = suffix.length;
 
-    // Check trailing substrings of varying lengths around the suffix length.
-    // A misspelling could be shorter or longer by a few characters.
     for (var len = suffixLen + 2; len >= suffixLen - 2; len--) {
       if (len <= 0 || len >= name.length) continue;
 

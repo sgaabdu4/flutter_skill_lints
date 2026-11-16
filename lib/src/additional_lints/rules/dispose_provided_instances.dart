@@ -11,13 +11,7 @@ import 'package:flutter_skill_lints/src/additional_lints/disposal_utils.dart';
 import 'package:flutter_skill_lints/src/additional_lints/riverpod_type_checkers.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when an instance with a `dispose` method is created inside a Riverpod
-/// provider callback or Notifier `build()` method without a corresponding
-/// `ref.onDispose()` call to clean it up.
-///
-/// Failing to properly dispose of resources can lead to memory leaks. When
-/// objects with cleanup logic are created within providers but never cleaned
-/// up, they retain memory unnecessarily.
+/// Warns when an instance with a `dispose` method is created inside a Riverpod provider callback or Notifier `build()` method without a corresponding `ref.onDispose()` call to clean it up.
 class DisposeProvidedInstances extends AnalysisRule {
   static const LintCode code = LintCode(
     'dispose_provided_instances',
@@ -89,8 +83,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   // --- Shared analysis logic ---
 
-  /// Extracts the first positional argument as a FunctionExpression from
-  /// a provider constructor's argument list.
+  /// Extracts the first positional argument as a FunctionExpression from a provider constructor's argument list.
   static FunctionExpression? _extractProviderCallback(ArgumentList argumentList) {
     final args = argumentList.arguments;
     if (args.isEmpty) return null;
@@ -145,11 +138,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       final name = variable.name;
       final cleanupMethod = variable.cleanupMethod;
 
-      // Check if ref.onDispose is called with this variable's cleanup method
-      // Common patterns:
-      //   ref.onDispose(instance.dispose)
-      //   ref.onDispose(() => instance.dispose())
-      //   ref.onDispose(() { instance.dispose(); })
       if (disposedSources.contains('$name.$cleanupMethod') || disposedSources.contains(name)) {
         continue;
       }
@@ -202,15 +190,8 @@ class _DisposableVariableFinder extends RecursiveAstVisitor<void> {
 }
 
 /// Collects sources disposed via `ref.onDispose(...)`.
-///
-/// Detects patterns like:
-/// - `ref.onDispose(instance.dispose)` → records `instance.dispose`
-/// - `ref.onDispose(instance.close)` → records `instance.close`
-/// - `ref.onDispose(() => instance.dispose())` → records `instance`
-/// - `ref.onDispose(() { instance.dispose(); })` → records `instance`
 class _OnDisposeCollector extends RecursiveAstVisitor<void> {
   /// Set of source patterns that are disposed.
-  /// Contains entries like `instance.dispose` (tear-off) or `instance` (lambda).
   final Set<String> disposedSources = {};
 
   @override
@@ -246,8 +227,6 @@ class _OnDisposeCollector extends RecursiveAstVisitor<void> {
       return;
     }
 
-    // ref.onDispose(() => instance.dispose())
-    // ref.onDispose(() { instance.dispose(); })
     if (arg is FunctionExpression) {
       final callFinder = _CleanupCallFinder();
       arg.body.visitChildren(callFinder);
@@ -256,19 +235,9 @@ class _OnDisposeCollector extends RecursiveAstVisitor<void> {
       }
     }
   }
-
-  // Stop at nested function boundaries
-  @override
-  void visitFunctionExpression(FunctionExpression node) {
-    // But still visit the function expression if it's an argument to onDispose
-    // This is handled via _extractDisposedSource above, so just visit normally
-    // for other cases
-    super.visitFunctionExpression(node);
-  }
 }
 
-/// Finds cleanup method calls (dispose/close/cancel) inside a lambda and
-/// records the target variable name.
+/// Finds cleanup method calls (dispose/close/cancel) inside a lambda and records the target variable name.
 class _CleanupCallFinder extends RecursiveAstVisitor<void> {
   final Set<String> sources = {};
 

@@ -6,9 +6,7 @@ import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart'
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Warns when a widget that supports a `padding` parameter is wrapped in a
-/// `Padding` widget. The padding should be passed directly to the child widget
-/// instead.
+/// Warns when a widget that supports a `padding` parameter is wrapped in a `Padding` widget. The padding should be passed directly to the child widget instead.
 class AvoidWrappingInPadding extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_wrapping_in_padding',

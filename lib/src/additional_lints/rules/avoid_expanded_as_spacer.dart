@@ -5,8 +5,7 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Warns when `Expanded` wraps an empty `SizedBox` or `Container` instead of
-/// using the dedicated `Spacer` widget.
+/// Warns when `Expanded` wraps an empty `SizedBox` or `Container` instead of using the dedicated `Spacer` widget.
 class AvoidExpandedAsSpacer extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_expanded_as_spacer',
@@ -61,8 +60,7 @@ class _Visitor extends InstanceAndMethodVisitor {
     }
   }
 
-  /// Returns true if the expression is an empty SizedBox() or Container() —
-  /// i.e. has no arguments or only a `key` argument.
+  /// Returns true if the expression is an empty SizedBox() or Container() — i.e. has no arguments or only a `key` argument.
   bool _isEmptyWidget(Expression expr) {
     final type = expr.staticType;
     if (type == null) return false;

@@ -48,8 +48,7 @@ bool _isEnumConstant(Expression expression) {
       (element.variable as FieldElement).isEnumConstant;
 }
 
-/// A `context.mounted` check on a captured BuildContext. The State.context getter
-/// itself throws once the State is unmounted, so it cannot guard an async gap.
+/// A `context.mounted` check on a captured BuildContext. The State.context getter itself throws once the State is unmounted, so it cannot guard an async gap.
 bool isCapturedContextAccess(Expression expression) {
   final context = switch (expression) {
     PrefixedIdentifier(:final prefix) => prefix,

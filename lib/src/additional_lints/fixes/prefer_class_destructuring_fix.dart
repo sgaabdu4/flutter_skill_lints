@@ -7,8 +7,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Fix that introduces a class destructuring declaration to replace
-/// multiple property accesses on the same variable.
+/// Fix that introduces a class destructuring declaration to replace multiple property accesses on the same variable.
 class PreferClassDestructuringFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.preferClassDestructuring',

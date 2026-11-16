@@ -6,11 +6,7 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart' show isEnclosedClassAssignableTo;
 
-/// Warns when a method in a `State` subclass contains multiple `setState` calls
-/// that could be merged into a single invocation.
-///
-/// Multiple `setState` calls cause redundant rebuilds. Merging them into one
-/// call is more efficient and keeps state mutations grouped together.
+/// Warns when a method in a `State` subclass contains multiple `setState` calls that could be merged into a single invocation.
 class PreferSingleSetstate extends MethodDeclarationRule {
   static const LintCode code = LintCode(
     'prefer_single_setstate',
@@ -53,8 +49,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Collects `setState` calls at the current method level,
-/// stopping at function boundaries (closures, local functions).
+/// Collects `setState` calls at the current method level, stopping at function boundaries (closures, local functions).
 class _SetStateCollector extends RecursiveAstVisitor<void> {
   final List<MethodInvocation> violations = [];
 
@@ -79,8 +74,6 @@ class _SetStateCollector extends RecursiveAstVisitor<void> {
     }
   }
 
-  // Stop at nested function boundaries — setState inside closures
-  // belongs to a different logical scope.
   @override
   void visitFunctionExpression(FunctionExpression node) {}
 

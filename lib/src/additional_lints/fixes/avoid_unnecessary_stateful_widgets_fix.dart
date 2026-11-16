@@ -9,8 +9,7 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Fix that converts a StatefulWidget to a StatelessWidget by inlining the
-/// build method and removing the State class.
+/// Fix that converts a StatefulWidget to a StatelessWidget by inlining the build method and removing the State class.
 class AvoidUnnecessaryStatefulWidgetsFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.convertStatefulToStatelessWidget',

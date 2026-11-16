@@ -6,8 +6,7 @@ import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart'
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Warns when a `SizedBox` is created with identical `height` and `width`
-/// values. Use `SizedBox.square(dimension: ...)` instead for cleaner code.
+/// Warns when a `SizedBox` is created with identical `height` and `width` values. Use `SizedBox.square(dimension: ...)` instead for cleaner code.
 class PreferSizedBoxSquare extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_sized_box_square',
@@ -44,8 +43,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     final type = node.staticType;
     if (type == null || !_sizedBoxChecker.isExactlyType(type)) return;
-    // MethodInvocation for SizedBox() without type args — skip named
-    // constructors (target would be 'SizedBox', methodName would be 'square')
     if (node.target != null) return;
     _check(type, node.argumentList, node.methodName);
   }

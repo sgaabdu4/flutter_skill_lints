@@ -4,8 +4,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when an extension type uses an unconstrained representation type
-/// parameter.
+/// Warns when an extension type uses an unconstrained representation type parameter.
 class AvoidImplicitlyNullableExtensionTypes extends GeneratedExtensionTypeDeclarationCheckRule {
   static const LintCode code = LintCode(
     'avoid_implicitly_nullable_extension_types',

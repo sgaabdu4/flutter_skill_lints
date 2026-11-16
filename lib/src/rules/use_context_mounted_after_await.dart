@@ -8,9 +8,6 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:flutter_skill_lints/src/mounted_guard_utils.dart';
 
 /// Don't use BuildContext after an await without checking context.mounted.
-///
-/// Why: Requires context.mounted guards before BuildContext use after async gaps. Add 'if
-/// (!context.mounted) return;' before using context after an await.
 final class UseContextMountedAfterAwait extends AnalysisRule {
   static const LintCode code = LintCode(
     'use_context_mounted_after_await',
@@ -58,8 +55,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     _checkBody(node.body);
   }
 
-  /// Each `context` resolves on its own: a captured parameter or local can be
-  /// guarded with `context.mounted`, the State.context getter cannot.
+  /// Each `context` resolves on its own: a captured parameter or local can be guarded with `context.mounted`, the State.context getter cannot.
   void _checkBody(FunctionBody body) {
     if (!body.isAsynchronous) return;
     final scanner = AsyncStatementScanner(

@@ -7,9 +7,7 @@ import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart'
 import 'package:flutter_skill_lints/src/additional_lints/correction_producer_utils.dart';
 import 'package:flutter_skill_lints/src/additional_lints/disposal_utils.dart';
 
-/// Fix that adds `ref.onDispose(instance.dispose)` after the variable
-/// declaration of a disposable instance inside a Riverpod provider or
-/// Notifier build().
+/// Fix that adds `ref.onDispose(instance.dispose)` after the variable declaration of a disposable instance inside a Riverpod provider or Notifier build().
 class DisposeProvidedInstancesFix extends SingleLocationCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.disposeProvidedInstances',

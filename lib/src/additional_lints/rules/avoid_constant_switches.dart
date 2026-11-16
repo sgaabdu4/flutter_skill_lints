@@ -8,9 +8,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/constant_expression.dart';
 
 /// Warns when a switch statement or expression evaluates a constant expression.
-///
-/// A switch on a constant like `switch (SomeClass.constField)` or `switch (42)`
-/// always takes the same branch, which usually indicates a typo or dead logic.
 class AvoidConstantSwitches extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_constant_switches',

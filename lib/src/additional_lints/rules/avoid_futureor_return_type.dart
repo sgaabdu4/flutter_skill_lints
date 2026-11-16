@@ -3,10 +3,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/function_body_rule.dart';
 
 /// Avoids `FutureOr<T>` as a function or method return type.
-///
-/// Effective Dart recommends returning a stable sync or async shape. Accepting
-/// `FutureOr<T>` in parameters or callback return types can be useful, but
-/// returning it makes callers branch or always `await`.
 class AvoidFutureOrReturnType extends GeneratedFunctionAndMethodReturnTypeCheckRule {
   static const LintCode code = LintCode(
     'avoid_futureor_return_type',

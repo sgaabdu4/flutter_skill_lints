@@ -3,8 +3,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-/// Warns when a `copyWith` method does not include all parameters from the
-/// class's default constructor, which can lead to incomplete copies.
+/// Warns when a `copyWith` method does not include all parameters from the class's default constructor, which can lead to incomplete copies.
 class AvoidIncompleteCopyWith extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_incomplete_copy_with',

@@ -7,9 +7,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when multi-child widgets have only a single child.
-///
-/// Dedicated single-child widgets keep the widget tree simpler and avoid a
-/// misleading `children` collection when only one child is present.
 class AvoidSingleChildInMultiChildWidgets extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'avoid_single_child_in_multi_child_widgets',

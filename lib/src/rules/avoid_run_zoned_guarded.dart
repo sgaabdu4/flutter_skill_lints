@@ -4,13 +4,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Avoid `runZonedGuarded` for app startup.
-///
-/// Why: keep startup simple. Call `WidgetsFlutterBinding.ensureInitialized()`,
-/// `await Crash.init()`, then `runApp(...)`. Do not wrap the app in a zone.
-///
-/// Catches direct calls (`runZonedGuarded(...)`) and aliased imports
-/// (`import 'dart:async' as a; a.runZonedGuarded(...)`). Skips method calls whose
-/// receiver is not a `dart:async` import prefix (e.g. `Zone().runZonedGuarded()`).
 final class AvoidRunZonedGuarded extends GeneratedCompilationUnitCheckRule {
   static const LintCode code = LintCode(
     'avoid_run_zoned_guarded',

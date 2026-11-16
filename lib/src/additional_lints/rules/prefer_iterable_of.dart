@@ -5,12 +5,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Suggests using `List.of()` / `Set.of()` instead of `List.from()` /
-/// `Set.from()` when the argument type is already assignable to the target
-/// element type.
-///
-/// `.of()` enforces type safety at compile time, while `.from()` allows
-/// potentially unsafe downcasting checked only at runtime.
+/// Suggests using `List.of()` / `Set.of()` instead of `List.from()` / `Set.from()` when the argument type is already assignable to the target element type.
 class PreferIterableOf extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_iterable_of',
@@ -93,8 +88,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final sourceElementType = iterableElementType(sourceType);
     if (sourceElementType == null) return;
 
-    // If source element type is assignable to target element type,
-    // .of() is safe and preferred
     if (_isAssignable(sourceElementType, targetElementType)) {
       rule.reportAtNode(node, arguments: [typeName]);
     }

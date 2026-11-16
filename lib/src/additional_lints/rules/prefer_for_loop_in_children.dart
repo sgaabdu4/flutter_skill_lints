@@ -8,9 +8,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Warns when functional approaches (`.map().toList()`, `List.generate()`,
-/// `.fold()`, spread with `.map()`) are used to build widget lists instead
-/// of collection-for syntax.
+/// Warns when functional approaches (`.map().toList()`, `List.generate()`, `.fold()`, spread with `.map()`) are used to build widget lists instead of collection-for syntax.
 class PreferForLoopInChildren extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_for_loop_in_children',
@@ -64,8 +62,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // Pattern 3: List.generate(n, (i) => ...) — parsed as MethodInvocation
-    // when no type args
     if (methodName == 'generate') {
       _checkListGenerate(node);
       return;
@@ -74,8 +70,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    // Pattern 3: List<Widget>.generate(n, (i) => ...) — parsed as
-    // InstanceCreationExpression when type args are present
     final constructorName = node.constructorName;
     if (constructorName.name?.name == 'generate') {
       if (_isWidgetCollection(node.staticType) &&
@@ -161,8 +155,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(node);
   }
 
-  /// Pattern 2: `...iterable.map((e) => ...)` inside a list literal,
-  /// including `...iterable.map((e) => ...).toList()`
   void _checkSpreadMap(SpreadElement spread) {
     var expr = spread.expression;
 

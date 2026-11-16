@@ -6,24 +6,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Converts an iterable call to `Iterable.map` with an optional
-/// collect `Iterable.toList`/`Iterable.toSet` to a collection-for idiom.
-///
-/// **Example**:
-///
-/// ```dart
-/// final iterable = [1, 2, 3];
-/// final someList = iterable.map((e) => e * 2).toList();
-/// final someSet = iterable.map((e) => e / 2).toSet();
-/// ```
-///
-/// When assist is applied to `someList` and `someSet` the result is
-///
-/// ```dart
-/// final iterable = [1, 2, 3];
-/// final someList = [for(final e in iterable) e * 2];
-/// final someSet = {for(final e in iterable) e / 2};
-/// ```
+/// Converts an iterable call to `Iterable.map` with an optional collect `Iterable.toList`/`Iterable.toSet` to a collection-for idiom.
 class ConvertIterableMapToCollectionFor extends ResolvedCorrectionProducer {
   static const _assistKind = AssistKind(
     'flutter_skill_lints.assist.convertIterableMapToCollectionFor',

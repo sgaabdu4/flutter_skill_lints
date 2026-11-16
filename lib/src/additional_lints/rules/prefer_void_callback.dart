@@ -4,21 +4,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when `void Function()` is used instead of `VoidCallback`.
-///
-/// The `VoidCallback` typedef from `dart:ui` is a cleaner and more readable
-/// alternative to the verbose `void Function()` type annotation.
-///
-/// ## Example
-///
-/// ❌ Bad:
-/// ```dart
-/// void fn(void Function() callback) {}
-/// ```
-///
-/// ✅ Good:
-/// ```dart
-/// void fn(VoidCallback callback) {}
-/// ```
 class PreferVoidCallback extends GenericFunctionTypeCheckRule {
   static const LintCode code = LintCode(
     'prefer_void_callback',

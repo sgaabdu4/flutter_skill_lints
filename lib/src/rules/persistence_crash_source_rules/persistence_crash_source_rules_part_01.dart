@@ -121,8 +121,7 @@ int? _hiveTypeId(ElementAnnotation? annotation) => _isHiveAnnotation(annotation,
     ? annotation?.computeConstantValue()?.getField('typeId')?.toIntValue()
     : null;
 
-/// The `reservedTypeIds` of a resolved hive_ce `@GenerateAdapters`, or null for any
-/// other annotation.
+/// The `reservedTypeIds` of a resolved hive_ce `@GenerateAdapters`, or null for any other annotation.
 Set<int>? _reservedTypeIds(ElementAnnotation? annotation) {
   if (!_isHiveAnnotation(annotation, 'GenerateAdapters')) return null;
   final reserved = annotation?.computeConstantValue()?.getField('reservedTypeIds')?.toSetValue();
@@ -146,7 +145,6 @@ _HiveFacts _localHiveFacts(LibraryElement library) {
 }
 
 /// Walks same-package libraries depth-first from [roots], visiting each once.
-/// [visit] returns whether to continue into the library's imports and exports.
 void _walkPackageLibraries(
   Iterable<LibraryElement> roots,
   String packageRoot,
@@ -187,8 +185,7 @@ String _packageRoot(SourceScannerContext context) {
   return path.endsWith(context.path) ? path.substring(0, path.length - context.path.length) : path;
 }
 
-/// Import scopes of the defining unit. A generated library (for example the Hive
-/// registrar) is not analyzed, so its own imports stand in for it.
+/// Import scopes of the defining unit. A generated library (for example the Hive registrar) is not analyzed, so its own imports stand in for it.
 List<_HiveImportScope> _hiveImportScopes(CompilationUnit unit, String packageRoot) {
   final scopes = <_HiveImportScope>[];
   for (final directive in unit.directives.whereType<NamespaceDirective>()) {
@@ -236,8 +233,7 @@ bool _meetsFirstInUnit(
     conflicts(first.fact, second.fact) &&
     !scopes.any((scope) => scope.facts.containsAll([first.element, second.element]));
 
-/// Directives where two non-local facts first meet: no single import scope already
-/// contains both, so no deeper analyzed library reports the pair.
+/// Directives where two non-local facts first meet: no single import scope already contains both, so no deeper analyzed library reports the pair.
 Set<NamespaceDirective> _joinDirectives(
   List<_HiveImportScope> scopes,
   Set<Element> localElements,

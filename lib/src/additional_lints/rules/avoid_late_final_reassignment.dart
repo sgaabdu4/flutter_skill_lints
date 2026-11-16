@@ -8,8 +8,7 @@ import 'package:analyzer/error/error.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/unassigned_field_analysis.dart';
 
-/// Warns when a `late final` variable or field is assigned more than once in
-/// the same local body.
+/// Warns when a `late final` variable or field is assigned more than once in the same local body.
 final class AvoidLateFinalReassignment extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_late_final_reassignment',

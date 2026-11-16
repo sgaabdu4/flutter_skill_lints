@@ -7,10 +7,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Use sealed class for Freezed declarations.
-///
-/// Why: The skill requires `sealed class` for every `@freezed` declaration, so a resolved
-/// Freezed annotation on an `abstract` or plain class is reported. Replace it with a sealed
-/// class.
 final class UseSealedFreezedClasses extends AnalysisRule {
   static const LintCode code = LintCode(
     'use_sealed_freezed_classes',

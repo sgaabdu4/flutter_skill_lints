@@ -7,14 +7,7 @@ import 'package:analyzer/error/error.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
 
-/// Warns when a class or mixin overrides a member without adding
-/// implementation or changing the signature.
-///
-/// Detects:
-/// - Methods that only call `super.method(...)` with identical arguments
-/// - Getters that only return `super.getter`
-/// - Setters that only assign `super.setter = value`
-/// - Abstract redeclarations without implementation changes
+/// Warns when a class or mixin overrides a member without adding implementation or changing the signature.
 class AvoidUnnecessaryOverrides extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_overrides',
@@ -91,8 +84,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Checks if a method only calls `super.methodName(...)` passing through
-  /// all parameters in the same order.
+  /// Checks if a method only calls `super.methodName(...)` passing through all parameters in the same order.
   static bool _isOnlySuperCall(MethodDeclaration method, String methodName) {
     final expression = _singleOverrideExpression(method.body);
     if (expression == null) return false;
@@ -121,8 +113,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     };
   }
 
-  /// Checks if a binary operator's right operand is just the method's
-  /// single parameter passed through.
+  /// Checks if a binary operator's right operand is just the method's single parameter passed through.
   static bool _isSingleParamPassThrough(FormalParameterList? params, Expression operand) {
     if (params == null) return false;
     final parameters = params.parameters;
@@ -131,8 +122,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     return paramName != null && operand is SimpleIdentifier && operand.name == paramName;
   }
 
-  /// Checks if the arguments in the call match the method's parameters
-  /// exactly (same order, same names for positional, same names for named).
+  /// Checks if the arguments in the call match the method's parameters exactly (same order, same names for positional, same names for named).
   static bool _areArgsPassThrough(FormalParameterList? params, ArgumentList args) {
     if (params == null) return args.arguments.isEmpty;
 
@@ -199,8 +189,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     };
   }
 
-  /// Checks if an expression is `super.name` (either PropertyAccess or
-  /// PrefixedIdentifier form).
+  /// Checks if an expression is `super.name` (either PropertyAccess or PrefixedIdentifier form).
   static bool _isSuperPropertyAccess(Expression expression, String name) {
     if (expression is PropertyAccess) {
       return expression.target is SuperExpression && expression.propertyName.name == name;

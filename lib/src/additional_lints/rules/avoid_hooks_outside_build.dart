@@ -11,14 +11,6 @@ import 'package:flutter_skill_lints/src/additional_lints/hook_detection.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when hook calls are made outside a hook build context.
-///
-/// Hooks are valid in HookWidget/HookConsumerWidget build methods,
-/// HookBuilder/HookConsumer builders, and custom hook functions whose names
-/// start with `use` or `_use`.
-///
-/// A call counts as a hook only when it resolves to `package:flutter_hooks` or
-/// `package:hooks_riverpod`, or to a `use` function that itself calls hooks, so
-/// `use`-prefixed APIs such as `usePathUrlStrategy()` are not reported.
 class AvoidHooksOutsideBuild extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_hooks_outside_build',

@@ -2,13 +2,6 @@ part of '../runtime_bug_source_rules.dart';
 
 final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
   /// Save callbacks for numeric forms must guard zero/empty input.
-  ///
-  /// Why: A "save" button that persists `amount: 0` and `count: 0` creates
-  /// empty rows the user did not intend. Guard with
-  /// `if (amount > 0 || count > 0)` around the call, or return early with
-  /// `if (amount <= 0 && count <= 0) return;` (or `isNotEmpty` / `isEmpty` for
-  /// strings/lists). Only arguments whose resolved type is `int`, `double` or `num`
-  /// need the guard; a Value Object such as `Distance` owns its own invariants.
   scannerRule(
     code: const LintCode(
       'notifier_zero_value_save_no_guard',
@@ -28,11 +21,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
   ),
 
   /// TextField `onChanged` that fires expensive work must debounce.
-  ///
-  /// Why: `onChanged` fires on every keystroke. A handler that starts an async notifier
-  /// operation, network call, or any `await` runs once per char. Without a
-  /// Timer-based debounce, typing "hello" sends 5 requests. Debounce in the
-  /// notifier (cancel-and-restart Timer) or wrap with a `Debouncer`.
   scannerRule(
     code: const LintCode(
       'text_field_on_changed_no_debounce',
@@ -56,11 +44,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
   ),
 
   /// `Slider` `onChanged` must defer expensive work to `onChangeEnd` or debounce.
-  ///
-  /// Why: Slider `onChanged` fires continuously during drag (~60Hz). An
-  /// async notifier operation or awaited work inside fires dozens of times for a
-  /// single user gesture. Use `onChangeEnd` for terminal effects, or
-  /// debounce.
   scannerRule(
     code: const LintCode(
       'slider_on_changed_no_debounce',
@@ -84,10 +67,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
   ),
 
   /// `ScrollController.addListener` callback must throttle expensive work.
-  ///
-  /// Why: Scroll callbacks fire per pixel. A load-more, analytics event, or
-  /// notifier call inside fires hundreds of times during a flick. Throttle
-  /// with a Timer or guard with a `notFiredInLast(...)` mechanism.
   scannerRule(
     code: const LintCode(
       'scroll_listener_no_throttle',
@@ -112,11 +91,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
   ),
 
   /// User-visible waits must stay below snappy budgets.
-  ///
-  /// Why: debounces and hard sleeps in UI/notifier flows are felt as tap or
-  /// typing latency. Keep search/realtime debounces <=150ms, visual animation
-  /// durations <=120ms, and persistence/hard waits <=50ms. Retry/backoff,
-  /// rest timers, reminders, and other background/domain timers are excluded.
   scannerRule(
     code: const LintCode(
       'user_visible_duration_too_long',
@@ -143,12 +117,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
   ),
 
   /// Unit-bearing numeric local vars passed to notifiers must be Value Objects.
-  ///
-  /// Why: `double amountCents = ...` followed by `ref.read(...).save(amount: amountCents)`
-  /// crosses the widget→notifier boundary as a raw primitive. The notifier
-  /// has no way to enforce sign, finiteness, or unit; mixups across unit
-  /// systems (cents/dollars, meters/feet, seconds/ms) flow through silently.
-  /// Wrap at the boundary in a Value Object.
   scannerRule(
     code: const LintCode(
       'notifier_param_requires_value_object',
@@ -168,11 +136,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
   ),
 
   /// Full-collection loads must not run once per loop iteration.
-  ///
-  /// Why: awaiting a `getAll`/`fetchAll`/`loadAll`-style loader inside a loop
-  /// re-reads (and often re-deserializes/sorts) the entire collection on every
-  /// iteration — an O(items × rows) N+1. Load the collection once before the
-  /// loop, or expose a batched method that resolves all keys in a single pass.
   scannerRule(
     code: const LintCode(
       'full_collection_load_in_loop',
@@ -190,13 +153,6 @@ final List<ScannerRule> _runtimeBugSourceRulesPart2 = [
   ),
 
   /// Fire-and-forget native/webview/media commands must handle their errors.
-  ///
-  /// Why: controller commands such as `runJavaScript`, `playVideo`, or `seekTo`
-  /// return futures that reject during platform races (a webview still loading
-  /// or being disposed). Passing one straight to `unawaited(...)` discards the
-  /// rejection, which then escapes to `PlatformDispatcher.onError` and is
-  /// commonly misreported as a fatal crash. Route the command through an
-  /// error-handling helper (a try/catch wrapper or `.catchError`) instead.
   scannerRule(
     code: const LintCode(
       'unguarded_fire_and_forget_platform_command',
@@ -254,8 +210,7 @@ bool _passesNumericNamedArgument(MethodInvocation call) =>
       return type != null && (type.isDartCoreInt || type.isDartCoreDouble || type.isDartCoreNum);
     });
 
-/// Whether an enclosing `if (x > 0)` wraps [call] or an earlier
-/// `if (x <= 0) return;` in an enclosing block exits before it.
+/// Whether an enclosing `if (x > 0)` wraps [call] or an earlier `if (x <= 0) return;` in an enclosing block exits before it.
 bool _hasZeroValueGuard(MethodInvocation call) {
   AstNode child = call;
   for (var parent = call.parent; parent != null; child = parent, parent = parent.parent) {
@@ -404,13 +359,7 @@ bool _isAwaitedCollectionLoad(
       (lineIndex - 1 >= loopStart && _awaitKeyword.hasMatch(context.source.masked[lineIndex - 1]));
 }
 
-/// Whether the `onChanged` callback of the input at [column] reaches
-/// asynchronous or remote work (#37): an `await`, a Future/Stream-typed call,
-/// an async callee, or a call that does not resolve. A lambda body is walked;
-/// a tear-off is judged by its resolved callee. Callees declared in this
-/// project are followed (other files through [_ParsedWorkFinder]), so
-/// synchronous state-only updates (`copyWith`, local validation) stay clean;
-/// SDK and package callees are judged by their resolved signature.
+/// Whether the `onChanged` callback of the input at [column] reaches asynchronous or remote work (#37): an `await`, a Future/Stream-typed call, an async callee, or a call that does not resolve. A lambda body is walked; a tear-off is judged by its resolved callee. Callees declared in this project are followed (other files through [_ParsedWorkFinder]), so synchronous state-only updates (`copyWith`, local validation) stay clean; SDK and package callees are judged by their resolved signature.
 bool _onChangedHasWork(SourceScannerContext context, int lineIndex, int column) {
   final callback = _onChangedCallback(context, context.source.lineOffsets[lineIndex] + column);
   if (callback == null) return false;
@@ -536,10 +485,7 @@ final class _AsyncWorkFinder extends RecursiveAstVisitor<void> {
     _depth--;
   }
 
-  /// The parsed unit of a callee file in this project. SDK and package
-  /// callees are judged by their resolved signature. A file that owns a
-  /// debounce mechanism is trusted, as [_fileHasDebounce] trusts the widget
-  /// file: debouncing in the notifier is the documented fix.
+  /// The parsed unit of a callee file in this project. SDK and package callees are judged by their resolved signature. A file that owns a debounce mechanism is trusted, as [_fileHasDebounce] trusts the widget file: debouncing in the notifier is the documented fix.
   CompilationUnit? _parsedProjectUnit(Uri uri, String path, String Function() content) {
     final current = context.unit.declaredFragment?.source.uri;
     final isProject = switch ((uri.scheme, current?.scheme)) {
@@ -556,11 +502,7 @@ final class _AsyncWorkFinder extends RecursiveAstVisitor<void> {
   }
 }
 
-/// Walks a callee declaration parsed from another project file (#37). The
-/// parse is unresolved, so names are typed through the callee's element
-/// model: locals and parameters, members of the enclosing type, extensions
-/// and the library scope. A call that cannot be typed is unresolved and
-/// counts as work.
+/// Walks a callee declaration parsed from another project file (#37). The parse is unresolved, so names are typed through the callee's element model: locals and parameters, members of the enclosing type, extensions and the library scope. A call that cannot be typed is unresolved and counts as work.
 final class _ParsedWorkFinder extends RecursiveAstVisitor<void> {
   _ParsedWorkFinder(this.finder, ExecutableElement callee)
     : fragment = callee.firstFragment.libraryFragment,
@@ -724,8 +666,7 @@ final class _ParsedWorkFinder extends RecursiveAstVisitor<void> {
     super.visitDeclaredVariablePattern(node);
   }
 
-  /// Follows a resolved callee, checks a callable value, or reports an
-  /// unresolved call.
+  /// Follows a resolved callee, checks a callable value, or reports an unresolved call.
   void _check(Object? callee) {
     switch (callee) {
       case InterfaceElement(:final unnamedConstructor?):
@@ -761,8 +702,7 @@ final class _ParsedWorkFinder extends RecursiveAstVisitor<void> {
 
   Element? _lookup(String name) => fragment.scope.lookup(name).getter;
 
-  /// An unqualified name: a local, a member of the enclosing type, or a
-  /// library-scope declaration. A local of unknown type is `null`.
+  /// An unqualified name: a local, a member of the enclosing type, or a library-scope declaration. A local of unknown type is `null`.
   Object? _resolveName(String name) {
     if (locals.containsKey(name)) return locals[name];
     return _member(thisType, name) ??
@@ -773,8 +713,7 @@ final class _ParsedWorkFinder extends RecursiveAstVisitor<void> {
         _lookup(name);
   }
 
-  /// `target.name`: a static member, an import-prefixed declaration, or an
-  /// instance member of the target's type.
+  /// `target.name`: a static member, an import-prefixed declaration, or an instance member of the target's type.
   Object? _resolveMember(Expression target, String name) {
     if (target is SuperExpression) return _member(thisType, name, inherited: true);
     switch (_staticTarget(target)) {

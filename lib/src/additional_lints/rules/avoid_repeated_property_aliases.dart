@@ -7,9 +7,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Reports groups of pass-through locals copied from the same object's fields.
-///
-/// Use the source object directly, class destructuring, or a named record
-/// typedef/projection instead of scattering `final x = source.x` aliases.
 final class AvoidRepeatedPropertyAliases extends BlockCheckRule {
   static const LintCode code = LintCode(
     'avoid_repeated_property_aliases',

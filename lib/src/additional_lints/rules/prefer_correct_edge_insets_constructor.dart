@@ -6,12 +6,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when an `EdgeInsets` constructor can be replaced with a simpler one.
-///
-/// Detects cases where:
-/// - `EdgeInsets.fromLTRB` can be `EdgeInsets.all`, `.symmetric`, `.only`, or `.zero`
-/// - `EdgeInsets.only` can be `EdgeInsets.all`, `.symmetric`, or `.zero`
-/// - `EdgeInsets.symmetric` can be `EdgeInsets.all` or `.zero`
-/// - `EdgeInsets.all(0)` can be `EdgeInsets.zero`
 class PreferCorrectEdgeInsetsConstructor extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_correct_edge_insets_constructor',

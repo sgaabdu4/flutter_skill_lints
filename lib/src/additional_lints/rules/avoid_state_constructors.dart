@@ -4,12 +4,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when a `State` subclass declares a constructor with a non-empty body
-/// or initializer list.
-///
-/// Constructors in `State` objects should not contain initialization logic.
-/// All setup should go into `State.initState` instead, which is the proper
-/// lifecycle method for initialization.
+/// Warns when a `State` subclass declares a constructor with a non-empty body or initializer list.
 class AvoidStateConstructors extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_state_constructors',

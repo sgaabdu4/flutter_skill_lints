@@ -3,12 +3,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when an extension type exposes its representation field publicly
-/// under any name other than `value`.
-///
-/// The skill's typed IDs expose `value` (dart-patterns-records.md,
-/// collections-helpers.md, value-objects.md "`value` getter"), so a public
-/// `value` field is allowed; other public names must be private.
+/// Warns when an extension type exposes its representation field publicly under any name other than `value`.
 class PreferPrivateExtensionTypeField extends GeneratedExtensionTypeDeclarationCheckRule {
   static const LintCode code = LintCode(
     'prefer_private_extension_type_field',

@@ -6,9 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
-/// Warns when an expression duplicates the initializer of an existing variable
-/// in the same scope. Suggests reusing the variable instead of repeating the
-/// expression.
+/// Warns when an expression duplicates the initializer of an existing variable in the same scope. Suggests reusing the variable instead of repeating the expression.
 class UseExistingVariable extends AnalysisRule {
   static const LintCode code = LintCode(
     'use_existing_variable',
@@ -94,8 +92,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (expression is PrefixExpression) {
       return _isTrivialExpression(expression.operand);
     }
-    // Collection literals create fresh mutable objects. Reusing another variable
-    // with the same initializer would alias state instead of removing duplication.
     if (expression is ListLiteral || expression is SetOrMapLiteral) return true;
     if (expression is InstanceCreationExpression && !expression.isConst) return true;
     if (expression is DotShorthandConstructorInvocation && !expression.isConst) return true;
@@ -115,8 +111,6 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
-    // Identifiers are too small to report, but an explicit getter may mutate
-    // values used by a later expression in the same statement.
     _invalidateAfter(node);
   }
 
@@ -257,7 +251,6 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
   void visitFunctionDeclaration(FunctionDeclaration node) {}
 
   /// Checks if [expression] matches any known variable initializer.
-  /// Returns true if a match is found (to stop recursion into children).
   bool _checkExpression(Expression expression) {
     final isWriteTarget = switch (expression.parent) {
       AssignmentExpression(:final leftHandSide) => identical(leftHandSide, expression),

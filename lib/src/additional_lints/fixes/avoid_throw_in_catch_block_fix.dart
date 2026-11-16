@@ -6,8 +6,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces `throw` in a catch block with
-/// `Error.throwWithStackTrace()` to preserve the original stack trace.
+/// Fix that replaces `throw` in a catch block with `Error.throwWithStackTrace()` to preserve the original stack trace.
 class AvoidThrowInCatchBlockFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.avoidThrowInCatchBlock',
@@ -70,8 +69,6 @@ class AvoidThrowInCatchBlockFix extends ResolvedCorrectionProducer {
       // Has exception parameter: `catch (e)` → `catch (e, stackTrace)`
       builder.addSimpleInsertion(exceptionParam.end, ', $stackParam');
     } else if (catchClause.catchKeyword != null) {
-      // Has `catch` keyword but no params (shouldn't normally happen)
-      // `catch` → `catch (_, stackTrace)`
       final catchKeyword = catchClause.catchKeyword!;
       builder.addSimpleInsertion(catchKeyword.end, ' (_, $stackParam)');
     } else {

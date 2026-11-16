@@ -7,9 +7,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a Riverpod notifier is assigned to a variable or field.
-///
-/// Keeping notifier instances around makes it easier to use a stale notifier
-/// after provider disposal. Read the notifier at the call site instead.
 class AvoidAssigningNotifiers extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_assigning_notifiers',

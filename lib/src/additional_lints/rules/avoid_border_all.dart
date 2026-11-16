@@ -6,10 +6,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when `Border.all()` is used instead of `Border.fromBorderSide()`.
-///
-/// `Border.all()` calls `Border.fromBorderSide()` under the hood, so using
-/// `Border.fromBorderSide(BorderSide(...))` directly allows the expression
-/// to be const.
 class AvoidBorderAll extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'avoid_border_all',

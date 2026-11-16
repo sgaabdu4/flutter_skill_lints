@@ -18,10 +18,6 @@ const _widgetPreviewsLibrary = 'package:flutter/widget_previews.dart';
 const _screensSegment = '/presentation/screens/';
 
 /// Keep `package:flutter/widget_previews.dart` out of production widget files.
-///
-/// Why: widget-previews.md requires the preview import only in preview files or
-/// preview-only blocks. A library that declares no resolved `@Preview`, or that
-/// also declares a Widget/State class, ships preview code with production UI.
 final class WidgetPreviewImportLeak extends AnalysisRule {
   static const LintCode code = LintCode(
     'widget_preview_import_leak',
@@ -82,10 +78,6 @@ final class _ImportLeakVisitor extends SimpleAstVisitor<void> {
 }
 
 /// Keep native plugins, IO, persistence, and network clients out of previews.
-///
-/// Why: widget-previews.md forbids `dart:io`, platform channels, Firebase, Hive
-/// boxes, and real HTTP in previews. References are matched by the resolved
-/// element's library; arbitrary native plugins cannot be identified soundly.
 final class WidgetPreviewPlatformDependency extends AnalysisRule {
   static const LintCode code = LintCode(
     'widget_preview_platform_dependency',
@@ -158,11 +150,6 @@ final class _PlatformReferenceVisitor extends RecursiveAstVisitor<void> {
 }
 
 /// Preview small surfaces, not full runtime screens.
-///
-/// Why: widget-previews.md forbids `@Preview` on app screens that need a full
-/// runtime boot. Screens are placement-defined (`presentation/screens/`, see
-/// atomic-design.md), so previews declared in, or constructing a widget from,
-/// a screens library are reported.
 final class WidgetPreviewScreen extends AnalysisRule {
   static const LintCode code = LintCode(
     'widget_preview_screen',

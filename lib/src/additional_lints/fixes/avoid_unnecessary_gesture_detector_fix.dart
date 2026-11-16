@@ -7,8 +7,7 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
 
-/// Fix that removes the unnecessary GestureDetector and replaces it with its
-/// child widget.
+/// Fix that removes the unnecessary GestureDetector and replaces it with its child widget.
 class AvoidUnnecessaryGestureDetectorFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.avoidUnnecessaryGestureDetector',

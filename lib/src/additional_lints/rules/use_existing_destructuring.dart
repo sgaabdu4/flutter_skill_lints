@@ -8,19 +8,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when a property is accessed directly on an object that already has a
-/// destructuring declaration in the same scope. The property should be added
-/// to the existing destructuring instead.
-///
-/// ```dart
-/// // Bad
-/// final SomeClass(:value) = variable;
-/// print(variable.another);
-///
-/// // Good
-/// final SomeClass(:value, :another) = variable;
-/// print(another);
-/// ```
+/// Warns when a property is accessed directly on an object that already has a destructuring declaration in the same scope. The property should be added to the existing destructuring instead.
 class UseExistingDestructuring extends AnalysisRule {
   static const LintCode code = LintCode(
     'use_existing_destructuring',
@@ -66,8 +54,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final destructurings = <_DestructuringInfo>[];
 
     for (final statement in node.statements) {
-      // First, check property accesses in this statement against
-      // already-collected destructurings
       if (destructurings.isNotEmpty) {
         final finder = _PropertyAccessFinder(destructurings);
         statement.accept(finder);

@@ -8,29 +8,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Warns when collection methods are called with arguments whose types are
-/// unrelated to the collection's type parameter.
-///
-/// Such calls always return `null`, `false`, or `-1`, indicating a likely
-/// logical error.
-///
-/// **Bad:**
-/// ```dart
-/// final map = <int, String>{};
-/// map.containsKey('a'); // String key on int-keyed map
-///
-/// final set = <int>{};
-/// set.contains('a'); // String in int set
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// final map = <int, String>{};
-/// map.containsKey(42);
-///
-/// final set = <int>{};
-/// set.contains(42);
-/// ```
+/// Warns when collection methods are called with arguments whose types are unrelated to the collection's type parameter.
 class AvoidCollectionMethodsWithUnrelatedTypes extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_collection_methods_with_unrelated_types',
@@ -60,9 +38,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  /// Methods on Iterable/List/Set that accept `Object?` but semantically
-  /// expect the element type. Methods with strict `E` signatures (like
-  /// `indexOf`) are already caught by the Dart analyzer.
+  /// Methods on Iterable/List/Set that accept `Object?` but semantically expect the element type. Methods with strict `E` signatures (like `indexOf`) are already caught by the Dart analyzer.
   static const _elementMethods = {
     'contains', // Iterable<E>.contains(Object?)
     'remove', // List<E>.remove(Object?), Set<E>.remove(Object?)
@@ -150,9 +126,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
       return;
     }
-
-    // For List<E>, the index should be int — but that's a different concern.
-    // We only check Map index access here.
   }
 
   /// Returns the key and value types if [type] implements `Map<K, V>`.
@@ -169,8 +142,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   /// Two types are "unrelated" if neither is a subtype of the other.
-  ///
-  /// In strict mode, even `dynamic` and `Object` are not special-cased.
   static bool _areUnrelatedTypes(DartType argType, DartType expectedType) {
     // Never flag dynamic or void — the analyzer can't know the actual type.
     if (argType is DynamicType || expectedType is DynamicType) return false;

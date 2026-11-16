@@ -7,9 +7,6 @@ import 'package:analyzer/source/line_info.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when commented-out code is found.
-///
-/// Commented-out code is a sign of technical debt. Use version control
-/// instead of keeping old code in comments.
 class AvoidCommentedOutCode extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_commented_out_code',
@@ -39,8 +36,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   static final _assignmentPattern = RegExp(r'^[a-zA-Z_]\w*(\.\w+)*\s*[+\-*/]?=\s');
   static final _returnPattern = RegExp(r'^return\s');
   static final _cascadePattern = RegExp(r'^\.\.[a-zA-Z]');
-  // Formatted Dart never puts whitespace between a callee and its `(`;
-  // prose such as `Glucose (fasting)` does.
   static final _functionCallPattern = RegExp(r'^[a-zA-Z_]\w*(\.\w+)*(<[^>]*>)?\(');
   static final _whitespacePattern = RegExp(r'\s+');
 
@@ -67,13 +62,9 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   /// Maximum number of single-line comments to collect before bailing out.
-  /// Prevents stalling the analysis server on auto-generated files with
-  /// thousands of comment lines.
   static const _maxComments = 500;
 
-  /// Collects all single-line comment tokens (`//`) from the token stream,
-  /// excluding doc comments (`///`) and ignore directives. Comments that
-  /// follow code on the same line are added to [trailing].
+  /// Collects all single-line comment tokens (`//`) from the token stream, excluding doc comments (`///`) and ignore directives. Comments that follow code on the same line are added to [trailing].
   List<Token> _collectAllComments(CompilationUnit node, LineInfo lineInfo, Set<Token> trailing) {
     final comments = <Token>[];
     Token? token = node.beginToken;
@@ -118,8 +109,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     return true;
   }
 
-  /// Groups whole-line comments on consecutive lines. A comment that follows
-  /// code on its line stands alone.
+  /// Groups whole-line comments on consecutive lines. A comment that follows code on its line stands alone.
   List<List<Token>> _groupConsecutiveComments(
     List<Token> comments,
     LineInfo lineInfo,
@@ -228,8 +218,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       return true;
     }
 
-    // Lines that are just prose (no code-like characters).
-    // Prose tends to have spaces and no special code characters.
     if (!line.contains(';') &&
         !line.contains('{') &&
         !line.contains('}') &&
@@ -304,11 +292,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   /// Confirms a keyword, assignment or call candidate is really code.
-  ///
-  /// A line that opens more parentheses than it closes starts a multi-line
-  /// statement. A complete line must parse as a Dart statement, so descriptive
-  /// text such as `Glucose(GOD-POD Method)` or `Reorder = UI flicker (stale
-  /// parent)` is not treated as code.
   static bool _opensOrParsesAsStatement(String line) {
     if (_countOf(line, '(') > _countOf(line, ')')) return true;
     return _parsesAsStatement(line);

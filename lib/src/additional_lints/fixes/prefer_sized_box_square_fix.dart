@@ -7,8 +7,7 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
 
-/// Fix that replaces `SizedBox(width: x, height: x)` with
-/// `SizedBox.square(dimension: x)`.
+/// Fix that replaces `SizedBox(width: x, height: x)` with `SizedBox.square(dimension: x)`.
 class PreferSizedBoxSquareFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'flutter_skill_lints.fix.preferSizedBoxSquare',

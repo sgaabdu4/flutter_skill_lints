@@ -6,9 +6,6 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 /// Reports untyped wildcard operands in logical-or patterns.
-///
-/// An untyped wildcard matches every value, so the other branch of the
-/// logical-or pattern cannot add useful matching behavior.
 class AvoidMisusedWildcardPattern extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_misused_wildcard_pattern',

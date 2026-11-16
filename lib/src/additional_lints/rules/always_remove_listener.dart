@@ -5,13 +5,7 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 import 'package:meta/meta.dart';
 
-/// Warns when a listener is added in a State lifecycle method but never
-/// removed in `dispose()`.
-///
-/// Every `addListener()` call on a `Listenable` (e.g. `ValueNotifier`,
-/// `ChangeNotifier`, `AnimationController`) inside `initState`,
-/// `didUpdateWidget`, or `didChangeDependencies` must have a corresponding
-/// `removeListener()` call in `dispose()` to prevent memory leaks.
+/// Warns when a listener is added in a State lifecycle method but never removed in `dispose()`.
 class AlwaysRemoveListener extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'always_remove_listener',

@@ -7,12 +7,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/riverpod_consumer_checkers.dart';
 
 /// Warns when a ConsumerWidget does not use WidgetRef.
-///
-/// A widget that never reads providers does not need Riverpod wiring, so it can
-/// be a regular StatelessWidget. Atomic-design pages (public, concrete widgets
-/// in a `presentation/screens/` library) are exempt: the skill requires every
-/// page to be a ConsumerWidget or ConsumerStatefulWidget even when it reads no
-/// provider yet.
 class AvoidUnnecessaryConsumerWidgets extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_consumer_widgets',
@@ -80,8 +74,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Whether [cls] is an atomic-design page: a public, concrete widget declared in
-/// a production `presentation/screens/` library.
+/// Whether [cls] is an atomic-design page: a public, concrete widget declared in a production `presentation/screens/` library.
 bool _isPage(ClassDeclaration cls) {
   final fragment = cls.declaredFragment;
   if (fragment == null) return false;

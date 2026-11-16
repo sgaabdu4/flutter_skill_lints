@@ -8,29 +8,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when multiple properties of the same object are accessed separately
-/// and could be consolidated using Dart 3 class destructuring.
-///
-/// When 3 or more distinct properties are accessed on the same variable,
-/// suggest using destructuring syntax instead:
-///
-/// ```dart
-/// // Bad
-/// final a = obj.x;
-/// final b = obj.y;
-/// print(obj.z);
-///
-/// // Good
-/// final SomeClass(:x, :y, :z) = obj;
-/// final a = x;
-/// final b = y;
-/// print(z);
-/// ```
-///
-/// Property reads passed straight as constructor arguments
-/// (`DateTime(local.year, local.month, local.day)`, the skill's
-/// `DateTimeX.localDayStart`) are a projection into the new object, not
-/// repeated reads, so they do not count.
+/// Warns when multiple properties of the same object are accessed separately and could be consolidated using Dart 3 class destructuring.
 class PreferClassDestructuring extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_class_destructuring',
@@ -124,9 +102,6 @@ class _VariableAccessInfo {
 }
 
 /// Collects property accesses within a block, grouped by target variable.
-///
-/// Only collects simple property reads (not method calls, not assignments).
-/// Stops at nested function boundaries to avoid mixing scopes.
 class _PropertyAccessCollector extends RecursiveAstVisitor<void> {
   final Map<String, _VariableAccessInfo> accessesByVariable = {};
 
@@ -154,8 +129,6 @@ class _PropertyAccessCollector extends RecursiveAstVisitor<void> {
         accessNode: node,
       );
     }
-    // Don't recurse into target — we already processed it
-    // But do recurse into the property name in case of chaining
   }
 
   // Stop at nested function boundaries

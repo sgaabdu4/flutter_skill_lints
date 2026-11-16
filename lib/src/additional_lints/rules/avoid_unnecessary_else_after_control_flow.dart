@@ -5,12 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-/// Warns when an `if` statement keeps an `else` after a then-branch that
-/// already exits.
-///
-/// A then-branch exits when it ends in `return`, `throw`, `rethrow`, `break`
-/// or `continue`, or in a nested `if`/`else` whose branches all exit. Ordinary
-/// two-way branching (assignments, calls, collection `if`/`else`) is allowed.
+/// Warns when an `if` statement keeps an `else` after a then-branch that already exits.
 class AvoidUnnecessaryElseAfterControlFlow extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_else_after_control_flow',

@@ -8,13 +8,7 @@ import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
-/// Warns when SizedBox widgets are used for spacing inside Row, Column, or Flex
-/// children instead of using the `spacing` argument (Flutter 3.27+).
-///
-/// Detects three patterns:
-/// 1. Direct SizedBox in children list with uniform spacing
-/// 2. `.separatedBy()` with SizedBox
-/// 3. `.expand()` with generator yielding SizedBox
+/// Warns when SizedBox widgets are used for spacing inside Row, Column, or Flex children instead of using the `spacing` argument (Flutter 3.27+).
 class PreferSpacing extends InstanceAndMethodInvocationRule {
   static const LintCode code = LintCode(
     'prefer_spacing',
@@ -139,8 +133,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   /// Pattern 1: Direct SizedBox widgets used as spacers in a children list.
-  /// Only triggers when two or more SizedBox spacers have the same value
-  /// (uniform). A single SizedBox gap is the skill's own Row layout.
   void _checkDirectSizedBoxInList(ListLiteral list, FlexAxis parentAxis) {
     final sizedBoxes = _uniformSizedBoxes(list, parentAxis);
     if (sizedBoxes == null) return;
@@ -236,8 +228,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Checks if a node is used as the `children` argument of a Row/Column/Flex.
   bool _isChildrenOfFlexWidget(Expression node) {
-    // Walk up through chained method calls like .skip(1).toList()
-    // where our node is the target (receiver) of subsequent calls
     AstNode topOfChain = node;
     while (topOfChain.parent is MethodInvocation) {
       final parent = topOfChain.parent! as MethodInvocation;
@@ -280,8 +270,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   /// Extracts spacing info from an expression that might be a SizedBox.
-  /// Handles both InstanceCreationExpression and MethodInvocation forms.
-  /// Returns (paramName, valueSource) or null.
   static (String, String)? _extractSizedBoxSpacingFromExpr(Expression expr) {
     if (expr is InstanceCreationExpression) {
       if (!isExpressionExactlyType(expr, _sizedBoxChecker)) return null;
@@ -295,7 +283,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   /// Extracts spacing info from SizedBox arguments.
-  /// Returns (paramName, valueSource) or null if not a pure spacer.
   static (String, String)? _extractSizedBoxSpacing(NodeList<Argument> args) {
     String? spacingParam;
     String? spacingValue;

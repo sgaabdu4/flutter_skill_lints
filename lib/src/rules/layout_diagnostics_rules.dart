@@ -10,8 +10,7 @@ import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Layout rules from the skill's layout-diagnostics and flutter-optimizations
-/// references. Each one reports only a resolved Flutter widget shape.
+/// Layout rules from the skill's layout-diagnostics and flutter-optimizations references. Each one reports only a resolved Flutter widget shape.
 final List<AnalysisRule> layoutDiagnosticsRules = [
   AvoidPositionedOutsideStack(),
   AvoidUnboundedListInColumn(),
@@ -51,9 +50,6 @@ const _orientationBuilderChecker = TypeChecker.fromName(
 );
 
 /// Positioned must be a direct child of Stack.
-///
-/// Why: Positioned writes StackParentData; under any other render parent
-/// Flutter throws "Incorrect use of ParentDataWidget".
 final class AvoidPositionedOutsideStack extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_positioned_outside_stack',
@@ -95,9 +91,6 @@ final class _PositionedVisitor extends SimpleAstVisitor<void> {
 }
 
 /// ListView or GridView directly inside a Column needs a bounded height.
-///
-/// Why: a Column lays out non-flex children with unbounded height, so a
-/// vertical list there throws "Vertical viewport was given unbounded height".
 final class AvoidUnboundedListInColumn extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_unbounded_list_in_column',
@@ -143,9 +136,6 @@ final class _ListInColumnVisitor extends SimpleAstVisitor<void> {
 }
 
 /// TextField directly inside a Row needs a bounded width.
-///
-/// Why: a Row lays out non-flex children with unbounded width, so a field
-/// there throws "InputDecorator cannot have an unbounded width".
 final class AvoidUnboundedTextFieldInRow extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_unbounded_text_field_in_row',
@@ -187,9 +177,6 @@ final class _TextFieldInRowVisitor extends SimpleAstVisitor<void> {
 }
 
 /// Use CustomScrollView, not ListView in SingleChildScrollView.
-///
-/// Why: a list nested in a same-axis SingleChildScrollView either throws for
-/// unbounded extent or needs shrinkWrap, which lays out every item.
 final class AvoidListInSingleChildScrollView extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_list_in_single_child_scroll_view',
@@ -244,10 +231,6 @@ final class _ListInScrollViewVisitor extends SimpleAstVisitor<void> {
 }
 
 /// Adapt layout to available space, not orientation.
-///
-/// Why: orientation says nothing about the space a widget actually gets
-/// (split screen, foldables, desktop windows). Use LayoutBuilder constraints or
-/// MediaQuery.sizeOf.
 final class AvoidOrientationLayout extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_orientation_layout',
@@ -319,9 +302,6 @@ final class _OrientationVisitor extends SimpleAstVisitor<void> {
 }
 
 /// Use borderRadius on Container, not a ClipRRect wrap.
-///
-/// Why: a Container decoration paints rounded corners without an extra clip
-/// layer; Container.clipBehavior clips its child when that is needed.
 final class AvoidClipRRectContainer extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_clip_rrect_container',

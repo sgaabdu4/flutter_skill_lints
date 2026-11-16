@@ -3,24 +3,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a cascade expression contains duplicate cascade sections.
-///
-/// Duplicate cascades are usually the result of a copy-paste error and
-/// indicate a bug. The last assignment wins, making earlier duplicates
-/// dead code.
-///
-/// **Bad:**
-/// ```dart
-/// value
-///   ..field = '2'
-///   ..field = '1';
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// value
-///   ..field1 = '2'
-///   ..field2 = '1';
-/// ```
 class AvoidDuplicateCascades extends CascadeExpressionCheckRule {
   static const LintCode code = LintCode(
     'avoid_duplicate_cascades',
@@ -53,10 +35,7 @@ class AvoidDuplicateCascades extends CascadeExpressionCheckRule {
     }
   }
 
-  /// Returns a string key that uniquely identifies a cascade section's
-  /// operation. Two sections with the same key are considered duplicates.
-  ///
-  /// Returns `null` for unrecognized section types.
+  /// Returns a string key that uniquely identifies a cascade section's operation. Two sections with the same key are considered duplicates.
   static String? _sectionKey(Expression section) {
     return switch (section) {
       // ..field = value or ..[index] = value

@@ -8,9 +8,6 @@ import 'package:flutter_skill_lints/src/additional_lints/riverpod_consumer_check
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when a notifier member is called directly from a Consumer build.
-///
-/// A build method must stay side-effect free. Trigger notifier mutations from
-/// callbacks, listeners, or explicit lifecycle code instead.
 class AvoidCallingNotifierMembersInsideBuild extends MethodDeclarationRule {
   static const LintCode code = LintCode(
     'avoid_calling_notifier_members_inside_build',

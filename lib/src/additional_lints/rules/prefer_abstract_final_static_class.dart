@@ -3,8 +3,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-/// Warns when a class containing only static members is not marked as
-/// `abstract final`, which would prevent instantiation and inheritance.
+/// Warns when a class containing only static members is not marked as `abstract final`, which would prevent instantiation and inheritance.
 class PreferAbstractFinalStaticClass extends ClassDeclarationRule {
   static const LintCode code = LintCode(
     'prefer_abstract_final_static_class',

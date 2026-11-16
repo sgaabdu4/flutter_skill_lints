@@ -5,12 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-/// Warns when `ReorderableListView` / `SliverReorderableList` code mixes old
-/// `onReorder` index semantics with new `onReorderItem` index semantics.
-///
-/// `onReorderItem` already reports the post-removal target index. Do not add
-/// one before forwarding, and do not subtract one in downstream reorder
-/// handlers.
+/// Warns when `ReorderableListView` / `SliverReorderableList` code mixes old `onReorder` index semantics with new `onReorderItem` index semantics.
 class UseOnReorderItemIndexSemantics extends AnalysisRule {
   static const LintCode code = LintCode(
     'use_on_reorder_item_index_semantics',

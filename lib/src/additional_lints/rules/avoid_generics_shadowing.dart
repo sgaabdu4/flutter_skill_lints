@@ -3,11 +3,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-/// Warns when a generic type parameter shadows a top-level type declaration
-/// in the same file (class, mixin, enum, typedef, or extension type).
-///
-/// Shadowing can be confusing when a parameter or variable annotated with the
-/// generic looks like it refers to the real class.
+/// Warns when a generic type parameter shadows a top-level type declaration in the same file (class, mixin, enum, typedef, or extension type).
 class AvoidGenericsShadowing extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_generics_shadowing',
@@ -64,8 +60,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Recursively visits the AST to find type parameter lists and check for
-/// shadowing.
+/// Recursively visits the AST to find type parameter lists and check for shadowing.
 class _TypeParameterChecker extends RecursiveAstVisitor<void> {
   final AvoidGenericsShadowing rule;
   final Set<String> topLevelNames;

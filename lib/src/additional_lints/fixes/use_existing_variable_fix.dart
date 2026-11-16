@@ -34,8 +34,7 @@ class UseExistingVariableFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Walks up to the enclosing block and finds the final/const variable
-  /// whose initializer matches the target expression's source.
+  /// Walks up to the enclosing block and finds the final/const variable whose initializer matches the target expression's source.
   static String? _findMatchingVariable(Expression expression) {
     final block = _enclosingBlock(expression.parent);
     if (block == null) return null;

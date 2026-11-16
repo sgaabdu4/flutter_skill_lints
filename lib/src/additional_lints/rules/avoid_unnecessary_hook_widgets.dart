@@ -5,9 +5,6 @@ import 'package:flutter_skill_lints/src/additional_lints/hook_detection.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Warns when a HookWidget does not use any hooks in the build method.
-///
-/// A widget without hook calls does not need hook lifecycle wiring, so a
-/// StatelessWidget is clearer.
 class AvoidUnnecessaryHookWidgets extends ClassAndInstanceCreationCheckRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_hook_widgets',

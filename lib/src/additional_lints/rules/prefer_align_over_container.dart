@@ -7,9 +7,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Suggests using `Align` instead of `Container` with only alignment.
-///
-/// The dedicated widget makes alignment intent explicit and avoids a generic
-/// `Container` when no decoration, constraints, or color are needed.
 class PreferAlignOverContainer extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'prefer_align_over_container',

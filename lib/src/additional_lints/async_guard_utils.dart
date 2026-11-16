@@ -1,17 +1,14 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 
-/// Returns true if [node] contains an `await` expression
-/// (stopping at function boundaries).
+/// Returns true if [node] contains an `await` expression (stopping at function boundaries).
 bool containsAwait(AstNode node) {
   final finder = _AwaitFinder();
   node.accept(finder);
   return finder.found;
 }
 
-/// Returns true if [statement] is a mounted guard pattern:
-/// `if (!ref.mounted) return;`, `if (!mounted) return;`,
-/// or `if (!context.mounted) return;`.
+/// Returns true if [statement] is a mounted guard pattern: `if (!ref.mounted) return;`, `if (!mounted) return;`, or `if (!context.mounted) return;`.
 bool isMountedGuardWithReturn(Statement statement) {
   if (statement is! IfStatement) return false;
   final condition = statement.expression;

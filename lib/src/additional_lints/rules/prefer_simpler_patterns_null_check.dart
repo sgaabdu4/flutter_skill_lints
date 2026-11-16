@@ -5,10 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-/// Warns when an if-case pattern uses `!= null && final field` instead of
-/// the simpler `final field?` syntax, or `!= null && final Type field` where
-/// the null check is redundant because the type annotation already guarantees
-/// non-nullability.
+/// Warns when an if-case pattern uses `!= null && final field` instead of the simpler `final field?` syntax, or `!= null && final Type field` where the null check is redundant because the type annotation already guarantees non-nullability.
 class PreferSimplerPatternsNullCheck extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_simpler_patterns_null_check',

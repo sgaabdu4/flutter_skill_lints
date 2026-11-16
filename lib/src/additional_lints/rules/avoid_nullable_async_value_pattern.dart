@@ -8,9 +8,6 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when `AsyncValue` is matched with a nullable `value?` object pattern.
-///
-/// `AsyncValue(:final value?)` hides loading/error branches behind a nullable
-/// getter. Match `AsyncData(:final value)` or switch all states explicitly.
 class AvoidNullableAsyncValuePattern extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_nullable_async_value_pattern',

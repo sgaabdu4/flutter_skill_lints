@@ -6,12 +6,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/constant_expression.dart';
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
-/// Warns when a logical AND (`&&`) expression contains contradictory
-/// comparisons on the same variable, resulting in a condition that always
-/// evaluates to `false`.
-///
-/// For example, `x == 3 && x == 4` can never be true because `x` cannot
-/// be both 3 and 4 at the same time.
+/// Warns when a logical AND (`&&`) expression contains contradictory comparisons on the same variable, resulting in a condition that always evaluates to `false`.
 class AvoidContradictoryExpressions extends BinaryExpressionCheckRule {
   static const LintCode code = LintCode(
     'avoid_contradictory_expressions',
@@ -84,8 +79,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Two comparisons are contradictory if they cannot both be true.
   static bool _areContradictory(_Comparison a, _Comparison b) {
-    // Case 1: Same operand pair, contradictory operators.
-    // e.g., x == a && x != a, or x < a && x > a.
     if (_sameExpression(a.left, b.left) && _sameExpression(a.right, b.right)) {
       return _contradictsSameOperands(a.op, b.op);
     }
@@ -93,8 +86,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       return _contradictsSameOperands(a.op, _flipOperator(b.op));
     }
 
-    // Case 2: Both use == but share one operand and the other operands are
-    // provably different literals. e.g., x == 3 && x == 4.
     if (a.op == TokenType.EQ_EQ && b.op == TokenType.EQ_EQ) {
       if (_hasDifferentLiteralValues(a, b)) return true;
     }
@@ -119,9 +110,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     (TokenType.LT, TokenType.GT),
   };
 
-  /// Returns `true` when both comparisons use `==`, share one operand
-  /// (the variable), and the other operands are provably different literals.
-  /// e.g., `x == 3 && x == 4`.
+  /// Returns `true` when both comparisons use `==`, share one operand (the variable), and the other operands are provably different literals.
   static bool _hasDifferentLiteralValues(_Comparison a, _Comparison b) {
     // Try all four orientations of the shared operand.
     if (_sameExpression(a.left, b.left) && _areDifferentLiterals(a.right, b.right)) {
@@ -162,14 +151,10 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (exprA is BooleanLiteral && exprB is BooleanLiteral) {
       return exprA.value != exprB.value;
     }
-    // NullLiteral vs NullLiteral — same value, not different.
-    // Different literal types (e.g., int vs string) — can't meaningfully
-    // compare, skip.
     return false;
   }
 
   /// Flip a comparison operator as if the operands were swapped.
-  /// `a < b` becomes `b > a`, etc.
   static TokenType _flipOperator(TokenType op) {
     return switch (op) {
       TokenType.LT => TokenType.GT,

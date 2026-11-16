@@ -8,10 +8,6 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Warns when error or status codes are written inline at call sites.
-///
-/// Protocol and backend error codes are shared contracts. Keeping them behind a
-/// dedicated owner makes retry, fallback, logging, and migration code refer to
-/// the same source of truth without forcing a specific helper API.
 class AvoidInlineErrorCodes extends CompilationUnitRule {
   static const LintCode code = LintCode(
     'avoid_inline_error_codes',
@@ -73,8 +69,7 @@ bool _isStatusCodeComparison(AstNode node) {
   return isStatusCodeExpression(codeOperand) && !_isExceptionCode(codeOperand);
 }
 
-/// Whether [expression] reads a code from a caught exception (`e.code` where `e` is a
-/// dart:core [Exception]), as in the skill's retry classification `e.code == 429`.
+/// Whether [expression] reads a code from a caught exception (`e.code` where `e` is a dart:core [Exception]), as in the skill's retry classification `e.code == 429`.
 bool _isExceptionCode(Expression expression) {
   final receiver = switch (expression.unParenthesized) {
     PrefixedIdentifier(:final prefix) => prefix,

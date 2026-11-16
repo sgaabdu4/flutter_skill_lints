@@ -5,9 +5,6 @@ import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart'
 import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.dart';
 
 /// Suggests using MediaQuery dedicated methods instead of MediaQuery.of().property.
-///
-/// Aspect-specific methods rebuild only when the requested property changes,
-/// avoiding broad MediaQuery dependencies.
 class UseDedicatedMediaQueryMethods extends MethodInvocationRule {
   static const LintCode code = LintCode(
     'use_dedicated_media_query_methods',

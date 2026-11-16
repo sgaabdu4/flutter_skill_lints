@@ -10,7 +10,7 @@ final class AvoidDynamicExceptJsonMaps extends GeneratedNamedTypeCheckRule {
     'Avoid dynamic except at JSON map boundaries.',
     correctionMessage:
         'Use Object?, a precise type, or Map<String, dynamic> for JSON. '
-        'For untyped runtime boundaries, add a targeted ignore with a local reason.',
+        'For untyped runtime input, parse it into a typed model at the boundary.',
   );
 
   AvoidDynamicExceptJsonMaps()

@@ -71,6 +71,24 @@ void main() {
     expect(deferring, isEmpty);
   });
 
+  test('no correction message tells users to add an ignore', () {
+    final registry = _RecordingPluginRegistry('flutter_skill_lints');
+
+    FlutterSkillLintsPlugin().register(registry);
+
+    final suppressing = [
+      for (final rule in registry.warningRules.values)
+        for (final code in rule.diagnosticCodes)
+          if (RegExp(
+            r'add (an? )?(targeted )?(ignore|suppress)',
+            caseSensitive: false,
+          ).hasMatch('${code.correctionMessage}'))
+            code.lowerCaseName,
+    ];
+
+    expect(suppressing, isEmpty);
+  });
+
   test('the init state and sync notifier messages name the same two fixes', () {
     final messages = [
       for (final rule in flutterSkillRules)
@@ -382,6 +400,8 @@ void main() {
       'avoid_non_null_assertion',
       // No skill basis; testing.md uses bare expected values, which expect() wraps in equals().
       'prefer_test_matchers',
+      // Duplicates avoid_dynamic_except_json_maps: every dynamic site reported twice.
+      'avoid_banned_types',
     ]) {
       expect(paths, isNot(contains(forbidden)));
     }
@@ -443,7 +463,7 @@ void main() {
 
 const _enabledFlutterSkillRuleCount = 229;
 const _enabledFlutterSkillDiagnosticCount = 237;
-const _enabledAdditionalRuleCount = 274;
+const _enabledAdditionalRuleCount = 273;
 
 const _modelSkillErrorDiagnostics = [
   'use_sealed_freezed_classes',

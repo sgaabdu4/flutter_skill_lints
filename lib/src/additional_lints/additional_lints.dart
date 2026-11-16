@@ -85,7 +85,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_expo
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_file_names.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_imports.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_names.dart';
-import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_types.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_bitwise_operators_with_booleans.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_border_all.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_bottom_type_in_patterns.dart';
@@ -519,7 +518,6 @@ class AdditionalLintsPlugin extends Plugin {
     registerDcmExpansionLints(registry);
     registry.registerWarningRule(AvoidAccessingOtherClassesPrivateMembers());
     registry.registerWarningRule(AvoidBannedNames());
-    registry.registerWarningRule(AvoidBannedTypes());
     registry.registerWarningRule(AvoidBitwiseOperatorsWithBooleans());
     registry.registerWarningRule(AvoidCollapsibleIf());
     registry.registerWarningRule(AvoidConditionsWithBooleanLiterals());

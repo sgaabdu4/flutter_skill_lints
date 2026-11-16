@@ -51,6 +51,11 @@ abstract class State<T extends StatefulWidget> {
   bool get mounted => true;
   void initState() {}
   void dispose() {}
+  void deactivate() {}
+  void activate() {}
+  void reassemble() {}
+  void didChangeDependencies() {}
+  void didUpdateWidget(T oldWidget) {}
   void setState(void Function() fn) => fn();
   Widget build(BuildContext context);
 }
@@ -99,6 +104,50 @@ class Container extends Widget {
     double? height,
     Widget? child,
   });
+}
+
+enum Axis { horizontal, vertical }
+
+enum MainAxisAlignment { start, end, center, spaceBetween, spaceAround, spaceEvenly }
+
+class Flex extends Widget {
+  const Flex({
+    super.key,
+    required Axis direction,
+    MainAxisAlignment mainAxisAlignment = MainAxisAlignment.start,
+    double spacing = 0,
+    List<Widget> children = const [],
+  });
+}
+
+class Row extends Widget {
+  const Row({
+    super.key,
+    MainAxisAlignment mainAxisAlignment = MainAxisAlignment.start,
+    double spacing = 0,
+    List<Widget> children = const [],
+  });
+}
+
+class Column extends Widget {
+  const Column({
+    super.key,
+    MainAxisAlignment mainAxisAlignment = MainAxisAlignment.start,
+    double spacing = 0,
+    List<Widget> children = const [],
+  });
+}
+
+class Expanded extends Widget {
+  const Expanded({super.key, Widget? child});
+}
+
+class Spacer extends Widget {
+  const Spacer({super.key});
+}
+
+extension WidgetListSeparator on List<Widget> {
+  List<Widget> separatedBy(Widget separator) => this;
 }
 
 class Text extends Widget {

@@ -35,7 +35,7 @@ int f(int a, int b) {
 ''';
 
   Future<void> reportsRepeatedExpression() async {
-    final source = _repeated;
+    const source = _repeated;
     await assertDiagnostics(source, [lint(source.lastIndexOf('a * b + 1'), 'a * b + 1'.length)]);
   }
 

@@ -61,7 +61,7 @@ ${_fakes}double f(BuildContext context) => MediaQuery.of(context).size;
   ]);
 
   Future<void> reportsMaybeOfWithSingleProperty() async {
-    final source =
+    const source =
         '''
 ${_fakes}double? f(BuildContext context) => MediaQuery.maybeOf(context)?.size;
 ''';

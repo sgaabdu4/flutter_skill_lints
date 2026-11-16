@@ -1,16 +1,23 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/resolve_platform_specific_implementation_before_use.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(
-    () => defineReflectiveTests(ResolvePlatformSpecificImplementationBeforeUseTest),
+  analysisRuleSuite<ResolvePlatformSpecificImplementationBeforeUseTest>(
+    'ResolvePlatformSpecificImplementationBeforeUseTest',
+    ResolvePlatformSpecificImplementationBeforeUseTest.new,
+    {
+      'test_optionalChainedPlatformMethod_lint': (t) => t._optionalChainedPlatformMethodLint(),
+      'test_nullAssertChainedPlatformMethod_lint': (t) => t._nullAssertChainedPlatformMethodLint(),
+      'test_chainedPlatformProperty_lint': (t) => t._chainedPlatformPropertyLint(),
+      'test_resolvedLocalWithExplicitNullCheck_noLint': (t) =>
+          t._resolvedLocalWithExplicitNullCheckNoLint(),
+      'test_resolutionOnly_noLint': (t) => t._resolutionOnlyNoLint(),
+    },
   );
 }
 
-@reflectiveTest
 class ResolvePlatformSpecificImplementationBeforeUseTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -26,7 +33,7 @@ class ResolvePlatformSpecificImplementationBeforeUseTest extends AnalysisRuleTes
     return lint(offset, needle.length) as T;
   }
 
-  Future<void> test_optionalChainedPlatformMethod_lint() async {
+  Future<void> _optionalChainedPlatformMethodLint() async {
     const source = r'''
 class FlutterLocalNotificationsPlugin {
   T? resolvePlatformSpecificImplementation<T>() => null;
@@ -47,7 +54,7 @@ Future<bool> requestPermission(FlutterLocalNotificationsPlugin plugin) async {
     await assertDiagnostics(source, [lintForLast(source, 'resolvePlatformSpecificImplementation')]);
   }
 
-  Future<void> test_nullAssertChainedPlatformMethod_lint() async {
+  Future<void> _nullAssertChainedPlatformMethodLint() async {
     const source = r'''
 class FlutterLocalNotificationsPlugin {
   T? resolvePlatformSpecificImplementation<T>() => null;
@@ -68,7 +75,7 @@ Future<bool> requestPermission(FlutterLocalNotificationsPlugin plugin) async {
     await assertDiagnostics(source, [lintForLast(source, 'resolvePlatformSpecificImplementation')]);
   }
 
-  Future<void> test_chainedPlatformProperty_lint() async {
+  Future<void> _chainedPlatformPropertyLint() async {
     const source = r'''
 class Plugin {
   T? resolvePlatformSpecificImplementation<T>() => null;
@@ -86,7 +93,7 @@ bool isReady(Plugin plugin) {
     await assertDiagnostics(source, [lintForLast(source, 'resolvePlatformSpecificImplementation')]);
   }
 
-  Future<void> test_resolvedLocalWithExplicitNullCheck_noLint() async {
+  Future<void> _resolvedLocalWithExplicitNullCheckNoLint() async {
     await assertNoDiagnostics(r'''
 class FlutterLocalNotificationsPlugin {
   T? resolvePlatformSpecificImplementation<T>() => null;
@@ -107,7 +114,7 @@ Future<bool> requestPermission(FlutterLocalNotificationsPlugin plugin) async {
 ''');
   }
 
-  Future<void> test_resolutionOnly_noLint() async {
+  Future<void> _resolutionOnlyNoLint() async {
     await assertNoDiagnostics(r'''
 class Plugin {
   T? resolvePlatformSpecificImplementation<T>() => null;

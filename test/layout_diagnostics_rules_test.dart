@@ -1,18 +1,62 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/layout_diagnostics_rules.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidPositionedOutsideStackTest);
-    defineReflectiveTests(AvoidUnboundedListInColumnTest);
-    defineReflectiveTests(AvoidUnboundedTextFieldInRowTest);
-    defineReflectiveTests(AvoidListInSingleChildScrollViewTest);
-    defineReflectiveTests(AvoidOrientationLayoutTest);
-    defineReflectiveTests(AvoidClipRRectContainerTest);
-  });
+  analysisRuleSuite<AvoidPositionedOutsideStackTest>(
+    'AvoidPositionedOutsideStackTest',
+    AvoidPositionedOutsideStackTest.new,
+    {
+      'test_positionedUnderColumnPaddingOrList_lint': (t) =>
+          t._positionedUnderColumnPaddingOrListLint(),
+      'test_positionedInStackOrUnprovenParent_noLint': (t) =>
+          t._positionedInStackOrUnprovenParentNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidUnboundedListInColumnTest>(
+    'AvoidUnboundedListInColumnTest',
+    AvoidUnboundedListInColumnTest.new,
+    {
+      'test_verticalListDirectlyInColumn_lint': (t) => t._verticalListDirectlyInColumnLint(),
+      'test_constrainedOrOtherAxisLists_noLint': (t) => t._constrainedOrOtherAxisListsNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidUnboundedTextFieldInRowTest>(
+    'AvoidUnboundedTextFieldInRowTest',
+    AvoidUnboundedTextFieldInRowTest.new,
+    {
+      'test_textFieldDirectlyInRow_lint': (t) => t._textFieldDirectlyInRowLint(),
+      'test_constrainedOrVerticalTextField_noLint': (t) =>
+          t._constrainedOrVerticalTextFieldNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidListInSingleChildScrollViewTest>(
+    'AvoidListInSingleChildScrollViewTest',
+    AvoidListInSingleChildScrollViewTest.new,
+    {
+      'test_sameAxisListInScrollView_lint': (t) => t._sameAxisListInScrollViewLint(),
+      'test_slivers_crossAxis_andUnprovenNesting_noLint': (t) =>
+          t._sliversCrossAxisAndUnprovenNestingNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidOrientationLayoutTest>(
+    'AvoidOrientationLayoutTest',
+    AvoidOrientationLayoutTest.new,
+    {
+      'test_orientationLayoutBranches_lint': (t) => t._orientationLayoutBranchesLint(),
+      'test_availableSpaceAndLookalikes_noLint': (t) => t._availableSpaceAndLookalikesNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidClipRRectContainerTest>(
+    'AvoidClipRRectContainerTest',
+    AvoidClipRRectContainerTest.new,
+    {
+      'test_clipRRectAroundContainer_lint': (t) => t._clipRRectAroundContainerLint(),
+      'test_containerRadiusOrOtherClippedChild_noLint': (t) =>
+          t._containerRadiusOrOtherClippedChildNoLint(),
+    },
+  );
 }
 
 abstract class _LayoutRuleTest extends AnalysisRuleTest {
@@ -153,7 +197,6 @@ class LayoutBuilder extends StatelessWidget {
   }
 }
 
-@reflectiveTest
 final class AvoidPositionedOutsideStackTest extends _LayoutRuleTest {
   @override
   void setUp() {
@@ -161,7 +204,7 @@ final class AvoidPositionedOutsideStackTest extends _LayoutRuleTest {
     super.setUp();
   }
 
-  Future<void> test_positionedUnderColumnPaddingOrList_lint() async {
+  Future<void> _positionedUnderColumnPaddingOrListLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 Widget column() => const Column(children: [Positioned(top: 0, child: SizedBox())]);
@@ -173,7 +216,7 @@ Widget list() => const ListView(children: [Positioned(child: SizedBox())]);
     ]);
   }
 
-  Future<void> test_positionedInStackOrUnprovenParent_noLint() async {
+  Future<void> _positionedInStackOrUnprovenParentNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 Widget stack() => const Stack(children: [SizedBox(), Positioned(top: 0, child: SizedBox())]);
@@ -188,7 +231,6 @@ Widget builder() => ListView.builder(itemBuilder: (context, index) => const Posi
   }
 }
 
-@reflectiveTest
 final class AvoidUnboundedListInColumnTest extends _LayoutRuleTest {
   @override
   void setUp() {
@@ -196,7 +238,7 @@ final class AvoidUnboundedListInColumnTest extends _LayoutRuleTest {
     super.setUp();
   }
 
-  Future<void> test_verticalListDirectlyInColumn_lint() async {
+  Future<void> _verticalListDirectlyInColumnLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 Widget list() => Column(children: [const Text('Header'), ListView.builder(itemBuilder: (context, index) => const SizedBox())]);
@@ -210,7 +252,7 @@ Widget flex(bool show) => Flex(direction: Axis.vertical, children: [if (show) co
     ]);
   }
 
-  Future<void> test_constrainedOrOtherAxisLists_noLint() async {
+  Future<void> _constrainedOrOtherAxisListsNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 Widget panel() => Column(children: [
@@ -226,7 +268,6 @@ Widget dynamicDirection(Axis axis) => Flex(direction: axis, children: const [Lis
   }
 }
 
-@reflectiveTest
 final class AvoidUnboundedTextFieldInRowTest extends _LayoutRuleTest {
   @override
   void setUp() {
@@ -234,7 +275,7 @@ final class AvoidUnboundedTextFieldInRowTest extends _LayoutRuleTest {
     super.setUp();
   }
 
-  Future<void> test_textFieldDirectlyInRow_lint() async {
+  Future<void> _textFieldDirectlyInRowLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 Widget search() => const Row(children: [Text('icon'), TextField()]);
@@ -246,7 +287,7 @@ Widget form() => const Flex(direction: Axis.horizontal, children: [TextFormField
     ]);
   }
 
-  Future<void> test_constrainedOrVerticalTextField_noLint() async {
+  Future<void> _constrainedOrVerticalTextFieldNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 Widget searchBar() => const Row(children: [
@@ -260,7 +301,6 @@ Widget column() => const Column(children: [TextField()]);
   }
 }
 
-@reflectiveTest
 final class AvoidListInSingleChildScrollViewTest extends _LayoutRuleTest {
   @override
   void setUp() {
@@ -268,7 +308,7 @@ final class AvoidListInSingleChildScrollViewTest extends _LayoutRuleTest {
     super.setUp();
   }
 
-  Future<void> test_sameAxisListInScrollView_lint() async {
+  Future<void> _sameAxisListInScrollViewLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 Widget direct() => const SingleChildScrollView(child: ListView(shrinkWrap: true));
@@ -282,7 +322,7 @@ Widget nested() => const SingleChildScrollView(
     ]);
   }
 
-  Future<void> test_slivers_crossAxis_andUnprovenNesting_noLint() async {
+  Future<void> _sliversCrossAxisAndUnprovenNestingNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 Widget slivers() => const CustomScrollView(slivers: [SizedBox()]);
@@ -303,7 +343,6 @@ Widget standalone() => const ListView();
   }
 }
 
-@reflectiveTest
 final class AvoidOrientationLayoutTest extends _LayoutRuleTest {
   @override
   void setUp() {
@@ -311,7 +350,7 @@ final class AvoidOrientationLayoutTest extends _LayoutRuleTest {
     super.setUp();
   }
 
-  Future<void> test_orientationLayoutBranches_lint() async {
+  Future<void> _orientationLayoutBranchesLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 bool landscape(BuildContext context) => MediaQuery.orientationOf(context) == Orientation.landscape;
@@ -333,7 +372,7 @@ Widget builder() => OrientationBuilder(builder: (context, orientation) => const 
     ]);
   }
 
-  Future<void> test_availableSpaceAndLookalikes_noLint() async {
+  Future<void> _availableSpaceAndLookalikesNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 Widget layout() => LayoutBuilder(
@@ -348,7 +387,6 @@ int photoOrientation(Photo photo) => photo.orientation;
   }
 }
 
-@reflectiveTest
 final class AvoidClipRRectContainerTest extends _LayoutRuleTest {
   @override
   void setUp() {
@@ -356,7 +394,7 @@ final class AvoidClipRRectContainerTest extends _LayoutRuleTest {
     super.setUp();
   }
 
-  Future<void> test_clipRRectAroundContainer_lint() async {
+  Future<void> _clipRRectAroundContainerLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 Widget card() => const ClipRRect(borderRadius: BorderRadius.circular(12), child: Container(color: 0));
@@ -364,7 +402,7 @@ Widget card() => const ClipRRect(borderRadius: BorderRadius.circular(12), child:
     await assertDiagnostics(source, [lint(source.indexOf('ClipRRect('), 'ClipRRect'.length)]);
   }
 
-  Future<void> test_containerRadiusOrOtherClippedChild_noLint() async {
+  Future<void> _containerRadiusOrOtherClippedChildNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 Widget card() => const Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)));

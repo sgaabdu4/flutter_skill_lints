@@ -1,13 +1,10 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class NotifierEnsureDepsTest extends _NotifierFixtureTest {
   @override
   String get ruleName => 'notifier_ensure_deps';
 
-  Future<void> test_allowsConstructorInjectedFinalRepository() async {
+  Future<void> _allowsConstructorInjectedFinalRepository() async {
     await assertAllows(r'''
 abstract interface class IItemsRepository {
   Future<void> addItem(String item);
@@ -22,7 +19,7 @@ class TestableItemsNotifier {
 ''');
   }
 
-  Future<void> test_reportsUninitializedLateRepository() async {
+  Future<void> _reportsUninitializedLateRepository() async {
     const source = r'''
 abstract interface class IItemsRepository {
   Future<void> addItem(String item);
@@ -39,7 +36,7 @@ class UninitializedItemsNotifier {
     ]);
   }
 
-  Future<void> test_reportsNullableConstructorInjectedRepository() async {
+  Future<void> _reportsNullableConstructorInjectedRepository() async {
     const source = r'''
 abstract interface class IItemsRepository { Future<void> addItem(String item); }
 class TestableItemsNotifier {
@@ -53,7 +50,7 @@ class TestableItemsNotifier {
     ]);
   }
 
-  Future<void> test_reportsDynamicConstructorInjectedRepository() async {
+  Future<void> _reportsDynamicConstructorInjectedRepository() async {
     const source = r'''
 class TestableItemsNotifier {
   TestableItemsNotifier(this._repository);
@@ -67,7 +64,6 @@ class TestableItemsNotifier {
   }
 }
 
-@reflectiveTest
 final class NotifierWatchMethodTest extends _NotifierFixtureTest {
   @override
   String get ruleName => 'notifier_watch_method';
@@ -86,7 +82,7 @@ final authProvider = Object();
 ''';
 
   /// async-mutations.md:61: use ref.listen in build() for side effects.
-  Future<void> test_reportsListenOutsideBuild() async {
+  Future<void> _reportsListenOutsideBuild() async {
     final analyzedSource = _analyzedSource('''$_prelude
 class SessionNotifier extends Notifier<int> {
   int build() => 0;
@@ -101,7 +97,7 @@ class SessionNotifier extends Notifier<int> {
     ]);
   }
 
-  Future<void> test_allowsWatchAndListenInBuild() async {
+  Future<void> _allowsWatchAndListenInBuild() async {
     await assertAllows('''$_prelude
 class SessionNotifier extends Notifier<int> {
   int build() {
@@ -126,7 +122,6 @@ abstract class _ServicesExtendedRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => servicesExtendedSourceRules;
 }
 
-@reflectiveTest
 final class ServiceSingletonTest extends _ServicesMixinsRuleTest {
   @override
   String get ruleName => 'service_singleton';
@@ -135,7 +130,7 @@ final class ServiceSingletonTest extends _ServicesMixinsRuleTest {
   @override
   String get source => 'class UserService { static final instance = UserService(); }';
 
-  Future<void> test_allowsPlainBoringSingleton() async {
+  Future<void> _allowsPlainBoringSingleton() async {
     await assertAllows('''
 /// Talks to the push backend through its locator.
 final class UserService {
@@ -146,7 +141,7 @@ final class UserService {
 ''');
   }
 
-  Future<void> test_allowsFireAndForgetMethodsOnly() async {
+  Future<void> _allowsFireAndForgetMethodsOnly() async {
     await assertAllows('''
 final class PushTokenRefresh {
   PushTokenRefresh._();
@@ -159,7 +154,7 @@ final class PushTokenRefresh {
 ''');
   }
 
-  Future<void> test_allowsPrivateBackingFieldWithTrivialGetter() async {
+  Future<void> _allowsPrivateBackingFieldWithTrivialGetter() async {
     await assertAllows('''
 final class UserService {
   UserService._();
@@ -170,7 +165,7 @@ final class UserService {
 ''');
   }
 
-  Future<void> test_reportsMutableStateEvenWithResetForTest() async {
+  Future<void> _reportsMutableStateEvenWithResetForTest() async {
     const source = '''
 final class AudioPlayerService {
   AudioPlayerService._();
@@ -188,7 +183,7 @@ final class AudioPlayerService {
     ]);
   }
 
-  Future<void> test_reportsPublicDataReturningMethod() async {
+  Future<void> _reportsPublicDataReturningMethod() async {
     const source = '''
 final class UserService {
   UserService._();
@@ -204,7 +199,7 @@ final class UserService {
     ]);
   }
 
-  Future<void> test_reportsPublicGetterState() async {
+  Future<void> _reportsPublicGetterState() async {
     const source = '''
 final class UserService {
   UserService._();
@@ -220,7 +215,7 @@ final class UserService {
     ]);
   }
 
-  Future<void> test_reportsPublicConstructorNextToPrivateConstructor() async {
+  Future<void> _reportsPublicConstructorNextToPrivateConstructor() async {
     const source = '''
 final class RunService {
   RunService();
@@ -237,7 +232,7 @@ final class RunService {
     ]);
   }
 
-  Future<void> test_reportsPublicGetterOverPrivateField() async {
+  Future<void> _reportsPublicGetterOverPrivateField() async {
     const source = '''
 final class TokenService {
   TokenService._();
@@ -256,7 +251,7 @@ final class TokenService {
   }
 
   /// #51: cache singletons belong to service_singleton, including the factory-exposed shape.
-  Future<void> test_reportsFactoryAndInstanceCacheSingletons() async {
+  Future<void> _reportsFactoryAndInstanceCacheSingletons() async {
     const source = '''
 class SharedCache {
   SharedCache._();
@@ -281,7 +276,7 @@ class SharedCacheWithFactory {
   }
 
   /// #51 control: constant and registry instances are not singletons.
-  Future<void> test_allowsConstantAndRegistryInstances() async {
+  Future<void> _allowsConstantAndRegistryInstances() async {
     await assertAllows('''
 final class Money {
   const Money(this.cents);
@@ -302,7 +297,7 @@ final class Palette {
 ''');
   }
 
-  Future<void> test_reportsDebugInjectionSeam() async {
+  Future<void> _reportsDebugInjectionSeam() async {
     const source = '''
 final class UserService {
   UserService._();
@@ -322,7 +317,6 @@ final class UserService {
   }
 }
 
-@reflectiveTest
 final class ServiceInlineConcreteDependencyTest extends _ServicesExtendedRuleTest {
   @override
   String get ruleName => 'service_inline_concrete_dependency';
@@ -340,7 +334,7 @@ Object backgroundAlarmService(Ref ref) {
 }
 ''';
 
-  Future<void> test_allowsProviderValue() async {
+  Future<void> _allowsProviderValue() async {
     await assertAllows(r'''
 class FlutterLocalNotificationsPlugin {}
 class BackgroundAlarmService {
@@ -353,7 +347,7 @@ Object backgroundAlarmService(Ref ref) {
 ''');
   }
 
-  Future<void> test_skipsTests() async {
+  Future<void> _skipsTests() async {
     await assertAllows(r'''
 class FlutterLocalNotificationsPlugin {}
 class BackgroundAlarmService {
@@ -367,7 +361,6 @@ Object backgroundAlarmService(Ref ref) {
   }
 }
 
-@reflectiveTest
 final class HiddenDependencyDefaultParamTest extends _ServicesExtendedRuleTest {
   @override
   String get ruleName => 'hidden_dependency_default_param';
@@ -387,7 +380,7 @@ class AuthRemoteDatasource {
 }
 ''';
 
-  Future<void> test_reportsDefaultedFunctionSeam() async {
+  Future<void> _reportsDefaultedFunctionSeam() async {
     const source = r'''
 typedef DeleteAccountPollDelay = Future<void> Function(Duration duration);
 Future<void> defaultDelay(Duration duration) async {}
@@ -404,7 +397,7 @@ class AuthRemoteDatasource {
     ]);
   }
 
-  Future<void> test_allowsRequiredFunctionSeam() async {
+  Future<void> _allowsRequiredFunctionSeam() async {
     await assertAllows(r'''
 typedef OAuthAuthenticator = Future<String> Function({
   required String url,
@@ -420,7 +413,6 @@ class AuthRemoteDatasource {
   }
 }
 
-@reflectiveTest
 final class RiverpodConfigDestructuringTest extends _ServicesExtendedRuleTest {
   static const _stubs = r'''
 class Riverpod {
@@ -461,7 +453,7 @@ HttpClient backendClient(Ref ref) {
 }
 ''';
 
-  Future<void> test_reportsAwaitedReadConfigLocal() async {
+  Future<void> _reportsAwaitedReadConfigLocal() async {
     const source =
         '''
 $_stubs
@@ -478,7 +470,7 @@ Future<HttpClient> connect(Ref ref) async {
     ]);
   }
 
-  Future<void> test_allowsSkillDestructuredConfig() async {
+  Future<void> _allowsSkillDestructuredConfig() async {
     await assertAllows('''
 $_stubs
 @Riverpod(keepAlive: true)
@@ -489,7 +481,7 @@ HttpClient backendClient(Ref ref) {
 ''');
   }
 
-  Future<void> test_allowsConfigUsedBeyondPropertyReads() async {
+  Future<void> _allowsConfigUsedBeyondPropertyReads() async {
     await assertAllows('''
 $_stubs
 class Cart {
@@ -520,7 +512,6 @@ int nonConfigValue(Ref ref) {
   }
 }
 
-@reflectiveTest
 final class MixinMixinClassTest extends _ServicesMixinsRuleTest {
   @override
   String get ruleName => 'mixin_mixin_class';
@@ -530,7 +521,6 @@ final class MixinMixinClassTest extends _ServicesMixinsRuleTest {
   String get source => 'mixin class Trackable {}';
 }
 
-@reflectiveTest
 final class MixinNameSuffixTest extends _ServicesMixinsRuleTest {
   @override
   String get ruleName => 'mixin_name_suffix';
@@ -540,7 +530,6 @@ final class MixinNameSuffixTest extends _ServicesMixinsRuleTest {
   String get source => 'mixin class Trackable {}';
 }
 
-@reflectiveTest
 final class MixinMutableStateTest extends _ServicesMixinsRuleTest {
   @override
   String get ruleName => 'mixin_mutable_state';
@@ -555,7 +544,7 @@ mixin class Trackable {
 }
 ''';
 
-  Future<void> test_allowsPrivateLifecycleFieldsInConsumerStateMixin() async {
+  Future<void> _allowsPrivateLifecycleFieldsInConsumerStateMixin() async {
     final filePath = '$testPackageLibPath/core/mixins/lifecycle_retry_mixin.dart';
     newFile(filePath, r'''
 class StatefulWidget {}
@@ -573,7 +562,7 @@ mixin LifecycleRetryMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> 
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsPublicMutableFieldInStateMixin() async {
+  Future<void> _reportsPublicMutableFieldInStateMixin() async {
     final filePath = '$testPackageLibPath/core/mixins/scroll_mixin.dart';
     const source = r'''
 class StatefulWidget {}
@@ -590,7 +579,7 @@ mixin ScrollMixin<T extends StatefulWidget> on State<T> {
     ]);
   }
 
-  Future<void> test_reportsPrivateMutableFieldInUnconstrainedMixin() async {
+  Future<void> _reportsPrivateMutableFieldInUnconstrainedMixin() async {
     final filePath = '$testPackageLibPath/core/mixins/cache_mixin.dart';
     const source = r'''
 mixin CacheMixin {
@@ -604,7 +593,7 @@ mixin CacheMixin {
     ]);
   }
 
-  Future<void> test_reportsUninitializedLateAndStaticMutableFields() async {
+  Future<void> _reportsUninitializedLateAndStaticMutableFields() async {
     final filePath = '$testPackageLibPath/core/mixins/remember_mixin.dart';
     const source = r'''
 mixin RememberMixin {
@@ -628,7 +617,7 @@ mixin RememberMixin {
     ]);
   }
 
-  Future<void> test_allowsExpressionBodiedMethodsAndGetters() async {
+  Future<void> _allowsExpressionBodiedMethodsAndGetters() async {
     final filePath = '$testPackageLibPath/core/mixins/connectivity_mixin.dart';
     newFile(filePath, r'''
 class ConnectivityService {
@@ -662,7 +651,6 @@ abstract class _TestFileRuleTest extends _TestRuleTest {
   String get path => '$testPackageRootPath/test/widget_test.dart';
 }
 
-@reflectiveTest
 final class TestProviderContainerTest extends _TestFileRuleTest {
   @override
   String get ruleName => 'test_provider_container';
@@ -672,7 +660,6 @@ final class TestProviderContainerTest extends _TestFileRuleTest {
   String get source => 'void main() { ProviderContainer(); }';
 }
 
-@reflectiveTest
 final class TestUncontrolledScopeTest extends _TestFileRuleTest {
   @override
   String get ruleName => 'test_uncontrolled_scope';
@@ -682,7 +669,6 @@ final class TestUncontrolledScopeTest extends _TestFileRuleTest {
   String get source => 'void main() { ProviderScope(); }';
 }
 
-@reflectiveTest
 final class TestCreateContainerTest extends _TestFileRuleTest {
   @override
   String get ruleName => 'test_create_container';
@@ -690,4 +676,105 @@ final class TestCreateContainerTest extends _TestFileRuleTest {
   String get needle => 'createContainer()';
   @override
   String get source => 'void main() { createContainer(); }';
+}
+
+void _defineSourceScannerRulesPart11Tests() {
+  analysisRuleSuite<NotifierEnsureDepsTest>('NotifierEnsureDepsTest', NotifierEnsureDepsTest.new, {
+    'test_allowsConstructorInjectedFinalRepository': (t) =>
+        t._allowsConstructorInjectedFinalRepository(),
+    'test_reportsUninitializedLateRepository': (t) => t._reportsUninitializedLateRepository(),
+    'test_reportsNullableConstructorInjectedRepository': (t) =>
+        t._reportsNullableConstructorInjectedRepository(),
+    'test_reportsDynamicConstructorInjectedRepository': (t) =>
+        t._reportsDynamicConstructorInjectedRepository(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<NotifierWatchMethodTest>(
+    'NotifierWatchMethodTest',
+    NotifierWatchMethodTest.new,
+    {
+      'test_reportsListenOutsideBuild': (t) => t._reportsListenOutsideBuild(),
+      'test_allowsWatchAndListenInBuild': (t) => t._allowsWatchAndListenInBuild(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ServiceSingletonTest>('ServiceSingletonTest', ServiceSingletonTest.new, {
+    'test_allowsPlainBoringSingleton': (t) => t._allowsPlainBoringSingleton(),
+    'test_allowsFireAndForgetMethodsOnly': (t) => t._allowsFireAndForgetMethodsOnly(),
+    'test_allowsPrivateBackingFieldWithTrivialGetter': (t) =>
+        t._allowsPrivateBackingFieldWithTrivialGetter(),
+    'test_reportsMutableStateEvenWithResetForTest': (t) =>
+        t._reportsMutableStateEvenWithResetForTest(),
+    'test_reportsPublicDataReturningMethod': (t) => t._reportsPublicDataReturningMethod(),
+    'test_reportsPublicGetterState': (t) => t._reportsPublicGetterState(),
+    'test_reportsPublicConstructorNextToPrivateConstructor': (t) =>
+        t._reportsPublicConstructorNextToPrivateConstructor(),
+    'test_reportsPublicGetterOverPrivateField': (t) => t._reportsPublicGetterOverPrivateField(),
+    'test_reportsFactoryAndInstanceCacheSingletons': (t) =>
+        t._reportsFactoryAndInstanceCacheSingletons(),
+    'test_allowsConstantAndRegistryInstances': (t) => t._allowsConstantAndRegistryInstances(),
+    'test_reportsDebugInjectionSeam': (t) => t._reportsDebugInjectionSeam(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<ServiceInlineConcreteDependencyTest>(
+    'ServiceInlineConcreteDependencyTest',
+    ServiceInlineConcreteDependencyTest.new,
+    {
+      'test_allowsProviderValue': (t) => t._allowsProviderValue(),
+      'test_skipsTests': (t) => t._skipsTests(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<HiddenDependencyDefaultParamTest>(
+    'HiddenDependencyDefaultParamTest',
+    HiddenDependencyDefaultParamTest.new,
+    {
+      'test_reportsDefaultedFunctionSeam': (t) => t._reportsDefaultedFunctionSeam(),
+      'test_allowsRequiredFunctionSeam': (t) => t._allowsRequiredFunctionSeam(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodConfigDestructuringTest>(
+    'RiverpodConfigDestructuringTest',
+    RiverpodConfigDestructuringTest.new,
+    {
+      'test_reportsAwaitedReadConfigLocal': (t) => t._reportsAwaitedReadConfigLocal(),
+      'test_allowsSkillDestructuredConfig': (t) => t._allowsSkillDestructuredConfig(),
+      'test_allowsConfigUsedBeyondPropertyReads': (t) => t._allowsConfigUsedBeyondPropertyReads(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<MixinMixinClassTest>('MixinMixinClassTest', MixinMixinClassTest.new, {
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<MixinNameSuffixTest>('MixinNameSuffixTest', MixinNameSuffixTest.new, {
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<MixinMutableStateTest>('MixinMutableStateTest', MixinMutableStateTest.new, {
+    'test_allowsPrivateLifecycleFieldsInConsumerStateMixin': (t) =>
+        t._allowsPrivateLifecycleFieldsInConsumerStateMixin(),
+    'test_reportsPublicMutableFieldInStateMixin': (t) => t._reportsPublicMutableFieldInStateMixin(),
+    'test_reportsPrivateMutableFieldInUnconstrainedMixin': (t) =>
+        t._reportsPrivateMutableFieldInUnconstrainedMixin(),
+    'test_reportsUninitializedLateAndStaticMutableFields': (t) =>
+        t._reportsUninitializedLateAndStaticMutableFields(),
+    'test_allowsExpressionBodiedMethodsAndGetters': (t) =>
+        t._allowsExpressionBodiedMethodsAndGetters(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<TestProviderContainerTest>(
+    'TestProviderContainerTest',
+    TestProviderContainerTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<TestUncontrolledScopeTest>(
+    'TestUncontrolledScopeTest',
+    TestUncontrolledScopeTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<TestCreateContainerTest>(
+    'TestCreateContainerTest',
+    TestCreateContainerTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
 }

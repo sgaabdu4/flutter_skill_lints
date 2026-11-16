@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class ScrollListenerWidgetPrefixTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'scroll_listener_no_throttle';
@@ -21,7 +18,6 @@ class FeedScreenState {
 ''';
 }
 
-@reflectiveTest
 final class ScrollListenerAllowsDebouncerTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'scroll_listener_no_throttle';
@@ -42,12 +38,11 @@ class FeedScreenWithDebouncer {
 ''';
 
   @override
-  Future<void> test_reportsDiagnostic() async {
+  Future<void> _reportsDiagnostic() async {
     await assertAllows(source);
   }
 }
 
-@reflectiveTest
 final class UserVisibleDurationTooLongTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'user_visible_duration_too_long';
@@ -63,7 +58,7 @@ class SearchNotifier {
 }
 ''';
 
-  Future<void> test_reportsHardWaitInAsyncMethod() async {
+  Future<void> _reportsHardWaitInAsyncMethod() async {
     final analyzedSource = _analyzedSource(r'''
 class SaveNotifier extends AsyncNotifier<void> {
   Future<void> save() async {
@@ -79,7 +74,7 @@ class SaveNotifier extends AsyncNotifier<void> {
     ]);
   }
 
-  Future<void> test_allowsSyncSettleTimerInAsyncMethod() async {
+  Future<void> _allowsSyncSettleTimerInAsyncMethod() async {
     await assertAllows(r'''
 class SaveNotifier {
   static const _syncSettleDelay = Duration(seconds: 2);
@@ -92,7 +87,6 @@ class SaveNotifier {
   }
 }
 
-@reflectiveTest
 final class UserVisibleDurationAllowsSnappyDebounceTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'user_visible_duration_too_long';
@@ -109,12 +103,11 @@ class SearchNotifier {
 ''';
 
   @override
-  Future<void> test_reportsDiagnostic() async {
+  Future<void> _reportsDiagnostic() async {
     await assertAllows(source, path: path);
   }
 }
 
-@reflectiveTest
 final class UserVisibleDurationAllowsRetryBackoffTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'user_visible_duration_too_long';
@@ -132,12 +125,11 @@ class RetryService {
 ''';
 
   @override
-  Future<void> test_reportsDiagnostic() async {
+  Future<void> _reportsDiagnostic() async {
     await assertAllows(source, path: path);
   }
 }
 
-@reflectiveTest
 final class UserVisibleDurationAllowsDismissTimerTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'user_visible_duration_too_long';
@@ -156,12 +148,11 @@ class CelebrationOverlayState {
 ''';
 
   @override
-  Future<void> test_reportsDiagnostic() async {
+  Future<void> _reportsDiagnostic() async {
     await assertAllows(source, path: path);
   }
 }
 
-@reflectiveTest
 final class UserVisibleDurationAllowsSnackBarDurationTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'user_visible_duration_too_long';
@@ -180,12 +171,11 @@ class SquadSync {
 ''';
 
   @override
-  Future<void> test_reportsDiagnostic() async {
+  Future<void> _reportsDiagnostic() async {
     await assertAllows(source, path: path);
   }
 }
 
-@reflectiveTest
 final class DebugPrintBlankingMasksMatchesTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'notifier_zero_value_save_no_guard';
@@ -201,11 +191,11 @@ class HiddenInPrint {
 ''';
 
   @override
-  Future<void> test_reportsDiagnostic() async {
+  Future<void> _reportsDiagnostic() async {
     await assertAllows(source);
   }
 
-  Future<void> test_allowsPrintStatement() async {
+  Future<void> _allowsPrintStatement() async {
     await assertAllows(r'''
 class HiddenPrintCall {
   void log() {
@@ -216,7 +206,6 @@ class HiddenPrintCall {
   }
 }
 
-@reflectiveTest
 final class IsTestFileSkipsRuleTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'sync_save_all_no_dirty_guard';
@@ -234,14 +223,13 @@ class SyncService {
 ''';
 
   @override
-  Future<void> test_reportsDiagnostic() async {
+  Future<void> _reportsDiagnostic() async {
     final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
     newFile(path!, analyzedSource);
     await assertNoDiagnosticsInFile(path!);
   }
 }
 
-@reflectiveTest
 final class DialogRuleSkipsTestFileTest extends _DialogRuleTest {
   @override
   String get ruleName => 'dialog_button_pop_then_state_mutation';
@@ -265,14 +253,13 @@ class EditDialog extends ConsumerWidget {
 ''';
 
   @override
-  Future<void> test_reportsDiagnostic() async {
+  Future<void> _reportsDiagnostic() async {
     final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
     newFile(path!, analyzedSource);
     await assertNoDiagnosticsInFile(path!);
   }
 }
 
-@reflectiveTest
 final class DebugPrintMultilineBlankingTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'notifier_zero_value_save_no_guard';
@@ -291,12 +278,11 @@ class MultilinePrint {
 ''';
 
   @override
-  Future<void> test_reportsDiagnostic() async {
+  Future<void> _reportsDiagnostic() async {
     await assertAllows(source);
   }
 }
 
-@reflectiveTest
 final class DatasourceBoundaryFourGettersAllowedTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'datasource_missing_batch_loader';
@@ -313,12 +299,11 @@ abstract class FourGetterLocalDatasource {
 ''';
 
   @override
-  Future<void> test_reportsDiagnostic() async {
+  Future<void> _reportsDiagnostic() async {
     await assertAllows(source);
   }
 }
 
-@reflectiveTest
 final class DatasourceBoundaryFiveGettersFiresTest extends _RuntimeBugRuleTest {
   // Boundary: exactly 5 getters is the cutoff and MUST trigger.
   @override
@@ -337,7 +322,6 @@ abstract class FiveGetterLocalDatasource {
 ''';
 }
 
-@reflectiveTest
 final class NotifierPersistenceNoDebounceTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'notifier_persistence_no_debounce';
@@ -358,7 +342,7 @@ class DraftNotifier {
 }
 ''';
 
-  Future<void> test_allowsWithTimerDebounce() async {
+  Future<void> _allowsWithTimerDebounce() async {
     await assertAllows(r'''
 class DraftNotifier {
   Object? _debounceTimer;
@@ -372,7 +356,7 @@ class DraftNotifier {
 ''');
   }
 
-  Future<void> test_allowsWithDotShorthandTimerDebounce() async {
+  Future<void> _allowsWithDotShorthandTimerDebounce() async {
     await assertAllows(r'''
 import 'dart:async';
 
@@ -388,7 +372,7 @@ class DraftNotifier {
 ''');
   }
 
-  Future<void> test_reportsQueueAndGenerationWithoutDebounce() async {
+  Future<void> _reportsQueueAndGenerationWithoutDebounce() async {
     const source = r'''
 class DraftNotifier {
   Future<void> _persistQueue = Future<void>.value();
@@ -413,7 +397,7 @@ class DraftNotifier {
     ]);
   }
 
-  Future<void> test_allowsNonNotifierClass() async {
+  Future<void> _allowsNonNotifierClass() async {
     await assertAllows(r'''
 class Helper {
   void _scheduleDraftPersist() {
@@ -424,7 +408,7 @@ class Helper {
 ''');
   }
 
-  Future<void> test_allowsAwaitedResourceHandleLifecycleWrites() async {
+  Future<void> _allowsAwaitedResourceHandleLifecycleWrites() async {
     await assertAllows(r'''
 class Store {
   Future<void> write(String handle) async {}
@@ -455,7 +439,7 @@ class ResourceNotifier {
 ''');
   }
 
-  Future<void> test_allowsStateWriteAfterAwaitedLifecycleResult() async {
+  Future<void> _allowsStateWriteAfterAwaitedLifecycleResult() async {
     await assertAllows(r'''
 class Remote {
   Future<String> create() async => 'synthetic';
@@ -475,7 +459,7 @@ class ResourceNotifier {
 ''');
   }
 
-  Future<void> test_allowsLookalikeLocalPersistFunctionInSetter() async {
+  Future<void> _allowsLookalikeLocalPersistFunctionInSetter() async {
     await assertAllows(r'''
 class ResourceNotifier {
   String state = '';
@@ -493,7 +477,7 @@ class ResourceNotifier {
 ''');
   }
 
-  Future<void> test_reportsAsyncSetterPersistingAfterStateWrite() async {
+  Future<void> _reportsAsyncSetterPersistingAfterStateWrite() async {
     const source = r'''
 class ThemeNotifier {
   String state = 'light';
@@ -512,7 +496,7 @@ class ThemeNotifier {
     ]);
   }
 
-  Future<void> test_reportsSyncDraftUpdateCallingAsyncPersist() async {
+  Future<void> _reportsSyncDraftUpdateCallingAsyncPersist() async {
     const source = r'''
 class DraftNotifier {
   String state = '';
@@ -535,7 +519,6 @@ class DraftNotifier {
   }
 }
 
-@reflectiveTest
 final class NotifierAsyncInitStaleStateWriteTest extends _RuntimeBugRuleTest {
   @override
   void setUp() {
@@ -568,7 +551,7 @@ class ActiveWorkoutNotifier extends _$ActiveWorkoutNotifier {
 }
 ''';
 
-  Future<void> test_allowsGenerationGuardBeforeStateWrite() async {
+  Future<void> _allowsGenerationGuardBeforeStateWrite() async {
     await assertAllows(r'''
 class ActiveWorkoutNotifier extends _$ActiveWorkoutNotifier {
   int _draftRestoreGeneration = 0;
@@ -589,7 +572,7 @@ class ActiveWorkoutNotifier extends _$ActiveWorkoutNotifier {
 ''');
   }
 
-  Future<void> test_allowsStateWriteBeforeAwait() async {
+  Future<void> _allowsStateWriteBeforeAwait() async {
     await assertAllows(r'''
 class ActiveWorkoutNotifier extends _$ActiveWorkoutNotifier {
   Future<void> _loadWorkout() async {
@@ -600,7 +583,7 @@ class ActiveWorkoutNotifier extends _$ActiveWorkoutNotifier {
 ''');
   }
 
-  Future<void> test_allowsSkillRefMountedGuard() async {
+  Future<void> _allowsSkillRefMountedGuard() async {
     await assertAllows(
       _productEditorSource('''
     final product = await ref.read<Future<String>>(productRepositoryProvider);
@@ -610,7 +593,7 @@ class ActiveWorkoutNotifier extends _$ActiveWorkoutNotifier {
     );
   }
 
-  Future<void> test_reportsMountedGuardOnNonRiverpodRefOrBeforeAwait() async {
+  Future<void> _reportsMountedGuardOnNonRiverpodRefOrBeforeAwait() async {
     final source = _productEditorSource('''
     if (!ref.mounted) return;
     final product = await ref.read<Future<String>>(productRepositoryProvider);
@@ -622,7 +605,7 @@ class ActiveWorkoutNotifier extends _$ActiveWorkoutNotifier {
     ]);
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(rule.diagnosticCodes.single.severity, DiagnosticSeverity.ERROR);
   }
 
@@ -652,7 +635,7 @@ $body
 }
 ''';
 
-  Future<void> test_allowsNonNotifierClass() async {
+  Future<void> _allowsNonNotifierClass() async {
     await assertAllows(r'''
 class ActiveWorkoutRepository {
   Future<void> _restoreDraft() async {
@@ -664,7 +647,6 @@ class ActiveWorkoutRepository {
   }
 }
 
-@reflectiveTest
 final class FullCollectionLoadInLoopTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'full_collection_load_in_loop';
@@ -682,7 +664,7 @@ class WorkoutInitializer {
 }
 ''';
 
-  Future<void> test_allowsLoadBeforeLoop() async {
+  Future<void> _allowsLoadBeforeLoop() async {
     await assertAllows(r'''
 class WorkoutInitializer {
   Future<void> initialize(List<String> exerciseIds) async {
@@ -695,7 +677,7 @@ class WorkoutInitializer {
 ''');
   }
 
-  Future<void> test_allowsLoaderInLoopHeader() async {
+  Future<void> _allowsLoaderInLoopHeader() async {
     await assertAllows(r'''
 class WorkoutInitializer {
   Future<void> initialize() async {
@@ -707,7 +689,7 @@ class WorkoutInitializer {
 ''');
   }
 
-  Future<void> test_allowsCollectionForInMapLiteral() async {
+  Future<void> _allowsCollectionForInMapLiteral() async {
     await assertAllows(r'''
 class SyncService {
   Future<Map<String, Object>> deltas() async {
@@ -721,7 +703,7 @@ class SyncService {
 ''');
   }
 
-  Future<void> test_allowsLoaderAfterBracelessLoop() async {
+  Future<void> _allowsLoaderAfterBracelessLoop() async {
     await assertAllows(r'''
 class Repo {
   Future<void> sync(List<String> ids) async {
@@ -734,7 +716,6 @@ class Repo {
   }
 }
 
-@reflectiveTest
 final class UnguardedFireAndForgetPlatformCommandTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'unguarded_fire_and_forget_platform_command';
@@ -749,7 +730,7 @@ class DemoPlayer {
 }
 ''';
 
-  Future<void> test_allowsAwaitedCommand() async {
+  Future<void> _allowsAwaitedCommand() async {
     await assertAllows(r'''
 class DemoPlayer {
   Future<void> togglePlay(Object controller) async {
@@ -759,7 +740,7 @@ class DemoPlayer {
 ''');
   }
 
-  Future<void> test_allowsWrappedCommand() async {
+  Future<void> _allowsWrappedCommand() async {
     await assertAllows(r'''
 class DemoPlayer {
   void togglePlay(Object controller) {
@@ -769,7 +750,7 @@ class DemoPlayer {
 ''');
   }
 
-  Future<void> test_allowsReturnedCommand() async {
+  Future<void> _allowsReturnedCommand() async {
     await assertAllows(r'''
 class DemoPlayer {
   Future<void> togglePlay(Object controller) {
@@ -779,7 +760,7 @@ class DemoPlayer {
 ''');
   }
 
-  Future<void> test_allowsCatchError() async {
+  Future<void> _allowsCatchError() async {
     await assertAllows(r'''
 class DemoPlayer {
   void togglePlay(Object controller) {
@@ -788,4 +769,138 @@ class DemoPlayer {
 }
 ''');
   }
+}
+
+void _defineSourceScannerRulesPart18Tests() {
+  analysisRuleSuite<NotifierPersistenceNoDebounceTest>(
+    'NotifierPersistenceNoDebounceTest',
+    NotifierPersistenceNoDebounceTest.new,
+    {
+      'test_allowsWithTimerDebounce': (t) => t._allowsWithTimerDebounce(),
+      'test_allowsWithDotShorthandTimerDebounce': (t) => t._allowsWithDotShorthandTimerDebounce(),
+      'test_reportsQueueAndGenerationWithoutDebounce': (t) =>
+          t._reportsQueueAndGenerationWithoutDebounce(),
+      'test_allowsNonNotifierClass': (t) => t._allowsNonNotifierClass(),
+      'test_allowsAwaitedResourceHandleLifecycleWrites': (t) =>
+          t._allowsAwaitedResourceHandleLifecycleWrites(),
+      'test_allowsStateWriteAfterAwaitedLifecycleResult': (t) =>
+          t._allowsStateWriteAfterAwaitedLifecycleResult(),
+      'test_allowsLookalikeLocalPersistFunctionInSetter': (t) =>
+          t._allowsLookalikeLocalPersistFunctionInSetter(),
+      'test_reportsAsyncSetterPersistingAfterStateWrite': (t) =>
+          t._reportsAsyncSetterPersistingAfterStateWrite(),
+      'test_reportsSyncDraftUpdateCallingAsyncPersist': (t) =>
+          t._reportsSyncDraftUpdateCallingAsyncPersist(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<NotifierAsyncInitStaleStateWriteTest>(
+    'NotifierAsyncInitStaleStateWriteTest',
+    NotifierAsyncInitStaleStateWriteTest.new,
+    {
+      'test_allowsGenerationGuardBeforeStateWrite': (t) =>
+          t._allowsGenerationGuardBeforeStateWrite(),
+      'test_allowsStateWriteBeforeAwait': (t) => t._allowsStateWriteBeforeAwait(),
+      'test_allowsSkillRefMountedGuard': (t) => t._allowsSkillRefMountedGuard(),
+      'test_reportsMountedGuardOnNonRiverpodRefOrBeforeAwait': (t) =>
+          t._reportsMountedGuardOnNonRiverpodRefOrBeforeAwait(),
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_allowsNonNotifierClass': (t) => t._allowsNonNotifierClass(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<UserVisibleDurationTooLongTest>(
+    'UserVisibleDurationTooLongTest',
+    UserVisibleDurationTooLongTest.new,
+    {
+      'test_reportsHardWaitInAsyncMethod': (t) => t._reportsHardWaitInAsyncMethod(),
+      'test_allowsSyncSettleTimerInAsyncMethod': (t) => t._allowsSyncSettleTimerInAsyncMethod(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<FullCollectionLoadInLoopTest>(
+    'FullCollectionLoadInLoopTest',
+    FullCollectionLoadInLoopTest.new,
+    {
+      'test_allowsLoadBeforeLoop': (t) => t._allowsLoadBeforeLoop(),
+      'test_allowsLoaderInLoopHeader': (t) => t._allowsLoaderInLoopHeader(),
+      'test_allowsCollectionForInMapLiteral': (t) => t._allowsCollectionForInMapLiteral(),
+      'test_allowsLoaderAfterBracelessLoop': (t) => t._allowsLoaderAfterBracelessLoop(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<UnguardedFireAndForgetPlatformCommandTest>(
+    'UnguardedFireAndForgetPlatformCommandTest',
+    UnguardedFireAndForgetPlatformCommandTest.new,
+    {
+      'test_allowsAwaitedCommand': (t) => t._allowsAwaitedCommand(),
+      'test_allowsWrappedCommand': (t) => t._allowsWrappedCommand(),
+      'test_allowsReturnedCommand': (t) => t._allowsReturnedCommand(),
+      'test_allowsCatchError': (t) => t._allowsCatchError(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ScrollListenerWidgetPrefixTest>(
+    'ScrollListenerWidgetPrefixTest',
+    ScrollListenerWidgetPrefixTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<ScrollListenerAllowsDebouncerTest>(
+    'ScrollListenerAllowsDebouncerTest',
+    ScrollListenerAllowsDebouncerTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<UserVisibleDurationAllowsSnappyDebounceTest>(
+    'UserVisibleDurationAllowsSnappyDebounceTest',
+    UserVisibleDurationAllowsSnappyDebounceTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<UserVisibleDurationAllowsRetryBackoffTest>(
+    'UserVisibleDurationAllowsRetryBackoffTest',
+    UserVisibleDurationAllowsRetryBackoffTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<UserVisibleDurationAllowsDismissTimerTest>(
+    'UserVisibleDurationAllowsDismissTimerTest',
+    UserVisibleDurationAllowsDismissTimerTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<UserVisibleDurationAllowsSnackBarDurationTest>(
+    'UserVisibleDurationAllowsSnackBarDurationTest',
+    UserVisibleDurationAllowsSnackBarDurationTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<DebugPrintBlankingMasksMatchesTest>(
+    'DebugPrintBlankingMasksMatchesTest',
+    DebugPrintBlankingMasksMatchesTest.new,
+    {
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+      'test_allowsPrintStatement': (t) => t._allowsPrintStatement(),
+    },
+  );
+  analysisRuleSuite<IsTestFileSkipsRuleTest>(
+    'IsTestFileSkipsRuleTest',
+    IsTestFileSkipsRuleTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<DialogRuleSkipsTestFileTest>(
+    'DialogRuleSkipsTestFileTest',
+    DialogRuleSkipsTestFileTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<DebugPrintMultilineBlankingTest>(
+    'DebugPrintMultilineBlankingTest',
+    DebugPrintMultilineBlankingTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<DatasourceBoundaryFourGettersAllowedTest>(
+    'DatasourceBoundaryFourGettersAllowedTest',
+    DatasourceBoundaryFourGettersAllowedTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<DatasourceBoundaryFiveGettersFiresTest>(
+    'DatasourceBoundaryFiveGettersFiresTest',
+    DatasourceBoundaryFiveGettersFiresTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
 }

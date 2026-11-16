@@ -1,16 +1,20 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_existing_destructuring.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(UseExistingDestructuringTest);
-  });
+  analysisRuleSuite<UseExistingDestructuringTest>(
+    'UseExistingDestructuringTest',
+    UseExistingDestructuringTest.new,
+    {
+      'test_allowsGeneratedFreezedCopyWithButReportsDataField': (t) =>
+          t._allowsGeneratedFreezedCopyWithButReportsDataField(),
+      'test_reportsOrdinaryGetterNamedCopyWith': (t) => t._reportsOrdinaryGetterNamedCopyWith(),
+    },
+  );
 }
 
-@reflectiveTest
 final class UseExistingDestructuringTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +26,7 @@ const freezed = Freezed();
     super.setUp();
   }
 
-  Future<void> test_allowsGeneratedFreezedCopyWithButReportsDataField() async {
+  Future<void> _allowsGeneratedFreezedCopyWithButReportsDataField() async {
     newFile('$testPackageLibPath/form_state.dart', r'''
 import 'package:freezed_annotation/freezed_annotation.dart';
 part 'form_state.freezed.dart';
@@ -58,7 +62,7 @@ bool readOther(FormState state) {
     await assertDiagnostics(source, [lint(source.indexOf('state.valid'), 'state.valid'.length)]);
   }
 
-  Future<void> test_reportsOrdinaryGetterNamedCopyWith() async {
+  Future<void> _reportsOrdinaryGetterNamedCopyWith() async {
     const source = r'''
 class Manual {
   const Manual(this.value);

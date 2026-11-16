@@ -1,20 +1,33 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_collapsible_if.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_redundant_else.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary_if.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidCollapsibleIfTest);
-    defineReflectiveTests(AvoidRedundantElseTest);
-    defineReflectiveTests(AvoidUnnecessaryIfTest);
+  analysisRuleSuite<AvoidCollapsibleIfTest>('AvoidCollapsibleIfTest', AvoidCollapsibleIfTest.new, {
+    'test_singleNestedIf_lint': (t) => t._singleNestedIfLint(),
+    'test_outerElse_noLint': (t) => t._outerElseNoLint(),
+    'test_innerElse_noLint': (t) => t._innerElseNoLint(),
+    'test_extraStatement_noLint': (t) => t._extraStatementNoLint(),
+  });
+  analysisRuleSuite<AvoidRedundantElseTest>('AvoidRedundantElseTest', AvoidRedundantElseTest.new, {
+    'test_returnBranch_lint': (t) => t._returnBranchLint(),
+    'test_throwBranch_lint': (t) => t._throwBranchLint(),
+    'test_elseIf_noLint': (t) => t._elseIfNoLint(),
+    'test_nonExitingBranch_noLint': (t) => t._nonExitingBranchNoLint(),
+    'test_nestedConditionalExit_noLint': (t) => t._nestedConditionalExitNoLint(),
+  });
+  analysisRuleSuite<AvoidUnnecessaryIfTest>('AvoidUnnecessaryIfTest', AvoidUnnecessaryIfTest.new, {
+    'test_oppositeBooleanReturns_lint': (t) => t._oppositeBooleanReturnsLint(),
+    'test_oppositeBooleanAssignments_lint': (t) => t._oppositeBooleanAssignmentsLint(),
+    'test_sameBooleanReturns_noLint': (t) => t._sameBooleanReturnsNoLint(),
+    'test_differentAssignmentTargets_noLint': (t) => t._differentAssignmentTargetsNoLint(),
+    'test_elseIf_noLint': (t) => t._elseIfNoLint(),
   });
 }
 
-@reflectiveTest
 final class AvoidCollapsibleIfTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +35,7 @@ final class AvoidCollapsibleIfTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_singleNestedIf_lint() async {
+  Future<void> _singleNestedIfLint() async {
     const source = r'''
 void f(bool ready, bool enabled) {
   if (ready) {
@@ -36,7 +49,7 @@ void f(bool ready, bool enabled) {
     await assertDiagnostics(source, [lint(source.indexOf('if (enabled)'), 'if'.length)]);
   }
 
-  Future<void> test_outerElse_noLint() async {
+  Future<void> _outerElseNoLint() async {
     await assertNoDiagnostics(r'''
 void f(bool ready, bool enabled) {
   if (ready) {
@@ -50,7 +63,7 @@ void f(bool ready, bool enabled) {
 ''');
   }
 
-  Future<void> test_innerElse_noLint() async {
+  Future<void> _innerElseNoLint() async {
     await assertNoDiagnostics(r'''
 void f(bool ready, bool enabled) {
   if (ready) {
@@ -64,7 +77,7 @@ void f(bool ready, bool enabled) {
 ''');
   }
 
-  Future<void> test_extraStatement_noLint() async {
+  Future<void> _extraStatementNoLint() async {
     await assertNoDiagnostics(r'''
 void f(bool ready, bool enabled) {
   if (ready) {
@@ -78,7 +91,6 @@ void f(bool ready, bool enabled) {
   }
 }
 
-@reflectiveTest
 final class AvoidRedundantElseTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -86,7 +98,7 @@ final class AvoidRedundantElseTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_returnBranch_lint() async {
+  Future<void> _returnBranchLint() async {
     const source = r'''
 int f(bool ready) {
   if (!ready) {
@@ -100,7 +112,7 @@ int f(bool ready) {
     await assertDiagnostics(source, [lint(source.indexOf('else'), 'else'.length)]);
   }
 
-  Future<void> test_throwBranch_lint() async {
+  Future<void> _throwBranchLint() async {
     const source = r'''
 int f(Object? value) {
   if (value == null) {
@@ -114,7 +126,7 @@ int f(Object? value) {
     await assertDiagnostics(source, [lint(source.indexOf('else'), 'else'.length)]);
   }
 
-  Future<void> test_elseIf_noLint() async {
+  Future<void> _elseIfNoLint() async {
     await assertNoDiagnostics(r'''
 int f(int value) {
   if (value < 0) {
@@ -127,7 +139,7 @@ int f(int value) {
 ''');
   }
 
-  Future<void> test_nonExitingBranch_noLint() async {
+  Future<void> _nonExitingBranchNoLint() async {
     await assertNoDiagnostics(r'''
 int f(bool ready) {
   if (!ready) {
@@ -140,7 +152,7 @@ int f(bool ready) {
 ''');
   }
 
-  Future<void> test_nestedConditionalExit_noLint() async {
+  Future<void> _nestedConditionalExitNoLint() async {
     await assertNoDiagnostics(r'''
 int f(bool outer, bool inner) {
   if (outer) {
@@ -156,7 +168,6 @@ int f(bool outer, bool inner) {
   }
 }
 
-@reflectiveTest
 final class AvoidUnnecessaryIfTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -164,7 +175,7 @@ final class AvoidUnnecessaryIfTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_oppositeBooleanReturns_lint() async {
+  Future<void> _oppositeBooleanReturnsLint() async {
     const source = r'''
 bool f(bool ready) {
   if (ready) {
@@ -180,7 +191,7 @@ bool f(bool ready) {
     ]);
   }
 
-  Future<void> test_oppositeBooleanAssignments_lint() async {
+  Future<void> _oppositeBooleanAssignmentsLint() async {
     const source = r'''
 void f(bool ready) {
   var enabled = false;
@@ -201,7 +212,7 @@ void f(bool ready) {
     ]);
   }
 
-  Future<void> test_sameBooleanReturns_noLint() async {
+  Future<void> _sameBooleanReturnsNoLint() async {
     await assertNoDiagnostics(r'''
 bool f(bool ready) {
   if (ready) {
@@ -213,7 +224,7 @@ bool f(bool ready) {
 ''');
   }
 
-  Future<void> test_differentAssignmentTargets_noLint() async {
+  Future<void> _differentAssignmentTargetsNoLint() async {
     await assertNoDiagnostics(r'''
 void f(bool ready) {
   var enabled = false;
@@ -227,7 +238,7 @@ void f(bool ready) {
 ''');
   }
 
-  Future<void> test_elseIf_noLint() async {
+  Future<void> _elseIfNoLint() async {
     await assertNoDiagnostics(r'''
 bool f(bool first, bool second) {
   if (first) {

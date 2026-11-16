@@ -1,20 +1,40 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_duplicate_test_assertions.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_empty_test_groups.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_then_return_with_future.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidEmptyTestGroupsTest);
-    defineReflectiveTests(AvoidDuplicateTestAssertionsTest);
-    defineReflectiveTests(AvoidThenReturnWithFutureTest);
-  });
+  analysisRuleSuite<AvoidEmptyTestGroupsTest>(
+    'AvoidEmptyTestGroupsTest',
+    AvoidEmptyTestGroupsTest.new,
+    {
+      'test_groupWithoutTests_lint': (t) => t._groupWithoutTestsLint(),
+      'test_groupWithTest_noLint': (t) => t._groupWithTestNoLint(),
+      'test_groupWithTestWidgets_noLint': (t) => t._groupWithTestWidgetsNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidDuplicateTestAssertionsTest>(
+    'AvoidDuplicateTestAssertionsTest',
+    AvoidDuplicateTestAssertionsTest.new,
+    {
+      'test_duplicateExpectInSameTest_lint': (t) => t._duplicateExpectInSameTestLint(),
+      'test_sameAssertionInDifferentTests_noLint': (t) => t._sameAssertionInDifferentTestsNoLint(),
+      'test_distinctExpectedValue_noLint': (t) => t._distinctExpectedValueNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidThenReturnWithFutureTest>(
+    'AvoidThenReturnWithFutureTest',
+    AvoidThenReturnWithFutureTest.new,
+    {
+      'test_thenReturnFuture_lint': (t) => t._thenReturnFutureLint(),
+      'test_thenReturnStream_lint': (t) => t._thenReturnStreamLint(),
+      'test_thenReturnSynchronousValue_noLint': (t) => t._thenReturnSynchronousValueNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidEmptyTestGroupsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +42,7 @@ final class AvoidEmptyTestGroupsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_groupWithoutTests_lint() async {
+  Future<void> _groupWithoutTestsLint() async {
     const source = r'''
 void group(String name, void Function() body) {}
 void test(String name, void Function() body) {}
@@ -38,7 +58,7 @@ void main() {
     await assertDiagnostics(source, [lint(source.indexOf("group('empty'"), 'group'.length)]);
   }
 
-  Future<void> test_groupWithTest_noLint() async {
+  Future<void> _groupWithTestNoLint() async {
     await assertNoDiagnostics(r'''
 void group(String name, void Function() body) {}
 void test(String name, void Function() body) {}
@@ -51,7 +71,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_groupWithTestWidgets_noLint() async {
+  Future<void> _groupWithTestWidgetsNoLint() async {
     await assertNoDiagnostics(r'''
 void group(String name, void Function() body) {}
 void testWidgets(String name, Future<void> Function(Object tester) body) {}
@@ -65,7 +85,6 @@ void main() {
   }
 }
 
-@reflectiveTest
 final class AvoidDuplicateTestAssertionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -73,7 +92,7 @@ final class AvoidDuplicateTestAssertionsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_duplicateExpectInSameTest_lint() async {
+  Future<void> _duplicateExpectInSameTestLint() async {
     const source = r'''
 void test(String name, void Function() body) {}
 void expect(Object? actual, Object? expected) {}
@@ -90,7 +109,7 @@ void main() {
     await assertDiagnostics(source, [lint(source.lastIndexOf('expect'), 'expect'.length)]);
   }
 
-  Future<void> test_sameAssertionInDifferentTests_noLint() async {
+  Future<void> _sameAssertionInDifferentTestsNoLint() async {
     await assertNoDiagnostics(r'''
 void test(String name, void Function() body) {}
 void expect(Object? actual, Object? expected) {}
@@ -106,7 +125,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_distinctExpectedValue_noLint() async {
+  Future<void> _distinctExpectedValueNoLint() async {
     await assertNoDiagnostics(r'''
 void test(String name, void Function() body) {}
 void expect(Object? actual, Object? expected) {}
@@ -122,7 +141,6 @@ void main() {
   }
 }
 
-@reflectiveTest
 final class AvoidThenReturnWithFutureTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -130,7 +148,7 @@ final class AvoidThenReturnWithFutureTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_thenReturnFuture_lint() async {
+  Future<void> _thenReturnFutureLint() async {
     const source = r'''
 class Stub {
   void thenReturn(Object? value) {}
@@ -146,7 +164,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_thenReturnStream_lint() async {
+  Future<void> _thenReturnStreamLint() async {
     const source = r'''
 class Stub {
   void thenReturn(Object? value) {}
@@ -162,7 +180,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_thenReturnSynchronousValue_noLint() async {
+  Future<void> _thenReturnSynchronousValueNoLint() async {
     await assertNoDiagnostics(r'''
 class Stub {
   void thenReturn(Object? value) {}

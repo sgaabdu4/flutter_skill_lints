@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/avoid_dynamic_except_json_maps.dart';
@@ -19,29 +17,14 @@ import 'package:flutter_skill_lints/src/rules/use_ref_mounted_after_await.dart';
 import 'package:flutter_skill_lints/src/rules/use_sealed_freezed_classes.dart';
 import 'package:flutter_skill_lints/src/rules/use_unawaited_for_fire_and_forget_futures.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_01.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_02.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(UseRefMountedAfterAwaitTest);
-    defineReflectiveTests(UseContextMountedAfterAwaitTest);
-    defineReflectiveTests(AvoidLegacyRiverpodApisTest);
-    defineReflectiveTests(AvoidDynamicExceptJsonMapsTest);
-    defineReflectiveTests(AvoidNullBangTest);
-    defineReflectiveTests(AvoidPrivateWidgetClassesTest);
-    defineReflectiveTests(AvoidWidgetBuildHelpersTest);
-    defineReflectiveTests(AvoidShrinkWrapTest);
-    defineReflectiveTests(GuardContextPopTest);
-    defineReflectiveTests(UseRefInvalidateTest);
-    defineReflectiveTests(UseSealedFreezedClassesTest);
-    defineReflectiveTests(AvoidRouteParamThrowInBuildTest);
-    defineReflectiveTests(AvoidRunZonedGuardedTest);
-    defineReflectiveTests(AvoidSilentRepositoryNullReturnTest);
-    defineReflectiveTests(AvoidSyncNotifierStateReadTest);
-    defineReflectiveTests(UseUnawaitedForFireAndForgetFuturesTest);
-  });
+  _defineFlutterSkillRulesPart01Tests();
+  _defineFlutterSkillRulesPart02Tests();
 }
 
 abstract class _FlutterSkillRuleTest extends AnalysisRuleTest {

@@ -1,22 +1,53 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_duplicate_switch_case_conditions.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_switch_expressions.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_switches.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidDuplicateSwitchCaseConditionsTest);
-    defineReflectiveTests(AvoidNestedSwitchesTest);
-    defineReflectiveTests(AvoidNestedSwitchExpressionsTest);
-  });
+  analysisRuleSuite<AvoidDuplicateSwitchCaseConditionsTest>(
+    'AvoidDuplicateSwitchCaseConditionsTest',
+    AvoidDuplicateSwitchCaseConditionsTest.new,
+    {
+      'test_severity_error': (t) => t._severityError(),
+      'test_switchStatementDuplicateSimpleCaseExpression_lint': (t) =>
+          t._switchStatementDuplicateSimpleCaseExpressionLint(),
+      'test_switchStatementDuplicateConstantPattern_lint': (t) =>
+          t._switchStatementDuplicateConstantPatternLint(),
+      'test_switchExpressionDuplicateConstantPattern_lint': (t) =>
+          t._switchExpressionDuplicateConstantPatternLint(),
+      'test_distinctSimpleCases_noLint': (t) => t._distinctSimpleCasesNoLint(),
+      'test_duplicatePatternWithDifferentGuards_noLint': (t) =>
+          t._duplicatePatternWithDifferentGuardsNoLint(),
+      'test_nonSimplePatterns_noLint': (t) => t._nonSimplePatternsNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidNestedSwitchesTest>(
+    'AvoidNestedSwitchesTest',
+    AvoidNestedSwitchesTest.new,
+    {
+      'test_severity_info': (t) => t._severityInfo(),
+      'test_nestedSwitchStatementDirectInCase_lint': (t) =>
+          t._nestedSwitchStatementDirectInCaseLint(),
+      'test_switchInsideBlock_noLint': (t) => t._switchInsideBlockNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidNestedSwitchExpressionsTest>(
+    'AvoidNestedSwitchExpressionsTest',
+    AvoidNestedSwitchExpressionsTest.new,
+    {
+      'test_severity_info': (t) => t._severityInfo(),
+      'test_nestedSwitchExpressionDirectInArm_lint': (t) =>
+          t._nestedSwitchExpressionDirectInArmLint(),
+      'test_switchExpressionInsideOtherExpression_noLint': (t) =>
+          t._switchExpressionInsideOtherExpressionNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidDuplicateSwitchCaseConditionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -24,11 +55,11 @@ final class AvoidDuplicateSwitchCaseConditionsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_severity_error() async {
+  Future<void> _severityError() async {
     expect(AvoidDuplicateSwitchCaseConditions.code.severity, DiagnosticSeverity.ERROR);
   }
 
-  Future<void> test_switchStatementDuplicateSimpleCaseExpression_lint() async {
+  Future<void> _switchStatementDuplicateSimpleCaseExpressionLint() async {
     const source = r'''
 // ignore_for_file: unreachable_switch_case
 
@@ -49,7 +80,7 @@ String describe(int value) {
     await assertDiagnostics(source, [lint(source.lastIndexOf('1:'), '1'.length)]);
   }
 
-  Future<void> test_switchStatementDuplicateConstantPattern_lint() async {
+  Future<void> _switchStatementDuplicateConstantPatternLint() async {
     const source = r'''
 // ignore_for_file: unreachable_switch_case
 
@@ -70,7 +101,7 @@ String describe(Object value) {
     await assertDiagnostics(source, [lint(source.lastIndexOf("'a'"), "'a'".length)]);
   }
 
-  Future<void> test_switchExpressionDuplicateConstantPattern_lint() async {
+  Future<void> _switchExpressionDuplicateConstantPatternLint() async {
     const source = r'''
 // ignore_for_file: unreachable_switch_case
 
@@ -85,7 +116,7 @@ String describe(Object value) => switch (value) {
     await assertDiagnostics(source, [lint(source.lastIndexOf("'a'"), "'a'".length)]);
   }
 
-  Future<void> test_distinctSimpleCases_noLint() async {
+  Future<void> _distinctSimpleCasesNoLint() async {
     await assertNoDiagnostics(r'''
 String describe(Object value) => switch (value) {
   'a' => 'a',
@@ -96,7 +127,7 @@ String describe(Object value) => switch (value) {
 ''');
   }
 
-  Future<void> test_duplicatePatternWithDifferentGuards_noLint() async {
+  Future<void> _duplicatePatternWithDifferentGuardsNoLint() async {
     await assertNoDiagnostics(r'''
 String f(String? selected, List<String> values) {
   return switch (selected) {
@@ -108,7 +139,7 @@ String f(String? selected, List<String> values) {
 ''');
   }
 
-  Future<void> test_nonSimplePatterns_noLint() async {
+  Future<void> _nonSimplePatternsNoLint() async {
     await assertNoDiagnostics(r'''
 String describe(Object value) => switch (value) {
   String(:final length) when length > 1 => 'long',
@@ -119,7 +150,6 @@ String describe(Object value) => switch (value) {
   }
 }
 
-@reflectiveTest
 final class AvoidNestedSwitchesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -127,11 +157,11 @@ final class AvoidNestedSwitchesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(AvoidNestedSwitches.code.severity, DiagnosticSeverity.INFO);
   }
 
-  Future<void> test_nestedSwitchStatementDirectInCase_lint() async {
+  Future<void> _nestedSwitchStatementDirectInCaseLint() async {
     const source = r'''
 String describe(int outer, int inner) {
   switch (outer) {
@@ -151,7 +181,7 @@ String describe(int outer, int inner) {
     await assertDiagnostics(source, [lint(source.indexOf('switch (inner)'), 108)]);
   }
 
-  Future<void> test_switchInsideBlock_noLint() async {
+  Future<void> _switchInsideBlockNoLint() async {
     await assertNoDiagnostics(r'''
 String describe(int outer, int inner) {
   switch (outer) {
@@ -172,7 +202,6 @@ String describe(int outer, int inner) {
   }
 }
 
-@reflectiveTest
 final class AvoidNestedSwitchExpressionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -180,11 +209,11 @@ final class AvoidNestedSwitchExpressionsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(AvoidNestedSwitchExpressions.code.severity, DiagnosticSeverity.INFO);
   }
 
-  Future<void> test_nestedSwitchExpressionDirectInArm_lint() async {
+  Future<void> _nestedSwitchExpressionDirectInArmLint() async {
     const source = r'''
 String describe(int outer, int inner) => switch (outer) {
   1 => switch (inner) {
@@ -198,7 +227,7 @@ String describe(int outer, int inner) => switch (outer) {
     await assertDiagnostics(source, [lint(source.indexOf('switch (inner)'), 55)]);
   }
 
-  Future<void> test_switchExpressionInsideOtherExpression_noLint() async {
+  Future<void> _switchExpressionInsideOtherExpressionNoLint() async {
     await assertNoDiagnostics(r'''
 String describe(int outer, int inner) => switch (outer) {
   1 => 'value ${switch (inner) {

@@ -1,20 +1,45 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_assigning_to_static_field.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_annotations.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_referencing_discarded_variables.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidAssigningToStaticFieldTest);
-    defineReflectiveTests(AvoidReferencingDiscardedVariablesTest);
-    defineReflectiveTests(AvoidBannedAnnotationsTest);
-  });
+  analysisRuleSuite<AvoidAssigningToStaticFieldTest>(
+    'AvoidAssigningToStaticFieldTest',
+    AvoidAssigningToStaticFieldTest.new,
+    {
+      'test_instanceFieldAssignment_noLint': (t) => t._instanceFieldAssignmentNoLint(),
+      'test_staticFieldAssignment_lint': (t) => t._staticFieldAssignmentLint(),
+      'test_staticFieldIncrement_lint': (t) => t._staticFieldIncrementLint(),
+      'test_visibleForTestingStaticAssignment_noLint': (t) =>
+          t._visibleForTestingStaticAssignmentNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidReferencingDiscardedVariablesTest>(
+    'AvoidReferencingDiscardedVariablesTest',
+    AvoidReferencingDiscardedVariablesTest.new,
+    {
+      'test_discardedVariableDeclarationOnly_noLint': (t) =>
+          t._discardedVariableDeclarationOnlyNoLint(),
+      'test_namedVariableReference_noLint': (t) => t._namedVariableReferenceNoLint(),
+      'test_referencedDiscardedVariable_lint': (t) => t._referencedDiscardedVariableLint(),
+      'test_privateNamedConstructorReferences_noLint': (t) =>
+          t._privateNamedConstructorReferencesNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidBannedAnnotationsTest>(
+    'AvoidBannedAnnotationsTest',
+    AvoidBannedAnnotationsTest.new,
+    {
+      'test_deprecatedConstantAnnotation_lint': (t) => t._deprecatedConstantAnnotationLint(),
+      'test_deprecatedConstructorAnnotation_lint': (t) => t._deprecatedConstructorAnnotationLint(),
+      'test_overrideAnnotation_noLint': (t) => t._overrideAnnotationNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidAssigningToStaticFieldTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +47,7 @@ final class AvoidAssigningToStaticFieldTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_instanceFieldAssignment_noLint() async {
+  Future<void> _instanceFieldAssignmentNoLint() async {
     await assertNoDiagnostics(r'''
 class Counter {
   int value = 0;
@@ -34,7 +59,7 @@ class Counter {
 ''');
   }
 
-  Future<void> test_staticFieldAssignment_lint() async {
+  Future<void> _staticFieldAssignmentLint() async {
     const source = r'''
 class Counter {
   static int value = 0;
@@ -48,7 +73,7 @@ class Counter {
     await assertDiagnostics(source, [lint(source.indexOf('value = 1'), 'value'.length)]);
   }
 
-  Future<void> test_staticFieldIncrement_lint() async {
+  Future<void> _staticFieldIncrementLint() async {
     const source = r'''
 class Counter {
   static int value = 0;
@@ -62,7 +87,7 @@ class Counter {
     await assertDiagnostics(source, [lint(source.indexOf('value++'), 'value'.length)]);
   }
 
-  Future<void> test_visibleForTestingStaticAssignment_noLint() async {
+  Future<void> _visibleForTestingStaticAssignmentNoLint() async {
     await assertNoDiagnostics(r'''
 const visibleForTesting = _VisibleForTesting();
 
@@ -82,7 +107,6 @@ class Counter {
   }
 }
 
-@reflectiveTest
 final class AvoidReferencingDiscardedVariablesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -90,7 +114,7 @@ final class AvoidReferencingDiscardedVariablesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_discardedVariableDeclarationOnly_noLint() async {
+  Future<void> _discardedVariableDeclarationOnlyNoLint() async {
     await assertNoDiagnostics(r'''
 void f(Object value) {
   final __ = value;
@@ -98,7 +122,7 @@ void f(Object value) {
 ''');
   }
 
-  Future<void> test_namedVariableReference_noLint() async {
+  Future<void> _namedVariableReferenceNoLint() async {
     await assertNoDiagnostics(r'''
 void f(Object value) {
   final used = value;
@@ -107,7 +131,7 @@ void f(Object value) {
 ''');
   }
 
-  Future<void> test_referencedDiscardedVariable_lint() async {
+  Future<void> _referencedDiscardedVariableLint() async {
     const source = r'''
 void f(Object value) {
   final __ = value;
@@ -118,7 +142,7 @@ void f(Object value) {
     await assertDiagnostics(source, [lint(source.indexOf('__);'), 2)]);
   }
 
-  Future<void> test_privateNamedConstructorReferences_noLint() async {
+  Future<void> _privateNamedConstructorReferencesNoLint() async {
     await assertNoDiagnostics(r'''
 final class Cache {
   Cache._();
@@ -135,7 +159,6 @@ Message create() => Message._('hello');
   }
 }
 
-@reflectiveTest
 final class AvoidBannedAnnotationsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -143,7 +166,7 @@ final class AvoidBannedAnnotationsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_deprecatedConstantAnnotation_lint() async {
+  Future<void> _deprecatedConstantAnnotationLint() async {
     const source = r'''
 @deprecated
 void f() {}
@@ -152,7 +175,7 @@ void f() {}
     await assertDiagnostics(source, [lint(source.indexOf('@deprecated'), '@deprecated'.length)]);
   }
 
-  Future<void> test_deprecatedConstructorAnnotation_lint() async {
+  Future<void> _deprecatedConstructorAnnotationLint() async {
     const source = r'''
 @Deprecated('Use g')
 void f() {}
@@ -163,7 +186,7 @@ void f() {}
     ]);
   }
 
-  Future<void> test_overrideAnnotation_noLint() async {
+  Future<void> _overrideAnnotationNoLint() async {
     await assertNoDiagnostics(r'''
 class Parent {
   void f() {}

@@ -1,20 +1,60 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_passing_async_when_sync_expected.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_uncaught_future_errors.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/require_atomic_async_updates.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidUncaughtFutureErrorsTest);
-    defineReflectiveTests(RequireAtomicAsyncUpdatesTest);
-    defineReflectiveTests(AvoidPassingAsyncWhenSyncExpectedTest);
-  });
+  analysisRuleSuite<AvoidUncaughtFutureErrorsTest>(
+    'AvoidUncaughtFutureErrorsTest',
+    AvoidUncaughtFutureErrorsTest.new,
+    {
+      'test_unawaitedNamedFuture_noLint': (t) => t._unawaitedNamedFutureNoLint(),
+      'test_unawaitedInlineAsyncWithoutTry_lint': (t) => t._unawaitedInlineAsyncWithoutTryLint(),
+      'test_unawaitedInlineAsyncWithTry_noLint': (t) => t._unawaitedInlineAsyncWithTryNoLint(),
+      'test_awaitedFuture_noLint': (t) => t._awaitedFutureNoLint(),
+    },
+  );
+  analysisRuleSuite<RequireAtomicAsyncUpdatesTest>(
+    'RequireAtomicAsyncUpdatesTest',
+    RequireAtomicAsyncUpdatesTest.new,
+    {
+      'test_sameVariableAssignedBeforeAndAfterAwait_lint': (t) =>
+          t._sameVariableAssignedBeforeAndAfterAwaitLint(),
+      'test_stateAssignedBeforeAndAfterAwait_lint': (t) =>
+          t._stateAssignedBeforeAndAfterAwaitLint(),
+      'test_differentVariablesAcrossAwait_noLint': (t) => t._differentVariablesAcrossAwaitNoLint(),
+      'test_terminalBranchUpdatesAreMutuallyExclusive_noLint': (t) =>
+          t._terminalBranchUpdatesAreMutuallyExclusiveNoLint(),
+      'test_reportsAwaitedUpdateInTerminalBranchAfterPriorWrite_lint': (t) =>
+          t._reportsAwaitedUpdateInTerminalBranchAfterPriorWriteLint(),
+      'test_allowsGuardedLoadingToResultTransition_noLint': (t) =>
+          t._allowsGuardedLoadingToResultTransitionNoLint(),
+      'test_reportsLocalStateAndMountedNames_lint': (t) =>
+          t._reportsLocalStateAndMountedNamesLint(),
+      'test_allowsSkillLoadMoreMountedGuard_noLint': (t) =>
+          t._allowsSkillLoadMoreMountedGuardNoLint(),
+      'test_reportsTransitionAfterSecondAwait_lint': (t) =>
+          t._reportsTransitionAfterSecondAwaitLint(),
+      'test_reportsManyConditionalWritesWithoutPathExplosion_lint': (t) =>
+          t._reportsManyConditionalWritesWithoutPathExplosionLint(),
+    },
+  );
+  analysisRuleSuite<AvoidPassingAsyncWhenSyncExpectedTest>(
+    'AvoidPassingAsyncWhenSyncExpectedTest',
+    AvoidPassingAsyncWhenSyncExpectedTest.new,
+    {
+      'test_asyncNamedCallbackForVoidFunction_lint': (t) =>
+          t._asyncNamedCallbackForVoidFunctionLint(),
+      'test_asyncPositionalCallbackForVoidFunction_lint': (t) =>
+          t._asyncPositionalCallbackForVoidFunctionLint(),
+      'test_asyncCallbackForFutureFunction_noLint': (t) =>
+          t._asyncCallbackForFutureFunctionNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidUncaughtFutureErrorsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +62,7 @@ final class AvoidUncaughtFutureErrorsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_unawaitedNamedFuture_noLint() async {
+  Future<void> _unawaitedNamedFutureNoLint() async {
     await assertNoDiagnostics(r'''
 import 'dart:async';
 
@@ -34,7 +74,7 @@ void submit() {
 ''');
   }
 
-  Future<void> test_unawaitedInlineAsyncWithoutTry_lint() async {
+  Future<void> _unawaitedInlineAsyncWithoutTryLint() async {
     const source = r'''
 import 'dart:async';
 
@@ -52,7 +92,7 @@ void submit() {
     ]);
   }
 
-  Future<void> test_unawaitedInlineAsyncWithTry_noLint() async {
+  Future<void> _unawaitedInlineAsyncWithTryNoLint() async {
     await assertNoDiagnostics(r'''
 import 'dart:async';
 
@@ -70,7 +110,7 @@ void submit() {
 ''');
   }
 
-  Future<void> test_awaitedFuture_noLint() async {
+  Future<void> _awaitedFutureNoLint() async {
     await assertNoDiagnostics(r'''
 Future<void> save() async {}
 
@@ -81,7 +121,6 @@ Future<void> submit() async {
   }
 }
 
-@reflectiveTest
 final class RequireAtomicAsyncUpdatesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -98,7 +137,7 @@ class Notifier<T> {
     super.setUp();
   }
 
-  Future<void> test_sameVariableAssignedBeforeAndAfterAwait_lint() async {
+  Future<void> _sameVariableAssignedBeforeAndAfterAwaitLint() async {
     const source = r'''
 Future<void> save() async {}
 
@@ -113,7 +152,7 @@ Future<void> submit() async {
     await assertDiagnostics(source, [lint(source.lastIndexOf('count = 2'), 'count'.length)]);
   }
 
-  Future<void> test_stateAssignedBeforeAndAfterAwait_lint() async {
+  Future<void> _stateAssignedBeforeAndAfterAwaitLint() async {
     const source = r'''
 Future<void> save() async {}
 
@@ -131,7 +170,7 @@ class Counter {
     await assertDiagnostics(source, [lint(source.lastIndexOf('state ='), 'state'.length)]);
   }
 
-  Future<void> test_differentVariablesAcrossAwait_noLint() async {
+  Future<void> _differentVariablesAcrossAwaitNoLint() async {
     await assertNoDiagnostics(r'''
 Future<void> save() async {}
 
@@ -145,7 +184,7 @@ Future<void> submit() async {
 ''');
   }
 
-  Future<void> test_terminalBranchUpdatesAreMutuallyExclusive_noLint() async {
+  Future<void> _terminalBranchUpdatesAreMutuallyExclusiveNoLint() async {
     await assertNoDiagnostics(r'''
 Future<void> clear() async {}
 
@@ -164,7 +203,7 @@ class Controller {
 ''');
   }
 
-  Future<void> test_reportsAwaitedUpdateInTerminalBranchAfterPriorWrite_lint() async {
+  Future<void> _reportsAwaitedUpdateInTerminalBranchAfterPriorWriteLint() async {
     const source = r'''
 Future<void> clear() async {}
 
@@ -186,7 +225,7 @@ class Controller {
     ]);
   }
 
-  Future<void> test_allowsGuardedLoadingToResultTransition_noLint() async {
+  Future<void> _allowsGuardedLoadingToResultTransitionNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -215,7 +254,7 @@ class Controller extends Notifier<ViewState> {
 ''');
   }
 
-  Future<void> test_reportsLocalStateAndMountedNames_lint() async {
+  Future<void> _reportsLocalStateAndMountedNamesLint() async {
     const source = r'''
 class LocalRef { bool get mounted => true; }
 class ViewState {
@@ -243,7 +282,7 @@ class Controller {
     ]);
   }
 
-  Future<void> test_allowsSkillLoadMoreMountedGuard_noLint() async {
+  Future<void> _allowsSkillLoadMoreMountedGuardNoLint() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -268,7 +307,7 @@ class Feed extends Notifier<int> {
     await assertDiagnostics(source, [lint(source.lastIndexOf('state = page'), 'state'.length)]);
   }
 
-  Future<void> test_reportsTransitionAfterSecondAwait_lint() async {
+  Future<void> _reportsTransitionAfterSecondAwaitLint() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -299,7 +338,7 @@ class Controller extends Notifier<ViewState> {
     ]);
   }
 
-  Future<void> test_reportsManyConditionalWritesWithoutPathExplosion_lint() async {
+  Future<void> _reportsManyConditionalWritesWithoutPathExplosionLint() async {
     final conditionalWrites = List.generate(
       32,
       (index) => 'if (condition$index) state = $index;',
@@ -323,7 +362,6 @@ class Controller {
   }
 }
 
-@reflectiveTest
 final class AvoidPassingAsyncWhenSyncExpectedTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -331,7 +369,7 @@ final class AvoidPassingAsyncWhenSyncExpectedTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_asyncNamedCallbackForVoidFunction_lint() async {
+  Future<void> _asyncNamedCallbackForVoidFunctionLint() async {
     const source = r'''
 void run({required void Function() callback}) {}
 
@@ -343,7 +381,7 @@ void start() {
     await assertDiagnostics(source, [lint(source.indexOf('() async'), '() async {}'.length)]);
   }
 
-  Future<void> test_asyncPositionalCallbackForVoidFunction_lint() async {
+  Future<void> _asyncPositionalCallbackForVoidFunctionLint() async {
     const source = r'''
 void run(void Function() callback) {}
 
@@ -355,7 +393,7 @@ void start() {
     await assertDiagnostics(source, [lint(source.indexOf('() async'), '() async {}'.length)]);
   }
 
-  Future<void> test_asyncCallbackForFutureFunction_noLint() async {
+  Future<void> _asyncCallbackForFutureFunctionNoLint() async {
     await assertNoDiagnostics(r'''
 void run(Future<void> Function() callback) {}
 

@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class RouterDirectRouteCallTest extends _RouterRuleTest {
   @override
   void setUp() {
@@ -21,7 +18,7 @@ void open(context, String id) {
 }
 ''';
 
-  Future<void> test_allowsGeneratedTypedRouteGo() async {
+  Future<void> _allowsGeneratedTypedRouteGo() async {
     await assertAllows(r'''
 class ProductDetailRoute {
   ProductDetailRoute({required String id});
@@ -34,7 +31,7 @@ void open(context, String id) {
 ''');
   }
 
-  Future<void> test_allowsConstTypedRoutePush() async {
+  Future<void> _allowsConstTypedRoutePush() async {
     await assertAllows(r'''
 class ProductCreateRoute {
   const ProductCreateRoute();
@@ -47,7 +44,7 @@ void open(context) {
 ''');
   }
 
-  Future<void> test_reportsTypedLocationOnExplicitRouter() async {
+  Future<void> _reportsTypedLocationOnExplicitRouter() async {
     const source = r'''
 import 'package:go_router/go_router.dart';
 
@@ -72,7 +69,7 @@ void open(GoRouter router, GoRouteData route, RouterHolder holder) {
     ]);
   }
 
-  Future<void> test_reportsRawLocationOnExplicitRouter() async {
+  Future<void> _reportsRawLocationOnExplicitRouter() async {
     const source = r'''
 import 'package:go_router/go_router.dart';
 
@@ -84,7 +81,7 @@ void open(GoRouter router, String location) {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'router.go', ruleName)]);
   }
 
-  Future<void> test_reportsContextGoWithTypedLocation() async {
+  Future<void> _reportsContextGoWithTypedLocation() async {
     final analyzedSource = _analyzedSource(r'''
 void open(context, String id) {
   context.go(ProductDetailRoute(id: id).location);
@@ -94,7 +91,7 @@ void open(context, String id) {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'context.go', ruleName)]);
   }
 
-  Future<void> test_reportsInjectedRouterGo() async {
+  Future<void> _reportsInjectedRouterGo() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:go_router/go_router.dart';
 
@@ -110,7 +107,7 @@ void open(router, String id, GoRouter goodRouter, GoRouteData route, bool ok) {
     ]);
   }
 
-  Future<void> test_reportsCamelCaseInjectedRouterGo() async {
+  Future<void> _reportsCamelCaseInjectedRouterGo() async {
     final analyzedSource = _analyzedSource(r'''
 void open(appRouter, String id) {
   appRouter.go(ProductDetailRoute(id: id).location);
@@ -120,7 +117,7 @@ void open(appRouter, String id) {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'appRouter.go', ruleName)]);
   }
 
-  Future<void> test_reportsRouterConvenienceGoHome() async {
+  Future<void> _reportsRouterConvenienceGoHome() async {
     final analyzedSource = _analyzedSource(r'''
 void open(router) {
   router.goHome();
@@ -132,7 +129,7 @@ void open(router) {
     ]);
   }
 
-  Future<void> test_reportsCamelCaseRouterConveniencePush() async {
+  Future<void> _reportsCamelCaseRouterConveniencePush() async {
     final analyzedSource = _analyzedSource(r'''
 void open(appRouter, String itemId) {
   appRouter.pushItem(itemId);
@@ -144,7 +141,7 @@ void open(appRouter, String itemId) {
     ]);
   }
 
-  Future<void> test_reportsContextConvenienceGoHome() async {
+  Future<void> _reportsContextConvenienceGoHome() async {
     final analyzedSource = _analyzedSource(r'''
 void open(context) {
   context.goHome();
@@ -156,7 +153,7 @@ void open(context) {
     ]);
   }
 
-  Future<void> test_reportsMultilineContextGo() async {
+  Future<void> _reportsMultilineContextGo() async {
     final analyzedSource = _analyzedSource(r'''
 void open(context, String id) {
   context
@@ -169,7 +166,7 @@ void open(context, String id) {
     ]);
   }
 
-  Future<void> test_reportsMultilineInjectedRouterGo() async {
+  Future<void> _reportsMultilineInjectedRouterGo() async {
     final analyzedSource = _analyzedSource(r'''
 void open(router, String id) {
   router
@@ -182,7 +179,7 @@ void open(router, String id) {
     ]);
   }
 
-  Future<void> test_allowsContextPopHelperCall() async {
+  Future<void> _allowsContextPopHelperCall() async {
     await assertAllows(r'''
 void close(context) {
   context.popIfCan();
@@ -195,7 +192,7 @@ class HomeRoute {
 ''');
   }
 
-  Future<void> test_allowsNavigatorMaybePopForLocalDismissal() async {
+  Future<void> _allowsNavigatorMaybePopForLocalDismissal() async {
     await assertAllows(r'''
 void close(context) {
   Navigator.of(context).maybePop().then((_) {});
@@ -203,7 +200,7 @@ void close(context) {
 ''');
   }
 
-  Future<void> test_allowsShellGoBranch() async {
+  Future<void> _allowsShellGoBranch() async {
     await assertAllows(r'''
 void selectTab(navigationShell) {
   navigationShell.goBranch(1);
@@ -211,7 +208,7 @@ void selectTab(navigationShell) {
 ''');
   }
 
-  Future<void> test_allowsLocalModalApi() async {
+  Future<void> _allowsLocalModalApi() async {
     await assertAllows(r'''
 void confirm(context) {
   showDialog<bool>(context: context, builder: (_) => null);
@@ -219,7 +216,7 @@ void confirm(context) {
 ''');
   }
 
-  Future<void> test_reportsPublicStaticCoordinatorCallOutsideCoreNavigation() async {
+  Future<void> _reportsPublicStaticCoordinatorCallOutsideCoreNavigation() async {
     for (final (index, body) in [
       'FeatureNavigationCoordinator.popIfCan(context);',
       'ok ? router.go(route.location) : FeatureNavigationCoordinator.popIfCan(context);',
@@ -245,7 +242,7 @@ void close(Object context, bool ok, GoRouter router, GoRouteData route) {
     }
   }
 
-  Future<void> test_reportsRouterGoEvenInCoreRouter() async {
+  Future<void> _reportsRouterGoEvenInCoreRouter() async {
     final analyzedSource = _analyzedSource(r'''
 class GoRouter {
   void go(String location) {}
@@ -271,7 +268,7 @@ final class RouterBridge {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, '_router.go', ruleName)]);
   }
 
-  Future<void> test_allowsFallbackRouteGoHelper() async {
+  Future<void> _allowsFallbackRouteGoHelper() async {
     await assertAllows(r'''
 final class FeatureNavigation {
   void popWithFallback(fallbackRoute) {
@@ -281,7 +278,7 @@ final class FeatureNavigation {
 ''');
   }
 
-  Future<void> test_reportsTestFileRawNavigation() async {
+  Future<void> _reportsTestFileRawNavigation() async {
     final analyzedSource = _analyzedSource(r'''
 void open(context, String id) {
   context.pushNamed('detail');
@@ -295,7 +292,7 @@ void open(context, String id) {
     ]);
   }
 
-  Future<void> test_scansPartFileSourceInsteadOfDefiningLibrary() async {
+  Future<void> _scansPartFileSourceInsteadOfDefiningLibrary() async {
     final libraryPath = '$testPackageLibPath/core/widgets/organisms/next_up_card.dart';
     final partPath = '$testPackageLibPath/core/widgets/organisms/start_button.dart';
     final librarySource = _analyzedSource(r'''
@@ -320,7 +317,7 @@ class StartButton {
     await assertNoDiagnosticsInFile(partPath);
   }
 
-  Future<void> test_reportsInjectedRouterNavigation() async {
+  Future<void> _reportsInjectedRouterNavigation() async {
     const source = r'''
 import 'package:go_router/go_router.dart';
 
@@ -336,7 +333,7 @@ void openHome() {
     ]);
   }
 
-  Future<void> test_allowsTypedRouteNavigation() async {
+  Future<void> _allowsTypedRouteNavigation() async {
     await assertAllows(r'''
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
@@ -352,7 +349,6 @@ void openHome(BuildContext context) {
   }
 }
 
-@reflectiveTest
 final class RouterRawRouteDefinitionTest extends _RouterRuleTest {
   @override
   String get ruleName => 'router_raw_route_definition';
@@ -365,7 +361,7 @@ void build() {
 }
 ''';
 
-  Future<void> test_reportsRawGoRouteOutsideRouterBoundary() async {
+  Future<void> _reportsRawGoRouteOutsideRouterBoundary() async {
     final analyzedSource = _analyzedSource(r'''
 void build() {
   GoRoute(path: '/detail', builder: (_, _) => null);
@@ -377,7 +373,7 @@ void build() {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'GoRoute(', ruleName)]);
   }
 
-  Future<void> test_reportsRawGoRouteWithSeparatedCallParen() async {
+  Future<void> _reportsRawGoRouteWithSeparatedCallParen() async {
     final analyzedSource = _analyzedSource(r'''
 void build() {
   GoRoute
@@ -390,7 +386,7 @@ void build() {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'GoRoute', ruleName)]);
   }
 
-  Future<void> test_reportsRawShellRouteOutsideRouterBoundary() async {
+  Future<void> _reportsRawShellRouteOutsideRouterBoundary() async {
     final analyzedSource = _analyzedSource(r'''
 void build() {
   StatefulShellRoute.indexedStack(branches: const []);
@@ -404,7 +400,7 @@ void build() {
     ]);
   }
 
-  Future<void> test_reportsRawGoRouterOutsideRouterBoundary() async {
+  Future<void> _reportsRawGoRouterOutsideRouterBoundary() async {
     final analyzedSource = _analyzedSource(r'''
 void build() {
   GoRouter(routes: const []);
@@ -416,7 +412,7 @@ void build() {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'GoRouter(', ruleName)]);
   }
 
-  Future<void> test_allowsRouterBoundary() async {
+  Future<void> _allowsRouterBoundary() async {
     await assertAllows(r'''
 void build() {
   GoRoute(path: '/detail', builder: (_, _) => null);
@@ -424,7 +420,7 @@ void build() {
 ''', path: '$testPackageLibPath/core/router/app_routes.dart');
   }
 
-  Future<void> test_reportsTestHarnessRouterOutsideHelper() async {
+  Future<void> _reportsTestHarnessRouterOutsideHelper() async {
     final analyzedSource = _analyzedSource(r'''
 void build() {
   GoRoute(path: '/detail', builder: (_, _) => null);
@@ -436,7 +432,7 @@ void build() {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'GoRoute(', ruleName)]);
   }
 
-  Future<void> test_allowsSharedTestRouterHelper() async {
+  Future<void> _allowsSharedTestRouterHelper() async {
     await assertAllows(r'''
 void build() {
   GoRoute(path: '/detail', builder: (_, _) => null);
@@ -445,7 +441,6 @@ void build() {
   }
 }
 
-@reflectiveTest
 final class RouterModalLocalHelpersTest extends _RouterRuleTest {
   @override
   String get ruleName => 'router_modal_local_helpers';
@@ -461,7 +456,7 @@ void open(ref, context) {
 }
 ''';
 
-  Future<void> test_reportsModalRouteAbstraction() async {
+  Future<void> _reportsModalRouteAbstraction() async {
     final analyzedSource = _analyzedSource(r'''
 abstract class ProductModalRoute<T> extends ModalRouteBase<T> {}
 ''', addIgnorePrefix: addIgnorePrefix);
@@ -471,7 +466,7 @@ abstract class ProductModalRoute<T> extends ModalRouteBase<T> {}
     ]);
   }
 
-  Future<void> test_reportsProviderPresent() async {
+  Future<void> _reportsProviderPresent() async {
     final analyzedSource = _analyzedSource(r'''
 void open(ref, context) {
   ref.read(featureNavigationCoordinatorProvider).present(
@@ -487,7 +482,7 @@ void open(ref, context) {
     ]);
   }
 
-  Future<void> test_allowsLocalBottomSheetHelper() async {
+  Future<void> _allowsLocalBottomSheetHelper() async {
     await assertAllows(r'''
 void open(context) {
   context.showScrollableBottomSheet<int>(builder: (_) => null);
@@ -495,7 +490,7 @@ void open(context) {
 ''');
   }
 
-  Future<void> test_allowsThemedDialogHelper() async {
+  Future<void> _allowsThemedDialogHelper() async {
     await assertAllows(r'''
 void open(context) {
   DialogTheme.showDialog<bool>(context: context, builder: (_) => null);
@@ -504,7 +499,6 @@ void open(context) {
   }
 }
 
-@reflectiveTest
 final class RouterProviderScopeNavigationReadTest extends _RouterRuleTest {
   @override
   void setUp() {
@@ -526,7 +520,7 @@ void open(context) {
 }
 ''';
 
-  Future<void> test_reportsMultilineReadAfterContainerLookup() async {
+  Future<void> _reportsMultilineReadAfterContainerLookup() async {
     final analyzedSource = _analyzedSource(r'''
 void open(context) {
   final container = ProviderScope.containerOf(context, listen: false);
@@ -539,7 +533,7 @@ void open(context) {
     ]);
   }
 
-  Future<void> test_reportsRouterDelegateNavigatorContext() async {
+  Future<void> _reportsRouterDelegateNavigatorContext() async {
     final analyzedSource = _analyzedSource(r'''
 class HomeRoute {
   const HomeRoute();
@@ -558,7 +552,7 @@ void open(router) {
     ]);
   }
 
-  Future<void> test_reportsNavigatorKeyCurrentContext() async {
+  Future<void> _reportsNavigatorKeyCurrentContext() async {
     final analyzedSource = _analyzedSource(r'''
 class HomeRoute {
   const HomeRoute();
@@ -577,7 +571,7 @@ void open(navigatorKey) {
     ]);
   }
 
-  Future<void> test_allowsUnrelatedProviderScopeRead() async {
+  Future<void> _allowsUnrelatedProviderScopeRead() async {
     await assertAllows(r'''
 void open(context) {
   final container = ProviderScope.containerOf(context, listen: false);
@@ -586,7 +580,7 @@ void open(context) {
 ''');
   }
 
-  Future<void> test_allowsWidgetRefNavigationRead() async {
+  Future<void> _allowsWidgetRefNavigationRead() async {
     await assertAllows(r'''
 void open(ref, context) {
   ref.read(featureNavigationCoordinatorProvider).present(context, NumberPickerModalRoute());
@@ -594,7 +588,7 @@ void open(ref, context) {
 ''');
   }
 
-  Future<void> test_reportsNavigatorGlobalKeyCurrentContext() async {
+  Future<void> _reportsNavigatorGlobalKeyCurrentContext() async {
     const source = r'''
 import 'package:flutter/material.dart';
 
@@ -610,7 +604,7 @@ BuildContext? escape() {
     ]);
   }
 
-  Future<void> test_allowsNonNavigatorGlobalKeyCurrentContext() async {
+  Future<void> _allowsNonNavigatorGlobalKeyCurrentContext() async {
     await assertAllows(r'''
 import 'package:flutter/material.dart';
 
@@ -672,7 +666,6 @@ abstract class Notifier<T> extends AnyNotifier<T, T> {}
 abstract class AsyncNotifier<T> extends AnyNotifier<Future<T>, T> {}
 ''';
 
-@reflectiveTest
 final class NotifierStoredRefFieldTest extends _NotifierRuleTest {
   @override
   void setUp() {
@@ -704,7 +697,7 @@ class CartNotifier extends Notifier<int> {
 }
 ''';
 
-  Future<void> test_reportsInferredRefField() async {
+  Future<void> _reportsInferredRefField() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -717,7 +710,7 @@ class OrdersNotifier extends AsyncNotifier<int> {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '_r = ref', ruleName)]);
   }
 
-  Future<void> test_reportsAnnotatedNotifierBeforeCodegen() async {
+  Future<void> _reportsAnnotatedNotifierBeforeCodegen() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -731,7 +724,7 @@ class ProductEditorNotifier extends _$ProductEditorNotifier {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '_ref;', ruleName)]);
   }
 
-  Future<void> test_allowsRefFieldOutsideNotifier() async {
+  Future<void> _allowsRefFieldOutsideNotifier() async {
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -743,7 +736,7 @@ class CartSession {
 ''');
   }
 
-  Future<void> test_allowsInheritedRefAndNonRefFields() async {
+  Future<void> _allowsInheritedRefAndNonRefFields() async {
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -758,7 +751,7 @@ class CartNotifier extends Notifier<int> {
 ''');
   }
 
-  Future<void> test_allowsUnrelatedRefTypeInNotifierLikeClass() async {
+  Future<void> _allowsUnrelatedRefTypeInNotifierLikeClass() async {
     await assertAllows(r'''
 class Ref {}
 
@@ -770,12 +763,11 @@ class CartNotifier extends Notifier<int> {
 ''');
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(rule.diagnosticCodes.single.severity, DiagnosticSeverity.ERROR);
   }
 }
 
-@reflectiveTest
 final class NotifierTimerWithoutOnDisposeTest extends _NotifierRuleTest {
   @override
   void setUp() {
@@ -805,7 +797,7 @@ class ProductSearch extends Notifier<List<String>> {
 }
 ''';
 
-  Future<void> test_reportsSkillDraftNotifierAsWritten() async {
+  Future<void> _reportsSkillDraftNotifierAsWritten() async {
     const source = '''
 import 'dart:async';
 import 'package:riverpod/riverpod.dart';
@@ -828,7 +820,7 @@ class DraftNotifier extends AsyncNotifier<String> {
     ]);
   }
 
-  Future<void> test_allowsTimerCancelledInOnDispose() async {
+  Future<void> _allowsTimerCancelledInOnDispose() async {
     await assertAllows('''
 import 'dart:async';
 import 'package:riverpod/riverpod.dart';
@@ -845,7 +837,7 @@ class ProductSearchOk extends Notifier<List<String>> {
 ''');
   }
 
-  Future<void> test_allowsTimerOutsideNotifier() async {
+  Future<void> _allowsTimerOutsideNotifier() async {
     await assertAllows('''
 import 'dart:async';
 
@@ -856,7 +848,7 @@ class Ticker {
 ''');
   }
 
-  Future<void> test_allowsLocalTimerLookalike() async {
+  Future<void> _allowsLocalTimerLookalike() async {
     await assertAllows('''
 import 'package:riverpod/riverpod.dart';
 
@@ -870,4 +862,115 @@ class Stopwatch extends Notifier<int> {
 }
 ''');
   }
+}
+
+void _defineSourceScannerRulesPart10Tests() {
+  analysisRuleSuite<RouterDirectRouteCallTest>(
+    'RouterDirectRouteCallTest',
+    RouterDirectRouteCallTest.new,
+    {
+      'test_allowsGeneratedTypedRouteGo': (t) => t._allowsGeneratedTypedRouteGo(),
+      'test_allowsConstTypedRoutePush': (t) => t._allowsConstTypedRoutePush(),
+      'test_reportsTypedLocationOnExplicitRouter': (t) => t._reportsTypedLocationOnExplicitRouter(),
+      'test_reportsRawLocationOnExplicitRouter': (t) => t._reportsRawLocationOnExplicitRouter(),
+      'test_reportsContextGoWithTypedLocation': (t) => t._reportsContextGoWithTypedLocation(),
+      'test_reportsInjectedRouterGo': (t) => t._reportsInjectedRouterGo(),
+      'test_reportsCamelCaseInjectedRouterGo': (t) => t._reportsCamelCaseInjectedRouterGo(),
+      'test_reportsRouterConvenienceGoHome': (t) => t._reportsRouterConvenienceGoHome(),
+      'test_reportsCamelCaseRouterConveniencePush': (t) =>
+          t._reportsCamelCaseRouterConveniencePush(),
+      'test_reportsContextConvenienceGoHome': (t) => t._reportsContextConvenienceGoHome(),
+      'test_reportsMultilineContextGo': (t) => t._reportsMultilineContextGo(),
+      'test_reportsMultilineInjectedRouterGo': (t) => t._reportsMultilineInjectedRouterGo(),
+      'test_allowsContextPopHelperCall': (t) => t._allowsContextPopHelperCall(),
+      'test_allowsNavigatorMaybePopForLocalDismissal': (t) =>
+          t._allowsNavigatorMaybePopForLocalDismissal(),
+      'test_allowsShellGoBranch': (t) => t._allowsShellGoBranch(),
+      'test_allowsLocalModalApi': (t) => t._allowsLocalModalApi(),
+      'test_reportsPublicStaticCoordinatorCallOutsideCoreNavigation': (t) =>
+          t._reportsPublicStaticCoordinatorCallOutsideCoreNavigation(),
+      'test_reportsRouterGoEvenInCoreRouter': (t) => t._reportsRouterGoEvenInCoreRouter(),
+      'test_allowsFallbackRouteGoHelper': (t) => t._allowsFallbackRouteGoHelper(),
+      'test_reportsTestFileRawNavigation': (t) => t._reportsTestFileRawNavigation(),
+      'test_scansPartFileSourceInsteadOfDefiningLibrary': (t) =>
+          t._scansPartFileSourceInsteadOfDefiningLibrary(),
+      'test_reportsInjectedRouterNavigation': (t) => t._reportsInjectedRouterNavigation(),
+      'test_allowsTypedRouteNavigation': (t) => t._allowsTypedRouteNavigation(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RouterRawRouteDefinitionTest>(
+    'RouterRawRouteDefinitionTest',
+    RouterRawRouteDefinitionTest.new,
+    {
+      'test_reportsRawGoRouteOutsideRouterBoundary': (t) =>
+          t._reportsRawGoRouteOutsideRouterBoundary(),
+      'test_reportsRawGoRouteWithSeparatedCallParen': (t) =>
+          t._reportsRawGoRouteWithSeparatedCallParen(),
+      'test_reportsRawShellRouteOutsideRouterBoundary': (t) =>
+          t._reportsRawShellRouteOutsideRouterBoundary(),
+      'test_reportsRawGoRouterOutsideRouterBoundary': (t) =>
+          t._reportsRawGoRouterOutsideRouterBoundary(),
+      'test_allowsRouterBoundary': (t) => t._allowsRouterBoundary(),
+      'test_reportsTestHarnessRouterOutsideHelper': (t) =>
+          t._reportsTestHarnessRouterOutsideHelper(),
+      'test_allowsSharedTestRouterHelper': (t) => t._allowsSharedTestRouterHelper(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RouterModalLocalHelpersTest>(
+    'RouterModalLocalHelpersTest',
+    RouterModalLocalHelpersTest.new,
+    {
+      'test_reportsModalRouteAbstraction': (t) => t._reportsModalRouteAbstraction(),
+      'test_reportsProviderPresent': (t) => t._reportsProviderPresent(),
+      'test_allowsLocalBottomSheetHelper': (t) => t._allowsLocalBottomSheetHelper(),
+      'test_allowsThemedDialogHelper': (t) => t._allowsThemedDialogHelper(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RouterProviderScopeNavigationReadTest>(
+    'RouterProviderScopeNavigationReadTest',
+    RouterProviderScopeNavigationReadTest.new,
+    {
+      'test_reportsMultilineReadAfterContainerLookup': (t) =>
+          t._reportsMultilineReadAfterContainerLookup(),
+      'test_reportsRouterDelegateNavigatorContext': (t) =>
+          t._reportsRouterDelegateNavigatorContext(),
+      'test_reportsNavigatorKeyCurrentContext': (t) => t._reportsNavigatorKeyCurrentContext(),
+      'test_allowsUnrelatedProviderScopeRead': (t) => t._allowsUnrelatedProviderScopeRead(),
+      'test_allowsWidgetRefNavigationRead': (t) => t._allowsWidgetRefNavigationRead(),
+      'test_reportsNavigatorGlobalKeyCurrentContext': (t) =>
+          t._reportsNavigatorGlobalKeyCurrentContext(),
+      'test_allowsNonNavigatorGlobalKeyCurrentContext': (t) =>
+          t._allowsNonNavigatorGlobalKeyCurrentContext(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<NotifierStoredRefFieldTest>(
+    'NotifierStoredRefFieldTest',
+    NotifierStoredRefFieldTest.new,
+    {
+      'test_reportsInferredRefField': (t) => t._reportsInferredRefField(),
+      'test_reportsAnnotatedNotifierBeforeCodegen': (t) =>
+          t._reportsAnnotatedNotifierBeforeCodegen(),
+      'test_allowsRefFieldOutsideNotifier': (t) => t._allowsRefFieldOutsideNotifier(),
+      'test_allowsInheritedRefAndNonRefFields': (t) => t._allowsInheritedRefAndNonRefFields(),
+      'test_allowsUnrelatedRefTypeInNotifierLikeClass': (t) =>
+          t._allowsUnrelatedRefTypeInNotifierLikeClass(),
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<NotifierTimerWithoutOnDisposeTest>(
+    'NotifierTimerWithoutOnDisposeTest',
+    NotifierTimerWithoutOnDisposeTest.new,
+    {
+      'test_reportsSkillDraftNotifierAsWritten': (t) => t._reportsSkillDraftNotifierAsWritten(),
+      'test_allowsTimerCancelledInOnDispose': (t) => t._allowsTimerCancelledInOnDispose(),
+      'test_allowsTimerOutsideNotifier': (t) => t._allowsTimerOutsideNotifier(),
+      'test_allowsLocalTimerLookalike': (t) => t._allowsLocalTimerLookalike(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

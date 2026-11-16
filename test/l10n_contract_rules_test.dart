@@ -1,16 +1,37 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/l10n_contract_rules.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(L10nStringConcatenationTest);
-    defineReflectiveTests(L10nNotifierLocalizedCopyTest);
-  });
+  analysisRuleSuite<L10nStringConcatenationTest>(
+    'L10nStringConcatenationTest',
+    L10nStringConcatenationTest.new,
+    {
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_reportsPlusConcatenation': (t) => t._reportsPlusConcatenation(),
+      'test_reportsInterpolationWithOtherText': (t) => t._reportsInterpolationWithOtherText(),
+      'test_allowsPlaceholderMessage': (t) => t._allowsPlaceholderMessage(),
+      'test_allowsConcatenationWithoutLocalizedStrings': (t) =>
+          t._allowsConcatenationWithoutLocalizedStrings(),
+      'test_allowsLookalikeClassWithoutDelegate': (t) => t._allowsLookalikeClassWithoutDelegate(),
+    },
+  );
+  analysisRuleSuite<L10nNotifierLocalizedCopyTest>(
+    'L10nNotifierLocalizedCopyTest',
+    L10nNotifierLocalizedCopyTest.new,
+    {
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_reportsCopyReturnedFromBuildAndAssignedToState': (t) =>
+          t._reportsCopyReturnedFromBuildAndAssignedToState(),
+      'test_reportsAsyncDataAndLabelledStateCopy': (t) => t._reportsAsyncDataAndLabelledStateCopy(),
+      'test_reportsLocalizedReadInNotifier': (t) => t._reportsLocalizedReadInNotifier(),
+      'test_allowsSemanticState': (t) => t._allowsSemanticState(),
+      'test_allowsCopyOutsideNotifiers': (t) => t._allowsCopyOutsideNotifiers(),
+    },
+  );
 }
 
 const _appLocalizations = r'''
@@ -63,7 +84,6 @@ final class AsyncData<T> {
   }
 }
 
-@reflectiveTest
 final class L10nStringConcatenationTest extends _L10nRuleTest {
   @override
   void setUp() {
@@ -71,11 +91,11 @@ final class L10nStringConcatenationTest extends _L10nRuleTest {
     super.setUp();
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(L10nStringConcatenation.code.severity, DiagnosticSeverity.ERROR);
   }
 
-  Future<void> test_reportsPlusConcatenation() async {
+  Future<void> _reportsPlusConcatenation() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 import 'package:test/l10n/app_localizations.dart';
@@ -88,7 +108,7 @@ Widget header(AppLocalizations l10n) => Text(l10n.title + l10n.subtitle);
     ]);
   }
 
-  Future<void> test_reportsInterpolationWithOtherText() async {
+  Future<void> _reportsInterpolationWithOtherText() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 import 'package:test/l10n/app_localizations.dart';
@@ -101,7 +121,7 @@ Widget header(AppLocalizations l10n, int count) => Text('${l10n.title}: $count i
     ]);
   }
 
-  Future<void> test_allowsPlaceholderMessage() async {
+  Future<void> _allowsPlaceholderMessage() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:test/l10n/app_localizations.dart';
@@ -110,13 +130,13 @@ Widget header(AppLocalizations l10n, int count) => Text(l10n.itemCount(count));
 ''');
   }
 
-  Future<void> test_allowsConcatenationWithoutLocalizedStrings() async {
+  Future<void> _allowsConcatenationWithoutLocalizedStrings() async {
     await assertNoDiagnostics(r'''
 String label(String first, String last) => first + ' ' + last + '${first.length}';
 ''');
   }
 
-  Future<void> test_allowsLookalikeClassWithoutDelegate() async {
+  Future<void> _allowsLookalikeClassWithoutDelegate() async {
     await assertNoDiagnostics(r'''
 class AppLocalizations {
   String get title => 'Title';
@@ -127,7 +147,6 @@ String label(AppLocalizations l10n) => l10n.title + '!';
   }
 }
 
-@reflectiveTest
 final class L10nNotifierLocalizedCopyTest extends _L10nRuleTest {
   @override
   void setUp() {
@@ -135,11 +154,11 @@ final class L10nNotifierLocalizedCopyTest extends _L10nRuleTest {
     super.setUp();
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(L10nNotifierLocalizedCopy.code.severity, DiagnosticSeverity.ERROR);
   }
 
-  Future<void> test_reportsCopyReturnedFromBuildAndAssignedToState() async {
+  Future<void> _reportsCopyReturnedFromBuildAndAssignedToState() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -157,7 +176,7 @@ class GreetingNotifier extends Notifier<String> {
     ]);
   }
 
-  Future<void> test_reportsAsyncDataAndLabelledStateCopy() async {
+  Future<void> _reportsAsyncDataAndLabelledStateCopy() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -183,7 +202,7 @@ class BannerNotifier extends AsyncNotifier<Banner> {
     ]);
   }
 
-  Future<void> test_reportsLocalizedReadInNotifier() async {
+  Future<void> _reportsLocalizedReadInNotifier() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 import 'package:test/l10n/app_localizations.dart';
@@ -200,7 +219,7 @@ class TitleNotifier extends Notifier<String> {
     await assertDiagnostics(source, [lint(source.indexOf('title;'), 'title'.length)]);
   }
 
-  Future<void> test_allowsSemanticState() async {
+  Future<void> _allowsSemanticState() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -218,7 +237,7 @@ class InviteNotifier extends Notifier<InviteStatus> {
 ''');
   }
 
-  Future<void> test_allowsCopyOutsideNotifiers() async {
+  Future<void> _allowsCopyOutsideNotifiers() async {
     await assertNoDiagnostics(r'''
 class GreetingFormatter {
   String build() => 'Welcome back!';

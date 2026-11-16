@@ -1,22 +1,49 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_explicit_pattern_field_name.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_keywords_in_wildcard_pattern.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_misused_wildcard_pattern.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidKeywordsInWildcardPatternTest);
-    defineReflectiveTests(AvoidMisusedWildcardPatternTest);
-    defineReflectiveTests(AvoidExplicitPatternFieldNameTest);
-  });
+  analysisRuleSuite<AvoidKeywordsInWildcardPatternTest>(
+    'AvoidKeywordsInWildcardPatternTest',
+    AvoidKeywordsInWildcardPatternTest.new,
+    {
+      'test_finalWildcard_lint': (t) => t._finalWildcardLint(),
+      'test_varWildcard_lint': (t) => t._varWildcardLint(),
+      'test_plainWildcard_noLint': (t) => t._plainWildcardNoLint(),
+      'test_severity_info': (t) => t._severityInfo(),
+    },
+  );
+  analysisRuleSuite<AvoidMisusedWildcardPatternTest>(
+    'AvoidMisusedWildcardPatternTest',
+    AvoidMisusedWildcardPatternTest.new,
+    {
+      'test_leftWildcardInLogicalOr_lint': (t) => t._leftWildcardInLogicalOrLint(),
+      'test_rightWildcardInLogicalOr_lint': (t) => t._rightWildcardInLogicalOrLint(),
+      'test_typedWildcardInLogicalOr_noLint': (t) => t._typedWildcardInLogicalOrNoLint(),
+      'test_withoutWildcardInLogicalOr_noLint': (t) => t._withoutWildcardInLogicalOrNoLint(),
+      'test_severity_error': (t) => t._severityError(),
+    },
+  );
+  analysisRuleSuite<AvoidExplicitPatternFieldNameTest>(
+    'AvoidExplicitPatternFieldNameTest',
+    AvoidExplicitPatternFieldNameTest.new,
+    {
+      'test_explicitObjectPatternFieldName_lint': (t) => t._explicitObjectPatternFieldNameLint(),
+      'test_shorthandObjectPatternFieldName_noLint': (t) =>
+          t._shorthandObjectPatternFieldNameNoLint(),
+      'test_differentVariableName_noLint': (t) => t._differentVariableNameNoLint(),
+      'test_typedPattern_noLint': (t) => t._typedPatternNoLint(),
+      'test_recordPattern_noLint': (t) => t._recordPatternNoLint(),
+      'test_severity_info': (t) => t._severityInfo(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidKeywordsInWildcardPatternTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -24,7 +51,7 @@ final class AvoidKeywordsInWildcardPatternTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_finalWildcard_lint() async {
+  Future<void> _finalWildcardLint() async {
     const source = r'''
 String describe(Object value) => switch (value) {
   final _ => 'value',
@@ -34,7 +61,7 @@ String describe(Object value) => switch (value) {
     await assertDiagnostics(source, [lint(source.indexOf('final _'), 'final'.length)]);
   }
 
-  Future<void> test_varWildcard_lint() async {
+  Future<void> _varWildcardLint() async {
     const source = r'''
 String describe(Object value) => switch (value) {
   var _ => 'value',
@@ -44,7 +71,7 @@ String describe(Object value) => switch (value) {
     await assertDiagnostics(source, [lint(source.indexOf('var _'), 'var'.length)]);
   }
 
-  Future<void> test_plainWildcard_noLint() async {
+  Future<void> _plainWildcardNoLint() async {
     await assertNoDiagnostics(r'''
 String describe(Object value) => switch (value) {
   _ => 'value',
@@ -52,12 +79,11 @@ String describe(Object value) => switch (value) {
 ''');
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(AvoidKeywordsInWildcardPattern.code.severity, DiagnosticSeverity.INFO);
   }
 }
 
-@reflectiveTest
 final class AvoidMisusedWildcardPatternTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -65,7 +91,7 @@ final class AvoidMisusedWildcardPatternTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_leftWildcardInLogicalOr_lint() async {
+  Future<void> _leftWildcardInLogicalOrLint() async {
     const source = r'''
 // ignore_for_file: dead_code
 
@@ -77,7 +103,7 @@ String describe(Object value) => switch (value) {
     await assertDiagnostics(source, [lint(source.indexOf('_ ||'), 1)]);
   }
 
-  Future<void> test_rightWildcardInLogicalOr_lint() async {
+  Future<void> _rightWildcardInLogicalOrLint() async {
     const source = r'''
 String describe(Object value) => switch (value) {
   int() || _ => 'value',
@@ -87,7 +113,7 @@ String describe(Object value) => switch (value) {
     await assertDiagnostics(source, [lint(source.indexOf('_ =>'), 1)]);
   }
 
-  Future<void> test_typedWildcardInLogicalOr_noLint() async {
+  Future<void> _typedWildcardInLogicalOrNoLint() async {
     await assertNoDiagnostics(r'''
 String describe(Object value) => switch (value) {
   int _ || String _ => 'typed',
@@ -96,7 +122,7 @@ String describe(Object value) => switch (value) {
 ''');
   }
 
-  Future<void> test_withoutWildcardInLogicalOr_noLint() async {
+  Future<void> _withoutWildcardInLogicalOrNoLint() async {
     await assertNoDiagnostics(r'''
 String describe(Object value) => switch (value) {
   int() || String() => 'typed',
@@ -105,12 +131,11 @@ String describe(Object value) => switch (value) {
 ''');
   }
 
-  Future<void> test_severity_error() async {
+  Future<void> _severityError() async {
     expect(AvoidMisusedWildcardPattern.code.severity, DiagnosticSeverity.ERROR);
   }
 }
 
-@reflectiveTest
 final class AvoidExplicitPatternFieldNameTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -118,7 +143,7 @@ final class AvoidExplicitPatternFieldNameTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_explicitObjectPatternFieldName_lint() async {
+  Future<void> _explicitObjectPatternFieldNameLint() async {
     const source = r'''
 class User {
   User(this.name);
@@ -134,7 +159,7 @@ void read(User user) {
     await assertDiagnostics(source, [lint(source.indexOf('name: name'), 'name:'.length)]);
   }
 
-  Future<void> test_shorthandObjectPatternFieldName_noLint() async {
+  Future<void> _shorthandObjectPatternFieldNameNoLint() async {
     await assertNoDiagnostics(r'''
 class User {
   User(this.name);
@@ -148,7 +173,7 @@ void read(User user) {
 ''');
   }
 
-  Future<void> test_differentVariableName_noLint() async {
+  Future<void> _differentVariableNameNoLint() async {
     await assertNoDiagnostics(r'''
 class User {
   User(this.name);
@@ -162,7 +187,7 @@ void read(User user) {
 ''');
   }
 
-  Future<void> test_typedPattern_noLint() async {
+  Future<void> _typedPatternNoLint() async {
     await assertNoDiagnostics(r'''
 class User {
   User(this.name);
@@ -176,7 +201,7 @@ void read(User user) {
 ''');
   }
 
-  Future<void> test_recordPattern_noLint() async {
+  Future<void> _recordPatternNoLint() async {
     await assertNoDiagnostics(r'''
 void read(({String name}) user) {
   final (name: name) = user;
@@ -185,7 +210,7 @@ void read(({String name}) user) {
 ''');
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(AvoidExplicitPatternFieldName.code.severity, DiagnosticSeverity.INFO);
   }
 }

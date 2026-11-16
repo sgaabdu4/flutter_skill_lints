@@ -1,17 +1,38 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/consistent_update_render_object.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_sliver_prefix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_dedicated_media_query_methods.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(UseDedicatedMediaQueryMethodsTest);
-    defineReflectiveTests(PreferSliverPrefixTest);
-    defineReflectiveTests(ConsistentUpdateRenderObjectTest);
+  analysisRuleSuite<UseDedicatedMediaQueryMethodsTest>(
+    'UseDedicatedMediaQueryMethodsTest',
+    UseDedicatedMediaQueryMethodsTest.new,
+    {
+      'test_sizePaddingAndViewInsets_lint': (t) => t._sizePaddingAndViewInsetsLint(),
+      'test_dedicatedMethods_noLint': (t) => t._dedicatedMethodsNoLint(),
+      'test_otherMediaQueryProperty_noLint': (t) => t._otherMediaQueryPropertyNoLint(),
+    },
+  );
+  analysisRuleSuite<PreferSliverPrefixTest>('PreferSliverPrefixTest', PreferSliverPrefixTest.new, {
+    'test_statelessWidgetReturningSliverWithoutPrefix_lint': (t) =>
+        t._statelessWidgetReturningSliverWithoutPrefixLint(),
+    'test_sliverNameOnlyInsideClassName_lint': (t) => t._sliverNameOnlyInsideClassNameLint(),
+    'test_prefixedStatelessWidget_noLint': (t) => t._prefixedStatelessWidgetNoLint(),
+    'test_statefulWidgetReturningSliver_lint': (t) => t._statefulWidgetReturningSliverLint(),
+    'test_boxWidgetReturn_noLint': (t) => t._boxWidgetReturnNoLint(),
   });
+  analysisRuleSuite<ConsistentUpdateRenderObjectTest>(
+    'ConsistentUpdateRenderObjectTest',
+    ConsistentUpdateRenderObjectTest.new,
+    {
+      'test_constructorFieldMissingFromUpdateRenderObject_lint': (t) =>
+          t._constructorFieldMissingFromUpdateRenderObjectLint(),
+      'test_allConstructorFieldsAssigned_noLint': (t) => t._allConstructorFieldsAssignedNoLint(),
+      'test_nonConstructorField_noLint': (t) => t._nonConstructorFieldNoLint(),
+    },
+  );
 }
 
 abstract class _FlutterRuleTest extends AnalysisRuleTest {
@@ -92,7 +113,6 @@ abstract class LeafRenderObjectWidget extends RenderObjectWidget {
   }
 }
 
-@reflectiveTest
 final class UseDedicatedMediaQueryMethodsTest extends _FlutterRuleTest {
   @override
   void setUp() {
@@ -100,7 +120,7 @@ final class UseDedicatedMediaQueryMethodsTest extends _FlutterRuleTest {
     super.setUp();
   }
 
-  Future<void> test_sizePaddingAndViewInsets_lint() async {
+  Future<void> _sizePaddingAndViewInsetsLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -121,7 +141,7 @@ void build(BuildContext context) {
     ]);
   }
 
-  Future<void> test_dedicatedMethods_noLint() async {
+  Future<void> _dedicatedMethodsNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -133,7 +153,7 @@ void build(BuildContext context) {
 ''');
   }
 
-  Future<void> test_otherMediaQueryProperty_noLint() async {
+  Future<void> _otherMediaQueryPropertyNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -144,7 +164,6 @@ void build(BuildContext context) {
   }
 }
 
-@reflectiveTest
 final class PreferSliverPrefixTest extends _FlutterRuleTest {
   @override
   void setUp() {
@@ -152,7 +171,7 @@ final class PreferSliverPrefixTest extends _FlutterRuleTest {
     super.setUp();
   }
 
-  Future<void> test_statelessWidgetReturningSliverWithoutPrefix_lint() async {
+  Future<void> _statelessWidgetReturningSliverWithoutPrefixLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -167,7 +186,7 @@ class FeedList extends StatelessWidget {
     await assertDiagnostics(source, [lint(source.indexOf('FeedList'), 'FeedList'.length)]);
   }
 
-  Future<void> test_sliverNameOnlyInsideClassName_lint() async {
+  Future<void> _sliverNameOnlyInsideClassNameLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -184,7 +203,7 @@ class FeedSliverList extends StatelessWidget {
     ]);
   }
 
-  Future<void> test_prefixedStatelessWidget_noLint() async {
+  Future<void> _prefixedStatelessWidgetNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -197,7 +216,7 @@ class SliverFeedList extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_statefulWidgetReturningSliver_lint() async {
+  Future<void> _statefulWidgetReturningSliverLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -217,7 +236,7 @@ class _FeedSectionState extends State<FeedSection> {
     await assertDiagnostics(source, [lint(source.indexOf('FeedSection'), 'FeedSection'.length)]);
   }
 
-  Future<void> test_boxWidgetReturn_noLint() async {
+  Future<void> _boxWidgetReturnNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -231,7 +250,6 @@ class FeedBox extends StatelessWidget {
   }
 }
 
-@reflectiveTest
 final class ConsistentUpdateRenderObjectTest extends _FlutterRuleTest {
   @override
   void setUp() {
@@ -239,7 +257,7 @@ final class ConsistentUpdateRenderObjectTest extends _FlutterRuleTest {
     super.setUp();
   }
 
-  Future<void> test_constructorFieldMissingFromUpdateRenderObject_lint() async {
+  Future<void> _constructorFieldMissingFromUpdateRenderObjectLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -267,7 +285,7 @@ class CounterWidget extends LeafRenderObjectWidget {
     await assertDiagnostics(source, [lint(source.indexOf('step;'), 'step'.length)]);
   }
 
-  Future<void> test_allConstructorFieldsAssigned_noLint() async {
+  Future<void> _allConstructorFieldsAssignedNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -296,7 +314,7 @@ class CounterWidget extends LeafRenderObjectWidget {
 ''');
   }
 
-  Future<void> test_nonConstructorField_noLint() async {
+  Future<void> _nonConstructorFieldNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 

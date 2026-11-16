@@ -1,18 +1,69 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_magic_literals.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidMagicLiteralsTest);
+  analysisRuleSuite<AvoidMagicLiteralsTest>('AvoidMagicLiteralsTest', AvoidMagicLiteralsTest.new, {
+    'test_severityIsError': (t) => t._severityIsError(),
+    'test_allowsSampleDataInsideResolvedPreviewFunction': (t) =>
+        t._allowsSampleDataInsideResolvedPreviewFunction(),
+    'test_allowsSampleDataInsideResolvedPreviewMethodAndConstructor': (t) =>
+        t._allowsSampleDataInsideResolvedPreviewMethodAndConstructor(),
+    'test_reportsBoundaryLiteralInsideMultiPreviewClass': (t) =>
+        t._reportsBoundaryLiteralInsideMultiPreviewClass(),
+    'test_reportsSampleDataUnderLookalikePreviewAnnotation': (t) =>
+        t._reportsSampleDataUnderLookalikePreviewAnnotation(),
+    'test_reportsSampleDataOutsidePreview': (t) => t._reportsSampleDataOutsidePreview(),
+    'test_reportsRawNumberLiteral': (t) => t._reportsRawNumberLiteral(),
+    'test_reportsNumericComparisonBoundaries': (t) => t._reportsNumericComparisonBoundaries(),
+    'test_allowsStatusCodeComparisonsForDedicatedRule': (t) =>
+        t._allowsStatusCodeComparisonsForDedicatedRule(),
+    'test_reportsGeneratedLiteralAppeasementConstants': (t) =>
+        t._reportsGeneratedLiteralAppeasementConstants(),
+    'test_allowsVersionAndProtocolNumbersInNames': (t) =>
+        t._allowsVersionAndProtocolNumbersInNames(),
+    'test_allowsDedicatedErrorCodeOwnerClasses': (t) => t._allowsDedicatedErrorCodeOwnerClasses(),
+    'test_allowsDedicatedErrorCodeOwnerFiles': (t) => t._allowsDedicatedErrorCodeOwnerFiles(),
+    'test_allowsCommonNumericSentinelComparisons': (t) =>
+        t._allowsCommonNumericSentinelComparisons(),
+    'test_reportsRawStringLiteral': (t) => t._reportsRawStringLiteral(),
+    'test_allowsUserFeedbackThroughWidgetCallbacks': (t) =>
+        t._allowsUserFeedbackThroughWidgetCallbacks(),
+    'test_reportsProtocolHeaderKeyBesideCallbackProse': (t) =>
+        t._reportsProtocolHeaderKeyBesideCallbackProse(),
+    'test_reportsInlineDateFormatPatternArgument': (t) =>
+        t._reportsInlineDateFormatPatternArgument(),
+    'test_reportsInlineDateFormatConstructorPattern': (t) =>
+        t._reportsInlineDateFormatConstructorPattern(),
+    'test_reportsNamedDateFormatPatternReference': (t) =>
+        t._reportsNamedDateFormatPatternReference(),
+    'test_reportsNamedDateFormatConstructorPatternReference': (t) =>
+        t._reportsNamedDateFormatConstructorPatternReference(),
+    'test_reportsStringInterpolationWithRawText': (t) => t._reportsStringInterpolationWithRawText(),
+    'test_allowsNamedConstDefinitionsAndReferences': (t) =>
+        t._allowsNamedConstDefinitionsAndReferences(),
+    'test_allowsCommonSentinelNumbers': (t) => t._allowsCommonSentinelNumbers(),
+    'test_allowsImportsAndAnnotations': (t) => t._allowsImportsAndAnnotations(),
+    'test_allowsConstantRegistryFiles': (t) => t._allowsConstantRegistryFiles(),
+    'test_allowsJsonKeysInModelCodecOwner': (t) => t._allowsJsonKeysInModelCodecOwner(),
+    'test_allowsJsonKeysInDataModelsFile': (t) => t._allowsJsonKeysInDataModelsFile(),
+    'test_reportsNumericThresholdInModelCodecOwner': (t) =>
+        t._reportsNumericThresholdInModelCodecOwner(),
+    'test_reportsJsonKeysOutsideCodecOwner': (t) => t._reportsJsonKeysOutsideCodecOwner(),
+    'test_allowsStorageKeysAndApiPathsOwners': (t) => t._allowsStorageKeysAndApiPathsOwners(),
+    'test_reportsStorageKeysOwnerBodyOutsideOwnerPath': (t) =>
+        t._reportsStorageKeysOwnerBodyOutsideOwnerPath(),
+    'test_allowsResolvedRouteNameAndFlutterRouteSettingsName': (t) =>
+        t._allowsResolvedRouteNameAndFlutterRouteSettingsName(),
+    'test_reportsKeyAndLookalikeRouteSettingsName': (t) =>
+        t._reportsKeyAndLookalikeRouteSettingsName(),
+    'test_allowsTestFiles': (t) => t._allowsTestFiles(),
   });
 }
 
-@reflectiveTest
 final class AvoidMagicLiteralsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -54,11 +105,11 @@ class ProductCard {
 }
 ''';
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(AvoidMagicLiterals.code.severity, DiagnosticSeverity.ERROR);
   }
 
-  Future<void> test_allowsSampleDataInsideResolvedPreviewFunction() async {
+  Future<void> _allowsSampleDataInsideResolvedPreviewFunction() async {
     await assertNoDiagnostics('''
 import 'package:flutter/widget_previews.dart';
 
@@ -73,7 +124,7 @@ ProductCard productCardInStockPreview() {
 ''');
   }
 
-  Future<void> test_allowsSampleDataInsideResolvedPreviewMethodAndConstructor() async {
+  Future<void> _allowsSampleDataInsideResolvedPreviewMethodAndConstructor() async {
     await assertNoDiagnostics('''
 import 'package:flutter/widget_previews.dart';
 
@@ -93,7 +144,7 @@ class ProductCardSample extends ProductCard {
 ''');
   }
 
-  Future<void> test_reportsBoundaryLiteralInsideMultiPreviewClass() async {
+  Future<void> _reportsBoundaryLiteralInsideMultiPreviewClass() async {
     const source = r'''
 import 'package:flutter/widget_previews.dart';
 
@@ -115,7 +166,7 @@ final class TextScalePreviews extends MultiPreview {
     ]);
   }
 
-  Future<void> test_reportsSampleDataUnderLookalikePreviewAnnotation() async {
+  Future<void> _reportsSampleDataUnderLookalikePreviewAnnotation() async {
     const source =
         '''
 class Preview {
@@ -138,7 +189,7 @@ ProductCard productCardInStockPreview() {
     ]);
   }
 
-  Future<void> test_reportsSampleDataOutsidePreview() async {
+  Future<void> _reportsSampleDataOutsidePreview() async {
     const source =
         '''
 $_productPreviewBody
@@ -156,7 +207,7 @@ ProductCard productCard() {
     ]);
   }
 
-  Future<void> test_reportsRawNumberLiteral() async {
+  Future<void> _reportsRawNumberLiteral() async {
     const source = r'''
 class RecentSessions {
   void take(int count) {}
@@ -168,7 +219,7 @@ void recent(RecentSessions values) => values.take(60);
     await assertDiagnostics(source, [lint(source.indexOf('60'), 2)]);
   }
 
-  Future<void> test_reportsNumericComparisonBoundaries() async {
+  Future<void> _reportsNumericComparisonBoundaries() async {
     const source = r'''
 bool isKilometer(double distanceMeters) => distanceMeters >= 1000;
 bool isLastCalendarRow(int row) => row < 6;
@@ -180,7 +231,7 @@ bool isLastCalendarRow(int row) => row < 6;
     ]);
   }
 
-  Future<void> test_allowsStatusCodeComparisonsForDedicatedRule() async {
+  Future<void> _allowsStatusCodeComparisonsForDedicatedRule() async {
     await assertNoDiagnostics(r'''
 bool notFound(int? code) => code == 404;
 bool failed(Response response) => response.statusCode >= 500;
@@ -193,7 +244,7 @@ class Response {
 ''');
   }
 
-  Future<void> test_reportsGeneratedLiteralAppeasementConstants() async {
+  Future<void> _reportsGeneratedLiteralAppeasementConstants() async {
     const source = r'''
 const int _kInt_404 = 404;
 const String _kStringActiveWorkout = 'active-workout';
@@ -211,7 +262,7 @@ final retryDelayMs250 = 250;
     ]);
   }
 
-  Future<void> test_allowsVersionAndProtocolNumbersInNames() async {
+  Future<void> _allowsVersionAndProtocolNumbersInNames() async {
     await assertNoDiagnostics(r'''
 const int apiV2 = 2;
 const int headingH2Level = 2;
@@ -220,7 +271,7 @@ const int sha256Bits = 256;
 ''');
   }
 
-  Future<void> test_allowsDedicatedErrorCodeOwnerClasses() async {
+  Future<void> _allowsDedicatedErrorCodeOwnerClasses() async {
     await assertNoDiagnostics(r'''
 abstract final class AppwriteErrorCodes {
   static const int tooManyRequests429 = 429;
@@ -230,7 +281,7 @@ abstract final class AppwriteErrorCodes {
 ''');
   }
 
-  Future<void> test_allowsDedicatedErrorCodeOwnerFiles() async {
+  Future<void> _allowsDedicatedErrorCodeOwnerFiles() async {
     final filePath = '$testPackageLibPath/core/services/appwrite_error_codes.dart';
     newFile(filePath, r'''
 abstract final class AppwriteCodes {
@@ -243,7 +294,7 @@ abstract final class AppwriteCodes {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsCommonNumericSentinelComparisons() async {
+  Future<void> _allowsCommonNumericSentinelComparisons() async {
     await assertNoDiagnostics(r'''
 bool hasDistance(double distanceMeters) => distanceMeters > 0;
 bool hasPrevious(int index) => index > -1;
@@ -251,7 +302,7 @@ bool hasSingleItem(int count) => count == 1;
 ''');
   }
 
-  Future<void> test_reportsRawStringLiteral() async {
+  Future<void> _reportsRawStringLiteral() async {
     const source = r'''
 Object? read(Map<String, Object?> data) => data['active-workout'];
 ''';
@@ -259,7 +310,7 @@ Object? read(Map<String, Object?> data) => data['active-workout'];
     await assertDiagnostics(source, [lint(source.indexOf("'active-workout'"), 16)]);
   }
 
-  Future<void> test_allowsUserFeedbackThroughWidgetCallbacks() async {
+  Future<void> _allowsUserFeedbackThroughWidgetCallbacks() async {
     await assertNoDiagnostics(r'''
 class Widget {
   void Function(String) onError = (_) {};
@@ -272,7 +323,7 @@ void save(Widget widget) {
 ''');
   }
 
-  Future<void> test_reportsProtocolHeaderKeyBesideCallbackProse() async {
+  Future<void> _reportsProtocolHeaderKeyBesideCallbackProse() async {
     const source = r'''
 class Widget { void Function(String) onError = (_) {}; }
 void save(Widget widget, Map<String, String> headers) {
@@ -285,7 +336,7 @@ void save(Widget widget, Map<String, String> headers) {
     ]);
   }
 
-  Future<void> test_reportsInlineDateFormatPatternArgument() async {
+  Future<void> _reportsInlineDateFormatPatternArgument() async {
     const source = r'''
 class DateLike {
   String formatted({required String pattern}) => pattern;
@@ -297,7 +348,7 @@ String label(DateLike timestamp) => timestamp.formatted(pattern: 'MM/dd');
     await assertDiagnostics(source, [lint(source.indexOf("'MM/dd'"), 7)]);
   }
 
-  Future<void> test_reportsInlineDateFormatConstructorPattern() async {
+  Future<void> _reportsInlineDateFormatConstructorPattern() async {
     const source = r'''
 class DateFormat {
   DateFormat(String pattern);
@@ -309,7 +360,7 @@ DateFormat formatter() => DateFormat('MM/dd');
     await assertDiagnostics(source, [lint(source.indexOf("'MM/dd'"), 7)]);
   }
 
-  Future<void> test_reportsNamedDateFormatPatternReference() async {
+  Future<void> _reportsNamedDateFormatPatternReference() async {
     const source = r'''
 const memberHistoryDatePattern = 'MM/dd';
 
@@ -325,7 +376,7 @@ String label(DateLike timestamp) => timestamp.formatted(pattern: memberHistoryDa
     ]);
   }
 
-  Future<void> test_reportsNamedDateFormatConstructorPatternReference() async {
+  Future<void> _reportsNamedDateFormatConstructorPatternReference() async {
     const source = r'''
 const memberHistoryDatePattern = 'MM/dd';
 
@@ -341,7 +392,7 @@ DateFormat formatter() => DateFormat(memberHistoryDatePattern);
     ]);
   }
 
-  Future<void> test_reportsStringInterpolationWithRawText() async {
+  Future<void> _reportsStringInterpolationWithRawText() async {
     const source = r'''
 class File {
   const File(String path);
@@ -353,7 +404,7 @@ File makeFile(String base, String name) => File('$base/$name');
     await assertDiagnostics(source, [lint(source.indexOf(r"'$base/"), 13)]);
   }
 
-  Future<void> test_allowsNamedConstDefinitionsAndReferences() async {
+  Future<void> _allowsNamedConstDefinitionsAndReferences() async {
     await assertNoDiagnostics(r'''
 const maxRecentSessions = 60;
 const activeWorkoutKey = 'active-workout';
@@ -372,7 +423,7 @@ void save() {
 ''');
   }
 
-  Future<void> test_allowsCommonSentinelNumbers() async {
+  Future<void> _allowsCommonSentinelNumbers() async {
     await assertNoDiagnostics(r'''
 void use(Object value) {}
 
@@ -384,7 +435,7 @@ void update() {
 ''');
   }
 
-  Future<void> test_allowsImportsAndAnnotations() async {
+  Future<void> _allowsImportsAndAnnotations() async {
     await assertNoDiagnostics(r'''
 import 'dart:async';
 
@@ -399,7 +450,7 @@ class HomeRoute {}
 ''');
   }
 
-  Future<void> test_allowsConstantRegistryFiles() async {
+  Future<void> _allowsConstantRegistryFiles() async {
     final filePath = '$testPackageLibPath/core/constants/app_strings.dart';
     newFile(filePath, r'''
 final activeWorkoutKey = 'active-workout';
@@ -409,7 +460,7 @@ final maxRecentSessions = 60;
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsJsonKeysInModelCodecOwner() async {
+  Future<void> _allowsJsonKeysInModelCodecOwner() async {
     await assertNoDiagnostics(r'''
 class ProductModel {
   const ProductModel({required this.id, required this.name});
@@ -428,7 +479,7 @@ class ProductModel {
 ''');
   }
 
-  Future<void> test_allowsJsonKeysInDataModelsFile() async {
+  Future<void> _allowsJsonKeysInDataModelsFile() async {
     final filePath = '$testPackageLibPath/features/products/data/models/product_json.dart';
     newFile(filePath, r'''
 Map<String, Object?> productRequestBody(String id, String name) => {
@@ -440,7 +491,7 @@ Map<String, Object?> productRequestBody(String id, String name) => {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsNumericThresholdInModelCodecOwner() async {
+  Future<void> _reportsNumericThresholdInModelCodecOwner() async {
     const source = r'''
 class ProductModel {
   const ProductModel(this.price);
@@ -453,7 +504,7 @@ class ProductModel {
     await assertDiagnostics(source, [lint(source.indexOf('1000'), '1000'.length)]);
   }
 
-  Future<void> test_reportsJsonKeysOutsideCodecOwner() async {
+  Future<void> _reportsJsonKeysOutsideCodecOwner() async {
     const source = r'''
 class ProductRepository {
   Map<String, Object?> requestBody(String id) => {'id': id};
@@ -470,7 +521,7 @@ class ItemsNotifier {
     ]);
   }
 
-  Future<void> test_allowsStorageKeysAndApiPathsOwners() async {
+  Future<void> _allowsStorageKeysAndApiPathsOwners() async {
     final storageKeysPath = '$testPackageLibPath/core/constants/storage_keys.dart';
     newFile(storageKeysPath, _storageKeysOwnerBody);
     final apiPathsPath = '$testPackageLibPath/core/constants/api_paths.dart';
@@ -487,7 +538,7 @@ abstract final class ApiPaths {
     await assertNoDiagnosticsInFile(apiPathsPath);
   }
 
-  Future<void> test_reportsStorageKeysOwnerBodyOutsideOwnerPath() async {
+  Future<void> _reportsStorageKeysOwnerBodyOutsideOwnerPath() async {
     final filePath = '$testPackageLibPath/features/todos/data/todo_store.dart';
     newFile(filePath, _storageKeysOwnerBody);
 
@@ -503,7 +554,7 @@ abstract final class StorageKeys {
 }
 ''';
 
-  Future<void> test_allowsResolvedRouteNameAndFlutterRouteSettingsName() async {
+  Future<void> _allowsResolvedRouteNameAndFlutterRouteSettingsName() async {
     final filePath = '$testPackageLibPath/features/create/presentation/screens/create_screen.dart';
     newFile(filePath, r'''
 import 'package:flutter/widgets.dart';
@@ -520,7 +571,7 @@ Future<void> openCreateSheet(String id) async {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsKeyAndLookalikeRouteSettingsName() async {
+  Future<void> _reportsKeyAndLookalikeRouteSettingsName() async {
     final filePath = '$testPackageLibPath/features/create/presentation/screens/create_screen.dart';
     const source = r'''
 class RouteSettings {
@@ -542,7 +593,7 @@ void openCreateSheet() {
     ]);
   }
 
-  Future<void> test_allowsTestFiles() async {
+  Future<void> _allowsTestFiles() async {
     final filePath = '$testPackageRootPath/test/widget_test.dart';
     newFile(filePath, r'''
 void main() {

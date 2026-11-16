@@ -1,16 +1,41 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/notifier_source_rules.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(NotifierDependencyCaptureScopeTest);
-  });
+  analysisRuleSuite<NotifierDependencyCaptureScopeTest>(
+    'NotifierDependencyCaptureScopeTest',
+    NotifierDependencyCaptureScopeTest.new,
+    {
+      'test_allowsNullableRepositoryAcquisitionInsideTryBody': (t) =>
+          t._allowsNullableRepositoryAcquisitionInsideTryBody(),
+      'test_allowsNullableRecordAcquisitionAndDestructureInsideTryBody': (t) =>
+          t._allowsNullableRecordAcquisitionAndDestructureInsideTryBody(),
+      'test_allowsSimpleTerminalMountedBranchBeforeTryAcquisition': (t) =>
+          t._allowsSimpleTerminalMountedBranchBeforeTryAcquisition(),
+      'test_reportsTryAcquisitionAfterUnrelatedAwait': (t) =>
+          t._reportsTryAcquisitionAfterUnrelatedAwait(),
+      'test_reportsEarlyTerminalBranchThatReadsAndAwaitsRepository': (t) =>
+          t._reportsEarlyTerminalBranchThatReadsAndAwaitsRepository(),
+      'test_allowsSkillSaveShapeWithCatchCapture': (t) => t._allowsSkillSaveShapeWithCatchCapture(),
+      'test_leavesUnguardedAwaitAfterClosureToMountedRule': (t) =>
+          t._leavesUnguardedAwaitAfterClosureToMountedRule(),
+      'test_allowsDirectReadAfterSafeTryCapture': (t) => t._allowsDirectReadAfterSafeTryCapture(),
+      'test_allowsDirectReadInCatchBesideSafeTryCapture': (t) =>
+          t._allowsDirectReadInCatchBesideSafeTryCapture(),
+      'test_allowsDirectReadInFinallyBesideSafeTryCapture': (t) =>
+          t._allowsDirectReadInFinallyBesideSafeTryCapture(),
+      'test_allowsResolvedResourceFreeFreezedStateReadAfterMutation': (t) =>
+          t._allowsResolvedResourceFreeFreezedStateReadAfterMutation(),
+      'test_allowsUnannotatedStateReadAfterMutation': (t) =>
+          t._allowsUnannotatedStateReadAfterMutation(),
+      'test_allowsFreezedStateContainingRepositoryReadAfterMutation': (t) =>
+          t._allowsFreezedStateContainingRepositoryReadAfterMutation(),
+    },
+  );
 }
 
-@reflectiveTest
 final class NotifierDependencyCaptureScopeTest extends AnalysisRuleTest {
   static const _ruleName = 'notifier_ensure_deps';
 
@@ -44,7 +69,7 @@ const freezed = Freezed();
     super.setUp();
   }
 
-  Future<void> test_allowsNullableRepositoryAcquisitionInsideTryBody() async {
+  Future<void> _allowsNullableRepositoryAcquisitionInsideTryBody() async {
     final source = _source(r'''
   Future<ItemsRepository?> _captureRepository() async {
     final repository = ref.read(repositoryProvider);
@@ -66,7 +91,7 @@ const freezed = Freezed();
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_allowsNullableRecordAcquisitionAndDestructureInsideTryBody() async {
+  Future<void> _allowsNullableRecordAcquisitionAndDestructureInsideTryBody() async {
     final source = _source(r'''
   Future<({String accountId, ItemsRepository repository})?> _captureContext() async {
     final repository = ref.read(repositoryProvider);
@@ -89,7 +114,7 @@ const freezed = Freezed();
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_allowsSimpleTerminalMountedBranchBeforeTryAcquisition() async {
+  Future<void> _allowsSimpleTerminalMountedBranchBeforeTryAcquisition() async {
     final source = _source(r'''
   Future<ItemsRepository?> _captureRepository() async {
     final repository = ref.read(repositoryProvider);
@@ -113,7 +138,7 @@ const freezed = Freezed();
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_reportsTryAcquisitionAfterUnrelatedAwait() async {
+  Future<void> _reportsTryAcquisitionAfterUnrelatedAwait() async {
     final source = _source(r'''
   Future<void> _doUnrelatedWork() async {}
   Future<ItemsRepository?> _captureRepository() async {
@@ -135,7 +160,7 @@ const freezed = Freezed();
     await _expectNotifierDiagnostic(source);
   }
 
-  Future<void> test_reportsEarlyTerminalBranchThatReadsAndAwaitsRepository() async {
+  Future<void> _reportsEarlyTerminalBranchThatReadsAndAwaitsRepository() async {
     final source = _source(r'''
   Future<ItemsRepository?> _captureRepository() async {
     final repository = ref.read(repositoryProvider);
@@ -160,7 +185,7 @@ const freezed = Freezed();
     await _expectNotifierDiagnostic(source);
   }
 
-  Future<void> test_allowsSkillSaveShapeWithCatchCapture() async {
+  Future<void> _allowsSkillSaveShapeWithCatchCapture() async {
     final source = _source(r'''
   Future<void> saveItem() async {
     try {
@@ -177,7 +202,7 @@ const freezed = Freezed();
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_leavesUnguardedAwaitAfterClosureToMountedRule() async {
+  Future<void> _leavesUnguardedAwaitAfterClosureToMountedRule() async {
     final source = _source(r'''
   Future<void> saveItem() async {
     final callback = () async {
@@ -194,7 +219,7 @@ const freezed = Freezed();
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_allowsDirectReadAfterSafeTryCapture() async {
+  Future<void> _allowsDirectReadAfterSafeTryCapture() async {
     final source = _source(r'''
   Future<void> saveItem() async {
     try {
@@ -211,7 +236,7 @@ const freezed = Freezed();
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_allowsDirectReadInCatchBesideSafeTryCapture() async {
+  Future<void> _allowsDirectReadInCatchBesideSafeTryCapture() async {
     final source = _source(r'''
   Future<void> saveItem() async {
     try {
@@ -228,7 +253,7 @@ const freezed = Freezed();
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_allowsDirectReadInFinallyBesideSafeTryCapture() async {
+  Future<void> _allowsDirectReadInFinallyBesideSafeTryCapture() async {
     final source = _source(r'''
   Future<void> saveItem() async {
     try {
@@ -244,7 +269,7 @@ const freezed = Freezed();
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_allowsResolvedResourceFreeFreezedStateReadAfterMutation() async {
+  Future<void> _allowsResolvedResourceFreeFreezedStateReadAfterMutation() async {
     final source = _source(
       r'''
   Future<void> saveItem() async {
@@ -267,7 +292,7 @@ final viewStateProvider = Provider<ViewState>(const ViewState('ready'));
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_allowsUnannotatedStateReadAfterMutation() async {
+  Future<void> _allowsUnannotatedStateReadAfterMutation() async {
     final source = _source(
       r'''
   Future<void> saveItem() async {
@@ -288,7 +313,7 @@ final fakeStateProvider = Provider<FakeState>(const FakeState('ready'));
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_allowsFreezedStateContainingRepositoryReadAfterMutation() async {
+  Future<void> _allowsFreezedStateContainingRepositoryReadAfterMutation() async {
     final source = _source(
       r'''
   Future<void> saveItem() async {

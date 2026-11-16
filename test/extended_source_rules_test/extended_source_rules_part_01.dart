@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../extended_source_rules_test.dart';
 
 abstract class _ServicesExtendedRuleTest extends _ExtendedSourceRuleTest {
@@ -7,7 +5,6 @@ abstract class _ServicesExtendedRuleTest extends _ExtendedSourceRuleTest {
   List<ScannerRule> get rules => servicesExtendedSourceRules;
 }
 
-@reflectiveTest
 final class ServiceStaticSideEffectTest extends _ServicesExtendedRuleTest {
   @override
   String get ruleName => 'service_static_side_effect';
@@ -20,7 +17,7 @@ abstract final class TokenUtils {
   @override
   String get needle => 'abstract final class TokenUtils';
 
-  Future<void> test_allowsTinyDirectSdkFacade() async {
+  Future<void> _allowsTinyDirectSdkFacade() async {
     await assertAllows('''
 abstract final class AnalyticsLog {
   static FirebaseAnalytics get _analytics => FirebaseAnalytics.instance;
@@ -37,7 +34,7 @@ abstract final class AnalyticsLog {
   }
 
   // Test helpers are not production service facades (hive-persistence.md).
-  Future<void> test_allowsStaticTestHelperInTests() async {
+  Future<void> _allowsStaticTestHelperInTests() async {
     await assertAllows('''
 import 'dart:io';
 
@@ -47,7 +44,7 @@ abstract final class HiveTestHelper {
 ''', path: '$testPackageRootPath/test/shared/hive_test_helper.dart');
   }
 
-  Future<void> test_reportsDataReturningStaticFacade() async {
+  Future<void> _reportsDataReturningStaticFacade() async {
     const source = '''
 abstract final class AnalyticsLog {
   static FirebaseAnalytics get _analytics => FirebaseAnalytics.instance;
@@ -61,7 +58,7 @@ abstract final class AnalyticsLog {
     ]);
   }
 
-  Future<void> test_reportsPublicStaticGetter() async {
+  Future<void> _reportsPublicStaticGetter() async {
     const source = '''
 abstract final class AnalyticsLog {
   static FirebaseAnalytics get analytics => FirebaseAnalytics.instance;
@@ -77,7 +74,7 @@ abstract final class AnalyticsLog {
     ]);
   }
 
-  Future<void> test_reportsOverbuiltDebugBackendFacade() async {
+  Future<void> _reportsOverbuiltDebugBackendFacade() async {
     const source = '''
 abstract final class AnalyticsLog {
   static IAnalyticsBackend _backend = FirebaseAnalyticsBackend();
@@ -98,7 +95,6 @@ abstract final class AnalyticsLog {
   }
 }
 
-@reflectiveTest
 final class ServiceRandomPerCallTest extends _ServicesExtendedRuleTest {
   @override
   String get ruleName => 'service_random_per_call';
@@ -116,7 +112,7 @@ class RetryDelay {
   @override
   String get needle => 'Random';
 
-  Future<void> test_reportsTopLevelFunctionAndClosure() async {
+  Future<void> _reportsTopLevelFunctionAndClosure() async {
     const source = '''
 import 'dart:math';
 
@@ -134,7 +130,7 @@ final pick = () => Random(7).nextBool();
     ]);
   }
 
-  Future<void> test_allowsHoistedModuleAndStaticRandom() async {
+  Future<void> _allowsHoistedModuleAndStaticRandom() async {
     await assertAllows('''
 import 'dart:math' as math;
 
@@ -151,7 +147,6 @@ Duration jitter() => Duration(milliseconds: _rng.nextInt(100));
   }
 }
 
-@reflectiveTest
 final class HiddenDependencyFallbackTest extends _ServicesExtendedRuleTest {
   @override
   String get ruleName => 'hidden_dependency_fallback';
@@ -167,7 +162,7 @@ class NotificationServiceHost {
   @override
   String get needle => '?? FlutterLocalNotificationsPlugin';
 
-  Future<void> test_reportsRepositoryFallback() async {
+  Future<void> _reportsRepositoryFallback() async {
     const source = '''
 class ExerciseRepository {
   ExerciseRepository([IRemoteMutationQueue? queue])
@@ -182,7 +177,7 @@ class ExerciseRepository {
     ]);
   }
 
-  Future<void> test_reportsFunctionDependencyFallback() async {
+  Future<void> _reportsFunctionDependencyFallback() async {
     const source = '''
 typedef DeleteAccountPollDelay = Future<void> Function(Duration duration);
 
@@ -199,7 +194,7 @@ class AuthRemoteDatasource {
     ]);
   }
 
-  Future<void> test_allowsNullableDomainValueFallback() async {
+  Future<void> _allowsNullableDomainValueFallback() async {
     await assertAllows('''
 class FormState {
   final String? title;
@@ -208,7 +203,7 @@ class FormState {
 ''');
   }
 
-  Future<void> test_allowsFallbacksInTests() async {
+  Future<void> _allowsFallbacksInTests() async {
     await assertAllows('''
 void main() {
   final service = overrideService ?? FakeNotificationService();
@@ -217,7 +212,6 @@ void main() {
   }
 }
 
-@reflectiveTest
 final class ImplicitNullFallbackTest extends _ServicesExtendedRuleTest {
   @override
   void setUp() {
@@ -241,7 +235,7 @@ class ProfileState {
   String get needle => "?? ''";
 
   // Canonical UI examples use primitive bool/num fallbacks.
-  Future<void> test_allowsSkillPrimitiveBoolAndNumFallbacks() async {
+  Future<void> _allowsSkillPrimitiveBoolAndNumFallbacks() async {
     await assertAllows('''
 extension BuildContextX on BuildContext {
   bool get isCurrentModalRoute => ModalRoute.of(this)?.isCurrent ?? false;
@@ -267,7 +261,7 @@ class ProductFormNotifier {
 ''');
   }
 
-  Future<void> test_reportsEmptyStringAndCollectionFallbacks() async {
+  Future<void> _reportsEmptyStringAndCollectionFallbacks() async {
     const source = '''
 class ProfileView {
   String name(String? value) => value ?? "";
@@ -283,7 +277,7 @@ class ProfileView {
     ]);
   }
 
-  Future<void> test_reportsChainedPrimitiveFallback() async {
+  Future<void> _reportsChainedPrimitiveFallback() async {
     const source = '''
 class Insets {
   double resolve(double? bottom, double? vertical) => bottom ?? vertical ?? 0;
@@ -295,7 +289,7 @@ class Insets {
     ]);
   }
 
-  Future<void> test_reportsNullableCallbackToStringFallback() async {
+  Future<void> _reportsNullableCallbackToStringFallback() async {
     const source = '''
 class ChipGroup<T> {
   String label(T item, String Function(T)? labelBuilder) =>
@@ -308,7 +302,7 @@ class ChipGroup<T> {
     ]);
   }
 
-  Future<void> test_allowsCopyWithFallback() async {
+  Future<void> _allowsCopyWithFallback() async {
     await assertAllows('''
 class FormState {
   const FormState(this.title);
@@ -319,7 +313,7 @@ class FormState {
 ''');
   }
 
-  Future<void> test_allowsThrowFallback() async {
+  Future<void> _allowsThrowFallback() async {
     await assertAllows('''
 class RequiredLookup {
   String read(Map<String, String> values) =>
@@ -328,7 +322,7 @@ class RequiredLookup {
 ''');
   }
 
-  Future<void> test_allowsFallbacksInTests() async {
+  Future<void> _allowsFallbacksInTests() async {
     await assertAllows('''
 void main() {
   final granted = overrideGranted ?? false;
@@ -336,7 +330,7 @@ void main() {
 ''', path: '$testPackageRootPath/test/permission_test.dart');
   }
 
-  Future<void> test_reportsNativeParseAndEditorFallbacks() async {
+  Future<void> _reportsNativeParseAndEditorFallbacks() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -354,7 +348,7 @@ double? parseAmount(String? value) => double.tryParse(value ?? "");
     ]);
   }
 
-  Future<void> test_reportsRequiredStringWireFieldFromNullableEntity() async {
+  Future<void> _reportsRequiredStringWireFieldFromNullableEntity() async {
     for (final (index, source) in [
       r'''
 class Item {
@@ -393,7 +387,7 @@ class _ItemModel extends ItemModel {
     }
   }
 
-  Future<void> test_reportsLookalikeNativeBoundaries() async {
+  Future<void> _reportsLookalikeNativeBoundaries() async {
     const source = r'''
 class TextEditingController {
   String text = '';
@@ -413,7 +407,7 @@ int? parse(String? value) => Parser.tryParse(value ?? '');
     ]);
   }
 
-  Future<void> test_reportsMappingOutsideTheWireFactory() async {
+  Future<void> _reportsMappingOutsideTheWireFactory() async {
     const source = r'''
 class Item {
   const Item(this.note);
@@ -441,7 +435,7 @@ class ItemModel {
     await assertDiagnosticsInFile(path, [compatLint(optionalWireField, "?? ''", ruleName)]);
   }
 
-  Future<void> test_reportsFirstFallbackWhenSeveralShareALine() async {
+  Future<void> _reportsFirstFallbackWhenSeveralShareALine() async {
     const source = r'''
 String label(String? value, String? name) { int.tryParse(value ?? ''); return name ?? ''; }
 ''';
@@ -450,7 +444,6 @@ String label(String? value, String? name) { int.tryParse(value ?? ''); return na
   }
 }
 
-@reflectiveTest
 final class FireForgetInTestsTest extends _ServicesExtendedRuleTest {
   @override
   String get ruleName => 'fire_forget_in_tests';
@@ -460,4 +453,66 @@ final class FireForgetInTestsTest extends _ServicesExtendedRuleTest {
   String get source => 'void main() { unawaited(service.track()); }';
   @override
   String get needle => 'unawaited';
+}
+
+void _defineExtendedSourceRulesPart01Tests() {
+  analysisRuleSuite<ServiceStaticSideEffectTest>(
+    'ServiceStaticSideEffectTest',
+    ServiceStaticSideEffectTest.new,
+    {
+      'test_allowsTinyDirectSdkFacade': (t) => t._allowsTinyDirectSdkFacade(),
+      'test_allowsStaticTestHelperInTests': (t) => t._allowsStaticTestHelperInTests(),
+      'test_reportsDataReturningStaticFacade': (t) => t._reportsDataReturningStaticFacade(),
+      'test_reportsPublicStaticGetter': (t) => t._reportsPublicStaticGetter(),
+      'test_reportsOverbuiltDebugBackendFacade': (t) => t._reportsOverbuiltDebugBackendFacade(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ServiceRandomPerCallTest>(
+    'ServiceRandomPerCallTest',
+    ServiceRandomPerCallTest.new,
+    {
+      'test_reportsTopLevelFunctionAndClosure': (t) => t._reportsTopLevelFunctionAndClosure(),
+      'test_allowsHoistedModuleAndStaticRandom': (t) => t._allowsHoistedModuleAndStaticRandom(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<HiddenDependencyFallbackTest>(
+    'HiddenDependencyFallbackTest',
+    HiddenDependencyFallbackTest.new,
+    {
+      'test_reportsRepositoryFallback': (t) => t._reportsRepositoryFallback(),
+      'test_reportsFunctionDependencyFallback': (t) => t._reportsFunctionDependencyFallback(),
+      'test_allowsNullableDomainValueFallback': (t) => t._allowsNullableDomainValueFallback(),
+      'test_allowsFallbacksInTests': (t) => t._allowsFallbacksInTests(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ImplicitNullFallbackTest>(
+    'ImplicitNullFallbackTest',
+    ImplicitNullFallbackTest.new,
+    {
+      'test_allowsSkillPrimitiveBoolAndNumFallbacks': (t) =>
+          t._allowsSkillPrimitiveBoolAndNumFallbacks(),
+      'test_reportsEmptyStringAndCollectionFallbacks': (t) =>
+          t._reportsEmptyStringAndCollectionFallbacks(),
+      'test_reportsChainedPrimitiveFallback': (t) => t._reportsChainedPrimitiveFallback(),
+      'test_reportsNullableCallbackToStringFallback': (t) =>
+          t._reportsNullableCallbackToStringFallback(),
+      'test_allowsCopyWithFallback': (t) => t._allowsCopyWithFallback(),
+      'test_allowsThrowFallback': (t) => t._allowsThrowFallback(),
+      'test_allowsFallbacksInTests': (t) => t._allowsFallbacksInTests(),
+      'test_reportsNativeParseAndEditorFallbacks': (t) => t._reportsNativeParseAndEditorFallbacks(),
+      'test_reportsRequiredStringWireFieldFromNullableEntity': (t) =>
+          t._reportsRequiredStringWireFieldFromNullableEntity(),
+      'test_reportsLookalikeNativeBoundaries': (t) => t._reportsLookalikeNativeBoundaries(),
+      'test_reportsMappingOutsideTheWireFactory': (t) => t._reportsMappingOutsideTheWireFactory(),
+      'test_reportsFirstFallbackWhenSeveralShareALine': (t) =>
+          t._reportsFirstFallbackWhenSeveralShareALine(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<FireForgetInTestsTest>('FireForgetInTestsTest', FireForgetInTestsTest.new, {
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
 }

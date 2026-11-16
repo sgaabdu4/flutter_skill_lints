@@ -1,20 +1,39 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_duplicate_constant_values.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_duplicate_exports.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_duplicate_map_keys.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidDuplicateExportsTest);
-    defineReflectiveTests(AvoidDuplicateMapKeysTest);
-    defineReflectiveTests(AvoidDuplicateConstantValuesTest);
-  });
+  analysisRuleSuite<AvoidDuplicateExportsTest>(
+    'AvoidDuplicateExportsTest',
+    AvoidDuplicateExportsTest.new,
+    {
+      'test_sameSimpleExportUri_lint': (t) => t._sameSimpleExportUriLint(),
+      'test_exportWithCombinators_noLint': (t) => t._exportWithCombinatorsNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidDuplicateMapKeysTest>(
+    'AvoidDuplicateMapKeysTest',
+    AvoidDuplicateMapKeysTest.new,
+    {
+      'test_constMapDuplicateStringKey_lint': (t) => t._constMapDuplicateStringKeyLint(),
+      'test_nonConstMapDuplicateKey_noLint': (t) => t._nonConstMapDuplicateKeyNoLint(),
+      'test_nonLiteralMapKeys_noLint': (t) => t._nonLiteralMapKeysNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidDuplicateConstantValuesTest>(
+    'AvoidDuplicateConstantValuesTest',
+    AvoidDuplicateConstantValuesTest.new,
+    {
+      'test_sameConstDeclarationGroupValue_lint': (t) => t._sameConstDeclarationGroupValueLint(),
+      'test_separateConstDeclarations_noLint': (t) => t._separateConstDeclarationsNoLint(),
+      'test_nonLiteralConstValues_noLint': (t) => t._nonLiteralConstValuesNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidDuplicateExportsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +41,7 @@ final class AvoidDuplicateExportsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_sameSimpleExportUri_lint() async {
+  Future<void> _sameSimpleExportUriLint() async {
     const source = r'''
 // ignore_for_file: duplicate_export
 
@@ -38,7 +57,7 @@ export 'src/a.dart';
     ]);
   }
 
-  Future<void> test_exportWithCombinators_noLint() async {
+  Future<void> _exportWithCombinatorsNoLint() async {
     newFile('$testPackageRootPath/lib/src/a.dart', 'class A {}\nclass B {}\n');
 
     await assertNoDiagnostics(r'''
@@ -48,7 +67,6 @@ export 'src/a.dart' show B;
   }
 }
 
-@reflectiveTest
 final class AvoidDuplicateMapKeysTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -56,7 +74,7 @@ final class AvoidDuplicateMapKeysTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_constMapDuplicateStringKey_lint() async {
+  Future<void> _constMapDuplicateStringKeyLint() async {
     const source = r'''
 // ignore_for_file: equal_keys_in_const_map
 
@@ -70,7 +88,7 @@ const values = {
     await assertDiagnostics(source, [lint(source.lastIndexOf("'a'"), "'a'".length)]);
   }
 
-  Future<void> test_nonConstMapDuplicateKey_noLint() async {
+  Future<void> _nonConstMapDuplicateKeyNoLint() async {
     await assertNoDiagnostics(r'''
 // ignore_for_file: equal_keys_in_map
 
@@ -81,7 +99,7 @@ final values = {
 ''');
   }
 
-  Future<void> test_nonLiteralMapKeys_noLint() async {
+  Future<void> _nonLiteralMapKeysNoLint() async {
     await assertNoDiagnostics(r'''
 // ignore_for_file: equal_keys_in_const_map
 
@@ -95,7 +113,6 @@ const values = {
   }
 }
 
-@reflectiveTest
 final class AvoidDuplicateConstantValuesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -103,7 +120,7 @@ final class AvoidDuplicateConstantValuesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_sameConstDeclarationGroupValue_lint() async {
+  Future<void> _sameConstDeclarationGroupValueLint() async {
     const source = r'''
 const first = 'a', second = 'b', third = 'a';
 ''';
@@ -111,14 +128,14 @@ const first = 'a', second = 'b', third = 'a';
     await assertDiagnostics(source, [lint(source.lastIndexOf("'a'"), "'a'".length)]);
   }
 
-  Future<void> test_separateConstDeclarations_noLint() async {
+  Future<void> _separateConstDeclarationsNoLint() async {
     await assertNoDiagnostics(r'''
 const first = 'a';
 const second = 'a';
 ''');
   }
 
-  Future<void> test_nonLiteralConstValues_noLint() async {
+  Future<void> _nonLiteralConstValuesNoLint() async {
     await assertNoDiagnostics(r'''
 const first = Object();
 const second = Object();

@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class DateTimeNowRequiresTimezoneIntentTest extends _UiRuleTest {
   @override
   String get ruleName => 'datetime_now_requires_timezone_intent';
@@ -11,7 +8,7 @@ final class DateTimeNowRequiresTimezoneIntentTest extends _UiRuleTest {
   @override
   String get source => 'final now = DateTime.now();';
 
-  Future<void> test_reportsUtcIntentOutsideExtensionBoundary() async {
+  Future<void> _reportsUtcIntentOutsideExtensionBoundary() async {
     final analyzedSource = _analyzedSource(
       'final savedAt = DateTime.now().toUtc();',
       addIgnorePrefix: addIgnorePrefix,
@@ -22,7 +19,7 @@ final class DateTimeNowRequiresTimezoneIntentTest extends _UiRuleTest {
     ]);
   }
 
-  Future<void> test_reportsTimestampOutsideExtensionBoundary() async {
+  Future<void> _reportsTimestampOutsideExtensionBoundary() async {
     final analyzedSource = _analyzedSource(
       'final savedAt = DateTime.timestamp();',
       addIgnorePrefix: addIgnorePrefix,
@@ -33,7 +30,7 @@ final class DateTimeNowRequiresTimezoneIntentTest extends _UiRuleTest {
     ]);
   }
 
-  Future<void> test_reportsLocalIntentAcrossLinesOutsideExtensionBoundary() async {
+  Future<void> _reportsLocalIntentAcrossLinesOutsideExtensionBoundary() async {
     final analyzedSource = _analyzedSource(r'''
 final today = DateTime.now()
     .toLocal();
@@ -44,11 +41,11 @@ final today = DateTime.now()
     ]);
   }
 
-  Future<void> test_allowsDateTimeXNowUtcForPersistedTimestamp() async {
+  Future<void> _allowsDateTimeXNowUtcForPersistedTimestamp() async {
     await assertAllows('final savedAt = DateTimeX.nowUtc();');
   }
 
-  Future<void> test_reportsLocalNowForPersistedTimestamp() async {
+  Future<void> _reportsLocalNowForPersistedTimestamp() async {
     final analyzedSource = _analyzedSource(r'''
 class ItemLog {
   const ItemLog({required this.timestamp});
@@ -63,7 +60,7 @@ final log = ItemLog(timestamp: DateTimeX.nowLocal());
     ]);
   }
 
-  Future<void> test_reportsMultilineLocalNowForPersistedTimestamp() async {
+  Future<void> _reportsMultilineLocalNowForPersistedTimestamp() async {
     final analyzedSource = _analyzedSource(r'''
 class ItemLog {
   const ItemLog({required this.timestamp});
@@ -81,7 +78,7 @@ final log = ItemLog(
     ]);
   }
 
-  Future<void> test_reportsDateTimeNowToLocalForPersistedTimestamp() async {
+  Future<void> _reportsDateTimeNowToLocalForPersistedTimestamp() async {
     final analyzedSource = _analyzedSource(r'''
 class SquadCheckIn {
   const SquadCheckIn({required this.checkedInAt});
@@ -96,7 +93,7 @@ final checkIn = SquadCheckIn(checkedInAt: DateTime.now().toLocal());
     ]);
   }
 
-  Future<void> test_reportsInlineCurrentDayBoundary() async {
+  Future<void> _reportsInlineCurrentDayBoundary() async {
     final analyzedSource = _analyzedSource(
       'final today = DateTimeX.nowLocal().startOfDay;',
       addIgnorePrefix: addIgnorePrefix,
@@ -107,7 +104,7 @@ final checkIn = SquadCheckIn(checkedInAt: DateTime.now().toLocal());
     ]);
   }
 
-  Future<void> test_reportsInlineCurrentUtcDayBoundary() async {
+  Future<void> _reportsInlineCurrentUtcDayBoundary() async {
     final analyzedSource = _analyzedSource(
       'final today = DateTimeX.nowUtc().startOfDay;',
       addIgnorePrefix: addIgnorePrefix,
@@ -118,11 +115,11 @@ final checkIn = SquadCheckIn(checkedInAt: DateTime.now().toLocal());
     ]);
   }
 
-  Future<void> test_allowsNamedCurrentDayBoundaryHelper() async {
+  Future<void> _allowsNamedCurrentDayBoundaryHelper() async {
     await assertAllows('final today = DateTimeX.nowLocalStartOfDay();');
   }
 
-  Future<void> test_reportsInlineCurrentDateWindow() async {
+  Future<void> _reportsInlineCurrentDateWindow() async {
     final analyzedSource = _analyzedSource(
       'final since = DateTimeX.nowLocal().daysBefore(60);',
       addIgnorePrefix: addIgnorePrefix,
@@ -133,7 +130,7 @@ final checkIn = SquadCheckIn(checkedInAt: DateTime.now().toLocal());
     ]);
   }
 
-  Future<void> test_reportsInlineCurrentCalendarDateWindow() async {
+  Future<void> _reportsInlineCurrentCalendarDateWindow() async {
     final analyzedSource = _analyzedSource(
       'final since = DateTimeX.nowLocal().calendarDaysBefore(60);',
       addIgnorePrefix: addIgnorePrefix,
@@ -144,7 +141,7 @@ final checkIn = SquadCheckIn(checkedInAt: DateTime.now().toLocal());
     ]);
   }
 
-  Future<void> test_reportsMultilineInlineCurrentDateWindow() async {
+  Future<void> _reportsMultilineInlineCurrentDateWindow() async {
     final analyzedSource = _analyzedSource(r'''
 final since = DateTimeX.nowLocal()
     .daysBefore(60);
@@ -155,7 +152,7 @@ final since = DateTimeX.nowLocal()
     ]);
   }
 
-  Future<void> test_reportsInlineCurrentDateWindowFromStartOfDay() async {
+  Future<void> _reportsInlineCurrentDateWindowFromStartOfDay() async {
     final analyzedSource = _analyzedSource(
       'final cutoff = DateTimeX.nowLocal().startOfDay.daysBefore(30);',
       addIgnorePrefix: addIgnorePrefix,
@@ -166,7 +163,7 @@ final since = DateTimeX.nowLocal()
     ]);
   }
 
-  Future<void> test_reportsEpochIntentOutsideExtensionBoundary() async {
+  Future<void> _reportsEpochIntentOutsideExtensionBoundary() async {
     final analyzedSource = _analyzedSource(
       'final id = DateTime.now().millisecondsSinceEpoch.toString();',
       addIgnorePrefix: addIgnorePrefix,
@@ -177,7 +174,7 @@ final since = DateTimeX.nowLocal()
     ]);
   }
 
-  Future<void> test_reportsInterpolatedEpochIntentOutsideExtensionBoundary() async {
+  Future<void> _reportsInterpolatedEpochIntentOutsideExtensionBoundary() async {
     final analyzedSource = _analyzedSource(
       r"final id = 'draft-${DateTime.now().millisecondsSinceEpoch}';",
       addIgnorePrefix: addIgnorePrefix,
@@ -188,7 +185,7 @@ final since = DateTimeX.nowLocal()
     ]);
   }
 
-  Future<void> test_allowsRawStringThatMentionsDateTimeNow() async {
+  Future<void> _allowsRawStringThatMentionsDateTimeNow() async {
     final analyzedSource = _analyzedSource(
       r"final sample = r'${DateTime.now()}';",
       addIgnorePrefix: addIgnorePrefix,
@@ -197,11 +194,11 @@ final since = DateTimeX.nowLocal()
     await assertNoDiagnostics(analyzedSource);
   }
 
-  Future<void> test_allowsDateTimeXEpochIntent() async {
+  Future<void> _allowsDateTimeXEpochIntent() async {
     await assertAllows('final id = DateTimeX.nowUtc().millisecondsSinceEpoch.toString();');
   }
 
-  Future<void> test_allowsDateTimeExtensionCurrentBoundary() async {
+  Future<void> _allowsDateTimeExtensionCurrentBoundary() async {
     final filePath = '$testPackageLibPath/core/extensions/date_time_extensions.dart';
     newFile(
       filePath,
@@ -217,7 +214,7 @@ extension DateTimeX on DateTime {
   }
 
   // Row 27: the skill's canonical DateTimeX (primitive-formatting.md).
-  Future<void> test_allowsSkillDateTimeXStaticNowHelpers() async {
+  Future<void> _allowsSkillDateTimeXStaticNowHelpers() async {
     final filePath = '$testPackageLibPath/core/extensions/date_time_extensions.dart';
     newFile(
       filePath,
@@ -234,7 +231,7 @@ extension DateTimeX on DateTime {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsStaticNowOutsideDateTimeExtension() async {
+  Future<void> _reportsStaticNowOutsideDateTimeExtension() async {
     final filePath = '$testPackageLibPath/core/extensions/date_time_extensions.dart';
     final analyzedSource = _analyzedSource(r'''
 extension StringClockX on String {
@@ -255,7 +252,7 @@ abstract final class Clock {
     ]);
   }
 
-  Future<void> test_reportsRawNowInsideDateTimeExtensionHelper() async {
+  Future<void> _reportsRawNowInsideDateTimeExtensionHelper() async {
     final filePath = '$testPackageLibPath/core/extensions/date_time_extensions.dart';
     final analyzedSource = _analyzedSource(r'''
 extension DateTimeExtensions on DateTime {
@@ -272,7 +269,7 @@ extension DateTimeExtensions on DateTime {
     ]);
   }
 
-  Future<void> test_allowsTests() async {
+  Future<void> _allowsTests() async {
     final filePath = '$testPackageRootPath/test/widgets/date_time_test.dart';
     newFile(
       filePath,
@@ -283,7 +280,6 @@ extension DateTimeExtensions on DateTime {
   }
 }
 
-@reflectiveTest
 final class AdHocIntlFormatTest extends _UiRuleTest {
   @override
   void setUp() {
@@ -315,7 +311,7 @@ import 'package:intl/intl.dart';
 String placedLabel(DateTime placedAt) => DateFormat('yyyy-MM-dd').format(placedAt);
 ''';
 
-  Future<void> test_reportsNumberFormatInWidgetMethod() async {
+  Future<void> _reportsNumberFormatInWidgetMethod() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:intl/intl.dart';
 
@@ -330,7 +326,7 @@ final class OrderRow {
     ]);
   }
 
-  Future<void> test_reportsDateFormatInNonPrimitiveExtension() async {
+  Future<void> _reportsDateFormatInNonPrimitiveExtension() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:intl/intl.dart';
 
@@ -350,7 +346,7 @@ extension OrderX on Order {
     ]);
   }
 
-  Future<void> test_allowsSkillPrimitiveExtensions() async {
+  Future<void> _allowsSkillPrimitiveExtensions() async {
     await assertAllows(r'''
 import 'package:intl/intl.dart';
 
@@ -368,7 +364,7 @@ extension NumX on num {
 ''', path: '$testPackageLibPath/core/extensions/primitive_extensions.dart');
   }
 
-  Future<void> test_allowsNonIntlFormatter() async {
+  Future<void> _allowsNonIntlFormatter() async {
     await assertAllows(r'''
 final class DateFormat {
   const DateFormat(String pattern);
@@ -378,7 +374,7 @@ const isoDate = DateFormat('yyyy-MM-dd');
 ''', path: path);
   }
 
-  Future<void> test_allowsTests() async {
+  Future<void> _allowsTests() async {
     await assertAllows(r'''
 import 'package:intl/intl.dart';
 
@@ -387,7 +383,6 @@ String expectedLabel(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
   }
 }
 
-@reflectiveTest
 final class InlineNumClampTest extends _UiRuleTest {
   @override
   String get ruleName => 'inline_num_clamp';
@@ -399,7 +394,7 @@ final class InlineNumClampTest extends _UiRuleTest {
   String get source => 'int visibleCount(int count) => count.clamp(0, 10);';
 
   // lists-forms-workflows.md:258 shows this batch bound; :60 forbids it.
-  Future<void> test_reportsBatchBoundClamp() async {
+  Future<void> _reportsBatchBoundClamp() async {
     final analyzedSource = _analyzedSource(r'''
 Iterable<List<T>> batches<T>(List<T> items, int batchSize) sync* {
   for (var i = 0; i < items.length; i += batchSize) {
@@ -416,7 +411,7 @@ Iterable<List<T>> batches<T>(List<T> items, int batchSize) sync* {
     ]);
   }
 
-  Future<void> test_allowsSkillNumExtension() async {
+  Future<void> _allowsSkillNumExtension() async {
     await assertAllows(r'''
 extension NumX on num {
   num clamped(num min, num max) => clamp(min, max);
@@ -424,7 +419,7 @@ extension NumX on num {
 ''', path: '$testPackageLibPath/core/extensions/num_extensions.dart');
   }
 
-  Future<void> test_allowsNonNumClamp() async {
+  Future<void> _allowsNonNumClamp() async {
     await assertAllows(r'''
 final class TextScaler {
   const TextScaler();
@@ -435,7 +430,7 @@ TextScaler bounded(TextScaler scaler) => scaler.clamp(maxScaleFactor: 2);
 ''', path: path);
   }
 
-  Future<void> test_allowsTests() async {
+  Future<void> _allowsTests() async {
     await assertAllows(
       'final bounded = 12.clamp(0, 10);',
       path: '$testPackageRootPath/test/features/cart/cart_badge_test.dart',
@@ -443,7 +438,6 @@ TextScaler bounded(TextScaler scaler) => scaler.clamp(maxScaleFactor: 2);
   }
 }
 
-@reflectiveTest
 final class PerfBuildWorkTest extends _UiRuleTest {
   @override
   String get ruleName => 'perf_build_work';
@@ -464,7 +458,7 @@ class Screen extends Widget {
 }
 ''';
 
-  Future<void> test_reportsSkillSortInWidgetAndStateBuild() async {
+  Future<void> _reportsSkillSortInWidgetAndStateBuild() async {
     final source = _analyzedSource(r'''
 import 'package:flutter/widgets.dart';
 
@@ -499,7 +493,7 @@ class ProductsView extends AppView {
     ]);
   }
 
-  Future<void> test_allowsNotifierBuild() async {
+  Future<void> _allowsNotifierBuild() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -522,7 +516,6 @@ class TodosNotifier extends _$TodosNotifier {
   }
 }
 
-@reflectiveTest
 final class PerfListviewChildrenTest extends _UiRuleTest {
   @override
   String get ruleName => 'perf_listview_children';
@@ -536,7 +529,7 @@ class ListView {
 ListView list(List<String> items) => ListView(children: items.map((item) => item).toList());
 ''';
 
-  Future<void> test_reportsWrappedDynamicChildren() async {
+  Future<void> _reportsWrappedDynamicChildren() async {
     final analyzedSource = _analyzedSource(r'''
 class ListView {
   ListView({List<Object> children = const []});
@@ -549,7 +542,7 @@ ListView list(List<String> items) => ListView(
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'ListView(\n', ruleName)]);
   }
 
-  Future<void> test_allowsStaticChildren() async {
+  Future<void> _allowsStaticChildren() async {
     await assertAllows(r'''
 class ListView {
   ListView({List<Object> children = const []});
@@ -559,4 +552,82 @@ ListView list() => ListView(children: const ['a', 'b']);
 ListView other() => ListView(children: [header, if (header.isEmpty) 'empty']);
 ''');
   }
+}
+
+void _defineSourceScannerRulesPart07Tests() {
+  analysisRuleSuite<DateTimeNowRequiresTimezoneIntentTest>(
+    'DateTimeNowRequiresTimezoneIntentTest',
+    DateTimeNowRequiresTimezoneIntentTest.new,
+    {
+      'test_reportsUtcIntentOutsideExtensionBoundary': (t) =>
+          t._reportsUtcIntentOutsideExtensionBoundary(),
+      'test_reportsTimestampOutsideExtensionBoundary': (t) =>
+          t._reportsTimestampOutsideExtensionBoundary(),
+      'test_reportsLocalIntentAcrossLinesOutsideExtensionBoundary': (t) =>
+          t._reportsLocalIntentAcrossLinesOutsideExtensionBoundary(),
+      'test_allowsDateTimeXNowUtcForPersistedTimestamp': (t) =>
+          t._allowsDateTimeXNowUtcForPersistedTimestamp(),
+      'test_reportsLocalNowForPersistedTimestamp': (t) => t._reportsLocalNowForPersistedTimestamp(),
+      'test_reportsMultilineLocalNowForPersistedTimestamp': (t) =>
+          t._reportsMultilineLocalNowForPersistedTimestamp(),
+      'test_reportsDateTimeNowToLocalForPersistedTimestamp': (t) =>
+          t._reportsDateTimeNowToLocalForPersistedTimestamp(),
+      'test_reportsInlineCurrentDayBoundary': (t) => t._reportsInlineCurrentDayBoundary(),
+      'test_reportsInlineCurrentUtcDayBoundary': (t) => t._reportsInlineCurrentUtcDayBoundary(),
+      'test_allowsNamedCurrentDayBoundaryHelper': (t) => t._allowsNamedCurrentDayBoundaryHelper(),
+      'test_reportsInlineCurrentDateWindow': (t) => t._reportsInlineCurrentDateWindow(),
+      'test_reportsInlineCurrentCalendarDateWindow': (t) =>
+          t._reportsInlineCurrentCalendarDateWindow(),
+      'test_reportsMultilineInlineCurrentDateWindow': (t) =>
+          t._reportsMultilineInlineCurrentDateWindow(),
+      'test_reportsInlineCurrentDateWindowFromStartOfDay': (t) =>
+          t._reportsInlineCurrentDateWindowFromStartOfDay(),
+      'test_reportsEpochIntentOutsideExtensionBoundary': (t) =>
+          t._reportsEpochIntentOutsideExtensionBoundary(),
+      'test_reportsInterpolatedEpochIntentOutsideExtensionBoundary': (t) =>
+          t._reportsInterpolatedEpochIntentOutsideExtensionBoundary(),
+      'test_allowsRawStringThatMentionsDateTimeNow': (t) =>
+          t._allowsRawStringThatMentionsDateTimeNow(),
+      'test_allowsDateTimeXEpochIntent': (t) => t._allowsDateTimeXEpochIntent(),
+      'test_allowsDateTimeExtensionCurrentBoundary': (t) =>
+          t._allowsDateTimeExtensionCurrentBoundary(),
+      'test_allowsSkillDateTimeXStaticNowHelpers': (t) => t._allowsSkillDateTimeXStaticNowHelpers(),
+      'test_reportsStaticNowOutsideDateTimeExtension': (t) =>
+          t._reportsStaticNowOutsideDateTimeExtension(),
+      'test_reportsRawNowInsideDateTimeExtensionHelper': (t) =>
+          t._reportsRawNowInsideDateTimeExtensionHelper(),
+      'test_allowsTests': (t) => t._allowsTests(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<AdHocIntlFormatTest>('AdHocIntlFormatTest', AdHocIntlFormatTest.new, {
+    'test_reportsNumberFormatInWidgetMethod': (t) => t._reportsNumberFormatInWidgetMethod(),
+    'test_reportsDateFormatInNonPrimitiveExtension': (t) =>
+        t._reportsDateFormatInNonPrimitiveExtension(),
+    'test_allowsSkillPrimitiveExtensions': (t) => t._allowsSkillPrimitiveExtensions(),
+    'test_allowsNonIntlFormatter': (t) => t._allowsNonIntlFormatter(),
+    'test_allowsTests': (t) => t._allowsTests(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<InlineNumClampTest>('InlineNumClampTest', InlineNumClampTest.new, {
+    'test_reportsBatchBoundClamp': (t) => t._reportsBatchBoundClamp(),
+    'test_allowsSkillNumExtension': (t) => t._allowsSkillNumExtension(),
+    'test_allowsNonNumClamp': (t) => t._allowsNonNumClamp(),
+    'test_allowsTests': (t) => t._allowsTests(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<PerfBuildWorkTest>('PerfBuildWorkTest', PerfBuildWorkTest.new, {
+    'test_reportsSkillSortInWidgetAndStateBuild': (t) => t._reportsSkillSortInWidgetAndStateBuild(),
+    'test_allowsNotifierBuild': (t) => t._allowsNotifierBuild(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<PerfListviewChildrenTest>(
+    'PerfListviewChildrenTest',
+    PerfListviewChildrenTest.new,
+    {
+      'test_reportsWrappedDynamicChildren': (t) => t._reportsWrappedDynamicChildren(),
+      'test_allowsStaticChildren': (t) => t._allowsStaticChildren(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

@@ -4,7 +4,7 @@ Status: Complete
 
 ## Outcome + scope
 
-The package passes HE-COMMENT-LINES, HE-NO-SWITCH-OFF (except the findings judged false) and the dart-decimate health gate with `max_crap` 30. No rule, test or behavior is removed. Non-goal: change the `test_` method names or the lints, which the owner decided to leave open.
+The package passes HE-COMMENT-LINES, HE-NO-SWITCH-OFF (except the lint sample strings judged false) and the dart-decimate health gate with `max_crap` 30. No rule, test or behavior is removed. The 129 `ignore_for_file: non_constant_identifier_names` lines are gone: each `test_` method is a private lowerCamel method that `main()` registers through `analysisRuleSuite`, with the old test names. Non-goal: change the lints include.
 
 ## Repository context
 
@@ -16,7 +16,7 @@ Single source: N/A — no value or rule is copied by this change.
 
 Blockers: None
 Handoff: Approval
-Authority: The owner asked for this fix wave and a draft PR first. The coordinator ruled that 253 off-switch hits are false or stay open: 124 sit inside raw-string lint samples, 129 are `ignore_for_file: non_constant_identifier_names` on `test_` methods. Merge and release are not part of this task.
+Authority: The owner asked for this fix wave and a draft PR first. The coordinator ruled that the 124 off-switch hits inside raw-string lint samples are false, and later ruled that the 129 `test_` method ignores are removed by the private-method registration. Merge and release are not part of this task.
 
 ## Acceptance + steps
 
@@ -48,7 +48,8 @@ Sources: N/A — the request is the only source.
 ## Verification
 
 Result: Passed
-Evidence: Run 1, `python3 .hooks/hard-eng.py check` with the branch's own hooks: exit 0; lockfile, performance, actionlint, vulnerabilities, freshness, secrets-history, zizmor, format, secrets-files, types-lint, security, tests (3,291 passed in 160 s, line coverage 92.42%) and dead-code-duplicates all PASS. Two earlier runs at a machine load of 100 to 225 timed out at the 180 s pre-push limit and passed with `CI=1`. Run 2, the same command in a scratch copy with Hard Eng develop's `.hooks/` and `.agents/`: exit 1 at HE-NO-SWITCH-OFF with 253 hits, which are exactly the two classes the coordinator ruled open or false (129 file-level `ignore_for_file: non_constant_identifier_names` lines on `test_` methods and 124 lint sample strings); no comment-lines hit. The check stops at that refusal, so only `check --quick` ran there (lockfile, format, secrets-files, types-lint, all PASS); tests, security, vulnerabilities and dead-code-duplicates are not checked under develop's hooks. Run 3, `npx -y dart-decimate@0.0.76 --version` then `check . --threshold 0 --format json --strict`: dart-decimate 0.0.76, verdict pass, 0 findings, exit 0. Regression check against base 4dfebb2e: the base ran 2,790 tests (1 skipped) and the branch runs 3,291 with none skipped; every base test name still runs except the smoke test, which moved to `integration_test/` and passed in the CI Flutter smoke job. The existing `use_existing_destructuring_test.dart` is byte for byte as on main. The other edited test files differ from main only in comments and in stub code moved to `test/support/`. `dart format` clean and `dart analyze --fatal-infos` clean.
+Evidence: Run 1, `python3 .hooks/hard-eng.py check` with the branch's own hooks: exit 0; lockfile, performance, actionlint, vulnerabilities, freshness, secrets-history, zizmor, format, secrets-files, types-lint, security, tests (3,291 passed in 160 s, line coverage 92.42%) and dead-code-duplicates all PASS. Two earlier runs at a machine load of 100 to 225 timed out at the 180 s pre-push limit and passed with `CI=1`. Run 2, the same command in a scratch copy with Hard Eng develop's `.hooks/` and `.agents/`: RUN2_RESULT Run 3, `npx -y dart-decimate@0.0.76 --version` then `check . --threshold 0 --format json --strict`: dart-decimate 0.0.76, verdict pass, 0 findings, exit 0. Regression check against base 4dfebb2e: the base ran 2,790 tests (1 skipped) and the branch runs 3,291 with none skipped; every base test name still runs except the smoke test, which moved to `integration_test/` and passed in the CI Flutter smoke job. The existing `use_existing_destructuring_test.dart` is byte for byte as on main. The other edited test files differ from main only in comments and in stub code moved to `test/support/`. `dart format` clean and `dart analyze --fatal-infos` clean.
+Test names: the full list of 3,291 test names, results and skip flags is equal before and after the rename (`dart test --reporter json`, compared as sorted multisets; logs `fsl-names-before.txt` and `fsl-names-after.txt`). `test_reflective_loader` is removed from `dev_dependencies`; nothing uses it.
 E2E: N/A — no user journey; the rule tests run the real analyzer on an in-memory project.
 Real service: N/A — the change calls no outside service; it only changes analyzer rule code and its tests.
 Retro: Done — the new tests found faults in rules and fixes (fixes that never ran, wrong indentation, a greedy suffix match); each was repaired with its test. Test files load the analyzer once each, so new cases run from four files.

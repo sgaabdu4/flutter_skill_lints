@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class TestMockConcreteTest extends _TestFileRuleTest {
   @override
   void setUp() {
@@ -55,7 +52,7 @@ class UserRepository {}
 class MockUserRepository extends Mock implements UserRepository {}
 ''';
 
-  Future<void> test_allowsAbstractContractsWithoutNamingPrefix() async {
+  Future<void> _allowsAbstractContractsWithoutNamingPrefix() async {
     await assertAllows(r'''
 import 'package:mocktail/mocktail.dart';
 abstract interface class TestBridge { void send(); }
@@ -67,7 +64,7 @@ class MockAlias extends Mock implements BridgeAlias {}
 ''', path: '$testPackageRootPath/test/abstract_contract_test.dart');
   }
 
-  Future<void> test_reportsConcreteContractWithInterfacePrefix() async {
+  Future<void> _reportsConcreteContractWithInterfacePrefix() async {
     const source = r'''
 import 'package:mocktail/mocktail.dart';
 interface class IConcreteBridge { void send() {} }
@@ -82,7 +79,7 @@ class MockBridge extends Mock implements IConcreteBridge {}
   }
 
   /// #77: concrete SDK classes are mocked concretes regardless of package.
-  Future<void> test_reportsExternalSdkPartDeclarations() async {
+  Future<void> _reportsExternalSdkPartDeclarations() async {
     const source = r'''
 import 'package:appwrite/appwrite.dart';
 import 'package:mocktail/mocktail.dart';
@@ -102,7 +99,7 @@ class MockTeams extends Mock implements Teams {}
   }
 
   /// #77: abstract contracts declared in a package part file stay allowed.
-  Future<void> test_allowsExternalAbstractPartDeclaration() async {
+  Future<void> _allowsExternalAbstractPartDeclaration() async {
     final filePath = '$testPackageRootPath/test/helpers/appwrite_service_test_utils.dart';
     newFile(filePath, r'''
 import 'package:appwrite/appwrite.dart';
@@ -114,7 +111,7 @@ class MockService extends Mock implements Service {}
   }
 
   /// #77: concrete plugin controllers are mocked concretes too.
-  Future<void> test_reportsExternalPluginControllerMocks() async {
+  Future<void> _reportsExternalPluginControllerMocks() async {
     const source = r'''
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:mocktail/mocktail.dart';
@@ -130,7 +127,7 @@ class MockYoutubePlayerValue extends Mock implements YoutubePlayerValue {}
     ]);
   }
 
-  Future<void> test_localConcreteSdkNameStillReports() async {
+  Future<void> _localConcreteSdkNameStillReports() async {
     const source = r'''
 import 'package:mocktail/mocktail.dart';
 class Account {}
@@ -144,7 +141,7 @@ class MockAccount extends Mock implements Account {}
     ]);
   }
 
-  Future<void> test_localFunctionsAndStorageConcreteNamesStillReport() async {
+  Future<void> _localFunctionsAndStorageConcreteNamesStillReport() async {
     const source = r'''
 import 'package:mocktail/mocktail.dart';
 class Functions {}
@@ -161,7 +158,7 @@ class MockStorage extends Mock implements Storage {}
     ]);
   }
 
-  Future<void> test_allowsLocalFunctionsAndStorageInterfaces() async {
+  Future<void> _allowsLocalFunctionsAndStorageInterfaces() async {
     await assertAllows(r'''
 import 'package:mocktail/mocktail.dart';
 abstract interface class Functions { void execute(); }
@@ -171,7 +168,7 @@ class MockStorage extends Mock implements Storage {}
 ''', path: '$testPackageRootPath/test/sdk_interface_mocks_test.dart');
   }
 
-  Future<void> test_concreteAliasStillReports() async {
+  Future<void> _concreteAliasStillReports() async {
     const source = r'''
 import 'package:mocktail/mocktail.dart';
 class ConcreteBridge {}
@@ -186,7 +183,7 @@ class MockBridge extends Mock implements BridgeAlias {}
     ]);
   }
 
-  Future<void> test_reportsFakeOfConcreteContract() async {
+  Future<void> _reportsFakeOfConcreteContract() async {
     const source = r'''
 import 'package:mocktail/mocktail.dart';
 class ProductRepository {}
@@ -200,7 +197,7 @@ class FakeProductRepository extends Fake implements ProductRepository {}
     ]);
   }
 
-  Future<void> test_allowsSkillFakeOfInterface() async {
+  Future<void> _allowsSkillFakeOfInterface() async {
     await assertAllows(r'''
 import 'package:mocktail/mocktail.dart';
 abstract interface class IProductRepository { Future<List<Object>> fetchAll(); }
@@ -212,7 +209,7 @@ class FakeProductRepository extends Fake implements IProductRepository {
 ''', path: '$testPackageRootPath/test/fake_interface_test.dart');
   }
 
-  Future<void> test_allowsLocalClassNamedMock() async {
+  Future<void> _allowsLocalClassNamedMock() async {
     await assertAllows(r'''
 class Mock {}
 class ProductRepository {}
@@ -221,7 +218,6 @@ class MockProductRepository extends Mock implements ProductRepository {}
   }
 }
 
-@reflectiveTest
 final class TestPumpAndSettleTest extends _TestFileRuleTest {
   @override
   String get ruleName => 'test_pump_and_settle';
@@ -230,7 +226,7 @@ final class TestPumpAndSettleTest extends _TestFileRuleTest {
   @override
   String get source => 'void main(tester) { tester.pumpAndSettle(); }';
 
-  Future<void> test_allowsExplicitDurationArgument() async {
+  Future<void> _allowsExplicitDurationArgument() async {
     final filePath = '$testPackageRootPath/test/widget_test.dart';
     newFile(filePath, r'''
 void main(tester) {
@@ -242,7 +238,6 @@ void main(tester) {
   }
 }
 
-@reflectiveTest
 final class TestTapAtTest extends _TestFileRuleTest {
   @override
   String get ruleName => 'test_tap_at';
@@ -252,7 +247,6 @@ final class TestTapAtTest extends _TestFileRuleTest {
   String get source => 'void main(tester) { tester.tapAt(Object()); }';
 }
 
-@reflectiveTest
 final class TestInlineValueKeyTest extends _TestRuleTest {
   @override
   void setUp() {
@@ -273,7 +267,7 @@ void main() {
 }
 ''';
 
-  Future<void> test_reportsInlineKeyFactoryString() async {
+  Future<void> _reportsInlineKeyFactoryString() async {
     const source = r'''
 import 'package:flutter/foundation.dart';
 
@@ -287,7 +281,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_allowsRegistryConstantKeys() async {
+  Future<void> _allowsRegistryConstantKeys() async {
     await assertAllows(r'''
 import 'package:flutter/foundation.dart';
 
@@ -303,7 +297,6 @@ void main() {
   }
 }
 
-@reflectiveTest
 final class TestFirstMatchFinderTest extends _TestFileRuleTest {
   @override
   void setUp() {
@@ -320,7 +313,7 @@ final class TestFirstMatchFinderTest extends _TestFileRuleTest {
   @override
   String get source => 'void main() { find.byIcon(Object()); }';
 
-  Future<void> test_allowsIterableFirstAccess() async {
+  Future<void> _allowsIterableFirstAccess() async {
     final filePath = '$testPackageRootPath/test/widget_test.dart';
     newFile(filePath, r'''
 void main() {
@@ -333,7 +326,7 @@ void main() {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsFirstOnFinder() async {
+  Future<void> _reportsFirstOnFinder() async {
     const source = r'''
 import 'package:flutter_test/flutter_test.dart';
 
@@ -347,7 +340,7 @@ Future<void> tapFirst(WidgetTester tester) async {
     await assertDiagnosticsInFile(filePath, [compatLint(analyzedSource, 'first);', ruleName)]);
   }
 
-  Future<void> test_allowsIterableFirstInsideFinderArgument() async {
+  Future<void> _allowsIterableFirstInsideFinderArgument() async {
     await assertAllows(r'''
 import 'package:flutter_test/flutter_test.dart';
 
@@ -359,7 +352,6 @@ void main() {
   }
 }
 
-@reflectiveTest
 final class TestNotifierOverrideTest extends _TestFileRuleTest {
   @override
   void setUp() {
@@ -389,7 +381,7 @@ final productNamesProvider = NotifierProvider<ProductNames, List<String>>(Produc
 final overrides = [productNamesProvider.overrideWith(FakeProductNames.new)];
 ''';
 
-  Future<void> test_reportsFamilyNotifierOverride() async {
+  Future<void> _reportsFamilyNotifierOverride() async {
     const source = '''
 import 'package:riverpod/riverpod.dart';
 
@@ -410,7 +402,7 @@ final overrides = [productDetailProvider.overrideWith2((id) => ProductDetail())]
     ]);
   }
 
-  Future<void> test_allowsSkillBuildValueAndRepositoryOverrides() async {
+  Future<void> _allowsSkillBuildValueAndRepositoryOverrides() async {
     await assertAllows('''
 import 'package:riverpod/riverpod.dart';
 
@@ -433,7 +425,7 @@ final overrides = [
 ''', path: '$testPackageRootPath/test/overrides_test.dart');
   }
 
-  Future<void> test_allowsNotifierOverrideOutsideTests() async {
+  Future<void> _allowsNotifierOverrideOutsideTests() async {
     await assertAllows('''
 import 'package:riverpod/riverpod.dart';
 
@@ -453,7 +445,6 @@ final overrides = [authProvider.overrideWith(SignedOutAuth.new)];
   }
 }
 
-@reflectiveTest
 final class TestE2eBlindSleepTest extends _TestRuleTest {
   @override
   void setUp() {
@@ -479,7 +470,7 @@ void main() {
 }
 ''';
 
-  Future<void> test_reportsHostDriverDelay() async {
+  Future<void> _reportsHostDriverDelay() async {
     const source = '''
 Future<void> main() async {
   await Future.delayed(const Duration(milliseconds: 500));
@@ -493,7 +484,7 @@ Future<void> main() async {
     ]);
   }
 
-  Future<void> test_allowsPollingLoopAndUnawaitedDelay() async {
+  Future<void> _allowsPollingLoopAndUnawaitedDelay() async {
     await assertAllows('''
 import 'dart:async';
 
@@ -509,7 +500,7 @@ void scheduleLater() {
 ''', path: '$testPackageRootPath/integration_test/helpers/wait_helpers.dart');
   }
 
-  Future<void> test_allowsDelayOutsideE2e() async {
+  Future<void> _allowsDelayOutsideE2e() async {
     await assertAllows('''
 Future<void> settle() async {
   await Future<void>.delayed(const Duration(milliseconds: 10));
@@ -517,7 +508,7 @@ Future<void> settle() async {
 ''', path: '$testPackageRootPath/test/unit/settle_test.dart');
   }
 
-  Future<void> test_allowsLocalDelayedLookalike() async {
+  Future<void> _allowsLocalDelayedLookalike() async {
     await assertAllows('''
 class Clock {
   static Future<void> delayed(Duration duration) async {}
@@ -530,7 +521,6 @@ Future<void> main() async {
   }
 }
 
-@reflectiveTest
 final class TestTextLabelSelectorTest extends _TestFileRuleTest {
   @override
   void setUp() {
@@ -553,7 +543,7 @@ void main() {
 }
 ''';
 
-  Future<void> test_reportsWidgetWithTextAndNestedLabelFinders() async {
+  Future<void> _reportsWidgetWithTextAndNestedLabelFinders() async {
     const source = '''
 import 'package:flutter_test/flutter_test.dart';
 
@@ -575,7 +565,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_allowsSkillTextAssertionsAndKeyTaps() async {
+  Future<void> _allowsSkillTextAssertionsAndKeyTaps() async {
     await assertAllows('''
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -593,7 +583,7 @@ void main() {
 ''', path: '$testPackageRootPath/test/product_list_test.dart');
   }
 
-  Future<void> test_allowsStableTextInE2e() async {
+  Future<void> _allowsStableTextInE2e() async {
     await assertAllows('''
 import 'package:flutter_test/flutter_test.dart';
 
@@ -605,7 +595,7 @@ void main() {
 ''', path: '$testPackageRootPath/integration_test/save_flow_test.dart');
   }
 
-  Future<void> test_allowsNonLiteralLabel() async {
+  Future<void> _allowsNonLiteralLabel() async {
     await assertAllows('''
 import 'package:flutter_test/flutter_test.dart';
 
@@ -624,7 +614,6 @@ abstract class _ValueObjectRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => valueObjectSourceRules;
 }
 
-@reflectiveTest
 final class DomainEmptyStringSentinelTest extends _ValueObjectRuleTest {
   @override
   String get ruleName => 'domain_empty_string_sentinel';
@@ -645,7 +634,7 @@ class User {
 }
 ''';
 
-  Future<void> test_reportsConstructorDefaultThisField() async {
+  Future<void> _reportsConstructorDefaultThisField() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     final analyzedSource = _analyzedSource(r'''
 class User {
@@ -659,7 +648,7 @@ class User {
     await assertDiagnosticsInFile(filePath, [compatLint(analyzedSource, "this.id = ''", ruleName)]);
   }
 
-  Future<void> test_allowsOptionalDomainTextAsNullable() async {
+  Future<void> _allowsOptionalDomainTextAsNullable() async {
     await assertAllows(r'''
 class User {
   const User({this.bio});
@@ -669,7 +658,7 @@ class User {
 ''', path: '$testPackageLibPath/features/users/domain/user.dart');
   }
 
-  Future<void> test_allowsDataModelWireEmptyDefault() async {
+  Future<void> _allowsDataModelWireEmptyDefault() async {
     await assertAllows(r'''
 class UserModel {
   const UserModel({this.id = ''});
@@ -680,7 +669,6 @@ class UserModel {
   }
 }
 
-@reflectiveTest
 final class VoPublicRawConstructorTest extends _ValueObjectRuleTest {
   @override
   String get ruleName => 'vo_public_raw_constructor';
@@ -700,7 +688,7 @@ class _Meters extends Distance {
 }
 ''';
 
-  Future<void> test_allowsPrivateRawRedirect() async {
+  Future<void> _allowsPrivateRawRedirect() async {
     final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     newFile(filePath, r'''
 class Distance {
@@ -720,7 +708,7 @@ class _Meters extends Distance {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsValidatedFactoryWithoutRedirect() async {
+  Future<void> _allowsValidatedFactoryWithoutRedirect() async {
     final filePath = '$testPackageLibPath/core/domain/values/email.dart';
     newFile(filePath, r'''
 // ignore_for_file: undefined_method, undefined_identifier
@@ -736,7 +724,7 @@ class Email {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsRedirectOutsideValueObjectsPath() async {
+  Future<void> _allowsRedirectOutsideValueObjectsPath() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     newFile(filePath, r'''
 class User {
@@ -752,7 +740,7 @@ class _User extends User {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsParameterlessPublicRedirect() async {
+  Future<void> _allowsParameterlessPublicRedirect() async {
     final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     newFile(filePath, r'''
 class Distance {
@@ -767,7 +755,7 @@ class _DistanceZero extends Distance {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsAnonymousPublicRawRedirect() async {
+  Future<void> _reportsAnonymousPublicRawRedirect() async {
     final filePath = '$testPackageLibPath/core/domain/values/email.dart';
     const source = r'''
 // ignore_for_file: undefined_method
@@ -787,7 +775,7 @@ class _Email extends Email {
     ]);
   }
 
-  Future<void> test_reportsNullablePrimitiveParam() async {
+  Future<void> _reportsNullablePrimitiveParam() async {
     final filePath = '$testPackageLibPath/core/domain/values/email.dart';
     const source = r'''
 // ignore_for_file: undefined_method
@@ -807,7 +795,7 @@ class _Email extends Email {
     ]);
   }
 
-  Future<void> test_reportsMultiParamPublicRawRedirect() async {
+  Future<void> _reportsMultiParamPublicRawRedirect() async {
     final filePath = '$testPackageLibPath/core/domain/values/money.dart';
     const source = r'''
 // ignore_for_file: undefined_method, undefined_class
@@ -832,7 +820,7 @@ class _UsdMoney extends Money {
     ]);
   }
 
-  Future<void> test_allowsCompositeCanonicalRedirect() async {
+  Future<void> _allowsCompositeCanonicalRedirect() async {
     await assertAllows(r'''
 // ignore_for_file: redirect_to_non_class
 enum Currency { usd, eur }
@@ -844,7 +832,7 @@ class Money {
 ''', path: '$testPackageLibPath/core/domain/values/money.dart');
   }
 
-  Future<void> test_reportsSingleFieldAndNonConstPublicRedirects() async {
+  Future<void> _reportsSingleFieldAndNonConstPublicRedirects() async {
     final filePath = '$testPackageLibPath/core/domain/values/email.dart';
     const source = r'''
 // ignore_for_file: redirect_to_non_class
@@ -862,7 +850,7 @@ class Email {
     ]);
   }
 
-  Future<void> test_reportsPassthroughPublicFactory() async {
+  Future<void> _reportsPassthroughPublicFactory() async {
     final filePath = '$testPackageLibPath/core/domain/values/weight_adjustment.dart';
     const source = r'''
 // ignore_for_file: undefined_method
@@ -883,7 +871,7 @@ class _Kg extends WeightAdjustment {
     ]);
   }
 
-  Future<void> test_allowsValidatedFactoryWithAssert() async {
+  Future<void> _allowsValidatedFactoryWithAssert() async {
     final filePath = '$testPackageLibPath/core/domain/values/weight.dart';
     newFile(filePath, r'''
 // ignore_for_file: undefined_method
@@ -904,7 +892,7 @@ class _Kg extends Weight {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsTransformingFactory() async {
+  Future<void> _allowsTransformingFactory() async {
     final filePath = '$testPackageLibPath/core/domain/values/email.dart';
     newFile(filePath, r'''
 // ignore_for_file: undefined_method
@@ -922,7 +910,7 @@ class _Email extends Email {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsMultiLinePublicRawRedirect() async {
+  Future<void> _reportsMultiLinePublicRawRedirect() async {
     final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     const source = r'''
 // ignore_for_file: undefined_method
@@ -943,4 +931,112 @@ class _Meters extends Distance {
       compatLint(source, 'const factory Distance.meters(', ruleName),
     ]);
   }
+}
+
+void _defineSourceScannerRulesPart12Tests() {
+  analysisRuleSuite<TestMockConcreteTest>('TestMockConcreteTest', TestMockConcreteTest.new, {
+    'test_allowsAbstractContractsWithoutNamingPrefix': (t) =>
+        t._allowsAbstractContractsWithoutNamingPrefix(),
+    'test_reportsConcreteContractWithInterfacePrefix': (t) =>
+        t._reportsConcreteContractWithInterfacePrefix(),
+    'test_reportsExternalSdkPartDeclarations': (t) => t._reportsExternalSdkPartDeclarations(),
+    'test_allowsExternalAbstractPartDeclaration': (t) => t._allowsExternalAbstractPartDeclaration(),
+    'test_reportsExternalPluginControllerMocks': (t) => t._reportsExternalPluginControllerMocks(),
+    'test_localConcreteSdkNameStillReports': (t) => t._localConcreteSdkNameStillReports(),
+    'test_localFunctionsAndStorageConcreteNamesStillReport': (t) =>
+        t._localFunctionsAndStorageConcreteNamesStillReport(),
+    'test_allowsLocalFunctionsAndStorageInterfaces': (t) =>
+        t._allowsLocalFunctionsAndStorageInterfaces(),
+    'test_concreteAliasStillReports': (t) => t._concreteAliasStillReports(),
+    'test_reportsFakeOfConcreteContract': (t) => t._reportsFakeOfConcreteContract(),
+    'test_allowsSkillFakeOfInterface': (t) => t._allowsSkillFakeOfInterface(),
+    'test_allowsLocalClassNamedMock': (t) => t._allowsLocalClassNamedMock(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<TestPumpAndSettleTest>('TestPumpAndSettleTest', TestPumpAndSettleTest.new, {
+    'test_allowsExplicitDurationArgument': (t) => t._allowsExplicitDurationArgument(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<TestTapAtTest>('TestTapAtTest', TestTapAtTest.new, {
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<TestInlineValueKeyTest>('TestInlineValueKeyTest', TestInlineValueKeyTest.new, {
+    'test_reportsInlineKeyFactoryString': (t) => t._reportsInlineKeyFactoryString(),
+    'test_allowsRegistryConstantKeys': (t) => t._allowsRegistryConstantKeys(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<TestFirstMatchFinderTest>(
+    'TestFirstMatchFinderTest',
+    TestFirstMatchFinderTest.new,
+    {
+      'test_allowsIterableFirstAccess': (t) => t._allowsIterableFirstAccess(),
+      'test_reportsFirstOnFinder': (t) => t._reportsFirstOnFinder(),
+      'test_allowsIterableFirstInsideFinderArgument': (t) =>
+          t._allowsIterableFirstInsideFinderArgument(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<TestNotifierOverrideTest>(
+    'TestNotifierOverrideTest',
+    TestNotifierOverrideTest.new,
+    {
+      'test_reportsFamilyNotifierOverride': (t) => t._reportsFamilyNotifierOverride(),
+      'test_allowsSkillBuildValueAndRepositoryOverrides': (t) =>
+          t._allowsSkillBuildValueAndRepositoryOverrides(),
+      'test_allowsNotifierOverrideOutsideTests': (t) => t._allowsNotifierOverrideOutsideTests(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<TestE2eBlindSleepTest>('TestE2eBlindSleepTest', TestE2eBlindSleepTest.new, {
+    'test_reportsHostDriverDelay': (t) => t._reportsHostDriverDelay(),
+    'test_allowsPollingLoopAndUnawaitedDelay': (t) => t._allowsPollingLoopAndUnawaitedDelay(),
+    'test_allowsDelayOutsideE2e': (t) => t._allowsDelayOutsideE2e(),
+    'test_allowsLocalDelayedLookalike': (t) => t._allowsLocalDelayedLookalike(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<TestTextLabelSelectorTest>(
+    'TestTextLabelSelectorTest',
+    TestTextLabelSelectorTest.new,
+    {
+      'test_reportsWidgetWithTextAndNestedLabelFinders': (t) =>
+          t._reportsWidgetWithTextAndNestedLabelFinders(),
+      'test_allowsSkillTextAssertionsAndKeyTaps': (t) => t._allowsSkillTextAssertionsAndKeyTaps(),
+      'test_allowsStableTextInE2e': (t) => t._allowsStableTextInE2e(),
+      'test_allowsNonLiteralLabel': (t) => t._allowsNonLiteralLabel(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<DomainEmptyStringSentinelTest>(
+    'DomainEmptyStringSentinelTest',
+    DomainEmptyStringSentinelTest.new,
+    {
+      'test_reportsConstructorDefaultThisField': (t) => t._reportsConstructorDefaultThisField(),
+      'test_allowsOptionalDomainTextAsNullable': (t) => t._allowsOptionalDomainTextAsNullable(),
+      'test_allowsDataModelWireEmptyDefault': (t) => t._allowsDataModelWireEmptyDefault(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<VoPublicRawConstructorTest>(
+    'VoPublicRawConstructorTest',
+    VoPublicRawConstructorTest.new,
+    {
+      'test_allowsPrivateRawRedirect': (t) => t._allowsPrivateRawRedirect(),
+      'test_allowsValidatedFactoryWithoutRedirect': (t) =>
+          t._allowsValidatedFactoryWithoutRedirect(),
+      'test_allowsRedirectOutsideValueObjectsPath': (t) =>
+          t._allowsRedirectOutsideValueObjectsPath(),
+      'test_allowsParameterlessPublicRedirect': (t) => t._allowsParameterlessPublicRedirect(),
+      'test_reportsAnonymousPublicRawRedirect': (t) => t._reportsAnonymousPublicRawRedirect(),
+      'test_reportsNullablePrimitiveParam': (t) => t._reportsNullablePrimitiveParam(),
+      'test_reportsMultiParamPublicRawRedirect': (t) => t._reportsMultiParamPublicRawRedirect(),
+      'test_allowsCompositeCanonicalRedirect': (t) => t._allowsCompositeCanonicalRedirect(),
+      'test_reportsSingleFieldAndNonConstPublicRedirects': (t) =>
+          t._reportsSingleFieldAndNonConstPublicRedirects(),
+      'test_reportsPassthroughPublicFactory': (t) => t._reportsPassthroughPublicFactory(),
+      'test_allowsValidatedFactoryWithAssert': (t) => t._allowsValidatedFactoryWithAssert(),
+      'test_allowsTransformingFactory': (t) => t._allowsTransformingFactory(),
+      'test_reportsMultiLinePublicRawRedirect': (t) => t._reportsMultiLinePublicRawRedirect(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

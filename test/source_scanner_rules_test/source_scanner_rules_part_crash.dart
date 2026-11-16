@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
 abstract class _DataCrashRuleTest extends _SourceRuleTest {
@@ -7,7 +5,6 @@ abstract class _DataCrashRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => dataCrashSourceRules;
 }
 
-@reflectiveTest
 final class DataLogRethrowTest extends _DataCrashRuleTest {
   @override
   String get ruleName => 'data_log_rethrow';
@@ -30,7 +27,7 @@ void load() {
 ''';
 
   /// The state-management-lifecycle.md:74-84 WRONG example.
-  Future<void> test_reportsReportingCallsBeforeRethrow() async {
+  Future<void> _reportsReportingCallsBeforeRethrow() async {
     final analyzedSource = _analyzedSource(r'''
 class Crash {
   static void error(Object error, StackTrace stackTrace, {String? reason}) {}
@@ -64,7 +61,7 @@ class TodoRepository {
   }
 
   /// Flutter debugPrint resolves as a FunctionExpressionInvocation.
-  Future<void> test_reportsFlutterDebugPrintBeforeRethrow() async {
+  Future<void> _reportsFlutterDebugPrintBeforeRethrow() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:flutter/foundation.dart';
 
@@ -96,7 +93,7 @@ class ProductRemoteDataSource {
   }
 
   /// Translation, rollback and local-first swallow + log (state-management-lifecycle.md:69-72).
-  Future<void> test_allowsSkillDataLayerCatches() async {
+  Future<void> _allowsSkillDataLayerCatches() async {
     await assertAllows(r'''
 class Crash {
   static void error(Object error, StackTrace stackTrace, {String? reason}) {}
@@ -140,7 +137,7 @@ class TodoRepository {
   }
 
   /// Rollback rethrows must not report a second incident.
-  Future<void> test_reportsRollbackThatReportsBeforeRethrow() async {
+  Future<void> _reportsRollbackThatReportsBeforeRethrow() async {
     const source = r'''
 abstract final class Crash {
   static void error(Object error, StackTrace stackTrace, {String? reason}) {}
@@ -167,7 +164,7 @@ class TodoRepository {
     ]);
   }
 
-  Future<void> test_reportsCrashReportThenRethrow() async {
+  Future<void> _reportsCrashReportThenRethrow() async {
     const source = r'''
 abstract final class Crash {
   static void error(Object error, StackTrace stackTrace) {}
@@ -192,7 +189,7 @@ class TodoRepository {
     ]);
   }
 
-  Future<void> test_reportsCrashReportThenThrowCaughtError() async {
+  Future<void> _reportsCrashReportThenThrowCaughtError() async {
     const source = r'''
 abstract final class Crash {
   static void error(Object error, StackTrace stackTrace) {}
@@ -215,7 +212,7 @@ Future<int> load(Future<int> Function() source) async {
     ]);
   }
 
-  Future<void> test_allowsReportThenMappedTypedError() async {
+  Future<void> _allowsReportThenMappedTypedError() async {
     await assertAllows(r'''
 abstract final class Crash {
   static void error(Object error, StackTrace stackTrace) {}
@@ -234,7 +231,7 @@ Future<int> load(Future<int> Function() source) async {
 ''', path: path);
   }
 
-  Future<void> test_allowsRethrowWithoutReport() async {
+  Future<void> _allowsRethrowWithoutReport() async {
     await assertAllows(r'''
 Future<int> load(Future<int> Function() source) async {
   try {
@@ -247,7 +244,6 @@ Future<int> load(Future<int> Function() source) async {
   }
 }
 
-@reflectiveTest
 final class CrashPossiblePiiTest extends _DataCrashRuleTest {
   @override
   String get ruleName => 'crash_possible_pii';
@@ -326,7 +322,6 @@ class PlatformDispatcher {
   String get crashServicePath => '$testPackageLibPath/core/crash/crash_service.dart';
 }
 
-@reflectiveTest
 final class CrashDirectSentryCallTest extends _CrashSdkRuleTest {
   @override
   String get ruleName => 'crash_direct_sentry_call';
@@ -339,7 +334,7 @@ final class CrashDirectSentryCallTest extends _CrashSdkRuleTest {
 import 'package:sentry_flutter/sentry_flutter.dart';
 ''';
 
-  Future<void> test_reportsImportAndCaptureCall() async {
+  Future<void> _reportsImportAndCaptureCall() async {
     const source = r'''
 import 'package:sentry_flutter/sentry_flutter.dart';
 
@@ -355,7 +350,7 @@ Future<void> submit(Object error) async {
     ]);
   }
 
-  Future<void> test_reportsSdkUseInOtherCoreCrashFiles() async {
+  Future<void> _reportsSdkUseInOtherCoreCrashFiles() async {
     final filePath = '$testPackageLibPath/core/crash/sentry_config.dart';
     const source = r'''
 // ignore_for_file: unused_import
@@ -368,7 +363,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
     ]);
   }
 
-  Future<void> test_allowsCrashService() async {
+  Future<void> _allowsCrashService() async {
     await assertAllows(r'''
 import 'package:sentry_flutter/sentry_flutter.dart';
 
@@ -383,7 +378,7 @@ abstract final class Crash {
 ''', path: crashServicePath);
   }
 
-  Future<void> test_allowsCrashFacadeCalls() async {
+  Future<void> _allowsCrashFacadeCalls() async {
     await assertAllows(r'''
 abstract final class Crash {
   static void error(Object error, StackTrace stackTrace) {}
@@ -396,7 +391,6 @@ void submit(Object error) {
   }
 }
 
-@reflectiveTest
 final class CrashCustomGlobalErrorHandlerTest extends _CrashSdkRuleTest {
   @override
   String get ruleName => 'crash_custom_global_error_handler';
@@ -413,7 +407,7 @@ void installHandlers() {
 }
 ''';
 
-  Future<void> test_reportsPlatformDispatcherHandler() async {
+  Future<void> _reportsPlatformDispatcherHandler() async {
     const source = r'''
 import 'dart:ui';
 
@@ -428,7 +422,7 @@ void installHandlers() {
     ]);
   }
 
-  Future<void> test_reportsCustomHandlerInCrashService() async {
+  Future<void> _reportsCustomHandlerInCrashService() async {
     const source = r'''
 import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -444,7 +438,7 @@ void installHandlers() {
     ]);
   }
 
-  Future<void> test_reportsCustomHandlerInsideCrashFacade() async {
+  Future<void> _reportsCustomHandlerInsideCrashFacade() async {
     const source = r'''
 import 'dart:async';
 
@@ -464,7 +458,7 @@ abstract final class Crash {
     ]);
   }
 
-  Future<void> test_reportsCrashlyticsHandlersOutsideCrashFacade() async {
+  Future<void> _reportsCrashlyticsHandlersOutsideCrashFacade() async {
     const source = r'''
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
@@ -480,7 +474,7 @@ void installHandlers() {
     ]);
   }
 
-  Future<void> test_reportsBootstrapHandlers() async {
+  Future<void> _reportsBootstrapHandlers() async {
     const source = r'''
 import 'dart:ui';
 
@@ -504,7 +498,7 @@ Future<void> bootstrap() async {
     ]);
   }
 
-  Future<void> test_allowsCrashlyticsHandlersInsideCrashFacade() async {
+  Future<void> _allowsCrashlyticsHandlersInsideCrashFacade() async {
     newFile(crashServicePath, r'''
 import 'dart:async';
 import 'dart:ui';
@@ -538,7 +532,7 @@ Future<void> main() async {
     await assertNoDiagnosticsInFile(mainPath);
   }
 
-  Future<void> test_allowsReadingHandler() async {
+  Future<void> _allowsReadingHandler() async {
     await assertAllows(r'''
 import 'package:flutter/foundation.dart';
 
@@ -546,7 +540,7 @@ final previous = FlutterError.onError;
 ''', path: path);
   }
 
-  Future<void> test_allowsStartupForwardingToLocalDiagnosticsOnly() async {
+  Future<void> _allowsStartupForwardingToLocalDiagnosticsOnly() async {
     await assertAllows(r'''
 import 'dart:async';
 import 'dart:ui';
@@ -573,7 +567,7 @@ abstract final class Crash {
 ''', path: crashServicePath);
   }
 
-  Future<void> test_reportsLocalHandlerOverwritingSdkFromExternalHelper() async {
+  Future<void> _reportsLocalHandlerOverwritingSdkFromExternalHelper() async {
     const source = r'''
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
@@ -604,7 +598,7 @@ abstract final class Crash {
     ]);
   }
 
-  Future<void> test_reportsRemoteArbitraryAndRecursiveFacadeHandlers() async {
+  Future<void> _reportsRemoteArbitraryAndRecursiveFacadeHandlers() async {
     for (final body in [
       'Sentry.captureException(error);',
       'relay(error);',
@@ -630,7 +624,7 @@ abstract final class Crash {
     }
   }
 
-  Future<void> test_reportsThrowAfterLocalForwarding() async {
+  Future<void> _reportsThrowAfterLocalForwarding() async {
     for (final callback in [
       'error(exception, stack); throw exception;',
       'try { error(exception, stack); return true; } catch (_) { rethrow; }',
@@ -660,7 +654,6 @@ abstract final class Crash {
   }
 }
 
-@reflectiveTest
 final class CrashSentrySendDefaultPiiTest extends _CrashSdkRuleTest {
   @override
   String get ruleName => 'crash_sentry_send_default_pii';
@@ -677,7 +670,7 @@ Future<void> init() => SentryFlutter.init((options) {
 });
 ''';
 
-  Future<void> test_allowsFalse() async {
+  Future<void> _allowsFalse() async {
     await assertAllows(r'''
 import 'package:sentry_flutter/sentry_flutter.dart';
 
@@ -687,7 +680,7 @@ Future<void> init() => SentryFlutter.init((options) {
 ''', path: path);
   }
 
-  Future<void> test_allowsUnrelatedOptionClass() async {
+  Future<void> _allowsUnrelatedOptionClass() async {
     await assertAllows(r'''
 class AnalyticsOptions {
   bool sendDefaultPii = false;
@@ -700,7 +693,6 @@ void configure(AnalyticsOptions options) {
   }
 }
 
-@reflectiveTest
 final class CrashSentryCaptureOptInTest extends _CrashSdkRuleTest {
   @override
   String get ruleName => 'crash_sentry_capture_opt_in';
@@ -717,7 +709,7 @@ Future<void> init() => SentryFlutter.init((options) {
 });
 ''';
 
-  Future<void> test_reportsViewHierarchy() async {
+  Future<void> _reportsViewHierarchy() async {
     const source = r'''
 import 'package:sentry_flutter/sentry_flutter.dart';
 
@@ -732,7 +724,7 @@ Future<void> init() => SentryFlutter.init((options) {
     ]);
   }
 
-  Future<void> test_allowsDisabledCapture() async {
+  Future<void> _allowsDisabledCapture() async {
     await assertAllows(r'''
 import 'package:sentry_flutter/sentry_flutter.dart';
 
@@ -744,7 +736,6 @@ Future<void> init() => SentryFlutter.init((options) {
   }
 }
 
-@reflectiveTest
 final class CrashFacadePublicApiTest extends _DataCrashRuleTest {
   @override
   String get ruleName => 'crash_facade_public_api';
@@ -761,7 +752,7 @@ abstract final class Crash {
 }
 ''';
 
-  Future<void> test_reportsPublicField() async {
+  Future<void> _reportsPublicField() async {
     const source = r'''
 abstract final class Crash {
   static const checkoutTag = 'checkout';
@@ -773,7 +764,7 @@ abstract final class Crash {
     await assertDiagnosticsInFile(path, [compatLint(source, "checkoutTag = 'checkout'", ruleName)]);
   }
 
-  Future<void> test_allowsInitLogErrorAndPrivateMembers() async {
+  Future<void> _allowsInitLogErrorAndPrivateMembers() async {
     await assertAllows(r'''
 abstract final class Crash {
   static bool _enabled = false;
@@ -789,7 +780,6 @@ abstract final class Crash {
   }
 }
 
-@reflectiveTest
 final class CrashErrorRecursionTest extends _CrashSdkRuleTest {
   @override
   String get ruleName => 'crash_error_recursion';
@@ -811,7 +801,7 @@ abstract final class Crash {
 }
 ''';
 
-  Future<void> test_allowsContainedSendFailure() async {
+  Future<void> _allowsContainedSendFailure() async {
     await assertAllows(r'''
 void debugPrint(String message) {}
 
@@ -828,7 +818,7 @@ abstract final class Crash {
 ''', path: path);
   }
 
-  Future<void> test_allowsStartupCallbacksForwardingToTerminalError() async {
+  Future<void> _allowsStartupCallbacksForwardingToTerminalError() async {
     await assertAllows(r'''
 import 'dart:async';
 import 'dart:ui';
@@ -849,7 +839,7 @@ abstract final class Crash {
 ''', path: path);
   }
 
-  Future<void> test_reportsSendFailureFromStartupCallback() async {
+  Future<void> _reportsSendFailureFromStartupCallback() async {
     const source = r'''
 import 'dart:ui';
 
@@ -872,7 +862,7 @@ abstract final class Crash {
     await assertDiagnosticsInFile(path, [compatLint(source, 'error(failure, trace);', ruleName)]);
   }
 
-  Future<void> test_allowsFeatureCallsToCrashError() async {
+  Future<void> _allowsFeatureCallsToCrashError() async {
     await assertAllows(r'''
 abstract final class Crash {
   static void error(Object error, StackTrace stackTrace) {}
@@ -885,7 +875,6 @@ void submit(Object error) {
   }
 }
 
-@reflectiveTest
 final class CrashSentryAuthTokenInSourceTest extends _DataCrashRuleTest {
   @override
   String get ruleName => 'crash_sentry_auth_token_in_source';
@@ -898,7 +887,7 @@ final class CrashSentryAuthTokenInSourceTest extends _DataCrashRuleTest {
 const sentryAuthToken = 'sntrys_fixture';
 ''';
 
-  Future<void> test_reportsEnvironmentBundledToken() async {
+  Future<void> _reportsEnvironmentBundledToken() async {
     const source = r'''
 const sentryAuthToken = String.fromEnvironment('SENTRY_AUTH_TOKEN');
 ''';
@@ -909,9 +898,112 @@ const sentryAuthToken = String.fromEnvironment('SENTRY_AUTH_TOKEN');
     ]);
   }
 
-  Future<void> test_allowsPublicDsnConfig() async {
+  Future<void> _allowsPublicDsnConfig() async {
     await assertAllows(r'''
 const sentryDsn = String.fromEnvironment('SENTRY_DSN');
 ''', path: path);
   }
+}
+
+void _defineSourceScannerRulesPartCrashTests() {
+  analysisRuleSuite<DataLogRethrowTest>('DataLogRethrowTest', DataLogRethrowTest.new, {
+    'test_reportsReportingCallsBeforeRethrow': (t) => t._reportsReportingCallsBeforeRethrow(),
+    'test_reportsFlutterDebugPrintBeforeRethrow': (t) => t._reportsFlutterDebugPrintBeforeRethrow(),
+    'test_allowsSkillDataLayerCatches': (t) => t._allowsSkillDataLayerCatches(),
+    'test_reportsRollbackThatReportsBeforeRethrow': (t) =>
+        t._reportsRollbackThatReportsBeforeRethrow(),
+    'test_reportsCrashReportThenRethrow': (t) => t._reportsCrashReportThenRethrow(),
+    'test_reportsCrashReportThenThrowCaughtError': (t) =>
+        t._reportsCrashReportThenThrowCaughtError(),
+    'test_allowsReportThenMappedTypedError': (t) => t._allowsReportThenMappedTypedError(),
+    'test_allowsRethrowWithoutReport': (t) => t._allowsRethrowWithoutReport(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<CrashPossiblePiiTest>('CrashPossiblePiiTest', CrashPossiblePiiTest.new, {
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<CrashDirectSentryCallTest>(
+    'CrashDirectSentryCallTest',
+    CrashDirectSentryCallTest.new,
+    {
+      'test_reportsImportAndCaptureCall': (t) => t._reportsImportAndCaptureCall(),
+      'test_reportsSdkUseInOtherCoreCrashFiles': (t) => t._reportsSdkUseInOtherCoreCrashFiles(),
+      'test_allowsCrashService': (t) => t._allowsCrashService(),
+      'test_allowsCrashFacadeCalls': (t) => t._allowsCrashFacadeCalls(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<CrashCustomGlobalErrorHandlerTest>(
+    'CrashCustomGlobalErrorHandlerTest',
+    CrashCustomGlobalErrorHandlerTest.new,
+    {
+      'test_reportsPlatformDispatcherHandler': (t) => t._reportsPlatformDispatcherHandler(),
+      'test_reportsCustomHandlerInCrashService': (t) => t._reportsCustomHandlerInCrashService(),
+      'test_reportsCustomHandlerInsideCrashFacade': (t) =>
+          t._reportsCustomHandlerInsideCrashFacade(),
+      'test_reportsCrashlyticsHandlersOutsideCrashFacade': (t) =>
+          t._reportsCrashlyticsHandlersOutsideCrashFacade(),
+      'test_reportsBootstrapHandlers': (t) => t._reportsBootstrapHandlers(),
+      'test_allowsCrashlyticsHandlersInsideCrashFacade': (t) =>
+          t._allowsCrashlyticsHandlersInsideCrashFacade(),
+      'test_allowsReadingHandler': (t) => t._allowsReadingHandler(),
+      'test_allowsStartupForwardingToLocalDiagnosticsOnly': (t) =>
+          t._allowsStartupForwardingToLocalDiagnosticsOnly(),
+      'test_reportsLocalHandlerOverwritingSdkFromExternalHelper': (t) =>
+          t._reportsLocalHandlerOverwritingSdkFromExternalHelper(),
+      'test_reportsRemoteArbitraryAndRecursiveFacadeHandlers': (t) =>
+          t._reportsRemoteArbitraryAndRecursiveFacadeHandlers(),
+      'test_reportsThrowAfterLocalForwarding': (t) => t._reportsThrowAfterLocalForwarding(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<CrashSentrySendDefaultPiiTest>(
+    'CrashSentrySendDefaultPiiTest',
+    CrashSentrySendDefaultPiiTest.new,
+    {
+      'test_allowsFalse': (t) => t._allowsFalse(),
+      'test_allowsUnrelatedOptionClass': (t) => t._allowsUnrelatedOptionClass(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<CrashSentryCaptureOptInTest>(
+    'CrashSentryCaptureOptInTest',
+    CrashSentryCaptureOptInTest.new,
+    {
+      'test_reportsViewHierarchy': (t) => t._reportsViewHierarchy(),
+      'test_allowsDisabledCapture': (t) => t._allowsDisabledCapture(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<CrashFacadePublicApiTest>(
+    'CrashFacadePublicApiTest',
+    CrashFacadePublicApiTest.new,
+    {
+      'test_reportsPublicField': (t) => t._reportsPublicField(),
+      'test_allowsInitLogErrorAndPrivateMembers': (t) => t._allowsInitLogErrorAndPrivateMembers(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<CrashErrorRecursionTest>(
+    'CrashErrorRecursionTest',
+    CrashErrorRecursionTest.new,
+    {
+      'test_allowsContainedSendFailure': (t) => t._allowsContainedSendFailure(),
+      'test_allowsStartupCallbacksForwardingToTerminalError': (t) =>
+          t._allowsStartupCallbacksForwardingToTerminalError(),
+      'test_reportsSendFailureFromStartupCallback': (t) =>
+          t._reportsSendFailureFromStartupCallback(),
+      'test_allowsFeatureCallsToCrashError': (t) => t._allowsFeatureCallsToCrashError(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<CrashSentryAuthTokenInSourceTest>(
+    'CrashSentryAuthTokenInSourceTest',
+    CrashSentryAuthTokenInSourceTest.new,
+    {
+      'test_reportsEnvironmentBundledToken': (t) => t._reportsEnvironmentBundledToken(),
+      'test_allowsPublicDsnConfig': (t) => t._allowsPublicDsnConfig(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

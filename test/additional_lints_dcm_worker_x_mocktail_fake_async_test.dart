@@ -1,20 +1,37 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_async_callback_in_fake_async.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_correct_any_matcher.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_then_answer.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidAsyncCallbackInFakeAsyncTest);
-    defineReflectiveTests(UseThenAnswerTest);
-    defineReflectiveTests(PreferCorrectAnyMatcherTest);
+  analysisRuleSuite<AvoidAsyncCallbackInFakeAsyncTest>(
+    'AvoidAsyncCallbackInFakeAsyncTest',
+    AvoidAsyncCallbackInFakeAsyncTest.new,
+    {
+      'test_fakeAsyncAsyncCallback_lint': (t) => t._fakeAsyncAsyncCallbackLint(),
+      'test_fakeAsyncRunAsyncCallback_lint': (t) => t._fakeAsyncRunAsyncCallbackLint(),
+      'test_fakeAsyncSyncCallback_noLint': (t) => t._fakeAsyncSyncCallbackNoLint(),
+    },
+  );
+  analysisRuleSuite<UseThenAnswerTest>('UseThenAnswerTest', UseThenAnswerTest.new, {
+    'test_futureValue_lint': (t) => t._futureValueLint(),
+    'test_streamValue_lint': (t) => t._streamValueLint(),
+    'test_plainValue_noLint': (t) => t._plainValueNoLint(),
   });
+  analysisRuleSuite<PreferCorrectAnyMatcherTest>(
+    'PreferCorrectAnyMatcherTest',
+    PreferCorrectAnyMatcherTest.new,
+    {
+      'test_whenNamedMatcherMismatch_lint': (t) => t._whenNamedMatcherMismatchLint(),
+      'test_verifyNamedMatcherMismatch_lint': (t) => t._verifyNamedMatcherMismatchLint(),
+      'test_matchingNamedMatcher_noLint': (t) => t._matchingNamedMatcherNoLint(),
+      'test_positionalMatcher_noLint': (t) => t._positionalMatcherNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidAsyncCallbackInFakeAsyncTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +39,7 @@ final class AvoidAsyncCallbackInFakeAsyncTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_fakeAsyncAsyncCallback_lint() async {
+  Future<void> _fakeAsyncAsyncCallbackLint() async {
     const source = r'''
 void fakeAsync(void Function(Object async) callback) {}
 
@@ -36,7 +53,7 @@ void test() {
     ]);
   }
 
-  Future<void> test_fakeAsyncRunAsyncCallback_lint() async {
+  Future<void> _fakeAsyncRunAsyncCallbackLint() async {
     const source = r'''
 class FakeAsync {
   static void run(void Function(Object async) callback) {}
@@ -52,7 +69,7 @@ void test() {
     ]);
   }
 
-  Future<void> test_fakeAsyncSyncCallback_noLint() async {
+  Future<void> _fakeAsyncSyncCallbackNoLint() async {
     await assertNoDiagnostics(r'''
 void fakeAsync(void Function(Object async) callback) {}
 
@@ -65,7 +82,6 @@ void test() {
   }
 }
 
-@reflectiveTest
 final class UseThenAnswerTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -73,7 +89,7 @@ final class UseThenAnswerTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_futureValue_lint() async {
+  Future<void> _futureValueLint() async {
     const source = r'''
 class Stub {
   void thenReturn(Object? value) {}
@@ -90,7 +106,7 @@ void test() {
     await assertDiagnostics(source, [lint(source.lastIndexOf('thenReturn'), 'thenReturn'.length)]);
   }
 
-  Future<void> test_streamValue_lint() async {
+  Future<void> _streamValueLint() async {
     const source = r'''
 class Stub {
   void thenReturn(Object? value) {}
@@ -107,7 +123,7 @@ void test() {
     await assertDiagnostics(source, [lint(source.lastIndexOf('thenReturn'), 'thenReturn'.length)]);
   }
 
-  Future<void> test_plainValue_noLint() async {
+  Future<void> _plainValueNoLint() async {
     await assertNoDiagnostics(r'''
 class Stub {
   void thenReturn(Object? value) {}
@@ -123,7 +139,6 @@ void test() {
   }
 }
 
-@reflectiveTest
 final class PreferCorrectAnyMatcherTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -131,7 +146,7 @@ final class PreferCorrectAnyMatcherTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_whenNamedMatcherMismatch_lint() async {
+  Future<void> _whenNamedMatcherMismatchLint() async {
     const source = r'''
 T any<T>({String? named}) => throw 'mock';
 void when(Object? Function() call) {}
@@ -148,7 +163,7 @@ void test(Cat cat) {
     await assertDiagnostics(source, [lint(source.lastIndexOf('any'), 'any'.length)]);
   }
 
-  Future<void> test_verifyNamedMatcherMismatch_lint() async {
+  Future<void> _verifyNamedMatcherMismatchLint() async {
     const source = r'''
 T any<T>({String? named}) => throw 'mock';
 void verify(Object? Function() call) {}
@@ -165,7 +180,7 @@ void test(Cat cat) {
     await assertDiagnostics(source, [lint(source.lastIndexOf('any'), 'any'.length)]);
   }
 
-  Future<void> test_matchingNamedMatcher_noLint() async {
+  Future<void> _matchingNamedMatcherNoLint() async {
     await assertNoDiagnostics(r'''
 T any<T>({String? named}) => throw 'mock';
 void when(Object? Function() call) {}
@@ -180,7 +195,7 @@ void test(Cat cat) {
 ''');
   }
 
-  Future<void> test_positionalMatcher_noLint() async {
+  Future<void> _positionalMatcherNoLint() async {
     await assertNoDiagnostics(r'''
 T any<T>({String? named}) => throw 'mock';
 void when(Object? Function() call) {}

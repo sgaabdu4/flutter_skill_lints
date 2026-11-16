@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class DomainCustomCopyWithTest extends _ValueObjectRuleTest {
   @override
   String get ruleName => 'domain_custom_copy_with';
@@ -19,7 +16,7 @@ class User {
 }
 ''';
 
-  Future<void> test_allowsCopyWithCallSite() async {
+  Future<void> _allowsCopyWithCallSite() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     newFile(filePath, r'''
 // ignore_for_file: undefined_method
@@ -41,7 +38,7 @@ extension on User {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsCopyWithOutsideDomain() async {
+  Future<void> _allowsCopyWithOutsideDomain() async {
     final filePath = '$testPackageLibPath/features/users/presentation/user_state.dart';
     newFile(filePath, r'''
 class UserState {
@@ -54,7 +51,7 @@ class UserState {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsCopyWithCommentInDomain() async {
+  Future<void> _allowsCopyWithCommentInDomain() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     newFile(filePath, r'''
 class User {
@@ -67,7 +64,7 @@ class User {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsCopyWithInGeneratedMixin() async {
+  Future<void> _allowsCopyWithInGeneratedMixin() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     newFile(filePath, r'''
 // ignore_for_file: undefined_class, undefined_method
@@ -79,7 +76,7 @@ mixin _$User {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsGenericCopyWith() async {
+  Future<void> _reportsGenericCopyWith() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     const source = r'''
 class User {
@@ -93,7 +90,7 @@ class User {
     await assertDiagnosticsInFile(filePath, [compatLint(source, 'copyWith<T>', ruleName)]);
   }
 
-  Future<void> test_reportsAbstractCopyWithSignature() async {
+  Future<void> _reportsAbstractCopyWithSignature() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     const source = r'''
 abstract class User {
@@ -108,7 +105,7 @@ abstract class User {
     ]);
   }
 
-  Future<void> test_allowsCopyWithInExtensionOutsideClass() async {
+  Future<void> _allowsCopyWithInExtensionOutsideClass() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     newFile(filePath, r'''
 class User {
@@ -125,7 +122,6 @@ extension UserCopy on User {
   }
 }
 
-@reflectiveTest
 final class FreezedDisableMapWhenRequiredTest extends _ValueObjectRuleTest {
   @override
   String get ruleName => 'freezed_disable_map_when_required';
@@ -167,7 +163,7 @@ sealed class Distance with _$Distance {
 }
 ''';
 
-  Future<void> test_allowsFullOptOut() async {
+  Future<void> _allowsFullOptOut() async {
     final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
@@ -183,7 +179,7 @@ sealed class Distance with _$Distance {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsDotShorthandOptOut() async {
+  Future<void> _allowsDotShorthandOptOut() async {
     final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
@@ -199,7 +195,7 @@ sealed class Distance with _$Distance {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsPartialOptOutMissingWhen() async {
+  Future<void> _reportsPartialOptOutMissingWhen() async {
     final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     const partialSource = r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
@@ -218,7 +214,7 @@ sealed class Distance with _$Distance {
     ]);
   }
 
-  Future<void> test_reportsPartialOptOutMissingMap() async {
+  Future<void> _reportsPartialOptOutMissingMap() async {
     final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     const partialSource = r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
@@ -237,7 +233,7 @@ sealed class Distance with _$Distance {
     ]);
   }
 
-  Future<void> test_allowsNonSealedFreezedClass() async {
+  Future<void> _allowsNonSealedFreezedClass() async {
     final filePath = '$testPackageLibPath/core/domain/values/money.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
@@ -253,7 +249,7 @@ class Money with _$Money {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsOutsideValueObjectsPath() async {
+  Future<void> _allowsOutsideValueObjectsPath() async {
     final filePath = '$testPackageLibPath/features/users/domain/entities/user.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
@@ -269,7 +265,7 @@ sealed class User with _$User {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsMultilineFullOptOut() async {
+  Future<void> _allowsMultilineFullOptOut() async {
     final filePath = '$testPackageLibPath/core/domain/values/distance.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class, mixin_of_non_class, redirect_to_non_class, extends_non_class
@@ -288,7 +284,7 @@ sealed class Distance with _$Distance {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsNoFreezedAnnotation() async {
+  Future<void> _allowsNoFreezedAnnotation() async {
     final filePath = '$testPackageLibPath/core/domain/values/state.dart';
     newFile(filePath, r'''
 sealed class AppState {
@@ -308,7 +304,6 @@ abstract class _HivePersistenceRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => hivePersistenceSourceRules;
 }
 
-@reflectiveTest
 final class UnvalidatedPersistedMapCastTest extends _HivePersistenceRuleTest {
   @override
   String get ruleName => 'avoid_unvalidated_persisted_map_cast';
@@ -346,7 +341,7 @@ Map<String, dynamic> readStoredValue(Box<Object?> box) {
 }
 ''';
 
-  Future<void> test_allowsCheckedMapNormalization() async {
+  Future<void> _allowsCheckedMapNormalization() async {
     await assertAllows(
       r'''
 import 'package:hive_ce/hive_ce.dart';
@@ -369,7 +364,7 @@ Map<String, dynamic> normalizeStoredMap(Box<Object?> box) {
     );
   }
 
-  Future<void> test_allowsJsonBoundaryCastOutsidePersistencePath() async {
+  Future<void> _allowsJsonBoundaryCastOutsidePersistencePath() async {
     final filePath = '$testPackageLibPath/features/items/data/models/item_json.dart';
     newFile(filePath, r'''
 Map<String, dynamic> decodeJson(Object? raw) => raw as Map<String, dynamic>;
@@ -378,7 +373,7 @@ Map<String, dynamic> decodeJson(Object? raw) => raw as Map<String, dynamic>;
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsRemoteDatasourceJsonCast() async {
+  Future<void> _allowsRemoteDatasourceJsonCast() async {
     final filePath = '$testPackageLibPath/features/items/data/remote/item_datasource.dart';
     newFile(filePath, r'''
 Map<String, dynamic> decodeResponse(Object? raw) => raw as Map<String, dynamic>;
@@ -387,7 +382,7 @@ Map<String, dynamic> decodeResponse(Object? raw) => raw as Map<String, dynamic>;
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsJsonDecoderInDatasourcesFolder() async {
+  Future<void> _allowsJsonDecoderInDatasourcesFolder() async {
     await assertAllows(
       r'''
 import 'dart:convert';
@@ -413,7 +408,7 @@ List<ProductModel> decodeProducts(String responseBody) {
     );
   }
 
-  Future<void> test_allowsJsonDecodedCacheValueInHiveLibrary() async {
+  Future<void> _allowsJsonDecodedCacheValueInHiveLibrary() async {
     await assertAllows(
       r'''
 import 'dart:convert';
@@ -430,7 +425,7 @@ Map<String, dynamic> readCachedJson(Box<String> box) {
     );
   }
 
-  Future<void> test_reportsHiveValuesLoopCast() async {
+  Future<void> _reportsHiveValuesLoopCast() async {
     const source = r'''
 import 'package:hive_ce/hive_ce.dart';
 
@@ -445,7 +440,7 @@ List<Map<String, dynamic>> readAll(Box<Object?> box) {
     await assertDiagnosticsInFile(path, [compatLint(source, 'as Map<String, dynamic>', ruleName)]);
   }
 
-  Future<void> test_reportsLocalDatasourceMapCast() async {
+  Future<void> _reportsLocalDatasourceMapCast() async {
     final filePath = '$testPackageLibPath/features/items/data/datasources/item_datasource.dart';
     const source = r'''
 import 'package:hive_ce/hive_ce.dart';
@@ -464,7 +459,6 @@ Object? readStoredValue(Box<Object?> box) {
   }
 }
 
-@reflectiveTest
 final class HiveFlutterImportTest extends _HivePersistenceRuleTest {
   @override
   String get ruleName => 'use_hive_ce_flutter_import';
@@ -497,7 +491,7 @@ Future<void> initStorage() async {
 }
 ''';
 
-  Future<void> test_allowsHiveCeFlutterImportInLib() async {
+  Future<void> _allowsHiveCeFlutterImportInLib() async {
     final filePath = '$testPackageLibPath/core/hive/hive_boxes.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, undefined_identifier
@@ -511,7 +505,7 @@ Future<void> initStorage() async {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsHiveCeImportInTests() async {
+  Future<void> _allowsHiveCeImportInTests() async {
     final filePath = '$testPackageRootPath/test/core/hive/hive_boxes_test.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, undefined_identifier
@@ -526,7 +520,6 @@ Future<void> initTempStorage() async {
   }
 }
 
-@reflectiveTest
 final class HiveFieldNoVoTypeTest extends _HivePersistenceRuleTest {
   @override
   String get ruleName => 'hive_field_no_vo_type';
@@ -568,7 +561,7 @@ class _EntryModel implements EntryModel {
 }
 ''';
 
-  Future<void> test_allowsPrimitiveTypedParams() async {
+  Future<void> _allowsPrimitiveTypedParams() async {
     final filePath = '$testPackageLibPath/features/items/data/models/item_set_model.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import
@@ -596,7 +589,7 @@ class _EntryModel implements EntryModel {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsImportedVoNotInBaselineList() async {
+  Future<void> _reportsImportedVoNotInBaselineList() async {
     final filePath = '$testPackageLibPath/features/cycling/data/models/ride_model.dart';
     const source = r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class
@@ -625,7 +618,7 @@ class Cadence {
     ]);
   }
 
-  Future<void> test_allowsVoTypeOutsideDataModelsPath() async {
+  Future<void> _allowsVoTypeOutsideDataModelsPath() async {
     final filePath = '$testPackageLibPath/features/items/domain/entities/item_set.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class
@@ -648,7 +641,7 @@ class _ItemSet implements ItemSet {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsNullableVoParam() async {
+  Future<void> _reportsNullableVoParam() async {
     final filePath = '$testPackageLibPath/features/items/data/models/item_set_model.dart';
     const source = r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class
@@ -672,7 +665,7 @@ class _EntryModel implements EntryModel {
     await assertDiagnosticsInFile(filePath, [compatLint(source, 'Distance? distance', ruleName)]);
   }
 
-  Future<void> test_reportsVoInsideListGeneric() async {
+  Future<void> _reportsVoInsideListGeneric() async {
     final filePath = '$testPackageLibPath/features/items/data/models/item_set_model.dart';
     const source = r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class, non_type_as_type_argument
@@ -694,7 +687,7 @@ class _EntryModel implements EntryModel {
     await assertDiagnosticsInFile(filePath, [compatLint(source, 'Distance> distances', ruleName)]);
   }
 
-  Future<void> test_reportsVoInsideMapGeneric() async {
+  Future<void> _reportsVoInsideMapGeneric() async {
     final filePath = '$testPackageLibPath/features/items/data/models/item_set_model.dart';
     const source = r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class, non_type_as_type_argument
@@ -716,7 +709,7 @@ class _EntryModel implements EntryModel {
     await assertDiagnosticsInFile(filePath, [compatLint(source, 'Money> totals', ruleName)]);
   }
 
-  Future<void> test_reportsMultiVoFromShowClause() async {
+  Future<void> _reportsMultiVoFromShowClause() async {
     final filePath = '$testPackageLibPath/features/cycling/data/models/ride_model.dart';
     const source = r'''
 // ignore_for_file: uri_does_not_exist, unused_import, undefined_class
@@ -752,4 +745,68 @@ class Tempo { const Tempo._(this.bpm); final int bpm; }
 abstract class _DialogRuleTest extends _SourceRuleTest {
   @override
   List<ScannerRule> get rules => dialogSourceRules;
+}
+
+void _defineSourceScannerRulesPart13Tests() {
+  analysisRuleSuite<DomainCustomCopyWithTest>(
+    'DomainCustomCopyWithTest',
+    DomainCustomCopyWithTest.new,
+    {
+      'test_allowsCopyWithCallSite': (t) => t._allowsCopyWithCallSite(),
+      'test_allowsCopyWithOutsideDomain': (t) => t._allowsCopyWithOutsideDomain(),
+      'test_allowsCopyWithCommentInDomain': (t) => t._allowsCopyWithCommentInDomain(),
+      'test_allowsCopyWithInGeneratedMixin': (t) => t._allowsCopyWithInGeneratedMixin(),
+      'test_reportsGenericCopyWith': (t) => t._reportsGenericCopyWith(),
+      'test_reportsAbstractCopyWithSignature': (t) => t._reportsAbstractCopyWithSignature(),
+      'test_allowsCopyWithInExtensionOutsideClass': (t) =>
+          t._allowsCopyWithInExtensionOutsideClass(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<FreezedDisableMapWhenRequiredTest>(
+    'FreezedDisableMapWhenRequiredTest',
+    FreezedDisableMapWhenRequiredTest.new,
+    {
+      'test_allowsFullOptOut': (t) => t._allowsFullOptOut(),
+      'test_allowsDotShorthandOptOut': (t) => t._allowsDotShorthandOptOut(),
+      'test_reportsPartialOptOutMissingWhen': (t) => t._reportsPartialOptOutMissingWhen(),
+      'test_reportsPartialOptOutMissingMap': (t) => t._reportsPartialOptOutMissingMap(),
+      'test_allowsNonSealedFreezedClass': (t) => t._allowsNonSealedFreezedClass(),
+      'test_allowsOutsideValueObjectsPath': (t) => t._allowsOutsideValueObjectsPath(),
+      'test_allowsMultilineFullOptOut': (t) => t._allowsMultilineFullOptOut(),
+      'test_allowsNoFreezedAnnotation': (t) => t._allowsNoFreezedAnnotation(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<UnvalidatedPersistedMapCastTest>(
+    'UnvalidatedPersistedMapCastTest',
+    UnvalidatedPersistedMapCastTest.new,
+    {
+      'test_allowsCheckedMapNormalization': (t) => t._allowsCheckedMapNormalization(),
+      'test_allowsJsonBoundaryCastOutsidePersistencePath': (t) =>
+          t._allowsJsonBoundaryCastOutsidePersistencePath(),
+      'test_allowsRemoteDatasourceJsonCast': (t) => t._allowsRemoteDatasourceJsonCast(),
+      'test_allowsJsonDecoderInDatasourcesFolder': (t) => t._allowsJsonDecoderInDatasourcesFolder(),
+      'test_allowsJsonDecodedCacheValueInHiveLibrary': (t) =>
+          t._allowsJsonDecodedCacheValueInHiveLibrary(),
+      'test_reportsHiveValuesLoopCast': (t) => t._reportsHiveValuesLoopCast(),
+      'test_reportsLocalDatasourceMapCast': (t) => t._reportsLocalDatasourceMapCast(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<HiveFlutterImportTest>('HiveFlutterImportTest', HiveFlutterImportTest.new, {
+    'test_allowsHiveCeFlutterImportInLib': (t) => t._allowsHiveCeFlutterImportInLib(),
+    'test_allowsHiveCeImportInTests': (t) => t._allowsHiveCeImportInTests(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<HiveFieldNoVoTypeTest>('HiveFieldNoVoTypeTest', HiveFieldNoVoTypeTest.new, {
+    'test_allowsPrimitiveTypedParams': (t) => t._allowsPrimitiveTypedParams(),
+    'test_reportsImportedVoNotInBaselineList': (t) => t._reportsImportedVoNotInBaselineList(),
+    'test_allowsVoTypeOutsideDataModelsPath': (t) => t._allowsVoTypeOutsideDataModelsPath(),
+    'test_reportsNullableVoParam': (t) => t._reportsNullableVoParam(),
+    'test_reportsVoInsideListGeneric': (t) => t._reportsVoInsideListGeneric(),
+    'test_reportsVoInsideMapGeneric': (t) => t._reportsVoInsideMapGeneric(),
+    'test_reportsMultiVoFromShowClause': (t) => t._reportsMultiVoFromShowClause(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
 }

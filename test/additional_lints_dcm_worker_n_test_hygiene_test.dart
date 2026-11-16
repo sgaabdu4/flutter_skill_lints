@@ -1,22 +1,79 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/missing_test_assertion.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_correct_test_file_name.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_unique_test_names.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
 
+import 'analysis_rule_suite.dart';
 import 'support/mocktail_stub.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(MissingTestAssertionTest);
-    defineReflectiveTests(PreferCorrectTestFileNameTest);
-    defineReflectiveTests(PreferUniqueTestNamesTest);
-  });
+  analysisRuleSuite<MissingTestAssertionTest>(
+    'MissingTestAssertionTest',
+    MissingTestAssertionTest.new,
+    {
+      'test_testWithoutAssertion_lint': (t) => t._testWithoutAssertionLint(),
+      'test_testWithExpect_noLint': (t) => t._testWithExpectNoLint(),
+      'test_resolvedLocalHelperAssertion_noLint': (t) => t._resolvedLocalHelperAssertionNoLint(),
+      'test_helperDoesNotCountUnrelatedOrDeferredAssertions': (t) =>
+          t._helperDoesNotCountUnrelatedOrDeferredAssertions(),
+      'test_helperWrapperPreservesResolvedAssertionIdentity': (t) =>
+          t._helperWrapperPreservesResolvedAssertionIdentity(),
+      'test_testWidgetsWithExpectLater_noLint': (t) => t._testWidgetsWithExpectLaterNoLint(),
+      'test_assertionInsideFakeAsync_noLint': (t) => t._assertionInsideFakeAsyncNoLint(),
+      'test_unitStubVerifyOnlyTest_lint': (t) => t._unitStubVerifyOnlyTestLint(),
+      'test_mocktailGetterVerifyOnlyTest_noLint': (t) => t._mocktailGetterVerifyOnlyTestNoLint(),
+      'test_prefixedMocktailGetterVerifyOnlyTest_noLint': (t) =>
+          t._prefixedMocktailGetterVerifyOnlyTestNoLint(),
+      'test_asyncVerifyOnlyTest_noLint': (t) => t._asyncVerifyOnlyTestNoLint(),
+      'test_mocktailVerifyInOrderOnlyTest_noLint': (t) => t._mocktailVerifyInOrderOnlyTestNoLint(),
+      'test_prefixedMocktailVerifyInOrderOnlyTest_noLint': (t) =>
+          t._prefixedMocktailVerifyInOrderOnlyTestNoLint(),
+      'test_mocktailVerifyNeverOnlyTest_noLint': (t) => t._mocktailVerifyNeverOnlyTestNoLint(),
+      'test_prefixedMocktailVerifyNeverOnlyTest_noLint': (t) =>
+          t._prefixedMocktailVerifyNeverOnlyTestNoLint(),
+      'test_mockitoVerifyGetterOnlyTest_noLint': (t) => t._mockitoVerifyGetterOnlyTestNoLint(),
+      'test_prefixedMockitoVerifyGetterOnlyTest_noLint': (t) =>
+          t._prefixedMockitoVerifyGetterOnlyTestNoLint(),
+      'test_mockitoVerifyNeverGetterOnlyTest_noLint': (t) =>
+          t._mockitoVerifyNeverGetterOnlyTestNoLint(),
+      'test_prefixedMockitoVerifyNeverGetterOnlyTest_noLint': (t) =>
+          t._prefixedMockitoVerifyNeverGetterOnlyTestNoLint(),
+      'test_mockitoVerifyInOrderGetterOnlyTest_noLint': (t) =>
+          t._mockitoVerifyInOrderGetterOnlyTestNoLint(),
+      'test_prefixedMockitoVerifyInOrderGetterOnlyTest_noLint': (t) =>
+          t._prefixedMockitoVerifyInOrderGetterOnlyTestNoLint(),
+      'test_fakeMemberVerifyGetter_lint': (t) => t._fakeMemberVerifyGetterLint(),
+      'test_differentLibraryVerifyGetter_lint': (t) => t._differentLibraryVerifyGetterLint(),
+      'test_localVerifyGetter_lint': (t) => t._localVerifyGetterLint(),
+      'test_deferredMocktailGetter_lint': (t) => t._deferredMocktailGetterLint(),
+      'test_resolvedMocktailHelperAssertion_noLint': (t) =>
+          t._resolvedMocktailHelperAssertionNoLint(),
+      'test_shadowedMocktailBindingsInHelper_lint': (t) =>
+          t._shadowedMocktailBindingsInHelperLint(),
+      'test_assertionOnlyInNestedHelper_lint': (t) => t._assertionOnlyInNestedHelperLint(),
+    },
+  );
+  analysisRuleSuite<PreferCorrectTestFileNameTest>(
+    'PreferCorrectTestFileNameTest',
+    PreferCorrectTestFileNameTest.new,
+    {
+      'test_fileWithTestButWrongName_lint': (t) => t._fileWithTestButWrongNameLint(),
+      'test_correctTestFileName_noLint': (t) => t._correctTestFileNameNoLint(),
+      'test_prefixedTestApis_lint': (t) => t._prefixedTestApisLint(),
+      'test_unrelatedSameNamedCalls_noLint': (t) => t._unrelatedSameNamedCallsNoLint(),
+    },
+  );
+  analysisRuleSuite<PreferUniqueTestNamesTest>(
+    'PreferUniqueTestNamesTest',
+    PreferUniqueTestNamesTest.new,
+    {
+      'test_duplicateSiblingTestName_lint': (t) => t._duplicateSiblingTestNameLint(),
+      'test_sameNameInDifferentGroups_noLint': (t) => t._sameNameInDifferentGroupsNoLint(),
+      'test_dynamicNames_noLint': (t) => t._dynamicNamesNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class MissingTestAssertionTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -60,7 +117,7 @@ Verify get verify => <T>(T Function() invocation) => VerificationResult();
     super.setUp();
   }
 
-  Future<void> test_testWithoutAssertion_lint() async {
+  Future<void> _testWithoutAssertionLint() async {
     const source = r'''
 void test(String name, void Function() body) {}
 
@@ -75,7 +132,7 @@ void main() {
     await assertDiagnostics(source, [lint(source.indexOf("test('does work'"), 'test'.length)]);
   }
 
-  Future<void> test_testWithExpect_noLint() async {
+  Future<void> _testWithExpectNoLint() async {
     await assertNoDiagnostics(r'''
 void test(String name, void Function() body) {}
 void expect(Object? actual, Object? matcher) {}
@@ -88,7 +145,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_resolvedLocalHelperAssertion_noLint() async {
+  Future<void> _resolvedLocalHelperAssertionNoLint() async {
     newFile('$testPackageLibPath/test.dart', "export 'package:test_api/src/expect/expect.dart';");
     newFile('$testPackageLibPath/assertions.dart', r'''
 import 'package:test/test.dart';
@@ -110,7 +167,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_helperDoesNotCountUnrelatedOrDeferredAssertions() async {
+  Future<void> _helperDoesNotCountUnrelatedOrDeferredAssertions() async {
     newFile('$testPackageLibPath/test.dart', "export 'package:test_api/src/expect/expect.dart';");
     newFile('$testPackageLibPath/assertions.dart', r'''
 import 'package:test/test.dart';
@@ -137,7 +194,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_helperWrapperPreservesResolvedAssertionIdentity() async {
+  Future<void> _helperWrapperPreservesResolvedAssertionIdentity() async {
     newFile('$testPackageLibPath/test.dart', "export 'package:test_api/src/expect/expect.dart';");
     newFile('$testPackageLibPath/assertions.dart', r'''
 import 'package:fake_async/fake_async.dart';
@@ -159,7 +216,7 @@ void main() {
     await assertDiagnosticsInFile(path, [lint(source.indexOf("test('unrelated'"), 'test'.length)]);
   }
 
-  Future<void> test_testWidgetsWithExpectLater_noLint() async {
+  Future<void> _testWidgetsWithExpectLaterNoLint() async {
     await assertNoDiagnostics(r'''
 void testWidgets(String name, void Function(Object tester) body) {}
 void expectLater(Object? actual, Object? matcher) {}
@@ -173,7 +230,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_assertionInsideFakeAsync_noLint() async {
+  Future<void> _assertionInsideFakeAsyncNoLint() async {
     await assertNoDiagnostics(r'''
 void test(String name, void Function() body) {}
 void fakeAsync(void Function(Object fake) body) {}
@@ -189,7 +246,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_unitStubVerifyOnlyTest_lint() async {
+  Future<void> _unitStubVerifyOnlyTestLint() async {
     const source = r'''
 void test(String name, void Function() body) {}
 
@@ -213,7 +270,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_mocktailGetterVerifyOnlyTest_noLint() async {
+  Future<void> _mocktailGetterVerifyOnlyTestNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:mocktail/mocktail.dart';
 
@@ -229,7 +286,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_prefixedMocktailGetterVerifyOnlyTest_noLint() async {
+  Future<void> _prefixedMocktailGetterVerifyOnlyTestNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:mocktail/mocktail.dart' as mocktail;
 
@@ -243,7 +300,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_asyncVerifyOnlyTest_noLint() async {
+  Future<void> _asyncVerifyOnlyTestNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:mocktail/mocktail.dart';
 
@@ -260,7 +317,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_mocktailVerifyInOrderOnlyTest_noLint() async {
+  Future<void> _mocktailVerifyInOrderOnlyTestNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:mocktail/mocktail.dart';
 
@@ -278,7 +335,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_prefixedMocktailVerifyInOrderOnlyTest_noLint() async {
+  Future<void> _prefixedMocktailVerifyInOrderOnlyTestNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:mocktail/mocktail.dart' as mocktail;
 
@@ -295,7 +352,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_mocktailVerifyNeverOnlyTest_noLint() async {
+  Future<void> _mocktailVerifyNeverOnlyTestNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:mocktail/mocktail.dart';
 
@@ -309,7 +366,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_prefixedMocktailVerifyNeverOnlyTest_noLint() async {
+  Future<void> _prefixedMocktailVerifyNeverOnlyTestNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:mocktail/mocktail.dart' as mocktail;
 
@@ -323,7 +380,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_mockitoVerifyGetterOnlyTest_noLint() async {
+  Future<void> _mockitoVerifyGetterOnlyTestNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:mockito/mockito.dart';
 
@@ -337,7 +394,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_prefixedMockitoVerifyGetterOnlyTest_noLint() async {
+  Future<void> _prefixedMockitoVerifyGetterOnlyTestNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:mockito/mockito.dart' as mockito;
 
@@ -351,7 +408,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_mockitoVerifyNeverGetterOnlyTest_noLint() async {
+  Future<void> _mockitoVerifyNeverGetterOnlyTestNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:mockito/mockito.dart';
 
@@ -365,7 +422,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_prefixedMockitoVerifyNeverGetterOnlyTest_noLint() async {
+  Future<void> _prefixedMockitoVerifyNeverGetterOnlyTestNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:mockito/mockito.dart' as mockito;
 
@@ -379,7 +436,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_mockitoVerifyInOrderGetterOnlyTest_noLint() async {
+  Future<void> _mockitoVerifyInOrderGetterOnlyTestNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:mockito/mockito.dart';
 
@@ -393,7 +450,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_prefixedMockitoVerifyInOrderGetterOnlyTest_noLint() async {
+  Future<void> _prefixedMockitoVerifyInOrderGetterOnlyTestNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:mockito/mockito.dart' as mockito;
 
@@ -407,7 +464,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_fakeMemberVerifyGetter_lint() async {
+  Future<void> _fakeMemberVerifyGetterLint() async {
     const source = r'''
 void test(String name, void Function() body) {}
 
@@ -434,7 +491,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_differentLibraryVerifyGetter_lint() async {
+  Future<void> _differentLibraryVerifyGetterLint() async {
     const source = r'''
 import 'package:other/other.dart' as other;
 
@@ -452,7 +509,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_localVerifyGetter_lint() async {
+  Future<void> _localVerifyGetterLint() async {
     const source = r'''
 void test(String name, void Function() body) {}
 
@@ -475,7 +532,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_deferredMocktailGetter_lint() async {
+  Future<void> _deferredMocktailGetterLint() async {
     const source = r'''
 import 'package:mocktail/mocktail.dart';
 
@@ -494,7 +551,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_resolvedMocktailHelperAssertion_noLint() async {
+  Future<void> _resolvedMocktailHelperAssertionNoLint() async {
     newFile('$testPackageLibPath/assertions.dart', r'''
 import 'package:mocktail/mocktail.dart' as mocktail;
 
@@ -519,7 +576,7 @@ void main() {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_shadowedMocktailBindingsInHelper_lint() async {
+  Future<void> _shadowedMocktailBindingsInHelperLint() async {
     newFile('$testPackageLibPath/assertions.dart', r'''
 import 'package:mocktail/mocktail.dart';
 
@@ -570,7 +627,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_assertionOnlyInNestedHelper_lint() async {
+  Future<void> _assertionOnlyInNestedHelperLint() async {
     const source = r'''
 void test(String name, void Function() body) {}
 void expect(Object? actual, Object? matcher) {}
@@ -592,7 +649,6 @@ void main() {
   }
 }
 
-@reflectiveTest
 final class PreferUniqueTestNamesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -600,7 +656,7 @@ final class PreferUniqueTestNamesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_duplicateSiblingTestName_lint() async {
+  Future<void> _duplicateSiblingTestNameLint() async {
     const source = r'''
 void test(String name, void Function() body) {}
 
@@ -615,7 +671,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_sameNameInDifferentGroups_noLint() async {
+  Future<void> _sameNameInDifferentGroupsNoLint() async {
     await assertNoDiagnostics(r'''
 void group(String name, void Function() body) {}
 void test(String name, void Function() body) {}
@@ -631,7 +687,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_dynamicNames_noLint() async {
+  Future<void> _dynamicNamesNoLint() async {
     await assertNoDiagnostics(r'''
 void test(String name, void Function() body) {}
 
@@ -644,7 +700,6 @@ void main() {
   }
 }
 
-@reflectiveTest
 final class PreferCorrectTestFileNameTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -659,7 +714,7 @@ void test(String name, void Function() body) {}
 ''');
   }
 
-  Future<void> test_fileWithTestButWrongName_lint() async {
+  Future<void> _fileWithTestButWrongNameLint() async {
     const source = r'''
 import 'package:test/test.dart';
 
@@ -674,7 +729,7 @@ void main() {
     await assertDiagnosticsInFile(path, [lint(source.indexOf("test('runs'"), 'test'.length)]);
   }
 
-  Future<void> test_correctTestFileName_noLint() async {
+  Future<void> _correctTestFileNameNoLint() async {
     const source = r'''
 import 'package:test/test.dart';
 
@@ -688,7 +743,7 @@ void main() {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_prefixedTestApis_lint() async {
+  Future<void> _prefixedTestApisLint() async {
     const source = r'''
 import 'package:test/test.dart' as spec;
 import 'package:flutter_test/flutter_test.dart' as widgets;
@@ -708,7 +763,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_unrelatedSameNamedCalls_noLint() async {
+  Future<void> _unrelatedSameNamedCallsNoLint() async {
     const source = r'''
 void group(String value) {}
 void test(String value) {}

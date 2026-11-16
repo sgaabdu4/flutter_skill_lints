@@ -1,14 +1,33 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary_else_after_control_flow.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() => defineReflectiveTests(AvoidUnnecessaryElseAfterControlFlowTest));
+  analysisRuleSuite<AvoidUnnecessaryElseAfterControlFlowTest>(
+    'AvoidUnnecessaryElseAfterControlFlowTest',
+    AvoidUnnecessaryElseAfterControlFlowTest.new,
+    {
+      'test_returnBranch_lint': (t) => t._returnBranchLint(),
+      'test_throwBranch_lint': (t) => t._throwBranchLint(),
+      'test_rethrowBranch_lint': (t) => t._rethrowBranchLint(),
+      'test_continueBranch_lint': (t) => t._continueBranchLint(),
+      'test_breakBranch_lint': (t) => t._breakBranchLint(),
+      'test_nestedIfWhenEveryNestedPathExits_lint': (t) =>
+          t._nestedIfWhenEveryNestedPathExitsLint(),
+      'test_elseIf_lint': (t) => t._elseIfLint(),
+      'test_nonExitingIf_noLint': (t) => t._nonExitingIfNoLint(),
+      'test_nestedConditionalReturn_noLint': (t) => t._nestedConditionalReturnNoLint(),
+      'test_normalBranching_noLint': (t) => t._normalBranchingNoLint(),
+      'test_collectionIfElse_noLint': (t) => t._collectionIfElseNoLint(),
+      'test_skillSafePopFallback_noLint': (t) => t._skillSafePopFallbackNoLint(),
+      'test_skillDeltaSyncAssignment_noLint': (t) => t._skillDeltaSyncAssignmentNoLint(),
+      'test_throwExpressionBranchWithoutBlock_lint': (t) =>
+          t._throwExpressionBranchWithoutBlockLint(),
+    },
+  );
 }
 
-@reflectiveTest
 class AvoidUnnecessaryElseAfterControlFlowTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -16,7 +35,7 @@ class AvoidUnnecessaryElseAfterControlFlowTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_returnBranch_lint() async {
+  Future<void> _returnBranchLint() async {
     const source = r'''
 int f(bool success) {
   if (!success) {
@@ -30,7 +49,7 @@ int f(bool success) {
     await assertDiagnostics(source, [lint(source.indexOf('else'), 'else'.length)]);
   }
 
-  Future<void> test_throwBranch_lint() async {
+  Future<void> _throwBranchLint() async {
     const source = r'''
 int f(Object? value) {
   if (value == null) {
@@ -44,7 +63,7 @@ int f(Object? value) {
     await assertDiagnostics(source, [lint(source.indexOf('else'), 'else'.length)]);
   }
 
-  Future<void> test_rethrowBranch_lint() async {
+  Future<void> _rethrowBranchLint() async {
     const source = r'''
 int f(Object? value) {
   try {
@@ -62,7 +81,7 @@ int f(Object? value) {
     await assertDiagnostics(source, [lint(source.indexOf('else {'), 'else'.length)]);
   }
 
-  Future<void> test_continueBranch_lint() async {
+  Future<void> _continueBranchLint() async {
     const source = r'''
 void f(List<int> values) {
   for (final value in values) {
@@ -78,7 +97,7 @@ void f(List<int> values) {
     await assertDiagnostics(source, [lint(source.indexOf('else'), 'else'.length)]);
   }
 
-  Future<void> test_breakBranch_lint() async {
+  Future<void> _breakBranchLint() async {
     const source = r'''
 void f(List<int> values) {
   for (final value in values) {
@@ -94,7 +113,7 @@ void f(List<int> values) {
     await assertDiagnostics(source, [lint(source.indexOf('else'), 'else'.length)]);
   }
 
-  Future<void> test_nestedIfWhenEveryNestedPathExits_lint() async {
+  Future<void> _nestedIfWhenEveryNestedPathExitsLint() async {
     const source = r'''
 int f(int value) {
   if (value < 10) {
@@ -115,7 +134,7 @@ int f(int value) {
     ]);
   }
 
-  Future<void> test_elseIf_lint() async {
+  Future<void> _elseIfLint() async {
     const source = r'''
 int f(int value) {
   if (value < 0) {
@@ -130,7 +149,7 @@ int f(int value) {
     await assertDiagnostics(source, [lint(source.indexOf('else if'), 'else'.length)]);
   }
 
-  Future<void> test_nonExitingIf_noLint() async {
+  Future<void> _nonExitingIfNoLint() async {
     const source = r'''
 int f(bool success) {
   if (!success) {
@@ -145,7 +164,7 @@ int f(bool success) {
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_nestedConditionalReturn_noLint() async {
+  Future<void> _nestedConditionalReturnNoLint() async {
     const source = r'''
 int f(bool outer, bool inner) {
   if (outer) {
@@ -162,7 +181,7 @@ int f(bool outer, bool inner) {
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_normalBranching_noLint() async {
+  Future<void> _normalBranchingNoLint() async {
     const source = r'''
 void f(bool exists, List<int> items) {
   if (exists) {
@@ -176,7 +195,7 @@ void f(bool exists, List<int> items) {
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_collectionIfElse_noLint() async {
+  Future<void> _collectionIfElseNoLint() async {
     const source = r'''
 List<int> f(bool exists) {
   return [
@@ -188,7 +207,7 @@ List<int> f(bool exists) {
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_skillSafePopFallback_noLint() async {
+  Future<void> _skillSafePopFallbackNoLint() async {
     const source = r'''
 bool canPop() => true;
 void pop(Object? result) {}
@@ -206,7 +225,7 @@ void f(Object? result) {
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_skillDeltaSyncAssignment_noLint() async {
+  Future<void> _skillDeltaSyncAssignmentNoLint() async {
     const source = r'''
 Future<int> f(int? lastTableSync, Future<List<int>> Function() all) async {
   int watermark;
@@ -223,7 +242,7 @@ Future<int> f(int? lastTableSync, Future<List<int>> Function() all) async {
     await assertNoDiagnostics(source);
   }
 
-  Future<void> test_throwExpressionBranchWithoutBlock_lint() async {
+  Future<void> _throwExpressionBranchWithoutBlockLint() async {
     const source = r'''
 int f(Object? value) {
   if (value == null) throw ArgumentError('value');

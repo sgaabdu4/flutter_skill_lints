@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
 abstract class _ArchitectureRuleTest extends _SourceRuleTest {
@@ -7,7 +5,6 @@ abstract class _ArchitectureRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => architectureSourceRules;
 }
 
-@reflectiveTest
 final class ArchDomainImportTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'arch_domain_import';
@@ -39,7 +36,7 @@ class User {
 }
 ''';
 
-  Future<void> test_allowsFreezedAnnotationDomainEntity() async {
+  Future<void> _allowsFreezedAnnotationDomainEntity() async {
     final filePath = '$testPackageLibPath/features/items/domain/item.dart';
     newFile('$testPackageLibPath/features/items/domain/item.freezed.dart', r'''
 part of 'item.dart';
@@ -73,7 +70,7 @@ sealed class Item with _$Item {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsDomainToDomainPackageImport() async {
+  Future<void> _allowsDomainToDomainPackageImport() async {
     final filePath = '$testPackageLibPath/features/items/domain/item.dart';
     newFile(filePath, r'''
 // ignore_for_file: uri_does_not_exist, unused_import
@@ -85,7 +82,7 @@ final class Item {}
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsMirroredDomainTestFlutterImport() async {
+  Future<void> _allowsMirroredDomainTestFlutterImport() async {
     final filePath =
         '$testPackageRootPath/test/features/auth/domain/values/email_address_test.dart';
     newFile(filePath, r'''
@@ -98,7 +95,7 @@ void main() {}
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsCoreConstantsImportFromDomain() async {
+  Future<void> _reportsCoreConstantsImportFromDomain() async {
     final filePath = '$testPackageLibPath/features/auth/domain/auth_error.dart';
     const source = r'''
 // ignore_for_file: uri_does_not_exist, unused_import
@@ -117,7 +114,7 @@ final class AuthError {}
     ]);
   }
 
-  Future<void> test_reportsDartIoImportFromDomain() async {
+  Future<void> _reportsDartIoImportFromDomain() async {
     final filePath = '$testPackageLibPath/features/files/domain/entities/stored_file.dart';
     const source = r'''
 // ignore_for_file: unused_import
@@ -130,7 +127,7 @@ final class StoredFile {}
     await assertDiagnosticsInFile(filePath, [compatLint(source, "import 'dart:io';", ruleName)]);
   }
 
-  Future<void> test_reportsRelativeCoreExtensionImportFromDomain() async {
+  Future<void> _reportsRelativeCoreExtensionImportFromDomain() async {
     newFile('$testPackageLibPath/core/extensions/num_extensions.dart', r'''
 extension NumExtensions on num {
   num get doubled => this * 2;
@@ -150,7 +147,7 @@ final class Run {}
     ]);
   }
 
-  Future<void> test_allowsRelativeDomainAndPureDartImports() async {
+  Future<void> _allowsRelativeDomainAndPureDartImports() async {
     newFile('$testPackageLibPath/features/runs/domain/values/run_id.dart', r'''
 final class RunId {}
 ''');
@@ -168,7 +165,6 @@ final class Run {}
   }
 }
 
-@reflectiveTest
 final class ArchStorageSdkImportTest extends _ArchitectureRuleTest {
   @override
   void setUp() {
@@ -200,7 +196,7 @@ import 'dart:io';
 final class NoteNotifier {}
 ''';
 
-  Future<void> test_reportsStorageSdkImportsInScreensRepositoriesAndServices() async {
+  Future<void> _reportsStorageSdkImportsInScreensRepositoriesAndServices() async {
     const imports = r'''
 // ignore_for_file: uri_does_not_exist, unused_import
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
@@ -219,7 +215,7 @@ import 'package:shared_preferences/shared_preferences.dart';
     }
   }
 
-  Future<void> test_allowsStorageSdkImportsInLocalDatasourcesAndMixins() async {
+  Future<void> _allowsStorageSdkImportsInLocalDatasourcesAndMixins() async {
     await assertAllows(r'''
 // ignore_for_file: uri_does_not_exist
 import 'dart:io';
@@ -231,7 +227,7 @@ import 'dart:io';
 ''', path: '$testPackageLibPath/core/services/appwrite_pagination_mixin.dart');
   }
 
-  Future<void> test_allowsOnlyHttpConstantsAndExceptions() async {
+  Future<void> _allowsOnlyHttpConstantsAndExceptions() async {
     for (final path in [
       '$testPackageLibPath/core/services/api_service.dart',
       '$testPackageLibPath/features/settings/data/settings_repository.dart',
@@ -247,7 +243,7 @@ bool isIoFailure(Object error) => error is SocketException || error is FileSyste
     }
   }
 
-  Future<void> test_reportsBroadHiddenAndMixedIoImports() async {
+  Future<void> _reportsBroadHiddenAndMixedIoImports() async {
     for (final combinator in [
       '',
       ' hide File',
@@ -268,7 +264,6 @@ import 'dart:io'$combinator;
   }
 }
 
-@reflectiveTest
 final class ArchDomainSerializationTest extends _ArchitectureRuleTest {
   @override
   String get ruleName => 'arch_domain_serialization';
@@ -280,4 +275,37 @@ final class ArchDomainSerializationTest extends _ArchitectureRuleTest {
   String get path => '$testPackageLibPath/features/users/domain/user.dart';
   @override
   String get source => 'class User { Map<String, dynamic> toJson() => {}; }';
+}
+
+void _defineSourceScannerRulesPartArchitectureTests() {
+  analysisRuleSuite<ArchDomainImportTest>('ArchDomainImportTest', ArchDomainImportTest.new, {
+    'test_allowsFreezedAnnotationDomainEntity': (t) => t._allowsFreezedAnnotationDomainEntity(),
+    'test_allowsDomainToDomainPackageImport': (t) => t._allowsDomainToDomainPackageImport(),
+    'test_allowsMirroredDomainTestFlutterImport': (t) => t._allowsMirroredDomainTestFlutterImport(),
+    'test_reportsCoreConstantsImportFromDomain': (t) => t._reportsCoreConstantsImportFromDomain(),
+    'test_reportsDartIoImportFromDomain': (t) => t._reportsDartIoImportFromDomain(),
+    'test_reportsRelativeCoreExtensionImportFromDomain': (t) =>
+        t._reportsRelativeCoreExtensionImportFromDomain(),
+    'test_allowsRelativeDomainAndPureDartImports': (t) =>
+        t._allowsRelativeDomainAndPureDartImports(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<ArchStorageSdkImportTest>(
+    'ArchStorageSdkImportTest',
+    ArchStorageSdkImportTest.new,
+    {
+      'test_reportsStorageSdkImportsInScreensRepositoriesAndServices': (t) =>
+          t._reportsStorageSdkImportsInScreensRepositoriesAndServices(),
+      'test_allowsStorageSdkImportsInLocalDatasourcesAndMixins': (t) =>
+          t._allowsStorageSdkImportsInLocalDatasourcesAndMixins(),
+      'test_allowsOnlyHttpConstantsAndExceptions': (t) => t._allowsOnlyHttpConstantsAndExceptions(),
+      'test_reportsBroadHiddenAndMixedIoImports': (t) => t._reportsBroadHiddenAndMixedIoImports(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ArchDomainSerializationTest>(
+    'ArchDomainSerializationTest',
+    ArchDomainSerializationTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
 }

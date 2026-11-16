@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class TextFieldOnChangedNoDebounceTest extends _RuntimeBugRuleTest {
   @override
   void setUp() {
@@ -33,11 +30,11 @@ class SearchSheet {
 }
 ''';
 
-  Future<void> test_allowsResolvedSynchronousFormUpdate() async {
+  Future<void> _allowsResolvedSynchronousFormUpdate() async {
     await assertAllows(_inputNotifierSource('TextField', 'void', ''));
   }
 
-  Future<void> test_allowsCopyWithAndLocalValidation() async {
+  Future<void> _allowsCopyWithAndLocalValidation() async {
     await assertAllows(r'''
 class TextField {
   const TextField({required void Function(String) onChanged});
@@ -66,7 +63,7 @@ class FormView {
 ''');
   }
 
-  Future<void> test_allowsGeneratedFreezedCallableCopyWith() async {
+  Future<void> _allowsGeneratedFreezedCallableCopyWith() async {
     newFile('$testPackageLibPath/form_state.dart', r'''
 import 'package:freezed_annotation/freezed_annotation.dart';
 part 'form_state.freezed.dart';
@@ -103,7 +100,7 @@ Object build(Ref ref) => TextField(onChanged: (value) => ref.read(formProvider.n
 ''');
   }
 
-  Future<void> test_reportsCopyWithThatStartsAsyncWork() async {
+  Future<void> _reportsCopyWithThatStartsAsyncWork() async {
     const source = r'''
 import 'dart:async';
 class TextField { TextField({required void Function(String) onChanged}); }
@@ -128,7 +125,7 @@ Object build(Ref ref) => TextField(onChanged: (value) => ref.read(formProvider.n
     await assertDiagnostics(source, [compatLint(source, 'TextField(onChanged:', ruleName)]);
   }
 
-  Future<void> test_reportsCopyWithUsingEffectfulConstructor() async {
+  Future<void> _reportsCopyWithUsingEffectfulConstructor() async {
     const source = r'''
 import 'dart:async';
 class TextField { TextField({required void Function(String) onChanged}); }
@@ -150,7 +147,7 @@ Object build(Ref ref) => TextField(onChanged: (value) => ref.read(formProvider.n
     await assertDiagnostics(source, [compatLint(source, 'TextField(onChanged:', ruleName)]);
   }
 
-  Future<void> test_reportsCopyWithReadingEffectfulGetter() async {
+  Future<void> _reportsCopyWithReadingEffectfulGetter() async {
     const source = r'''
 import 'dart:async';
 class TextField { TextField({required void Function(String) onChanged}); }
@@ -173,7 +170,7 @@ Object build(Ref ref) => TextField(onChanged: (value) => ref.read(formProvider.n
     await assertDiagnostics(source, [compatLint(source, 'TextField(onChanged:', ruleName)]);
   }
 
-  Future<void> test_reportsReturnThatStartsAsyncWork() async {
+  Future<void> _reportsReturnThatStartsAsyncWork() async {
     const source = r'''
 import 'dart:async';
 class TextField { TextField({required void Function(String) onChanged}); }
@@ -194,11 +191,11 @@ Object build(Ref ref) => TextField(onChanged: (value) => ref.read(formProvider.n
     await assertDiagnostics(source, [compatLint(source, 'TextField(onChanged:', ruleName)]);
   }
 
-  Future<void> test_allowsDirectStateAssignment() async {
+  Future<void> _allowsDirectStateAssignment() async {
     await assertAllows(_inputNotifierSource('TextField', 'void', '', body: 'state = value;'));
   }
 
-  Future<void> test_reportsSynchronousForwardingMethods() async {
+  Future<void> _reportsSynchronousForwardingMethods() async {
     for (final (index, body) in [
       'unawaited(fetch(value));',
       'fetch(value);',
@@ -211,12 +208,12 @@ Object build(Ref ref) => TextField(onChanged: (value) => ref.read(formProvider.n
     }
   }
 
-  Future<void> test_reportsResolvedAsyncRequest() async {
+  Future<void> _reportsResolvedAsyncRequest() async {
     final source = _inputNotifierSource('TextField', 'Future<void>', 'async');
     await assertDiagnostics(source, [compatLint(source, 'TextField(onChanged:', ruleName)]);
   }
 
-  Future<void> test_submissionWorkIsNotOnChangedWork() async {
+  Future<void> _submissionWorkIsNotOnChangedWork() async {
     await assertAllows(r'''
 class TextField {
   TextField({required void Function(String) onChanged, required void Function(String) onSubmitted});
@@ -228,7 +225,7 @@ Object build() => TextField(
 ''');
   }
 
-  Future<void> test_onlyAsyncNeighborReports() async {
+  Future<void> _onlyAsyncNeighborReports() async {
     const source = r'''
 class TextField { TextField({required void Function(String) onChanged}); }
 class Notifier {
@@ -252,12 +249,12 @@ List<Object> build(Ref ref) => [
     ]);
   }
 
-  Future<void> test_reportsResolvedAsyncVoidRequest() async {
+  Future<void> _reportsResolvedAsyncVoidRequest() async {
     final source = _inputNotifierSource('TextField', 'void', 'async');
     await assertDiagnostics(source, [compatLint(source, 'TextField(onChanged:', ruleName)]);
   }
 
-  Future<void> test_allowsWithTimerInFile() async {
+  Future<void> _allowsWithTimerInFile() async {
     await assertAllows(r'''
 class TextField {
   TextField({Object? onChanged});
@@ -280,7 +277,7 @@ class SearchSheet {
 ''');
   }
 
-  Future<void> test_allowsLocalOnlyCallback() async {
+  Future<void> _allowsLocalOnlyCallback() async {
     await assertAllows(r'''
 class TextField {
   TextField({Object? onChanged});
@@ -294,7 +291,7 @@ class SearchSheet {
   }
 
   /// #37: the issue's hand-written copyWith update and the skill's `setName` form handler (lists-forms-workflows.md) are synchronous state-only updates, as lambdas or tear-offs.
-  Future<void> test_allowsIssue37SynchronousFormHandlers() async {
+  Future<void> _allowsIssue37SynchronousFormHandlers() async {
     await assertAllows(
       _formNotifierSource +
           r'''
@@ -311,7 +308,7 @@ List<Object> build(Ref ref) => [
   }
 
   /// #37: the notifier and its state live in another library (the usual widget/notifier layout); its synchronous signature is the evidence.
-  Future<void> test_allowsIssue37SynchronousFormHandlersFromAnotherFile() async {
+  Future<void> _allowsIssue37SynchronousFormHandlersFromAnotherFile() async {
     newFile('$testPackageLibPath/form_notifier.dart', _formNotifierSource);
     await assertAllows(r'''
 import 'form_notifier.dart';
@@ -326,7 +323,7 @@ List<Object> build(Ref ref) => [
   }
 
   /// #37: a tear-off to an async remote request reaches async work.
-  Future<void> test_reportsIssue37AsyncTearOff() async {
+  Future<void> _reportsIssue37AsyncTearOff() async {
     const source = r'''
 class TextField { TextField({required void Function(String) onChanged}); }
 class SearchNotifier {
@@ -341,7 +338,7 @@ Object build(Ref ref) => TextField(onChanged: ref.read(searchProvider.notifier).
   }
 
   /// #37: a cross-file async notifier method reports as a lambda or tear-off.
-  Future<void> test_reportsIssue37AsyncRequestFromAnotherFile() async {
+  Future<void> _reportsIssue37AsyncRequestFromAnotherFile() async {
     newFile('$testPackageLibPath/search_notifier.dart', r'''
 class SearchNotifier {
   Future<void> search(String query) async {}
@@ -365,7 +362,7 @@ List<Object> build(Ref ref) => [
   }
 
   /// #37: a synchronous `void` method in another file that forwards to a Future (directly or through an unresolved generic `ref.read<T>`) still reaches async work; a state-only neighbor stays clean.
-  Future<void> test_reportsCrossFileSynchronousForwarders() async {
+  Future<void> _reportsCrossFileSynchronousForwarders() async {
     newFile('$testPackageLibPath/input_notifier.dart', r'''
 import 'dart:async';
 class Provider<T> { Provider(this.value); final T value; }
@@ -412,7 +409,7 @@ List<Object> build(Ref ref) => [
   }
 
   /// #37: the skill's `setName` (lists-forms-workflows.md:205-210) on a Freezed state, with state, generated part and notifier in other files.
-  Future<void> test_allowsCrossFileFreezedCallableCopyWith() async {
+  Future<void> _allowsCrossFileFreezedCallableCopyWith() async {
     newFile('$testPackageLibPath/form_state.dart', r'''
 import 'package:freezed_annotation/freezed_annotation.dart';
 part 'form_state.freezed.dart';
@@ -477,7 +474,7 @@ List<Object> build(Ref ref) => [
   }
 
   /// lists-forms-workflows.md SearchNotifier DO: the notifier in another file debounces its async work, so the TextField forwarding to it is clean.
-  Future<void> test_allowsCrossFileNotifierDebounce() async {
+  Future<void> _allowsCrossFileNotifierDebounce() async {
     newFile('$testPackageLibPath/search_notifier.dart', r'''
 import 'dart:async';
 final class Debouncer {
@@ -513,7 +510,7 @@ Object build(Ref ref) =>
   }
 
   /// debounce-gate-batch.md:21-31 DO: Timer cancel-and-restart in the widget.
-  Future<void> test_allowsSkillTimerDebounceDo() async {
+  Future<void> _allowsSkillTimerDebounceDo() async {
     await assertAllows(r'''
 import 'dart:async';
 class TextField { TextField({required void Function(String) onChanged}); }
@@ -564,7 +561,6 @@ class FormNotifier {
 }
 ''';
 
-@reflectiveTest
 final class SliderOnChangedNoDebounceTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'slider_on_changed_no_debounce';
@@ -586,16 +582,16 @@ class RangeSheet {
 }
 ''';
 
-  Future<void> test_allowsResolvedSynchronousSliderUpdate() async {
+  Future<void> _allowsResolvedSynchronousSliderUpdate() async {
     await assertAllows(_inputNotifierSource('Slider', 'void', ''));
   }
 
-  Future<void> test_reportsResolvedAsyncSliderRequest() async {
+  Future<void> _reportsResolvedAsyncSliderRequest() async {
     final source = _inputNotifierSource('Slider', 'Future<void>', 'async');
     await assertDiagnostics(source, [compatLint(source, 'Slider(onChanged:', ruleName)]);
   }
 
-  Future<void> test_allowsSliderWithOnlySetState() async {
+  Future<void> _allowsSliderWithOnlySetState() async {
     await assertAllows(r'''
 class Slider {
   Slider({Object? onChanged});
@@ -609,7 +605,7 @@ class RangeSheet {
 ''');
   }
 
-  Future<void> test_allowsSliderWhenFileHasTimer() async {
+  Future<void> _allowsSliderWhenFileHasTimer() async {
     await assertAllows(r'''
 class Slider {
   Slider({Object? onChanged});
@@ -633,7 +629,6 @@ class RangeSheet {
   }
 }
 
-@reflectiveTest
 final class ScrollListenerNoThrottleTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'scroll_listener_no_throttle';
@@ -651,7 +646,7 @@ class FeedScreen {
 }
 ''';
 
-  Future<void> test_allowsListenerWithLocalStateOnly() async {
+  Future<void> _allowsListenerWithLocalStateOnly() async {
     await assertAllows(r'''
 class FeedScreen {
   final Object _scrollController = Object();
@@ -665,7 +660,7 @@ class FeedScreen {
 ''');
   }
 
-  Future<void> test_allowsListenerWhenFileHasTimer() async {
+  Future<void> _allowsListenerWhenFileHasTimer() async {
     await assertAllows(r'''
 class FeedScreen {
   final Object _scrollController = Object();
@@ -685,7 +680,6 @@ class Timer {
   }
 }
 
-@reflectiveTest
 final class DialogWidgetSubscribesPathBasedTest extends _DialogRuleTest {
   @override
   String get ruleName => 'dialog_widget_subscribes_to_mutable_provider';
@@ -730,3 +724,69 @@ class Ref { Notifier read(Notifier notifier) => notifier; }
 final formProvider = Provider();
 Object build(Ref ref) => $inputType(onChanged: (value) => ref.read(formProvider.notifier).update(value));
 ''';
+
+void _defineSourceScannerRulesPart21Tests() {
+  analysisRuleSuite<TextFieldOnChangedNoDebounceTest>(
+    'TextFieldOnChangedNoDebounceTest',
+    TextFieldOnChangedNoDebounceTest.new,
+    {
+      'test_allowsResolvedSynchronousFormUpdate': (t) => t._allowsResolvedSynchronousFormUpdate(),
+      'test_allowsCopyWithAndLocalValidation': (t) => t._allowsCopyWithAndLocalValidation(),
+      'test_allowsGeneratedFreezedCallableCopyWith': (t) =>
+          t._allowsGeneratedFreezedCallableCopyWith(),
+      'test_reportsCopyWithThatStartsAsyncWork': (t) => t._reportsCopyWithThatStartsAsyncWork(),
+      'test_reportsCopyWithUsingEffectfulConstructor': (t) =>
+          t._reportsCopyWithUsingEffectfulConstructor(),
+      'test_reportsCopyWithReadingEffectfulGetter': (t) =>
+          t._reportsCopyWithReadingEffectfulGetter(),
+      'test_reportsReturnThatStartsAsyncWork': (t) => t._reportsReturnThatStartsAsyncWork(),
+      'test_allowsDirectStateAssignment': (t) => t._allowsDirectStateAssignment(),
+      'test_reportsSynchronousForwardingMethods': (t) => t._reportsSynchronousForwardingMethods(),
+      'test_reportsResolvedAsyncRequest': (t) => t._reportsResolvedAsyncRequest(),
+      'test_submissionWorkIsNotOnChangedWork': (t) => t._submissionWorkIsNotOnChangedWork(),
+      'test_onlyAsyncNeighborReports': (t) => t._onlyAsyncNeighborReports(),
+      'test_reportsResolvedAsyncVoidRequest': (t) => t._reportsResolvedAsyncVoidRequest(),
+      'test_allowsWithTimerInFile': (t) => t._allowsWithTimerInFile(),
+      'test_allowsLocalOnlyCallback': (t) => t._allowsLocalOnlyCallback(),
+      'test_allowsIssue37SynchronousFormHandlers': (t) => t._allowsIssue37SynchronousFormHandlers(),
+      'test_allowsIssue37SynchronousFormHandlersFromAnotherFile': (t) =>
+          t._allowsIssue37SynchronousFormHandlersFromAnotherFile(),
+      'test_reportsIssue37AsyncTearOff': (t) => t._reportsIssue37AsyncTearOff(),
+      'test_reportsIssue37AsyncRequestFromAnotherFile': (t) =>
+          t._reportsIssue37AsyncRequestFromAnotherFile(),
+      'test_reportsCrossFileSynchronousForwarders': (t) =>
+          t._reportsCrossFileSynchronousForwarders(),
+      'test_allowsCrossFileFreezedCallableCopyWith': (t) =>
+          t._allowsCrossFileFreezedCallableCopyWith(),
+      'test_allowsCrossFileNotifierDebounce': (t) => t._allowsCrossFileNotifierDebounce(),
+      'test_allowsSkillTimerDebounceDo': (t) => t._allowsSkillTimerDebounceDo(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<SliderOnChangedNoDebounceTest>(
+    'SliderOnChangedNoDebounceTest',
+    SliderOnChangedNoDebounceTest.new,
+    {
+      'test_allowsResolvedSynchronousSliderUpdate': (t) =>
+          t._allowsResolvedSynchronousSliderUpdate(),
+      'test_reportsResolvedAsyncSliderRequest': (t) => t._reportsResolvedAsyncSliderRequest(),
+      'test_allowsSliderWithOnlySetState': (t) => t._allowsSliderWithOnlySetState(),
+      'test_allowsSliderWhenFileHasTimer': (t) => t._allowsSliderWhenFileHasTimer(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ScrollListenerNoThrottleTest>(
+    'ScrollListenerNoThrottleTest',
+    ScrollListenerNoThrottleTest.new,
+    {
+      'test_allowsListenerWithLocalStateOnly': (t) => t._allowsListenerWithLocalStateOnly(),
+      'test_allowsListenerWhenFileHasTimer': (t) => t._allowsListenerWhenFileHasTimer(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<DialogWidgetSubscribesPathBasedTest>(
+    'DialogWidgetSubscribesPathBasedTest',
+    DialogWidgetSubscribesPathBasedTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+}

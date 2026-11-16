@@ -1,22 +1,50 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unconditional_break.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary_continue.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unreachable_for_loop.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidUnnecessaryContinueTest);
-    defineReflectiveTests(AvoidUnconditionalBreakTest);
-    defineReflectiveTests(AvoidUnreachableForLoopTest);
-  });
+  analysisRuleSuite<AvoidUnnecessaryContinueTest>(
+    'AvoidUnnecessaryContinueTest',
+    AvoidUnnecessaryContinueTest.new,
+    {
+      'test_continueAsLastBlockStatement_lint': (t) => t._continueAsLastBlockStatementLint(),
+      'test_continueAsDirectLoopBody_lint': (t) => t._continueAsDirectLoopBodyLint(),
+      'test_continueBeforeStatement_noLint': (t) => t._continueBeforeStatementNoLint(),
+      'test_labeledContinue_noLint': (t) => t._labeledContinueNoLint(),
+      'test_severity_error': (t) => t._severityError(),
+    },
+  );
+  analysisRuleSuite<AvoidUnconditionalBreakTest>(
+    'AvoidUnconditionalBreakTest',
+    AvoidUnconditionalBreakTest.new,
+    {
+      'test_breakAsFirstLoopBlockStatement_lint': (t) => t._breakAsFirstLoopBlockStatementLint(),
+      'test_breakAsDirectLoopBody_lint': (t) => t._breakAsDirectLoopBodyLint(),
+      'test_breakAsFirstSwitchCaseStatement_lint': (t) => t._breakAsFirstSwitchCaseStatementLint(),
+      'test_conditionalBreak_noLint': (t) => t._conditionalBreakNoLint(),
+      'test_breakAfterStatement_noLint': (t) => t._breakAfterStatementNoLint(),
+      'test_labeledBreak_noLint': (t) => t._labeledBreakNoLint(),
+      'test_severity_info': (t) => t._severityInfo(),
+    },
+  );
+  analysisRuleSuite<AvoidUnreachableForLoopTest>(
+    'AvoidUnreachableForLoopTest',
+    AvoidUnreachableForLoopTest.new,
+    {
+      'test_literalFalseCondition_lint': (t) => t._literalFalseConditionLint(),
+      'test_literalTrueCondition_noLint': (t) => t._literalTrueConditionNoLint(),
+      'test_missingCondition_noLint': (t) => t._missingConditionNoLint(),
+      'test_nonLiteralFalseCondition_noLint': (t) => t._nonLiteralFalseConditionNoLint(),
+      'test_severity_error': (t) => t._severityError(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidUnnecessaryContinueTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -24,7 +52,7 @@ final class AvoidUnnecessaryContinueTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_continueAsLastBlockStatement_lint() async {
+  Future<void> _continueAsLastBlockStatementLint() async {
     const source = r'''
 void f(List<int> values) {
   for (final value in values) {
@@ -37,7 +65,7 @@ void f(List<int> values) {
     await assertDiagnostics(source, [lint(source.indexOf('continue'), 'continue'.length)]);
   }
 
-  Future<void> test_continueAsDirectLoopBody_lint() async {
+  Future<void> _continueAsDirectLoopBodyLint() async {
     const source = r'''
 void f() {
   while (true) continue;
@@ -47,7 +75,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('continue'), 'continue'.length)]);
   }
 
-  Future<void> test_continueBeforeStatement_noLint() async {
+  Future<void> _continueBeforeStatementNoLint() async {
     await assertNoDiagnostics(r'''
 void f(List<int> values) {
   for (final value in values) {
@@ -58,7 +86,7 @@ void f(List<int> values) {
 ''');
   }
 
-  Future<void> test_labeledContinue_noLint() async {
+  Future<void> _labeledContinueNoLint() async {
     await assertNoDiagnostics(r'''
 // ignore_for_file: dead_code
 
@@ -74,12 +102,11 @@ void f(List<int> values) {
 ''');
   }
 
-  Future<void> test_severity_error() async {
+  Future<void> _severityError() async {
     expect(AvoidUnnecessaryContinue.code.severity, DiagnosticSeverity.ERROR);
   }
 }
 
-@reflectiveTest
 final class AvoidUnconditionalBreakTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -87,7 +114,7 @@ final class AvoidUnconditionalBreakTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_breakAsFirstLoopBlockStatement_lint() async {
+  Future<void> _breakAsFirstLoopBlockStatementLint() async {
     const source = r'''
 // ignore_for_file: dead_code
 
@@ -101,7 +128,7 @@ void f(List<int> values) {
     await assertDiagnostics(source, [lint(source.indexOf('break'), 'break'.length)]);
   }
 
-  Future<void> test_breakAsDirectLoopBody_lint() async {
+  Future<void> _breakAsDirectLoopBodyLint() async {
     const source = r'''
 void f() {
   while (true) break;
@@ -111,7 +138,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('break'), 'break'.length)]);
   }
 
-  Future<void> test_breakAsFirstSwitchCaseStatement_lint() async {
+  Future<void> _breakAsFirstSwitchCaseStatementLint() async {
     const source = r'''
 void f(int value) {
   switch (value) {
@@ -126,7 +153,7 @@ void f(int value) {
     await assertDiagnostics(source, [lint(source.indexOf('break'), 'break'.length)]);
   }
 
-  Future<void> test_conditionalBreak_noLint() async {
+  Future<void> _conditionalBreakNoLint() async {
     await assertNoDiagnostics(r'''
 void f(List<int> values) {
   for (final value in values) {
@@ -137,7 +164,7 @@ void f(List<int> values) {
 ''');
   }
 
-  Future<void> test_breakAfterStatement_noLint() async {
+  Future<void> _breakAfterStatementNoLint() async {
     await assertNoDiagnostics(r'''
 void f(List<int> values) {
   for (final value in values) {
@@ -148,7 +175,7 @@ void f(List<int> values) {
 ''');
   }
 
-  Future<void> test_labeledBreak_noLint() async {
+  Future<void> _labeledBreakNoLint() async {
     await assertNoDiagnostics(r'''
 void f(List<int> values) {
   outer:
@@ -161,12 +188,11 @@ void f(List<int> values) {
 ''');
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(AvoidUnconditionalBreak.code.severity, DiagnosticSeverity.INFO);
   }
 }
 
-@reflectiveTest
 final class AvoidUnreachableForLoopTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -174,7 +200,7 @@ final class AvoidUnreachableForLoopTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_literalFalseCondition_lint() async {
+  Future<void> _literalFalseConditionLint() async {
     const source = r'''
 // ignore_for_file: dead_code
 
@@ -188,7 +214,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('false'), 'false'.length)]);
   }
 
-  Future<void> test_literalTrueCondition_noLint() async {
+  Future<void> _literalTrueConditionNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   for (var i = 0; true; i++) {
@@ -198,7 +224,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_missingCondition_noLint() async {
+  Future<void> _missingConditionNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   for (;;) {
@@ -208,7 +234,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_nonLiteralFalseCondition_noLint() async {
+  Future<void> _nonLiteralFalseConditionNoLint() async {
     await assertNoDiagnostics(r'''
 void f(bool done) {
   for (var i = 0; done == false; i++) {
@@ -218,7 +244,7 @@ void f(bool done) {
 ''');
   }
 
-  Future<void> test_severity_error() async {
+  Future<void> _severityError() async {
     expect(AvoidUnreachableForLoop.code.severity, DiagnosticSeverity.ERROR);
   }
 }

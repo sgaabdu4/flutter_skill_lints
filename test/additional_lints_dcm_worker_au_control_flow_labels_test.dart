@@ -1,22 +1,59 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_continue.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_labels.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_local_functions.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidContinueTest);
-    defineReflectiveTests(AvoidLabelsTest);
-    defineReflectiveTests(AvoidLocalFunctionsTest);
+  analysisRuleSuite<AvoidContinueTest>('AvoidContinueTest', AvoidContinueTest.new, {
+    'test_continueStatement_lint': (t) => t._continueStatementLint(),
+    'test_loopWithoutContinue_noLint': (t) => t._loopWithoutContinueNoLint(),
+    'test_severity_info': (t) => t._severityInfo(),
   });
+  analysisRuleSuite<AvoidLabelsTest>('AvoidLabelsTest', AvoidLabelsTest.new, {
+    'test_labeledStatement_lint': (t) => t._labeledStatementLint(),
+    'test_labeledBreak_lint': (t) => t._labeledBreakLint(),
+    'test_labeledContinue_lint': (t) => t._labeledContinueLint(),
+    'test_unlabeledBreakAndContinue_noLint': (t) => t._unlabeledBreakAndContinueNoLint(),
+    'test_severity_error': (t) => t._severityError(),
+  });
+  analysisRuleSuite<AvoidLocalFunctionsTest>(
+    'AvoidLocalFunctionsTest',
+    AvoidLocalFunctionsTest.new,
+    {
+      'test_localFunction_lint': (t) => t._localFunctionLint(),
+      'test_topLevelFunction_noLint': (t) => t._topLevelFunctionNoLint(),
+      'test_anonymousFunction_noLint': (t) => t._anonymousFunctionNoLint(),
+      'test_identityGuardedCallback_noLint': (t) => t._identityGuardedCallbackNoLint(),
+      'test_invertedIdentityGuard_lint': (t) => t._invertedIdentityGuardLint(),
+      'test_parenthesizedConjunctiveIdentityGuard_noLint': (t) =>
+          t._parenthesizedConjunctiveIdentityGuardNoLint(),
+      'test_effectfulConjunctiveIdentityGuard_lint': (t) =>
+          t._effectfulConjunctiveIdentityGuardLint(),
+      'test_effectfulStatementBeforeCleanup_lint': (t) => t._effectfulStatementBeforeCleanupLint(),
+      'test_disjunctiveIdentityGuard_lint': (t) => t._disjunctiveIdentityGuardLint(),
+      'test_coreIdenticalGuard_noLint': (t) => t._coreIdenticalGuardNoLint(),
+      'test_staticAndNestedInstanceCallbackSlots_noLint': (t) =>
+          t._staticAndNestedInstanceCallbackSlotsNoLint(),
+      'test_callbackWithoutCleanupIdentity_lint': (t) => t._callbackWithoutCleanupIdentityLint(),
+      'test_comparisonOutsideCleanup_lint': (t) => t._comparisonOutsideCleanupLint(),
+      'test_cleanupChecksDifferentSlot_lint': (t) => t._cleanupChecksDifferentSlotLint(),
+      'test_cleanupChecksDifferentReceiver_lint': (t) => t._cleanupChecksDifferentReceiverLint(),
+      'test_identityComparisonWithoutCleanupWrite_lint': (t) =>
+          t._identityComparisonWithoutCleanupWriteLint(),
+      'test_identityGuardWithNoOpSlotWrite_lint': (t) => t._identityGuardWithNoOpSlotWriteLint(),
+      'test_identityGuardWithUnrelatedConditionalWrite_lint': (t) =>
+          t._identityGuardWithUnrelatedConditionalWriteLint(),
+      'test_shadowedCallbackName_lint': (t) => t._shadowedCallbackNameLint(),
+      'test_unrelatedIdenticalMethod_lint': (t) => t._unrelatedIdenticalMethodLint(),
+      'test_severity_info': (t) => t._severityInfo(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidContinueTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -24,7 +61,7 @@ final class AvoidContinueTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_continueStatement_lint() async {
+  Future<void> _continueStatementLint() async {
     const source = r'''
 void f(List<int> values) {
   for (final value in values) {
@@ -37,7 +74,7 @@ void f(List<int> values) {
     await assertDiagnostics(source, [lint(source.indexOf('continue'), 'continue'.length)]);
   }
 
-  Future<void> test_loopWithoutContinue_noLint() async {
+  Future<void> _loopWithoutContinueNoLint() async {
     await assertNoDiagnostics(r'''
 void f(List<int> values) {
   for (final value in values) {
@@ -49,12 +86,11 @@ void f(List<int> values) {
 ''');
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(AvoidContinue.code.severity, DiagnosticSeverity.INFO);
   }
 }
 
-@reflectiveTest
 final class AvoidLabelsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -62,7 +98,7 @@ final class AvoidLabelsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_labeledStatement_lint() async {
+  Future<void> _labeledStatementLint() async {
     const source = r'''
 void f() {
   retry:
@@ -77,7 +113,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('retry:'), 'retry:'.length)]);
   }
 
-  Future<void> test_labeledBreak_lint() async {
+  Future<void> _labeledBreakLint() async {
     const source = r'''
 void f() {
   outer:
@@ -94,7 +130,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('outer:'), 'outer:'.length)]);
   }
 
-  Future<void> test_labeledContinue_lint() async {
+  Future<void> _labeledContinueLint() async {
     const source = r'''
 void f() {
   outer:
@@ -111,7 +147,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('outer:'), 'outer:'.length)]);
   }
 
-  Future<void> test_unlabeledBreakAndContinue_noLint() async {
+  Future<void> _unlabeledBreakAndContinueNoLint() async {
     await assertNoDiagnostics(r'''
 void f(List<int> values) {
   for (final value in values) {
@@ -123,12 +159,11 @@ void f(List<int> values) {
 ''');
   }
 
-  Future<void> test_severity_error() async {
+  Future<void> _severityError() async {
     expect(AvoidLabels.code.severity, DiagnosticSeverity.ERROR);
   }
 }
 
-@reflectiveTest
 final class AvoidLocalFunctionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -136,7 +171,7 @@ final class AvoidLocalFunctionsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_localFunction_lint() async {
+  Future<void> _localFunctionLint() async {
     const source = r'''
 void f() {
   int local(int value) => value + 1;
@@ -147,7 +182,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('local'), 'local'.length)]);
   }
 
-  Future<void> test_topLevelFunction_noLint() async {
+  Future<void> _topLevelFunctionNoLint() async {
     await assertNoDiagnostics(r'''
 int helper(int value) => value + 1;
 
@@ -157,7 +192,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_anonymousFunction_noLint() async {
+  Future<void> _anonymousFunctionNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   final values = [1, 2, 3].map((value) => value + 1);
@@ -166,7 +201,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_identityGuardedCallback_noLint() async {
+  Future<void> _identityGuardedCallbackNoLint() async {
     await assertNoDiagnostics(r'''
 typedef Handler = void Function(Object error);
 
@@ -185,7 +220,7 @@ class Registry {
 ''');
   }
 
-  Future<void> test_invertedIdentityGuard_lint() async {
+  Future<void> _invertedIdentityGuardLint() async {
     const source = r'''
 typedef Handler = void Function(Object error);
 class Registry {
@@ -202,7 +237,7 @@ class Registry {
     await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
   }
 
-  Future<void> test_parenthesizedConjunctiveIdentityGuard_noLint() async {
+  Future<void> _parenthesizedConjunctiveIdentityGuardNoLint() async {
     await assertNoDiagnostics(r'''
 typedef Handler = void Function(Object error);
 class Registry {
@@ -218,7 +253,7 @@ class Registry {
 ''');
   }
 
-  Future<void> test_effectfulConjunctiveIdentityGuard_lint() async {
+  Future<void> _effectfulConjunctiveIdentityGuardLint() async {
     const source = r'''
 typedef Handler = void Function(Object error);
 class Registry {
@@ -239,7 +274,7 @@ class Registry {
     await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
   }
 
-  Future<void> test_effectfulStatementBeforeCleanup_lint() async {
+  Future<void> _effectfulStatementBeforeCleanupLint() async {
     const source = r'''
 typedef Handler = void Function(Object error);
 class Registry {
@@ -260,7 +295,7 @@ class Registry {
     await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
   }
 
-  Future<void> test_disjunctiveIdentityGuard_lint() async {
+  Future<void> _disjunctiveIdentityGuardLint() async {
     const source = r'''
 typedef Handler = void Function(Object error);
 class Registry {
@@ -277,7 +312,7 @@ class Registry {
     await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
   }
 
-  Future<void> test_coreIdenticalGuard_noLint() async {
+  Future<void> _coreIdenticalGuardNoLint() async {
     await assertNoDiagnostics(r'''
 typedef Handler = void Function(Object error);
 
@@ -296,7 +331,7 @@ class Registry {
 ''');
   }
 
-  Future<void> test_staticAndNestedInstanceCallbackSlots_noLint() async {
+  Future<void> _staticAndNestedInstanceCallbackSlotsNoLint() async {
     await assertNoDiagnostics(r'''
 typedef Handler = void Function(Object error);
 
@@ -328,7 +363,7 @@ Handler install() {
 ''');
   }
 
-  Future<void> test_callbackWithoutCleanupIdentity_lint() async {
+  Future<void> _callbackWithoutCleanupIdentityLint() async {
     const source = r'''
 typedef Handler = void Function(Object error);
 
@@ -343,7 +378,7 @@ void install() {
     await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
   }
 
-  Future<void> test_comparisonOutsideCleanup_lint() async {
+  Future<void> _comparisonOutsideCleanupLint() async {
     const source = r'''
 typedef Handler = void Function(Object error);
 
@@ -361,7 +396,7 @@ class Registry {
     await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
   }
 
-  Future<void> test_cleanupChecksDifferentSlot_lint() async {
+  Future<void> _cleanupChecksDifferentSlotLint() async {
     const source = r'''
 typedef Handler = void Function(Object error);
 
@@ -382,7 +417,7 @@ class Registry {
     await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
   }
 
-  Future<void> test_cleanupChecksDifferentReceiver_lint() async {
+  Future<void> _cleanupChecksDifferentReceiverLint() async {
     const source = r'''
 typedef Handler = void Function(Object error);
 
@@ -402,7 +437,7 @@ Handler install(Registry first, Registry second) {
     await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
   }
 
-  Future<void> test_identityComparisonWithoutCleanupWrite_lint() async {
+  Future<void> _identityComparisonWithoutCleanupWriteLint() async {
     const source = r'''
 typedef Handler = void Function(Object error);
 
@@ -422,7 +457,7 @@ class Registry {
     await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
   }
 
-  Future<void> test_identityGuardWithNoOpSlotWrite_lint() async {
+  Future<void> _identityGuardWithNoOpSlotWriteLint() async {
     const source = r'''
 typedef Handler = void Function(Object error);
 
@@ -442,7 +477,7 @@ class Registry {
     await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
   }
 
-  Future<void> test_identityGuardWithUnrelatedConditionalWrite_lint() async {
+  Future<void> _identityGuardWithUnrelatedConditionalWriteLint() async {
     const source = r'''
 typedef Handler = void Function(Object error);
 
@@ -464,7 +499,7 @@ class Registry {
     await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
   }
 
-  Future<void> test_shadowedCallbackName_lint() async {
+  Future<void> _shadowedCallbackNameLint() async {
     const source = r'''
 typedef Handler = void Function(Object error);
 
@@ -485,7 +520,7 @@ class Registry {
     await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
   }
 
-  Future<void> test_unrelatedIdenticalMethod_lint() async {
+  Future<void> _unrelatedIdenticalMethodLint() async {
     const source = r'''
 typedef Handler = void Function(Object error);
 
@@ -510,7 +545,7 @@ class Registry {
     await assertDiagnostics(source, [lint(source.indexOf('handle(Object'), 'handle'.length)]);
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(AvoidLocalFunctions.code.severity, DiagnosticSeverity.INFO);
   }
 }

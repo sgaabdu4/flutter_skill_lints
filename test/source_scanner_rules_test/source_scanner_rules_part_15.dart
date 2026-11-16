@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class SyncSaveAllNoDirtyGuardTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'sync_save_all_no_dirty_guard';
@@ -17,7 +14,7 @@ class SyncService {
 }
 ''';
 
-  Future<void> test_allowsWhenGuarded() async {
+  Future<void> _allowsWhenGuarded() async {
     await assertAllows(r'''
 class SyncService {
   void pushItems(String userId, List<Object> items) {
@@ -28,7 +25,7 @@ class SyncService {
 ''');
   }
 
-  Future<void> test_allowsNonEntitySaveAll() async {
+  Future<void> _allowsNonEntitySaveAll() async {
     await assertAllows(r'''
 class SyncService {
   void pushRaw(String userId, List<Object> items) {
@@ -38,7 +35,7 @@ class SyncService {
 ''');
   }
 
-  Future<void> test_reportsMultilineSaveAll() async {
+  Future<void> _reportsMultilineSaveAll() async {
     final analyzedSource = _analyzedSource(r'''
 class SyncService {
   void pushItems(String userId, List<Object> items) {
@@ -54,7 +51,6 @@ class SyncService {
   }
 }
 
-@reflectiveTest
 final class SaveAllFullCollectionAfterSubsetMutationTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'save_all_full_collection_after_subset_mutation';
@@ -73,7 +69,7 @@ class ItemRepository {
 }
 ''';
 
-  Future<void> test_allowsChangedSubsetWrite() async {
+  Future<void> _allowsChangedSubsetWrite() async {
     await assertAllows(r'''
 class ItemRepository {
   void refresh(List<Object> items) {
@@ -90,7 +86,6 @@ class ItemRepository {
   }
 }
 
-@reflectiveTest
 final class CollectionGetterAllocatesEachAccessTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'collection_getter_allocates_each_access';
@@ -114,7 +109,7 @@ class ItemState {
 }
 ''';
 
-  Future<void> test_allowsLateFinalCachedGetter() async {
+  Future<void> _allowsLateFinalCachedGetter() async {
     await assertAllows(r'''
 class ItemState {
   ItemState(this.items);
@@ -126,7 +121,6 @@ class ItemState {
   }
 }
 
-@reflectiveTest
 final class ExpandoDerivedCacheForbiddenTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'expando_derived_cache_forbidden';
@@ -137,7 +131,7 @@ final class ExpandoDerivedCacheForbiddenTest extends _RuntimeBugRuleTest {
 final _itemsByIdCache = Expando<Map<String, Object>>('ItemState.itemsById');
 ''';
 
-  Future<void> test_allowsLateFinalDerivedIndex() async {
+  Future<void> _allowsLateFinalDerivedIndex() async {
     await assertAllows(r'''
 class ItemState {
   ItemState(this.items);
@@ -150,14 +144,13 @@ class ItemState {
 ''');
   }
 
-  Future<void> test_skipsTestFiles() async {
+  Future<void> _skipsTestFiles() async {
     await assertAllows(r'''
 final _cache = Expando<Map<String, Object>>('test cache');
 ''', path: '$testPackageRootPath/test/item_state_test.dart');
   }
 }
 
-@reflectiveTest
 final class AdHocIdIndexLookupTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'ad_hoc_id_index_lookup';
@@ -172,7 +165,7 @@ class ItemNotifier {
 }
 ''';
 
-  Future<void> test_allowsSharedLookupExtension() async {
+  Future<void> _allowsSharedLookupExtension() async {
     await assertAllows(r'''
 class ItemNotifier {
   Item? itemById(List<Item> items, String itemId) {
@@ -183,7 +176,7 @@ class ItemNotifier {
   }
 
   // Row 21: the skill's indexOfByKey (collections-helpers.md) subscripted in place.
-  Future<void> test_reportsIndexOfByKeySubscriptedInPlace() async {
+  Future<void> _reportsIndexOfByKeySubscriptedInPlace() async {
     const source = r'''
 class ItemNotifier {
   Item? itemById(List<Item> items, String itemId) {
@@ -198,7 +191,7 @@ class ItemNotifier {
     ]);
   }
 
-  Future<void> test_allowsSkillCachedIndexOfByKey() async {
+  Future<void> _allowsSkillCachedIndexOfByKey() async {
     await assertAllows(r'''
 class ItemNotifier {
   List<Item?> itemsByIds(List<Item> items, List<String> ids) {
@@ -209,7 +202,7 @@ class ItemNotifier {
 ''');
   }
 
-  Future<void> test_allowsReturnedIndexMap() async {
+  Future<void> _allowsReturnedIndexMap() async {
     await assertAllows(r'''
 Map<String, Item> itemsById(List<Item> items) {
   return items.indexBy((item) => item.id);
@@ -218,7 +211,6 @@ Map<String, Item> itemsById(List<Item> items) {
   }
 }
 
-@reflectiveTest
 final class LinearIdLookupInHotPathTest extends _RuntimeBugRuleTest {
   static const _item = r'''
 import 'package:flutter/widgets.dart';
@@ -245,7 +237,7 @@ void applyAll(List<Item> items, List<String> changes, String selectedId) {
 }
 ''';
 
-  Future<void> test_reportsMultilineLookupInIterationCallback() async {
+  Future<void> _reportsMultilineLookupInIterationCallback() async {
     const source =
         '''
 $_item
@@ -265,7 +257,7 @@ List<Item> resolve(List<Item> items, List<String> ids) {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
   }
 
-  Future<void> test_reportsLookupInForEachCallback() async {
+  Future<void> _reportsLookupInForEachCallback() async {
     const source =
         '''
 $_item
@@ -282,7 +274,7 @@ void apply(List<Item> items, List<String> ids) {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
   }
 
-  Future<void> test_reportsLookupInCollectionFor() async {
+  Future<void> _reportsLookupInCollectionFor() async {
     const source =
         '''
 $_item
@@ -296,7 +288,7 @@ List<Item> resolve(List<Item> items, List<String> ids) => [
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
   }
 
-  Future<void> test_reportsNestedIndexWhereLookup() async {
+  Future<void> _reportsNestedIndexWhereLookup() async {
     const source =
         '''
 $_item
@@ -320,7 +312,7 @@ class ItemRepository {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
   }
 
-  Future<void> test_reportsManualLookupLoopInsideLoop() async {
+  Future<void> _reportsManualLookupLoopInsideLoop() async {
     const source =
         '''
 $_item
@@ -340,7 +332,7 @@ void apply(List<Item> items, List<String> ids) {
     ]);
   }
 
-  Future<void> test_reportsLookupInBuild() async {
+  Future<void> _reportsLookupInBuild() async {
     const source =
         '''
 $_item
@@ -362,7 +354,7 @@ class ItemTile extends Widget {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
   }
 
-  Future<void> test_reportsIndexedManualLookupInsideCallback() async {
+  Future<void> _reportsIndexedManualLookupInsideCallback() async {
     const source =
         '''
 $_item
@@ -379,7 +371,7 @@ void apply(List<Item> items, List<String> ids) {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'for (var i', ruleName)]);
   }
 
-  Future<void> test_reportsLookupInWidgetBuilderFunction() async {
+  Future<void> _reportsLookupInWidgetBuilderFunction() async {
     const source =
         '''
 $_item
@@ -392,7 +384,7 @@ Widget buildTile(List<Item> items, String itemId, Widget Function(Item) tile) {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
   }
 
-  Future<void> test_allowsLookupInSingleCallMapCallback() async {
+  Future<void> _allowsLookupInSingleCallMapCallback() async {
     await assertAllows('''
 $_item
 void cache(Map<String, Item> cache, List<Item> items, String itemId) {
@@ -401,7 +393,7 @@ void cache(Map<String, Item> cache, List<Item> items, String itemId) {
 ''');
   }
 
-  Future<void> test_reportsLookupOverIdListInNotifier() async {
+  Future<void> _reportsLookupOverIdListInNotifier() async {
     const source =
         '''
 $_item
@@ -419,7 +411,7 @@ class ItemNotifier {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
   }
 
-  Future<void> test_reportsCompoundAndBlockPredicatesInLoop() async {
+  Future<void> _reportsCompoundAndBlockPredicatesInLoop() async {
     const source =
         '''
 $_item
@@ -441,7 +433,7 @@ void apply(List<Item> items, List<String> ids, bool active) {
     ]);
   }
 
-  Future<void> test_reportsLookupInGetters() async {
+  Future<void> _reportsLookupInGetters() async {
     const source =
         '''
 $_item
@@ -467,7 +459,7 @@ int get selectedIndex {
     ]);
   }
 
-  Future<void> test_allowsOneOffRepositoryMutation() async {
+  Future<void> _allowsOneOffRepositoryMutation() async {
     await assertAllows('''
 final class StoredValue {
   const StoredValue(this.id);
@@ -491,7 +483,7 @@ final class ExampleRepository implements IExampleRepository {
 ''');
   }
 
-  Future<void> test_allowsOneOffNotifierLookup() async {
+  Future<void> _allowsOneOffNotifierLookup() async {
     await assertAllows('''
 $_item
 class ItemNotifier {
@@ -504,7 +496,7 @@ class ItemNotifier {
 ''');
   }
 
-  Future<void> test_allowsSingleManualLookupLoop() async {
+  Future<void> _allowsSingleManualLookupLoop() async {
     await assertAllows('''
 $_item
 Item? itemById(List<Item> items, String itemId) {
@@ -516,7 +508,7 @@ Item? itemById(List<Item> items, String itemId) {
 ''');
   }
 
-  Future<void> test_allowsLookupInTapCallbackInsideBuild() async {
+  Future<void> _allowsLookupInTapCallbackInsideBuild() async {
     await assertAllows('''
 $_item
 class Button extends Widget {
@@ -541,7 +533,7 @@ class ItemTile extends Widget {
 ''');
   }
 
-  Future<void> test_allowsLookupInLoopIterable() async {
+  Future<void> _allowsLookupInLoopIterable() async {
     await assertAllows('''
 $_item
 void printFrom(List<Item> items, String itemId) {
@@ -552,7 +544,7 @@ void printFrom(List<Item> items, String itemId) {
 ''');
   }
 
-  Future<void> test_allowsMapIndex() async {
+  Future<void> _allowsMapIndex() async {
     await assertAllows('''
 $_item
 void apply(Map<String, Item> itemsById, List<String> ids) {
@@ -564,7 +556,6 @@ void apply(Map<String, Item> itemsById, List<String> ids) {
   }
 }
 
-@reflectiveTest
 final class NestedLinearLookupByIdTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'nested_linear_lookup_by_id';
@@ -582,7 +573,7 @@ class ItemRepository {
 }
 ''';
 
-  Future<void> test_reportsMultilineIndexWhereLookup() async {
+  Future<void> _reportsMultilineIndexWhereLookup() async {
     const source = r'''
 class ItemRepository {
   void applyChanges(List<Object> items, List<Object> changes) {
@@ -600,7 +591,7 @@ class ItemRepository {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
   }
 
-  Future<void> test_reportsLookupOverIdListInNotifier() async {
+  Future<void> _reportsLookupOverIdListInNotifier() async {
     const source = r'''
 class ItemNotifier {
   void removeAll(List<Object> items, List<String> ids) {
@@ -616,7 +607,7 @@ class ItemNotifier {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
   }
 
-  Future<void> test_allowsLookupByUnrelatedLongerName() async {
+  Future<void> _allowsLookupByUnrelatedLongerName() async {
     await assertAllows(r'''
 class ItemNotifier {
   void removeAll(List<Object> items, List<String> ids, String idx) {
@@ -629,7 +620,7 @@ class ItemNotifier {
 ''');
   }
 
-  Future<void> test_reportsNestedLookupInTopLevelFunction() async {
+  Future<void> _reportsNestedLookupInTopLevelFunction() async {
     const source = r'''
 void applyChanges(List<Object> items, List<Object> changes) {
   for (final change in changes) {
@@ -643,7 +634,7 @@ void applyChanges(List<Object> items, List<Object> changes) {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.indexWhere(', ruleName)]);
   }
 
-  Future<void> test_reportsNestedLookupInCollectionFor() async {
+  Future<void> _reportsNestedLookupInCollectionFor() async {
     const source = r'''
 List<Object> resolve(List<Object> items, List<String> ids) => [
   for (final id in ids) items.firstWhere((item) => item.id == id),
@@ -654,7 +645,7 @@ List<Object> resolve(List<Object> items, List<String> ids) => [
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.firstWhere(', ruleName)]);
   }
 
-  Future<void> test_allowsLookupNotKeyedByLoopVariable() async {
+  Future<void> _allowsLookupNotKeyedByLoopVariable() async {
     await assertAllows(r'''
 void applyAll(List<Object> items, List<Object> changes, String selectedId) {
   for (final change in changes) {
@@ -665,7 +656,7 @@ void applyAll(List<Object> items, List<Object> changes, String selectedId) {
 ''');
   }
 
-  Future<void> test_allowsPreIndexedMap() async {
+  Future<void> _allowsPreIndexedMap() async {
     await assertAllows(r'''
 class ItemRepository {
   void applyChanges(List<Object> items, List<Object> changes) {
@@ -680,7 +671,6 @@ class ItemRepository {
   }
 }
 
-@reflectiveTest
 final class AppwriteBlockingFunctionExecutionInClientTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'appwrite_blocking_function_execution_in_client';
@@ -699,7 +689,7 @@ class AuthRemoteDatasource {
 }
 ''';
 
-  Future<void> test_reportsOmittedXasyncInLongRunningMethod() async {
+  Future<void> _reportsOmittedXasyncInLongRunningMethod() async {
     const source = r'''
 class ImportRemoteDatasource {
   Future<void> importData(String userId) async {
@@ -717,7 +707,7 @@ class ImportRemoteDatasource {
     ]);
   }
 
-  Future<void> test_reportsClientWaitingForBackendCompletion() async {
+  Future<void> _reportsClientWaitingForBackendCompletion() async {
     const source = r'''
 class DeleteResult {}
 
@@ -756,7 +746,7 @@ class AccountRepository {
     ]);
   }
 
-  Future<void> test_allowsUnresolvedWaitForCompletionLookalike() async {
+  Future<void> _allowsUnresolvedWaitForCompletionLookalike() async {
     await assertAllows(r'''
 class AccountRepository {
   Future<void> deleteAccount(String userId) async {
@@ -766,7 +756,7 @@ class AccountRepository {
 ''');
   }
 
-  Future<void> test_allowsAsyncExecution() async {
+  Future<void> _allowsAsyncExecution() async {
     await assertAllows(r'''
 class AuthRemoteDatasource {
   Future<void> deleteAccount(String userId) async {
@@ -780,7 +770,7 @@ class AuthRemoteDatasource {
 ''');
   }
 
-  Future<void> test_allowsForwardingWrapperWithXasyncParameter() async {
+  Future<void> _allowsForwardingWrapperWithXasyncParameter() async {
     await assertAllows(r'''
 class AuthRemoteDatasource {
   Future<void> deleteAccount(String userId) async {
@@ -802,7 +792,7 @@ class AuthRemoteDatasource {
 ''');
   }
 
-  Future<void> test_allowsShortInteractiveFunction() async {
+  Future<void> _allowsShortInteractiveFunction() async {
     await assertAllows(r'''
 class AuthRemoteDatasource {
   Future<void> ping(String userId) async {
@@ -816,7 +806,6 @@ class AuthRemoteDatasource {
   }
 }
 
-@reflectiveTest
 final class DestructiveFailureLoggedBeforeReconcileTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'destructive_failure_logged_before_reconcile';
@@ -838,7 +827,7 @@ class AuthNotifier {
 }
 ''';
 
-  Future<void> test_allowsReconcileBeforeTelemetry() async {
+  Future<void> _allowsReconcileBeforeTelemetry() async {
     await assertAllows(r'''
 class AuthNotifier {
   Future<void> deleteAccount() async {
@@ -858,7 +847,7 @@ class AuthNotifier {
   }
 
   // networking.md "Long-Running Remote Work" WRONG: reports before reconcile.
-  Future<void> test_reportsSkillTelemetryBeforeWaitForReconcile() async {
+  Future<void> _reportsSkillTelemetryBeforeWaitForReconcile() async {
     final source = _analyzedSource(r'''
 class DeleteResult {
   const DeleteResult.ok();
@@ -880,7 +869,7 @@ class AccountRepository {
     await assertDiagnostics(source, [compatLint(source, 'Crash.error', ruleName)]);
   }
 
-  Future<void> test_reportsTelemetryWithoutReconcileAfterAsyncStart() async {
+  Future<void> _reportsTelemetryWithoutReconcileAfterAsyncStart() async {
     final source = _analyzedSource(r'''
 class AccountRepository {
   Future<bool> deleteAccount(String userId) async {
@@ -910,7 +899,7 @@ class AccountRepository {
     ]);
   }
 
-  Future<void> test_allowsSkillAsyncStartThenReconcile() async {
+  Future<void> _allowsSkillAsyncStartThenReconcile() async {
     await assertAllows(r'''
 class DeleteResult {
   const DeleteResult.ok();
@@ -939,7 +928,7 @@ class AccountRepository {
 ''');
   }
 
-  Future<void> test_allowsOrdinaryDestructiveTelemetry() async {
+  Future<void> _allowsOrdinaryDestructiveTelemetry() async {
     await assertAllows(r'''
 class ProductNotifier {
   Future<void> deleteProduct(String id) async {
@@ -962,4 +951,123 @@ class ProductNotifier {
 }
 ''');
   }
+}
+
+void _defineSourceScannerRulesPart15Tests() {
+  analysisRuleSuite<SyncSaveAllNoDirtyGuardTest>(
+    'SyncSaveAllNoDirtyGuardTest',
+    SyncSaveAllNoDirtyGuardTest.new,
+    {
+      'test_allowsWhenGuarded': (t) => t._allowsWhenGuarded(),
+      'test_allowsNonEntitySaveAll': (t) => t._allowsNonEntitySaveAll(),
+      'test_reportsMultilineSaveAll': (t) => t._reportsMultilineSaveAll(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<SaveAllFullCollectionAfterSubsetMutationTest>(
+    'SaveAllFullCollectionAfterSubsetMutationTest',
+    SaveAllFullCollectionAfterSubsetMutationTest.new,
+    {
+      'test_allowsChangedSubsetWrite': (t) => t._allowsChangedSubsetWrite(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<CollectionGetterAllocatesEachAccessTest>(
+    'CollectionGetterAllocatesEachAccessTest',
+    CollectionGetterAllocatesEachAccessTest.new,
+    {
+      'test_allowsLateFinalCachedGetter': (t) => t._allowsLateFinalCachedGetter(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ExpandoDerivedCacheForbiddenTest>(
+    'ExpandoDerivedCacheForbiddenTest',
+    ExpandoDerivedCacheForbiddenTest.new,
+    {
+      'test_allowsLateFinalDerivedIndex': (t) => t._allowsLateFinalDerivedIndex(),
+      'test_skipsTestFiles': (t) => t._skipsTestFiles(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<AdHocIdIndexLookupTest>('AdHocIdIndexLookupTest', AdHocIdIndexLookupTest.new, {
+    'test_allowsSharedLookupExtension': (t) => t._allowsSharedLookupExtension(),
+    'test_reportsIndexOfByKeySubscriptedInPlace': (t) => t._reportsIndexOfByKeySubscriptedInPlace(),
+    'test_allowsSkillCachedIndexOfByKey': (t) => t._allowsSkillCachedIndexOfByKey(),
+    'test_allowsReturnedIndexMap': (t) => t._allowsReturnedIndexMap(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<LinearIdLookupInHotPathTest>(
+    'LinearIdLookupInHotPathTest',
+    LinearIdLookupInHotPathTest.new,
+    {
+      'test_reportsMultilineLookupInIterationCallback': (t) =>
+          t._reportsMultilineLookupInIterationCallback(),
+      'test_reportsLookupInForEachCallback': (t) => t._reportsLookupInForEachCallback(),
+      'test_reportsLookupInCollectionFor': (t) => t._reportsLookupInCollectionFor(),
+      'test_reportsNestedIndexWhereLookup': (t) => t._reportsNestedIndexWhereLookup(),
+      'test_reportsManualLookupLoopInsideLoop': (t) => t._reportsManualLookupLoopInsideLoop(),
+      'test_reportsLookupInBuild': (t) => t._reportsLookupInBuild(),
+      'test_reportsIndexedManualLookupInsideCallback': (t) =>
+          t._reportsIndexedManualLookupInsideCallback(),
+      'test_reportsLookupInWidgetBuilderFunction': (t) => t._reportsLookupInWidgetBuilderFunction(),
+      'test_allowsLookupInSingleCallMapCallback': (t) => t._allowsLookupInSingleCallMapCallback(),
+      'test_reportsLookupOverIdListInNotifier': (t) => t._reportsLookupOverIdListInNotifier(),
+      'test_reportsCompoundAndBlockPredicatesInLoop': (t) =>
+          t._reportsCompoundAndBlockPredicatesInLoop(),
+      'test_reportsLookupInGetters': (t) => t._reportsLookupInGetters(),
+      'test_allowsOneOffRepositoryMutation': (t) => t._allowsOneOffRepositoryMutation(),
+      'test_allowsOneOffNotifierLookup': (t) => t._allowsOneOffNotifierLookup(),
+      'test_allowsSingleManualLookupLoop': (t) => t._allowsSingleManualLookupLoop(),
+      'test_allowsLookupInTapCallbackInsideBuild': (t) => t._allowsLookupInTapCallbackInsideBuild(),
+      'test_allowsLookupInLoopIterable': (t) => t._allowsLookupInLoopIterable(),
+      'test_allowsMapIndex': (t) => t._allowsMapIndex(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<NestedLinearLookupByIdTest>(
+    'NestedLinearLookupByIdTest',
+    NestedLinearLookupByIdTest.new,
+    {
+      'test_reportsMultilineIndexWhereLookup': (t) => t._reportsMultilineIndexWhereLookup(),
+      'test_reportsLookupOverIdListInNotifier': (t) => t._reportsLookupOverIdListInNotifier(),
+      'test_allowsLookupByUnrelatedLongerName': (t) => t._allowsLookupByUnrelatedLongerName(),
+      'test_reportsNestedLookupInTopLevelFunction': (t) =>
+          t._reportsNestedLookupInTopLevelFunction(),
+      'test_reportsNestedLookupInCollectionFor': (t) => t._reportsNestedLookupInCollectionFor(),
+      'test_allowsLookupNotKeyedByLoopVariable': (t) => t._allowsLookupNotKeyedByLoopVariable(),
+      'test_allowsPreIndexedMap': (t) => t._allowsPreIndexedMap(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<AppwriteBlockingFunctionExecutionInClientTest>(
+    'AppwriteBlockingFunctionExecutionInClientTest',
+    AppwriteBlockingFunctionExecutionInClientTest.new,
+    {
+      'test_reportsOmittedXasyncInLongRunningMethod': (t) =>
+          t._reportsOmittedXasyncInLongRunningMethod(),
+      'test_reportsClientWaitingForBackendCompletion': (t) =>
+          t._reportsClientWaitingForBackendCompletion(),
+      'test_allowsUnresolvedWaitForCompletionLookalike': (t) =>
+          t._allowsUnresolvedWaitForCompletionLookalike(),
+      'test_allowsAsyncExecution': (t) => t._allowsAsyncExecution(),
+      'test_allowsForwardingWrapperWithXasyncParameter': (t) =>
+          t._allowsForwardingWrapperWithXasyncParameter(),
+      'test_allowsShortInteractiveFunction': (t) => t._allowsShortInteractiveFunction(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<DestructiveFailureLoggedBeforeReconcileTest>(
+    'DestructiveFailureLoggedBeforeReconcileTest',
+    DestructiveFailureLoggedBeforeReconcileTest.new,
+    {
+      'test_allowsReconcileBeforeTelemetry': (t) => t._allowsReconcileBeforeTelemetry(),
+      'test_reportsSkillTelemetryBeforeWaitForReconcile': (t) =>
+          t._reportsSkillTelemetryBeforeWaitForReconcile(),
+      'test_reportsTelemetryWithoutReconcileAfterAsyncStart': (t) =>
+          t._reportsTelemetryWithoutReconcileAfterAsyncStart(),
+      'test_allowsSkillAsyncStartThenReconcile': (t) => t._allowsSkillAsyncStartThenReconcile(),
+      'test_allowsOrdinaryDestructiveTelemetry': (t) => t._allowsOrdinaryDestructiveTelemetry(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

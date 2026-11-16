@@ -1,22 +1,45 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_empty_spread.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_map_keys_contains.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_misused_set_literals.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidMapKeysContainsTest);
-    defineReflectiveTests(AvoidEmptySpreadTest);
-    defineReflectiveTests(AvoidMisusedSetLiteralsTest);
+  analysisRuleSuite<AvoidMapKeysContainsTest>(
+    'AvoidMapKeysContainsTest',
+    AvoidMapKeysContainsTest.new,
+    {
+      'test_complexTarget_lint': (t) => t._complexTargetLint(),
+      'test_mapKeysContains_lint': (t) => t._mapKeysContainsLint(),
+      'test_containsKey_noLint': (t) => t._containsKeyNoLint(),
+      'test_iterableContains_noLint': (t) => t._iterableContainsNoLint(),
+      'test_severity_error': (t) => t._severityError(),
+    },
+  );
+  analysisRuleSuite<AvoidEmptySpreadTest>('AvoidEmptySpreadTest', AvoidEmptySpreadTest.new, {
+    'test_emptyListSpread_lint': (t) => t._emptyListSpreadLint(),
+    'test_emptyMapSpread_lint': (t) => t._emptyMapSpreadLint(),
+    'test_emptySetSpread_lint': (t) => t._emptySetSpreadLint(),
+    'test_nonEmptySpread_noLint': (t) => t._nonEmptySpreadNoLint(),
+    'test_severity_error': (t) => t._severityError(),
   });
+  analysisRuleSuite<AvoidMisusedSetLiteralsTest>(
+    'AvoidMisusedSetLiteralsTest',
+    AvoidMisusedSetLiteralsTest.new,
+    {
+      'test_setLiteralAsExpressionStatement_lint': (t) => t._setLiteralAsExpressionStatementLint(),
+      'test_setLiteralInIfCondition_lint': (t) => t._setLiteralInIfConditionLint(),
+      'test_setLiteralInWhenClause_lint': (t) => t._setLiteralInWhenClauseLint(),
+      'test_setLiteralValue_noLint': (t) => t._setLiteralValueNoLint(),
+      'test_setLiteralMethodCondition_noLint': (t) => t._setLiteralMethodConditionNoLint(),
+      'test_severity_error': (t) => t._severityError(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidMapKeysContainsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -24,7 +47,7 @@ final class AvoidMapKeysContainsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_complexTarget_lint() async {
+  Future<void> _complexTargetLint() async {
     const source = r'''
 class Holder {
   Map<String, int> get values => {'a': 1};
@@ -43,7 +66,7 @@ void f(Holder holder) {
     ]);
   }
 
-  Future<void> test_mapKeysContains_lint() async {
+  Future<void> _mapKeysContainsLint() async {
     const source = r'''
 void f(Map<String, int> values) {
   values.keys.contains('a');
@@ -55,7 +78,7 @@ void f(Map<String, int> values) {
     ]);
   }
 
-  Future<void> test_containsKey_noLint() async {
+  Future<void> _containsKeyNoLint() async {
     await assertNoDiagnostics(r'''
 void f(Map<String, int> values) {
   values.containsKey('a');
@@ -63,7 +86,7 @@ void f(Map<String, int> values) {
 ''');
   }
 
-  Future<void> test_iterableContains_noLint() async {
+  Future<void> _iterableContainsNoLint() async {
     await assertNoDiagnostics(r'''
 void f(Iterable<String> values) {
   values.contains('a');
@@ -71,12 +94,11 @@ void f(Iterable<String> values) {
 ''');
   }
 
-  Future<void> test_severity_error() async {
+  Future<void> _severityError() async {
     expect(AvoidMapKeysContains.code.severity, DiagnosticSeverity.ERROR);
   }
 }
 
-@reflectiveTest
 final class AvoidEmptySpreadTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -84,7 +106,7 @@ final class AvoidEmptySpreadTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_emptyListSpread_lint() async {
+  Future<void> _emptyListSpreadLint() async {
     const source = r'''
 void f() {
   final values = [1, ...[], 2];
@@ -95,7 +117,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('...[]'), '...[]'.length)]);
   }
 
-  Future<void> test_emptyMapSpread_lint() async {
+  Future<void> _emptyMapSpreadLint() async {
     const source = r'''
 void f() {
   final values = {'a': 1, ...{}};
@@ -106,7 +128,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('...{}'), '...{}'.length)]);
   }
 
-  Future<void> test_emptySetSpread_lint() async {
+  Future<void> _emptySetSpreadLint() async {
     const source = r'''
 void f() {
   final values = {1, ...<int>{}};
@@ -117,7 +139,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('...<int>{}'), '...<int>{}'.length)]);
   }
 
-  Future<void> test_nonEmptySpread_noLint() async {
+  Future<void> _nonEmptySpreadNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   final list = [1, ...[2]];
@@ -128,12 +150,11 @@ void f() {
 ''');
   }
 
-  Future<void> test_severity_error() async {
+  Future<void> _severityError() async {
     expect(AvoidEmptySpread.code.severity, DiagnosticSeverity.ERROR);
   }
 }
 
-@reflectiveTest
 final class AvoidMisusedSetLiteralsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -141,7 +162,7 @@ final class AvoidMisusedSetLiteralsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_setLiteralAsExpressionStatement_lint() async {
+  Future<void> _setLiteralAsExpressionStatementLint() async {
     const source = r'''
 void f() {
   <int>{1};
@@ -151,7 +172,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('<int>{1}'), '<int>{1}'.length)]);
   }
 
-  Future<void> test_setLiteralInIfCondition_lint() async {
+  Future<void> _setLiteralInIfConditionLint() async {
     const source = r'''
 void f() {
   if ({1} as dynamic) {
@@ -163,7 +184,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('{1}'), '{1}'.length)]);
   }
 
-  Future<void> test_setLiteralInWhenClause_lint() async {
+  Future<void> _setLiteralInWhenClauseLint() async {
     const source = r'''
 void f(Object value) {
   switch (value) {
@@ -176,7 +197,7 @@ void f(Object value) {
     await assertDiagnostics(source, [lint(source.indexOf('{value}'), '{value}'.length)]);
   }
 
-  Future<void> test_setLiteralValue_noLint() async {
+  Future<void> _setLiteralValueNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   final values = {1, 2};
@@ -185,7 +206,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_setLiteralMethodCondition_noLint() async {
+  Future<void> _setLiteralMethodConditionNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   if ({1, 2}.contains(1)) {
@@ -195,7 +216,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_severity_error() async {
+  Future<void> _severityError() async {
     expect(AvoidMisusedSetLiterals.code.severity, DiagnosticSeverity.ERROR);
   }
 }

@@ -1,18 +1,51 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_hooks_outside_build.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_misused_hooks.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_ref_watch_outside_build.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
 
+import 'analysis_rule_suite.dart';
 import 'support/flutter_hooks_stub.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidRefWatchOutsideBuildTest);
-    defineReflectiveTests(AvoidHooksOutsideBuildTest);
-    defineReflectiveTests(AvoidMisusedHooksTest);
+  analysisRuleSuite<AvoidRefWatchOutsideBuildTest>(
+    'AvoidRefWatchOutsideBuildTest',
+    AvoidRefWatchOutsideBuildTest.new,
+    {
+      'test_consumerWidgetBuild_noLint': (t) => t._consumerWidgetBuildNoLint(),
+      'test_consumerBuilder_noLint': (t) => t._consumerBuilderNoLint(),
+      'test_hookConsumerBuilder_noLint': (t) => t._hookConsumerBuilderNoLint(),
+      'test_consumerNestedCallback_lint': (t) => t._consumerNestedCallbackLint(),
+      'test_outerRefInsideConsumerBuilder_lint': (t) => t._outerRefInsideConsumerBuilderLint(),
+      'test_unrelatedConsumerBuilder_lint': (t) => t._unrelatedConsumerBuilderLint(),
+      'test_callbackInsideBuild_lint': (t) => t._callbackInsideBuildLint(),
+      'test_consumerStateHelper_lint': (t) => t._consumerStateHelperLint(),
+      'test_riverpodFunctionProvider_noLint': (t) => t._riverpodFunctionProviderNoLint(),
+      'test_callbackInsideRiverpodFunctionProvider_lint': (t) =>
+          t._callbackInsideRiverpodFunctionProviderLint(),
+    },
+  );
+  analysisRuleSuite<AvoidHooksOutsideBuildTest>(
+    'AvoidHooksOutsideBuildTest',
+    AvoidHooksOutsideBuildTest.new,
+    {
+      'test_nonHookUsePrefixedPackageFunction_noLint': (t) =>
+          t._nonHookUsePrefixedPackageFunctionNoLint(),
+      'test_localUsePrefixedFunctionWithoutHooks_noLint': (t) =>
+          t._localUsePrefixedFunctionWithoutHooksNoLint(),
+      'test_localCustomHookInPlainFunction_lint': (t) => t._localCustomHookInPlainFunctionLint(),
+      'test_importedCustomHookInPlainFunction_lint': (t) =>
+          t._importedCustomHookInPlainFunctionLint(),
+      'test_hookWidgetBuild_noLint': (t) => t._hookWidgetBuildNoLint(),
+      'test_customHook_noLint': (t) => t._customHookNoLint(),
+      'test_plainFunction_lint': (t) => t._plainFunctionLint(),
+      'test_hookBuilder_noLint': (t) => t._hookBuilderNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidMisusedHooksTest>('AvoidMisusedHooksTest', AvoidMisusedHooksTest.new, {
+    'test_topLevelHookWidgetBuild_noLint': (t) => t._topLevelHookWidgetBuildNoLint(),
+    'test_loopInBuild_lint': (t) => t._loopInBuildLint(),
+    'test_callbackInCustomHook_lint': (t) => t._callbackInCustomHookLint(),
+    'test_tryBlockInHookBuilder_lint': (t) => t._tryBlockInHookBuilderLint(),
   });
 }
 
@@ -24,7 +57,6 @@ abstract class _RiverpodHooksRuleTest extends AnalysisRuleTest {
   }
 }
 
-@reflectiveTest
 final class AvoidRefWatchOutsideBuildTest extends _RiverpodHooksRuleTest {
   @override
   void setUp() {
@@ -32,7 +64,7 @@ final class AvoidRefWatchOutsideBuildTest extends _RiverpodHooksRuleTest {
     super.setUp();
   }
 
-  Future<void> test_consumerWidgetBuild_noLint() async {
+  Future<void> _consumerWidgetBuildNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,7 +83,7 @@ class Host extends ConsumerWidget {
 ''');
   }
 
-  Future<void> test_consumerBuilder_noLint() async {
+  Future<void> _consumerBuilderNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63,7 +95,7 @@ Widget make() => Consumer(builder: (context, ref, child) {
 ''');
   }
 
-  Future<void> test_hookConsumerBuilder_noLint() async {
+  Future<void> _hookConsumerBuilderNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -76,7 +108,7 @@ Widget make() => HookConsumer(builder: (context, ref) {
 ''');
   }
 
-  Future<void> test_consumerNestedCallback_lint() async {
+  Future<void> _consumerNestedCallbackLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,7 +122,7 @@ Widget make() => Consumer(builder: (context, ref, child) {
     await assertDiagnostics(source, [lint(source.indexOf('ref.watch'), 19)]);
   }
 
-  Future<void> test_outerRefInsideConsumerBuilder_lint() async {
+  Future<void> _outerRefInsideConsumerBuilderLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -103,7 +135,7 @@ Widget make(WidgetRef ref) => Consumer(builder: (context, innerRef, child) {
     await assertDiagnostics(source, [lint(source.indexOf('ref.watch'), 19)]);
   }
 
-  Future<void> test_unrelatedConsumerBuilder_lint() async {
+  Future<void> _unrelatedConsumerBuilderLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Consumer;
@@ -119,7 +151,7 @@ void make() => Consumer(builder: (ref) {
     await assertDiagnostics(source, [lint(source.indexOf('ref.watch'), 19)]);
   }
 
-  Future<void> test_callbackInsideBuild_lint() async {
+  Future<void> _callbackInsideBuildLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -145,7 +177,7 @@ class Host extends ConsumerWidget {
     ]);
   }
 
-  Future<void> test_consumerStateHelper_lint() async {
+  Future<void> _consumerStateHelperLint() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
@@ -165,7 +197,7 @@ class HostState extends ConsumerState<ConsumerStatefulWidget> {
     ]);
   }
 
-  Future<void> test_riverpodFunctionProvider_noLint() async {
+  Future<void> _riverpodFunctionProviderNoLint() async {
     await assertNoDiagnostics(r'''
 class Riverpod {
   const Riverpod();
@@ -190,7 +222,7 @@ int count(Ref ref) {
 ''');
   }
 
-  Future<void> test_callbackInsideRiverpodFunctionProvider_lint() async {
+  Future<void> _callbackInsideRiverpodFunctionProviderLint() async {
     const source = r'''
 class Riverpod {
   const Riverpod();
@@ -221,7 +253,6 @@ int count(Ref ref) {
   }
 }
 
-@reflectiveTest
 final class AvoidHooksOutsideBuildTest extends _RiverpodHooksRuleTest {
   @override
   void setUp() {
@@ -232,7 +263,7 @@ void usePathUrlStrategy() {}
     super.setUp();
   }
 
-  Future<void> test_nonHookUsePrefixedPackageFunction_noLint() async {
+  Future<void> _nonHookUsePrefixedPackageFunctionNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter_web_plugins/url_strategy.dart';
 
@@ -242,7 +273,7 @@ Future<void> main() async {
 ''');
   }
 
-  Future<void> test_localUsePrefixedFunctionWithoutHooks_noLint() async {
+  Future<void> _localUsePrefixedFunctionWithoutHooksNoLint() async {
     await assertNoDiagnostics(r'''
 int useDefaultPageSize() => 20;
 
@@ -250,7 +281,7 @@ int pageSize() => useDefaultPageSize();
 ''');
   }
 
-  Future<void> test_localCustomHookInPlainFunction_lint() async {
+  Future<void> _localCustomHookInPlainFunctionLint() async {
     const source = r'''
 import 'package:flutter_hooks/flutter_hooks.dart';
 
@@ -264,7 +295,7 @@ int counter() => useCounter();
     ]);
   }
 
-  Future<void> test_importedCustomHookInPlainFunction_lint() async {
+  Future<void> _importedCustomHookInPlainFunctionLint() async {
     newFile('$testPackageLibPath/hooks.dart', r'''
 import 'package:flutter_hooks/flutter_hooks.dart';
 
@@ -279,7 +310,7 @@ int counter() => useCounter();
     await assertDiagnostics(source, [lint(source.indexOf('useCounter()'), 'useCounter()'.length)]);
   }
 
-  Future<void> test_hookWidgetBuild_noLint() async {
+  Future<void> _hookWidgetBuildNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -296,7 +327,7 @@ class Host extends HookWidget {
 ''');
   }
 
-  Future<void> test_customHook_noLint() async {
+  Future<void> _customHookNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter_hooks/flutter_hooks.dart';
 
@@ -304,7 +335,7 @@ int useCounter() => useState(0).value;
 ''');
   }
 
-  Future<void> test_plainFunction_lint() async {
+  Future<void> _plainFunctionLint() async {
     const source = r'''
 import 'package:flutter_hooks/flutter_hooks.dart';
 
@@ -314,7 +345,7 @@ int counter() => useState(0).value;
     await assertDiagnostics(source, [lint(source.indexOf('useState'), 'useState(0)'.length)]);
   }
 
-  Future<void> test_hookBuilder_noLint() async {
+  Future<void> _hookBuilderNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -331,7 +362,6 @@ Widget build() {
   }
 }
 
-@reflectiveTest
 final class AvoidMisusedHooksTest extends _RiverpodHooksRuleTest {
   @override
   void setUp() {
@@ -339,7 +369,7 @@ final class AvoidMisusedHooksTest extends _RiverpodHooksRuleTest {
     super.setUp();
   }
 
-  Future<void> test_topLevelHookWidgetBuild_noLint() async {
+  Future<void> _topLevelHookWidgetBuildNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -356,7 +386,7 @@ class Host extends HookWidget {
 ''');
   }
 
-  Future<void> test_loopInBuild_lint() async {
+  Future<void> _loopInBuildLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -377,7 +407,7 @@ class Host extends HookWidget {
     await assertDiagnostics(source, [lint(source.indexOf('useState'), 'useState(i)'.length)]);
   }
 
-  Future<void> test_callbackInCustomHook_lint() async {
+  Future<void> _callbackInCustomHookLint() async {
     const source = r'''
 import 'package:flutter_hooks/flutter_hooks.dart';
 
@@ -392,7 +422,7 @@ void useRegister() {
     await assertDiagnostics(source, [lint(source.indexOf('useState'), 'useState(0)'.length)]);
   }
 
-  Future<void> test_tryBlockInHookBuilder_lint() async {
+  Future<void> _tryBlockInHookBuilderLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';

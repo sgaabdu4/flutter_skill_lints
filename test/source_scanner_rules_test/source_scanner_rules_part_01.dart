@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
 const _riverpodProviderStub = r'''
@@ -52,7 +50,6 @@ abstract class _RiverpodRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => riverpodSourceRules;
 }
 
-@reflectiveTest
 final class RiverpodReadInitStateTest extends _RiverpodRuleTest {
   @override
   void setUp() {
@@ -65,7 +62,7 @@ class SchedulerBinding {
 ''');
   }
 
-  Future<void> test_allowsReadInAnotherMethod() async {
+  Future<void> _allowsReadInAnotherMethod() async {
     await assertAllows(r'''
 final provider = Object();
 class Ref { Object read(Object value) => value; }
@@ -77,7 +74,7 @@ class View {
 ''');
   }
 
-  Future<void> test_reportsReadInsidePostFrameCallback() async {
+  Future<void> _reportsReadInsidePostFrameCallback() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:flutter/scheduler.dart';
 final provider = Object();
@@ -92,7 +89,7 @@ class View {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, needle, ruleName)]);
   }
 
-  Future<void> test_reportsReadInsideMicrotask() async {
+  Future<void> _reportsReadInsideMicrotask() async {
     final analyzedSource = _analyzedSource(r'''
 import 'dart:async';
 final provider = Object();
@@ -107,7 +104,7 @@ class View {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, needle, ruleName)]);
   }
 
-  Future<void> test_reportsImmediatelyInvokedRead() async {
+  Future<void> _reportsImmediatelyInvokedRead() async {
     final analyzedSource = _analyzedSource(r'''
 final provider = Object();
 class Ref { Object read(Object value) => value; }
@@ -121,7 +118,7 @@ class View {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, needle, ruleName)]);
   }
 
-  Future<void> test_reportsSynchronousCallback() async {
+  Future<void> _reportsSynchronousCallback() async {
     final analyzedSource = _analyzedSource(r'''
 final provider = Object();
 class Ref { Object read(Object value) => value; }
@@ -157,7 +154,6 @@ class TodosState {
 ''';
 }
 
-@reflectiveTest
 final class RiverpodServiceLocatorTest extends _RiverpodRuleTest {
   @override
   String get ruleName => 'riverpod_service_locator';
@@ -166,7 +162,7 @@ final class RiverpodServiceLocatorTest extends _RiverpodRuleTest {
   @override
   String get source => 'class ServiceLocator {}';
 
-  Future<void> test_reportsPrefixedLocatorAndFactoryClasses() async {
+  Future<void> _reportsPrefixedLocatorAndFactoryClasses() async {
     const source = r'''
 class AppServiceLocator {
   final Map<Type, Object> registry = {};
@@ -183,7 +179,7 @@ class LegacyBackendProvider {}
     ]);
   }
 
-  Future<void> test_allowsNamesThatOnlyContainTheBannedWords() async {
+  Future<void> _allowsNamesThatOnlyContainTheBannedWords() async {
     await assertAllows(r'''
 class ServiceLocatorException implements Exception {}
 class BackendProviderConfig {}
@@ -193,7 +189,6 @@ const note = 'class ServiceLocator {}';
   }
 }
 
-@reflectiveTest
 final class RiverpodManualProviderTest extends _RiverpodRuleTest {
   @override
   void setUp() {
@@ -216,7 +211,7 @@ class Ref {}
 final featureNavigationCoordinatorProvider = Provider((ref) => Object());
 ''';
 
-  Future<void> test_reportsTypedManualProvider() async {
+  Future<void> _reportsTypedManualProvider() async {
     final analyzedSource = _analyzedSource(r'''
 class Provider<T> {
   const Provider(T Function(Ref ref) create);
@@ -232,7 +227,7 @@ final itemRepositoryProvider = Provider<Object>((ref) => Object());
     ]);
   }
 
-  Future<void> test_reportsFamilyProvider() async {
+  Future<void> _reportsFamilyProvider() async {
     final analyzedSource = _analyzedSource(r'''
 class Provider {
   static Object family(Object create) => Object();
@@ -246,7 +241,7 @@ final itemByIdProvider = Provider.family((ref, id) => Object());
     ]);
   }
 
-  Future<void> test_reportsGenericFamilyProvider() async {
+  Future<void> _reportsGenericFamilyProvider() async {
     final analyzedSource = _analyzedSource(r'''
 class Provider {
   static Object family<T, Arg>(Object create) => Object();
@@ -266,7 +261,7 @@ final availableOptionsProvider = Provider.family<List<Exercise>, String>((ref, i
     ]);
   }
 
-  Future<void> test_reportsMultilineGenericFamilyProvider() async {
+  Future<void> _reportsMultilineGenericFamilyProvider() async {
     final analyzedSource = _analyzedSource(r'''
 class Provider {
   static Object family<T, Arg>(Object create) => Object();
@@ -287,7 +282,7 @@ final availableOptionsProvider =
     ]);
   }
 
-  Future<void> test_reportsOtherManualProviderTypes() async {
+  Future<void> _reportsOtherManualProviderTypes() async {
     final analyzedSource = _analyzedSource(r'''
 class FutureProvider<T> {
   const FutureProvider(Object create);
@@ -307,7 +302,7 @@ final itemStreamProvider = StreamProvider<Object>((ref) => Object());
     ]);
   }
 
-  Future<void> test_allowsGeneratedProviderDeclaration() async {
+  Future<void> _allowsGeneratedProviderDeclaration() async {
     await assertAllows(r'''
 final featureNavigationCoordinatorProvider = FeatureNavigationCoordinatorProvider._();
 
@@ -317,7 +312,7 @@ final class FeatureNavigationCoordinatorProvider {
 ''');
   }
 
-  Future<void> test_allowsProviderScope() async {
+  Future<void> _allowsProviderScope() async {
     await assertAllows(r'''
 class ProviderScope {
   const ProviderScope({required Object child});
@@ -327,7 +322,7 @@ final scope = ProviderScope(child: Object());
 ''');
   }
 
-  Future<void> test_reportsResolvedTypedAndReturnedProviders() async {
+  Future<void> _reportsResolvedTypedAndReturnedProviders() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -345,7 +340,7 @@ final ProviderFamily<int, String> lengthProvider =
     ]);
   }
 
-  Future<void> test_reportsResolvedUntypedProvidersOnce() async {
+  Future<void> _reportsResolvedUntypedProvidersOnce() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -361,7 +356,7 @@ final multiLineProvider =
     ]);
   }
 
-  Future<void> test_allowsGeneratedProviderSubclassesAndFamilyCalls() async {
+  Future<void> _allowsGeneratedProviderSubclassesAndFamilyCalls() async {
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -379,7 +374,6 @@ int read(Ref ref, ProviderFamily<int, String> family) {
   }
 }
 
-@reflectiveTest
 final class RiverpodNotifierOverrideWithValueTest extends _RiverpodRuleTest {
   @override
   String get ruleName => 'riverpod_notifier_override_with_value';
@@ -400,7 +394,7 @@ class AppInitState {
 }
 ''';
 
-  Future<void> test_reportsSingleLineStateConstructorOverride() async {
+  Future<void> _reportsSingleLineStateConstructorOverride() async {
     final analyzedSource = _analyzedSource(r'''
 final overrides = [
   onboardingProvider.overrideWithValue(const OnboardingState(isLoading: false)),
@@ -418,7 +412,7 @@ class OnboardingState {
     ]);
   }
 
-  Future<void> test_allowsNotifierFactoryOverride() async {
+  Future<void> _allowsNotifierFactoryOverride() async {
     await assertAllows(r'''
 final overrides = [
   onboardingProvider.overrideWith(E2eOnboardingNotifier.new),
@@ -428,7 +422,7 @@ class E2eOnboardingNotifier {}
 ''');
   }
 
-  Future<void> test_allowsRepositoryValueOverride() async {
+  Future<void> _allowsRepositoryValueOverride() async {
     await assertAllows(r'''
 final overrides = [
   authRepositoryProvider.overrideWithValue(authRepository),
@@ -438,7 +432,7 @@ final authRepository = Object();
 ''');
   }
 
-  Future<void> test_allowsAsyncValueOverride() async {
+  Future<void> _allowsAsyncValueOverride() async {
     await assertAllows(r'''
 final overrides = [
   userProvider.overrideWithValue(AsyncValue.data(const User(id: '1'))),
@@ -456,7 +450,7 @@ class User {
 ''');
   }
 
-  Future<void> test_allowsTestFileStateOverride() async {
+  Future<void> _allowsTestFileStateOverride() async {
     await assertAllows(r'''
 final overrides = [
   authProvider.overrideWithValue(const AuthState()),
@@ -469,7 +463,6 @@ class AuthState {
   }
 }
 
-@reflectiveTest
 final class RiverpodConsumerStateDerivedCacheTest extends _RiverpodRuleTest {
   @override
   void setUp() {
@@ -495,7 +488,7 @@ class _MemberDetailHistoryCardState extends ConsumerState<MemberDetailHistoryCar
 }
 ''';
 
-  Future<void> test_reportsDayStartMemoizationField() async {
+  Future<void> _reportsDayStartMemoizationField() async {
     final analyzedSource = _analyzedSource(r'''
 class MemberDetailTopLiftsCard extends ConsumerStatefulWidget {}
 
@@ -516,7 +509,7 @@ class _MemberDetailTopLiftsCardState extends ConsumerState<MemberDetailTopLiftsC
     ]);
   }
 
-  Future<void> test_reportsDerivedIndexField() async {
+  Future<void> _reportsDerivedIndexField() async {
     final analyzedSource = _analyzedSource(r'''
 class ExercisePickerSheet extends ConsumerStatefulWidget {}
 
@@ -535,7 +528,7 @@ class _ExercisePickerSheetState extends ConsumerState<ExercisePickerSheet> {
     ]);
   }
 
-  Future<void> test_reportsResolvedProviderDerivedFields() async {
+  Future<void> _reportsResolvedProviderDerivedFields() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -580,7 +573,7 @@ class _HistoryCardState extends ConsumerState<HistoryCard> {
     ]);
   }
 
-  Future<void> test_allowsLifecycleHandlesSeededFromProviders() async {
+  Future<void> _allowsLifecycleHandlesSeededFromProviders() async {
     await assertAllows(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -615,11 +608,11 @@ class _NameFieldState extends ConsumerState<NameField> {
 ''', addIgnorePrefix: false);
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(rule.diagnosticCodes.single.severity, DiagnosticSeverity.ERROR);
   }
 
-  Future<void> test_allowsControllerStateWithProviderWatch() async {
+  Future<void> _allowsControllerStateWithProviderWatch() async {
     await assertAllows(r'''
 class TextEditingController {}
 
@@ -637,7 +630,7 @@ class _SearchSheetState extends ConsumerState<SearchSheet> {
 ''');
   }
 
-  Future<void> test_allowsNonConsumerStateMemoizationHelper() async {
+  Future<void> _allowsNonConsumerStateMemoizationHelper() async {
     await assertAllows(r'''
 class HistoryPresenter {
   List<Object>? _historySource;
@@ -647,7 +640,6 @@ class HistoryPresenter {
   }
 }
 
-@reflectiveTest
 final class RiverpodWidgetProviderArgWrapperTest extends _RiverpodRuleTest {
   @override
   String get ruleName => 'riverpod_widget_provider_arg_wrapper';
@@ -674,7 +666,7 @@ class _ExercisePickerScreenState extends ConsumerState<ExercisePickerScreen> {
 }
 ''';
 
-  Future<void> test_reportsConsumerStateProviderArgField() async {
+  Future<void> _reportsConsumerStateProviderArgField() async {
     final analyzedSource = _analyzedSource(r'''
 class ExercisePickerArgs {
   const ExercisePickerArgs(this.workoutId);
@@ -700,7 +692,7 @@ class _ExercisePickerScreenState extends ConsumerState<ExercisePickerScreen> {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '_args', ruleName)]);
   }
 
-  Future<void> test_reportsBuildLocalProviderArgWrapper() async {
+  Future<void> _reportsBuildLocalProviderArgWrapper() async {
     final analyzedSource = _analyzedSource(r'''
 class ExercisePickerConfig {
   const ExercisePickerConfig({required this.workoutId});
@@ -719,7 +711,7 @@ class ExercisePickerScreen {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'config', ruleName)]);
   }
 
-  Future<void> test_reportsInlineProviderArgWrapper() async {
+  Future<void> _reportsInlineProviderArgWrapper() async {
     final analyzedSource = _analyzedSource(r'''
 class ExercisePickerConfig {
   const ExercisePickerConfig({required this.workoutId});
@@ -743,7 +735,7 @@ class ExercisePickerScreen {
     ]);
   }
 
-  Future<void> test_allowsDirectProviderIdArg() async {
+  Future<void> _allowsDirectProviderIdArg() async {
     await assertAllows(r'''
 class ExercisePickerScreen extends ConsumerStatefulWidget {
   String get workoutId => 'workout-1';
@@ -757,7 +749,7 @@ class _ExercisePickerScreenState extends ConsumerState<ExercisePickerScreen> {
 ''');
   }
 
-  Future<void> test_allowsUiConfigNotPassedToProvider() async {
+  Future<void> _allowsUiConfigNotPassedToProvider() async {
     await assertAllows(r'''
 class ButtonConfig {
   const ButtonConfig();
@@ -779,7 +771,6 @@ class FormSection {
   }
 }
 
-@reflectiveTest
 final class RiverpodConsumerStateProviderSubscriptionTest extends _RiverpodRuleTest {
   @override
   String get ruleName => 'riverpod_consumer_state_provider_subscription';
@@ -798,7 +789,7 @@ class _BentoExerciseCardState extends ConsumerState<BentoExerciseCard> {
 }
 ''';
 
-  Future<void> test_reportsPrefixedProviderSubscriptionField() async {
+  Future<void> _reportsPrefixedProviderSubscriptionField() async {
     final analyzedSource = _analyzedSource(r'''
 class ProviderSubscription<T> {
   void close() {}
@@ -820,7 +811,7 @@ class _ExerciseDemoSheetState extends ConsumerState<ExerciseDemoSheet> {
     ]);
   }
 
-  Future<void> test_allowsRefListenInBuildWithoutStoredHandle() async {
+  Future<void> _allowsRefListenInBuildWithoutStoredHandle() async {
     await assertAllows(r'''
 class ExerciseStatsSheet extends ConsumerStatefulWidget {}
 
@@ -835,7 +826,7 @@ class _ExerciseStatsSheetState extends ConsumerState<ExerciseStatsSheet> {
 ''');
   }
 
-  Future<void> test_allowsProviderSubscriptionOutsideWidgetState() async {
+  Future<void> _allowsProviderSubscriptionOutsideWidgetState() async {
     await assertAllows(r'''
 class ProviderSubscription<T> {
   void close() {}
@@ -848,7 +839,6 @@ class ExerciseLifecycleCoordinator {
   }
 }
 
-@reflectiveTest
 final class RiverpodListenManualForbiddenTest extends _RiverpodRuleTest {
   @override
   String get ruleName => 'riverpod_listen_manual_forbidden';
@@ -865,7 +855,7 @@ class _DisplayNameSheetState extends ConsumerState<DisplayNameSheetState> {
 }
 ''';
 
-  Future<void> test_reportsAssignedListenManual() async {
+  Future<void> _reportsAssignedListenManual() async {
     final analyzedSource = _analyzedSource(r'''
 class HomeScreen extends ConsumerStatefulWidget {}
 
@@ -882,7 +872,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ]);
   }
 
-  Future<void> test_reportsListenManualInTests() async {
+  Future<void> _reportsListenManualInTests() async {
     final analyzedSource = _analyzedSource(r'''
 void main() {
   testWidgets('wires listener', (tester) async {
@@ -898,7 +888,7 @@ void main() {
     ]);
   }
 
-  Future<void> test_allowsRefListenInBuild() async {
+  Future<void> _allowsRefListenInBuild() async {
     await assertAllows(r'''
 class HomeScreen extends ConsumerStatefulWidget {}
 
@@ -910,4 +900,115 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 }
 ''');
   }
+}
+
+void _defineSourceScannerRulesPart01Tests() {
+  analysisRuleSuite<RiverpodReadInitStateTest>(
+    'RiverpodReadInitStateTest',
+    RiverpodReadInitStateTest.new,
+    {
+      'test_allowsReadInAnotherMethod': (t) => t._allowsReadInAnotherMethod(),
+      'test_reportsReadInsidePostFrameCallback': (t) => t._reportsReadInsidePostFrameCallback(),
+      'test_reportsReadInsideMicrotask': (t) => t._reportsReadInsideMicrotask(),
+      'test_reportsImmediatelyInvokedRead': (t) => t._reportsImmediatelyInvokedRead(),
+      'test_reportsSynchronousCallback': (t) => t._reportsSynchronousCallback(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodServiceLocatorTest>(
+    'RiverpodServiceLocatorTest',
+    RiverpodServiceLocatorTest.new,
+    {
+      'test_reportsPrefixedLocatorAndFactoryClasses': (t) =>
+          t._reportsPrefixedLocatorAndFactoryClasses(),
+      'test_allowsNamesThatOnlyContainTheBannedWords': (t) =>
+          t._allowsNamesThatOnlyContainTheBannedWords(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodManualProviderTest>(
+    'RiverpodManualProviderTest',
+    RiverpodManualProviderTest.new,
+    {
+      'test_reportsTypedManualProvider': (t) => t._reportsTypedManualProvider(),
+      'test_reportsFamilyProvider': (t) => t._reportsFamilyProvider(),
+      'test_reportsGenericFamilyProvider': (t) => t._reportsGenericFamilyProvider(),
+      'test_reportsMultilineGenericFamilyProvider': (t) =>
+          t._reportsMultilineGenericFamilyProvider(),
+      'test_reportsOtherManualProviderTypes': (t) => t._reportsOtherManualProviderTypes(),
+      'test_allowsGeneratedProviderDeclaration': (t) => t._allowsGeneratedProviderDeclaration(),
+      'test_allowsProviderScope': (t) => t._allowsProviderScope(),
+      'test_reportsResolvedTypedAndReturnedProviders': (t) =>
+          t._reportsResolvedTypedAndReturnedProviders(),
+      'test_reportsResolvedUntypedProvidersOnce': (t) => t._reportsResolvedUntypedProvidersOnce(),
+      'test_allowsGeneratedProviderSubclassesAndFamilyCalls': (t) =>
+          t._allowsGeneratedProviderSubclassesAndFamilyCalls(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodNotifierOverrideWithValueTest>(
+    'RiverpodNotifierOverrideWithValueTest',
+    RiverpodNotifierOverrideWithValueTest.new,
+    {
+      'test_reportsSingleLineStateConstructorOverride': (t) =>
+          t._reportsSingleLineStateConstructorOverride(),
+      'test_allowsNotifierFactoryOverride': (t) => t._allowsNotifierFactoryOverride(),
+      'test_allowsRepositoryValueOverride': (t) => t._allowsRepositoryValueOverride(),
+      'test_allowsAsyncValueOverride': (t) => t._allowsAsyncValueOverride(),
+      'test_allowsTestFileStateOverride': (t) => t._allowsTestFileStateOverride(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodConsumerStateDerivedCacheTest>(
+    'RiverpodConsumerStateDerivedCacheTest',
+    RiverpodConsumerStateDerivedCacheTest.new,
+    {
+      'test_reportsDayStartMemoizationField': (t) => t._reportsDayStartMemoizationField(),
+      'test_reportsDerivedIndexField': (t) => t._reportsDerivedIndexField(),
+      'test_reportsResolvedProviderDerivedFields': (t) => t._reportsResolvedProviderDerivedFields(),
+      'test_allowsLifecycleHandlesSeededFromProviders': (t) =>
+          t._allowsLifecycleHandlesSeededFromProviders(),
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_allowsControllerStateWithProviderWatch': (t) =>
+          t._allowsControllerStateWithProviderWatch(),
+      'test_allowsNonConsumerStateMemoizationHelper': (t) =>
+          t._allowsNonConsumerStateMemoizationHelper(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodWidgetProviderArgWrapperTest>(
+    'RiverpodWidgetProviderArgWrapperTest',
+    RiverpodWidgetProviderArgWrapperTest.new,
+    {
+      'test_reportsConsumerStateProviderArgField': (t) => t._reportsConsumerStateProviderArgField(),
+      'test_reportsBuildLocalProviderArgWrapper': (t) => t._reportsBuildLocalProviderArgWrapper(),
+      'test_reportsInlineProviderArgWrapper': (t) => t._reportsInlineProviderArgWrapper(),
+      'test_allowsDirectProviderIdArg': (t) => t._allowsDirectProviderIdArg(),
+      'test_allowsUiConfigNotPassedToProvider': (t) => t._allowsUiConfigNotPassedToProvider(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodConsumerStateProviderSubscriptionTest>(
+    'RiverpodConsumerStateProviderSubscriptionTest',
+    RiverpodConsumerStateProviderSubscriptionTest.new,
+    {
+      'test_reportsPrefixedProviderSubscriptionField': (t) =>
+          t._reportsPrefixedProviderSubscriptionField(),
+      'test_allowsRefListenInBuildWithoutStoredHandle': (t) =>
+          t._allowsRefListenInBuildWithoutStoredHandle(),
+      'test_allowsProviderSubscriptionOutsideWidgetState': (t) =>
+          t._allowsProviderSubscriptionOutsideWidgetState(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodListenManualForbiddenTest>(
+    'RiverpodListenManualForbiddenTest',
+    RiverpodListenManualForbiddenTest.new,
+    {
+      'test_reportsAssignedListenManual': (t) => t._reportsAssignedListenManual(),
+      'test_reportsListenManualInTests': (t) => t._reportsListenManualInTests(),
+      'test_allowsRefListenInBuild': (t) => t._allowsRefListenInBuild(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

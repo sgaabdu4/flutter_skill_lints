@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class RiverpodSelectIdentityForbiddenTest extends _RiverpodRuleTest {
   @override
   String get ruleName => 'riverpod_select_identity_forbidden';
@@ -34,7 +31,7 @@ class TodoTitle {
 }
 ''';
 
-  Future<void> test_allowsFieldSelect() async {
+  Future<void> _allowsFieldSelect() async {
     await assertAllows(r'''
 class ProviderArg<T> {
   Object select(Object Function(T value) selector) => Object();
@@ -61,7 +58,7 @@ class TodoTitle {
 ''');
   }
 
-  Future<void> test_allowsRecordSelect() async {
+  Future<void> _allowsRecordSelect() async {
     await assertAllows(r'''
 class ProviderArg<T> {
   Object select(Object Function(T value) selector) => Object();
@@ -89,7 +86,7 @@ class TodoTitle {
 ''');
   }
 
-  Future<void> test_allowsNonRiverpodIdentitySelectApi() async {
+  Future<void> _allowsNonRiverpodIdentitySelectApi() async {
     await assertAllows(r'''
 class Query<T> {
   Object select(Object Function(T value) selector) => Object();
@@ -101,7 +98,7 @@ final selected = query.select((value) => value);
 ''');
   }
 
-  Future<void> test_reportsTypedIdentitySelect() async {
+  Future<void> _reportsTypedIdentitySelect() async {
     final analyzedSource = _analyzedSource(r'''
 class ProviderArg<T> {
   Object select(Object Function(T value) selector) => Object();
@@ -132,7 +129,7 @@ class TodoTitle {
     ]);
   }
 
-  Future<void> test_reportsMultilineIdentitySelect() async {
+  Future<void> _reportsMultilineIdentitySelect() async {
     final analyzedSource = _analyzedSource(r'''
 class ProviderArg<T> {
   Object select(Object Function(T value) selector) => Object();
@@ -190,7 +187,6 @@ abstract class _RiverpodMutationRuleTest extends _RiverpodRuleTest {
   }
 }
 
-@reflectiveTest
 final class RiverpodMutationExperimentalWarningTest extends _RiverpodMutationRuleTest {
   @override
   String get ruleName => 'riverpod_mutation_experimental_warning';
@@ -205,7 +201,7 @@ import 'package:riverpod/riverpod.dart';
 final removeTodoMutation = Mutation<void>();
 ''';
 
-  Future<void> test_allowsDocumentedTrailingExperimentalNote() async {
+  Future<void> _allowsDocumentedTrailingExperimentalNote() async {
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -213,7 +209,7 @@ final addTodoMutation = Mutation<void>(); // experimental API — may change wit
 ''', path: path);
   }
 
-  Future<void> test_allowsLeadingExperimentalNote() async {
+  Future<void> _allowsLeadingExperimentalNote() async {
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -222,7 +218,7 @@ final addTodoMutation = Mutation<void>();
 ''', path: path);
   }
 
-  Future<void> test_reportsMutationBesideNeighbourExperimentalNote() async {
+  Future<void> _reportsMutationBesideNeighbourExperimentalNote() async {
     final analyzedSource = _analyzedSource(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -233,7 +229,7 @@ final removeTodoMutation = Mutation<int>();
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'Mutation<int>()', ruleName)]);
   }
 
-  Future<void> test_allowsLocalMutationLookalike() async {
+  Future<void> _allowsLocalMutationLookalike() async {
     await assertAllows(r'''
 class Mutation<T> {
   const Mutation();
@@ -243,7 +239,7 @@ final widget = Mutation<int>();
 ''', path: path);
   }
 
-  Future<void> test_allowsQualifiedNonRiverpodMutation() async {
+  Future<void> _allowsQualifiedNonRiverpodMutation() async {
     await assertAllows(r'''
 class Graphql {
   const Graphql();
@@ -258,7 +254,6 @@ final saveMutation = graphql.Mutation<int>();
   }
 }
 
-@reflectiveTest
 final class RiverpodMutationTopLevelTest extends _RiverpodMutationRuleTest {
   @override
   String get ruleName => 'riverpod_mutation_top_level';
@@ -276,7 +271,7 @@ class AddTodoScreen {
 }
 ''';
 
-  Future<void> test_allowsDocumentedFileScopeFinal() async {
+  Future<void> _allowsDocumentedFileScopeFinal() async {
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -284,7 +279,7 @@ final addTodoMutation = Mutation<void>(); // experimental API — may change wit
 ''');
   }
 
-  Future<void> test_reportsStaticClassField() async {
+  Future<void> _reportsStaticClassField() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -295,7 +290,7 @@ class TodoMutations {
     await assertDiagnostics(source, [compatLint(source, needle, ruleName)]);
   }
 
-  Future<void> test_reportsNonFinalTopLevel() async {
+  Future<void> _reportsNonFinalTopLevel() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -304,7 +299,7 @@ var addTodoMutation = Mutation<void>();
     await assertDiagnostics(source, [compatLint(source, needle, ruleName)]);
   }
 
-  Future<void> test_allowsLocalMutationLookalike() async {
+  Future<void> _allowsLocalMutationLookalike() async {
     await assertAllows(r'''
 class Mutation<T> {}
 
@@ -316,7 +311,6 @@ Object build() {
   }
 }
 
-@reflectiveTest
 final class RiverpodMutationRefReadTest extends _RiverpodMutationRuleTest {
   @override
   String get ruleName => 'riverpod_mutation_ref_read';
@@ -337,7 +331,7 @@ void onPressed(Ref ref) {
 }
 ''';
 
-  Future<void> test_allowsDocumentedTransactionGet() async {
+  Future<void> _allowsDocumentedTransactionGet() async {
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -353,7 +347,7 @@ void onPressed(Ref ref) {
 ''');
   }
 
-  Future<void> test_allowsRefReadOutsideMutationCallback() async {
+  Future<void> _allowsRefReadOutsideMutationCallback() async {
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -368,7 +362,7 @@ void onPressed(Ref ref) {
 ''');
   }
 
-  Future<void> test_allowsReadInLookalikeRun() async {
+  Future<void> _allowsReadInLookalikeRun() async {
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -417,7 +411,6 @@ extension AsyncValueExtensions<T> on AsyncValue<T> {
 ''';
 
 /// freezed-sealed.md:9 matches unions with `switch`, never `.when()`/`.map()`; Riverpod AsyncValue is sealed (freezed-sealed.md:136-146).
-@reflectiveTest
 final class AsyncValueSwitchOverWhenTest extends _RiverpodRuleTest {
   @override
   void setUp() {
@@ -440,7 +433,7 @@ String label(AsyncValue<int> result) => result.when(
 );
 ''';
 
-  Future<void> test_reportsEveryWhenAndMapHelper() async {
+  Future<void> _reportsEveryWhenAndMapHelper() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -461,7 +454,7 @@ class ResultView {
     ]);
   }
 
-  Future<void> test_allowsSkillSealedSwitchAndWhenData() async {
+  Future<void> _allowsSkillSealedSwitchAndWhenData() async {
     await assertAllows(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -478,7 +471,7 @@ class ResultView {
 ''');
   }
 
-  Future<void> test_allowsSameNamedLocalAsyncValue() async {
+  Future<void> _allowsSameNamedLocalAsyncValue() async {
     await assertAllows(r'''
 class AsyncValue<T> {
   R when<R>({required R Function(T value) data}) => throw StateError('synthetic');
@@ -493,7 +486,6 @@ Object label(AsyncValue<int> result) => (
   }
 }
 
-@reflectiveTest
 final class RiverpodAutoDisposeKeepAliveDependenciesTest extends _RiverpodRuleTest {
   @override
   String get ruleName => 'riverpod_auto_dispose_keepalive_dependencies';
@@ -560,7 +552,7 @@ const manualProvider = ProviderListenable<int>();
 ''');
   }
 
-  Future<void> test_reportsSameFileClassNotifier() async {
+  Future<void> _reportsSameFileClassNotifier() async {
     const source = r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -580,7 +572,7 @@ class ItemSummaryNotifier {
     await assertDiagnostics(source, [compatLint(source, '@riverpod\nclass', ruleName)]);
   }
 
-  Future<void> test_allowsMixedKeepAliveAndAutoDisposeDependencies() async {
+  Future<void> _allowsMixedKeepAliveAndAutoDisposeDependencies() async {
     await assertAllows(r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'sources.dart';
@@ -590,7 +582,7 @@ int cartTotal(Ref ref) => ref.watch(cartItemsProvider).length - ref.watch(discou
 ''', addIgnorePrefix: false);
   }
 
-  Future<void> test_allowsUnresolvedDependency() async {
+  Future<void> _allowsUnresolvedDependency() async {
     await assertAllows(r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'sources.dart';
@@ -600,7 +592,7 @@ int cartTotal(Ref ref) => ref.watch(cartItemsProvider).length + ref.watch(manual
 ''', addIgnorePrefix: false);
   }
 
-  Future<void> test_allowsAlreadyKeepAlive() async {
+  Future<void> _allowsAlreadyKeepAlive() async {
     await assertAllows(r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'sources.dart';
@@ -610,7 +602,7 @@ int cartTotal(Ref ref) => ref.watch(cartItemsProvider).length;
 ''', addIgnorePrefix: false);
   }
 
-  Future<void> test_allowsFamilyProviderTarget() async {
+  Future<void> _allowsFamilyProviderTarget() async {
     await assertAllows(r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'sources.dart';
@@ -620,7 +612,7 @@ int cartTotal(Ref ref, int multiplier) => ref.watch(cartItemsProvider).length * 
 ''', addIgnorePrefix: false);
   }
 
-  Future<void> test_allowsFamilyNotifierTarget() async {
+  Future<void> _allowsFamilyNotifierTarget() async {
     await assertAllows(r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'sources.dart';
@@ -634,7 +626,7 @@ class CartTotalNotifier {
 ''', addIgnorePrefix: false);
   }
 
-  Future<void> test_allowsReadOnlyKeepAliveProviderUse() async {
+  Future<void> _allowsReadOnlyKeepAliveProviderUse() async {
     await assertAllows(r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'sources.dart';
@@ -645,7 +637,6 @@ int cartTotal(Ref ref) => ref.read(cartItemsProvider).length;
   }
 }
 
-@reflectiveTest
 final class RiverpodFeatureNotifierKeepaliveTest extends _RiverpodRuleTest {
   @override
   String get ruleName => 'riverpod_feature_notifier_keepalive';
@@ -664,7 +655,7 @@ class HistoryCalendarNotifier {
 }
 ''';
 
-  Future<void> test_reportsExplicitKeepAliveFalse() async {
+  Future<void> _reportsExplicitKeepAliveFalse() async {
     final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -682,7 +673,7 @@ class HistoryCalendarNotifier {
     ]);
   }
 
-  Future<void> test_allowsKeepAliveFeatureNotifier() async {
+  Future<void> _allowsKeepAliveFeatureNotifier() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -695,7 +686,7 @@ class HistoryCalendarNotifier {
 ''', path: path);
   }
 
-  Future<void> test_allowsFamilyFeatureNotifier() async {
+  Future<void> _allowsFamilyFeatureNotifier() async {
     await assertAllows(r'''
 const riverpod = Object();
 
@@ -706,7 +697,7 @@ class ItemEditorNotifier {
 ''', path: '$testPackageLibPath/features/items/presentation/notifiers/item_editor_notifier.dart');
   }
 
-  Future<void> test_allowsComputedFunctionProviderInNotifierFile() async {
+  Future<void> _allowsComputedFunctionProviderInNotifierFile() async {
     await assertAllows(r'''
 const riverpod = Object();
 
@@ -717,7 +708,7 @@ Object historyCalendarSessions(Ref ref) => Object();
 ''', path: path);
   }
 
-  Future<void> test_allowsDocumentedEphemeralNotifier() async {
+  Future<void> _allowsDocumentedEphemeralNotifier() async {
     await assertAllows(r'''
 const riverpod = Object();
 
@@ -729,7 +720,7 @@ class ItemDraftNotifier {
 ''', path: '$testPackageLibPath/features/items/presentation/notifiers/item_draft_notifier.dart');
   }
 
-  Future<void> test_allowsLifecycleCleanupNotifier() async {
+  Future<void> _allowsLifecycleCleanupNotifier() async {
     await assertAllows(
       r'''
 const riverpod = Object();
@@ -753,7 +744,7 @@ class EntryTimerNotifier {
     );
   }
 
-  Future<void> test_allowsNotifierOutsideFeaturePresentationNotifiers() async {
+  Future<void> _allowsNotifierOutsideFeaturePresentationNotifiers() async {
     await assertAllows(r'''
 const riverpod = Object();
 
@@ -764,7 +755,99 @@ class DraftNotifier {
 ''', path: '$testPackageLibPath/core/notifiers/draft_notifier.dart');
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(rule.diagnosticCodes.single.severity, DiagnosticSeverity.ERROR);
   }
+}
+
+void _defineSourceScannerRulesPart03Tests() {
+  analysisRuleSuite<RiverpodSelectIdentityForbiddenTest>(
+    'RiverpodSelectIdentityForbiddenTest',
+    RiverpodSelectIdentityForbiddenTest.new,
+    {
+      'test_allowsFieldSelect': (t) => t._allowsFieldSelect(),
+      'test_allowsRecordSelect': (t) => t._allowsRecordSelect(),
+      'test_allowsNonRiverpodIdentitySelectApi': (t) => t._allowsNonRiverpodIdentitySelectApi(),
+      'test_reportsTypedIdentitySelect': (t) => t._reportsTypedIdentitySelect(),
+      'test_reportsMultilineIdentitySelect': (t) => t._reportsMultilineIdentitySelect(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodMutationExperimentalWarningTest>(
+    'RiverpodMutationExperimentalWarningTest',
+    RiverpodMutationExperimentalWarningTest.new,
+    {
+      'test_allowsDocumentedTrailingExperimentalNote': (t) =>
+          t._allowsDocumentedTrailingExperimentalNote(),
+      'test_allowsLeadingExperimentalNote': (t) => t._allowsLeadingExperimentalNote(),
+      'test_reportsMutationBesideNeighbourExperimentalNote': (t) =>
+          t._reportsMutationBesideNeighbourExperimentalNote(),
+      'test_allowsLocalMutationLookalike': (t) => t._allowsLocalMutationLookalike(),
+      'test_allowsQualifiedNonRiverpodMutation': (t) => t._allowsQualifiedNonRiverpodMutation(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodMutationTopLevelTest>(
+    'RiverpodMutationTopLevelTest',
+    RiverpodMutationTopLevelTest.new,
+    {
+      'test_allowsDocumentedFileScopeFinal': (t) => t._allowsDocumentedFileScopeFinal(),
+      'test_reportsStaticClassField': (t) => t._reportsStaticClassField(),
+      'test_reportsNonFinalTopLevel': (t) => t._reportsNonFinalTopLevel(),
+      'test_allowsLocalMutationLookalike': (t) => t._allowsLocalMutationLookalike(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodMutationRefReadTest>(
+    'RiverpodMutationRefReadTest',
+    RiverpodMutationRefReadTest.new,
+    {
+      'test_allowsDocumentedTransactionGet': (t) => t._allowsDocumentedTransactionGet(),
+      'test_allowsRefReadOutsideMutationCallback': (t) => t._allowsRefReadOutsideMutationCallback(),
+      'test_allowsReadInLookalikeRun': (t) => t._allowsReadInLookalikeRun(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<AsyncValueSwitchOverWhenTest>(
+    'AsyncValueSwitchOverWhenTest',
+    AsyncValueSwitchOverWhenTest.new,
+    {
+      'test_reportsEveryWhenAndMapHelper': (t) => t._reportsEveryWhenAndMapHelper(),
+      'test_allowsSkillSealedSwitchAndWhenData': (t) => t._allowsSkillSealedSwitchAndWhenData(),
+      'test_allowsSameNamedLocalAsyncValue': (t) => t._allowsSameNamedLocalAsyncValue(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodAutoDisposeKeepAliveDependenciesTest>(
+    'RiverpodAutoDisposeKeepAliveDependenciesTest',
+    RiverpodAutoDisposeKeepAliveDependenciesTest.new,
+    {
+      'test_reportsSameFileClassNotifier': (t) => t._reportsSameFileClassNotifier(),
+      'test_allowsMixedKeepAliveAndAutoDisposeDependencies': (t) =>
+          t._allowsMixedKeepAliveAndAutoDisposeDependencies(),
+      'test_allowsUnresolvedDependency': (t) => t._allowsUnresolvedDependency(),
+      'test_allowsAlreadyKeepAlive': (t) => t._allowsAlreadyKeepAlive(),
+      'test_allowsFamilyProviderTarget': (t) => t._allowsFamilyProviderTarget(),
+      'test_allowsFamilyNotifierTarget': (t) => t._allowsFamilyNotifierTarget(),
+      'test_allowsReadOnlyKeepAliveProviderUse': (t) => t._allowsReadOnlyKeepAliveProviderUse(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RiverpodFeatureNotifierKeepaliveTest>(
+    'RiverpodFeatureNotifierKeepaliveTest',
+    RiverpodFeatureNotifierKeepaliveTest.new,
+    {
+      'test_reportsExplicitKeepAliveFalse': (t) => t._reportsExplicitKeepAliveFalse(),
+      'test_allowsKeepAliveFeatureNotifier': (t) => t._allowsKeepAliveFeatureNotifier(),
+      'test_allowsFamilyFeatureNotifier': (t) => t._allowsFamilyFeatureNotifier(),
+      'test_allowsComputedFunctionProviderInNotifierFile': (t) =>
+          t._allowsComputedFunctionProviderInNotifierFile(),
+      'test_allowsDocumentedEphemeralNotifier': (t) => t._allowsDocumentedEphemeralNotifier(),
+      'test_allowsLifecycleCleanupNotifier': (t) => t._allowsLifecycleCleanupNotifier(),
+      'test_allowsNotifierOutsideFeaturePresentationNotifiers': (t) =>
+          t._allowsNotifierOutsideFeaturePresentationNotifiers(),
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

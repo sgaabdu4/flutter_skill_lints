@@ -1,20 +1,36 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_implementation_in_mocks.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/pass_mock_object.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_intl_name.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidImplementationInMocksTest);
-    defineReflectiveTests(PassMockObjectTest);
-    defineReflectiveTests(PreferIntlNameTest);
+  analysisRuleSuite<AvoidImplementationInMocksTest>(
+    'AvoidImplementationInMocksTest',
+    AvoidImplementationInMocksTest.new,
+    {
+      'test_overrideMethodInMock_lint': (t) => t._overrideMethodInMockLint(),
+      'test_overrideFieldInMock_lint': (t) => t._overrideFieldInMockLint(),
+      'test_emptyMock_noLint': (t) => t._emptyMockNoLint(),
+      'test_fakeImplementation_noLint': (t) => t._fakeImplementationNoLint(),
+    },
+  );
+  analysisRuleSuite<PassMockObjectTest>('PassMockObjectTest', PassMockObjectTest.new, {
+    'test_whenTargetsRegularObject_lint': (t) => t._whenTargetsRegularObjectLint(),
+    'test_verifyTargetsRegularObject_lint': (t) => t._verifyTargetsRegularObjectLint(),
+    'test_whenTargetsMock_noLint': (t) => t._whenTargetsMockNoLint(),
+    'test_nonCallbackWhen_noLint': (t) => t._nonCallbackWhenNoLint(),
+  });
+  analysisRuleSuite<PreferIntlNameTest>('PreferIntlNameTest', PreferIntlNameTest.new, {
+    'test_fieldNameMismatch_lint': (t) => t._fieldNameMismatchLint(),
+    'test_getterNameMismatch_lint': (t) => t._getterNameMismatchLint(),
+    'test_methodNameMismatch_lint': (t) => t._methodNameMismatchLint(),
+    'test_matchingName_noLint': (t) => t._matchingNameNoLint(),
+    'test_topLevelIntl_noLint': (t) => t._topLevelIntlNoLint(),
   });
 }
 
-@reflectiveTest
 final class AvoidImplementationInMocksTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +38,7 @@ final class AvoidImplementationInMocksTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_overrideMethodInMock_lint() async {
+  Future<void> _overrideMethodInMockLint() async {
     const source = r'''
 class Mock {
   @override
@@ -41,7 +57,7 @@ class MockCat extends Mock implements Cat {
     await assertDiagnostics(source, [lint(source.indexOf('sound() =>'), 'sound'.length)]);
   }
 
-  Future<void> test_overrideFieldInMock_lint() async {
+  Future<void> _overrideFieldInMockLint() async {
     const source = r'''
 class Mock {
   @override
@@ -60,7 +76,7 @@ class MockCat extends Mock implements Cat {
     await assertDiagnostics(source, [lint(source.indexOf('lives ='), 'lives'.length)]);
   }
 
-  Future<void> test_emptyMock_noLint() async {
+  Future<void> _emptyMockNoLint() async {
     await assertNoDiagnostics(r'''
 class Mock {
   @override
@@ -74,7 +90,7 @@ class MockCat extends Mock implements Cat {}
 ''');
   }
 
-  Future<void> test_fakeImplementation_noLint() async {
+  Future<void> _fakeImplementationNoLint() async {
     await assertNoDiagnostics(r'''
 abstract class Cat {
   String sound();
@@ -88,7 +104,6 @@ class FakeCat implements Cat {
   }
 }
 
-@reflectiveTest
 final class PassMockObjectTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -96,7 +111,7 @@ final class PassMockObjectTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_whenTargetsRegularObject_lint() async {
+  Future<void> _whenTargetsRegularObjectLint() async {
     const source = r'''
 class Mock {
   @override
@@ -121,7 +136,7 @@ void test(RealCat cat) {
     await assertDiagnostics(source, [lint(source.lastIndexOf('cat.sound'), 'cat'.length)]);
   }
 
-  Future<void> test_verifyTargetsRegularObject_lint() async {
+  Future<void> _verifyTargetsRegularObjectLint() async {
     const source = r'''
 class Mock {
   @override
@@ -146,7 +161,7 @@ void test(RealCat cat) {
     await assertDiagnostics(source, [lint(source.lastIndexOf('cat.sound'), 'cat'.length)]);
   }
 
-  Future<void> test_whenTargetsMock_noLint() async {
+  Future<void> _whenTargetsMockNoLint() async {
     await assertNoDiagnostics(r'''
 class Mock {
   @override
@@ -166,7 +181,7 @@ void test(MockCat cat) {
 ''');
   }
 
-  Future<void> test_nonCallbackWhen_noLint() async {
+  Future<void> _nonCallbackWhenNoLint() async {
     await assertNoDiagnostics(r'''
 void when(Object? call) {}
 String sound() => 'meow';
@@ -178,7 +193,6 @@ void test() {
   }
 }
 
-@reflectiveTest
 final class PreferIntlNameTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -186,7 +200,7 @@ final class PreferIntlNameTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_fieldNameMismatch_lint() async {
+  Future<void> _fieldNameMismatchLint() async {
     const source = r'''
 class Intl {
   static String message(String value, {String? name}) => value;
@@ -200,7 +214,7 @@ class CatLabels {
     await assertDiagnostics(source, [lint(source.indexOf("'wrong'"), "'wrong'".length)]);
   }
 
-  Future<void> test_getterNameMismatch_lint() async {
+  Future<void> _getterNameMismatchLint() async {
     const source = r'''
 class Intl {
   static String message(String value, {String? name}) => value;
@@ -216,7 +230,7 @@ class CatLabels {
     ]);
   }
 
-  Future<void> test_methodNameMismatch_lint() async {
+  Future<void> _methodNameMismatchLint() async {
     const source = r'''
 class Intl {
   static String plural(int count, {String? name}) => '$count';
@@ -230,7 +244,7 @@ class CatLabels {
     await assertDiagnostics(source, [lint(source.indexOf("'count'"), "'count'".length)]);
   }
 
-  Future<void> test_matchingName_noLint() async {
+  Future<void> _matchingNameNoLint() async {
     await assertNoDiagnostics(r'''
 class Intl {
   static String message(String value, {String? name}) => value;
@@ -244,7 +258,7 @@ class CatLabels {
 ''');
   }
 
-  Future<void> test_topLevelIntl_noLint() async {
+  Future<void> _topLevelIntlNoLint() async {
     await assertNoDiagnostics(r'''
 class Intl {
   static String message(String value, {String? name}) => value;

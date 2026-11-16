@@ -1,17 +1,42 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/widget_preview_rules.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(WidgetPreviewImportLeakTest);
-    defineReflectiveTests(WidgetPreviewPlatformDependencyTest);
-    defineReflectiveTests(WidgetPreviewScreenTest);
-  });
+  analysisRuleSuite<WidgetPreviewImportLeakTest>(
+    'WidgetPreviewImportLeakTest',
+    WidgetPreviewImportLeakTest.new,
+    {
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_allowsPreviewOnlyFile': (t) => t._allowsPreviewOnlyFile(),
+      'test_reportsImportInProductionWidgetFile': (t) => t._reportsImportInProductionWidgetFile(),
+      'test_reportsPreviewNextToProductionWidget': (t) => t._reportsPreviewNextToProductionWidget(),
+    },
+  );
+  analysisRuleSuite<WidgetPreviewPlatformDependencyTest>(
+    'WidgetPreviewPlatformDependencyTest',
+    WidgetPreviewPlatformDependencyTest.new,
+    {
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_reportsIoHiveDioAndChannels': (t) => t._reportsIoHiveDioAndChannels(),
+      'test_allowsFakesInPreview': (t) => t._allowsFakesInPreview(),
+      'test_allowsPlatformUseOutsidePreview': (t) => t._allowsPlatformUseOutsidePreview(),
+    },
+  );
+  analysisRuleSuite<WidgetPreviewScreenTest>(
+    'WidgetPreviewScreenTest',
+    WidgetPreviewScreenTest.new,
+    {
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_reportsPreviewDeclaredInScreensLibrary': (t) =>
+          t._reportsPreviewDeclaredInScreensLibrary(),
+      'test_reportsPreviewConstructingScreen': (t) => t._reportsPreviewConstructingScreen(),
+      'test_allowsPreviewOfPresentationWidget': (t) => t._allowsPreviewOfPresentationWidget(),
+    },
+  );
 }
 
 abstract class _WidgetPreviewRuleTest extends AnalysisRuleTest {
@@ -69,7 +94,6 @@ abstract final class Hive {
   }
 }
 
-@reflectiveTest
 final class WidgetPreviewImportLeakTest extends _WidgetPreviewRuleTest {
   @override
   void setUp() {
@@ -77,11 +101,11 @@ final class WidgetPreviewImportLeakTest extends _WidgetPreviewRuleTest {
     super.setUp();
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(WidgetPreviewImportLeak.code.severity, DiagnosticSeverity.ERROR);
   }
 
-  Future<void> test_allowsPreviewOnlyFile() async {
+  Future<void> _allowsPreviewOnlyFile() async {
     final path = '$widgetsPath/order_card_preview.dart';
     newFile(path, r'''
 import 'package:flutter/widget_previews.dart';
@@ -94,7 +118,7 @@ Widget orderCardPreview() => const Widget();
     await assertNoDiagnosticsInFile(path);
   }
 
-  Future<void> test_reportsImportInProductionWidgetFile() async {
+  Future<void> _reportsImportInProductionWidgetFile() async {
     await assertFileDiagnostics(
       '$widgetsPath/order_card.dart',
       r'''
@@ -114,7 +138,7 @@ class OrderCard extends StatelessWidget {
     );
   }
 
-  Future<void> test_reportsPreviewNextToProductionWidget() async {
+  Future<void> _reportsPreviewNextToProductionWidget() async {
     await assertFileDiagnostics(
       '$widgetsPath/order_card.dart',
       r'''
@@ -136,7 +160,6 @@ Widget orderCardPreview() => const OrderCard();
   }
 }
 
-@reflectiveTest
 final class WidgetPreviewPlatformDependencyTest extends _WidgetPreviewRuleTest {
   @override
   void setUp() {
@@ -144,11 +167,11 @@ final class WidgetPreviewPlatformDependencyTest extends _WidgetPreviewRuleTest {
     super.setUp();
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(WidgetPreviewPlatformDependency.code.severity, DiagnosticSeverity.ERROR);
   }
 
-  Future<void> test_reportsIoHiveDioAndChannels() async {
+  Future<void> _reportsIoHiveDioAndChannels() async {
     await assertFileDiagnostics(
       '$widgetsPath/order_card_preview.dart',
       r'''
@@ -173,7 +196,7 @@ Widget orderCardPreview() {
     );
   }
 
-  Future<void> test_allowsFakesInPreview() async {
+  Future<void> _allowsFakesInPreview() async {
     final path = '$widgetsPath/order_card_preview.dart';
     newFile(path, r'''
 import 'package:flutter/widget_previews.dart';
@@ -193,7 +216,7 @@ Widget orderCardPreview() {
     await assertNoDiagnosticsInFile(path);
   }
 
-  Future<void> test_allowsPlatformUseOutsidePreview() async {
+  Future<void> _allowsPlatformUseOutsidePreview() async {
     final path = '$testPackageLibPath/features/orders/data/order_datasource.dart';
     newFile(path, r'''
 import 'package:dio/dio.dart';
@@ -207,7 +230,6 @@ class OrderDatasource {
   }
 }
 
-@reflectiveTest
 final class WidgetPreviewScreenTest extends _WidgetPreviewRuleTest {
   String get screenPath =>
       '$testPackageLibPath/features/orders/presentation/screens/orders_screen.dart';
@@ -218,11 +240,11 @@ final class WidgetPreviewScreenTest extends _WidgetPreviewRuleTest {
     super.setUp();
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(WidgetPreviewScreen.code.severity, DiagnosticSeverity.ERROR);
   }
 
-  Future<void> test_reportsPreviewDeclaredInScreensLibrary() async {
+  Future<void> _reportsPreviewDeclaredInScreensLibrary() async {
     await assertFileDiagnostics(
       screenPath,
       r'''
@@ -243,7 +265,7 @@ Widget ordersScreenPreview() => const OrdersScreen();
     );
   }
 
-  Future<void> test_reportsPreviewConstructingScreen() async {
+  Future<void> _reportsPreviewConstructingScreen() async {
     newFile(screenPath, r'''
 import 'package:flutter/widgets.dart';
 
@@ -269,7 +291,7 @@ Widget ordersScreenPreview() => const OrdersScreen();
     );
   }
 
-  Future<void> test_allowsPreviewOfPresentationWidget() async {
+  Future<void> _allowsPreviewOfPresentationWidget() async {
     newFile('$widgetsPath/order_card.dart', r'''
 import 'package:flutter/widgets.dart';
 

@@ -1,20 +1,39 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_async_call_in_sync_function.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missed_calls.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_async_await.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidAsyncCallInSyncFunctionTest);
-    defineReflectiveTests(PreferAsyncAwaitTest);
-    defineReflectiveTests(AvoidMissedCallsTest);
+  analysisRuleSuite<AvoidAsyncCallInSyncFunctionTest>(
+    'AvoidAsyncCallInSyncFunctionTest',
+    AvoidAsyncCallInSyncFunctionTest.new,
+    {
+      'test_futureCallInSyncFunction_lint': (t) => t._futureCallInSyncFunctionLint(),
+      'test_asyncFunctionAwait_noLint': (t) => t._asyncFunctionAwaitNoLint(),
+      'test_returnedFutureFromSyncFunction_noLint': (t) =>
+          t._returnedFutureFromSyncFunctionNoLint(),
+      'test_assignedFutureInSyncFunction_noLint': (t) => t._assignedFutureInSyncFunctionNoLint(),
+      'test_explicitUnawaited_noLint': (t) => t._explicitUnawaitedNoLint(),
+    },
+  );
+  analysisRuleSuite<PreferAsyncAwaitTest>('PreferAsyncAwaitTest', PreferAsyncAwaitTest.new, {
+    'test_futureThen_lint': (t) => t._futureThenLint(),
+    'test_futureCatchError_lint': (t) => t._futureCatchErrorLint(),
+    'test_futureThenInDatasource_noLint': (t) => t._futureThenInDatasourceNoLint(),
+    'test_streamListen_noLint': (t) => t._streamListenNoLint(),
+    'test_userTypeThen_noLint': (t) => t._userTypeThenNoLint(),
+  });
+  analysisRuleSuite<AvoidMissedCallsTest>('AvoidMissedCallsTest', AvoidMissedCallsTest.new, {
+    'test_bareFutureCall_lint': (t) => t._bareFutureCallLint(),
+    'test_awaitedFuture_noLint': (t) => t._awaitedFutureNoLint(),
+    'test_assignedFuture_noLint': (t) => t._assignedFutureNoLint(),
+    'test_futureAssignmentStatement_noLint': (t) => t._futureAssignmentStatementNoLint(),
+    'test_returnedFuture_noLint': (t) => t._returnedFutureNoLint(),
   });
 }
 
-@reflectiveTest
 final class AvoidAsyncCallInSyncFunctionTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +41,7 @@ final class AvoidAsyncCallInSyncFunctionTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_futureCallInSyncFunction_lint() async {
+  Future<void> _futureCallInSyncFunctionLint() async {
     const source = r'''
 Future<void> load() async {}
 
@@ -34,7 +53,7 @@ void start() {
     await assertDiagnostics(source, [lint(source.indexOf('load();'), 'load()'.length)]);
   }
 
-  Future<void> test_asyncFunctionAwait_noLint() async {
+  Future<void> _asyncFunctionAwaitNoLint() async {
     await assertNoDiagnostics(r'''
 Future<void> load() async {}
 
@@ -44,7 +63,7 @@ Future<void> start() async {
 ''');
   }
 
-  Future<void> test_returnedFutureFromSyncFunction_noLint() async {
+  Future<void> _returnedFutureFromSyncFunctionNoLint() async {
     await assertNoDiagnostics(r'''
 Future<void> load() async {}
 
@@ -54,7 +73,7 @@ Future<void> start() {
 ''');
   }
 
-  Future<void> test_assignedFutureInSyncFunction_noLint() async {
+  Future<void> _assignedFutureInSyncFunctionNoLint() async {
     await assertNoDiagnostics(r'''
 Future<void> pending = Future<void>.value();
 
@@ -64,7 +83,7 @@ void reset() {
 ''');
   }
 
-  Future<void> test_explicitUnawaited_noLint() async {
+  Future<void> _explicitUnawaitedNoLint() async {
     await assertNoDiagnostics(r'''
 import 'dart:async';
 
@@ -77,7 +96,6 @@ void start() {
   }
 }
 
-@reflectiveTest
 final class PreferAsyncAwaitTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -85,7 +103,7 @@ final class PreferAsyncAwaitTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_futureThen_lint() async {
+  Future<void> _futureThenLint() async {
     const source = r'''
 Future<int> load() async => 1;
 
@@ -97,7 +115,7 @@ Future<int> start() {
     await assertDiagnostics(source, [lint(source.indexOf('then'), 'then'.length)]);
   }
 
-  Future<void> test_futureCatchError_lint() async {
+  Future<void> _futureCatchErrorLint() async {
     const source = r'''
 Future<int> load() async => 1;
 
@@ -109,7 +127,7 @@ Future<int> start() {
     await assertDiagnostics(source, [lint(source.indexOf('catchError'), 'catchError'.length)]);
   }
 
-  Future<void> test_futureThenInDatasource_noLint() async {
+  Future<void> _futureThenInDatasourceNoLint() async {
     final path = '$testPackageLibPath/features/users/data/datasources/user_datasource.dart';
     newFile(path, r'''
 Future<int> load() async => 1;
@@ -121,7 +139,7 @@ Future<int> start() {
     await assertNoDiagnosticsInFile(path);
   }
 
-  Future<void> test_streamListen_noLint() async {
+  Future<void> _streamListenNoLint() async {
     await assertNoDiagnostics(r'''
 Stream<int> values() => Stream<int>.fromIterable(const [1]);
 
@@ -131,7 +149,7 @@ void start() {
 ''');
   }
 
-  Future<void> test_userTypeThen_noLint() async {
+  Future<void> _userTypeThenNoLint() async {
     await assertNoDiagnostics(r'''
 class Task {
   int then(int Function(int value) callback) => callback(1);
@@ -144,7 +162,6 @@ void start(Task task) {
   }
 }
 
-@reflectiveTest
 final class AvoidMissedCallsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -152,7 +169,7 @@ final class AvoidMissedCallsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_bareFutureCall_lint() async {
+  Future<void> _bareFutureCallLint() async {
     const source = r'''
 Future<void> save() async {}
 
@@ -164,7 +181,7 @@ Future<void> submit() async {
     await assertDiagnostics(source, [lint(source.indexOf('save();'), 'save()'.length)]);
   }
 
-  Future<void> test_awaitedFuture_noLint() async {
+  Future<void> _awaitedFutureNoLint() async {
     await assertNoDiagnostics(r'''
 Future<void> save() async {}
 
@@ -174,7 +191,7 @@ Future<void> submit() async {
 ''');
   }
 
-  Future<void> test_assignedFuture_noLint() async {
+  Future<void> _assignedFutureNoLint() async {
     await assertNoDiagnostics(r'''
 import 'dart:async';
 
@@ -187,7 +204,7 @@ void submit() {
 ''');
   }
 
-  Future<void> test_futureAssignmentStatement_noLint() async {
+  Future<void> _futureAssignmentStatementNoLint() async {
     await assertNoDiagnostics(r'''
 Future<void> pending = Future<void>.value();
 
@@ -197,7 +214,7 @@ void submit() {
 ''');
   }
 
-  Future<void> test_returnedFuture_noLint() async {
+  Future<void> _returnedFutureNoLint() async {
     await assertNoDiagnostics(r'''
 Future<void> save() async {}
 

@@ -1,14 +1,30 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_mounted_check_in_finally.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() => defineReflectiveTests(AvoidMountedCheckInFinallyTest));
+  analysisRuleSuite<AvoidMountedCheckInFinallyTest>(
+    'AvoidMountedCheckInFinallyTest',
+    AvoidMountedCheckInFinallyTest.new,
+    {
+      'test_refMountedReturn_inFinally_lint': (t) => t._refMountedReturnInFinallyLint(),
+      'test_contextMountedReturn_inFinally_lint': (t) => t._contextMountedReturnInFinallyLint(),
+      'test_bareMountedReturn_inFinally_lint': (t) => t._bareMountedReturnInFinallyLint(),
+      'test_returnInBlock_inFinally_lint': (t) => t._returnInBlockInFinallyLint(),
+      'test_guardForm_inFinally_noLint': (t) => t._guardFormInFinallyNoLint(),
+      'test_singleLineGuard_inFinally_noLint': (t) => t._singleLineGuardInFinallyNoLint(),
+      'test_returnOutsideFinally_noLint': (t) => t._returnOutsideFinallyNoLint(),
+      'test_returnInCatch_noLint': (t) => t._returnInCatchNoLint(),
+      'test_nonMountedReturn_inFinally_noLint': (t) => t._nonMountedReturnInFinallyNoLint(),
+      'test_returnWithValue_inFinally_noLint': (t) => t._returnWithValueInFinallyNoLint(),
+      'test_ifWithElse_inFinally_noLint': (t) => t._ifWithElseInFinallyNoLint(),
+      'test_returnInsideNestedClosure_inFinally_noLint': (t) =>
+          t._returnInsideNestedClosureInFinallyNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 class AvoidMountedCheckInFinallyTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -16,7 +32,7 @@ class AvoidMountedCheckInFinallyTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_refMountedReturn_inFinally_lint() async {
+  Future<void> _refMountedReturnInFinallyLint() async {
     await assertDiagnostics(
       r'''
 class Ref { bool get mounted => true; }
@@ -34,7 +50,7 @@ Future<void> f(Ref ref, State state) async {
     );
   }
 
-  Future<void> test_contextMountedReturn_inFinally_lint() async {
+  Future<void> _contextMountedReturnInFinallyLint() async {
     await assertDiagnostics(
       r'''
 class Ctx { bool get mounted => true; }
@@ -50,7 +66,7 @@ Future<void> f(Ctx context) async {
     );
   }
 
-  Future<void> test_bareMountedReturn_inFinally_lint() async {
+  Future<void> _bareMountedReturnInFinallyLint() async {
     await assertDiagnostics(
       r'''
 class S {
@@ -68,7 +84,7 @@ class S {
     );
   }
 
-  Future<void> test_returnInBlock_inFinally_lint() async {
+  Future<void> _returnInBlockInFinallyLint() async {
     await assertDiagnostics(
       r'''
 class Ref { bool get mounted => true; }
@@ -86,7 +102,7 @@ Future<void> f(Ref ref) async {
     );
   }
 
-  Future<void> test_guardForm_inFinally_noLint() async {
+  Future<void> _guardFormInFinallyNoLint() async {
     await assertNoDiagnostics(r'''
 class Ref { bool get mounted => true; }
 class State { State copyWith({bool? isResetting}) => this; }
@@ -102,7 +118,7 @@ Future<void> f(Ref ref, State state) async {
 ''');
   }
 
-  Future<void> test_singleLineGuard_inFinally_noLint() async {
+  Future<void> _singleLineGuardInFinallyNoLint() async {
     await assertNoDiagnostics(r'''
 class Ref { bool get mounted => true; }
 class State { State copyWith({bool? isResetting}) => this; }
@@ -116,7 +132,7 @@ Future<void> f(Ref ref, State state) async {
 ''');
   }
 
-  Future<void> test_returnOutsideFinally_noLint() async {
+  Future<void> _returnOutsideFinallyNoLint() async {
     await assertNoDiagnostics(r'''
 class Ref { bool get mounted => true; }
 class State { State copyWith({bool? l}) => this; }
@@ -132,7 +148,7 @@ Future<void> f(Ref ref, State state) async {
 ''');
   }
 
-  Future<void> test_returnInCatch_noLint() async {
+  Future<void> _returnInCatchNoLint() async {
     await assertNoDiagnostics(r'''
 class Ref { bool get mounted => true; }
 Future<void> f(Ref ref) async {
@@ -149,7 +165,7 @@ Future<void> f(Ref ref) async {
 ''');
   }
 
-  Future<void> test_nonMountedReturn_inFinally_noLint() async {
+  Future<void> _nonMountedReturnInFinallyNoLint() async {
     await assertNoDiagnostics(r'''
 Future<void> f(bool flag) async {
   try {
@@ -163,7 +179,7 @@ Future<void> f(bool flag) async {
 ''');
   }
 
-  Future<void> test_returnWithValue_inFinally_noLint() async {
+  Future<void> _returnWithValueInFinallyNoLint() async {
     await assertNoDiagnostics(r'''
 class Ref { bool get mounted => true; }
 Future<int> f(Ref ref) async {
@@ -179,7 +195,7 @@ Future<int> f(Ref ref) async {
 ''');
   }
 
-  Future<void> test_ifWithElse_inFinally_noLint() async {
+  Future<void> _ifWithElseInFinallyNoLint() async {
     await assertNoDiagnostics(r'''
 class Ref { bool get mounted => true; }
 Future<void> f(Ref ref) async {
@@ -196,7 +212,7 @@ Future<void> f(Ref ref) async {
 ''');
   }
 
-  Future<void> test_returnInsideNestedClosure_inFinally_noLint() async {
+  Future<void> _returnInsideNestedClosureInFinallyNoLint() async {
     await assertNoDiagnostics(r'''
 class Ref { bool get mounted => true; }
 Future<void> f(Ref ref) async {

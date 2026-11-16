@@ -1,22 +1,46 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_number_format.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_providing_intl_description.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_providing_intl_examples.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(PreferNumberFormatTest);
-    defineReflectiveTests(PreferProvidingIntlDescriptionTest);
-    defineReflectiveTests(PreferProvidingIntlExamplesTest);
+  analysisRuleSuite<PreferNumberFormatTest>('PreferNumberFormatTest', PreferNumberFormatTest.new, {
+    'test_severity_info': (t) => t._severityInfo(),
+    'test_decimalPattern_lint': (t) => t._decimalPatternLint(),
+    'test_percentPattern_lint': (t) => t._percentPatternLint(),
+    'test_scientificPattern_lint': (t) => t._scientificPatternLint(),
+    'test_customPattern_noLint': (t) => t._customPatternNoLint(),
+    'test_namedConstructor_noLint': (t) => t._namedConstructorNoLint(),
   });
+  analysisRuleSuite<PreferProvidingIntlDescriptionTest>(
+    'PreferProvidingIntlDescriptionTest',
+    PreferProvidingIntlDescriptionTest.new,
+    {
+      'test_severity_info': (t) => t._severityInfo(),
+      'test_missingDesc_lint': (t) => t._missingDescLint(),
+      'test_nullDesc_lint': (t) => t._nullDescLint(),
+      'test_descProvided_noLint': (t) => t._descProvidedNoLint(),
+      'test_otherIntlMethod_noLint': (t) => t._otherIntlMethodNoLint(),
+    },
+  );
+  analysisRuleSuite<PreferProvidingIntlExamplesTest>(
+    'PreferProvidingIntlExamplesTest',
+    PreferProvidingIntlExamplesTest.new,
+    {
+      'test_severity_info': (t) => t._severityInfo(),
+      'test_placeholdersWithoutExamples_lint': (t) => t._placeholdersWithoutExamplesLint(),
+      'test_placeholdersWithEmptyExamples_lint': (t) => t._placeholdersWithEmptyExamplesLint(),
+      'test_placeholdersWithExamples_noLint': (t) => t._placeholdersWithExamplesNoLint(),
+      'test_emptyPlaceholders_noLint': (t) => t._emptyPlaceholdersNoLint(),
+      'test_nonLiteralPlaceholders_noLint': (t) => t._nonLiteralPlaceholdersNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class PreferNumberFormatTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -24,11 +48,11 @@ final class PreferNumberFormatTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(PreferNumberFormat.code.severity, DiagnosticSeverity.INFO);
   }
 
-  Future<void> test_decimalPattern_lint() async {
+  Future<void> _decimalPatternLint() async {
     const source = r'''
 class NumberFormat {
   NumberFormat([String? pattern, String? locale]);
@@ -42,7 +66,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf("'#,##0.###'"), "'#,##0.###'".length)]);
   }
 
-  Future<void> test_percentPattern_lint() async {
+  Future<void> _percentPatternLint() async {
     const source = r'''
 class NumberFormat {
   NumberFormat([String? pattern, String? locale]);
@@ -56,7 +80,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf("'#,##0%'"), "'#,##0%'".length)]);
   }
 
-  Future<void> test_scientificPattern_lint() async {
+  Future<void> _scientificPatternLint() async {
     const source = r'''
 class NumberFormat {
   NumberFormat([String? pattern, String? locale]);
@@ -70,7 +94,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf("'#E0'"), "'#E0'".length)]);
   }
 
-  Future<void> test_customPattern_noLint() async {
+  Future<void> _customPatternNoLint() async {
     await assertNoDiagnostics(r'''
 class NumberFormat {
   NumberFormat([String? pattern, String? locale]);
@@ -82,7 +106,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_namedConstructor_noLint() async {
+  Future<void> _namedConstructorNoLint() async {
     await assertNoDiagnostics(r'''
 class NumberFormat {
   NumberFormat.decimalPattern([String? locale]);
@@ -95,7 +119,6 @@ void f() {
   }
 }
 
-@reflectiveTest
 final class PreferProvidingIntlDescriptionTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -103,11 +126,11 @@ final class PreferProvidingIntlDescriptionTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(PreferProvidingIntlDescription.code.severity, DiagnosticSeverity.INFO);
   }
 
-  Future<void> test_missingDesc_lint() async {
+  Future<void> _missingDescLint() async {
     const source = r'''
 class Intl {
   static String message(String value, {String? desc}) => value;
@@ -119,7 +142,7 @@ String f() => Intl.message('Hello');
     await assertDiagnostics(source, [lint(source.lastIndexOf('message'), 'message'.length)]);
   }
 
-  Future<void> test_nullDesc_lint() async {
+  Future<void> _nullDescLint() async {
     const source = r'''
 class Intl {
   static String message(String value, {String? desc}) => value;
@@ -131,7 +154,7 @@ String f() => Intl.message('Hello', desc: null);
     await assertDiagnostics(source, [lint(source.lastIndexOf('message'), 'message'.length)]);
   }
 
-  Future<void> test_descProvided_noLint() async {
+  Future<void> _descProvidedNoLint() async {
     await assertNoDiagnostics(r'''
 class Intl {
   static String message(String value, {String? desc}) => value;
@@ -141,7 +164,7 @@ String f() => Intl.message('Hello', desc: 'Shown on the home page.');
 ''');
   }
 
-  Future<void> test_otherIntlMethod_noLint() async {
+  Future<void> _otherIntlMethodNoLint() async {
     await assertNoDiagnostics(r'''
 class Intl {
   static String plural(int count, {String? desc}) => '$count';
@@ -152,7 +175,6 @@ String f() => Intl.plural(1);
   }
 }
 
-@reflectiveTest
 final class PreferProvidingIntlExamplesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -160,11 +182,11 @@ final class PreferProvidingIntlExamplesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(PreferProvidingIntlExamples.code.severity, DiagnosticSeverity.INFO);
   }
 
-  Future<void> test_placeholdersWithoutExamples_lint() async {
+  Future<void> _placeholdersWithoutExamplesLint() async {
     const source = r'''
 class Intl {
   static String message(
@@ -187,7 +209,7 @@ String f(String userName) {
     ]);
   }
 
-  Future<void> test_placeholdersWithEmptyExamples_lint() async {
+  Future<void> _placeholdersWithEmptyExamplesLint() async {
     const source = r'''
 class Intl {
   static String message(
@@ -211,7 +233,7 @@ String f(String userName) {
     ]);
   }
 
-  Future<void> test_placeholdersWithExamples_noLint() async {
+  Future<void> _placeholdersWithExamplesNoLint() async {
     await assertNoDiagnostics(r'''
 class Intl {
   static String message(
@@ -231,7 +253,7 @@ String f(String userName) {
 ''');
   }
 
-  Future<void> test_emptyPlaceholders_noLint() async {
+  Future<void> _emptyPlaceholdersNoLint() async {
     await assertNoDiagnostics(r'''
 class Intl {
   static String message(
@@ -245,7 +267,7 @@ String f() => Intl.message('Hello', placeholders: {});
 ''');
   }
 
-  Future<void> test_nonLiteralPlaceholders_noLint() async {
+  Future<void> _nonLiteralPlaceholdersNoLint() async {
     await assertNoDiagnostics(r'''
 class Intl {
   static String message(

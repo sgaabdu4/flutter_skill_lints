@@ -353,14 +353,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.21"
-  test_reflective_loader:
-    dependency: "direct dev"
-    description:
-      name: test_reflective_loader
-      sha256: "9c4327839510a742171b9d37b37464d0d215ebee4d7701a272db337dbde3e17b"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.6.0"
   typed_data:
     dependency: transitive
     description:

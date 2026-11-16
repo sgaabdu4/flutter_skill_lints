@@ -1,20 +1,43 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_duplicate_named_imports.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_importing_entrypoint_exports.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_incorrect_uri.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidDuplicateNamedImportsTest);
-    defineReflectiveTests(AvoidImportingEntrypointExportsTest);
-    defineReflectiveTests(AvoidIncorrectUriTest);
+  analysisRuleSuite<AvoidDuplicateNamedImportsTest>(
+    'AvoidDuplicateNamedImportsTest',
+    AvoidDuplicateNamedImportsTest.new,
+    {
+      'test_sameUriDifferentPrefixes_lint': (t) => t._sameUriDifferentPrefixesLint(),
+      'test_sameUriPrefixedAndUnprefixed_lint': (t) => t._sameUriPrefixedAndUnprefixedLint(),
+      'test_sameUriSamePrefix_noLint': (t) => t._sameUriSamePrefixNoLint(),
+      'test_distinctUris_noLint': (t) => t._distinctUrisNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidImportingEntrypointExportsTest>(
+    'AvoidImportingEntrypointExportsTest',
+    AvoidImportingEntrypointExportsTest.new,
+    {
+      'test_srcImportsOwnEntrypoint_lint': (t) => t._srcImportsOwnEntrypointLint(),
+      'test_srcImportsAnotherPackageEntrypoint_noLint': (t) =>
+          t._srcImportsAnotherPackageEntrypointNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidIncorrectUriTest>('AvoidIncorrectUriTest', AvoidIncorrectUriTest.new, {
+    'test_backslashImportUri_lint': (t) => t._backslashImportUriLint(),
+    'test_packageUriWithoutPath_lint': (t) => t._packageUriWithoutPathLint(),
+    'test_partUriWithCurrentDirectorySegment_lint': (t) =>
+        t._partUriWithCurrentDirectorySegmentLint(),
+    'test_uriWithNonLeadingParentDirectorySegment_lint': (t) =>
+        t._uriWithNonLeadingParentDirectorySegmentLint(),
+    'test_uriWithLeadingParentDirectorySegments_noLint': (t) =>
+        t._uriWithLeadingParentDirectorySegmentsNoLint(),
+    'test_validUris_noLint': (t) => t._validUrisNoLint(),
   });
 }
 
-@reflectiveTest
 final class AvoidDuplicateNamedImportsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -23,7 +46,7 @@ final class AvoidDuplicateNamedImportsTest extends AnalysisRuleTest {
     newFile('$testPackageLibPath/src/a.dart', 'class A {}\n');
   }
 
-  Future<void> test_sameUriDifferentPrefixes_lint() async {
+  Future<void> _sameUriDifferentPrefixesLint() async {
     const source = r'''
 // ignore_for_file: unused_import
 
@@ -36,7 +59,7 @@ import 'src/a.dart' as second;
     ]);
   }
 
-  Future<void> test_sameUriPrefixedAndUnprefixed_lint() async {
+  Future<void> _sameUriPrefixedAndUnprefixedLint() async {
     const source = r'''
 // ignore_for_file: unused_import
 
@@ -49,7 +72,7 @@ import 'src/a.dart' as a;
     ]);
   }
 
-  Future<void> test_sameUriSamePrefix_noLint() async {
+  Future<void> _sameUriSamePrefixNoLint() async {
     await assertNoDiagnostics(r'''
 // ignore_for_file: duplicate_import, unused_import
 
@@ -58,7 +81,7 @@ import 'src/a.dart' as a;
 ''');
   }
 
-  Future<void> test_distinctUris_noLint() async {
+  Future<void> _distinctUrisNoLint() async {
     newFile('$testPackageLibPath/src/b.dart', 'class B {}\n');
 
     await assertNoDiagnostics(r'''
@@ -70,7 +93,6 @@ import 'src/b.dart' as b;
   }
 }
 
-@reflectiveTest
 final class AvoidImportingEntrypointExportsTest extends AnalysisRuleTest {
   @override
   String get testFileName => 'src/feature.dart';
@@ -83,7 +105,7 @@ final class AvoidImportingEntrypointExportsTest extends AnalysisRuleTest {
     newFile('$testPackageLibPath/test.dart', 'library;\n');
   }
 
-  Future<void> test_srcImportsOwnEntrypoint_lint() async {
+  Future<void> _srcImportsOwnEntrypointLint() async {
     const source = r'''
 // ignore_for_file: unused_import
 
@@ -95,7 +117,7 @@ import 'package:test/test.dart';
     ]);
   }
 
-  Future<void> test_srcImportsAnotherPackageEntrypoint_noLint() async {
+  Future<void> _srcImportsAnotherPackageEntrypointNoLint() async {
     const source = r'''
 // ignore_for_file: unused_import
 
@@ -106,7 +128,6 @@ import 'dart:async';
   }
 }
 
-@reflectiveTest
 final class AvoidIncorrectUriTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -117,7 +138,7 @@ final class AvoidIncorrectUriTest extends AnalysisRuleTest {
     newFile('$testPackageLibPath/src/part.dart', 'part of app;\n');
   }
 
-  Future<void> test_backslashImportUri_lint() async {
+  Future<void> _backslashImportUriLint() async {
     const source = r'''
 // ignore_for_file: uri_does_not_exist
 
@@ -127,7 +148,7 @@ import 'src\a.dart';
     await assertDiagnostics(source, [lint(source.indexOf("'src"), "'src\\a.dart'".length)]);
   }
 
-  Future<void> test_packageUriWithoutPath_lint() async {
+  Future<void> _packageUriWithoutPathLint() async {
     const source = r'''
 // ignore_for_file: uri_does_not_exist
 
@@ -139,7 +160,7 @@ export 'package:test';
     ]);
   }
 
-  Future<void> test_partUriWithCurrentDirectorySegment_lint() async {
+  Future<void> _partUriWithCurrentDirectorySegmentLint() async {
     const source = r'''
 // ignore_for_file: uri_does_not_exist
 
@@ -151,7 +172,7 @@ part './src/part.dart';
     ]);
   }
 
-  Future<void> test_uriWithNonLeadingParentDirectorySegment_lint() async {
+  Future<void> _uriWithNonLeadingParentDirectorySegmentLint() async {
     const source = r'''
 // ignore_for_file: uri_does_not_exist, unused_import
 
@@ -163,7 +184,7 @@ import 'src/../a.dart';
     ]);
   }
 
-  Future<void> test_uriWithLeadingParentDirectorySegments_noLint() async {
+  Future<void> _uriWithLeadingParentDirectorySegmentsNoLint() async {
     await assertNoDiagnostics(r'''
 // ignore_for_file: uri_does_not_exist, unused_import
 
@@ -171,7 +192,7 @@ import '../../helpers/test_fakes.dart';
 ''');
   }
 
-  Future<void> test_validUris_noLint() async {
+  Future<void> _validUrisNoLint() async {
     await assertNoDiagnostics(r'''
 // ignore_for_file: unused_import
 

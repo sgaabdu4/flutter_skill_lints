@@ -1,20 +1,50 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_futureor_return_type.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nullable_async_or_collection_return_type.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_public_late_final_without_initializer.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidFutureOrReturnTypeTest);
-    defineReflectiveTests(AvoidNullableAsyncOrCollectionReturnTypeTest);
-    defineReflectiveTests(AvoidPublicLateFinalWithoutInitializerTest);
-  });
+  analysisRuleSuite<AvoidFutureOrReturnTypeTest>(
+    'AvoidFutureOrReturnTypeTest',
+    AvoidFutureOrReturnTypeTest.new,
+    {
+      'test_functionReturn_lint': (t) => t._functionReturnLint(),
+      'test_methodReturn_lint': (t) => t._methodReturnLint(),
+      'test_parameter_noLint': (t) => t._parameterNoLint(),
+      'test_callbackReturn_noLint': (t) => t._callbackReturnNoLint(),
+      'test_userTypeNamedFutureOr_noLint': (t) => t._userTypeNamedFutureOrNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidNullableAsyncOrCollectionReturnTypeTest>(
+    'AvoidNullableAsyncOrCollectionReturnTypeTest',
+    AvoidNullableAsyncOrCollectionReturnTypeTest.new,
+    {
+      'test_nullableFutureReturn_lint': (t) => t._nullableFutureReturnLint(),
+      'test_nullableStreamReturn_lint': (t) => t._nullableStreamReturnLint(),
+      'test_nullableCollectionReturn_lint': (t) => t._nullableCollectionReturnLint(),
+      'test_nestedNullableCollectionReturn_lint': (t) => t._nestedNullableCollectionReturnLint(),
+      'test_nullableValueInsideFuture_noLint': (t) => t._nullableValueInsideFutureNoLint(),
+      'test_nullableElementInsideCollection_noLint': (t) =>
+          t._nullableElementInsideCollectionNoLint(),
+      'test_parameter_noLint': (t) => t._parameterNoLint(),
+      'test_overrideFrameworkSignature_noLint': (t) => t._overrideFrameworkSignatureNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidPublicLateFinalWithoutInitializerTest>(
+    'AvoidPublicLateFinalWithoutInitializerTest',
+    AvoidPublicLateFinalWithoutInitializerTest.new,
+    {
+      'test_publicLateFinalField_lint': (t) => t._publicLateFinalFieldLint(),
+      'test_privateLateFinalField_noLint': (t) => t._privateLateFinalFieldNoLint(),
+      'test_initializedLateFinalField_noLint': (t) => t._initializedLateFinalFieldNoLint(),
+      'test_localLateFinal_noLint': (t) => t._localLateFinalNoLint(),
+      'test_mutableLateField_noLint': (t) => t._mutableLateFieldNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 class AvoidFutureOrReturnTypeTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +52,7 @@ class AvoidFutureOrReturnTypeTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_functionReturn_lint() async {
+  Future<void> _functionReturnLint() async {
     const source = r'''
 import 'dart:async';
 
@@ -34,7 +64,7 @@ FutureOr<int> loadValue() => 1;
     ]);
   }
 
-  Future<void> test_methodReturn_lint() async {
+  Future<void> _methodReturnLint() async {
     const source = r'''
 import 'dart:async';
 
@@ -48,7 +78,7 @@ class Repository {
     ]);
   }
 
-  Future<void> test_parameter_noLint() async {
+  Future<void> _parameterNoLint() async {
     await assertNoDiagnostics(r'''
 import 'dart:async';
 
@@ -56,7 +86,7 @@ Future<int> loadValue(FutureOr<int> value) async => await Future<int>.value(1);
 ''');
   }
 
-  Future<void> test_callbackReturn_noLint() async {
+  Future<void> _callbackReturnNoLint() async {
     await assertNoDiagnostics(r'''
 import 'dart:async';
 
@@ -64,7 +94,7 @@ void observe(FutureOr<void> Function() callback) {}
 ''');
   }
 
-  Future<void> test_userTypeNamedFutureOr_noLint() async {
+  Future<void> _userTypeNamedFutureOrNoLint() async {
     await assertNoDiagnostics(r'''
 class FutureOr<T> {
   const FutureOr();
@@ -75,7 +105,6 @@ FutureOr<int> loadValue() => const FutureOr<int>();
   }
 }
 
-@reflectiveTest
 class AvoidNullableAsyncOrCollectionReturnTypeTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -83,7 +112,7 @@ class AvoidNullableAsyncOrCollectionReturnTypeTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_nullableFutureReturn_lint() async {
+  Future<void> _nullableFutureReturnLint() async {
     const source = r'''
 Future<int>? loadValue() => null;
 ''';
@@ -91,7 +120,7 @@ Future<int>? loadValue() => null;
     await assertDiagnostics(source, [lint(source.indexOf('Future<int>?'), 'Future<int>?'.length)]);
   }
 
-  Future<void> test_nullableStreamReturn_lint() async {
+  Future<void> _nullableStreamReturnLint() async {
     const source = r'''
 Stream<int>? streamValues() => null;
 ''';
@@ -99,7 +128,7 @@ Stream<int>? streamValues() => null;
     await assertDiagnostics(source, [lint(source.indexOf('Stream<int>?'), 'Stream<int>?'.length)]);
   }
 
-  Future<void> test_nullableCollectionReturn_lint() async {
+  Future<void> _nullableCollectionReturnLint() async {
     const source = r'''
 List<int>? loadValues() => null;
 ''';
@@ -107,7 +136,7 @@ List<int>? loadValues() => null;
     await assertDiagnostics(source, [lint(source.indexOf('List<int>?'), 'List<int>?'.length)]);
   }
 
-  Future<void> test_nestedNullableCollectionReturn_lint() async {
+  Future<void> _nestedNullableCollectionReturnLint() async {
     const source = r'''
 Future<List<int>?> loadValues() async => null;
 ''';
@@ -115,25 +144,25 @@ Future<List<int>?> loadValues() async => null;
     await assertDiagnostics(source, [lint(source.indexOf('List<int>?'), 'List<int>?'.length)]);
   }
 
-  Future<void> test_nullableValueInsideFuture_noLint() async {
+  Future<void> _nullableValueInsideFutureNoLint() async {
     await assertNoDiagnostics(r'''
 Future<int?> loadValue() async => null;
 ''');
   }
 
-  Future<void> test_nullableElementInsideCollection_noLint() async {
+  Future<void> _nullableElementInsideCollectionNoLint() async {
     await assertNoDiagnostics(r'''
 List<int?> loadValues() => const <int?>[];
 ''');
   }
 
-  Future<void> test_parameter_noLint() async {
+  Future<void> _parameterNoLint() async {
     await assertNoDiagnostics(r'''
 void saveValues(List<int>? values) {}
 ''');
   }
 
-  Future<void> test_overrideFrameworkSignature_noLint() async {
+  Future<void> _overrideFrameworkSignatureNoLint() async {
     await assertNoDiagnostics(r'''
 abstract class Headers {
   // ignore: avoid_nullable_async_or_collection_return_type
@@ -148,7 +177,6 @@ class FakeHeaders implements Headers {
   }
 }
 
-@reflectiveTest
 class AvoidPublicLateFinalWithoutInitializerTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -156,7 +184,7 @@ class AvoidPublicLateFinalWithoutInitializerTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_publicLateFinalField_lint() async {
+  Future<void> _publicLateFinalFieldLint() async {
     const source = r'''
 class Cache {
   late final int count;
@@ -166,7 +194,7 @@ class Cache {
     await assertDiagnostics(source, [lint(source.indexOf('count'), 'count'.length)]);
   }
 
-  Future<void> test_privateLateFinalField_noLint() async {
+  Future<void> _privateLateFinalFieldNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   late final int _count;
@@ -174,7 +202,7 @@ class Cache {
 ''');
   }
 
-  Future<void> test_initializedLateFinalField_noLint() async {
+  Future<void> _initializedLateFinalFieldNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   late final int count = 0;
@@ -182,7 +210,7 @@ class Cache {
 ''');
   }
 
-  Future<void> test_localLateFinal_noLint() async {
+  Future<void> _localLateFinalNoLint() async {
     await assertNoDiagnostics(r'''
 void build() {
   late final int count;
@@ -191,7 +219,7 @@ void build() {
 ''');
   }
 
-  Future<void> test_mutableLateField_noLint() async {
+  Future<void> _mutableLateFieldNoLint() async {
     await assertNoDiagnostics(r'''
 class Cache {
   late int count;

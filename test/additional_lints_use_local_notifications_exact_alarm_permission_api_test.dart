@@ -1,16 +1,24 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_local_notifications_exact_alarm_permission_api.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(
-    () => defineReflectiveTests(UseLocalNotificationsExactAlarmPermissionApiTest),
+  analysisRuleSuite<UseLocalNotificationsExactAlarmPermissionApiTest>(
+    'UseLocalNotificationsExactAlarmPermissionApiTest',
+    UseLocalNotificationsExactAlarmPermissionApiTest.new,
+    {
+      'test_androidIntentExactAlarmSettingsAction_lint': (t) =>
+          t._androidIntentExactAlarmSettingsActionLint(),
+      'test_androidIntentOtherSettingsAction_noLint': (t) =>
+          t._androidIntentOtherSettingsActionNoLint(),
+      'test_exactAlarmPermissionApi_noLint': (t) => t._exactAlarmPermissionApiNoLint(),
+      'test_exactAlarmSettingsStringWithoutAndroidIntent_noLint': (t) =>
+          t._exactAlarmSettingsStringWithoutAndroidIntentNoLint(),
+    },
   );
 }
 
-@reflectiveTest
 class UseLocalNotificationsExactAlarmPermissionApiTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -26,7 +34,7 @@ class UseLocalNotificationsExactAlarmPermissionApiTest extends AnalysisRuleTest 
     return lint(offset, needle.length) as T;
   }
 
-  Future<void> test_androidIntentExactAlarmSettingsAction_lint() async {
+  Future<void> _androidIntentExactAlarmSettingsActionLint() async {
     const source = r'''
 class AndroidIntent {
   const AndroidIntent({required String action});
@@ -43,7 +51,7 @@ void requestPermission() {
     ]);
   }
 
-  Future<void> test_androidIntentOtherSettingsAction_noLint() async {
+  Future<void> _androidIntentOtherSettingsActionNoLint() async {
     await assertNoDiagnostics(r'''
 class AndroidIntent {
   const AndroidIntent({required String action});
@@ -56,7 +64,7 @@ void openSettings() {
 ''');
   }
 
-  Future<void> test_exactAlarmPermissionApi_noLint() async {
+  Future<void> _exactAlarmPermissionApiNoLint() async {
     await assertNoDiagnostics(r'''
 class AndroidFlutterLocalNotificationsPlugin {
   Future<bool?> canScheduleExactNotifications() async => true;
@@ -73,7 +81,7 @@ Future<bool> requestPermission(AndroidFlutterLocalNotificationsPlugin android) a
 ''');
   }
 
-  Future<void> test_exactAlarmSettingsStringWithoutAndroidIntent_noLint() async {
+  Future<void> _exactAlarmSettingsStringWithoutAndroidIntentNoLint() async {
     await assertNoDiagnostics(r'''
 const exactAlarmSettingsAction = 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM';
 ''');

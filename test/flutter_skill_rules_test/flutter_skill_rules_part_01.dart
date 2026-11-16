@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../flutter_skill_rules_test.dart';
 
-@reflectiveTest
 final class AvoidPrivateWidgetClassesTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -10,7 +7,7 @@ final class AvoidPrivateWidgetClassesTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsPrivateStatelessWidget() async {
+  Future<void> _reportsPrivateStatelessWidget() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -25,7 +22,7 @@ class _PrivateCard extends StatelessWidget {
     await assertDiagnostics(source, [lintFor(source, '_PrivateCard')]);
   }
 
-  Future<void> test_allowsPublicWidgetClasses() async {
+  Future<void> _allowsPublicWidgetClasses() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -38,7 +35,7 @@ class PublicCard extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_allowsPrivateStateSubclasses() async {
+  Future<void> _allowsPrivateStateSubclasses() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -50,7 +47,7 @@ class _PublicCardState extends State<PublicCard> {}
 ''');
   }
 
-  Future<void> test_allowsPrivateWidgetClassesInTestFiles() async {
+  Future<void> _allowsPrivateWidgetClassesInTestFiles() async {
     final filePath = '$testPackageRootPath/test/widgets/widget_harness_test.dart';
     newFile(filePath, r'''
 import 'package:flutter/widgets.dart';
@@ -66,7 +63,7 @@ class _Harness extends StatelessWidget {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsPrivateWidgetClassesInPartFiles() async {
+  Future<void> _reportsPrivateWidgetClassesInPartFiles() async {
     newFile('$testPackageLibPath/widgets/sheet.dart', r'''
 import 'package:flutter/widgets.dart';
 
@@ -97,7 +94,6 @@ class _SheetContent extends StatelessWidget {
   }
 }
 
-@reflectiveTest
 final class UseContextMountedAfterAwaitTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -105,7 +101,7 @@ final class UseContextMountedAfterAwaitTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsContextAfterAwait() async {
+  Future<void> _reportsContextAfterAwait() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -117,7 +113,7 @@ Future<void> close(BuildContext context) async {
     await assertDiagnostics(source, [lintFor(source, 'context.pop()')]);
   }
 
-  Future<void> test_allowsMountedGuard() async {
+  Future<void> _allowsMountedGuard() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -129,7 +125,7 @@ Future<void> close(BuildContext context) async {
 ''');
   }
 
-  Future<void> test_reportsStateContextMountedGuardAfterAwait() async {
+  Future<void> _reportsStateContextMountedGuardAfterAwait() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -147,7 +143,7 @@ class DemoState extends State<Demo> {
     await assertDiagnostics(source, [lintFor(source, 'context.mounted')]);
   }
 
-  Future<void> test_reportsExplicitStateContextMountedGuardAfterAwait() async {
+  Future<void> _reportsExplicitStateContextMountedGuardAfterAwait() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -165,7 +161,7 @@ class DemoState extends State<Demo> {
     await assertDiagnostics(source, [lintFor(source, 'this.context.mounted')]);
   }
 
-  Future<void> test_allowsCapturedStateContextMountedGuardAfterAwait() async {
+  Future<void> _allowsCapturedStateContextMountedGuardAfterAwait() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -183,7 +179,7 @@ class DemoState extends State<Demo> {
 ''');
   }
 
-  Future<void> test_reportsContextAfterAwaitInAsyncCallback() async {
+  Future<void> _reportsContextAfterAwaitInAsyncCallback() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -219,7 +215,7 @@ class Demo extends StatelessWidget {
     await assertDiagnostics(source, [lint(source.indexOf('context);'), 7)]);
   }
 
-  Future<void> test_reportsContextAfterAwaitInNestedBlocks() async {
+  Future<void> _reportsContextAfterAwaitInNestedBlocks() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -282,7 +278,7 @@ class DemoState extends State<Demo> {
     ]);
   }
 
-  Future<void> test_allowsGuardsInNestedBlocksAndSkillExamples() async {
+  Future<void> _allowsGuardsInNestedBlocksAndSkillExamples() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -341,7 +337,6 @@ Future<void> namedArgumentLabel(BuildContext context, BuildContext sheetContext)
   }
 }
 
-@reflectiveTest
 final class AvoidLegacyRiverpodApisTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -349,7 +344,7 @@ final class AvoidLegacyRiverpodApisTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsLegacyProvider() async {
+  Future<void> _reportsLegacyProvider() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -358,7 +353,7 @@ final counterProvider = StateProvider<int>((ref) => 0);
     await assertDiagnostics(source, [lintFor(source, 'StateProvider<int>')]);
   }
 
-  Future<void> test_allowsUnifiedRef() async {
+  Future<void> _allowsUnifiedRef() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -366,7 +361,7 @@ int load(Ref ref) => ref.read(Object());
 ''');
   }
 
-  Future<void> test_reportsLegacyImportAndStateNotifier() async {
+  Future<void> _reportsLegacyImportAndStateNotifier() async {
     const source = r'''
 import 'package:flutter_riverpod/legacy.dart';
 
@@ -380,7 +375,7 @@ class Counter extends StateNotifier<int> {
     ]);
   }
 
-  Future<void> test_reportsRiverpodLegacyImport() async {
+  Future<void> _reportsRiverpodLegacyImport() async {
     const source = r'''
 import 'package:riverpod/legacy.dart';
 
@@ -392,7 +387,7 @@ StateNotifier<int>? counter;
     ]);
   }
 
-  Future<void> test_reportsRefAliasAndLegacyRefTypes() async {
+  Future<void> _reportsRefAliasAndLegacyRefTypes() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -407,7 +402,7 @@ String legacy(AutoDisposeRef ref) => 'Hello';
     ]);
   }
 
-  Future<void> test_allowsUserTypesNamedLikeRiverpodApis() async {
+  Future<void> _allowsUserTypesNamedLikeRiverpodApis() async {
     await assertNoDiagnostics(r'''
 class Provider<T> {
   Provider(T value);
@@ -423,12 +418,11 @@ StateNotifier<int>? notifier;
 ''');
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(AvoidLegacyRiverpodApis.code.severity, DiagnosticSeverity.ERROR);
   }
 }
 
-@reflectiveTest
 final class AvoidDynamicExceptJsonMapsTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -436,7 +430,7 @@ final class AvoidDynamicExceptJsonMapsTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsBareDynamic() async {
+  Future<void> _reportsBareDynamic() async {
     const source = r'''
 dynamic value;
 Map<String, dynamic> json = {};
@@ -444,13 +438,13 @@ Map<String, dynamic> json = {};
     await assertDiagnostics(source, [lintFor(source, 'dynamic')]);
   }
 
-  Future<void> test_allowsJsonMapDynamic() async {
+  Future<void> _allowsJsonMapDynamic() async {
     await assertNoDiagnostics(r'''
 Map<String, dynamic> fromJson(Map<String, dynamic> json) => json;
 ''');
   }
 
-  Future<void> test_allowsJsonMapCastDynamic() async {
+  Future<void> _allowsJsonMapCastDynamic() async {
     await assertNoDiagnostics(r'''
 Map<String, Object?> normalize(Map<String, Object?> json) {
   return json.cast<String, dynamic>();
@@ -463,7 +457,7 @@ Map<String, dynamic> emptyPrefs() {
   }
 
   // hive-persistence.md:56: `<String, dynamic>{}` is a JSON map literal.
-  Future<void> test_allowsJsonMapLiteralDynamic() async {
+  Future<void> _allowsJsonMapLiteralDynamic() async {
     await assertNoDiagnostics(r'''
 Map<String, dynamic> normalizePersistedMap(Map<Object?, Object?> raw) {
   final normalized = <String, dynamic>{};
@@ -475,7 +469,7 @@ Map<String, dynamic> normalizePersistedMap(Map<Object?, Object?> raw) {
 ''');
   }
 
-  Future<void> test_reportsNonJsonLiteralDynamic() async {
+  Future<void> _reportsNonJsonLiteralDynamic() async {
     const source = r'''
 final byId = <int, dynamic>{};
 final items = <dynamic>[];
@@ -486,7 +480,7 @@ final items = <dynamic>[];
     ]);
   }
 
-  Future<void> test_reportsUntypedRuntimeBoundaryDynamic() async {
+  Future<void> _reportsUntypedRuntimeBoundaryDynamic() async {
     final filePath = '$testPackageRootPath/functions/shared/lib/http.dart';
     const source = r'''
 Object handle(dynamic req, dynamic context) {
@@ -503,7 +497,7 @@ Object handle(dynamic req, dynamic context) {
     ]);
   }
 
-  Future<void> test_allowsGeneratedLocalizationsDynamic() async {
+  Future<void> _allowsGeneratedLocalizationsDynamic() async {
     final filePath = '$testPackageLibPath/l10n/app_localizations.dart';
     const source = r'''
 class LocalizationsDelegate<T> {}
@@ -519,7 +513,6 @@ abstract class AppLocalizations {
   }
 }
 
-@reflectiveTest
 final class AvoidNullBangTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -527,7 +520,7 @@ final class AvoidNullBangTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsNullBang() async {
+  Future<void> _reportsNullBang() async {
     const source = r'''
 void f(String? value) {
   value!;
@@ -536,7 +529,7 @@ void f(String? value) {
     await assertDiagnostics(source, [lintFor(source, '!')]);
   }
 
-  Future<void> test_allowsNullCheck() async {
+  Future<void> _allowsNullCheck() async {
     await assertNoDiagnostics(r'''
 void f(String? value) {
   if (value case final text?) {
@@ -547,7 +540,6 @@ void f(String? value) {
   }
 }
 
-@reflectiveTest
 final class AvoidWidgetBuildHelpersTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -555,7 +547,7 @@ final class AvoidWidgetBuildHelpersTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsBuildHelper() async {
+  Future<void> _reportsBuildHelper() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -571,7 +563,7 @@ class Screen extends StatelessWidget {
     await assertDiagnostics(source, [lintForLast(source, '_buildTitle')]);
   }
 
-  Future<void> test_allowsNamedWidgetClass() async {
+  Future<void> _allowsNamedWidgetClass() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -585,7 +577,6 @@ class ScreenTitle extends StatelessWidget {
   }
 }
 
-@reflectiveTest
 final class AvoidShrinkWrapTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -593,7 +584,7 @@ final class AvoidShrinkWrapTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsShrinkWrapTrue() async {
+  Future<void> _reportsShrinkWrapTrue() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -602,7 +593,7 @@ final widget = ListView(shrinkWrap: true);
     await assertDiagnostics(source, [lintFor(source, 'shrinkWrap: true')]);
   }
 
-  Future<void> test_allowsDefaultListView() async {
+  Future<void> _allowsDefaultListView() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -611,7 +602,6 @@ final widget = ListView();
   }
 }
 
-@reflectiveTest
 final class GuardContextPopTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -619,7 +609,7 @@ final class GuardContextPopTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsUnguardedPop() async {
+  Future<void> _reportsUnguardedPop() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -630,7 +620,7 @@ void close(BuildContext context) {
     await assertDiagnostics(source, [lintFor(source, 'context.pop()')]);
   }
 
-  Future<void> test_allowsCanPopGuardWithTypedFallback() async {
+  Future<void> _allowsCanPopGuardWithTypedFallback() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -650,7 +640,6 @@ void close(BuildContext context) {
   }
 }
 
-@reflectiveTest
 final class UseRefInvalidateTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -658,7 +647,7 @@ final class UseRefInvalidateTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsIgnoredRefresh() async {
+  Future<void> _reportsIgnoredRefresh() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -671,7 +660,7 @@ void reset(Ref ref) {
     await assertDiagnostics(source, [lintFor(source, 'ref.refresh(provider)')]);
   }
 
-  Future<void> test_allowsUsedRefreshResult() async {
+  Future<void> _allowsUsedRefreshResult() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -684,12 +673,11 @@ void reset(Ref ref) {
 ''');
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(UseRefInvalidate.code.severity, DiagnosticSeverity.ERROR);
   }
 }
 
-@reflectiveTest
 final class UseSealedFreezedClassesTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -697,7 +685,7 @@ final class UseSealedFreezedClassesTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsAbstractFreezed() async {
+  Future<void> _reportsAbstractFreezed() async {
     const source = r'''
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -707,7 +695,7 @@ abstract class User {}
     await assertDiagnostics(source, [lintFor(source, 'abstract')]);
   }
 
-  Future<void> test_allowsSealedFreezed() async {
+  Future<void> _allowsSealedFreezed() async {
     await assertNoDiagnostics(r'''
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -716,7 +704,7 @@ sealed class User {}
 ''');
   }
 
-  Future<void> test_reportsPlainFreezedClass() async {
+  Future<void> _reportsPlainFreezedClass() async {
     const source = r'''
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -728,7 +716,7 @@ class WorkoutSet {
     await assertDiagnostics(source, [lintFor(source, 'class')]);
   }
 
-  Future<void> test_ignoresSameNamedNonFreezedAnnotation() async {
+  Future<void> _ignoresSameNamedNonFreezedAnnotation() async {
     await assertNoDiagnostics(r'''
 class Freezed {
   const Freezed();
@@ -742,7 +730,6 @@ class User {}
   }
 }
 
-@reflectiveTest
 final class AvoidRouteParamThrowInBuildTest extends _FlutterSkillRuleTest {
   @override
   void setUp() {
@@ -750,7 +737,7 @@ final class AvoidRouteParamThrowInBuildTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
-  Future<void> test_reportsFirstWhereThrowInBuild() async {
+  Future<void> _reportsFirstWhereThrowInBuild() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -771,7 +758,7 @@ class Screen extends StatelessWidget {
     await assertDiagnostics(source, [lintFor(source, 'firstWhere')]);
   }
 
-  Future<void> test_allowsFallbackValue() async {
+  Future<void> _allowsFallbackValue() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -791,7 +778,7 @@ class Screen extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_reportsDirectThrowAndUnguardedFirstWhereInBuild() async {
+  Future<void> _reportsDirectThrowAndUnguardedFirstWhereInBuild() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -817,7 +804,7 @@ class ProductMissingScreen extends StatelessWidget {
     ]);
   }
 
-  Future<void> test_allowsThrowInsideBuildClosure() async {
+  Future<void> _allowsThrowInsideBuildClosure() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -833,7 +820,7 @@ class Screen extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_allowsThrowInNonWidgetBuild() async {
+  Future<void> _allowsThrowInNonWidgetBuild() async {
     await assertNoDiagnostics(r'''
 class ReportBuilder {
   String build(List<String> lines) {
@@ -844,7 +831,7 @@ class ReportBuilder {
 ''');
   }
 
-  Future<void> test_allowsSameNamedFirstWhereOnNonIterable() async {
+  Future<void> _allowsSameNamedFirstWhereOnNonIterable() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -862,4 +849,115 @@ class Screen extends StatelessWidget {
 }
 ''');
   }
+}
+
+void _defineFlutterSkillRulesPart01Tests() {
+  analysisRuleSuite<UseContextMountedAfterAwaitTest>(
+    'UseContextMountedAfterAwaitTest',
+    UseContextMountedAfterAwaitTest.new,
+    {
+      'test_reportsContextAfterAwait': (t) => t._reportsContextAfterAwait(),
+      'test_allowsMountedGuard': (t) => t._allowsMountedGuard(),
+      'test_reportsStateContextMountedGuardAfterAwait': (t) =>
+          t._reportsStateContextMountedGuardAfterAwait(),
+      'test_reportsExplicitStateContextMountedGuardAfterAwait': (t) =>
+          t._reportsExplicitStateContextMountedGuardAfterAwait(),
+      'test_allowsCapturedStateContextMountedGuardAfterAwait': (t) =>
+          t._allowsCapturedStateContextMountedGuardAfterAwait(),
+      'test_reportsContextAfterAwaitInAsyncCallback': (t) =>
+          t._reportsContextAfterAwaitInAsyncCallback(),
+      'test_reportsContextAfterAwaitInNestedBlocks': (t) =>
+          t._reportsContextAfterAwaitInNestedBlocks(),
+      'test_allowsGuardsInNestedBlocksAndSkillExamples': (t) =>
+          t._allowsGuardsInNestedBlocksAndSkillExamples(),
+    },
+  );
+  analysisRuleSuite<AvoidLegacyRiverpodApisTest>(
+    'AvoidLegacyRiverpodApisTest',
+    AvoidLegacyRiverpodApisTest.new,
+    {
+      'test_reportsLegacyProvider': (t) => t._reportsLegacyProvider(),
+      'test_allowsUnifiedRef': (t) => t._allowsUnifiedRef(),
+      'test_reportsLegacyImportAndStateNotifier': (t) => t._reportsLegacyImportAndStateNotifier(),
+      'test_reportsRiverpodLegacyImport': (t) => t._reportsRiverpodLegacyImport(),
+      'test_reportsRefAliasAndLegacyRefTypes': (t) => t._reportsRefAliasAndLegacyRefTypes(),
+      'test_allowsUserTypesNamedLikeRiverpodApis': (t) => t._allowsUserTypesNamedLikeRiverpodApis(),
+      'test_severityIsError': (t) => t._severityIsError(),
+    },
+  );
+  analysisRuleSuite<AvoidDynamicExceptJsonMapsTest>(
+    'AvoidDynamicExceptJsonMapsTest',
+    AvoidDynamicExceptJsonMapsTest.new,
+    {
+      'test_reportsBareDynamic': (t) => t._reportsBareDynamic(),
+      'test_allowsJsonMapDynamic': (t) => t._allowsJsonMapDynamic(),
+      'test_allowsJsonMapCastDynamic': (t) => t._allowsJsonMapCastDynamic(),
+      'test_allowsJsonMapLiteralDynamic': (t) => t._allowsJsonMapLiteralDynamic(),
+      'test_reportsNonJsonLiteralDynamic': (t) => t._reportsNonJsonLiteralDynamic(),
+      'test_reportsUntypedRuntimeBoundaryDynamic': (t) => t._reportsUntypedRuntimeBoundaryDynamic(),
+      'test_allowsGeneratedLocalizationsDynamic': (t) => t._allowsGeneratedLocalizationsDynamic(),
+    },
+  );
+  analysisRuleSuite<AvoidNullBangTest>('AvoidNullBangTest', AvoidNullBangTest.new, {
+    'test_reportsNullBang': (t) => t._reportsNullBang(),
+    'test_allowsNullCheck': (t) => t._allowsNullCheck(),
+  });
+  analysisRuleSuite<AvoidPrivateWidgetClassesTest>(
+    'AvoidPrivateWidgetClassesTest',
+    AvoidPrivateWidgetClassesTest.new,
+    {
+      'test_reportsPrivateStatelessWidget': (t) => t._reportsPrivateStatelessWidget(),
+      'test_allowsPublicWidgetClasses': (t) => t._allowsPublicWidgetClasses(),
+      'test_allowsPrivateStateSubclasses': (t) => t._allowsPrivateStateSubclasses(),
+      'test_allowsPrivateWidgetClassesInTestFiles': (t) =>
+          t._allowsPrivateWidgetClassesInTestFiles(),
+      'test_reportsPrivateWidgetClassesInPartFiles': (t) =>
+          t._reportsPrivateWidgetClassesInPartFiles(),
+    },
+  );
+  analysisRuleSuite<AvoidWidgetBuildHelpersTest>(
+    'AvoidWidgetBuildHelpersTest',
+    AvoidWidgetBuildHelpersTest.new,
+    {
+      'test_reportsBuildHelper': (t) => t._reportsBuildHelper(),
+      'test_allowsNamedWidgetClass': (t) => t._allowsNamedWidgetClass(),
+    },
+  );
+  analysisRuleSuite<AvoidShrinkWrapTest>('AvoidShrinkWrapTest', AvoidShrinkWrapTest.new, {
+    'test_reportsShrinkWrapTrue': (t) => t._reportsShrinkWrapTrue(),
+    'test_allowsDefaultListView': (t) => t._allowsDefaultListView(),
+  });
+  analysisRuleSuite<GuardContextPopTest>('GuardContextPopTest', GuardContextPopTest.new, {
+    'test_reportsUnguardedPop': (t) => t._reportsUnguardedPop(),
+    'test_allowsCanPopGuardWithTypedFallback': (t) => t._allowsCanPopGuardWithTypedFallback(),
+  });
+  analysisRuleSuite<UseRefInvalidateTest>('UseRefInvalidateTest', UseRefInvalidateTest.new, {
+    'test_reportsIgnoredRefresh': (t) => t._reportsIgnoredRefresh(),
+    'test_allowsUsedRefreshResult': (t) => t._allowsUsedRefreshResult(),
+    'test_severityIsError': (t) => t._severityIsError(),
+  });
+  analysisRuleSuite<UseSealedFreezedClassesTest>(
+    'UseSealedFreezedClassesTest',
+    UseSealedFreezedClassesTest.new,
+    {
+      'test_reportsAbstractFreezed': (t) => t._reportsAbstractFreezed(),
+      'test_allowsSealedFreezed': (t) => t._allowsSealedFreezed(),
+      'test_reportsPlainFreezedClass': (t) => t._reportsPlainFreezedClass(),
+      'test_ignoresSameNamedNonFreezedAnnotation': (t) => t._ignoresSameNamedNonFreezedAnnotation(),
+    },
+  );
+  analysisRuleSuite<AvoidRouteParamThrowInBuildTest>(
+    'AvoidRouteParamThrowInBuildTest',
+    AvoidRouteParamThrowInBuildTest.new,
+    {
+      'test_reportsFirstWhereThrowInBuild': (t) => t._reportsFirstWhereThrowInBuild(),
+      'test_allowsFallbackValue': (t) => t._allowsFallbackValue(),
+      'test_reportsDirectThrowAndUnguardedFirstWhereInBuild': (t) =>
+          t._reportsDirectThrowAndUnguardedFirstWhereInBuild(),
+      'test_allowsThrowInsideBuildClosure': (t) => t._allowsThrowInsideBuildClosure(),
+      'test_allowsThrowInNonWidgetBuild': (t) => t._allowsThrowInNonWidgetBuild(),
+      'test_allowsSameNamedFirstWhereOnNonIterable': (t) =>
+          t._allowsSameNamedFirstWhereOnNonIterable(),
+    },
+  );
 }

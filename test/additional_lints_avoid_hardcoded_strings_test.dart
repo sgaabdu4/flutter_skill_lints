@@ -1,18 +1,52 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_hardcoded_strings.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidHardcodedStringsTest);
-  });
+  analysisRuleSuite<AvoidHardcodedStringsTest>(
+    'AvoidHardcodedStringsTest',
+    AvoidHardcodedStringsTest.new,
+    {
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_textPositionalLiteral_lint': (t) => t._textPositionalLiteralLint(),
+      'test_sampleTextInsideResolvedPreview_noLint': (t) =>
+          t._sampleTextInsideResolvedPreviewNoLint(),
+      'test_textUnderLookalikePreviewAnnotation_lint': (t) =>
+          t._textUnderLookalikePreviewAnnotationLint(),
+      'test_textFromStringsConstantsClass_lint': (t) => t._textFromStringsConstantsClassLint(),
+      'test_labelFromTopLevelConstant_lint': (t) => t._labelFromTopLevelConstantLint(),
+      'test_textFromLocalizationsGetter_noLint': (t) => t._textFromLocalizationsGetterNoLint(),
+      'test_constantWithoutLetters_noLint': (t) => t._constantWithoutLettersNoLint(),
+      'test_stringsFileWidget_lint': (t) => t._stringsFileWidgetLint(),
+      'test_textFromVariable_noLint': (t) => t._textFromVariableNoLint(),
+      'test_emptyText_noLint': (t) => t._emptyTextNoLint(),
+      'test_numericText_noLint': (t) => t._numericTextNoLint(),
+      'test_namedLabelLiteral_lint': (t) => t._namedLabelLiteralLint(),
+      'test_namedHintTextLiteral_lint': (t) => t._namedHintTextLiteralLint(),
+      'test_namedSemanticLabelLiteral_lint': (t) => t._namedSemanticLabelLiteralLint(),
+      'test_namedLabelFromVariable_noLint': (t) => t._namedLabelFromVariableNoLint(),
+      'test_interpolationWithLiteralText_lint': (t) => t._interpolationWithLiteralTextLint(),
+      'test_interpolationWithoutLiteralText_noLint': (t) =>
+          t._interpolationWithoutLiteralTextNoLint(),
+      'test_callbackProseInState_lint': (t) => t._callbackProseInStateLint(),
+      'test_callbackProseInStatelessWidget_lint': (t) => t._callbackProseInStatelessWidgetLint(),
+      'test_callbackIdentifiersKeysAndProtocolStrings_noLint': (t) =>
+          t._callbackIdentifiersKeysAndProtocolStringsNoLint(),
+      'test_declaredMethodAndFunctionProse_noLint': (t) =>
+          t._declaredMethodAndFunctionProseNoLint(),
+      'test_callbackProseOutsideWidgetClass_noLint': (t) =>
+          t._callbackProseOutsideWidgetClassNoLint(),
+      'test_callbackProseInsideResolvedPreview_noLint': (t) =>
+          t._callbackProseInsideResolvedPreviewNoLint(),
+      'test_globalFunctionVariableProseInWidget_noLint': (t) =>
+          t._globalFunctionVariableProseInWidgetNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidHardcodedStringsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -21,7 +55,7 @@ final class AvoidHardcodedStringsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(AvoidHardcodedStrings.code.severity, DiagnosticSeverity.ERROR);
   }
 
@@ -88,7 +122,7 @@ abstract base class MultiPreview {
 ''');
   }
 
-  Future<void> test_textPositionalLiteral_lint() async {
+  Future<void> _textPositionalLiteralLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -98,7 +132,7 @@ Widget build() => const Text('Save');
     await assertDiagnostics(source, [lint(source.indexOf("'Save'"), "'Save'".length)]);
   }
 
-  Future<void> test_sampleTextInsideResolvedPreview_noLint() async {
+  Future<void> _sampleTextInsideResolvedPreviewNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter/widgets.dart';
@@ -108,7 +142,7 @@ Widget buttonPreview() => const AppButton(label: 'Suture Kit');
 ''');
   }
 
-  Future<void> test_textUnderLookalikePreviewAnnotation_lint() async {
+  Future<void> _textUnderLookalikePreviewAnnotationLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -123,7 +157,7 @@ Widget buttonPreview() => const AppButton(label: 'Suture Kit');
     await assertDiagnostics(source, [lint(source.indexOf("'Suture Kit'"), "'Suture Kit'".length)]);
   }
 
-  Future<void> test_textFromStringsConstantsClass_lint() async {
+  Future<void> _textFromStringsConstantsClassLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -139,7 +173,7 @@ Widget build() => const Text(AppStrings.welcome);
     ]);
   }
 
-  Future<void> test_labelFromTopLevelConstant_lint() async {
+  Future<void> _labelFromTopLevelConstantLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -151,7 +185,7 @@ Widget build() => const AppButton(label: saveLabel);
     await assertDiagnostics(source, [lint(source.indexOf('saveLabel);'), 'saveLabel'.length)]);
   }
 
-  Future<void> test_textFromLocalizationsGetter_noLint() async {
+  Future<void> _textFromLocalizationsGetterNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -163,7 +197,7 @@ Widget build(AppLocalizations l10n) => Text(l10n.welcome);
 ''');
   }
 
-  Future<void> test_constantWithoutLetters_noLint() async {
+  Future<void> _constantWithoutLettersNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -175,7 +209,7 @@ Widget build() => const Text(Separators.dash);
 ''');
   }
 
-  Future<void> test_stringsFileWidget_lint() async {
+  Future<void> _stringsFileWidgetLint() async {
     final filePath = '$testPackageLibPath/core/constants/app_strings.dart';
     const source = r'''
 import 'package:flutter/widgets.dart';
@@ -187,7 +221,7 @@ Widget build() => const Text('Save');
     await assertDiagnosticsInFile(filePath, [lint(source.indexOf("'Save'"), "'Save'".length)]);
   }
 
-  Future<void> test_textFromVariable_noLint() async {
+  Future<void> _textFromVariableNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -195,7 +229,7 @@ Widget build(String label) => Text(label);
 ''');
   }
 
-  Future<void> test_emptyText_noLint() async {
+  Future<void> _emptyTextNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -203,7 +237,7 @@ Widget build() => const Text('');
 ''');
   }
 
-  Future<void> test_numericText_noLint() async {
+  Future<void> _numericTextNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -211,7 +245,7 @@ Widget build() => const Text('5');
 ''');
   }
 
-  Future<void> test_namedLabelLiteral_lint() async {
+  Future<void> _namedLabelLiteralLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -221,7 +255,7 @@ Widget build() => const AppButton(label: 'Save');
     await assertDiagnostics(source, [lint(source.indexOf("'Save'"), "'Save'".length)]);
   }
 
-  Future<void> test_namedHintTextLiteral_lint() async {
+  Future<void> _namedHintTextLiteralLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -231,7 +265,7 @@ Widget build() => const InputField(hintText: 'Email');
     await assertDiagnostics(source, [lint(source.indexOf("'Email'"), "'Email'".length)]);
   }
 
-  Future<void> test_namedSemanticLabelLiteral_lint() async {
+  Future<void> _namedSemanticLabelLiteralLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -243,7 +277,7 @@ Widget build() => const Icon(semanticLabel: 'Add exercise');
     ]);
   }
 
-  Future<void> test_namedLabelFromVariable_noLint() async {
+  Future<void> _namedLabelFromVariableNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -251,7 +285,7 @@ Widget build(String label) => AppButton(label: label);
 ''');
   }
 
-  Future<void> test_interpolationWithLiteralText_lint() async {
+  Future<void> _interpolationWithLiteralTextLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -263,7 +297,7 @@ Widget build(String name) => Text('Hello $name');
     ]);
   }
 
-  Future<void> test_interpolationWithoutLiteralText_noLint() async {
+  Future<void> _interpolationWithoutLiteralTextNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -284,7 +318,7 @@ class ScheduleForm extends StatefulWidget {
 }
 ''';
 
-  Future<void> test_callbackProseInState_lint() async {
+  Future<void> _callbackProseInStateLint() async {
     const source =
         '''
 $_formWidget
@@ -303,7 +337,7 @@ class _ScheduleFormState extends State<ScheduleForm> {
     ]);
   }
 
-  Future<void> test_callbackProseInStatelessWidget_lint() async {
+  Future<void> _callbackProseInStatelessWidgetLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -338,7 +372,7 @@ class SavePanel extends StatelessWidget {
     ]);
   }
 
-  Future<void> test_callbackIdentifiersKeysAndProtocolStrings_noLint() async {
+  Future<void> _callbackIdentifiersKeysAndProtocolStringsNoLint() async {
     await assertNoDiagnostics('''
 $_formWidget
 class _ScheduleFormState extends State<ScheduleForm> {
@@ -357,7 +391,7 @@ class _ScheduleFormState extends State<ScheduleForm> {
 ''');
   }
 
-  Future<void> test_declaredMethodAndFunctionProse_noLint() async {
+  Future<void> _declaredMethodAndFunctionProseNoLint() async {
     await assertNoDiagnostics('''
 $_formWidget
 class TodoNotifier {
@@ -380,7 +414,7 @@ class _ScheduleFormState extends State<ScheduleForm> {
 ''');
   }
 
-  Future<void> test_callbackProseOutsideWidgetClass_noLint() async {
+  Future<void> _callbackProseOutsideWidgetClassNoLint() async {
     await assertNoDiagnostics(r'''
 class FormCallbacks {
   const FormCallbacks({required this.onError});
@@ -393,7 +427,7 @@ void notify(FormCallbacks callbacks) {
 ''');
   }
 
-  Future<void> test_callbackProseInsideResolvedPreview_noLint() async {
+  Future<void> _callbackProseInsideResolvedPreviewNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter/widgets.dart';
@@ -415,7 +449,7 @@ class SavePanel extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_globalFunctionVariableProseInWidget_noLint() async {
+  Future<void> _globalFunctionVariableProseInWidgetNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 

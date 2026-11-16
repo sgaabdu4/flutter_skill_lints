@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_assigning_notifiers.dart';
@@ -7,15 +5,49 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_calling_not
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nullable_async_value_pattern.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary_consumer_widgets.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidAssigningNotifiersTest);
-    defineReflectiveTests(AvoidCallingNotifierMembersInsideBuildTest);
-    defineReflectiveTests(AvoidNullableAsyncValuePatternTest);
-    defineReflectiveTests(AvoidUnnecessaryConsumerWidgetsTest);
-  });
+  analysisRuleSuite<AvoidAssigningNotifiersTest>(
+    'AvoidAssigningNotifiersTest',
+    AvoidAssigningNotifiersTest.new,
+    {
+      'test_refReadNotifierAssignedToLocal_lint': (t) => t._refReadNotifierAssignedToLocalLint(),
+      'test_refWatchNotifierAssignedToField_lint': (t) => t._refWatchNotifierAssignedToFieldLint(),
+      'test_directNotifierCall_noLint': (t) => t._directNotifierCallNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidCallingNotifierMembersInsideBuildTest>(
+    'AvoidCallingNotifierMembersInsideBuildTest',
+    AvoidCallingNotifierMembersInsideBuildTest.new,
+    {
+      'test_consumerWidgetBuildNotifierCall_lint': (t) => t._consumerWidgetBuildNotifierCallLint(),
+      'test_consumerStateBuildNotifierCall_lint': (t) => t._consumerStateBuildNotifierCallLint(),
+      'test_callbackInsideBuild_noLint': (t) => t._callbackInsideBuildNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidNullableAsyncValuePatternTest>(
+    'AvoidNullableAsyncValuePatternTest',
+    AvoidNullableAsyncValuePatternTest.new,
+    {
+      'test_asyncValueNullableValuePattern_lint': (t) => t._asyncValueNullableValuePatternLint(),
+      'test_asyncDataPattern_noLint': (t) => t._asyncDataPatternNoLint(),
+      'test_unrelatedValuePattern_noLint': (t) => t._unrelatedValuePatternNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidUnnecessaryConsumerWidgetsTest>(
+    'AvoidUnnecessaryConsumerWidgetsTest',
+    AvoidUnnecessaryConsumerWidgetsTest.new,
+    {
+      'test_severityIsError': (t) => t._severityIsError(),
+      'test_providerFreePageUnderScreens_noLint': (t) => t._providerFreePageUnderScreensNoLint(),
+      'test_unusedRefOutsideScreens_lint': (t) => t._unusedRefOutsideScreensLint(),
+      'test_privateConsumerWidgetUnderScreens_lint': (t) =>
+          t._privateConsumerWidgetUnderScreensLint(),
+      'test_pageReadingRefUnderScreens_noLint': (t) => t._pageReadingRefUnderScreensNoLint(),
+    },
+  );
 }
 
 abstract class _RiverpodSafetyRuleTest extends AnalysisRuleTest {
@@ -120,7 +152,6 @@ abstract class HookConsumerState<T extends Widget> extends ConsumerState<T> {}
   }
 }
 
-@reflectiveTest
 final class AvoidAssigningNotifiersTest extends _RiverpodSafetyRuleTest {
   @override
   void setUp() {
@@ -128,7 +159,7 @@ final class AvoidAssigningNotifiersTest extends _RiverpodSafetyRuleTest {
     super.setUp();
   }
 
-  Future<void> test_refReadNotifierAssignedToLocal_lint() async {
+  Future<void> _refReadNotifierAssignedToLocalLint() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -147,7 +178,7 @@ void update(WidgetRef ref) {
     await assertDiagnostics(source, [lint(source.indexOf('notifier ='), 'notifier'.length)]);
   }
 
-  Future<void> test_refWatchNotifierAssignedToField_lint() async {
+  Future<void> _refWatchNotifierAssignedToFieldLint() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -167,7 +198,7 @@ class Host {
     await assertDiagnostics(source, [lint(source.indexOf('stored ='), 'stored'.length)]);
   }
 
-  Future<void> test_directNotifierCall_noLint() async {
+  Future<void> _directNotifierCallNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -184,7 +215,6 @@ void update(WidgetRef ref) {
   }
 }
 
-@reflectiveTest
 final class AvoidCallingNotifierMembersInsideBuildTest extends _RiverpodSafetyRuleTest {
   @override
   void setUp() {
@@ -192,7 +222,7 @@ final class AvoidCallingNotifierMembersInsideBuildTest extends _RiverpodSafetyRu
     super.setUp();
   }
 
-  Future<void> test_consumerWidgetBuildNotifierCall_lint() async {
+  Future<void> _consumerWidgetBuildNotifierCallLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -217,7 +247,7 @@ class Host extends ConsumerWidget {
     await assertDiagnostics(source, [lint(source.lastIndexOf('increment'), 'increment'.length)]);
   }
 
-  Future<void> test_consumerStateBuildNotifierCall_lint() async {
+  Future<void> _consumerStateBuildNotifierCallLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -240,7 +270,7 @@ class HostState extends ConsumerState<ConsumerStatefulWidget> {
     await assertDiagnostics(source, [lint(source.lastIndexOf('refresh'), 'refresh'.length)]);
   }
 
-  Future<void> test_callbackInsideBuild_noLint() async {
+  Future<void> _callbackInsideBuildNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -267,7 +297,6 @@ class Host extends ConsumerWidget {
   }
 }
 
-@reflectiveTest
 final class AvoidNullableAsyncValuePatternTest extends _RiverpodSafetyRuleTest {
   @override
   void setUp() {
@@ -275,7 +304,7 @@ final class AvoidNullableAsyncValuePatternTest extends _RiverpodSafetyRuleTest {
     super.setUp();
   }
 
-  Future<void> test_asyncValueNullableValuePattern_lint() async {
+  Future<void> _asyncValueNullableValuePatternLint() async {
     const source = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -290,7 +319,7 @@ String label(AsyncValue<String> value) {
     await assertDiagnostics(source, [lint(source.indexOf('final value?'), 'final value?'.length)]);
   }
 
-  Future<void> test_asyncDataPattern_noLint() async {
+  Future<void> _asyncDataPatternNoLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -303,7 +332,7 @@ String label(AsyncValue<String> value) {
 ''');
   }
 
-  Future<void> test_unrelatedValuePattern_noLint() async {
+  Future<void> _unrelatedValuePatternNoLint() async {
     await assertNoDiagnostics(r'''
 class Box<T> {
   const Box(this.value);
@@ -320,7 +349,6 @@ String label(Box<String> box) {
   }
 }
 
-@reflectiveTest
 final class AvoidUnnecessaryConsumerWidgetsTest extends _RiverpodSafetyRuleTest {
   @override
   void setUp() {
@@ -340,18 +368,18 @@ class AboutScreen extends ConsumerWidget {
 }
 ''';
 
-  Future<void> test_severityIsError() async {
+  Future<void> _severityIsError() async {
     expect(AvoidUnnecessaryConsumerWidgets.code.severity, DiagnosticSeverity.ERROR);
   }
 
-  Future<void> test_providerFreePageUnderScreens_noLint() async {
+  Future<void> _providerFreePageUnderScreensNoLint() async {
     final filePath = '$testPackageLibPath/features/about/presentation/screens/about_screen.dart';
     newFile(filePath, _staticPage);
 
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_unusedRefOutsideScreens_lint() async {
+  Future<void> _unusedRefOutsideScreensLint() async {
     final filePath = '$testPackageLibPath/features/about/presentation/widgets/about_screen.dart';
     newFile(filePath, _staticPage);
 
@@ -360,7 +388,7 @@ class AboutScreen extends ConsumerWidget {
     ]);
   }
 
-  Future<void> test_privateConsumerWidgetUnderScreens_lint() async {
+  Future<void> _privateConsumerWidgetUnderScreensLint() async {
     final filePath = '$testPackageLibPath/features/about/presentation/screens/about_screen.dart';
     const source = r'''
 import 'package:flutter/widgets.dart';
@@ -382,7 +410,7 @@ const header = _AboutHeader();
     ]);
   }
 
-  Future<void> test_pageReadingRefUnderScreens_noLint() async {
+  Future<void> _pageReadingRefUnderScreensNoLint() async {
     final filePath = '$testPackageLibPath/features/about/presentation/screens/about_screen.dart';
     newFile(filePath, r'''
 import 'package:flutter/widgets.dart';

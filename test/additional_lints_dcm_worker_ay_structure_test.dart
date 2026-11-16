@@ -1,20 +1,34 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_extensions_on_records.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_non_empty_constructor_bodies.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidNonEmptyConstructorBodiesTest);
-    defineReflectiveTests(AvoidExtensionsOnRecordsTest);
-  });
+  analysisRuleSuite<AvoidNonEmptyConstructorBodiesTest>(
+    'AvoidNonEmptyConstructorBodiesTest',
+    AvoidNonEmptyConstructorBodiesTest.new,
+    {
+      'test_blockBodyWithStatement_lint': (t) => t._blockBodyWithStatementLint(),
+      'test_factoryExpressionBody_lint': (t) => t._factoryExpressionBodyLint(),
+      'test_emptyBodyAndInitializerList_noLint': (t) => t._emptyBodyAndInitializerListNoLint(),
+      'test_severity_info': (t) => t._severityInfo(),
+    },
+  );
+  analysisRuleSuite<AvoidExtensionsOnRecordsTest>(
+    'AvoidExtensionsOnRecordsTest',
+    AvoidExtensionsOnRecordsTest.new,
+    {
+      'test_positionalRecordExtension_lint': (t) => t._positionalRecordExtensionLint(),
+      'test_namedRecordExtension_lint': (t) => t._namedRecordExtensionLint(),
+      'test_namedTypeExtension_noLint': (t) => t._namedTypeExtensionNoLint(),
+      'test_severity_error': (t) => t._severityError(),
+    },
+  );
 }
 
-@reflectiveTest
 final class AvoidNonEmptyConstructorBodiesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +36,7 @@ final class AvoidNonEmptyConstructorBodiesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_blockBodyWithStatement_lint() async {
+  Future<void> _blockBodyWithStatementLint() async {
     const source = r'''
 class Example {
   Example() {
@@ -36,7 +50,7 @@ class Example {
     ]);
   }
 
-  Future<void> test_factoryExpressionBody_lint() async {
+  Future<void> _factoryExpressionBodyLint() async {
     const source = r'''
 class Example {
   Example._();
@@ -49,7 +63,7 @@ class Example {
     ]);
   }
 
-  Future<void> test_emptyBodyAndInitializerList_noLint() async {
+  Future<void> _emptyBodyAndInitializerListNoLint() async {
     await assertNoDiagnostics(r'''
 class Example {
   Example() : value = 0;
@@ -61,12 +75,11 @@ class Example {
 ''');
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(AvoidNonEmptyConstructorBodies.code.severity, DiagnosticSeverity.INFO);
   }
 }
 
-@reflectiveTest
 final class AvoidExtensionsOnRecordsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -74,7 +87,7 @@ final class AvoidExtensionsOnRecordsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_positionalRecordExtension_lint() async {
+  Future<void> _positionalRecordExtensionLint() async {
     const source = r'''
 extension PointRecord on (int, int) {
   int get x => $1;
@@ -84,7 +97,7 @@ extension PointRecord on (int, int) {
     await assertDiagnostics(source, [lint(source.indexOf('(int, int)'), '(int, int)'.length)]);
   }
 
-  Future<void> test_namedRecordExtension_lint() async {
+  Future<void> _namedRecordExtensionLint() async {
     const source = r'''
 extension UserRecord on ({String name, int score}) {
   String get label => name;
@@ -96,7 +109,7 @@ extension UserRecord on ({String name, int score}) {
     ]);
   }
 
-  Future<void> test_namedTypeExtension_noLint() async {
+  Future<void> _namedTypeExtensionNoLint() async {
     await assertNoDiagnostics(r'''
 extension ExampleString on String {
   String get label => this;
@@ -104,7 +117,7 @@ extension ExampleString on String {
 ''');
   }
 
-  Future<void> test_severity_error() async {
+  Future<void> _severityError() async {
     expect(AvoidExtensionsOnRecords.code.severity, DiagnosticSeverity.ERROR);
   }
 }

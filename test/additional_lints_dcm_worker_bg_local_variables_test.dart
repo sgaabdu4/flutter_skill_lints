@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_parameter_aliases.dart';
@@ -9,20 +7,96 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unused_assi
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unused_local_variable.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_type_over_var.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidUnusedAssignmentTest);
-    defineReflectiveTests(AvoidParameterAliasesTest);
-    defineReflectiveTests(AvoidRepeatedPropertyAliasesTest);
-    defineReflectiveTests(AvoidUnassignedLocalVariableTest);
-    defineReflectiveTests(AvoidUnusedLocalVariableTest);
-    defineReflectiveTests(PreferTypeOverVarTest);
+  analysisRuleSuite<AvoidUnusedAssignmentTest>(
+    'AvoidUnusedAssignmentTest',
+    AvoidUnusedAssignmentTest.new,
+    {
+      'test_assignedTwiceBeforeRead_lint': (t) => t._assignedTwiceBeforeReadLint(),
+      'test_readBetweenAssignments_noLint': (t) => t._readBetweenAssignmentsNoLint(),
+      'test_registeredInlineCallbackReadsAcrossAwaits_noLint': (t) =>
+          t._registeredInlineCallbackReadsAcrossAwaitsNoLint(),
+      'test_callbackCaptureStillRequiresExecution_lint': (t) =>
+          t._callbackCaptureStillRequiresExecutionLint(),
+      'test_storedClosureReadsValue_noLint': (t) => t._storedClosureReadsValueNoLint(),
+      'test_escapedClosureDoesNotHideAdjacentOverwrite_lint': (t) =>
+          t._escapedClosureDoesNotHideAdjacentOverwriteLint(),
+      'test_shadowedCallbackReadDoesNotConsumeOuter_lint': (t) =>
+          t._shadowedCallbackReadDoesNotConsumeOuterLint(),
+      'test_shadowedVariable_noLint': (t) => t._shadowedVariableNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidParameterAliasesTest>(
+    'AvoidParameterAliasesTest',
+    AvoidParameterAliasesTest.new,
+    {
+      'test_directParameterAlias_lint': (t) => t._directParameterAliasLint(),
+      'test_finalParameterAlias_lint': (t) => t._finalParameterAliasLint(),
+      'test_derivedFromParameter_noLint': (t) => t._derivedFromParameterNoLint(),
+      'test_forLoopCursor_noLint': (t) => t._forLoopCursorNoLint(),
+      'test_localAliasOfLocal_lint': (t) => t._localAliasOfLocalLint(),
+      'test_reassignedAlias_lint': (t) => t._reassignedAliasLint(),
+      'test_reassignedAdjustedBoundsAliases_lint': (t) => t._reassignedAdjustedBoundsAliasesLint(),
+      'test_topLevelValueAlias_noLint': (t) => t._topLevelValueAliasNoLint(),
+      'test_parenthesizedParameterAlias_lint': (t) => t._parenthesizedParameterAliasLint(),
+    },
+  );
+  analysisRuleSuite<AvoidRepeatedPropertyAliasesTest>(
+    'AvoidRepeatedPropertyAliasesTest',
+    AvoidRepeatedPropertyAliasesTest.new,
+    {
+      'test_threeAliasesFromSameReceiver_lint': (t) => t._threeAliasesFromSameReceiverLint(),
+      'test_twoAliases_noLint': (t) => t._twoAliasesNoLint(),
+      'test_useSourceObjectDirectly_noLint': (t) => t._useSourceObjectDirectlyNoLint(),
+      'test_namedRecordProjection_noLint': (t) => t._namedRecordProjectionNoLint(),
+      'test_l10nAliases_noLint': (t) => t._l10nAliasesNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidUnassignedLocalVariableTest>(
+    'AvoidUnassignedLocalVariableTest',
+    AvoidUnassignedLocalVariableTest.new,
+    {
+      'test_readBeforeAssignment_lint': (t) => t._readBeforeAssignmentLint(),
+      'test_assignmentBeforeRead_noLint': (t) => t._assignmentBeforeReadNoLint(),
+      'test_nullableDefaultIsInitialized_noLint': (t) => t._nullableDefaultIsInitializedNoLint(),
+      'test_lateNullableStillNeedsAssignment_lint': (t) =>
+          t._lateNullableStillNeedsAssignmentLint(),
+      'test_finalNullableStillNeedsAssignment_lint': (t) =>
+          t._finalNullableStillNeedsAssignmentLint(),
+      'test_initializerMakesVariableAssigned_noLint': (t) =>
+          t._initializerMakesVariableAssignedNoLint(),
+      'test_severity_info': (t) => t._severityInfo(),
+    },
+  );
+  analysisRuleSuite<AvoidUnusedLocalVariableTest>(
+    'AvoidUnusedLocalVariableTest',
+    AvoidUnusedLocalVariableTest.new,
+    {
+      'test_neverRead_lint': (t) => t._neverReadLint(),
+      'test_readInNestedBlock_noLint': (t) => t._readInNestedBlockNoLint(),
+      'test_readInClosure_noLint': (t) => t._readInClosureNoLint(),
+      'test_readInLocalFunction_noLint': (t) => t._readInLocalFunctionNoLint(),
+      'test_wildcardLikeName_noLint': (t) => t._wildcardLikeNameNoLint(),
+    },
+  );
+  analysisRuleSuite<PreferTypeOverVarTest>('PreferTypeOverVarTest', PreferTypeOverVarTest.new, {
+    'test_localVar_lint': (t) => t._localVarLint(),
+    'test_forLoopVar_lint': (t) => t._forLoopVarLint(),
+    'test_fieldVar_lint': (t) => t._fieldVarLint(),
+    'test_patternDeclarationVar_lint': (t) => t._patternDeclarationVarLint(),
+    'test_casePatternVar_lint': (t) => t._casePatternVarLint(),
+    'test_topLevelVar_lint': (t) => t._topLevelVarLint(),
+    'test_forInLoopVar_lint': (t) => t._forInLoopVarLint(),
+    'test_awaitForLoopVar_lint': (t) => t._awaitForLoopVarLint(),
+    'test_forInPatternVar_lint': (t) => t._forInPatternVarLint(),
+    'test_inferredFinal_noLint': (t) => t._inferredFinalNoLint(),
+    'test_explicitType_noLint': (t) => t._explicitTypeNoLint(),
   });
 }
 
-@reflectiveTest
 final class AvoidUnusedAssignmentTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -30,7 +104,7 @@ final class AvoidUnusedAssignmentTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_assignedTwiceBeforeRead_lint() async {
+  Future<void> _assignedTwiceBeforeReadLint() async {
     const source = r'''
 void f() {
   var count = 1;
@@ -42,7 +116,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('count = 2'), 'count'.length)]);
   }
 
-  Future<void> test_readBetweenAssignments_noLint() async {
+  Future<void> _readBetweenAssignmentsNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   var count = 1;
@@ -53,7 +127,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_registeredInlineCallbackReadsAcrossAwaits_noLint() async {
+  Future<void> _registeredInlineCallbackReadsAcrossAwaitsNoLint() async {
     await assertNoDiagnostics(r'''
 void Function()? listener;
 void register(void Function() callback) { listener = callback; }
@@ -71,7 +145,7 @@ Future<void> f() async {
 ''');
   }
 
-  Future<void> test_callbackCaptureStillRequiresExecution_lint() async {
+  Future<void> _callbackCaptureStillRequiresExecutionLint() async {
     const source = r'''
 Future<void> unrelated() async {}
 
@@ -95,7 +169,7 @@ Future<void> f() async {
     ]);
   }
 
-  Future<void> test_storedClosureReadsValue_noLint() async {
+  Future<void> _storedClosureReadsValueNoLint() async {
     await assertNoDiagnostics(r'''
 void Function()? listener;
 Future<void> flush() async { listener!(); }
@@ -110,7 +184,7 @@ Future<void> f() async {
 ''');
   }
 
-  Future<void> test_escapedClosureDoesNotHideAdjacentOverwrite_lint() async {
+  Future<void> _escapedClosureDoesNotHideAdjacentOverwriteLint() async {
     const source = r'''
 void Function()? listener;
 void register(void Function() callback) { listener = callback; }
@@ -139,7 +213,7 @@ Future<void> f() async {
     ]);
   }
 
-  Future<void> test_shadowedCallbackReadDoesNotConsumeOuter_lint() async {
+  Future<void> _shadowedCallbackReadDoesNotConsumeOuterLint() async {
     const source = r'''
 void register(void Function(int) callback) { callback(0); }
 
@@ -154,7 +228,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('value = 2'), 'value'.length)]);
   }
 
-  Future<void> test_shadowedVariable_noLint() async {
+  Future<void> _shadowedVariableNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   var value = 1;
@@ -168,7 +242,6 @@ void f() {
   }
 }
 
-@reflectiveTest
 final class AvoidRepeatedPropertyAliasesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -176,7 +249,7 @@ final class AvoidRepeatedPropertyAliasesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_threeAliasesFromSameReceiver_lint() async {
+  Future<void> _threeAliasesFromSameReceiverLint() async {
     const source = r'''
 class Preferences {
   bool? calendar;
@@ -195,7 +268,7 @@ void f(Preferences preferences) {
     await assertDiagnostics(source, [lint(source.indexOf('calendar ='), 'calendar'.length)]);
   }
 
-  Future<void> test_twoAliases_noLint() async {
+  Future<void> _twoAliasesNoLint() async {
     await assertNoDiagnostics(r'''
 class Preferences {
   bool? calendar;
@@ -210,7 +283,7 @@ void f(Preferences preferences) {
 ''');
   }
 
-  Future<void> test_useSourceObjectDirectly_noLint() async {
+  Future<void> _useSourceObjectDirectlyNoLint() async {
     await assertNoDiagnostics(r'''
 class Preferences {
   bool? calendar;
@@ -226,7 +299,7 @@ void f(Preferences preferences) {
 ''');
   }
 
-  Future<void> test_namedRecordProjection_noLint() async {
+  Future<void> _namedRecordProjectionNoLint() async {
     await assertNoDiagnostics(r'''
 class Preferences {
   bool? calendar;
@@ -247,7 +320,7 @@ void f(Preferences preferences) {
 ''');
   }
 
-  Future<void> test_l10nAliases_noLint() async {
+  Future<void> _l10nAliasesNoLint() async {
     await assertNoDiagnostics(r'''
 class AppLocalizations {
   String get save => '';
@@ -265,7 +338,6 @@ void f(AppLocalizations l10n) {
   }
 }
 
-@reflectiveTest
 final class AvoidParameterAliasesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -273,7 +345,7 @@ final class AvoidParameterAliasesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_directParameterAlias_lint() async {
+  Future<void> _directParameterAliasLint() async {
     const source = r'''
 void f(double dataMin) {
   double adjustedDataMin = dataMin;
@@ -286,7 +358,7 @@ void f(double dataMin) {
     ]);
   }
 
-  Future<void> test_finalParameterAlias_lint() async {
+  Future<void> _finalParameterAliasLint() async {
     const source = r'''
 void f(String name) {
   final label = name;
@@ -297,7 +369,7 @@ void f(String name) {
     await assertDiagnostics(source, [lint(source.indexOf('label'), 'label'.length)]);
   }
 
-  Future<void> test_derivedFromParameter_noLint() async {
+  Future<void> _derivedFromParameterNoLint() async {
     await assertNoDiagnostics(r'''
 void f(double dataMin) {
   final adjusted = dataMin * 0.9;
@@ -306,7 +378,7 @@ void f(double dataMin) {
 ''');
   }
 
-  Future<void> test_forLoopCursor_noLint() async {
+  Future<void> _forLoopCursorNoLint() async {
     await assertNoDiagnostics(r'''
 void f(int start) {
   for (int index = start; index < 3; index++) {
@@ -316,7 +388,7 @@ void f(int start) {
 ''');
   }
 
-  Future<void> test_localAliasOfLocal_lint() async {
+  Future<void> _localAliasOfLocalLint() async {
     const source = r'''
 void f() {
   final source = 1;
@@ -328,7 +400,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('copy'), 'copy'.length)]);
   }
 
-  Future<void> test_reassignedAlias_lint() async {
+  Future<void> _reassignedAliasLint() async {
     const source = r'''
 void f(int start) {
   int cursor = start;
@@ -340,7 +412,7 @@ void f(int start) {
     await assertDiagnostics(source, [lint(source.indexOf('cursor'), 'cursor'.length)]);
   }
 
-  Future<void> test_reassignedAdjustedBoundsAliases_lint() async {
+  Future<void> _reassignedAdjustedBoundsAliasesLint() async {
     const source = r'''
 void f(double dataMin, double dataMax) {
   double adjustedDataMin = dataMin;
@@ -357,7 +429,7 @@ void f(double dataMin, double dataMax) {
     ]);
   }
 
-  Future<void> test_topLevelValueAlias_noLint() async {
+  Future<void> _topLevelValueAliasNoLint() async {
     await assertNoDiagnostics(r'''
 const source = 1;
 
@@ -368,7 +440,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_parenthesizedParameterAlias_lint() async {
+  Future<void> _parenthesizedParameterAliasLint() async {
     const source = r'''
 void f(int count) {
   final total = (count);
@@ -380,7 +452,6 @@ void f(int count) {
   }
 }
 
-@reflectiveTest
 final class AvoidUnassignedLocalVariableTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -388,7 +459,7 @@ final class AvoidUnassignedLocalVariableTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_readBeforeAssignment_lint() async {
+  Future<void> _readBeforeAssignmentLint() async {
     const source = r'''
 void f() {
   late int value;
@@ -406,7 +477,7 @@ void f() {
     ]);
   }
 
-  Future<void> test_assignmentBeforeRead_noLint() async {
+  Future<void> _assignmentBeforeReadNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   late int value;
@@ -416,7 +487,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_nullableDefaultIsInitialized_noLint() async {
+  Future<void> _nullableDefaultIsInitializedNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   int? count;
@@ -427,7 +498,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_lateNullableStillNeedsAssignment_lint() async {
+  Future<void> _lateNullableStillNeedsAssignmentLint() async {
     const source = r'''
 void f() {
   late int? value;
@@ -441,7 +512,7 @@ void f() {
     ]);
   }
 
-  Future<void> test_finalNullableStillNeedsAssignment_lint() async {
+  Future<void> _finalNullableStillNeedsAssignmentLint() async {
     const source = r'''
 void f() {
   final int? value;
@@ -455,7 +526,7 @@ void f() {
     ]);
   }
 
-  Future<void> test_initializerMakesVariableAssigned_noLint() async {
+  Future<void> _initializerMakesVariableAssignedNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   var value = 1;
@@ -464,12 +535,11 @@ void f() {
 ''');
   }
 
-  Future<void> test_severity_info() async {
+  Future<void> _severityInfo() async {
     expect(AvoidUnassignedLocalVariable.code.severity, DiagnosticSeverity.INFO);
   }
 }
 
-@reflectiveTest
 final class AvoidUnusedLocalVariableTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -477,7 +547,7 @@ final class AvoidUnusedLocalVariableTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_neverRead_lint() async {
+  Future<void> _neverReadLint() async {
     const source = r'''
 void f() {
   final unused = 1;
@@ -487,7 +557,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('unused'), 'unused'.length)]);
   }
 
-  Future<void> test_readInNestedBlock_noLint() async {
+  Future<void> _readInNestedBlockNoLint() async {
     await assertNoDiagnostics(r'''
 void f(bool enabled) {
   final value = 1;
@@ -498,7 +568,7 @@ void f(bool enabled) {
 ''');
   }
 
-  Future<void> test_readInClosure_noLint() async {
+  Future<void> _readInClosureNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   final value = 1;
@@ -510,7 +580,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_readInLocalFunction_noLint() async {
+  Future<void> _readInLocalFunctionNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   final value = 1;
@@ -522,7 +592,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_wildcardLikeName_noLint() async {
+  Future<void> _wildcardLikeNameNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   final _ignored = 1;
@@ -531,7 +601,6 @@ void f() {
   }
 }
 
-@reflectiveTest
 final class PreferTypeOverVarTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -539,7 +608,7 @@ final class PreferTypeOverVarTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_localVar_lint() async {
+  Future<void> _localVarLint() async {
     const source = r'''
 void f() {
   var hasMore = true;
@@ -550,7 +619,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('var'), 'var'.length)]);
   }
 
-  Future<void> test_forLoopVar_lint() async {
+  Future<void> _forLoopVarLint() async {
     const source = r'''
 void f() {
   for (var index = 0; index < 3; index++) {
@@ -562,7 +631,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('var'), 'var'.length)]);
   }
 
-  Future<void> test_fieldVar_lint() async {
+  Future<void> _fieldVarLint() async {
     const source = r'''
 final class Counter {
   var value = 0;
@@ -572,7 +641,7 @@ final class Counter {
     await assertDiagnostics(source, [lint(source.indexOf('var'), 'var'.length)]);
   }
 
-  Future<void> test_patternDeclarationVar_lint() async {
+  Future<void> _patternDeclarationVarLint() async {
     const source = r'''
 void f() {
   var (:hasMore) = (hasMore: true);
@@ -583,7 +652,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('var'), 'var'.length)]);
   }
 
-  Future<void> test_casePatternVar_lint() async {
+  Future<void> _casePatternVarLint() async {
     const source = r'''
 void f(Object value) {
   switch (value) {
@@ -596,7 +665,7 @@ void f(Object value) {
     await assertDiagnostics(source, [lint(source.indexOf('var hasMore'), 'var'.length)]);
   }
 
-  Future<void> test_topLevelVar_lint() async {
+  Future<void> _topLevelVarLint() async {
     const source = r'''
 var count = 0;
 ''';
@@ -604,7 +673,7 @@ var count = 0;
     await assertDiagnostics(source, [lint(source.indexOf('var'), 'var'.length)]);
   }
 
-  Future<void> test_forInLoopVar_lint() async {
+  Future<void> _forInLoopVarLint() async {
     const source = r'''
 void f(List<int> values) {
   for (var value in values) {
@@ -616,7 +685,7 @@ void f(List<int> values) {
     await assertDiagnostics(source, [lint(source.indexOf('var'), 'var'.length)]);
   }
 
-  Future<void> test_awaitForLoopVar_lint() async {
+  Future<void> _awaitForLoopVarLint() async {
     const source = r'''
 Future<void> f(Stream<int> values) async {
   await for (var value in values) {
@@ -628,7 +697,7 @@ Future<void> f(Stream<int> values) async {
     await assertDiagnostics(source, [lint(source.indexOf('var'), 'var'.length)]);
   }
 
-  Future<void> test_forInPatternVar_lint() async {
+  Future<void> _forInPatternVarLint() async {
     const source = r'''
 void f(List<(int, int)> pairs) {
   for (var (first, second) in pairs) {
@@ -640,7 +709,7 @@ void f(List<(int, int)> pairs) {
     await assertDiagnostics(source, [lint(source.indexOf('var'), 'var'.length)]);
   }
 
-  Future<void> test_inferredFinal_noLint() async {
+  Future<void> _inferredFinalNoLint() async {
     await assertNoDiagnostics(r'''
 final total = 0;
 void f(List<int> values) {
@@ -654,7 +723,7 @@ void f(List<int> values) {
 ''');
   }
 
-  Future<void> test_explicitType_noLint() async {
+  Future<void> _explicitTypeNoLint() async {
     await assertNoDiagnostics(r'''
 void f() {
   bool hasMore = true;

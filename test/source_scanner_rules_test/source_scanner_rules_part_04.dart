@@ -1,10 +1,7 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class RiverpodKeepaliveFamilyTest extends _RiverpodRuleTest {
-  Future<void> test_allowsNearbyRequiredFieldsAndMethods() async {
+  Future<void> _allowsNearbyRequiredFieldsAndMethods() async {
     await assertAllows(r'''
 class Riverpod { const Riverpod({bool keepAlive = false}); }
 class Ref {}
@@ -33,7 +30,7 @@ class Riverpod {
 Object todoProvider({required String todoId}) => Object();
 ''';
 
-  Future<void> test_reportsRefFamilyParameter() async {
+  Future<void> _reportsRefFamilyParameter() async {
     final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -47,7 +44,7 @@ Object todoProvider(Ref ref, String todoId) => Object();
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, needle, ruleName)]);
   }
 
-  Future<void> test_allowsKeepAliveProviderWithoutFamilyArgument() async {
+  Future<void> _allowsKeepAliveProviderWithoutFamilyArgument() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -60,7 +57,7 @@ Object repositoryProvider(Ref ref) => Object();
 ''');
   }
 
-  Future<void> test_allowsFamilyProviderAfterKeepAliveProviderBody() async {
+  Future<void> _allowsFamilyProviderAfterKeepAliveProviderBody() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -82,7 +79,7 @@ Object cardProvider(Ref ref, String id) {
 ''');
   }
 
-  Future<void> test_allowsKeepAliveClassProviderWithoutBuildArgument() async {
+  Future<void> _allowsKeepAliveClassProviderWithoutBuildArgument() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -95,7 +92,7 @@ class RepositoryNotifier {
 ''');
   }
 
-  Future<void> test_reportsMultilineKeepAliveFamilyAnnotation() async {
+  Future<void> _reportsMultilineKeepAliveFamilyAnnotation() async {
     final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -111,7 +108,7 @@ Object todoProvider(Ref ref, String todoId) => Object();
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, needle, ruleName)]);
   }
 
-  Future<void> test_reportsKeepAliveClassBuildFamily() async {
+  Future<void> _reportsKeepAliveClassBuildFamily() async {
     final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -125,7 +122,7 @@ class TodoNotifier {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, needle, ruleName)]);
   }
 
-  Future<void> test_allowsTickerModeKeepAliveWorkaround() async {
+  Future<void> _allowsTickerModeKeepAliveWorkaround() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -140,7 +137,7 @@ Object todoProvider(Ref ref, String todoId) => Object();
 ''');
   }
 
-  Future<void> test_allowsDocumentedWorkaroundNoteOnAnnotationLine() async {
+  Future<void> _allowsDocumentedWorkaroundNoteOnAnnotationLine() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -153,7 +150,7 @@ Object todoProvider(Ref ref, String todoId) => Object();
 ''');
   }
 
-  Future<void> test_reportsFamilyBesideNeighbourWorkaroundNote() async {
+  Future<void> _reportsFamilyBesideNeighbourWorkaroundNote() async {
     final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -180,7 +177,6 @@ abstract class _FreezedRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => freezedSourceRules;
 }
 
-@reflectiveTest
 final class DartStaticNamespaceTest extends _FreezedRuleTest {
   @override
   String get ruleName => 'dart_static_namespace';
@@ -196,7 +192,7 @@ class Tokens {
 }
 ''';
 
-  Future<void> test_allowsPrivateConstructorSingletonWithInstanceMembers() async {
+  Future<void> _allowsPrivateConstructorSingletonWithInstanceMembers() async {
     await assertAllows(r'''
 class SharedCache {
   SharedCache._();
@@ -207,7 +203,7 @@ class SharedCache {
 ''');
   }
 
-  Future<void> test_allowsPrivateConstructorWithFactoryAndInstanceMembers() async {
+  Future<void> _allowsPrivateConstructorWithFactoryAndInstanceMembers() async {
     await assertAllows(r'''
 class SharedCache {
   SharedCache._();
@@ -220,7 +216,6 @@ class SharedCache {
   }
 }
 
-@reflectiveTest
 final class RecordUseOutsideFfiTest extends _FreezedRuleTest {
   @override
   void setUp() {
@@ -246,7 +241,7 @@ import 'package:meta/meta.dart';
 String greeting(String name) => 'Hello $name';
 ''';
 
-  Future<void> test_allowsFfiBinding() async {
+  Future<void> _allowsFfiBinding() async {
     await assertAllows(r'''
 import 'dart:ffi';
 import 'package:meta/meta.dart';
@@ -258,7 +253,7 @@ abstract final class SquareBindings {
 ''', path: '$testPackageLibPath/src/square_bindings.dart');
   }
 
-  Future<void> test_allowsNonMetaRecordUse() async {
+  Future<void> _allowsNonMetaRecordUse() async {
     await assertAllows(r'''
 class RecordUse {
   const RecordUse();
@@ -270,7 +265,6 @@ String greeting(String name) => 'Hello $name';
   }
 }
 
-@reflectiveTest
 final class FreezedPerClassExplicitToJsonTest extends _FreezedRuleTest {
   @override
   String get ruleName => 'freezed_per_class_explicit_to_json';
@@ -287,7 +281,6 @@ class UserDto {}
 ''';
 }
 
-@reflectiveTest
 final class FreezedToJsonWithFromJsonTest extends _FreezedRuleTest {
   @override
   String get ruleName => 'freezed_to_json_with_from_json';
@@ -310,7 +303,6 @@ class User {
 ''';
 }
 
-@reflectiveTest
 final class FreezedLegacyWhenMapTest extends _FreezedRuleTest {
   @override
   void setUp() {
@@ -331,7 +323,7 @@ extension UnionPatterns on Union {
     super.setUp();
   }
 
-  Future<void> test_reportsEveryGeneratedPatternHelper() async {
+  Future<void> _reportsEveryGeneratedPatternHelper() async {
     const source = r'''
 import 'package:freezed_annotation/freezed_annotation.dart';
 part 'union.freezed.dart';
@@ -354,7 +346,7 @@ String maybe(Union union) => union.maybeWhen();
     ]);
   }
 
-  Future<void> test_reportsHelpersOnConfiguredFreezedAnnotation() async {
+  Future<void> _reportsHelpersOnConfiguredFreezedAnnotation() async {
     newFile('$testPackageLibPath/keyed.freezed.dart', r'''
 part of 'keyed.dart';
 mixin _$Keyed { String when() => 'legacy'; }
@@ -371,7 +363,7 @@ String label(Keyed keyed) => keyed.when();
     await assertDiagnosticsInFile(keyedPath, [compatLint(source, 'when();', ruleName)]);
   }
 
-  Future<void> test_allowsSameNamedHelpersOnNonFreezedTypes() async {
+  Future<void> _allowsSameNamedHelpersOnNonFreezedTypes() async {
     await assertAllows(r'''
 class AsyncValue<T> {
   R map<R>(R Function() data) => data();
@@ -402,14 +394,14 @@ class Union with _$Union {}
 String label(Union union) => union.when();
 ''';
 
-  Future<void> test_allowsUnrelatedMethodNamedWhen() async {
+  Future<void> _allowsUnrelatedMethodNamedWhen() async {
     await assertAllows(r'''
 class AsyncValue<T> { T when({required T Function() data}) => data(); }
 int label(AsyncValue<int> value) => value.when(data: () => 1);
 ''');
   }
 
-  Future<void> test_allowsBareMocktailWhenCall() async {
+  Future<void> _allowsBareMocktailWhenCall() async {
     await assertNoDiagnostics(r'''
 dynamic when(Object callback) => _Stub();
 
@@ -429,7 +421,6 @@ void main() {
   }
 }
 
-@reflectiveTest
 final class FreezedRequiredValueClassTest extends _FreezedRuleTest {
   @override
   String get ruleName => 'freezed_required_value_class';
@@ -474,7 +465,7 @@ class HiveField {
     super.setUp();
   }
 
-  Future<void> test_allowsNonFreezedHiveTypeDataModel() async {
+  Future<void> _allowsNonFreezedHiveTypeDataModel() async {
     final filePath = '$testPackageLibPath/features/cache/data/models/cache_entry.dart';
     newFile(filePath, r'''
 import 'package:hive_ce/hive_ce.dart';
@@ -494,7 +485,7 @@ class CacheEntry {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsStaticCodecNamespaceInDataModels() async {
+  Future<void> _allowsStaticCodecNamespaceInDataModels() async {
     final filePath = '$testPackageLibPath/features/todos/data/models/todo_list_codec.dart';
     newFile(filePath, r'''
 abstract final class TodoListCodec {
@@ -508,7 +499,7 @@ abstract final class TodoListCodec {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_reportsDataModelWithUnresolvedHiveTypeLookalike() async {
+  Future<void> _reportsDataModelWithUnresolvedHiveTypeLookalike() async {
     final filePath = '$testPackageLibPath/features/cache/data/models/cache_entry.dart';
     const source = r'''
 class HiveType {
@@ -531,7 +522,7 @@ class CacheEntry {
     ]);
   }
 
-  Future<void> test_reportsEquatableDataModel() async {
+  Future<void> _reportsEquatableDataModel() async {
     final filePath = '$testPackageLibPath/features/users/data/models/user_model.dart';
     const source = r'''
 // ignore_for_file: uri_does_not_exist, unused_import
@@ -550,7 +541,7 @@ class UserModel extends Equatable {
     ]);
   }
 
-  Future<void> test_allowsFreezedDomainEntity() async {
+  Future<void> _allowsFreezedDomainEntity() async {
     final filePath = '$testPackageLibPath/features/users/domain/user.dart';
     newFile('$testPackageLibPath/features/users/domain/user.freezed.dart', r'''
 part of 'user.dart';
@@ -581,7 +572,7 @@ sealed class User with _$User {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsFreezedDataModel() async {
+  Future<void> _allowsFreezedDataModel() async {
     final filePath = '$testPackageLibPath/features/users/data/models/user_model.dart';
     newFile('$testPackageLibPath/features/users/data/models/user_model.freezed.dart', r'''
 part of 'user_model.dart';
@@ -612,7 +603,7 @@ sealed class UserModel with _$UserModel {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsDomainInterfaceContracts() async {
+  Future<void> _allowsDomainInterfaceContracts() async {
     final filePath = '$testPackageLibPath/features/users/domain/user_repository.dart';
     newFile(filePath, r'''
 abstract interface class IUserRepository {
@@ -623,7 +614,7 @@ abstract interface class IUserRepository {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  Future<void> test_allowsNonModelDataClassOutsideModelsFolder() async {
+  Future<void> _allowsNonModelDataClassOutsideModelsFolder() async {
     final filePath = '$testPackageLibPath/features/users/data/datasources/user_datasource.dart';
     newFile(filePath, r'''
 class UserDatasource {
@@ -635,7 +626,6 @@ class UserDatasource {
   }
 }
 
-@reflectiveTest
 final class UseFreezedInsteadOfImmutableTest extends _FreezedRuleTest {
   @override
   void setUp() {
@@ -668,7 +658,7 @@ class UserState {
 }
 ''';
 
-  Future<void> test_reportsUnfreezedStateClass() async {
+  Future<void> _reportsUnfreezedStateClass() async {
     final filePath = '$testPackageLibPath/features/users/presentation/form_state.dart';
     const source = r'''
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -680,7 +670,7 @@ sealed class FormState {}
     await assertDiagnosticsInFile(filePath, [compatLint(source, '@unfreezed', ruleName)]);
   }
 
-  Future<void> test_allowsSameNamedNonFreezedUnfreezedAnnotation() async {
+  Future<void> _allowsSameNamedNonFreezedUnfreezedAnnotation() async {
     await assertAllows(r'''
 class Marker { const Marker(); }
 const unfreezed = Marker();
@@ -690,14 +680,14 @@ class Draft {}
 ''', path: '$testPackageLibPath/features/users/presentation/draft.dart');
   }
 
-  Future<void> test_allowsImmutableTextInComments() async {
+  Future<void> _allowsImmutableTextInComments() async {
     await assertNoDiagnostics(r'''
 // Use Freezed for immutable state classes.
 final message = 'immutable value';
 ''');
   }
 
-  Future<void> test_allowsImmutableInTests() async {
+  Future<void> _allowsImmutableInTests() async {
     final filePath = '$testPackageRootPath/test/features/users/user_state_test.dart';
     newFile(filePath, r'''
 class Immutable {
@@ -716,7 +706,6 @@ class TestUserState {
   }
 }
 
-@reflectiveTest
 final class FreezedOneClassPerFileTest extends _FreezedRuleTest {
   @override
   String get ruleName => 'freezed_one_class_per_file';
@@ -757,7 +746,7 @@ final class _UserFilters implements UserFilters {
 }
 ''';
 
-  Future<void> test_allowsSingleFreezedClassPerFile() async {
+  Future<void> _allowsSingleFreezedClassPerFile() async {
     await assertAllows(r'''
 class Freezed {
   const Freezed();
@@ -779,7 +768,7 @@ final class _User implements User {
 ''', path: '$testPackageLibPath/features/users/domain/user.dart');
   }
 
-  Future<void> test_allowsMultipleNonFreezedClasses() async {
+  Future<void> _allowsMultipleNonFreezedClasses() async {
     await assertAllows(r'''
 class User {
   const User();
@@ -790,4 +779,113 @@ class UserFilters {
 }
 ''', path: '$testPackageLibPath/features/users/presentation/user_helpers.dart');
   }
+}
+
+void _defineSourceScannerRulesPart04Tests() {
+  analysisRuleSuite<RiverpodKeepaliveFamilyTest>(
+    'RiverpodKeepaliveFamilyTest',
+    RiverpodKeepaliveFamilyTest.new,
+    {
+      'test_allowsNearbyRequiredFieldsAndMethods': (t) => t._allowsNearbyRequiredFieldsAndMethods(),
+      'test_reportsRefFamilyParameter': (t) => t._reportsRefFamilyParameter(),
+      'test_allowsKeepAliveProviderWithoutFamilyArgument': (t) =>
+          t._allowsKeepAliveProviderWithoutFamilyArgument(),
+      'test_allowsFamilyProviderAfterKeepAliveProviderBody': (t) =>
+          t._allowsFamilyProviderAfterKeepAliveProviderBody(),
+      'test_allowsKeepAliveClassProviderWithoutBuildArgument': (t) =>
+          t._allowsKeepAliveClassProviderWithoutBuildArgument(),
+      'test_reportsMultilineKeepAliveFamilyAnnotation': (t) =>
+          t._reportsMultilineKeepAliveFamilyAnnotation(),
+      'test_reportsKeepAliveClassBuildFamily': (t) => t._reportsKeepAliveClassBuildFamily(),
+      'test_allowsTickerModeKeepAliveWorkaround': (t) => t._allowsTickerModeKeepAliveWorkaround(),
+      'test_allowsDocumentedWorkaroundNoteOnAnnotationLine': (t) =>
+          t._allowsDocumentedWorkaroundNoteOnAnnotationLine(),
+      'test_reportsFamilyBesideNeighbourWorkaroundNote': (t) =>
+          t._reportsFamilyBesideNeighbourWorkaroundNote(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<DartStaticNamespaceTest>(
+    'DartStaticNamespaceTest',
+    DartStaticNamespaceTest.new,
+    {
+      'test_allowsPrivateConstructorSingletonWithInstanceMembers': (t) =>
+          t._allowsPrivateConstructorSingletonWithInstanceMembers(),
+      'test_allowsPrivateConstructorWithFactoryAndInstanceMembers': (t) =>
+          t._allowsPrivateConstructorWithFactoryAndInstanceMembers(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RecordUseOutsideFfiTest>(
+    'RecordUseOutsideFfiTest',
+    RecordUseOutsideFfiTest.new,
+    {
+      'test_allowsFfiBinding': (t) => t._allowsFfiBinding(),
+      'test_allowsNonMetaRecordUse': (t) => t._allowsNonMetaRecordUse(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<FreezedPerClassExplicitToJsonTest>(
+    'FreezedPerClassExplicitToJsonTest',
+    FreezedPerClassExplicitToJsonTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<FreezedToJsonWithFromJsonTest>(
+    'FreezedToJsonWithFromJsonTest',
+    FreezedToJsonWithFromJsonTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<FreezedLegacyWhenMapTest>(
+    'FreezedLegacyWhenMapTest',
+    FreezedLegacyWhenMapTest.new,
+    {
+      'test_reportsEveryGeneratedPatternHelper': (t) => t._reportsEveryGeneratedPatternHelper(),
+      'test_reportsHelpersOnConfiguredFreezedAnnotation': (t) =>
+          t._reportsHelpersOnConfiguredFreezedAnnotation(),
+      'test_allowsSameNamedHelpersOnNonFreezedTypes': (t) =>
+          t._allowsSameNamedHelpersOnNonFreezedTypes(),
+      'test_allowsUnrelatedMethodNamedWhen': (t) => t._allowsUnrelatedMethodNamedWhen(),
+      'test_allowsBareMocktailWhenCall': (t) => t._allowsBareMocktailWhenCall(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<FreezedRequiredValueClassTest>(
+    'FreezedRequiredValueClassTest',
+    FreezedRequiredValueClassTest.new,
+    {
+      'test_allowsNonFreezedHiveTypeDataModel': (t) => t._allowsNonFreezedHiveTypeDataModel(),
+      'test_allowsStaticCodecNamespaceInDataModels': (t) =>
+          t._allowsStaticCodecNamespaceInDataModels(),
+      'test_reportsDataModelWithUnresolvedHiveTypeLookalike': (t) =>
+          t._reportsDataModelWithUnresolvedHiveTypeLookalike(),
+      'test_reportsEquatableDataModel': (t) => t._reportsEquatableDataModel(),
+      'test_allowsFreezedDomainEntity': (t) => t._allowsFreezedDomainEntity(),
+      'test_allowsFreezedDataModel': (t) => t._allowsFreezedDataModel(),
+      'test_allowsDomainInterfaceContracts': (t) => t._allowsDomainInterfaceContracts(),
+      'test_allowsNonModelDataClassOutsideModelsFolder': (t) =>
+          t._allowsNonModelDataClassOutsideModelsFolder(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<UseFreezedInsteadOfImmutableTest>(
+    'UseFreezedInsteadOfImmutableTest',
+    UseFreezedInsteadOfImmutableTest.new,
+    {
+      'test_reportsUnfreezedStateClass': (t) => t._reportsUnfreezedStateClass(),
+      'test_allowsSameNamedNonFreezedUnfreezedAnnotation': (t) =>
+          t._allowsSameNamedNonFreezedUnfreezedAnnotation(),
+      'test_allowsImmutableTextInComments': (t) => t._allowsImmutableTextInComments(),
+      'test_allowsImmutableInTests': (t) => t._allowsImmutableInTests(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<FreezedOneClassPerFileTest>(
+    'FreezedOneClassPerFileTest',
+    FreezedOneClassPerFileTest.new,
+    {
+      'test_allowsSingleFreezedClassPerFile': (t) => t._allowsSingleFreezedClassPerFile(),
+      'test_allowsMultipleNonFreezedClasses': (t) => t._allowsMultipleNonFreezedClasses(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

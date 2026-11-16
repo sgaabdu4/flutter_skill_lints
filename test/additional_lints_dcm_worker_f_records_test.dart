@@ -1,20 +1,32 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_function_type_in_records.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_long_records.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_records.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidFunctionTypeInRecordsTest);
-    defineReflectiveTests(AvoidNestedRecordsTest);
-    defineReflectiveTests(AvoidLongRecordsTest);
+  analysisRuleSuite<AvoidFunctionTypeInRecordsTest>(
+    'AvoidFunctionTypeInRecordsTest',
+    AvoidFunctionTypeInRecordsTest.new,
+    {
+      'test_functionLiteralField_lint': (t) => t._functionLiteralFieldLint(),
+      'test_functionTypedField_lint': (t) => t._functionTypedFieldLint(),
+      'test_valueFields_noLint': (t) => t._valueFieldsNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidNestedRecordsTest>('AvoidNestedRecordsTest', AvoidNestedRecordsTest.new, {
+    'test_nestedLiteralField_lint': (t) => t._nestedLiteralFieldLint(),
+    'test_nestedTypeField_lint': (t) => t._nestedTypeFieldLint(),
+    'test_flatRecord_noLint': (t) => t._flatRecordNoLint(),
+  });
+  analysisRuleSuite<AvoidLongRecordsTest>('AvoidLongRecordsTest', AvoidLongRecordsTest.new, {
+    'test_fourFieldLiteral_lint': (t) => t._fourFieldLiteralLint(),
+    'test_fourFieldType_lint': (t) => t._fourFieldTypeLint(),
+    'test_threeFields_noLint': (t) => t._threeFieldsNoLint(),
   });
 }
 
-@reflectiveTest
 final class AvoidFunctionTypeInRecordsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +34,7 @@ final class AvoidFunctionTypeInRecordsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_functionLiteralField_lint() async {
+  Future<void> _functionLiteralFieldLint() async {
     const source = r'''
 void f() {
   final value = (() => 1, label: 'count');
@@ -33,7 +45,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('() => 1'), '() => 1'.length)]);
   }
 
-  Future<void> test_functionTypedField_lint() async {
+  Future<void> _functionTypedFieldLint() async {
     const source = r'''
 typedef HandlerRecord = ({void Function() onTap, String label});
 ''';
@@ -43,7 +55,7 @@ typedef HandlerRecord = ({void Function() onTap, String label});
     ]);
   }
 
-  Future<void> test_valueFields_noLint() async {
+  Future<void> _valueFieldsNoLint() async {
     await assertNoDiagnostics(r'''
 typedef LabelRecord = ({String label, int count});
 
@@ -55,7 +67,6 @@ void f() {
   }
 }
 
-@reflectiveTest
 final class AvoidNestedRecordsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -63,7 +74,7 @@ final class AvoidNestedRecordsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_nestedLiteralField_lint() async {
+  Future<void> _nestedLiteralFieldLint() async {
     const source = r'''
 void f() {
   final value = ((1, 2), label: 'point');
@@ -74,7 +85,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('(1, 2)'), '(1, 2)'.length)]);
   }
 
-  Future<void> test_nestedTypeField_lint() async {
+  Future<void> _nestedTypeFieldLint() async {
     const source = r'''
 typedef PointRecord = ((int, int), String);
 ''';
@@ -82,7 +93,7 @@ typedef PointRecord = ((int, int), String);
     await assertDiagnostics(source, [lint(source.indexOf('(int, int)'), '(int, int)'.length)]);
   }
 
-  Future<void> test_flatRecord_noLint() async {
+  Future<void> _flatRecordNoLint() async {
     await assertNoDiagnostics(r'''
 typedef PointRecord = ({int x, int y});
 
@@ -94,7 +105,6 @@ void f() {
   }
 }
 
-@reflectiveTest
 final class AvoidLongRecordsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -102,7 +112,7 @@ final class AvoidLongRecordsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_fourFieldLiteral_lint() async {
+  Future<void> _fourFieldLiteralLint() async {
     const source = r'''
 void f() {
   final value = (1, 2, 3, 4);
@@ -113,7 +123,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('(1, 2, 3, 4)'), '(1, 2, 3, 4)'.length)]);
   }
 
-  Future<void> test_fourFieldType_lint() async {
+  Future<void> _fourFieldTypeLint() async {
     const source = r'''
 typedef UserRecord = ({String id, String name, int age, bool active});
 ''';
@@ -126,7 +136,7 @@ typedef UserRecord = ({String id, String name, int age, bool active});
     ]);
   }
 
-  Future<void> test_threeFields_noLint() async {
+  Future<void> _threeFieldsNoLint() async {
     await assertNoDiagnostics(r'''
 typedef UserRecord = ({String id, String name, int age});
 

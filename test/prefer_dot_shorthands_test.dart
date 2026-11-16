@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/diagnostic/diagnostic.dart';
@@ -10,15 +8,48 @@ import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/fixes/prefer_dot_shorthands_fix.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_dot_shorthands.dart';
 import 'package:test/test.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(PreferDotShorthandsTest);
-  });
+  analysisRuleSuite<PreferDotShorthandsTest>(
+    'PreferDotShorthandsTest',
+    PreferDotShorthandsTest.new,
+    {
+      'test_contextuallyTypedForms_lint': (t) => t._contextuallyTypedFormsLint(),
+      'test_nullableContext_lint': (t) => t._nullableContextLint(),
+      'test_importPrefixedType_lint': (t) => t._importPrefixedTypeLint(),
+      'test_extensionTypeStaticAndConstructor_lint': (t) =>
+          t._extensionTypeStaticAndConstructorLint(),
+      'test_conditionalSwitchPatternAndDefault_lint': (t) =>
+          t._conditionalSwitchPatternAndDefaultLint(),
+      'test_inferredOrWrongNamespace_noLint': (t) => t._inferredOrWrongNamespaceNoLint(),
+      'test_namedExtensionStaticHelpers_noLint': (t) => t._namedExtensionStaticHelpersNoLint(),
+      'test_inferredGenericArgument_noLint': (t) => t._inferredGenericArgumentNoLint(),
+      'test_narrowerExplicitGenericConstructor_noLint': (t) =>
+          t._narrowerExplicitGenericConstructorNoLint(),
+      'test_explicitGenericArgument_lint': (t) => t._explicitGenericArgumentLint(),
+      'test_asyncReturn_usesFlattenedValueContext': (t) =>
+          t._asyncReturnUsesFlattenedValueContext(),
+      'test_subtypeStaticNamespace_noLint': (t) => t._subtypeStaticNamespaceNoLint(),
+      'test_selectorChainWithContextNamespace_lint': (t) =>
+          t._selectorChainWithContextNamespaceLint(),
+      'test_fix_constructorForms_areValid': (t) => t._fixConstructorFormsAreValid(),
+      'test_fix_staticGenericMethod_preservesTypeArguments': (t) =>
+          t._fixStaticGenericMethodPreservesTypeArguments(),
+      'test_fix_typeAliasNamespace_isValid': (t) => t._fixTypeAliasNamespaceIsValid(),
+      'test_fix_extensionTypeMembers_areValid': (t) => t._fixExtensionTypeMembersAreValid(),
+      'test_fix_selectorChain_isValid': (t) => t._fixSelectorChainIsValid(),
+      'test_alreadyShorthand_noLint': (t) => t._alreadyShorthandNoLint(),
+      'test_unnamedConstructorCalls_noLint': (t) => t._unnamedConstructorCallsNoLint(),
+      'test_namedConstructorControl_lint': (t) => t._namedConstructorControlLint(),
+      'test_untypedClosureReturn_noLint': (t) => t._untypedClosureReturnNoLint(),
+      'test_bulkFix_leavesForeignDiagnosticUnchanged': (t) =>
+          t._bulkFixLeavesForeignDiagnosticUnchanged(),
+    },
+  );
 }
 
-@reflectiveTest
 final class PreferDotShorthandsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -26,7 +57,7 @@ final class PreferDotShorthandsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_contextuallyTypedForms_lint() async {
+  Future<void> _contextuallyTypedFormsLint() async {
     const source = r'''
 enum Axis { start, center }
 
@@ -70,12 +101,12 @@ void example() {
     ]);
   }
 
-  Future<void> test_nullableContext_lint() async {
+  Future<void> _nullableContextLint() async {
     const source = 'enum Axis { center }\nAxis? axis = Axis.center;';
     await assertDiagnostics(source, [lint(source.indexOf('Axis.center'), 'Axis.center'.length)]);
   }
 
-  Future<void> test_importPrefixedType_lint() async {
+  Future<void> _importPrefixedTypeLint() async {
     newFile('$testPackageRootPath/lib/types.dart', 'enum Axis { center }');
     const source = r'''
 import 'types.dart' as types;
@@ -88,7 +119,7 @@ void example() => consume(types.Axis.center);
     ]);
   }
 
-  Future<void> test_extensionTypeStaticAndConstructor_lint() async {
+  Future<void> _extensionTypeStaticAndConstructorLint() async {
     const source = r'''
 extension type UserId(int value) {
   UserId.parse(String raw) : value = int.parse(raw);
@@ -107,7 +138,7 @@ void example() {
     ]);
   }
 
-  Future<void> test_conditionalSwitchPatternAndDefault_lint() async {
+  Future<void> _conditionalSwitchPatternAndDefaultLint() async {
     const source = r'''
 enum Axis { start, center }
 Axis conditional(bool value) => value ? Axis.start : Axis.center;
@@ -138,7 +169,7 @@ void consume([Axis axis = Axis.center]) {}
     await assertDiagnostics(source, diagnostics);
   }
 
-  Future<void> test_inferredOrWrongNamespace_noLint() async {
+  Future<void> _inferredOrWrongNamespaceNoLint() async {
     await assertNoDiagnostics(r'''
 enum Axis { center }
 class Color { const Color(); }
@@ -149,7 +180,7 @@ Color color = Palette.red;
 ''');
   }
 
-  Future<void> test_namedExtensionStaticHelpers_noLint() async {
+  Future<void> _namedExtensionStaticHelpersNoLint() async {
     await assertNoDiagnostics(r'''
 extension DateTimeX on DateTime {
   static DateTime nowUtc() => throw 0;
@@ -164,7 +195,7 @@ Choice choice() => ChoiceMapping.fromDbInt(1);
 ''');
   }
 
-  Future<void> test_inferredGenericArgument_noLint() async {
+  Future<void> _inferredGenericArgumentNoLint() async {
     await assertNoDiagnostics(r'''
 enum Choice { one }
 class Key<T> {
@@ -184,7 +215,7 @@ void example(Navigator navigator) {
 ''');
   }
 
-  Future<void> test_narrowerExplicitGenericConstructor_noLint() async {
+  Future<void> _narrowerExplicitGenericConstructorNoLint() async {
     await assertNoDiagnostics(r'''
 class Box<T> {
   const Box();
@@ -193,7 +224,7 @@ Box<num> value = const Box<int>();
 ''');
   }
 
-  Future<void> test_explicitGenericArgument_lint() async {
+  Future<void> _explicitGenericArgumentLint() async {
     const source = r'''
 enum Choice { one }
 class Key<T> {
@@ -214,7 +245,7 @@ void example(Navigator navigator) {
     await assertDiagnostics(source, targets.map((target) => lint(target.$1, target.$2)).toList());
   }
 
-  Future<void> test_asyncReturn_usesFlattenedValueContext() async {
+  Future<void> _asyncReturnUsesFlattenedValueContext() async {
     const source = r'''
 import 'dart:async';
 
@@ -231,7 +262,7 @@ Future<Axis> alreadyFuture() async => Future<Axis>.error(0);
     await assertDiagnostics(source, targets.map((target) => lint(target.$1, target.$2)).toList());
   }
 
-  Future<void> test_subtypeStaticNamespace_noLint() async {
+  Future<void> _subtypeStaticNamespaceNoLint() async {
     await assertNoDiagnostics(r'''
 class Base {
   const Base();
@@ -244,7 +275,7 @@ Base value = Derived.value;
 ''');
   }
 
-  Future<void> test_selectorChainWithContextNamespace_lint() async {
+  Future<void> _selectorChainWithContextNamespaceLint() async {
     const source = r'''
 class Item {
   static Builder builder() => .new();
@@ -258,7 +289,7 @@ Item item = Item.builder().build();
     await assertDiagnostics(source, [lint(source.indexOf(target), target.length)]);
   }
 
-  Future<void> test_fix_constructorForms_areValid() async {
+  Future<void> _fixConstructorFormsAreValid() async {
     const source = r'''
 class Box<T> {
   const Box();
@@ -290,7 +321,7 @@ Box<int> f = .named();
     await _assertFixes(source, targets, expected);
   }
 
-  Future<void> test_fix_staticGenericMethod_preservesTypeArguments() async {
+  Future<void> _fixStaticGenericMethodPreservesTypeArguments() async {
     const source = r'''
 class Token {
   const Token();
@@ -308,7 +339,7 @@ Token token = .parse<int>(1);
     await _assertFixes(source, const ['Token.parse<int>(1)'], expected);
   }
 
-  Future<void> test_fix_typeAliasNamespace_isValid() async {
+  Future<void> _fixTypeAliasNamespaceIsValid() async {
     const source = r'''
 class Token {
   const Token();
@@ -328,7 +359,7 @@ Alias token = .zero;
     await _assertFixes(source, const ['Alias.zero'], expected);
   }
 
-  Future<void> test_fix_extensionTypeMembers_areValid() async {
+  Future<void> _fixExtensionTypeMembersAreValid() async {
     const source = r'''
 extension type UserId(int value) {
   static UserId get zero => .new(0);
@@ -350,7 +381,7 @@ UserId created = UserId(1);
     await _assertFixes(source, const ['UserId.zero', "UserId.parse('1')"], expected);
   }
 
-  Future<void> test_fix_selectorChain_isValid() async {
+  Future<void> _fixSelectorChainIsValid() async {
     const source = r'''
 class Item {
   static Builder builder() => .new();
@@ -372,7 +403,7 @@ Item item = .builder().build();
     await _assertFixes(source, const ['Item.builder()'], expected);
   }
 
-  Future<void> test_alreadyShorthand_noLint() async {
+  Future<void> _alreadyShorthandNoLint() async {
     await assertNoDiagnostics(r'''
 enum Axis { center }
 void consume(Axis axis) {}
@@ -380,7 +411,7 @@ void example() => consume(.center);
 ''');
   }
 
-  Future<void> test_unnamedConstructorCalls_noLint() async {
+  Future<void> _unnamedConstructorCallsNoLint() async {
     await assertNoDiagnostics(r'''
 class Span {
   const Span(int value);
@@ -405,7 +436,7 @@ void example() {
 ''');
   }
 
-  Future<void> test_namedConstructorControl_lint() async {
+  Future<void> _namedConstructorControlLint() async {
     const source = r'''
 class Span {
   const Span(int value);
@@ -420,14 +451,14 @@ void example() => consume(Span.all(2));
     await assertDiagnostics(source, targets.map((target) => lint(target.$1, target.$2)).toList());
   }
 
-  Future<void> test_untypedClosureReturn_noLint() async {
+  Future<void> _untypedClosureReturnNoLint() async {
     await assertNoDiagnostics(r'''
 enum Axis { center }
 final callback = () => Axis.center;
 ''');
   }
 
-  Future<void> test_bulkFix_leavesForeignDiagnosticUnchanged() async {
+  Future<void> _bulkFixLeavesForeignDiagnosticUnchanged() async {
     const source = r'''
 class Item {
   const Item(this.id);

@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'dart:typed_data';
 
 import 'package:analyzer/file_system/file_system.dart';
@@ -9,18 +7,88 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_missing_tes
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_top_level_members_in_tests.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_match_file_name.dart';
 import 'package:test/test.dart' show expect, lessThanOrEqualTo;
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidTopLevelMembersInTestsTest);
-    defineReflectiveTests(PreferMatchFileNameTest);
-    defineReflectiveTests(AvoidMissingTestFilesTest);
-    defineReflectiveTests(AvoidMissingTestFilesReadsTest);
-  });
+  analysisRuleSuite<AvoidTopLevelMembersInTestsTest>(
+    'AvoidTopLevelMembersInTestsTest',
+    AvoidTopLevelMembersInTestsTest.new,
+    {
+      'test_allowsMainOnly_noLint': (t) => t._allowsMainOnlyNoLint(),
+      'test_topLevelFunctionInTest_lint': (t) => t._topLevelFunctionInTestLint(),
+      'test_privateTopLevelFunctionInTest_noLint': (t) => t._privateTopLevelFunctionInTestNoLint(),
+      'test_publicTopLevelVariableInTest_lint': (t) => t._publicTopLevelVariableInTestLint(),
+      'test_privateTopLevelVariableInTest_noLint': (t) => t._privateTopLevelVariableInTestNoLint(),
+      'test_topLevelClassInTest_noLint': (t) => t._topLevelClassInTestNoLint(),
+      'test_testSupportFile_noLint': (t) => t._testSupportFileNoLint(),
+    },
+  );
+  analysisRuleSuite<PreferMatchFileNameTest>(
+    'PreferMatchFileNameTest',
+    PreferMatchFileNameTest.new,
+    {
+      'test_allowsDocumentedCrashFacadeFilename': (t) => t._allowsDocumentedCrashFacadeFilename(),
+      'test_reportsUnrelatedPublicTypeInCrashServiceFile': (t) =>
+          t._reportsUnrelatedPublicTypeInCrashServiceFile(),
+      'test_allowsDocumentedDateTimeHelperFilename': (t) =>
+          t._allowsDocumentedDateTimeHelperFilename(),
+      'test_reportsDifferentTypeInDateTimeHelperFilename': (t) =>
+          t._reportsDifferentTypeInDateTimeHelperFilename(),
+      'test_reportsDateTimeHelperOutsideCanonicalPath': (t) =>
+          t._reportsDateTimeHelperOutsideCanonicalPath(),
+      'test_allowsInterfacePrefixFileName': (t) => t._allowsInterfacePrefixFileName(),
+      'test_reportsInterfacePrefixFileNameForConcreteClass': (t) =>
+          t._reportsInterfacePrefixFileNameForConcreteClass(),
+      'test_matchingClassName_noLint': (t) => t._matchingClassNameNoLint(),
+      'test_matchingMixedCaseWord_noLint': (t) => t._matchingMixedCaseWordNoLint(),
+      'test_matchingInitialAcronymWord_noLint': (t) => t._matchingInitialAcronymWordNoLint(),
+      'test_mismatchedClassName_lint': (t) => t._mismatchedClassNameLint(),
+      'test_multiplePublicTypes_noLint': (t) => t._multiplePublicTypesNoLint(),
+      'test_generatedFile_noLint': (t) => t._generatedFileNoLint(),
+      'test_generatedPartDoesNotSkipFileNameLint': (t) => t._generatedPartDoesNotSkipFileNameLint(),
+      'test_manualPartLibrary_noLint': (t) => t._manualPartLibraryNoLint(),
+      'test_partFile_noLint': (t) => t._partFileNoLint(),
+      'test_extensionDeclaration_noLint': (t) => t._extensionDeclarationNoLint(),
+    },
+  );
+  analysisRuleSuite<AvoidMissingTestFilesTest>(
+    'AvoidMissingTestFilesTest',
+    AvoidMissingTestFilesTest.new,
+    {
+      'test_missingSiblingTest_lint': (t) => t._missingSiblingTestLint(),
+      'test_existingSiblingTest_noLint': (t) => t._existingSiblingTestNoLint(),
+      'test_importedByNonSiblingTest_noLint': (t) => t._importedByNonSiblingTestNoLint(),
+      'test_exportedByImportedBarrel_noLint': (t) => t._exportedByImportedBarrelNoLint(),
+      'test_importedByImportedOwner_noLint': (t) => t._importedByImportedOwnerNoLint(),
+      'test_unrelatedImportedBarrel_lint': (t) => t._unrelatedImportedBarrelLint(),
+      'test_noTestDirectory_noLint': (t) => t._noTestDirectoryNoLint(),
+      'test_generatedFile_noLint': (t) => t._generatedFileNoLint(),
+      'test_partOfFile_noLint': (t) => t._partOfFileNoLint(),
+      'test_exportOnlyBarrel_noLint': (t) => t._exportOnlyBarrelNoLint(),
+      'test_importOnlyFile_noLint': (t) => t._importOnlyFileNoLint(),
+      'test_constantsFile_noLint': (t) => t._constantsFileNoLint(),
+      'test_coreConfigSchemaFile_noLint': (t) => t._coreConfigSchemaFileNoLint(),
+      'test_nestedLibPathUsesNestedTestPath_noLint': (t) =>
+          t._nestedLibPathUsesNestedTestPathNoLint(),
+      'test_relativeImportFromNestedTest_noLint': (t) => t._relativeImportFromNestedTestNoLint(),
+      'test_importCycleBetweenLibFiles_noLint': (t) => t._importCycleBetweenLibFilesNoLint(),
+      'test_importCycleThatNeverReachesLibrary_lint': (t) =>
+          t._importCycleThatNeverReachesLibraryLint(),
+      'test_importOfOtherPackage_lint': (t) => t._importOfOtherPackageLint(),
+      'test_reachedOnlyThroughReadableLibFile_noLint': (t) =>
+          t._reachedOnlyThroughReadableLibFileNoLint(),
+      'test_behindMissingLibFile_lint': (t) => t._behindMissingLibFileLint(),
+      'test_cacheFollowsFileChanges': (t) => t._cacheFollowsFileChanges(),
+    },
+  );
+  analysisRuleSuite<AvoidMissingTestFilesReadsTest>(
+    'AvoidMissingTestFilesReadsTest',
+    AvoidMissingTestFilesReadsTest.new,
+    {'test_readsEachFileFewTimes': (t) => t._readsEachFileFewTimes()},
+  );
 }
 
-@reflectiveTest
 final class AvoidTopLevelMembersInTestsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -28,7 +96,7 @@ final class AvoidTopLevelMembersInTestsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_allowsMainOnly_noLint() async {
+  Future<void> _allowsMainOnlyNoLint() async {
     await assertNoDiagnostics(r'''
 void main() {
   void helper() {}
@@ -38,7 +106,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_topLevelFunctionInTest_lint() async {
+  Future<void> _topLevelFunctionInTestLint() async {
     const source = r'''
 void helper() {}
 
@@ -50,7 +118,7 @@ void main() {}
     await assertDiagnosticsInFile(path, [lint(source.indexOf('helper'), 'helper'.length)]);
   }
 
-  Future<void> test_privateTopLevelFunctionInTest_noLint() async {
+  Future<void> _privateTopLevelFunctionInTestNoLint() async {
     const source = r'''
 void _helper() {}
 
@@ -64,7 +132,7 @@ void main() {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_publicTopLevelVariableInTest_lint() async {
+  Future<void> _publicTopLevelVariableInTestLint() async {
     const source = r'''
 const helper = 1;
 
@@ -76,7 +144,7 @@ void main() {}
     await assertDiagnosticsInFile(path, [lint(source.indexOf('helper'), 'helper'.length)]);
   }
 
-  Future<void> test_privateTopLevelVariableInTest_noLint() async {
+  Future<void> _privateTopLevelVariableInTestNoLint() async {
     const source = r'''
 const _helper = 1;
 
@@ -90,7 +158,7 @@ void main() {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_topLevelClassInTest_noLint() async {
+  Future<void> _topLevelClassInTestNoLint() async {
     const source = r'''
 class TestHarness {}
 
@@ -102,7 +170,7 @@ void main() {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_testSupportFile_noLint() async {
+  Future<void> _testSupportFileNoLint() async {
     const source = r'''
 class TestHarness {}
 
@@ -115,7 +183,6 @@ void helper() {}
   }
 }
 
-@reflectiveTest
 final class PreferMatchFileNameTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -123,37 +190,37 @@ final class PreferMatchFileNameTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_allowsDocumentedCrashFacadeFilename() async {
+  Future<void> _allowsDocumentedCrashFacadeFilename() async {
     final path = '$testPackageRootPath/lib/core/observability/crash_service.dart';
     newFile(path, 'class Crash {}');
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_reportsUnrelatedPublicTypeInCrashServiceFile() async {
+  Future<void> _reportsUnrelatedPublicTypeInCrashServiceFile() async {
     final path = '$testPackageRootPath/lib/core/observability/crash_service.dart';
     newFile(path, 'class Foo {}');
     await assertDiagnosticsInFile(path, [lint(6, 3)]);
   }
 
-  Future<void> test_allowsDocumentedDateTimeHelperFilename() async {
+  Future<void> _allowsDocumentedDateTimeHelperFilename() async {
     final path = '$testPackageRootPath/lib/core/extensions/date_time_extensions.dart';
     newFile(path, 'abstract final class DateTimeX {}');
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_reportsDifferentTypeInDateTimeHelperFilename() async {
+  Future<void> _reportsDifferentTypeInDateTimeHelperFilename() async {
     final path = '$testPackageRootPath/lib/core/extensions/date_time_extensions.dart';
     newFile(path, 'class Clock {}');
     await assertDiagnosticsInFile(path, [lint(6, 5)]);
   }
 
-  Future<void> test_reportsDateTimeHelperOutsideCanonicalPath() async {
+  Future<void> _reportsDateTimeHelperOutsideCanonicalPath() async {
     final path = '$testPackageRootPath/lib/other/date_time_extensions.dart';
     newFile(path, 'abstract final class DateTimeX {}');
     await assertDiagnosticsInFile(path, [lint(21, 9)]);
   }
 
-  Future<void> test_allowsInterfacePrefixFileName() async {
+  Future<void> _allowsInterfacePrefixFileName() async {
     final path =
         '$testPackageRootPath/lib/features/probe/domain/repositories/i_probe_b_items_repository.dart';
     newFile(path, '''
@@ -164,7 +231,7 @@ abstract interface class IProbeBItemsRepository {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_reportsInterfacePrefixFileNameForConcreteClass() async {
+  Future<void> _reportsInterfacePrefixFileNameForConcreteClass() async {
     const source = '''
 class IProbeBItemsRepository {}
 ''';
@@ -173,7 +240,7 @@ class IProbeBItemsRepository {}
     await assertDiagnosticsInFile(path, [lint(source.indexOf('IProbe'), 22)]);
   }
 
-  Future<void> test_matchingClassName_noLint() async {
+  Future<void> _matchingClassNameNoLint() async {
     const source = r'''
 class UserProfile {}
 ''';
@@ -183,7 +250,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_matchingMixedCaseWord_noLint() async {
+  Future<void> _matchingMixedCaseWordNoLint() async {
     const source = r'''
 class WatchOnYouTubeButton {}
 ''';
@@ -193,7 +260,7 @@ class WatchOnYouTubeButton {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_matchingInitialAcronymWord_noLint() async {
+  Future<void> _matchingInitialAcronymWordNoLint() async {
     const source = r'''
 enum OAuthProvider { none }
 ''';
@@ -203,7 +270,7 @@ enum OAuthProvider { none }
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_mismatchedClassName_lint() async {
+  Future<void> _mismatchedClassNameLint() async {
     const source = r'''
 class UserProfile {}
 ''';
@@ -218,7 +285,7 @@ part of 'profile.dart';
     ]);
   }
 
-  Future<void> test_multiplePublicTypes_noLint() async {
+  Future<void> _multiplePublicTypesNoLint() async {
     const source = r'''
 class UserProfile {}
 class UserAvatar {}
@@ -229,7 +296,7 @@ class UserAvatar {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_generatedFile_noLint() async {
+  Future<void> _generatedFileNoLint() async {
     const source = r'''
 class UserProfile {}
 ''';
@@ -239,7 +306,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_generatedPartDoesNotSkipFileNameLint() async {
+  Future<void> _generatedPartDoesNotSkipFileNameLint() async {
     const source = r'''
 part 'profile.config.dart';
 
@@ -256,7 +323,7 @@ part of 'profile.dart';
     ]);
   }
 
-  Future<void> test_manualPartLibrary_noLint() async {
+  Future<void> _manualPartLibraryNoLint() async {
     const source = r'''
 part 'reminder_days_selector.dart';
 part 'workout_reminder_tile.dart';
@@ -279,7 +346,7 @@ class WorkoutReminderTile {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_partFile_noLint() async {
+  Future<void> _partFileNoLint() async {
     const source = r'''
 part of 'user_profile.dart';
 
@@ -291,7 +358,7 @@ class UserProfileHelper {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_extensionDeclaration_noLint() async {
+  Future<void> _extensionDeclarationNoLint() async {
     const source = r'''
 extension DateTimeX on DateTime {}
 ''';
@@ -302,7 +369,6 @@ extension DateTimeX on DateTime {}
   }
 }
 
-@reflectiveTest
 final class AvoidMissingTestFilesTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -310,7 +376,7 @@ final class AvoidMissingTestFilesTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_missingSiblingTest_lint() async {
+  Future<void> _missingSiblingTestLint() async {
     newFolder('$testPackageRootPath/test');
     const source = r'''
 class UserProfile {}
@@ -321,7 +387,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, [lint(0, 'class'.length)]);
   }
 
-  Future<void> test_existingSiblingTest_noLint() async {
+  Future<void> _existingSiblingTestNoLint() async {
     newFolder('$testPackageRootPath/test');
     newFile('$testPackageRootPath/test/user_profile_test.dart', '''
 void main() {}
@@ -335,7 +401,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_importedByNonSiblingTest_noLint() async {
+  Future<void> _importedByNonSiblingTestNoLint() async {
     newFolder('$testPackageRootPath/test/features');
     newFile('$testPackageRootPath/test/features/profile_flow_test.dart', '''
 import 'package:test/user_profile.dart';
@@ -353,7 +419,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_exportedByImportedBarrel_noLint() async {
+  Future<void> _exportedByImportedBarrelNoLint() async {
     newFolder('$testPackageRootPath/test/features');
     newFile('$testPackageRootPath/lib/profile.dart', '''
 export 'user_profile.dart';
@@ -372,7 +438,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_importedByImportedOwner_noLint() async {
+  Future<void> _importedByImportedOwnerNoLint() async {
     newFolder('$testPackageRootPath/lib/screens');
     newFolder('$testPackageRootPath/lib/widgets');
     newFolder('$testPackageRootPath/test/features');
@@ -395,7 +461,7 @@ class ProfileHeader {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_unrelatedImportedBarrel_lint() async {
+  Future<void> _unrelatedImportedBarrelLint() async {
     newFolder('$testPackageRootPath/test/features');
     newFile('$testPackageRootPath/lib/profile.dart', '''
 export 'other_profile.dart';
@@ -417,7 +483,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, [lint(0, 'class'.length)]);
   }
 
-  Future<void> test_noTestDirectory_noLint() async {
+  Future<void> _noTestDirectoryNoLint() async {
     const source = r'''
 class UserProfile {}
 ''';
@@ -427,7 +493,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_generatedFile_noLint() async {
+  Future<void> _generatedFileNoLint() async {
     newFolder('$testPackageRootPath/test');
     const source = r'''
 class UserProfile {}
@@ -438,7 +504,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_partOfFile_noLint() async {
+  Future<void> _partOfFileNoLint() async {
     newFolder('$testPackageRootPath/test');
     const source = r'''
 part of 'profile.dart';
@@ -451,7 +517,7 @@ class UserProfileHeader {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_exportOnlyBarrel_noLint() async {
+  Future<void> _exportOnlyBarrelNoLint() async {
     newFolder('$testPackageRootPath/test');
     newFile('$testPackageRootPath/lib/user_profile.dart', '''
 class UserProfile {}
@@ -467,7 +533,7 @@ export 'user_profile.dart';
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_importOnlyFile_noLint() async {
+  Future<void> _importOnlyFileNoLint() async {
     newFolder('$testPackageRootPath/test');
     newFile('$testPackageRootPath/lib/user_profile.dart', '''
 class UserProfile {}
@@ -482,7 +548,7 @@ import 'user_profile.dart';
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_constantsFile_noLint() async {
+  Future<void> _constantsFileNoLint() async {
     newFolder('$testPackageRootPath/test');
     const source = r'''
 abstract final class UserStrings {
@@ -495,7 +561,7 @@ abstract final class UserStrings {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_coreConfigSchemaFile_noLint() async {
+  Future<void> _coreConfigSchemaFileNoLint() async {
     newFolder('$testPackageRootPath/test');
     const source = r'''
 abstract final class UserRemoteSchema {
@@ -508,7 +574,7 @@ abstract final class UserRemoteSchema {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_nestedLibPathUsesNestedTestPath_noLint() async {
+  Future<void> _nestedLibPathUsesNestedTestPathNoLint() async {
     newFolder('$testPackageRootPath/test/src');
     newFile('$testPackageRootPath/test/src/user_profile_test.dart', '''
 void main() {}
@@ -522,7 +588,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_relativeImportFromNestedTest_noLint() async {
+  Future<void> _relativeImportFromNestedTestNoLint() async {
     newFolder('$testPackageRootPath/test/features/profile');
     newFile('$testPackageRootPath/test/features/profile/flow_test.dart', '''
 import '../../../lib/user_profile.dart';
@@ -538,7 +604,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_importCycleBetweenLibFiles_noLint() async {
+  Future<void> _importCycleBetweenLibFilesNoLint() async {
     newFolder('$testPackageRootPath/test/features');
     newFile('$testPackageRootPath/lib/hub.dart', '''
 import 'ring_a.dart';
@@ -570,7 +636,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_importCycleThatNeverReachesLibrary_lint() async {
+  Future<void> _importCycleThatNeverReachesLibraryLint() async {
     newFolder('$testPackageRootPath/test/features');
     newFile('$testPackageRootPath/lib/ring_a.dart', '''
 import 'ring_b.dart';
@@ -596,7 +662,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, [lint(0, 'class'.length)]);
   }
 
-  Future<void> test_importOfOtherPackage_lint() async {
+  Future<void> _importOfOtherPackageLint() async {
     newFolder('$testPackageRootPath/test/features');
     newFile('$testPackageRootPath/test/features/other_flow_test.dart', '''
 import 'package:other_package/user_profile.dart';
@@ -612,7 +678,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, [lint(0, 'class'.length)]);
   }
 
-  Future<void> test_reachedOnlyThroughReadableLibFile_noLint() async {
+  Future<void> _reachedOnlyThroughReadableLibFileNoLint() async {
     newFolder('$testPackageRootPath/test/features');
     newFile('$testPackageRootPath/lib/hub.dart', '''
 import 'user_profile.dart';
@@ -633,7 +699,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> test_behindMissingLibFile_lint() async {
+  Future<void> _behindMissingLibFileLint() async {
     newFolder('$testPackageRootPath/test/features');
     newFile('$testPackageRootPath/test/features/ghost_test.dart', '''
 import 'package:test/ghost.dart';
@@ -649,7 +715,7 @@ class UserProfile {}
     await assertDiagnosticsInFile(path, [lint(0, 'class'.length)]);
   }
 
-  Future<void> test_cacheFollowsFileChanges() async {
+  Future<void> _cacheFollowsFileChanges() async {
     newFolder('$testPackageRootPath/test/features');
     const source = r'''
 class UserProfile {}
@@ -674,7 +740,6 @@ void main() {}
   }
 }
 
-@reflectiveTest
 final class AvoidMissingTestFilesReadsTest extends AnalysisRuleTest {
   static const _chainLength = 30;
   static const _decoyLength = 20;
@@ -693,7 +758,7 @@ final class AvoidMissingTestFilesReadsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_readsEachFileFewTimes() async {
+  Future<void> _readsEachFileFewTimes() async {
     String name(String prefix, int index) => '$prefix${index.toString().padLeft(2, '0')}';
     void writeChain(String prefix, int length) {
       for (var index = 0; index < length; index++) {

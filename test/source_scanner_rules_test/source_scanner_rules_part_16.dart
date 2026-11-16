@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class WebViewInitInBuildNoGateTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'webview_init_in_build_no_gate';
@@ -22,7 +19,7 @@ class DemoSheet extends ConsumerWidget {
 }
 ''';
 
-  Future<void> test_allowsWithUserTappedGate() async {
+  Future<void> _allowsWithUserTappedGate() async {
     await assertAllows(r'''
 class WebViewWidget {
   WebViewWidget({Object? controller});
@@ -39,7 +36,7 @@ class DemoSheet extends ConsumerWidget {
 ''');
   }
 
-  Future<void> test_reportsWhenGateFieldExistsButConstructorUngated() async {
+  Future<void> _reportsWhenGateFieldExistsButConstructorUngated() async {
     final analyzedSource = _analyzedSource(r'''
 class WebViewWidget {
   WebViewWidget({Object? controller});
@@ -59,7 +56,7 @@ class DemoSheet extends ConsumerWidget {
     ]);
   }
 
-  Future<void> test_allowsHeavyWidgetOutsideBuild() async {
+  Future<void> _allowsHeavyWidgetOutsideBuild() async {
     await assertAllows(r'''
 class WebViewWidget {
   WebViewWidget({Object? controller});
@@ -74,7 +71,6 @@ class DemoSheet extends ConsumerWidget {
   }
 }
 
-@reflectiveTest
 final class ServiceStorageReadNoMemoTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'service_storage_read_no_memo';
@@ -91,7 +87,7 @@ class PreferenceService {
 }
 ''';
 
-  Future<void> test_allowsWithMemoCache() async {
+  Future<void> _allowsWithMemoCache() async {
     await assertAllows(r'''
 class PreferenceService {
   final Object _storage = Object();
@@ -105,7 +101,7 @@ class PreferenceService {
 ''');
   }
 
-  Future<void> test_allowsNonServiceClass() async {
+  Future<void> _allowsNonServiceClass() async {
     await assertAllows(r'''
 class ContentRepository {
   final Object _storage = Object();
@@ -118,7 +114,6 @@ class ContentRepository {
   }
 }
 
-@reflectiveTest
 final class KeepAliveWatchesResolvedProviderLifecycleTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'keepalive_watches_unbounded_collection';
@@ -153,12 +148,12 @@ class ProviderListenable<T> {
   }
 
   @override
-  Future<void> test_reportsDiagnostic() async {
+  Future<void> _reportsDiagnostic() async {
     _addProductNotifier(keepAlive: false);
-    await super.test_reportsDiagnostic();
+    await super._reportsDiagnostic();
   }
 
-  Future<void> test_allowsKeepAliveSourceFromAnotherFile() async {
+  Future<void> _allowsKeepAliveSourceFromAnotherFile() async {
     _addProductNotifier(keepAlive: true);
     await assertAllows(_sortedProducts, path: path, addIgnorePrefix: false);
   }
@@ -194,7 +189,6 @@ List<int> sortedProducts(Ref ref) {
 ''';
 }
 
-@reflectiveTest
 final class KeepAliveWatchesUnboundedCollectionTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'keepalive_watches_unbounded_collection';
@@ -216,7 +210,7 @@ class ProgressNotifier {
 }
 ''';
 
-  Future<void> test_reportsLocalPureProjection() async {
+  Future<void> _reportsLocalPureProjection() async {
     final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -235,7 +229,7 @@ class ProgressNotifier {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'ref.watch(', ruleName)]);
   }
 
-  Future<void> test_reportsDirectPureProjection() async {
+  Future<void> _reportsDirectPureProjection() async {
     final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -252,7 +246,7 @@ Object historyLogs(Ref ref) {
   }
 
   /// The skill's NEVER example (common-patterns/debounce-gate-batch.md).
-  Future<void> test_reportsSkillNeverExpressionBodyProjection() async {
+  Future<void> _reportsSkillNeverExpressionBodyProjection() async {
     final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -268,7 +262,7 @@ List<Log> session(Ref ref) => ref.watch(provider.select((s) => s.logs));
   }
 
   /// The skill's DO counterpart (common-patterns/debounce-gate-batch.md).
-  Future<void> test_allowsSkillDoBoundedProjection() async {
+  Future<void> _allowsSkillDoBoundedProjection() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -289,7 +283,7 @@ Object sessionCount(Ref ref) => ref.watch(provider.select((s) => s.count));
 ''');
   }
 
-  Future<void> test_allowsAutoDispose() async {
+  Future<void> _allowsAutoDispose() async {
     await assertAllows(r'''
 class ProgressNotifier {
   Object build() {
@@ -301,7 +295,7 @@ class ProgressNotifier {
 ''');
   }
 
-  Future<void> test_allowsKeepAliveWithBoundedProjection() async {
+  Future<void> _allowsKeepAliveWithBoundedProjection() async {
     await assertAllows(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -318,7 +312,7 @@ class ProgressNotifier {
 ''');
   }
 
-  Future<void> test_reportsMultilineSelect() async {
+  Future<void> _reportsMultilineSelect() async {
     final analyzedSource = _analyzedSource(r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -341,7 +335,6 @@ class ProgressNotifier {
   }
 }
 
-@reflectiveTest
 final class DatasourceMissingBatchLoaderTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'datasource_missing_batch_loader';
@@ -359,7 +352,7 @@ abstract class SettingsLocalDatasource {
 }
 ''';
 
-  Future<void> test_allowsWithLoadAll() async {
+  Future<void> _allowsWithLoadAll() async {
     await assertAllows(r'''
 abstract class SettingsLocalDatasource {
   Future<Object> loadAll();
@@ -373,7 +366,7 @@ abstract class SettingsLocalDatasource {
 ''');
   }
 
-  Future<void> test_allowsSmallInterface() async {
+  Future<void> _allowsSmallInterface() async {
     await assertAllows(r'''
 abstract class SettingsLocalDatasource {
   Future<Object> getToken();
@@ -383,7 +376,6 @@ abstract class SettingsLocalDatasource {
   }
 }
 
-@reflectiveTest
 final class NotifierZeroValueSaveNoGuardTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'notifier_zero_value_save_no_guard';
@@ -401,7 +393,7 @@ class EntrySheet {
 }
 ''';
 
-  Future<void> test_allowsWithPositiveGuard() async {
+  Future<void> _allowsWithPositiveGuard() async {
     await assertAllows(r'''
 class EntrySheet {
   void _save(Object ref, int totalSeconds, double distance) {
@@ -416,7 +408,7 @@ class EntrySheet {
 ''');
   }
 
-  Future<void> test_allowsDocEarlyReturnGuard() async {
+  Future<void> _allowsDocEarlyReturnGuard() async {
     await assertAllows(r'''
 class EntrySheet {
   void submit(Object ref, int amount, int count) {
@@ -427,7 +419,7 @@ class EntrySheet {
 ''');
   }
 
-  Future<void> test_allowsValueObjectSave() async {
+  Future<void> _allowsValueObjectSave() async {
     await assertAllows(r'''
 class Distance {
   const Distance.fromMeters(this.meters);
@@ -443,7 +435,7 @@ class EntrySheet {
 ''');
   }
 
-  Future<void> test_reportsZeroCheckThatDoesNotExit() async {
+  Future<void> _reportsZeroCheckThatDoesNotExit() async {
     final analyzedSource = _analyzedSource(r'''
 class EntrySheet {
   void submit(Object ref, int amount, int count, List<String> log) {
@@ -456,7 +448,7 @@ class EntrySheet {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.saveEntry(', ruleName)]);
   }
 
-  Future<void> test_allowsNonSaveCall() async {
+  Future<void> _allowsNonSaveCall() async {
     await assertAllows(r'''
 class EntrySheet {
   void _show(Object ref, int totalSeconds) {
@@ -466,7 +458,7 @@ class EntrySheet {
 ''');
   }
 
-  Future<void> test_reportsPlainSaveMethod() async {
+  Future<void> _reportsPlainSaveMethod() async {
     final analyzedSource = _analyzedSource(r'''
 class EntrySheet {
   void _save(Object ref, int totalSeconds) {
@@ -481,7 +473,6 @@ class EntrySheet {
   }
 }
 
-@reflectiveTest
 final class NotifierParamRequiresValueObjectTest extends _RuntimeBugRuleTest {
   @override
   String get ruleName => 'notifier_param_requires_value_object';
@@ -497,7 +488,7 @@ class EntrySheet {
 }
 ''';
 
-  Future<void> test_allowsValueObjectAtBoundary() async {
+  Future<void> _allowsValueObjectAtBoundary() async {
     await assertAllows(r'''
 class EntrySheet {
   void _save(Object ref) {
@@ -508,7 +499,7 @@ class EntrySheet {
 ''');
   }
 
-  Future<void> test_allowsPlainNonUnitLocal() async {
+  Future<void> _allowsPlainNonUnitLocal() async {
     await assertAllows(r'''
 class EntrySheet {
   void _save(Object ref) {
@@ -519,7 +510,7 @@ class EntrySheet {
 ''');
   }
 
-  Future<void> test_reportsPlainSaveMethod() async {
+  Future<void> _reportsPlainSaveMethod() async {
     final analyzedSource = _analyzedSource(r'''
 class EntrySheet {
   void _save(Object ref) {
@@ -531,4 +522,82 @@ class EntrySheet {
 
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, '.save(', ruleName)]);
   }
+}
+
+void _defineSourceScannerRulesPart16Tests() {
+  analysisRuleSuite<WebViewInitInBuildNoGateTest>(
+    'WebViewInitInBuildNoGateTest',
+    WebViewInitInBuildNoGateTest.new,
+    {
+      'test_allowsWithUserTappedGate': (t) => t._allowsWithUserTappedGate(),
+      'test_reportsWhenGateFieldExistsButConstructorUngated': (t) =>
+          t._reportsWhenGateFieldExistsButConstructorUngated(),
+      'test_allowsHeavyWidgetOutsideBuild': (t) => t._allowsHeavyWidgetOutsideBuild(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<ServiceStorageReadNoMemoTest>(
+    'ServiceStorageReadNoMemoTest',
+    ServiceStorageReadNoMemoTest.new,
+    {
+      'test_allowsWithMemoCache': (t) => t._allowsWithMemoCache(),
+      'test_allowsNonServiceClass': (t) => t._allowsNonServiceClass(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<KeepAliveWatchesUnboundedCollectionTest>(
+    'KeepAliveWatchesUnboundedCollectionTest',
+    KeepAliveWatchesUnboundedCollectionTest.new,
+    {
+      'test_reportsLocalPureProjection': (t) => t._reportsLocalPureProjection(),
+      'test_reportsDirectPureProjection': (t) => t._reportsDirectPureProjection(),
+      'test_reportsSkillNeverExpressionBodyProjection': (t) =>
+          t._reportsSkillNeverExpressionBodyProjection(),
+      'test_allowsSkillDoBoundedProjection': (t) => t._allowsSkillDoBoundedProjection(),
+      'test_allowsAutoDispose': (t) => t._allowsAutoDispose(),
+      'test_allowsKeepAliveWithBoundedProjection': (t) => t._allowsKeepAliveWithBoundedProjection(),
+      'test_reportsMultilineSelect': (t) => t._reportsMultilineSelect(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<KeepAliveWatchesResolvedProviderLifecycleTest>(
+    'KeepAliveWatchesResolvedProviderLifecycleTest',
+    KeepAliveWatchesResolvedProviderLifecycleTest.new,
+    {
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+      'test_allowsKeepAliveSourceFromAnotherFile': (t) => t._allowsKeepAliveSourceFromAnotherFile(),
+    },
+  );
+  analysisRuleSuite<DatasourceMissingBatchLoaderTest>(
+    'DatasourceMissingBatchLoaderTest',
+    DatasourceMissingBatchLoaderTest.new,
+    {
+      'test_allowsWithLoadAll': (t) => t._allowsWithLoadAll(),
+      'test_allowsSmallInterface': (t) => t._allowsSmallInterface(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<NotifierZeroValueSaveNoGuardTest>(
+    'NotifierZeroValueSaveNoGuardTest',
+    NotifierZeroValueSaveNoGuardTest.new,
+    {
+      'test_allowsWithPositiveGuard': (t) => t._allowsWithPositiveGuard(),
+      'test_allowsDocEarlyReturnGuard': (t) => t._allowsDocEarlyReturnGuard(),
+      'test_allowsValueObjectSave': (t) => t._allowsValueObjectSave(),
+      'test_reportsZeroCheckThatDoesNotExit': (t) => t._reportsZeroCheckThatDoesNotExit(),
+      'test_allowsNonSaveCall': (t) => t._allowsNonSaveCall(),
+      'test_reportsPlainSaveMethod': (t) => t._reportsPlainSaveMethod(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<NotifierParamRequiresValueObjectTest>(
+    'NotifierParamRequiresValueObjectTest',
+    NotifierParamRequiresValueObjectTest.new,
+    {
+      'test_allowsValueObjectAtBoundary': (t) => t._allowsValueObjectAtBoundary(),
+      'test_allowsPlainNonUnitLocal': (t) => t._allowsPlainNonUnitLocal(),
+      'test_reportsPlainSaveMethod': (t) => t._reportsPlainSaveMethod(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
 }

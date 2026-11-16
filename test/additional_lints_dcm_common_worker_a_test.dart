@@ -1,20 +1,42 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary_enum_arguments.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/no_boolean_literal_compare.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/no_empty_block.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(AvoidUnnecessaryEnumArgumentsTest);
-    defineReflectiveTests(NoBooleanLiteralCompareTest);
-    defineReflectiveTests(NoEmptyBlockTest);
+  analysisRuleSuite<AvoidUnnecessaryEnumArgumentsTest>(
+    'AvoidUnnecessaryEnumArgumentsTest',
+    AvoidUnnecessaryEnumArgumentsTest.new,
+    {
+      'test_namedEnumArgumentMatchingDefault_lint': (t) =>
+          t._namedEnumArgumentMatchingDefaultLint(),
+      'test_namedEnumArgumentDifferentFromDefault_noLint': (t) =>
+          t._namedEnumArgumentDifferentFromDefaultNoLint(),
+      'test_namedEnumArgumentWithoutDefault_noLint': (t) =>
+          t._namedEnumArgumentWithoutDefaultNoLint(),
+    },
+  );
+  analysisRuleSuite<NoBooleanLiteralCompareTest>(
+    'NoBooleanLiteralCompareTest',
+    NoBooleanLiteralCompareTest.new,
+    {
+      'test_boolEqualsTrue_lint': (t) => t._boolEqualsTrueLint(),
+      'test_falseNotEqualsBool_lint': (t) => t._falseNotEqualsBoolLint(),
+      'test_nullableBoolEqualsTrue_noLint': (t) => t._nullableBoolEqualsTrueNoLint(),
+      'test_boolVariableComparison_noLint': (t) => t._boolVariableComparisonNoLint(),
+    },
+  );
+  analysisRuleSuite<NoEmptyBlockTest>('NoEmptyBlockTest', NoEmptyBlockTest.new, {
+    'test_emptyIfBlock_lint': (t) => t._emptyIfBlockLint(),
+    'test_emptyCatchBlock_lint': (t) => t._emptyCatchBlockLint(),
+    'test_emptyCallbackBody_noLint': (t) => t._emptyCallbackBodyNoLint(),
+    'test_emptyOverrideBody_noLint': (t) => t._emptyOverrideBodyNoLint(),
+    'test_nonEmptyBlock_noLint': (t) => t._nonEmptyBlockNoLint(),
   });
 }
 
-@reflectiveTest
 final class AvoidUnnecessaryEnumArgumentsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +44,7 @@ final class AvoidUnnecessaryEnumArgumentsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_namedEnumArgumentMatchingDefault_lint() async {
+  Future<void> _namedEnumArgumentMatchingDefaultLint() async {
     const source = r'''
 enum Priority { low, normal, high }
 
@@ -38,7 +60,7 @@ void f() {
     ]);
   }
 
-  Future<void> test_namedEnumArgumentDifferentFromDefault_noLint() async {
+  Future<void> _namedEnumArgumentDifferentFromDefaultNoLint() async {
     await assertNoDiagnostics(r'''
 enum Priority { low, normal, high }
 
@@ -50,7 +72,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_namedEnumArgumentWithoutDefault_noLint() async {
+  Future<void> _namedEnumArgumentWithoutDefaultNoLint() async {
     await assertNoDiagnostics(r'''
 enum Priority { low, normal, high }
 
@@ -63,7 +85,6 @@ void f() {
   }
 }
 
-@reflectiveTest
 final class NoBooleanLiteralCompareTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -71,7 +92,7 @@ final class NoBooleanLiteralCompareTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_boolEqualsTrue_lint() async {
+  Future<void> _boolEqualsTrueLint() async {
     const source = r'''
 bool enabled = true;
 
@@ -83,7 +104,7 @@ bool f() => enabled == true;
     ]);
   }
 
-  Future<void> test_falseNotEqualsBool_lint() async {
+  Future<void> _falseNotEqualsBoolLint() async {
     const source = r'''
 bool enabled = true;
 
@@ -95,7 +116,7 @@ bool f() => false != enabled;
     ]);
   }
 
-  Future<void> test_nullableBoolEqualsTrue_noLint() async {
+  Future<void> _nullableBoolEqualsTrueNoLint() async {
     await assertNoDiagnostics(r'''
 bool? enabled;
 
@@ -103,7 +124,7 @@ bool f() => enabled == true;
 ''');
   }
 
-  Future<void> test_boolVariableComparison_noLint() async {
+  Future<void> _boolVariableComparisonNoLint() async {
     await assertNoDiagnostics(r'''
 bool left = true;
 bool right = false;
@@ -113,7 +134,6 @@ bool f() => left == right;
   }
 }
 
-@reflectiveTest
 final class NoEmptyBlockTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -121,7 +141,7 @@ final class NoEmptyBlockTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_emptyIfBlock_lint() async {
+  Future<void> _emptyIfBlockLint() async {
     const source = r'''
 void f(bool enabled) {
   if (enabled) {}
@@ -131,7 +151,7 @@ void f(bool enabled) {
     await assertDiagnostics(source, [lint(source.indexOf('{}'), '{}'.length)]);
   }
 
-  Future<void> test_emptyCatchBlock_lint() async {
+  Future<void> _emptyCatchBlockLint() async {
     const source = r'''
 void f() {
   try {
@@ -143,7 +163,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.lastIndexOf('{}'), '{}'.length)]);
   }
 
-  Future<void> test_emptyCallbackBody_noLint() async {
+  Future<void> _emptyCallbackBodyNoLint() async {
     await assertNoDiagnostics(r'''
 void f(void Function() callback) {
   f(() {});
@@ -151,7 +171,7 @@ void f(void Function() callback) {
 ''');
   }
 
-  Future<void> test_emptyOverrideBody_noLint() async {
+  Future<void> _emptyOverrideBodyNoLint() async {
     await assertNoDiagnostics(r'''
 class Base {
   void close() {}
@@ -164,7 +184,7 @@ class FakeBase extends Base {
 ''');
   }
 
-  Future<void> test_nonEmptyBlock_noLint() async {
+  Future<void> _nonEmptyBlockNoLint() async {
     await assertNoDiagnostics(r'''
 void f(bool enabled) {
   if (enabled) {

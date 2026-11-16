@@ -1,14 +1,26 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/use_on_reorder_item_index_semantics.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() => defineReflectiveTests(UseOnReorderItemIndexSemanticsTest));
+  analysisRuleSuite<UseOnReorderItemIndexSemanticsTest>(
+    'UseOnReorderItemIndexSemanticsTest',
+    UseOnReorderItemIndexSemanticsTest.new,
+    {
+      'test_frameworkOnReorder_lint': (t) => t._frameworkOnReorderLint(),
+      'test_customOnReorder_noLint': (t) => t._customOnReorderNoLint(),
+      'test_onReorderItemInverseAdapter_lint': (t) => t._onReorderItemInverseAdapterLint(),
+      'test_onReorderItemPassThrough_noLint': (t) => t._onReorderItemPassThroughNoLint(),
+      'test_downstreamReorderLegacyAdjustment_lint': (t) =>
+          t._downstreamReorderLegacyAdjustmentLint(),
+      'test_downstreamReorderDirectInsert_noLint': (t) => t._downstreamReorderDirectInsertNoLint(),
+      'test_nonReorderFunctionWithSameParams_noLint': (t) =>
+          t._nonReorderFunctionWithSameParamsNoLint(),
+    },
+  );
 }
 
-@reflectiveTest
 class UseOnReorderItemIndexSemanticsTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -24,7 +36,7 @@ class UseOnReorderItemIndexSemanticsTest extends AnalysisRuleTest {
     return lint(offset, needle.length) as T;
   }
 
-  Future<void> test_frameworkOnReorder_lint() async {
+  Future<void> _frameworkOnReorderLint() async {
     const source = r'''
 typedef ReorderCallback = void Function(int oldIndex, int newIndex);
 class ReorderableListView {
@@ -38,7 +50,7 @@ void f() {
     await assertDiagnostics(source, [lint(source.indexOf('onReorder:'), 'onReorder'.length)]);
   }
 
-  Future<void> test_customOnReorder_noLint() async {
+  Future<void> _customOnReorderNoLint() async {
     await assertNoDiagnostics(r'''
 typedef ReorderCallback = void Function(int oldIndex, int newIndex);
 class BentoReorderableList {
@@ -50,7 +62,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_onReorderItemInverseAdapter_lint() async {
+  Future<void> _onReorderItemInverseAdapterLint() async {
     const source = r'''
 typedef ReorderCallback = void Function(int oldIndex, int newIndex);
 class SliverReorderableList {
@@ -70,7 +82,7 @@ void f() {
     ]);
   }
 
-  Future<void> test_onReorderItemPassThrough_noLint() async {
+  Future<void> _onReorderItemPassThroughNoLint() async {
     await assertNoDiagnostics(r'''
 typedef ReorderCallback = void Function(int oldIndex, int newIndex);
 class SliverReorderableList {
@@ -83,7 +95,7 @@ void f() {
 ''');
   }
 
-  Future<void> test_downstreamReorderLegacyAdjustment_lint() async {
+  Future<void> _downstreamReorderLegacyAdjustmentLint() async {
     const source = r'''
 void reorderSelectedExercises(int oldIndex, int newIndex) {
   if (oldIndex < newIndex) newIndex -= 1;
@@ -95,7 +107,7 @@ void _sink(Object? value) {}
     await assertDiagnostics(source, [lintFor(source, 'if (oldIndex < newIndex) newIndex -= 1;')]);
   }
 
-  Future<void> test_downstreamReorderDirectInsert_noLint() async {
+  Future<void> _downstreamReorderDirectInsertNoLint() async {
     await assertNoDiagnostics(r'''
 void reorderSelectedExercises(int oldIndex, int newIndex) {
   _sink(newIndex);
@@ -104,7 +116,7 @@ void _sink(Object? value) {}
 ''');
   }
 
-  Future<void> test_nonReorderFunctionWithSameParams_noLint() async {
+  Future<void> _nonReorderFunctionWithSameParamsNoLint() async {
     await assertNoDiagnostics(r'''
 void compareIndexes(int oldIndex, int newIndex) {
   if (oldIndex < newIndex) newIndex -= 1;

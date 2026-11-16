@@ -1,16 +1,21 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/rules/flutter_skill_project_config.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'analysis_rule_suite.dart';
 
 void main() {
-  defineReflectiveSuite(() {
-    defineReflectiveTests(PubspecProjectConfigLintTest);
-  });
+  analysisRuleSuite<PubspecProjectConfigLintTest>(
+    'PubspecProjectConfigLintTest',
+    PubspecProjectConfigLintTest.new,
+    {
+      'test_reportsAnyDependencyVersions': (t) => t._reportsAnyDependencyVersions(),
+      'test_reportsNonNonePublishTarget': (t) => t._reportsNonNonePublishTarget(),
+      'test_allowsPinnedDependenciesWithoutOverrides': (t) =>
+          t._allowsPinnedDependenciesWithoutOverrides(),
+    },
+  );
 }
 
-@reflectiveTest
 final class PubspecProjectConfigLintTest extends AnalysisRuleTest {
   @override
   void setUp() {
@@ -22,7 +27,7 @@ final class PubspecProjectConfigLintTest extends AnalysisRuleTest {
 
   T projectLint<T>(String name) => lint(0, 1, name: name) as T;
 
-  Future<void> test_reportsAnyDependencyVersions() async {
+  Future<void> _reportsAnyDependencyVersions() async {
     newFile(
       '$testPackageRootPath/pubspec.yaml',
       _pubspec(
@@ -38,13 +43,13 @@ dev_dependencies:
     await assertDiagnostics('void main() {}', [projectLint('avoid_any_version')]);
   }
 
-  Future<void> test_reportsNonNonePublishTarget() async {
+  Future<void> _reportsNonNonePublishTarget() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec(publishTo: 'https://pub.dev'));
 
     await assertDiagnostics('void main() {}', [projectLint('prefer_publish_to_none')]);
   }
 
-  Future<void> test_allowsPinnedDependenciesWithoutOverrides() async {
+  Future<void> _allowsPinnedDependenciesWithoutOverrides() async {
     newFile('$testPackageRootPath/pubspec.yaml', _pubspec());
 
     await assertNoDiagnostics('void main() {}');

@@ -1,8 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
 part of '../source_scanner_rules_test.dart';
 
-@reflectiveTest
 final class BareStateMountedForbiddenTest extends _StateRuleTest {
   @override
   String get ruleName => 'bare_state_mounted_forbidden';
@@ -19,7 +16,7 @@ class ScreenState {
 }
 ''';
 
-  Future<void> test_reportsThisMounted() async {
+  Future<void> _reportsThisMounted() async {
     final analyzedSource = _analyzedSource(r'''
 class ScreenState {
   void onFrame() {
@@ -32,7 +29,7 @@ class ScreenState {
     await assertDiagnosticsInFile(path, [compatLint(analyzedSource, 'mounted) return', ruleName)]);
   }
 
-  Future<void> test_allowsContextAndRefMounted() async {
+  Future<void> _allowsContextAndRefMounted() async {
     await assertAllows(r'''
 class ScreenState {
   void onFrame(context, ref) {
@@ -43,7 +40,7 @@ class ScreenState {
 ''', path: path);
   }
 
-  Future<void> test_allowsNonWidgetMountedMember() async {
+  Future<void> _allowsNonWidgetMountedMember() async {
     await assertAllows(r'''
 class LifecycleHandle {
   bool mounted = true;
@@ -61,7 +58,6 @@ abstract class _RouterRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => routerSourceRules;
 }
 
-@reflectiveTest
 final class RouterStringNavTest extends _RouterRuleTest {
   @override
   String get ruleName => 'router_string_nav';
@@ -74,7 +70,7 @@ void navigate(context) {
 }
 ''';
 
-  Future<void> test_allowsTestHostStringRoutes() async {
+  Future<void> _allowsTestHostStringRoutes() async {
     await assertAllows(r'''
 void navigate(context) {
   context.go('/host');
@@ -82,7 +78,7 @@ void navigate(context) {
 ''', path: '$testPackageRootPath/test/features/home/home_screen_test.dart');
   }
 
-  Future<void> test_reportsRouterStringInsideCoreRouter() async {
+  Future<void> _reportsRouterStringInsideCoreRouter() async {
     final analyzedSource = _analyzedSource(r'''
 class GoRouter {
   void go(String location) {}
@@ -105,7 +101,7 @@ final class RouterBridge {
     ]);
   }
 
-  Future<void> test_reportsRouterPushNamedInsideCoreRouter() async {
+  Future<void> _reportsRouterPushNamedInsideCoreRouter() async {
     final analyzedSource = _analyzedSource(r'''
 class GoRouter {
   Future<T?> pushNamed<T>(String name) async => null;
@@ -128,7 +124,7 @@ final class RouterBridge {
     ]);
   }
 
-  Future<void> test_reportsCamelCaseRouterVariableInsideCoreRouter() async {
+  Future<void> _reportsCamelCaseRouterVariableInsideCoreRouter() async {
     final analyzedSource = _analyzedSource(r'''
 class GoRouter {
   void go(String location) {}
@@ -146,7 +142,7 @@ void open(GoRouter appRouter) {
     ]);
   }
 
-  Future<void> test_reportsRawInitialLocationInsideCoreRouter() async {
+  Future<void> _reportsRawInitialLocationInsideCoreRouter() async {
     final analyzedSource = _analyzedSource(r'''
 class GoRouter {
   GoRouter({required String initialLocation});
@@ -164,7 +160,7 @@ GoRouter router() {
     ]);
   }
 
-  Future<void> test_allowsTypedLocationsForStringNavRule() async {
+  Future<void> _allowsTypedLocationsForStringNavRule() async {
     await assertAllows(r'''
 class GoRouter {
   GoRouter({required String initialLocation});
@@ -202,7 +198,7 @@ GoRouter router() {
 ''', path: '$testPackageLibPath/core/router/app_router.dart');
   }
 
-  Future<void> test_allowsTypedRouteDefinitions() async {
+  Future<void> _allowsTypedRouteDefinitions() async {
     await assertAllows(r'''
 class TypedGoRoute<T> {
   const TypedGoRoute({required String path, List<Object> routes = const []});
@@ -223,7 +219,6 @@ class ProductRoute extends GoRouteData {}
   }
 }
 
-@reflectiveTest
 final class RouterPopThenPushTest extends _RouterRuleTest {
   @override
   void setUp() {
@@ -246,7 +241,7 @@ void navigate(BuildContext context) {
 }
 ''';
 
-  Future<void> test_allowsSkillSafePopAfterEarlierPushReplacement() async {
+  Future<void> _allowsSkillSafePopAfterEarlierPushReplacement() async {
     await assertAllows(r'''
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -272,7 +267,7 @@ void navigate(BuildContext context, bool result) {
 ''');
   }
 
-  Future<void> test_reportsNavigatorPopThenTypedRoutePush() async {
+  Future<void> _reportsNavigatorPopThenTypedRoutePush() async {
     const source = r'''
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -292,7 +287,7 @@ Future<void> onCreateTapped(BuildContext context) async {
     ]);
   }
 
-  Future<void> test_allowsSkillPopWithResultThenCallerPush() async {
+  Future<void> _allowsSkillPopWithResultThenCallerPush() async {
     await assertAllows(r'''
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -316,7 +311,6 @@ Future<void> openCreateSheet(BuildContext context, Future<CreateChoice?> sheet) 
   }
 }
 
-@reflectiveTest
 final class PopFallbackHelperMustCheckNavigatorStackTest extends _RouterRuleTest {
   @override
   String get ruleName => 'pop_fallback_helper_must_check_navigator_stack';
@@ -340,7 +334,7 @@ extension ContextNavigationX on BuildContext {
 }
 ''';
 
-  Future<void> test_allowsNavigatorStackChecks() async {
+  Future<void> _allowsNavigatorStackChecks() async {
     await assertAllows(r'''
 class BuildContext {}
 class NavigatorState {
@@ -386,7 +380,7 @@ extension ContextNavigationX on BuildContext {
 ''');
   }
 
-  Future<void> test_reportsMissingMountedGuard() async {
+  Future<void> _reportsMissingMountedGuard() async {
     final analyzedSource = _analyzedSource(r'''
 class BuildContext {}
 class NavigatorState {
@@ -424,7 +418,7 @@ extension ContextNavigationX on BuildContext {
     ]);
   }
 
-  Future<void> test_reportsMissingLocalNavigatorCheck() async {
+  Future<void> _reportsMissingLocalNavigatorCheck() async {
     final analyzedSource = _analyzedSource(r'''
 class BuildContext {}
 class NavigatorState {
@@ -459,7 +453,7 @@ extension ContextNavigationX on BuildContext {
     ]);
   }
 
-  Future<void> test_reportsMissingRootNavigatorCheck() async {
+  Future<void> _reportsMissingRootNavigatorCheck() async {
     final analyzedSource = _analyzedSource(r'''
 class BuildContext {}
 class NavigatorState {
@@ -494,7 +488,7 @@ extension ContextNavigationX on BuildContext {
     ]);
   }
 
-  Future<void> test_allowsNonFallbackHelper() async {
+  Future<void> _allowsNonFallbackHelper() async {
     await assertAllows(r'''
 class BuildContext {}
 
@@ -505,7 +499,6 @@ extension ContextNavigationX on BuildContext {
   }
 }
 
-@reflectiveTest
 final class RouterRedirectWatchTest extends _RouterRuleTest {
   @override
   String get ruleName => 'router_redirect_watch';
@@ -522,7 +515,6 @@ final router = GoRouter(
 ''';
 }
 
-@reflectiveTest
 final class RouterRedirectLoadingBounceTest extends _RouterRuleTest {
   @override
   void setUp() {
@@ -544,7 +536,7 @@ String? redirectFor(AuthStatus status) {
 }
 ''';
 
-  Future<void> test_reportsLoadingSwitchCaseReturningTypedLocation() async {
+  Future<void> _reportsLoadingSwitchCaseReturningTypedLocation() async {
     const source = '''
 import 'package:go_router/go_router.dart';
 
@@ -575,7 +567,7 @@ String? resolveBadRedirect({required String location, required SetupStatus setup
     ]);
   }
 
-  Future<void> test_reportsFallThroughLoadingCase() async {
+  Future<void> _reportsFallThroughLoadingCase() async {
     const source = '''
 import 'package:go_router/go_router.dart';
 
@@ -605,7 +597,7 @@ String? resolve(SetupStatus setupStatus) {
     ]);
   }
 
-  Future<void> test_reportsLoadingSwitchExpressionCase() async {
+  Future<void> _reportsLoadingSwitchExpressionCase() async {
     const source = '''
 import 'package:go_router/go_router.dart';
 
@@ -631,7 +623,7 @@ String? resolve(SetupStatus setupStatus) => switch (setupStatus) {
     ]);
   }
 
-  Future<void> test_reportsIsLoadingBranchInRedirectClosure() async {
+  Future<void> _reportsIsLoadingBranchInRedirectClosure() async {
     const source = '''
 import 'package:go_router/go_router.dart';
 
@@ -662,7 +654,7 @@ String? Function() redirectFor(AuthState auth) => () {
     ]);
   }
 
-  Future<void> test_allowsSkillResolverThatStaysPutWhileLoading() async {
+  Future<void> _allowsSkillResolverThatStaysPutWhileLoading() async {
     await assertAllows('''
 import 'package:go_router/go_router.dart';
 
@@ -689,7 +681,7 @@ String? resolveAppRedirect({required String location, required SetupStatus setup
 ''');
   }
 
-  Future<void> test_allowsNegatedLoadingBranch() async {
+  Future<void> _allowsNegatedLoadingBranch() async {
     await assertAllows('''
 import 'package:go_router/go_router.dart';
 
@@ -710,7 +702,7 @@ String? resolve(SetupStatus setupStatus, String location) {
 ''');
   }
 
-  Future<void> test_allowsNonEnumLoadingConstant() async {
+  Future<void> _allowsNonEnumLoadingConstant() async {
     await assertAllows('''
 import 'package:go_router/go_router.dart';
 
@@ -735,7 +727,7 @@ String? resolve(int step) {
 ''');
   }
 
-  Future<void> test_allowsLoadingComparisonInsideOtherCase() async {
+  Future<void> _allowsLoadingComparisonInsideOtherCase() async {
     await assertAllows(r'''
 enum SetupStatus { loading, unauthenticated }
 
@@ -752,7 +744,6 @@ String? resolve(SetupStatus setupStatus, SetupStatus previous) {
   }
 }
 
-@reflectiveTest
 final class RouterSplashWaitsForInitialSyncTest extends _RouterRuleTest {
   @override
   String get ruleName => 'router_splash_waits_for_initial_sync';
@@ -776,7 +767,7 @@ bool _shouldStayOnSplash(String currentPath, AuthState authState, InitialSyncSta
 }
 ''';
 
-  Future<void> test_allowsAuthLoadingSplashGate() async {
+  Future<void> _allowsAuthLoadingSplashGate() async {
     await assertAllows(r'''
 String? resolveAppRedirect({
   required String currentPath,
@@ -788,7 +779,7 @@ String? resolveAppRedirect({
 ''');
   }
 
-  Future<void> test_allowsInitialSyncStatusOutsideSplashRedirect() async {
+  Future<void> _allowsInitialSyncStatusOutsideSplashRedirect() async {
     await assertAllows(r'''
 void logSyncStatus(InitialSyncStatus status) {
   if (status == InitialSyncStatus.syncing) {
@@ -799,7 +790,6 @@ void logSyncStatus(InitialSyncStatus status) {
   }
 }
 
-@reflectiveTest
 final class RouterComplexExtraTest extends _RouterRuleTest {
   @override
   String get ruleName => 'router_complex_extra';
@@ -817,7 +807,7 @@ class ActiveItemRoute extends GoRouteData {
 ''';
 
   @override
-  Future<void> test_reportsDiagnostic() async {
+  Future<void> _reportsDiagnostic() async {
     final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
     await assertDiagnostics(analyzedSource, [
       compatLint(analyzedSource, r'$extra});', ruleName),
@@ -825,7 +815,7 @@ class ActiveItemRoute extends GoRouteData {
     ]);
   }
 
-  Future<void> test_reportsTypedRouteExtraCall() async {
+  Future<void> _reportsTypedRouteExtraCall() async {
     final analyzedSource = _analyzedSource(r'''
 void open(item) {
   ActiveItemRoute($extra: item);
@@ -835,7 +825,7 @@ void open(item) {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, r'$extra:', ruleName)]);
   }
 
-  Future<void> test_reportsGoRouterStateExtraRead() async {
+  Future<void> _reportsGoRouterStateExtraRead() async {
     final analyzedSource = _analyzedSource(r'''
 class Item {}
 
@@ -849,7 +839,7 @@ void build(context) {
     ]);
   }
 
-  Future<void> test_reportsContextNavigationExtraArgument() async {
+  Future<void> _reportsContextNavigationExtraArgument() async {
     final analyzedSource = _analyzedSource(r'''
 void open(context, item) {
   context.push('/active_item', extra: item);
@@ -859,7 +849,7 @@ void open(context, item) {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'extra: item', ruleName)]);
   }
 
-  Future<void> test_allowsTypedRouteWithoutExtra() async {
+  Future<void> _allowsTypedRouteWithoutExtra() async {
     await assertAllows(r'''
 class ActiveItemRoute extends GoRouteData {
   const ActiveItemRoute();
@@ -871,7 +861,7 @@ void open(context) {
 ''');
   }
 
-  Future<void> test_allowsTestFixtureExtraRead() async {
+  Future<void> _allowsTestFixtureExtraRead() async {
     await assertAllows(r'''
 void build(state) {
   final text = state.extra == null ? 'active:no-extra' : 'active:has-extra';
@@ -879,7 +869,7 @@ void build(state) {
 ''', path: '$testPackageRootPath/test/features/home/home_screen_auto_resume_test.dart');
   }
 
-  Future<void> test_allowsUnrelatedNamedExtraArgument() async {
+  Future<void> _allowsUnrelatedNamedExtraArgument() async {
     await assertAllows(r'''
 class DetailPanel {
   const DetailPanel({required this.extra});
@@ -892,4 +882,93 @@ void build(value) {
 }
 ''');
   }
+}
+
+void _defineSourceScannerRulesPart08Tests() {
+  analysisRuleSuite<BareStateMountedForbiddenTest>(
+    'BareStateMountedForbiddenTest',
+    BareStateMountedForbiddenTest.new,
+    {
+      'test_reportsThisMounted': (t) => t._reportsThisMounted(),
+      'test_allowsContextAndRefMounted': (t) => t._allowsContextAndRefMounted(),
+      'test_allowsNonWidgetMountedMember': (t) => t._allowsNonWidgetMountedMember(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RouterStringNavTest>('RouterStringNavTest', RouterStringNavTest.new, {
+    'test_allowsTestHostStringRoutes': (t) => t._allowsTestHostStringRoutes(),
+    'test_reportsRouterStringInsideCoreRouter': (t) => t._reportsRouterStringInsideCoreRouter(),
+    'test_reportsRouterPushNamedInsideCoreRouter': (t) =>
+        t._reportsRouterPushNamedInsideCoreRouter(),
+    'test_reportsCamelCaseRouterVariableInsideCoreRouter': (t) =>
+        t._reportsCamelCaseRouterVariableInsideCoreRouter(),
+    'test_reportsRawInitialLocationInsideCoreRouter': (t) =>
+        t._reportsRawInitialLocationInsideCoreRouter(),
+    'test_allowsTypedLocationsForStringNavRule': (t) => t._allowsTypedLocationsForStringNavRule(),
+    'test_allowsTypedRouteDefinitions': (t) => t._allowsTypedRouteDefinitions(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<RouterPopThenPushTest>('RouterPopThenPushTest', RouterPopThenPushTest.new, {
+    'test_allowsSkillSafePopAfterEarlierPushReplacement': (t) =>
+        t._allowsSkillSafePopAfterEarlierPushReplacement(),
+    'test_reportsNavigatorPopThenTypedRoutePush': (t) => t._reportsNavigatorPopThenTypedRoutePush(),
+    'test_allowsSkillPopWithResultThenCallerPush': (t) =>
+        t._allowsSkillPopWithResultThenCallerPush(),
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+  });
+  analysisRuleSuite<PopFallbackHelperMustCheckNavigatorStackTest>(
+    'PopFallbackHelperMustCheckNavigatorStackTest',
+    PopFallbackHelperMustCheckNavigatorStackTest.new,
+    {
+      'test_allowsNavigatorStackChecks': (t) => t._allowsNavigatorStackChecks(),
+      'test_reportsMissingMountedGuard': (t) => t._reportsMissingMountedGuard(),
+      'test_reportsMissingLocalNavigatorCheck': (t) => t._reportsMissingLocalNavigatorCheck(),
+      'test_reportsMissingRootNavigatorCheck': (t) => t._reportsMissingRootNavigatorCheck(),
+      'test_allowsNonFallbackHelper': (t) => t._allowsNonFallbackHelper(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RouterRedirectWatchTest>(
+    'RouterRedirectWatchTest',
+    RouterRedirectWatchTest.new,
+    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+  );
+  analysisRuleSuite<RouterRedirectLoadingBounceTest>(
+    'RouterRedirectLoadingBounceTest',
+    RouterRedirectLoadingBounceTest.new,
+    {
+      'test_reportsLoadingSwitchCaseReturningTypedLocation': (t) =>
+          t._reportsLoadingSwitchCaseReturningTypedLocation(),
+      'test_reportsFallThroughLoadingCase': (t) => t._reportsFallThroughLoadingCase(),
+      'test_reportsLoadingSwitchExpressionCase': (t) => t._reportsLoadingSwitchExpressionCase(),
+      'test_reportsIsLoadingBranchInRedirectClosure': (t) =>
+          t._reportsIsLoadingBranchInRedirectClosure(),
+      'test_allowsSkillResolverThatStaysPutWhileLoading': (t) =>
+          t._allowsSkillResolverThatStaysPutWhileLoading(),
+      'test_allowsNegatedLoadingBranch': (t) => t._allowsNegatedLoadingBranch(),
+      'test_allowsNonEnumLoadingConstant': (t) => t._allowsNonEnumLoadingConstant(),
+      'test_allowsLoadingComparisonInsideOtherCase': (t) =>
+          t._allowsLoadingComparisonInsideOtherCase(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RouterSplashWaitsForInitialSyncTest>(
+    'RouterSplashWaitsForInitialSyncTest',
+    RouterSplashWaitsForInitialSyncTest.new,
+    {
+      'test_allowsAuthLoadingSplashGate': (t) => t._allowsAuthLoadingSplashGate(),
+      'test_allowsInitialSyncStatusOutsideSplashRedirect': (t) =>
+          t._allowsInitialSyncStatusOutsideSplashRedirect(),
+      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    },
+  );
+  analysisRuleSuite<RouterComplexExtraTest>('RouterComplexExtraTest', RouterComplexExtraTest.new, {
+    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
+    'test_reportsTypedRouteExtraCall': (t) => t._reportsTypedRouteExtraCall(),
+    'test_reportsGoRouterStateExtraRead': (t) => t._reportsGoRouterStateExtraRead(),
+    'test_reportsContextNavigationExtraArgument': (t) => t._reportsContextNavigationExtraArgument(),
+    'test_allowsTypedRouteWithoutExtra': (t) => t._allowsTypedRouteWithoutExtra(),
+    'test_allowsTestFixtureExtraRead': (t) => t._allowsTestFixtureExtraRead(),
+    'test_allowsUnrelatedNamedExtraArgument': (t) => t._allowsUnrelatedNamedExtraArgument(),
+  });
 }

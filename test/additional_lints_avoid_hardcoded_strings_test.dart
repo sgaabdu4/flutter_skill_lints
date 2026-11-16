@@ -52,6 +52,16 @@ final class _AvoidHardcodedStringsTest extends AnalysisRuleTest {
               t._callbackProseInsideResolvedPreviewNoLint(),
           'test_globalFunctionVariableProseInWidget_noLint': (t) =>
               t._globalFunctionVariableProseInWidgetNoLint(),
+          'test_titleLiteralPassedToFunction_lint': (t) => t._titleLiteralPassedToFunctionLint(),
+          'test_titleLiteralPassedToMethod_lint': (t) => t._titleLiteralPassedToMethodLint(),
+          'test_labelLiteralAfterPositionalArgument_lint': (t) =>
+              t._labelLiteralAfterPositionalArgumentLint(),
+          'test_titleFromVariablePassedToFunction_noLint': (t) =>
+              t._titleFromVariablePassedToFunctionNoLint(),
+          'test_unrelatedNamedLiteralPassedToFunction_noLint': (t) =>
+              t._unrelatedNamedLiteralPassedToFunctionNoLint(),
+          'test_titleLiteralWithoutLettersPassedToFunction_noLint': (t) =>
+              t._titleLiteralWithoutLettersPassedToFunctionNoLint(),
         },
       );
 
@@ -452,6 +462,77 @@ class SavePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Widget();
+}
+''');
+  }
+
+  Future<void> _titleLiteralPassedToFunctionLint() async {
+    const source = '''
+void show({String? title}) {}
+
+void open() {
+  show(title: 'Saved changes');
+}
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf("'Saved changes'"), "'Saved changes'".length),
+    ]);
+  }
+
+  Future<void> _titleLiteralPassedToMethodLint() async {
+    const source = '''
+class Toaster {
+  void show({String? tooltip}) {}
+}
+
+void open(Toaster toaster) {
+  toaster.show(tooltip: 'Undo last change');
+}
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf("'Undo last change'"), "'Undo last change'".length),
+    ]);
+  }
+
+  Future<void> _labelLiteralAfterPositionalArgumentLint() async {
+    const source = '''
+void showConfirmDialog(Object context, {String? title}) {}
+
+void open(Object context) {
+  showConfirmDialog(context, title: 'Delete item?');
+}
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf("'Delete item?'"), "'Delete item?'".length),
+    ]);
+  }
+
+  Future<void> _titleFromVariablePassedToFunctionNoLint() async {
+    await assertNoDiagnostics('''
+void show({String? title}) {}
+
+void open(String heading) {
+  show(title: heading);
+}
+''');
+  }
+
+  Future<void> _unrelatedNamedLiteralPassedToFunctionNoLint() async {
+    await assertNoDiagnostics('''
+void send({String? channel}) {}
+
+void open() {
+  send(channel: 'Order updates');
+}
+''');
+  }
+
+  Future<void> _titleLiteralWithoutLettersPassedToFunctionNoLint() async {
+    await assertNoDiagnostics('''
+void show({String? title}) {}
+
+void open() {
+  show(title: '123');
 }
 ''');
   }

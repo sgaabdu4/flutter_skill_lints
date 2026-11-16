@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.15.0] - 2026-11-16
+
+- Remove `avoid_banned_types`. It reported the same `dynamic` sites as
+  `avoid_dynamic_except_json_maps`, so every finding counted twice. Use
+  `avoid_dynamic_except_json_maps`. Remove its entry from any
+  `analysis_options.yaml` that names it. This release is a minor version
+  because a project that lists the removed rules by name needs a change; move
+  the `^0.14` pin to `^0.15.0` when ready.
+- Remove `strings_hardcoded`. `avoid_hardcoded_strings` now owns hardcoded UI
+  strings and also reports a literal passed as `title`, `label`, `tooltip`,
+  `hintText`, `helperText` or `errorText` to any function or method call, which
+  only `strings_hardcoded` caught before. Use `avoid_hardcoded_strings`.
+- Change the correction messages of `avoid_dynamic_except_json_maps` and
+  `save_all_full_collection_after_subset_mutation`. They told users to add an
+  ignore. They now name the real fix.
+- Change `flutter_skill_project_config`. It follows `include:` files in
+  `analysis_options.yaml` (a single path or a list), and accepts the
+  `rule: true` map form of linter rules. It asks for `riverpod_lint` only when
+  the package depends on Riverpod, and for the `*.arb` exclude only when the
+  package has ARB files outside dot folders and build folders.
+- Report loads and `state` reads inside `then`, `catchError` and `whenComplete`
+  callbacks chained on a microtask, a cascade on it, and a load passed as an
+  `onError` callback, in `avoid_sync_notifier_state_read`.
+
 ## [0.14.0] - 2026-11-15
 
 - Add `avoid_frame_deferral`, which reports Flutter next-frame deferral at error

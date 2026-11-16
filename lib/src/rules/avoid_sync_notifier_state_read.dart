@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
@@ -79,6 +80,7 @@ final class _Visitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitArgumentList(ArgumentList node) {
+    if (!_createsProvider(node.parent)) return;
     for (final argument in node.arguments) {
       final expression = argument.argumentExpression;
       final element = switch (expression) {
@@ -111,6 +113,16 @@ final class _Visitor extends RecursiveAstVisitor<void> {
     if (node.body.isAsynchronous || !isNotifierClass(classNode)) return;
     node.body.accept(_BodyVisitor(rule, classNode));
   }
+}
+
+bool _createsProvider(AstNode? call) {
+  final type = call is Expression ? call.staticType : null;
+  final uri = type is InterfaceType ? type.element.library.uri.toString() : '';
+  return const [
+    'package:riverpod/',
+    'package:flutter_riverpod/',
+    'package:hooks_riverpod/',
+  ].any(uri.startsWith);
 }
 
 bool _isResolvedNotifier(ClassDeclaration node) {

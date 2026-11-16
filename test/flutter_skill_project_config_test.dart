@@ -45,6 +45,19 @@ final class _FlutterSkillProjectConfigTest extends AnalysisRuleTest {
               t._reportsQuotedProhibitedAnalysisOptionPlugins(),
           'test_allowsCanonicalConfigWithoutDeprecatedLints': (t) =>
               t._allowsCanonicalConfigWithoutDeprecatedLints(),
+          'test_allowsMissingRiverpodLintWithoutRiverpodDependency': (t) =>
+              t._allowsMissingRiverpodLintWithoutRiverpodDependency(),
+          'test_reportsMissingRiverpodLintWithRiverpodDependency': (t) =>
+              t._reportsMissingRiverpodLintWithRiverpodDependency(),
+          'test_allowsMissingArbExcludeWithoutArbFiles': (t) =>
+              t._allowsMissingArbExcludeWithoutArbFiles(),
+          'test_reportsMissingArbExcludeWithArbFiles': (t) =>
+              t._reportsMissingArbExcludeWithArbFiles(),
+          'test_acceptsRuleMapFormLints': (t) => t._acceptsRuleMapFormLints(),
+          'test_followsIncludedSiblingOptionsFile': (t) => t._followsIncludedSiblingOptionsFile(),
+          'test_followsIncludedParentOptionsFile': (t) => t._followsIncludedParentOptionsFile(),
+          'test_reportsGapsInsideIncludedOptionsFile': (t) =>
+              t._reportsGapsInsideIncludedOptionsFile(),
         },
       );
 
@@ -561,8 +574,89 @@ class User {
 ''');
   }
 
+  Future<void> _allowsMissingRiverpodLintWithoutRiverpodDependency() async {
+    newFile(
+      '$testPackageRootPath/analysis_options.yaml',
+      _canonicalOptions.replaceAll('  riverpod_lint: ^3.1.9\n', ''),
+    );
+
+    await assertNoDiagnostics('void main() {}');
+  }
+
+  Future<void> _reportsMissingRiverpodLintWithRiverpodDependency() async {
+    newFile('$testPackageRootPath/pubspec.yaml', r'''
+name: test
+environment:
+  sdk: ^3.10.0
+dependencies:
+  flutter_riverpod: ^3.0.0
+''');
+    newFile(
+      '$testPackageRootPath/analysis_options.yaml',
+      _canonicalOptions.replaceAll('  riverpod_lint: ^3.1.9\n', ''),
+    );
+
+    await assertDiagnostics('void main() {}', [projectLint('cfg_analysis_options_canonical')]);
+  }
+
+  Future<void> _allowsMissingArbExcludeWithoutArbFiles() async {
+    newFile(
+      '$testPackageRootPath/analysis_options.yaml',
+      _canonicalOptions.replaceAll('    - "**/*.arb"\n', ''),
+    );
+
+    await assertNoDiagnostics('void main() {}');
+  }
+
+  Future<void> _reportsMissingArbExcludeWithArbFiles() async {
+    newFile('$testPackageRootPath/lib/l10n/app_en.arb', '{}');
+    newFile(
+      '$testPackageRootPath/analysis_options.yaml',
+      _canonicalOptions.replaceAll('    - "**/*.arb"\n', ''),
+    );
+
+    await assertDiagnostics('void main() {}', [projectLint('cfg_generated_exclude')]);
+  }
+
+  Future<void> _acceptsRuleMapFormLints() async {
+    final mapForm = _canonicalOptions.replaceAllMapped(
+      RegExp(r'^    - (\w+)$', multiLine: true),
+      (match) => '    ${match[1]}: true',
+    );
+    newFile('$testPackageRootPath/analysis_options.yaml', mapForm);
+
+    await assertNoDiagnostics('void main() {}');
+  }
+
+  Future<void> _followsIncludedSiblingOptionsFile() async {
+    newFile('$testPackageRootPath/base_options.yaml', _canonicalOptions);
+    newFile('$testPackageRootPath/analysis_options.yaml', 'include: base_options.yaml\n');
+
+    await assertNoDiagnostics('void main() {}');
+  }
+
+  Future<void> _followsIncludedParentOptionsFile() async {
+    newFile('/home/root_options.yaml', _canonicalOptions);
+    newFile('$testPackageRootPath/analysis_options.yaml', 'include: ../root_options.yaml\n');
+
+    await assertNoDiagnostics('void main() {}');
+  }
+
+  Future<void> _reportsGapsInsideIncludedOptionsFile() async {
+    newFile(
+      '$testPackageRootPath/base_options.yaml',
+      _canonicalOptions.replaceAll('    - avoid_print\n', ''),
+    );
+    newFile('$testPackageRootPath/analysis_options.yaml', 'include: base_options.yaml\n');
+
+    await assertDiagnostics('void main() {}', [projectLint('cfg_required_lints')]);
+  }
+
   void _writeCanonicalAnalysisOptions() {
-    newFile('$testPackageRootPath/analysis_options.yaml', r'''
+    newFile('$testPackageRootPath/analysis_options.yaml', _canonicalOptions);
+  }
+
+  static const _canonicalOptions = r'''
 include: package:flutter_lints/flutter.yaml
 
 plugins:
@@ -610,6 +704,5 @@ linter:
     - avoid_print
     - cancel_subscriptions
     - close_sinks
-''');
-  }
+''';
 }

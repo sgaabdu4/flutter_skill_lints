@@ -1,9 +1,9 @@
+import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_spacing.dart';
 
 import 'analysis_rule_suite.dart';
 import 'support/flutter_widgets_stub.dart';
 
-import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 
 void main() {
   analysisRuleSuite<PreferSpacingTest>('PreferSpacingTest', PreferSpacingTest.new, {

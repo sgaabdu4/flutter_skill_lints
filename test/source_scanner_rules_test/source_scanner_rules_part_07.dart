@@ -283,8 +283,6 @@ extension DateTimeExtensions on DateTime {
   }
 }
 
-// primitive-formatting.md:33/:60: ad-hoc DateFormat/NumberFormat is forbidden
-// at call sites; the DateTimeX/NumX extensions own intl formatting.
 @reflectiveTest
 final class AdHocIntlFormatTest extends _UiRuleTest {
   @override
@@ -389,8 +387,6 @@ String expectedLabel(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
   }
 }
 
-// primitive-formatting.md:60: inline `.clamp(...)` is forbidden at call sites;
-// NumX.clamped owns it.
 @reflectiveTest
 final class InlineNumClampTest extends _UiRuleTest {
   @override
@@ -468,8 +464,6 @@ class Screen extends Widget {
 }
 ''';
 
-  // performance.md:289 WRONG "sorts on every rebuild", in a State build and
-  // in a `Widget build(BuildContext ...)` on a custom view base class.
   Future<void> test_reportsSkillSortInWidgetAndStateBuild() async {
     final source = _analyzedSource(r'''
 import 'package:flutter/widgets.dart';
@@ -505,8 +499,6 @@ class ProductsView extends AppView {
     ]);
   }
 
-  // riverpod-codegen.md:335-346: a Riverpod Notifier build computes provider
-  // state, where performance.md:5 sends collection work.
   Future<void> test_allowsNotifierBuild() async {
     await assertAllows(r'''
 class Riverpod {

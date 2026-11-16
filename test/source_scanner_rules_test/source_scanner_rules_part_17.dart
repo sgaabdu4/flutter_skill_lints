@@ -266,8 +266,6 @@ Future<T?> openHelp<T>(BuildContext context) => showDialog<T>(
 ''';
 
   Future<void> test_allowsBareShowDialogNotInHelperPosition() async {
-    // Inline call without "helper" wrapper still flagged if no routeSettings,
-    // confirm rule fires regardless of surrounding context.
     final analyzedSource = _analyzedSource(r'''
 import 'package:flutter/material.dart';
 

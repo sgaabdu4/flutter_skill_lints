@@ -187,9 +187,6 @@ class SquadSync {
 
 @reflectiveTest
 final class DebugPrintBlankingMasksMatchesTest extends _RuntimeBugRuleTest {
-  // Lock in the source_scanner_rule._blankDebugCalls behavior: tokens that
-  // would otherwise trigger a rule MUST be ignored when buried inside
-  // `debugPrint(...)` / `print(...)`.
   @override
   String get ruleName => 'notifier_zero_value_save_no_guard';
   @override
@@ -221,9 +218,6 @@ class HiddenPrintCall {
 
 @reflectiveTest
 final class IsTestFileSkipsRuleTest extends _RuntimeBugRuleTest {
-  // Confirm the universal `if (context.isTestFile) return;` early-exit at the
-  // top of every new rule scan: identical buggy fixture under a `_test.dart`
-  // path must produce no diagnostic.
   @override
   String get ruleName => 'sync_save_all_no_dirty_guard';
   @override
@@ -249,9 +243,6 @@ class SyncService {
 
 @reflectiveTest
 final class DialogRuleSkipsTestFileTest extends _DialogRuleTest {
-  // Per-family coverage of the universal `if (context.isTestFile) return;`
-  // guard: dialog rule under a `_test.dart` path must produce no diagnostic
-  // even with an obviously buggy fixture.
   @override
   String get ruleName => 'dialog_button_pop_then_state_mutation';
   @override
@@ -283,9 +274,6 @@ class EditDialog extends ConsumerWidget {
 
 @reflectiveTest
 final class DebugPrintMultilineBlankingTest extends _RuntimeBugRuleTest {
-  // Cover the multi-line branch of source_scanner_rule._blankDebugCalls: a
-  // `debugPrint(...)` spanning multiple lines must blank EVERY embedded
-  // token so a buggy-looking string never triggers a downstream rule.
   @override
   String get ruleName => 'notifier_zero_value_save_no_guard';
   @override
@@ -310,8 +298,6 @@ class MultilinePrint {
 
 @reflectiveTest
 final class DatasourceBoundaryFourGettersAllowedTest extends _RuntimeBugRuleTest {
-  // Boundary: 4 single-value getters is just under the `< 5` cutoff — must
-  // NOT trigger. Locks the off-by-one in case the threshold is ever tweaked.
   @override
   String get ruleName => 'datasource_missing_batch_loader';
   @override

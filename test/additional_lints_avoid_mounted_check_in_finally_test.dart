@@ -164,9 +164,6 @@ Future<void> f(bool flag) async {
   }
 
   Future<void> test_returnWithValue_inFinally_noLint() async {
-    // This rule fires only on bare `return;`. A `return value;` with an
-    // expression is a different anti-pattern; we leave that to the built-in
-    // `control_flow_in_finally` lint.
     await assertNoDiagnostics(r'''
 class Ref { bool get mounted => true; }
 Future<int> f(Ref ref) async {

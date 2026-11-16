@@ -293,9 +293,7 @@ class SearchSheet {
 ''');
   }
 
-  /// #37: the issue's hand-written copyWith update and the skill's `setName`
-  /// form handler (lists-forms-workflows.md) are synchronous state-only
-  /// updates, as lambdas or tear-offs.
+  /// #37: the issue's hand-written copyWith update and the skill's `setName` form handler (lists-forms-workflows.md) are synchronous state-only updates, as lambdas or tear-offs.
   Future<void> test_allowsIssue37SynchronousFormHandlers() async {
     await assertAllows(
       _formNotifierSource +
@@ -312,8 +310,7 @@ List<Object> build(Ref ref) => [
     );
   }
 
-  /// #37: the notifier and its state live in another library (the usual
-  /// widget/notifier layout); its synchronous signature is the evidence.
+  /// #37: the notifier and its state live in another library (the usual widget/notifier layout); its synchronous signature is the evidence.
   Future<void> test_allowsIssue37SynchronousFormHandlersFromAnotherFile() async {
     newFile('$testPackageLibPath/form_notifier.dart', _formNotifierSource);
     await assertAllows(r'''
@@ -367,9 +364,7 @@ List<Object> build(Ref ref) => [
     ]);
   }
 
-  /// #37: a synchronous `void` method in another file that forwards to a
-  /// Future (directly or through an unresolved generic `ref.read<T>`) still
-  /// reaches async work; a state-only neighbor stays clean.
+  /// #37: a synchronous `void` method in another file that forwards to a Future (directly or through an unresolved generic `ref.read<T>`) still reaches async work; a state-only neighbor stays clean.
   Future<void> test_reportsCrossFileSynchronousForwarders() async {
     newFile('$testPackageLibPath/input_notifier.dart', r'''
 import 'dart:async';
@@ -416,9 +411,7 @@ List<Object> build(Ref ref) => [
     ]);
   }
 
-  /// #37: the skill's `setName` (lists-forms-workflows.md:205-210) on a
-  /// Freezed state, with state, generated part and notifier in other files.
-  /// The generated callable `copyWith` is synchronous.
+  /// #37: the skill's `setName` (lists-forms-workflows.md:205-210) on a Freezed state, with state, generated part and notifier in other files.
   Future<void> test_allowsCrossFileFreezedCallableCopyWith() async {
     newFile('$testPackageLibPath/form_state.dart', r'''
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -483,8 +476,7 @@ List<Object> build(Ref ref) => [
 ''');
   }
 
-  /// lists-forms-workflows.md SearchNotifier DO: the notifier in another file
-  /// debounces its async work, so the TextField forwarding to it is clean.
+  /// lists-forms-workflows.md SearchNotifier DO: the notifier in another file debounces its async work, so the TextField forwarding to it is clean.
   Future<void> test_allowsCrossFileNotifierDebounce() async {
     newFile('$testPackageLibPath/search_notifier.dart', r'''
 import 'dart:async';
@@ -692,11 +684,6 @@ class Timer {
 ''');
   }
 }
-
-// ---------------------------------------------------------------------------
-// Regression suite — alternate TP shapes + edge FP guards per rule.
-// Added 2026-05 to lock in detection coverage and false-positive defenses.
-// ---------------------------------------------------------------------------
 
 @reflectiveTest
 final class DialogWidgetSubscribesPathBasedTest extends _DialogRuleTest {

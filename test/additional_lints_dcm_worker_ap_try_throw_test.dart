@@ -574,8 +574,6 @@ final class CounterNotifier extends Notifier<int> {
     ]);
   }
 
-  // Issue #86: a typed throw inside a @riverpod codegen notifier reports like
-  // a hand-written Notifier (state-management-lifecycle.md:92).
   Future<void> test_codegenRiverpodNotifierTypedThrow_lint() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';
@@ -598,8 +596,6 @@ class P86Form extends _$P86Form {
     ]);
   }
 
-  // Issue #86: typed infrastructure failures stay allowed in datasources
-  // (networking.md:25).
   Future<void> test_datasourceTypedThrowNextToCodegenNotifier_noLint() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
@@ -941,9 +937,7 @@ Future<void> load() async {
     await assertDiagnostics(source, [lint(source.indexOf(clause), clause.length)]);
   }
 
-  /// Datasource catches the skill allows (networking.md:30-43,
-  /// hive-persistence.md:72, state-management-lifecycle.md:69-72). An earlier
-  /// rethrow-only clause keeps its error type out of a later catch.
+  /// Datasource catches the skill allows (networking.md:30-43, hive-persistence.md:72, state-management-lifecycle.md:69-72). An earlier rethrow-only clause keeps its error type out of a later catch.
   Future<void> test_skillDataLayerCatches_noLint() async {
     await assertNoDiagnostics(r'''
 class AppException implements Exception {

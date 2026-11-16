@@ -404,10 +404,6 @@ class TodoList {
 ''');
   }
 
-  // performance.md:6: watch a generated computed projection provider directly
-  // when the entire provider value is already the render projection: passed
-  // whole, destructured as a record, or a projected collection read by length
-  // and index (routing-app-shell.md:179 ProductListScreen).
   Future<void> test_allowsDirectWatchOfComputedProjectionProvider() async {
     await assertAllows(r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -450,8 +446,6 @@ class ProductListScreen {
 ''');
   }
 
-  // performance.md:76 WRONG: a broad watch read only by field reports, also
-  // when the provider is a computed (functional) provider.
   static const _userSummarySource = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
@@ -555,8 +549,6 @@ class View {
 ''');
   }
 
-  // performance.md:26-27: reusable widgets get minimal view data, so a whole
-  // multi-field state passed into an app widget reports (#36).
   static const _productStateWidget = r'''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
@@ -664,8 +656,6 @@ class HistoryScreen {
 ''');
   }
 
-  // routing-app-shell.md:381: framework widgets take framework config, not
-  // reusable-widget view data.
   Future<void> test_allowsWholeValueIntoFrameworkWidget() async {
     newFile(convertPath('/package/flutter/lib/material.dart'), r'''
 import 'widgets.dart';

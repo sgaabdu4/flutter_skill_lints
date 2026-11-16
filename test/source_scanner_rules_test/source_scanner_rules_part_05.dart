@@ -718,8 +718,6 @@ final class UiSnackbarBoundaryTest extends _UiRuleTest {
 
   @override
   void setUp() {
-    // Mirrors riverpod 3: codegen `_$X extends $Notifier` reaches AnyNotifier
-    // without passing through the hand-written Notifier.
     newPackage('riverpod').addFile('lib/riverpod.dart', r'''
 abstract class AnyNotifier<StateT, ValueT> {
   late StateT state;

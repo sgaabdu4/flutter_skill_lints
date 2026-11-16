@@ -7,22 +7,22 @@ import 'support/flutter_riverpod_stub.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<AvoidUnnecessaryConsumerWidgetsTest>(
+  analysisRuleSuite<_AvoidUnnecessaryConsumerWidgetsTest>(
     'AvoidUnnecessaryConsumerWidgetsTest',
-    AvoidUnnecessaryConsumerWidgetsTest.new,
+    _AvoidUnnecessaryConsumerWidgetsTest.new,
     {
-      'reportsConsumerWidgetThatNeverUsesRef': (t) => t.reportsConsumerWidgetThatNeverUsesRef(),
-      'acceptsConsumerWidgetThatUsesRef': (t) => t.acceptsConsumerWidgetThatUsesRef(),
+      'reportsConsumerWidgetThatNeverUsesRef': (t) => t._reportsConsumerWidgetThatNeverUsesRef(),
+      'acceptsConsumerWidgetThatUsesRef': (t) => t._acceptsConsumerWidgetThatUsesRef(),
       'acceptsConsumerWidgetWithoutRefParameter': (t) =>
-          t.acceptsConsumerWidgetWithoutRefParameter(),
-      'acceptsPlainStatelessWidget': (t) => t.acceptsPlainStatelessWidget(),
-      'acceptsPublicPageInScreensFolder': (t) => t.acceptsPublicPageInScreensFolder(),
-      'convertsConsumerWidgetToStateless': (t) => t.convertsConsumerWidgetToStateless(),
+          t._acceptsConsumerWidgetWithoutRefParameter(),
+      'acceptsPlainStatelessWidget': (t) => t._acceptsPlainStatelessWidget(),
+      'acceptsPublicPageInScreensFolder': (t) => t._acceptsPublicPageInScreensFolder(),
+      'convertsConsumerWidgetToStateless': (t) => t._convertsConsumerWidgetToStateless(),
     },
   );
 }
 
-final class AvoidUnnecessaryConsumerWidgetsTest extends FixRuleTest {
+final class _AvoidUnnecessaryConsumerWidgetsTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -43,10 +43,10 @@ class Tile extends ConsumerWidget {
 }
 ''';
 
-  Future<void> reportsConsumerWidgetThatNeverUsesRef() =>
+  Future<void> _reportsConsumerWidgetThatNeverUsesRef() =>
       assertDiagnostics(_unused, [lint(_unused.indexOf('Tile extends'), 'Tile'.length)]);
 
-  Future<void> acceptsConsumerWidgetThatUsesRef() => assertNoDiagnostics('''
+  Future<void> _acceptsConsumerWidgetThatUsesRef() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -61,7 +61,7 @@ class Tile extends ConsumerWidget {
 }
 ''');
 
-  Future<void> acceptsConsumerWidgetWithoutRefParameter() => assertNoDiagnostics('''
+  Future<void> _acceptsConsumerWidgetWithoutRefParameter() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -73,7 +73,7 @@ class Tile extends ConsumerWidget {
 }
 ''');
 
-  Future<void> acceptsPlainStatelessWidget() => assertNoDiagnostics('''
+  Future<void> _acceptsPlainStatelessWidget() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 class Tile extends StatelessWidget {
@@ -84,13 +84,13 @@ class Tile extends StatelessWidget {
 }
 ''');
 
-  Future<void> acceptsPublicPageInScreensFolder() async {
+  Future<void> _acceptsPublicPageInScreensFolder() async {
     final path = '$testPackageLibPath/features/todos/presentation/screens/todo_screen.dart';
     newFile(path, _unused);
     await assertNoDiagnosticsInFile(path);
   }
 
-  Future<void> convertsConsumerWidgetToStateless() => expectFix(
+  Future<void> _convertsConsumerWidgetToStateless() => expectFix(
     _unused,
     (context) => AvoidUnnecessaryConsumerWidgetsFix(context: context),
     expected: '''

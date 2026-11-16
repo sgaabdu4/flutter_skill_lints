@@ -5,23 +5,23 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<UseDedicatedMediaQueryMethodsTest>(
+  analysisRuleSuite<_UseDedicatedMediaQueryMethodsTest>(
     'UseDedicatedMediaQueryMethodsTest',
-    UseDedicatedMediaQueryMethodsTest.new,
+    _UseDedicatedMediaQueryMethodsTest.new,
     {
-      'reportsOfWithSingleProperty': (t) => t.reportsOfWithSingleProperty(),
-      'reportsMaybeOfWithSingleProperty': (t) => t.reportsMaybeOfWithSingleProperty(),
-      'acceptsDedicatedMethods': (t) => t.acceptsDedicatedMethods(),
-      'acceptsUnsupportedProperties': (t) => t.acceptsUnsupportedProperties(),
-      'acceptsOtherReceivers': (t) => t.acceptsOtherReceivers(),
-      'acceptsOtherMethods': (t) => t.acceptsOtherMethods(),
-      'rewritesOfToDedicatedMethod': (t) => t.rewritesOfToDedicatedMethod(),
-      'rewritesMaybeOfToDedicatedMethod': (t) => t.rewritesMaybeOfToDedicatedMethod(),
+      'reportsOfWithSingleProperty': (t) => t._reportsOfWithSingleProperty(),
+      'reportsMaybeOfWithSingleProperty': (t) => t._reportsMaybeOfWithSingleProperty(),
+      'acceptsDedicatedMethods': (t) => t._acceptsDedicatedMethods(),
+      'acceptsUnsupportedProperties': (t) => t._acceptsUnsupportedProperties(),
+      'acceptsOtherReceivers': (t) => t._acceptsOtherReceivers(),
+      'acceptsOtherMethods': (t) => t._acceptsOtherMethods(),
+      'rewritesOfToDedicatedMethod': (t) => t._rewritesOfToDedicatedMethod(),
+      'rewritesMaybeOfToDedicatedMethod': (t) => t._rewritesMaybeOfToDedicatedMethod(),
     },
   );
 }
 
-final class UseDedicatedMediaQueryMethodsTest extends FixRuleTest {
+final class _UseDedicatedMediaQueryMethodsTest extends FixRuleTest {
   @override
   void setUp() {
     rule = UseDedicatedMediaQueryMethods();
@@ -56,11 +56,11 @@ class Other {
 ${_fakes}double f(BuildContext context) => MediaQuery.of(context).size;
 ''';
 
-  Future<void> reportsOfWithSingleProperty() => assertDiagnostics(_of, [
+  Future<void> _reportsOfWithSingleProperty() => assertDiagnostics(_of, [
     lint(_of.indexOf('MediaQuery.of'), 'MediaQuery.of(context).size'.length),
   ]);
 
-  Future<void> reportsMaybeOfWithSingleProperty() async {
+  Future<void> _reportsMaybeOfWithSingleProperty() async {
     const source =
         '''
 ${_fakes}double? f(BuildContext context) => MediaQuery.maybeOf(context)?.size;
@@ -69,23 +69,23 @@ ${_fakes}double? f(BuildContext context) => MediaQuery.maybeOf(context)?.size;
     await assertDiagnostics(source, [lint(source.indexOf(expression), expression.length)]);
   }
 
-  Future<void> acceptsDedicatedMethods() => assertNoDiagnostics('''
+  Future<void> _acceptsDedicatedMethods() => assertNoDiagnostics('''
 ${_fakes}double f(BuildContext context) => MediaQuery.sizeOf(context);
 ''');
 
-  Future<void> acceptsUnsupportedProperties() => assertNoDiagnostics('''
+  Future<void> _acceptsUnsupportedProperties() => assertNoDiagnostics('''
 ${_fakes}int f(BuildContext context) => MediaQuery.of(context).viewport;
 ''');
 
-  Future<void> acceptsOtherReceivers() => assertNoDiagnostics('''
+  Future<void> _acceptsOtherReceivers() => assertNoDiagnostics('''
 ${_fakes}double f(BuildContext context) => Other.of(context).size;
 ''');
 
-  Future<void> acceptsOtherMethods() => assertNoDiagnostics('''
+  Future<void> _acceptsOtherMethods() => assertNoDiagnostics('''
 ${_fakes}int f(BuildContext context) => MediaQuery.refresh(context);
 ''');
 
-  Future<void> rewritesOfToDedicatedMethod() => expectFix(
+  Future<void> _rewritesOfToDedicatedMethod() => expectFix(
     _of,
     (context) => UseDedicatedMediaQueryMethodsFix(context: context),
     expected:
@@ -94,7 +94,7 @@ ${_fakes}double f(BuildContext context) => MediaQuery.sizeOf(context);
 ''',
   );
 
-  Future<void> rewritesMaybeOfToDedicatedMethod() => expectFix(
+  Future<void> _rewritesMaybeOfToDedicatedMethod() => expectFix(
     '''
 ${_fakes}double? f(BuildContext context) => MediaQuery.maybeOf(context)?.size;
 ''',

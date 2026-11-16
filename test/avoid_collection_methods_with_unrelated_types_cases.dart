@@ -4,28 +4,28 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_collection_
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidCollectionMethodsWithUnrelatedTypesTest>(
+  analysisRuleSuite<_AvoidCollectionMethodsWithUnrelatedTypesTest>(
     'AvoidCollectionMethodsWithUnrelatedTypesTest',
-    AvoidCollectionMethodsWithUnrelatedTypesTest.new,
+    _AvoidCollectionMethodsWithUnrelatedTypesTest.new,
     {
-      'reportsListContainsWithUnrelatedType': (t) => t.reportsListContainsWithUnrelatedType(),
-      'reportsSetRemoveWithUnrelatedType': (t) => t.reportsSetRemoveWithUnrelatedType(),
-      'reportsMapContainsKeyWithUnrelatedType': (t) => t.reportsMapContainsKeyWithUnrelatedType(),
+      'reportsListContainsWithUnrelatedType': (t) => t._reportsListContainsWithUnrelatedType(),
+      'reportsSetRemoveWithUnrelatedType': (t) => t._reportsSetRemoveWithUnrelatedType(),
+      'reportsMapContainsKeyWithUnrelatedType': (t) => t._reportsMapContainsKeyWithUnrelatedType(),
       'reportsMapContainsValueWithUnrelatedType': (t) =>
-          t.reportsMapContainsValueWithUnrelatedType(),
-      'reportsMapRemoveWithUnrelatedKey': (t) => t.reportsMapRemoveWithUnrelatedKey(),
-      'reportsMapIndexWithUnrelatedKey': (t) => t.reportsMapIndexWithUnrelatedKey(),
-      'acceptsRelatedTypes': (t) => t.acceptsRelatedTypes(),
-      'acceptsDynamicAndGenericArguments': (t) => t.acceptsDynamicAndGenericArguments(),
-      'acceptsNullableOfSameType': (t) => t.acceptsNullableOfSameType(),
-      'acceptsUnrelatedMethodNames': (t) => t.acceptsUnrelatedMethodNames(),
-      'acceptsListIndexAndNoArguments': (t) => t.acceptsListIndexAndNoArguments(),
-      'reportsOnMapSubclass': (t) => t.reportsOnMapSubclass(),
+          t._reportsMapContainsValueWithUnrelatedType(),
+      'reportsMapRemoveWithUnrelatedKey': (t) => t._reportsMapRemoveWithUnrelatedKey(),
+      'reportsMapIndexWithUnrelatedKey': (t) => t._reportsMapIndexWithUnrelatedKey(),
+      'acceptsRelatedTypes': (t) => t._acceptsRelatedTypes(),
+      'acceptsDynamicAndGenericArguments': (t) => t._acceptsDynamicAndGenericArguments(),
+      'acceptsNullableOfSameType': (t) => t._acceptsNullableOfSameType(),
+      'acceptsUnrelatedMethodNames': (t) => t._acceptsUnrelatedMethodNames(),
+      'acceptsListIndexAndNoArguments': (t) => t._acceptsListIndexAndNoArguments(),
+      'reportsOnMapSubclass': (t) => t._reportsOnMapSubclass(),
     },
   );
 }
 
-final class AvoidCollectionMethodsWithUnrelatedTypesTest extends AnalysisRuleTest {
+final class _AvoidCollectionMethodsWithUnrelatedTypesTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = AvoidCollectionMethodsWithUnrelatedTypes();
@@ -37,24 +37,24 @@ final class AvoidCollectionMethodsWithUnrelatedTypesTest extends AnalysisRuleTes
     await assertDiagnostics(source, [lint(source.indexOf(expression), expression.length)]);
   }
 
-  Future<void> reportsListContainsWithUnrelatedType() =>
+  Future<void> _reportsListContainsWithUnrelatedType() =>
       _expectReported('List<int> a', "a.contains('x')");
 
-  Future<void> reportsSetRemoveWithUnrelatedType() =>
+  Future<void> _reportsSetRemoveWithUnrelatedType() =>
       _expectReported('Set<String> a', 'a.remove(1)');
 
-  Future<void> reportsMapContainsKeyWithUnrelatedType() =>
+  Future<void> _reportsMapContainsKeyWithUnrelatedType() =>
       _expectReported('Map<String, int> a', 'a.containsKey(1)');
 
-  Future<void> reportsMapContainsValueWithUnrelatedType() =>
+  Future<void> _reportsMapContainsValueWithUnrelatedType() =>
       _expectReported('Map<String, int> a', "a.containsValue('x')");
 
-  Future<void> reportsMapRemoveWithUnrelatedKey() =>
+  Future<void> _reportsMapRemoveWithUnrelatedKey() =>
       _expectReported('Map<String, int> a', 'a.remove(1)');
 
-  Future<void> reportsMapIndexWithUnrelatedKey() => _expectReported('Map<String, int> a', 'a[1]');
+  Future<void> _reportsMapIndexWithUnrelatedKey() => _expectReported('Map<String, int> a', 'a[1]');
 
-  Future<void> reportsOnMapSubclass() async {
+  Future<void> _reportsOnMapSubclass() async {
     const source = '''
 class Cache extends MapBase<String, int> {}
 
@@ -71,7 +71,7 @@ void f(Cache c) {
     await assertDiagnostics(source, [lint(source.indexOf(call), call.length)]);
   }
 
-  Future<void> acceptsRelatedTypes() => assertNoDiagnostics('''
+  Future<void> _acceptsRelatedTypes() => assertNoDiagnostics('''
 void f(List<num> a, Map<String, int> m, Set<Object> s) {
   a.contains(1);
   m.containsKey('k');
@@ -81,7 +81,7 @@ void f(List<num> a, Map<String, int> m, Set<Object> s) {
 }
 ''');
 
-  Future<void> acceptsDynamicAndGenericArguments() => assertNoDiagnostics('''
+  Future<void> _acceptsDynamicAndGenericArguments() => assertNoDiagnostics('''
 void f<T>(List<int> a, dynamic d, T t, Map<String, int> m) {
   a.contains(d);
   a.contains(t);
@@ -89,13 +89,13 @@ void f<T>(List<int> a, dynamic d, T t, Map<String, int> m) {
 }
 ''');
 
-  Future<void> acceptsNullableOfSameType() => assertNoDiagnostics('''
+  Future<void> _acceptsNullableOfSameType() => assertNoDiagnostics('''
 void f(List<int> a, int? x) {
   a.contains(x);
 }
 ''');
 
-  Future<void> acceptsUnrelatedMethodNames() => assertNoDiagnostics('''
+  Future<void> _acceptsUnrelatedMethodNames() => assertNoDiagnostics('''
 void f(List<int> a, Map<String, int> m) {
   a.indexOf(1);
   m.putIfAbsent('k', () => 1);
@@ -103,7 +103,7 @@ void f(List<int> a, Map<String, int> m) {
 }
 ''');
 
-  Future<void> acceptsListIndexAndNoArguments() => assertNoDiagnostics('''
+  Future<void> _acceptsListIndexAndNoArguments() => assertNoDiagnostics('''
 void f(List<int> a, String s) {
   a[0];
   a.clear();

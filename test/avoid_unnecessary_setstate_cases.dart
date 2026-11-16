@@ -6,26 +6,27 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<AvoidUnnecessarySetstateTest>(
+  analysisRuleSuite<_AvoidUnnecessarySetstateTest>(
     'AvoidUnnecessarySetstateTest',
-    AvoidUnnecessarySetstateTest.new,
+    _AvoidUnnecessarySetstateTest.new,
     {
-      'reportsSetStateInInitState': (t) => t.reportsSetStateInInitState(),
-      'reportsSetStateInDidUpdateWidget': (t) => t.reportsSetStateInDidUpdateWidget(),
-      'reportsSetStateDirectlyInBuild': (t) => t.reportsSetStateDirectlyInBuild(),
-      'acceptsSetStateInEventHandler': (t) => t.acceptsSetStateInEventHandler(),
-      'acceptsSetStateInOtherMethods': (t) => t.acceptsSetStateInOtherMethods(),
-      'acceptsSetStateInsideClosureInInitState': (t) => t.acceptsSetStateInsideClosureInInitState(),
-      'acceptsSetStateOutsideState': (t) => t.acceptsSetStateOutsideState(),
-      'inlinesExpressionBody': (t) => t.inlinesExpressionBody(),
-      'inlinesBlockBody': (t) => t.inlinesBlockBody(),
-      'removesEmptyCallback': (t) => t.removesEmptyCallback(),
-      'keepsCallbackReferences': (t) => t.keepsCallbackReferences(),
+      'reportsSetStateInInitState': (t) => t._reportsSetStateInInitState(),
+      'reportsSetStateInDidUpdateWidget': (t) => t._reportsSetStateInDidUpdateWidget(),
+      'reportsSetStateDirectlyInBuild': (t) => t._reportsSetStateDirectlyInBuild(),
+      'acceptsSetStateInEventHandler': (t) => t._acceptsSetStateInEventHandler(),
+      'acceptsSetStateInOtherMethods': (t) => t._acceptsSetStateInOtherMethods(),
+      'acceptsSetStateInsideClosureInInitState': (t) =>
+          t._acceptsSetStateInsideClosureInInitState(),
+      'acceptsSetStateOutsideState': (t) => t._acceptsSetStateOutsideState(),
+      'inlinesExpressionBody': (t) => t._inlinesExpressionBody(),
+      'inlinesBlockBody': (t) => t._inlinesBlockBody(),
+      'removesEmptyCallback': (t) => t._removesEmptyCallback(),
+      'keepsCallbackReferences': (t) => t._keepsCallbackReferences(),
     },
   );
 }
 
-final class AvoidUnnecessarySetstateTest extends FixRuleTest {
+final class _AvoidUnnecessarySetstateTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -58,11 +59,11 @@ $members
   }
 ''');
 
-  Future<void> reportsSetStateInInitState() => assertDiagnostics(_initWithExpression, [
+  Future<void> _reportsSetStateInInitState() => assertDiagnostics(_initWithExpression, [
     lint(_initWithExpression.indexOf('setState('), 'setState(() => count = 1)'.length),
   ]);
 
-  Future<void> reportsSetStateInDidUpdateWidget() async {
+  Future<void> _reportsSetStateInDidUpdateWidget() async {
     final source = _state('''
   @override
   void didUpdateWidget(W oldWidget) {
@@ -72,7 +73,7 @@ $members
     await assertDiagnostics(source, [lint(source.indexOf('setState('), 'setState(() {})'.length)]);
   }
 
-  Future<void> reportsSetStateDirectlyInBuild() async {
+  Future<void> _reportsSetStateDirectlyInBuild() async {
     const source = '''
 import 'package:flutter/widgets.dart';
 
@@ -91,7 +92,7 @@ class S extends State<W> {
     await assertDiagnostics(source, [lint(source.indexOf('setState('), 'setState(() {})'.length)]);
   }
 
-  Future<void> acceptsSetStateInEventHandler() => assertNoDiagnostics('''
+  Future<void> _acceptsSetStateInEventHandler() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 class W extends StatefulWidget {
@@ -107,7 +108,7 @@ class S extends State<W> {
 }
 ''');
 
-  Future<void> acceptsSetStateInOtherMethods() => assertNoDiagnostics(
+  Future<void> _acceptsSetStateInOtherMethods() => assertNoDiagnostics(
     _state('''
   void bump() {
     setState(() => count++);
@@ -115,7 +116,7 @@ class S extends State<W> {
 '''),
   );
 
-  Future<void> acceptsSetStateInsideClosureInInitState() => assertNoDiagnostics(
+  Future<void> _acceptsSetStateInsideClosureInInitState() => assertNoDiagnostics(
     _state('''
   @override
   void initState() {
@@ -126,7 +127,7 @@ class S extends State<W> {
 '''),
   );
 
-  Future<void> acceptsSetStateOutsideState() => assertNoDiagnostics('''
+  Future<void> _acceptsSetStateOutsideState() => assertNoDiagnostics('''
 class Plain {
   void setState(void Function() fn) {}
 
@@ -136,7 +137,7 @@ class Plain {
 }
 ''');
 
-  Future<void> inlinesExpressionBody() => expectFix(
+  Future<void> _inlinesExpressionBody() => expectFix(
     _initWithExpression,
     (context) => AvoidUnnecessarySetstateFix(context: context),
     expected: _state('''
@@ -148,7 +149,7 @@ class Plain {
 '''),
   );
 
-  Future<void> inlinesBlockBody() => expectFix(
+  Future<void> _inlinesBlockBody() => expectFix(
     _state('''
   @override
   void initState() {
@@ -168,7 +169,7 @@ class Plain {
 '''),
   );
 
-  Future<void> removesEmptyCallback() => expectFix(
+  Future<void> _removesEmptyCallback() => expectFix(
     _state('''
   @override
   void initState() {
@@ -184,7 +185,7 @@ class Plain {
 '''),
   );
 
-  Future<void> keepsCallbackReferences() => expectNoFix(
+  Future<void> _keepsCallbackReferences() => expectNoFix(
     _state('''
   void _apply() {}
 

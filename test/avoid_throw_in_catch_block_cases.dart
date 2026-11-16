@@ -5,21 +5,21 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<AvoidThrowInCatchBlockTest>(
+  analysisRuleSuite<_AvoidThrowInCatchBlockTest>(
     'AvoidThrowInCatchBlockTest',
-    AvoidThrowInCatchBlockTest.new,
+    _AvoidThrowInCatchBlockTest.new,
     {
-      'reportsThrowInCatch': (t) => t.reportsThrowInCatch(),
-      'acceptsThrowInTryBody': (t) => t.acceptsThrowInTryBody(),
-      'acceptsThrowInsideClosure': (t) => t.acceptsThrowInsideClosure(),
-      'reusesExistingStackTrace': (t) => t.reusesExistingStackTrace(),
-      'addsStackTraceToCatchWithException': (t) => t.addsStackTraceToCatchWithException(),
-      'addsStackTraceToOnClauseWithoutCatch': (t) => t.addsStackTraceToOnClauseWithoutCatch(),
+      'reportsThrowInCatch': (t) => t._reportsThrowInCatch(),
+      'acceptsThrowInTryBody': (t) => t._acceptsThrowInTryBody(),
+      'acceptsThrowInsideClosure': (t) => t._acceptsThrowInsideClosure(),
+      'reusesExistingStackTrace': (t) => t._reusesExistingStackTrace(),
+      'addsStackTraceToCatchWithException': (t) => t._addsStackTraceToCatchWithException(),
+      'addsStackTraceToOnClauseWithoutCatch': (t) => t._addsStackTraceToOnClauseWithoutCatch(),
     },
   );
 }
 
-final class AvoidThrowInCatchBlockTest extends FixRuleTest {
+final class _AvoidThrowInCatchBlockTest extends FixRuleTest {
   @override
   void setUp() {
     rule = AvoidThrowInCatchBlock();
@@ -36,11 +36,11 @@ void f() {
 }
 ''';
 
-  Future<void> reportsThrowInCatch() => assertDiagnostics(_plain, [
+  Future<void> _reportsThrowInCatch() => assertDiagnostics(_plain, [
     lint(_plain.indexOf("throw Exception('x')"), "throw Exception('x')".length),
   ]);
 
-  Future<void> acceptsThrowInTryBody() => assertNoDiagnostics('''
+  Future<void> _acceptsThrowInTryBody() => assertNoDiagnostics('''
 void f() {
   try {
     throw Exception('x');
@@ -50,7 +50,7 @@ void f() {
 }
 ''');
 
-  Future<void> acceptsThrowInsideClosure() => assertNoDiagnostics('''
+  Future<void> _acceptsThrowInsideClosure() => assertNoDiagnostics('''
 void f() {
   try {
     print(1);
@@ -63,7 +63,7 @@ void f() {
 }
 ''');
 
-  Future<void> reusesExistingStackTrace() => expectFix(
+  Future<void> _reusesExistingStackTrace() => expectFix(
     '''
 void f() {
   try {
@@ -85,7 +85,7 @@ void f() {
 ''',
   );
 
-  Future<void> addsStackTraceToCatchWithException() => expectFix(
+  Future<void> _addsStackTraceToCatchWithException() => expectFix(
     _plain,
     (context) => AvoidThrowInCatchBlockFix(context: context),
     expected: '''
@@ -99,7 +99,7 @@ void f() {
 ''',
   );
 
-  Future<void> addsStackTraceToOnClauseWithoutCatch() => expectFix(
+  Future<void> _addsStackTraceToOnClauseWithoutCatch() => expectFix(
     '''
 void f() {
   try {

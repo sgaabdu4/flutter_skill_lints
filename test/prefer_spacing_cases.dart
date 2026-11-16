@@ -5,26 +5,26 @@ import 'analysis_rule_suite.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<PreferSpacingTest>('PreferSpacingTest', PreferSpacingTest.new, {
-    'reportsUniformColumnSpacers': (t) => t.reportsUniformColumnSpacers(),
-    'reportsUniformRowSpacers': (t) => t.reportsUniformRowSpacers(),
-    'ignoresWrongAxisSpacers': (t) => t.ignoresWrongAxisSpacers(),
-    'ignoresDifferentSpacerSizes': (t) => t.ignoresDifferentSpacerSizes(),
-    'ignoresShortChildLists': (t) => t.ignoresShortChildLists(),
-    'ignoresWhenSpacingAlreadySet': (t) => t.ignoresWhenSpacingAlreadySet(),
-    'ignoresSpaceBetweenDistribution': (t) => t.ignoresSpaceBetweenDistribution(),
-    'reportsCenterDistribution': (t) => t.reportsCenterDistribution(),
-    'usesFlexDirectionLiteral': (t) => t.usesFlexDirectionLiteral(),
-    'ignoresSpacerWithChildOrKey': (t) => t.ignoresSpacerWithChildOrKey(),
-    'ignoresNonConstantExtent': (t) => t.ignoresNonConstantExtent(),
-    'reportsSeparatedBy': (t) => t.reportsSeparatedBy(),
-    'ignoresSeparatedByOutsideChildren': (t) => t.ignoresSeparatedByOutsideChildren(),
-    'reportsExpandYieldingSizedBox': (t) => t.reportsExpandYieldingSizedBox(),
-    'ignoresExpandWithoutSizedBox': (t) => t.ignoresExpandWithoutSizedBox(),
+  analysisRuleSuite<_PreferSpacingTest>('PreferSpacingTest', _PreferSpacingTest.new, {
+    'reportsUniformColumnSpacers': (t) => t._reportsUniformColumnSpacers(),
+    'reportsUniformRowSpacers': (t) => t._reportsUniformRowSpacers(),
+    'ignoresWrongAxisSpacers': (t) => t._ignoresWrongAxisSpacers(),
+    'ignoresDifferentSpacerSizes': (t) => t._ignoresDifferentSpacerSizes(),
+    'ignoresShortChildLists': (t) => t._ignoresShortChildLists(),
+    'ignoresWhenSpacingAlreadySet': (t) => t._ignoresWhenSpacingAlreadySet(),
+    'ignoresSpaceBetweenDistribution': (t) => t._ignoresSpaceBetweenDistribution(),
+    'reportsCenterDistribution': (t) => t._reportsCenterDistribution(),
+    'usesFlexDirectionLiteral': (t) => t._usesFlexDirectionLiteral(),
+    'ignoresSpacerWithChildOrKey': (t) => t._ignoresSpacerWithChildOrKey(),
+    'ignoresNonConstantExtent': (t) => t._ignoresNonConstantExtent(),
+    'reportsSeparatedBy': (t) => t._reportsSeparatedBy(),
+    'ignoresSeparatedByOutsideChildren': (t) => t._ignoresSeparatedByOutsideChildren(),
+    'reportsExpandYieldingSizedBox': (t) => t._reportsExpandYieldingSizedBox(),
+    'ignoresExpandWithoutSizedBox': (t) => t._ignoresExpandWithoutSizedBox(),
   });
 }
 
-final class PreferSpacingTest extends AnalysisRuleTest {
+final class _PreferSpacingTest extends AnalysisRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -34,7 +34,7 @@ final class PreferSpacingTest extends AnalysisRuleTest {
 
   static const _import = "import 'package:flutter/widgets.dart';\n";
 
-  Future<void> reportsUniformColumnSpacers() async {
+  Future<void> _reportsUniformColumnSpacers() async {
     const source =
         '''
 ${_import}Widget build() => Column(
@@ -53,7 +53,7 @@ ${_import}Widget build() => Column(
     ]);
   }
 
-  Future<void> reportsUniformRowSpacers() async {
+  Future<void> _reportsUniformRowSpacers() async {
     const source =
         '''
 ${_import}Widget build() => Row(
@@ -72,7 +72,7 @@ ${_import}Widget build() => Row(
     ]);
   }
 
-  Future<void> ignoresWrongAxisSpacers() => assertNoDiagnostics('''
+  Future<void> _ignoresWrongAxisSpacers() => assertNoDiagnostics('''
 ${_import}Widget build() => Column(
   children: [
     Text('a'),
@@ -84,7 +84,7 @@ ${_import}Widget build() => Column(
 );
 ''');
 
-  Future<void> ignoresDifferentSpacerSizes() => assertNoDiagnostics('''
+  Future<void> _ignoresDifferentSpacerSizes() => assertNoDiagnostics('''
 ${_import}Widget build() => Column(
   children: [
     Text('a'),
@@ -96,13 +96,13 @@ ${_import}Widget build() => Column(
 );
 ''');
 
-  Future<void> ignoresShortChildLists() => assertNoDiagnostics('''
+  Future<void> _ignoresShortChildLists() => assertNoDiagnostics('''
 ${_import}Widget build() => Column(
   children: [Text('a'), SizedBox(height: 8), Text('b')],
 );
 ''');
 
-  Future<void> ignoresWhenSpacingAlreadySet() => assertNoDiagnostics('''
+  Future<void> _ignoresWhenSpacingAlreadySet() => assertNoDiagnostics('''
 ${_import}Widget build() => Column(
   spacing: 2,
   children: [
@@ -115,7 +115,7 @@ ${_import}Widget build() => Column(
 );
 ''');
 
-  Future<void> ignoresSpaceBetweenDistribution() => assertNoDiagnostics('''
+  Future<void> _ignoresSpaceBetweenDistribution() => assertNoDiagnostics('''
 ${_import}Widget build() => Column(
   mainAxisAlignment: MainAxisAlignment.spaceBetween,
   children: [
@@ -128,7 +128,7 @@ ${_import}Widget build() => Column(
 );
 ''');
 
-  Future<void> reportsCenterDistribution() async {
+  Future<void> _reportsCenterDistribution() async {
     const source =
         '''
 ${_import}Widget build() => Column(
@@ -148,7 +148,7 @@ ${_import}Widget build() => Column(
     ]);
   }
 
-  Future<void> usesFlexDirectionLiteral() async {
+  Future<void> _usesFlexDirectionLiteral() async {
     const source =
         '''
 ${_import}Widget build() => Flex(
@@ -168,7 +168,7 @@ ${_import}Widget build() => Flex(
     ]);
   }
 
-  Future<void> ignoresSpacerWithChildOrKey() => assertNoDiagnostics('''
+  Future<void> _ignoresSpacerWithChildOrKey() => assertNoDiagnostics('''
 ${_import}Widget build() => Column(
   children: [
     Text('a'),
@@ -180,7 +180,7 @@ ${_import}Widget build() => Column(
 );
 ''');
 
-  Future<void> ignoresNonConstantExtent() => assertNoDiagnostics('''
+  Future<void> _ignoresNonConstantExtent() => assertNoDiagnostics('''
 ${_import}Widget build(double gap) => Column(
   children: [
     Text('a'),
@@ -192,7 +192,7 @@ ${_import}Widget build(double gap) => Column(
 );
 ''');
 
-  Future<void> reportsSeparatedBy() async {
+  Future<void> _reportsSeparatedBy() async {
     const source =
         '''
 ${_import}Widget build() => Column(
@@ -203,11 +203,11 @@ ${_import}Widget build() => Column(
     await assertDiagnostics(source, [lint(source.indexOf(call), call.length)]);
   }
 
-  Future<void> ignoresSeparatedByOutsideChildren() => assertNoDiagnostics('''
+  Future<void> _ignoresSeparatedByOutsideChildren() => assertNoDiagnostics('''
 ${_import}List<Widget> build() => [Text('a')].separatedBy(SizedBox(height: 8));
 ''');
 
-  Future<void> reportsExpandYieldingSizedBox() async {
+  Future<void> _reportsExpandYieldingSizedBox() async {
     const source =
         '''
 ${_import}Widget build(List<Widget> items) => Column(
@@ -224,7 +224,7 @@ ${_import}Widget build(List<Widget> items) => Column(
     await assertDiagnostics(source, [lint(source.indexOf(call), call.length)]);
   }
 
-  Future<void> ignoresExpandWithoutSizedBox() => assertNoDiagnostics('''
+  Future<void> _ignoresExpandWithoutSizedBox() => assertNoDiagnostics('''
 ${_import}Widget build(List<Widget> items) => Column(
   children: items.expand((w) sync* {
     yield w;

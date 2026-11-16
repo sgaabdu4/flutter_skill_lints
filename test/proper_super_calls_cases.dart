@@ -6,19 +6,19 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<ProperSuperCallsTest>('ProperSuperCallsTest', ProperSuperCallsTest.new, {
-    'reportsInitStateSuperNotFirst': (t) => t.reportsInitStateSuperNotFirst(),
-    'reportsDisposeSuperNotLast': (t) => t.reportsDisposeSuperNotLast(),
-    'acceptsCorrectOrder': (t) => t.acceptsCorrectOrder(),
-    'ignoresMissingSuperCall': (t) => t.ignoresMissingSuperCall(),
-    'ignoresClassesThatAreNotState': (t) => t.ignoresClassesThatAreNotState(),
-    'ignoresExpressionBodies': (t) => t.ignoresExpressionBodies(),
-    'movesSuperToStart': (t) => t.movesSuperToStart(),
-    'movesSuperToEnd': (t) => t.movesSuperToEnd(),
+  analysisRuleSuite<_ProperSuperCallsTest>('ProperSuperCallsTest', _ProperSuperCallsTest.new, {
+    'reportsInitStateSuperNotFirst': (t) => t._reportsInitStateSuperNotFirst(),
+    'reportsDisposeSuperNotLast': (t) => t._reportsDisposeSuperNotLast(),
+    'acceptsCorrectOrder': (t) => t._acceptsCorrectOrder(),
+    'ignoresMissingSuperCall': (t) => t._ignoresMissingSuperCall(),
+    'ignoresClassesThatAreNotState': (t) => t._ignoresClassesThatAreNotState(),
+    'ignoresExpressionBodies': (t) => t._ignoresExpressionBodies(),
+    'movesSuperToStart': (t) => t._movesSuperToStart(),
+    'movesSuperToEnd': (t) => t._movesSuperToEnd(),
   });
 }
 
-final class ProperSuperCallsTest extends FixRuleTest {
+final class _ProperSuperCallsTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -64,15 +64,15 @@ class S extends State<W> {
 }
 ''';
 
-  Future<void> reportsInitStateSuperNotFirst() => assertDiagnostics(_wrongInit, [
+  Future<void> _reportsInitStateSuperNotFirst() => assertDiagnostics(_wrongInit, [
     lint(_wrongInit.indexOf('super.initState()'), 'super.initState()'.length),
   ]);
 
-  Future<void> reportsDisposeSuperNotLast() => assertDiagnostics(_wrongDispose, [
+  Future<void> _reportsDisposeSuperNotLast() => assertDiagnostics(_wrongDispose, [
     lint(_wrongDispose.indexOf('super.dispose()'), 'super.dispose()'.length),
   ]);
 
-  Future<void> acceptsCorrectOrder() => assertNoDiagnostics('''
+  Future<void> _acceptsCorrectOrder() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 class W extends StatefulWidget {
@@ -97,7 +97,7 @@ class S extends State<W> {
 }
 ''');
 
-  Future<void> ignoresMissingSuperCall() => assertNoDiagnostics('''
+  Future<void> _ignoresMissingSuperCall() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 class W extends StatefulWidget {
@@ -115,7 +115,7 @@ class S extends State<W> {
 }
 ''');
 
-  Future<void> ignoresClassesThatAreNotState() => assertNoDiagnostics('''
+  Future<void> _ignoresClassesThatAreNotState() => assertNoDiagnostics('''
 class Base {
   void initState() {}
 }
@@ -129,7 +129,7 @@ class Other extends Base {
 }
 ''');
 
-  Future<void> ignoresExpressionBodies() => assertNoDiagnostics('''
+  Future<void> _ignoresExpressionBodies() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 class W extends StatefulWidget {
@@ -145,7 +145,7 @@ class S extends State<W> {
 }
 ''');
 
-  Future<void> movesSuperToStart() => expectFix(
+  Future<void> _movesSuperToStart() => expectFix(
     _wrongInit,
     (context) => ProperSuperCallsFix(context: context),
     expected: '''
@@ -168,7 +168,7 @@ class S extends State<W> {
 ''',
   );
 
-  Future<void> movesSuperToEnd() => expectFix(
+  Future<void> _movesSuperToEnd() => expectFix(
     _wrongDispose,
     (context) => ProperSuperCallsFix(context: context),
     expected: '''

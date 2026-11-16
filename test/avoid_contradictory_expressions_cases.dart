@@ -4,32 +4,32 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_contradicto
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidContradictoryExpressionsTest>(
+  analysisRuleSuite<_AvoidContradictoryExpressionsTest>(
     'AvoidContradictoryExpressionsTest',
-    AvoidContradictoryExpressionsTest.new,
+    _AvoidContradictoryExpressionsTest.new,
     {
-      'reportsEqualAndNotEqual': (t) => t.reportsEqualAndNotEqual(),
-      'reportsLessAndGreater': (t) => t.reportsLessAndGreater(),
-      'reportsEqualAndLess': (t) => t.reportsEqualAndLess(),
-      'reportsSwappedOperands': (t) => t.reportsSwappedOperands(),
-      'reportsDifferentIntegerLiterals': (t) => t.reportsDifferentIntegerLiterals(),
-      'reportsDifferentStringLiterals': (t) => t.reportsDifferentStringLiterals(),
-      'reportsDifferentBooleanLiterals': (t) => t.reportsDifferentBooleanLiterals(),
-      'reportsDifferentDoubleLiterals': (t) => t.reportsDifferentDoubleLiterals(),
-      'reportsContradictionInLongerChain': (t) => t.reportsContradictionInLongerChain(),
-      'reportsPropertyAccessPairs': (t) => t.reportsPropertyAccessPairs(),
-      'reportsPrefixedIdentifierPairs': (t) => t.reportsPrefixedIdentifierPairs(),
-      'reportsOncePerChain': (t) => t.reportsOncePerChain(),
-      'acceptsCompatibleComparisons': (t) => t.acceptsCompatibleComparisons(),
-      'acceptsDifferentVariables': (t) => t.acceptsDifferentVariables(),
-      'acceptsSameLiteralTwice': (t) => t.acceptsSameLiteralTwice(),
-      'acceptsDisjunctions': (t) => t.acceptsDisjunctions(),
-      'acceptsSingleComparison': (t) => t.acceptsSingleComparison(),
+      'reportsEqualAndNotEqual': (t) => t._reportsEqualAndNotEqual(),
+      'reportsLessAndGreater': (t) => t._reportsLessAndGreater(),
+      'reportsEqualAndLess': (t) => t._reportsEqualAndLess(),
+      'reportsSwappedOperands': (t) => t._reportsSwappedOperands(),
+      'reportsDifferentIntegerLiterals': (t) => t._reportsDifferentIntegerLiterals(),
+      'reportsDifferentStringLiterals': (t) => t._reportsDifferentStringLiterals(),
+      'reportsDifferentBooleanLiterals': (t) => t._reportsDifferentBooleanLiterals(),
+      'reportsDifferentDoubleLiterals': (t) => t._reportsDifferentDoubleLiterals(),
+      'reportsContradictionInLongerChain': (t) => t._reportsContradictionInLongerChain(),
+      'reportsPropertyAccessPairs': (t) => t._reportsPropertyAccessPairs(),
+      'reportsPrefixedIdentifierPairs': (t) => t._reportsPrefixedIdentifierPairs(),
+      'reportsOncePerChain': (t) => t._reportsOncePerChain(),
+      'acceptsCompatibleComparisons': (t) => t._acceptsCompatibleComparisons(),
+      'acceptsDifferentVariables': (t) => t._acceptsDifferentVariables(),
+      'acceptsSameLiteralTwice': (t) => t._acceptsSameLiteralTwice(),
+      'acceptsDisjunctions': (t) => t._acceptsDisjunctions(),
+      'acceptsSingleComparison': (t) => t._acceptsSingleComparison(),
     },
   );
 }
 
-final class AvoidContradictoryExpressionsTest extends AnalysisRuleTest {
+final class _AvoidContradictoryExpressionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = AvoidContradictoryExpressions();
@@ -41,29 +41,29 @@ final class AvoidContradictoryExpressionsTest extends AnalysisRuleTest {
     await assertDiagnostics(source, [lint(source.indexOf(expression), expression.length)]);
   }
 
-  Future<void> reportsEqualAndNotEqual() => _expectReported('x == 1 && x != 1');
+  Future<void> _reportsEqualAndNotEqual() => _expectReported('x == 1 && x != 1');
 
-  Future<void> reportsLessAndGreater() => _expectReported('x < 5 && x > 5');
+  Future<void> _reportsLessAndGreater() => _expectReported('x < 5 && x > 5');
 
-  Future<void> reportsEqualAndLess() => _expectReported('x == 5 && x < 5');
+  Future<void> _reportsEqualAndLess() => _expectReported('x == 5 && x < 5');
 
-  Future<void> reportsSwappedOperands() => _expectReported('x < 5 && 5 < x');
+  Future<void> _reportsSwappedOperands() => _expectReported('x < 5 && 5 < x');
 
-  Future<void> reportsDifferentIntegerLiterals() => _expectReported('x == 1 && x == 2');
+  Future<void> _reportsDifferentIntegerLiterals() => _expectReported('x == 1 && x == 2');
 
-  Future<void> reportsDifferentStringLiterals() =>
+  Future<void> _reportsDifferentStringLiterals() =>
       _expectReported("s == 'a' && s == 'b'", params: 'String s');
 
-  Future<void> reportsDifferentBooleanLiterals() =>
+  Future<void> _reportsDifferentBooleanLiterals() =>
       _expectReported('b == true && b == false', params: 'bool b');
 
-  Future<void> reportsDifferentDoubleLiterals() =>
+  Future<void> _reportsDifferentDoubleLiterals() =>
       _expectReported('d == 1.5 && d == 2.5', params: 'double d');
 
-  Future<void> reportsContradictionInLongerChain() =>
+  Future<void> _reportsContradictionInLongerChain() =>
       _expectReported('y > 0 && x == 1 && y < 10 && x != 1', params: 'int x, int y');
 
-  Future<void> reportsPropertyAccessPairs() async {
+  Future<void> _reportsPropertyAccessPairs() async {
     const source = '''
 class P {
   int v = 0;
@@ -75,7 +75,7 @@ bool f(P p) => p.v == 1 && p.v != 1;
     await assertDiagnostics(source, [lint(source.indexOf(expression), expression.length)]);
   }
 
-  Future<void> reportsPrefixedIdentifierPairs() async {
+  Future<void> _reportsPrefixedIdentifierPairs() async {
     const source = '''
 class P {
   int v = 0;
@@ -89,25 +89,25 @@ bool f() => (p).v == 1 && (p).v == 2;
     await assertDiagnostics(source, [lint(source.indexOf(expression), expression.length)]);
   }
 
-  Future<void> reportsOncePerChain() => _expectReported('x == 1 && x != 1 && x == 3');
+  Future<void> _reportsOncePerChain() => _expectReported('x == 1 && x != 1 && x == 3');
 
-  Future<void> acceptsCompatibleComparisons() => assertNoDiagnostics('''
+  Future<void> _acceptsCompatibleComparisons() => assertNoDiagnostics('''
 bool f(int x) => x > 1 && x < 5 && x != 3;
 ''');
 
-  Future<void> acceptsDifferentVariables() => assertNoDiagnostics('''
+  Future<void> _acceptsDifferentVariables() => assertNoDiagnostics('''
 bool f(int x, int y) => x == 1 && y != 1;
 ''');
 
-  Future<void> acceptsSameLiteralTwice() => assertNoDiagnostics('''
+  Future<void> _acceptsSameLiteralTwice() => assertNoDiagnostics('''
 bool f(int x) => x == 1 && x == 1;
 ''');
 
-  Future<void> acceptsDisjunctions() => assertNoDiagnostics('''
+  Future<void> _acceptsDisjunctions() => assertNoDiagnostics('''
 bool f(int x) => x == 1 || x != 1;
 ''');
 
-  Future<void> acceptsSingleComparison() => assertNoDiagnostics('''
+  Future<void> _acceptsSingleComparison() => assertNoDiagnostics('''
 bool f(int x, bool b) => x == 1 && b;
 ''');
 }

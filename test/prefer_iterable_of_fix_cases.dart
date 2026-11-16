@@ -5,30 +5,30 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<PreferIterableOfFixTest>(
+  analysisRuleSuite<_PreferIterableOfFixTest>(
     'PreferIterableOfFixTest',
-    PreferIterableOfFixTest.new,
+    _PreferIterableOfFixTest.new,
     {
-      'replacesFromInConstructor': (t) => t.replacesFromInConstructor(),
-      'replacesFromInStaticCall': (t) => t.replacesFromInStaticCall(),
+      'replacesFromInConstructor': (t) => t._replacesFromInConstructor(),
+      'replacesFromInStaticCall': (t) => t._replacesFromInStaticCall(),
     },
   );
 }
 
-final class PreferIterableOfFixTest extends FixRuleTest {
+final class _PreferIterableOfFixTest extends FixRuleTest {
   @override
   void setUp() {
     rule = PreferIterableOf();
     super.setUp();
   }
 
-  Future<void> replacesFromInConstructor() => expectFix(
+  Future<void> _replacesFromInConstructor() => expectFix(
     'final a = List<int>.from(<int>[1]);\n',
     (context) => PreferIterableOfFix(context: context),
     expected: 'final a = List<int>.of(<int>[1]);\n',
   );
 
-  Future<void> replacesFromInStaticCall() => expectFix(
+  Future<void> _replacesFromInStaticCall() => expectFix(
     'final a = Set<int>.from(<int>[1]);\n',
     (context) => PreferIterableOfFix(context: context),
     expected: 'final a = Set<int>.of(<int>[1]);\n',

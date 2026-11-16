@@ -5,21 +5,21 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<UseExistingVariableTest>(
+  analysisRuleSuite<_UseExistingVariableTest>(
     'UseExistingVariableTest',
-    UseExistingVariableTest.new,
+    _UseExistingVariableTest.new,
     {
-      'reportsRepeatedExpression': (t) => t.reportsRepeatedExpression(),
-      'ignoresTrivialInitializers': (t) => t.ignoresTrivialInitializers(),
-      'ignoresNonFinalVariables': (t) => t.ignoresNonFinalVariables(),
-      'forgetsVariablesAfterSideEffects': (t) => t.forgetsVariablesAfterSideEffects(),
-      'ignoresDifferentExpressions': (t) => t.ignoresDifferentExpressions(),
-      'replacesRepeatedExpressionWithVariable': (t) => t.replacesRepeatedExpressionWithVariable(),
+      'reportsRepeatedExpression': (t) => t._reportsRepeatedExpression(),
+      'ignoresTrivialInitializers': (t) => t._ignoresTrivialInitializers(),
+      'ignoresNonFinalVariables': (t) => t._ignoresNonFinalVariables(),
+      'forgetsVariablesAfterSideEffects': (t) => t._forgetsVariablesAfterSideEffects(),
+      'ignoresDifferentExpressions': (t) => t._ignoresDifferentExpressions(),
+      'replacesRepeatedExpressionWithVariable': (t) => t._replacesRepeatedExpressionWithVariable(),
     },
   );
 }
 
-final class UseExistingVariableTest extends FixRuleTest {
+final class _UseExistingVariableTest extends FixRuleTest {
   @override
   void setUp() {
     rule = UseExistingVariable();
@@ -34,12 +34,12 @@ int f(int a, int b) {
 }
 ''';
 
-  Future<void> reportsRepeatedExpression() async {
+  Future<void> _reportsRepeatedExpression() async {
     const source = _repeated;
     await assertDiagnostics(source, [lint(source.lastIndexOf('a * b + 1'), 'a * b + 1'.length)]);
   }
 
-  Future<void> ignoresTrivialInitializers() => assertNoDiagnostics('''
+  Future<void> _ignoresTrivialInitializers() => assertNoDiagnostics('''
 int f(int a) {
   final c = a;
   final d = a;
@@ -51,7 +51,7 @@ int f(int a) {
 }
 ''');
 
-  Future<void> ignoresNonFinalVariables() => assertNoDiagnostics('''
+  Future<void> _ignoresNonFinalVariables() => assertNoDiagnostics('''
 int f(int a, int b) {
   var c = a * b + 1;
   var d = a * b + 1;
@@ -59,7 +59,7 @@ int f(int a, int b) {
 }
 ''');
 
-  Future<void> forgetsVariablesAfterSideEffects() => assertNoDiagnostics('''
+  Future<void> _forgetsVariablesAfterSideEffects() => assertNoDiagnostics('''
 void touch() {}
 
 int f(int a, int b) {
@@ -70,7 +70,7 @@ int f(int a, int b) {
 }
 ''');
 
-  Future<void> ignoresDifferentExpressions() => assertNoDiagnostics('''
+  Future<void> _ignoresDifferentExpressions() => assertNoDiagnostics('''
 int f(int a, int b) {
   final c = a * b + 1;
   final d = a * b + 2;
@@ -78,7 +78,7 @@ int f(int a, int b) {
 }
 ''');
 
-  Future<void> replacesRepeatedExpressionWithVariable() => expectFix(
+  Future<void> _replacesRepeatedExpressionWithVariable() => expectFix(
     _repeated,
     (context) => UseExistingVariableFix(context: context),
     expected: '''

@@ -5,16 +5,16 @@ import 'package:flutter_skill_lints/src/rules/runtime_bug_source_rules.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<OnChangedCalleeTest>('OnChangedCalleeTest', OnChangedCalleeTest.new, {
+  analysisRuleSuite<_OnChangedCalleeTest>('OnChangedCalleeTest', _OnChangedCalleeTest.new, {
     'allowsCalleeThatTypesWrappedAndLiteralReceivers': (t) =>
-        t.allowsCalleeThatTypesWrappedAndLiteralReceivers(),
-    'allowsCalleeWithTypedClosureParameters': (t) => t.allowsCalleeWithTypedClosureParameters(),
-    'allowsCalleeThatBuildsConstObjects': (t) => t.allowsCalleeThatBuildsConstObjects(),
-    'allowsCalleeThatUsesExtensionMembers': (t) => t.allowsCalleeThatUsesExtensionMembers(),
+        t._allowsCalleeThatTypesWrappedAndLiteralReceivers(),
+    'allowsCalleeWithTypedClosureParameters': (t) => t._allowsCalleeWithTypedClosureParameters(),
+    'allowsCalleeThatBuildsConstObjects': (t) => t._allowsCalleeThatBuildsConstObjects(),
+    'allowsCalleeThatUsesExtensionMembers': (t) => t._allowsCalleeThatUsesExtensionMembers(),
   });
 }
 
-final class OnChangedCalleeTest extends AnalysisRuleTest {
+final class _OnChangedCalleeTest extends AnalysisRuleTest {
   static const _helpers = r'''
 class Box {
   const Box();
@@ -94,14 +94,14 @@ Object build() => TextField(onChanged: (value) => $call);
 ''');
   }
 
-  Future<void> allowsCalleeThatTypesWrappedAndLiteralReceivers() async {
+  Future<void> _allowsCalleeThatTypesWrappedAndLiteralReceivers() async {
     await _expectAllowed('wrapped(value, [value])');
   }
 
-  Future<void> allowsCalleeWithTypedClosureParameters() => _expectAllowed('closures([value])');
+  Future<void> _allowsCalleeWithTypedClosureParameters() => _expectAllowed('closures([value])');
 
-  Future<void> allowsCalleeThatBuildsConstObjects() => _expectAllowed('constObjects()');
+  Future<void> _allowsCalleeThatBuildsConstObjects() => _expectAllowed('constObjects()');
 
-  Future<void> allowsCalleeThatUsesExtensionMembers() =>
+  Future<void> _allowsCalleeThatUsesExtensionMembers() =>
       _expectAllowed('extensions(value, [value])');
 }

@@ -4,24 +4,29 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_frame_defer
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidFrameDeferralTest>('AvoidFrameDeferralTest', AvoidFrameDeferralTest.new, {
-    'reportsAddPostFrameCallbackOnWidgetsBinding': (t) =>
-        t.reportsAddPostFrameCallbackOnWidgetsBinding(),
-    'reportsAddPostFrameCallbackOnSchedulerBinding': (t) =>
-        t.reportsAddPostFrameCallbackOnSchedulerBinding(),
-    'reportsAddPostFrameCallbackOnBindingVariable': (t) =>
-        t.reportsAddPostFrameCallbackOnBindingVariable(),
-    'reportsScheduleFrameCallback': (t) => t.reportsScheduleFrameCallback(),
-    'reportsScheduleFrame': (t) => t.reportsScheduleFrame(),
-    'reportsAwaitedEndOfFrame': (t) => t.reportsAwaitedEndOfFrame(),
-    'reportsEndOfFrameReadFromBindingVariable': (t) => t.reportsEndOfFrameReadFromBindingVariable(),
-    'allowsUserMethodsWithTheSameNames': (t) => t.allowsUserMethodsWithTheSameNames(),
-    'allowsOtherSchedulerMembers': (t) => t.allowsOtherSchedulerMembers(),
-    'ignoresDocCommentReferences': (t) => t.ignoresDocCommentReferences(),
-    'skipsTestFiles': (t) => t.skipsTestFiles(),
-    'skipsIntegrationTestHelpers': (t) => t.skipsIntegrationTestHelpers(),
-    'skipsGeneratedFiles': (t) => t.skipsGeneratedFiles(),
-  });
+  analysisRuleSuite<_AvoidFrameDeferralTest>(
+    'AvoidFrameDeferralTest',
+    _AvoidFrameDeferralTest.new,
+    {
+      'reportsAddPostFrameCallbackOnWidgetsBinding': (t) =>
+          t._reportsAddPostFrameCallbackOnWidgetsBinding(),
+      'reportsAddPostFrameCallbackOnSchedulerBinding': (t) =>
+          t._reportsAddPostFrameCallbackOnSchedulerBinding(),
+      'reportsAddPostFrameCallbackOnBindingVariable': (t) =>
+          t._reportsAddPostFrameCallbackOnBindingVariable(),
+      'reportsScheduleFrameCallback': (t) => t._reportsScheduleFrameCallback(),
+      'reportsScheduleFrame': (t) => t._reportsScheduleFrame(),
+      'reportsAwaitedEndOfFrame': (t) => t._reportsAwaitedEndOfFrame(),
+      'reportsEndOfFrameReadFromBindingVariable': (t) =>
+          t._reportsEndOfFrameReadFromBindingVariable(),
+      'allowsUserMethodsWithTheSameNames': (t) => t._allowsUserMethodsWithTheSameNames(),
+      'allowsOtherSchedulerMembers': (t) => t._allowsOtherSchedulerMembers(),
+      'ignoresDocCommentReferences': (t) => t._ignoresDocCommentReferences(),
+      'skipsTestFiles': (t) => t._skipsTestFiles(),
+      'skipsIntegrationTestHelpers': (t) => t._skipsIntegrationTestHelpers(),
+      'skipsGeneratedFiles': (t) => t._skipsGeneratedFiles(),
+    },
+  );
 }
 
 const _flutterSchedulerLibrary = r'''
@@ -42,7 +47,7 @@ class WidgetsBinding extends SchedulerBinding {
 }
 ''';
 
-final class AvoidFrameDeferralTest extends AnalysisRuleTest {
+final class _AvoidFrameDeferralTest extends AnalysisRuleTest {
   @override
   void setUp() {
     newPackage('flutter').addFile('lib/widgets.dart', _flutterSchedulerLibrary);
@@ -50,7 +55,7 @@ final class AvoidFrameDeferralTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> reportsAddPostFrameCallbackOnWidgetsBinding() async {
+  Future<void> _reportsAddPostFrameCallbackOnWidgetsBinding() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -64,7 +69,7 @@ void run() {
     ]);
   }
 
-  Future<void> reportsAddPostFrameCallbackOnSchedulerBinding() async {
+  Future<void> _reportsAddPostFrameCallbackOnSchedulerBinding() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -78,7 +83,7 @@ void run() {
     ]);
   }
 
-  Future<void> reportsAddPostFrameCallbackOnBindingVariable() async {
+  Future<void> _reportsAddPostFrameCallbackOnBindingVariable() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -92,7 +97,7 @@ void run(WidgetsBinding binding) {
     ]);
   }
 
-  Future<void> reportsScheduleFrameCallback() async {
+  Future<void> _reportsScheduleFrameCallback() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -106,7 +111,7 @@ void run() {
     ]);
   }
 
-  Future<void> reportsScheduleFrame() async {
+  Future<void> _reportsScheduleFrame() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -120,7 +125,7 @@ void run() {
     ]);
   }
 
-  Future<void> reportsAwaitedEndOfFrame() async {
+  Future<void> _reportsAwaitedEndOfFrame() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -132,7 +137,7 @@ Future<void> run() async {
     await assertDiagnostics(source, [lint(source.indexOf('endOfFrame'), 'endOfFrame'.length)]);
   }
 
-  Future<void> reportsEndOfFrameReadFromBindingVariable() async {
+  Future<void> _reportsEndOfFrameReadFromBindingVariable() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
 
@@ -145,7 +150,7 @@ Future<void> run(WidgetsBinding binding) {
     await assertDiagnostics(source, [lint(source.indexOf('endOfFrame'), 'endOfFrame'.length)]);
   }
 
-  Future<void> allowsUserMethodsWithTheSameNames() async {
+  Future<void> _allowsUserMethodsWithTheSameNames() async {
     await assertNoDiagnostics(r'''
 class Scheduler {
   void addPostFrameCallback(void Function() callback) {}
@@ -163,7 +168,7 @@ Future<void> run(Scheduler scheduler) async {
 ''');
   }
 
-  Future<void> allowsOtherSchedulerMembers() async {
+  Future<void> _allowsOtherSchedulerMembers() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -173,7 +178,7 @@ void run() {
 ''');
   }
 
-  Future<void> ignoresDocCommentReferences() async {
+  Future<void> _ignoresDocCommentReferences() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -182,7 +187,7 @@ void run() {}
 ''');
   }
 
-  Future<void> skipsIntegrationTestHelpers() async {
+  Future<void> _skipsIntegrationTestHelpers() async {
     final path = '$testPackageRootPath/integration_test/support/pump.dart';
     newFile(path, r'''
 import 'package:flutter/widgets.dart';
@@ -195,7 +200,7 @@ Future<void> pump() async {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> skipsTestFiles() async {
+  Future<void> _skipsTestFiles() async {
     final path = '$testPackageRootPath/test/widget_test.dart';
     newFile(path, r'''
 import 'package:flutter/widgets.dart';
@@ -208,7 +213,7 @@ void main() {
     await assertDiagnosticsInFile(path, []);
   }
 
-  Future<void> skipsGeneratedFiles() async {
+  Future<void> _skipsGeneratedFiles() async {
     final path = '$testPackageRootPath/lib/screen.g.dart';
     newFile(path, r'''
 import 'package:flutter/widgets.dart';

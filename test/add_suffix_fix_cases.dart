@@ -5,17 +5,17 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<AddSuffixFixTest>('AddSuffixFixTest', AddSuffixFixTest.new, {
-    'appendsSuffixToPlainName': (t) => t.appendsSuffixToPlainName(),
-    'replacesMisspelledSuffix': (t) => t.replacesMisspelledSuffix(),
-    'replacesSuffixWithExtraLetter': (t) => t.replacesSuffixWithExtraLetter(),
-    'replacesSuffixWithMissingLetter': (t) => t.replacesSuffixWithMissingLetter(),
+  analysisRuleSuite<_AddSuffixFixTest>('AddSuffixFixTest', _AddSuffixFixTest.new, {
+    'appendsSuffixToPlainName': (t) => t._appendsSuffixToPlainName(),
+    'replacesMisspelledSuffix': (t) => t._replacesMisspelledSuffix(),
+    'replacesSuffixWithExtraLetter': (t) => t._replacesSuffixWithExtraLetter(),
+    'replacesSuffixWithMissingLetter': (t) => t._replacesSuffixWithMissingLetter(),
     'keepsNamesThatOnlyResembleTheSuffixLoosely': (t) =>
-        t.keepsNamesThatOnlyResembleTheSuffixLoosely(),
+        t._keepsNamesThatOnlyResembleTheSuffixLoosely(),
   });
 }
 
-final class AddSuffixFixTest extends FixRuleTest {
+final class _AddSuffixFixTest extends FixRuleTest {
   @override
   void setUp() {
     rule = UseNotifierSuffix();
@@ -43,16 +43,16 @@ class $name extends Notifier<int> {
     expected: _source(to),
   );
 
-  Future<void> appendsSuffixToPlainName() => _expectRename('Counter', 'CounterNotifier');
+  Future<void> _appendsSuffixToPlainName() => _expectRename('Counter', 'CounterNotifier');
 
-  Future<void> replacesMisspelledSuffix() => _expectRename('CounterNotifer', 'CounterNotifier');
+  Future<void> _replacesMisspelledSuffix() => _expectRename('CounterNotifer', 'CounterNotifier');
 
-  Future<void> replacesSuffixWithExtraLetter() =>
+  Future<void> _replacesSuffixWithExtraLetter() =>
       _expectRename('CounterNotifierr', 'CounterNotifier');
 
-  Future<void> replacesSuffixWithMissingLetter() =>
+  Future<void> _replacesSuffixWithMissingLetter() =>
       _expectRename('CounterNotfier', 'CounterNotifier');
 
-  Future<void> keepsNamesThatOnlyResembleTheSuffixLoosely() =>
+  Future<void> _keepsNamesThatOnlyResembleTheSuffixLoosely() =>
       _expectRename('NotesStore', 'NotesStoreNotifier');
 }

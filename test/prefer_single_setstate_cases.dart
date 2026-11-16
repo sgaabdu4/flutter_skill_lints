@@ -6,23 +6,23 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<PreferSingleSetstateTest>(
+  analysisRuleSuite<_PreferSingleSetstateTest>(
     'PreferSingleSetstateTest',
-    PreferSingleSetstateTest.new,
+    _PreferSingleSetstateTest.new,
     {
-      'reportsSecondSetState': (t) => t.reportsSecondSetState(),
-      'acceptsSingleSetState': (t) => t.acceptsSingleSetState(),
-      'acceptsSetStatesSeparatedByAwait': (t) => t.acceptsSetStatesSeparatedByAwait(),
-      'acceptsSetStatesSeparatedByReturn': (t) => t.acceptsSetStatesSeparatedByReturn(),
-      'acceptsSetStatesInSeparateClosures': (t) => t.acceptsSetStatesInSeparateClosures(),
-      'acceptsClassesThatAreNotState': (t) => t.acceptsClassesThatAreNotState(),
-      'mergesCallbacksIntoOne': (t) => t.mergesCallbacksIntoOne(),
-      'mergesBlockBodies': (t) => t.mergesBlockBodies(),
+      'reportsSecondSetState': (t) => t._reportsSecondSetState(),
+      'acceptsSingleSetState': (t) => t._acceptsSingleSetState(),
+      'acceptsSetStatesSeparatedByAwait': (t) => t._acceptsSetStatesSeparatedByAwait(),
+      'acceptsSetStatesSeparatedByReturn': (t) => t._acceptsSetStatesSeparatedByReturn(),
+      'acceptsSetStatesInSeparateClosures': (t) => t._acceptsSetStatesInSeparateClosures(),
+      'acceptsClassesThatAreNotState': (t) => t._acceptsClassesThatAreNotState(),
+      'mergesCallbacksIntoOne': (t) => t._mergesCallbacksIntoOne(),
+      'mergesBlockBodies': (t) => t._mergesBlockBodies(),
     },
   );
 }
 
-final class PreferSingleSetstateTest extends FixRuleTest {
+final class _PreferSingleSetstateTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -55,24 +55,24 @@ $body
     setState(() => count++);
     setState(() => other++);''');
 
-  Future<void> reportsSecondSetState() => assertDiagnostics(_twice, [
+  Future<void> _reportsSecondSetState() => assertDiagnostics(_twice, [
     lint(_twice.lastIndexOf('setState('), 'setState(() => other++)'.length),
   ]);
 
-  Future<void> acceptsSingleSetState() => assertNoDiagnostics(
+  Future<void> _acceptsSingleSetState() => assertNoDiagnostics(
     _state('''
     setState(() => count++);
     other++;'''),
   );
 
-  Future<void> acceptsSetStatesSeparatedByAwait() => assertNoDiagnostics(
+  Future<void> _acceptsSetStatesSeparatedByAwait() => assertNoDiagnostics(
     _state('''
     setState(() => count++);
     await Future<void>.value();
     setState(() => other++);'''),
   );
 
-  Future<void> acceptsSetStatesSeparatedByReturn() => assertNoDiagnostics(
+  Future<void> _acceptsSetStatesSeparatedByReturn() => assertNoDiagnostics(
     _state('''
     if (count > 0) {
       setState(() => count++);
@@ -81,7 +81,7 @@ $body
     setState(() => other++);'''),
   );
 
-  Future<void> acceptsSetStatesInSeparateClosures() => assertNoDiagnostics(
+  Future<void> _acceptsSetStatesInSeparateClosures() => assertNoDiagnostics(
     _state('''
     Future<void>.value().then((_) {
       setState(() => count++);
@@ -91,7 +91,7 @@ $body
     });'''),
   );
 
-  Future<void> acceptsClassesThatAreNotState() => assertNoDiagnostics('''
+  Future<void> _acceptsClassesThatAreNotState() => assertNoDiagnostics('''
 class Plain {
   void setState(void Function() fn) {}
 
@@ -102,7 +102,7 @@ class Plain {
 }
 ''');
 
-  Future<void> mergesCallbacksIntoOne() => expectFix(
+  Future<void> _mergesCallbacksIntoOne() => expectFix(
     _twice,
     (context) => PreferSingleSetstateFix(context: context),
     expected: _state('''
@@ -112,7 +112,7 @@ class Plain {
     });'''),
   );
 
-  Future<void> mergesBlockBodies() => expectFix(
+  Future<void> _mergesBlockBodies() => expectFix(
     _state('''
     setState(() {
       count++;

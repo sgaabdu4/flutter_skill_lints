@@ -6,19 +6,19 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<AvoidUnnecessaryGestureDetectorTest>(
+  analysisRuleSuite<_AvoidUnnecessaryGestureDetectorTest>(
     'AvoidUnnecessaryGestureDetectorTest',
-    AvoidUnnecessaryGestureDetectorTest.new,
+    _AvoidUnnecessaryGestureDetectorTest.new,
     {
-      'reportsDetectorWithoutHandlers': (t) => t.reportsDetectorWithoutHandlers(),
-      'acceptsDetectorWithHandler': (t) => t.acceptsDetectorWithHandler(),
-      'replacesDetectorWithItsChild': (t) => t.replacesDetectorWithItsChild(),
-      'ignoresDetectorWithoutChild': (t) => t.ignoresDetectorWithoutChild(),
+      'reportsDetectorWithoutHandlers': (t) => t._reportsDetectorWithoutHandlers(),
+      'acceptsDetectorWithHandler': (t) => t._acceptsDetectorWithHandler(),
+      'replacesDetectorWithItsChild': (t) => t._replacesDetectorWithItsChild(),
+      'ignoresDetectorWithoutChild': (t) => t._ignoresDetectorWithoutChild(),
     },
   );
 }
 
-final class AvoidUnnecessaryGestureDetectorTest extends FixRuleTest {
+final class _AvoidUnnecessaryGestureDetectorTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -32,17 +32,17 @@ import 'package:flutter/widgets.dart';
 Widget build() => GestureDetector(child: Text('a'));
 ''';
 
-  Future<void> reportsDetectorWithoutHandlers() => assertDiagnostics(_useless, [
+  Future<void> _reportsDetectorWithoutHandlers() => assertDiagnostics(_useless, [
     lint(_useless.indexOf('GestureDetector('), 'GestureDetector'.length),
   ]);
 
-  Future<void> acceptsDetectorWithHandler() => assertNoDiagnostics('''
+  Future<void> _acceptsDetectorWithHandler() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => GestureDetector(onTap: () {}, child: Text('a'));
 ''');
 
-  Future<void> replacesDetectorWithItsChild() => expectFix(
+  Future<void> _replacesDetectorWithItsChild() => expectFix(
     _useless,
     (context) => AvoidUnnecessaryGestureDetectorFix(context: context),
     expected: '''
@@ -52,7 +52,7 @@ Widget build() => Text('a');
 ''',
   );
 
-  Future<void> ignoresDetectorWithoutChild() => expectNoFix('''
+  Future<void> _ignoresDetectorWithoutChild() => expectNoFix('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => GestureDetector();

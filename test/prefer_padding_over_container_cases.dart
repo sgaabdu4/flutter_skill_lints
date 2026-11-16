@@ -6,24 +6,24 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<PreferPaddingOverContainerTest>(
+  analysisRuleSuite<_PreferPaddingOverContainerTest>(
     'PreferPaddingOverContainerTest',
-    PreferPaddingOverContainerTest.new,
+    _PreferPaddingOverContainerTest.new,
     {
-      'reportsContainerWithOnlyPadding': (t) => t.reportsContainerWithOnlyPadding(),
-      'reportsContainerWithOnlyMargin': (t) => t.reportsContainerWithOnlyMargin(),
-      'acceptsContainerWithOtherArguments': (t) => t.acceptsContainerWithOtherArguments(),
+      'reportsContainerWithOnlyPadding': (t) => t._reportsContainerWithOnlyPadding(),
+      'reportsContainerWithOnlyMargin': (t) => t._reportsContainerWithOnlyMargin(),
+      'acceptsContainerWithOtherArguments': (t) => t._acceptsContainerWithOtherArguments(),
       'acceptsContainerWithBothPaddingAndMargin': (t) =>
-          t.acceptsContainerWithBothPaddingAndMargin(),
-      'acceptsNullPaddingLiteral': (t) => t.acceptsNullPaddingLiteral(),
-      'acceptsNullablePadding': (t) => t.acceptsNullablePadding(),
-      'keepsPaddingArgument': (t) => t.keepsPaddingArgument(),
-      'renamesMarginToPadding': (t) => t.renamesMarginToPadding(),
+          t._acceptsContainerWithBothPaddingAndMargin(),
+      'acceptsNullPaddingLiteral': (t) => t._acceptsNullPaddingLiteral(),
+      'acceptsNullablePadding': (t) => t._acceptsNullablePadding(),
+      'keepsPaddingArgument': (t) => t._keepsPaddingArgument(),
+      'renamesMarginToPadding': (t) => t._renamesMarginToPadding(),
     },
   );
 }
 
-final class PreferPaddingOverContainerTest extends FixRuleTest {
+final class _PreferPaddingOverContainerTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -37,10 +37,10 @@ import 'package:flutter/widgets.dart';
 Widget build() => Container(padding: EdgeInsets.all(4), child: Text('a'));
 ''';
 
-  Future<void> reportsContainerWithOnlyPadding() =>
+  Future<void> _reportsContainerWithOnlyPadding() =>
       assertDiagnostics(_padded, [lint(_padded.indexOf('Container('), 'Container'.length)]);
 
-  Future<void> reportsContainerWithOnlyMargin() async {
+  Future<void> _reportsContainerWithOnlyMargin() async {
     const source = '''
 import 'package:flutter/widgets.dart';
 
@@ -49,31 +49,31 @@ Widget build() => Container(margin: EdgeInsets.all(4), child: Text('a'));
     await assertDiagnostics(source, [lint(source.indexOf('Container('), 'Container'.length)]);
   }
 
-  Future<void> acceptsContainerWithOtherArguments() => assertNoDiagnostics('''
+  Future<void> _acceptsContainerWithOtherArguments() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Container(padding: EdgeInsets.all(4), color: Color(1));
 ''');
 
-  Future<void> acceptsContainerWithBothPaddingAndMargin() => assertNoDiagnostics('''
+  Future<void> _acceptsContainerWithBothPaddingAndMargin() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Container(padding: EdgeInsets.all(4), margin: EdgeInsets.all(2));
 ''');
 
-  Future<void> acceptsNullPaddingLiteral() => assertNoDiagnostics('''
+  Future<void> _acceptsNullPaddingLiteral() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Container(padding: null, child: Text('a'));
 ''');
 
-  Future<void> acceptsNullablePadding() => assertNoDiagnostics('''
+  Future<void> _acceptsNullablePadding() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build(EdgeInsets? inset) => Container(padding: inset, child: Text('a'));
 ''');
 
-  Future<void> keepsPaddingArgument() => expectFix(
+  Future<void> _keepsPaddingArgument() => expectFix(
     _padded,
     (context) => PreferPaddingOverContainerFix(context: context),
     expected: '''
@@ -83,7 +83,7 @@ Widget build() => Padding(padding: EdgeInsets.all(4), child: Text('a'));
 ''',
   );
 
-  Future<void> renamesMarginToPadding() => expectFix(
+  Future<void> _renamesMarginToPadding() => expectFix(
     '''
 import 'package:flutter/widgets.dart';
 

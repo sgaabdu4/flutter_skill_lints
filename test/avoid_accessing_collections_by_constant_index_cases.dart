@@ -4,31 +4,31 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_accessing_c
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidAccessingCollectionsByConstantIndexTest>(
+  analysisRuleSuite<_AvoidAccessingCollectionsByConstantIndexTest>(
     'AvoidAccessingCollectionsByConstantIndexTest',
-    AvoidAccessingCollectionsByConstantIndexTest.new,
+    _AvoidAccessingCollectionsByConstantIndexTest.new,
     {
-      'reportsLiteralIndexInForLoop': (t) => t.reportsLiteralIndexInForLoop(),
-      'reportsLiteralIndexInWhileLoop': (t) => t.reportsLiteralIndexInWhileLoop(),
-      'reportsConstantVariableIndex': (t) => t.reportsConstantVariableIndex(),
-      'reportsStaticConstantFieldIndex': (t) => t.reportsStaticConstantFieldIndex(),
-      'acceptsLoopDependentIndex': (t) => t.acceptsLoopDependentIndex(),
-      'acceptsIndexOutsideLoops': (t) => t.acceptsIndexOutsideLoops(),
-      'acceptsIndexInsideNestedClosure': (t) => t.acceptsIndexInsideNestedClosure(),
-      'acceptsNonConstantVariableIndex': (t) => t.acceptsNonConstantVariableIndex(),
-      'reportsDoWhileLoop': (t) => t.reportsDoWhileLoop(),
+      'reportsLiteralIndexInForLoop': (t) => t._reportsLiteralIndexInForLoop(),
+      'reportsLiteralIndexInWhileLoop': (t) => t._reportsLiteralIndexInWhileLoop(),
+      'reportsConstantVariableIndex': (t) => t._reportsConstantVariableIndex(),
+      'reportsStaticConstantFieldIndex': (t) => t._reportsStaticConstantFieldIndex(),
+      'acceptsLoopDependentIndex': (t) => t._acceptsLoopDependentIndex(),
+      'acceptsIndexOutsideLoops': (t) => t._acceptsIndexOutsideLoops(),
+      'acceptsIndexInsideNestedClosure': (t) => t._acceptsIndexInsideNestedClosure(),
+      'acceptsNonConstantVariableIndex': (t) => t._acceptsNonConstantVariableIndex(),
+      'reportsDoWhileLoop': (t) => t._reportsDoWhileLoop(),
     },
   );
 }
 
-final class AvoidAccessingCollectionsByConstantIndexTest extends AnalysisRuleTest {
+final class _AvoidAccessingCollectionsByConstantIndexTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = AvoidAccessingCollectionsByConstantIndex();
     super.setUp();
   }
 
-  Future<void> reportsLiteralIndexInForLoop() async {
+  Future<void> _reportsLiteralIndexInForLoop() async {
     const source = '''
 void f(List<int> a) {
   for (var i = 0; i < 3; i++) {
@@ -39,7 +39,7 @@ void f(List<int> a) {
     await assertDiagnostics(source, [lint(source.indexOf('a[0]'), 'a[0]'.length)]);
   }
 
-  Future<void> reportsLiteralIndexInWhileLoop() async {
+  Future<void> _reportsLiteralIndexInWhileLoop() async {
     const source = '''
 void f(List<int> a) {
   while (a.isNotEmpty) {
@@ -50,7 +50,7 @@ void f(List<int> a) {
     await assertDiagnostics(source, [lint(source.indexOf('a[1]'), 'a[1]'.length)]);
   }
 
-  Future<void> reportsDoWhileLoop() async {
+  Future<void> _reportsDoWhileLoop() async {
     const source = '''
 void f(List<int> a) {
   do {
@@ -61,7 +61,7 @@ void f(List<int> a) {
     await assertDiagnostics(source, [lint(source.indexOf('a[2]'), 'a[2]'.length)]);
   }
 
-  Future<void> reportsConstantVariableIndex() async {
+  Future<void> _reportsConstantVariableIndex() async {
     const source = '''
 const first = 0;
 
@@ -74,7 +74,7 @@ void f(List<int> a) {
     await assertDiagnostics(source, [lint(source.indexOf('a[first]'), 'a[first]'.length)]);
   }
 
-  Future<void> reportsStaticConstantFieldIndex() async {
+  Future<void> _reportsStaticConstantFieldIndex() async {
     const source = '''
 class K {
   static const slot = 2;
@@ -89,7 +89,7 @@ void f(List<int> a) {
     await assertDiagnostics(source, [lint(source.indexOf('a[K.slot]'), 'a[K.slot]'.length)]);
   }
 
-  Future<void> acceptsLoopDependentIndex() => assertNoDiagnostics('''
+  Future<void> _acceptsLoopDependentIndex() => assertNoDiagnostics('''
 void f(List<int> a) {
   for (var i = 0; i < a.length; i++) {
     print(a[i]);
@@ -98,13 +98,13 @@ void f(List<int> a) {
 }
 ''');
 
-  Future<void> acceptsIndexOutsideLoops() => assertNoDiagnostics('''
+  Future<void> _acceptsIndexOutsideLoops() => assertNoDiagnostics('''
 void f(List<int> a) {
   print(a[0]);
 }
 ''');
 
-  Future<void> acceptsIndexInsideNestedClosure() => assertNoDiagnostics('''
+  Future<void> _acceptsIndexInsideNestedClosure() => assertNoDiagnostics('''
 void f(List<int> a) {
   for (var i = 0; i < 3; i++) {
     void read() => print(a[0]);
@@ -113,7 +113,7 @@ void f(List<int> a) {
 }
 ''');
 
-  Future<void> acceptsNonConstantVariableIndex() => assertNoDiagnostics('''
+  Future<void> _acceptsNonConstantVariableIndex() => assertNoDiagnostics('''
 void f(List<int> a, int slot) {
   for (var i = 0; i < 3; i++) {
     print(a[slot]);

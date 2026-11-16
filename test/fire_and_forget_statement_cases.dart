@@ -6,20 +6,20 @@ import 'package:flutter_skill_lints/src/rules/persistence_crash_source_rules.dar
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<FireAndForgetStatementTest>(
+  analysisRuleSuite<_FireAndForgetStatementTest>(
     'FireAndForgetStatementTest',
-    FireAndForgetStatementTest.new,
+    _FireAndForgetStatementTest.new,
     {
-      'reportsAbstractCalleeWithRiskyName': (t) => t.reportsAbstractCalleeWithRiskyName(),
-      'reportsStatementSpanningLines': (t) => t.reportsStatementSpanningLines(),
-      'acceptsAbstractCalleeWithoutRiskyName': (t) => t.acceptsAbstractCalleeWithoutRiskyName(),
-      'acceptsNestedCatchError': (t) => t.acceptsNestedCatchError(),
-      'acceptsTryCatchInsideStatement': (t) => t.acceptsTryCatchInsideStatement(),
+      'reportsAbstractCalleeWithRiskyName': (t) => t._reportsAbstractCalleeWithRiskyName(),
+      'reportsStatementSpanningLines': (t) => t._reportsStatementSpanningLines(),
+      'acceptsAbstractCalleeWithoutRiskyName': (t) => t._acceptsAbstractCalleeWithoutRiskyName(),
+      'acceptsNestedCatchError': (t) => t._acceptsNestedCatchError(),
+      'acceptsTryCatchInsideStatement': (t) => t._acceptsTryCatchInsideStatement(),
     },
   );
 }
 
-final class FireAndForgetStatementTest extends AnalysisRuleTest {
+final class _FireAndForgetStatementTest extends AnalysisRuleTest {
   static const _prelude = '''
 import 'dart:async';
 
@@ -51,13 +51,13 @@ abstract interface class Gate {
     ]);
   }
 
-  Future<void> reportsAbstractCalleeWithRiskyName() => _expectReported('''
+  Future<void> _reportsAbstractCalleeWithRiskyName() => _expectReported('''
 void mirror(Client client) {
   unawaited(client.sync());
 }
 ''', 'unawaited(client.sync())');
 
-  Future<void> reportsStatementSpanningLines() => _expectReported('''
+  Future<void> _reportsStatementSpanningLines() => _expectReported('''
 void mirror(Client client) {
   unawaited(
     client
@@ -66,21 +66,21 @@ void mirror(Client client) {
 }
 ''', 'unawaited(\n');
 
-  Future<void> acceptsAbstractCalleeWithoutRiskyName() => assertNoDiagnostics('''
+  Future<void> _acceptsAbstractCalleeWithoutRiskyName() => assertNoDiagnostics('''
 $_prelude
 void mirror(Client client) {
   unawaited(client.ping());
 }
 ''');
 
-  Future<void> acceptsNestedCatchError() => assertNoDiagnostics('''
+  Future<void> _acceptsNestedCatchError() => assertNoDiagnostics('''
 $_prelude
 void mirror(Client client, Gate gate) {
   unawaited(gate.run(client.sync().catchError((Object error) {})));
 }
 ''');
 
-  Future<void> acceptsTryCatchInsideStatement() => assertNoDiagnostics('''
+  Future<void> _acceptsTryCatchInsideStatement() => assertNoDiagnostics('''
 $_prelude
 void mirror(Client client, Gate gate) {
   unawaited(gate.run(() {

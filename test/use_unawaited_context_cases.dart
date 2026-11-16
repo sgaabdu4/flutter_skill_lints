@@ -4,23 +4,23 @@ import 'package:flutter_skill_lints/src/rules/use_unawaited_for_fire_and_forget_
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<UseUnawaitedContextTest>(
+  analysisRuleSuite<_UseUnawaitedContextTest>(
     'UseUnawaitedContextTest',
-    UseUnawaitedContextTest.new,
+    _UseUnawaitedContextTest.new,
     {
       'reportsFutureDroppedInDeclaredVoidCallback': (t) =>
-          t.reportsFutureDroppedInDeclaredVoidCallback(),
+          t._reportsFutureDroppedInDeclaredVoidCallback(),
       'reportsFutureDroppedInAssignedVoidCallback': (t) =>
-          t.reportsFutureDroppedInAssignedVoidCallback(),
+          t._reportsFutureDroppedInAssignedVoidCallback(),
       'acceptsDeclaredCallbackThatReturnsFuture': (t) =>
-          t.acceptsDeclaredCallbackThatReturnsFuture(),
-      'acceptsCallbackWithoutDeclaredType': (t) => t.acceptsCallbackWithoutDeclaredType(),
-      'acceptsAssignmentToUntypedTarget': (t) => t.acceptsAssignmentToUntypedTarget(),
+          t._acceptsDeclaredCallbackThatReturnsFuture(),
+      'acceptsCallbackWithoutDeclaredType': (t) => t._acceptsCallbackWithoutDeclaredType(),
+      'acceptsAssignmentToUntypedTarget': (t) => t._acceptsAssignmentToUntypedTarget(),
     },
   );
 }
 
-final class UseUnawaitedContextTest extends AnalysisRuleTest {
+final class _UseUnawaitedContextTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = UseUnawaitedForFireAndForgetFutures();
@@ -29,7 +29,7 @@ final class UseUnawaitedContextTest extends AnalysisRuleTest {
 
   static const _prelude = 'Future<void> fetch() async {}\n';
 
-  Future<void> reportsFutureDroppedInDeclaredVoidCallback() async {
+  Future<void> _reportsFutureDroppedInDeclaredVoidCallback() async {
     const source =
         '''
 ${_prelude}void Function() callback = () {
@@ -39,7 +39,7 @@ ${_prelude}void Function() callback = () {
     await assertDiagnostics(source, [lint(source.lastIndexOf('fetch()'), 'fetch()'.length)]);
   }
 
-  Future<void> reportsFutureDroppedInAssignedVoidCallback() async {
+  Future<void> _reportsFutureDroppedInAssignedVoidCallback() async {
     const source =
         '''
 ${_prelude}void Function()? callback;
@@ -53,20 +53,20 @@ void assign() {
     await assertDiagnostics(source, [lint(source.lastIndexOf('fetch()'), 'fetch()'.length)]);
   }
 
-  Future<void> acceptsDeclaredCallbackThatReturnsFuture() => assertNoDiagnostics('''
+  Future<void> _acceptsDeclaredCallbackThatReturnsFuture() => assertNoDiagnostics('''
 ${_prelude}Future<void> Function() callback = () {
   fetch();
   return fetch();
 };
 ''');
 
-  Future<void> acceptsCallbackWithoutDeclaredType() => assertNoDiagnostics('''
+  Future<void> _acceptsCallbackWithoutDeclaredType() => assertNoDiagnostics('''
 ${_prelude}final callback = () {
   fetch();
 };
 ''');
 
-  Future<void> acceptsAssignmentToUntypedTarget() => assertNoDiagnostics('''
+  Future<void> _acceptsAssignmentToUntypedTarget() => assertNoDiagnostics('''
 ${_prelude}dynamic callback;
 
 void assign() {

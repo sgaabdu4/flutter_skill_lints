@@ -5,22 +5,22 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<AvoidIncompleteCopyWithTest>(
+  analysisRuleSuite<_AvoidIncompleteCopyWithTest>(
     'AvoidIncompleteCopyWithTest',
-    AvoidIncompleteCopyWithTest.new,
+    _AvoidIncompleteCopyWithTest.new,
     {
-      'reportsMissingParameters': (t) => t.reportsMissingParameters(),
-      'acceptsCompleteCopyWith': (t) => t.acceptsCompleteCopyWith(),
-      'ignoresClassWithoutCopyWith': (t) => t.ignoresClassWithoutCopyWith(),
-      'ignoresClassWithoutDefaultConstructor': (t) => t.ignoresClassWithoutDefaultConstructor(),
-      'addsMissingNamedParameter': (t) => t.addsMissingNamedParameter(),
-      'wrapsParameterInBracesWhenPositional': (t) => t.wrapsParameterInBracesWhenPositional(),
-      'wrapsParameterInEmptyList': (t) => t.wrapsParameterInEmptyList(),
+      'reportsMissingParameters': (t) => t._reportsMissingParameters(),
+      'acceptsCompleteCopyWith': (t) => t._acceptsCompleteCopyWith(),
+      'ignoresClassWithoutCopyWith': (t) => t._ignoresClassWithoutCopyWith(),
+      'ignoresClassWithoutDefaultConstructor': (t) => t._ignoresClassWithoutDefaultConstructor(),
+      'addsMissingNamedParameter': (t) => t._addsMissingNamedParameter(),
+      'wrapsParameterInBracesWhenPositional': (t) => t._wrapsParameterInBracesWhenPositional(),
+      'wrapsParameterInEmptyList': (t) => t._wrapsParameterInEmptyList(),
     },
   );
 }
 
-final class AvoidIncompleteCopyWithTest extends FixRuleTest {
+final class _AvoidIncompleteCopyWithTest extends FixRuleTest {
   @override
   void setUp() {
     rule = AvoidIncompleteCopyWith();
@@ -37,10 +37,10 @@ class A {
 }
 ''';
 
-  Future<void> reportsMissingParameters() =>
+  Future<void> _reportsMissingParameters() =>
       assertDiagnostics(_missing, [lint(_missing.indexOf('copyWith'), 'copyWith'.length)]);
 
-  Future<void> acceptsCompleteCopyWith() => assertNoDiagnostics('''
+  Future<void> _acceptsCompleteCopyWith() => assertNoDiagnostics('''
 class A {
   final int a;
   A({required int a}) : a = a;
@@ -49,14 +49,14 @@ class A {
 }
 ''');
 
-  Future<void> ignoresClassWithoutCopyWith() => assertNoDiagnostics('''
+  Future<void> _ignoresClassWithoutCopyWith() => assertNoDiagnostics('''
 class A {
   final int a;
   A({required int a}) : a = a;
 }
 ''');
 
-  Future<void> ignoresClassWithoutDefaultConstructor() => assertNoDiagnostics('''
+  Future<void> _ignoresClassWithoutDefaultConstructor() => assertNoDiagnostics('''
 class A {
   final int a;
   A.named(int a) : a = a;
@@ -65,7 +65,7 @@ class A {
 }
 ''');
 
-  Future<void> addsMissingNamedParameter() => expectFix(
+  Future<void> _addsMissingNamedParameter() => expectFix(
     _missing,
     (context) => AvoidIncompleteCopyWithFix(context: context),
     expected: '''
@@ -79,7 +79,7 @@ class A {
 ''',
   );
 
-  Future<void> wrapsParameterInBracesWhenPositional() => expectFix(
+  Future<void> _wrapsParameterInBracesWhenPositional() => expectFix(
     '''
 class A {
   final int a;
@@ -101,7 +101,7 @@ class A {
 ''',
   );
 
-  Future<void> wrapsParameterInEmptyList() => expectFix(
+  Future<void> _wrapsParameterInEmptyList() => expectFix(
     '''
 class A {
   final int a;

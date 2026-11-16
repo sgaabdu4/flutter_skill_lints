@@ -43,117 +43,120 @@ void main() {
     });
   });
 
-  analysisRuleSuite<FireAndForgetModalStandaloneTest>(
+  analysisRuleSuite<_FireAndForgetModalStandaloneTest>(
     'FireAndForgetModalStandaloneTest',
-    FireAndForgetModalStandaloneTest.new,
+    _FireAndForgetModalStandaloneTest.new,
     {
       'test_materialModalIsTrusted_frameworkImport': (t) =>
-          t.materialModalIsTrustedFrameworkImport(),
+          t._materialModalIsTrustedFrameworkImport(),
       'test_materialModalIsTrusted_standaloneImport': (t) =>
-          t.materialModalIsTrustedStandaloneImport(),
+          t._materialModalIsTrustedStandaloneImport(),
       'test_cupertinoModalIsTrusted_frameworkImport': (t) =>
-          t.cupertinoModalIsTrustedFrameworkImport(),
+          t._cupertinoModalIsTrustedFrameworkImport(),
       'test_cupertinoModalIsTrusted_standaloneImport': (t) =>
-          t.cupertinoModalIsTrustedStandaloneImport(),
+          t._cupertinoModalIsTrustedStandaloneImport(),
       'test_appModalLookalikeStillReports_frameworkImport': (t) =>
-          t.appModalLookalikeStillReportsFrameworkImport(),
+          t._appModalLookalikeStillReportsFrameworkImport(),
       'test_appModalLookalikeStillReports_standaloneImport': (t) =>
-          t.appModalLookalikeStillReportsStandaloneImport(),
+          t._appModalLookalikeStillReportsStandaloneImport(),
     },
   );
 
-  analysisRuleSuite<ModalRouteSettingsStandaloneTest>(
+  analysisRuleSuite<_ModalRouteSettingsStandaloneTest>(
     'ModalRouteSettingsStandaloneTest',
-    ModalRouteSettingsStandaloneTest.new,
+    _ModalRouteSettingsStandaloneTest.new,
     {
-      'test_reportsMaterialModal_frameworkImport': (t) => t.reportsMaterialModalFrameworkImport(),
-      'test_reportsMaterialModal_standaloneImport': (t) => t.reportsMaterialModalStandaloneImport(),
-      'test_reportsCupertinoModal_frameworkImport': (t) => t.reportsCupertinoModalFrameworkImport(),
+      'test_reportsMaterialModal_frameworkImport': (t) => t._reportsMaterialModalFrameworkImport(),
+      'test_reportsMaterialModal_standaloneImport': (t) =>
+          t._reportsMaterialModalStandaloneImport(),
+      'test_reportsCupertinoModal_frameworkImport': (t) =>
+          t._reportsCupertinoModalFrameworkImport(),
       'test_reportsCupertinoModal_standaloneImport': (t) =>
-          t.reportsCupertinoModalStandaloneImport(),
+          t._reportsCupertinoModalStandaloneImport(),
       'test_allowsModalWithRouteSettings_frameworkImport': (t) =>
-          t.allowsModalWithRouteSettingsFrameworkImport(),
+          t._allowsModalWithRouteSettingsFrameworkImport(),
       'test_allowsModalWithRouteSettings_standaloneImport': (t) =>
-          t.allowsModalWithRouteSettingsStandaloneImport(),
+          t._allowsModalWithRouteSettingsStandaloneImport(),
     },
   );
 
-  analysisRuleSuite<StyleRawTokenStandaloneTest>(
+  analysisRuleSuite<_StyleRawTokenStandaloneTest>(
     'StyleRawTokenStandaloneTest',
-    StyleRawTokenStandaloneTest.new,
+    _StyleRawTokenStandaloneTest.new,
     {
       'test_reportsRawIconButtonSize_frameworkImport': (t) =>
-          t.reportsRawIconButtonSizeFrameworkImport(),
+          t._reportsRawIconButtonSizeFrameworkImport(),
       'test_reportsRawIconButtonSize_standaloneImport': (t) =>
-          t.reportsRawIconButtonSizeStandaloneImport(),
+          t._reportsRawIconButtonSizeStandaloneImport(),
       'test_reportsRawMaterialColor_frameworkImport': (t) =>
-          t.reportsRawMaterialColorFrameworkImport(),
+          t._reportsRawMaterialColorFrameworkImport(),
       'test_reportsRawMaterialColor_standaloneImport': (t) =>
-          t.reportsRawMaterialColorStandaloneImport(),
+          t._reportsRawMaterialColorStandaloneImport(),
       'test_reportsRawCupertinoColor_frameworkImport': (t) =>
-          t.reportsRawCupertinoColorFrameworkImport(),
+          t._reportsRawCupertinoColorFrameworkImport(),
       'test_reportsRawCupertinoColor_standaloneImport': (t) =>
-          t.reportsRawCupertinoColorStandaloneImport(),
+          t._reportsRawCupertinoColorStandaloneImport(),
     },
   );
 
-  analysisRuleSuite<WatchIntoFrameworkWidgetStandaloneTest>(
+  analysisRuleSuite<_WatchIntoFrameworkWidgetStandaloneTest>(
     'WatchIntoFrameworkWidgetStandaloneTest',
-    WatchIntoFrameworkWidgetStandaloneTest.new,
+    _WatchIntoFrameworkWidgetStandaloneTest.new,
     {
       'test_allowsWholeValueIntoMaterialApp_frameworkImport': (t) =>
-          t.allowsWholeValueIntoMaterialAppFrameworkImport(),
+          t._allowsWholeValueIntoMaterialAppFrameworkImport(),
       'test_allowsWholeValueIntoMaterialApp_standaloneImport': (t) =>
-          t.allowsWholeValueIntoMaterialAppStandaloneImport(),
+          t._allowsWholeValueIntoMaterialAppStandaloneImport(),
       'test_reportsWholeValueIntoAppWidget_frameworkImport': (t) =>
-          t.reportsWholeValueIntoAppWidgetFrameworkImport(),
+          t._reportsWholeValueIntoAppWidgetFrameworkImport(),
       'test_reportsWholeValueIntoAppWidget_standaloneImport': (t) =>
-          t.reportsWholeValueIntoAppWidgetStandaloneImport(),
+          t._reportsWholeValueIntoAppWidgetStandaloneImport(),
     },
   );
 
-  analysisRuleSuite<AvoidThrowModalBuilderStandaloneTest>(
+  analysisRuleSuite<_AvoidThrowModalBuilderStandaloneTest>(
     'AvoidThrowModalBuilderStandaloneTest',
-    AvoidThrowModalBuilderStandaloneTest.new,
+    _AvoidThrowModalBuilderStandaloneTest.new,
     {
       'test_reportsThrowInModalBuilder_frameworkImport': (t) =>
-          t.reportsThrowInModalBuilderFrameworkImport(),
+          t._reportsThrowInModalBuilderFrameworkImport(),
       'test_reportsThrowInModalBuilder_standaloneImport': (t) =>
-          t.reportsThrowInModalBuilderStandaloneImport(),
+          t._reportsThrowInModalBuilderStandaloneImport(),
     },
   );
 
-  analysisRuleSuite<UseSliverPrefixStandaloneTest>(
+  analysisRuleSuite<_UseSliverPrefixStandaloneTest>(
     'UseSliverPrefixStandaloneTest',
-    UseSliverPrefixStandaloneTest.new,
+    _UseSliverPrefixStandaloneTest.new,
     {
       'test_reportsSliverAppBarWithoutPrefix_frameworkImport': (t) =>
-          t.reportsSliverAppBarWithoutPrefixFrameworkImport(),
+          t._reportsSliverAppBarWithoutPrefixFrameworkImport(),
       'test_reportsSliverAppBarWithoutPrefix_standaloneImport': (t) =>
-          t.reportsSliverAppBarWithoutPrefixStandaloneImport(),
+          t._reportsSliverAppBarWithoutPrefixStandaloneImport(),
     },
   );
 
-  analysisRuleSuite<PreferSliverPrefixStandaloneTest>(
+  analysisRuleSuite<_PreferSliverPrefixStandaloneTest>(
     'PreferSliverPrefixStandaloneTest',
-    PreferSliverPrefixStandaloneTest.new,
+    _PreferSliverPrefixStandaloneTest.new,
     {
       'test_reportsSliverAppBarWithoutPrefix_frameworkImport': (t) =>
-          t.reportsSliverAppBarWithoutPrefixFrameworkImport(),
+          t._reportsSliverAppBarWithoutPrefixFrameworkImport(),
       'test_reportsSliverAppBarWithoutPrefix_standaloneImport': (t) =>
-          t.reportsSliverAppBarWithoutPrefixStandaloneImport(),
+          t._reportsSliverAppBarWithoutPrefixStandaloneImport(),
     },
   );
 
-  analysisRuleSuite<HostDriverImportsStandaloneTest>(
+  analysisRuleSuite<_HostDriverImportsStandaloneTest>(
     'HostDriverImportsStandaloneTest',
-    HostDriverImportsStandaloneTest.new,
+    _HostDriverImportsStandaloneTest.new,
     {
-      'test_reportsMaterialImport_frameworkImport': (t) => t.reportsMaterialImportFrameworkImport(),
+      'test_reportsMaterialImport_frameworkImport': (t) =>
+          t._reportsMaterialImportFrameworkImport(),
       'test_reportsMaterialImport_standaloneImport': (t) =>
-          t.reportsMaterialImportStandaloneImport(),
+          t._reportsMaterialImportStandaloneImport(),
       'test_reportsCupertinoImport_standaloneImport': (t) =>
-          t.reportsCupertinoImportStandaloneImport(),
+          t._reportsCupertinoImportStandaloneImport(),
     },
   );
 }
@@ -291,7 +294,7 @@ class CupertinoColors {
 }
 ''';
 
-final class FireAndForgetModalStandaloneTest extends _ScannerStandaloneUiTest {
+final class _FireAndForgetModalStandaloneTest extends _ScannerStandaloneUiTest {
   @override
   List<ScannerRule> get rules => persistenceCrashSourceRules;
   @override
@@ -306,16 +309,16 @@ void open(BuildContext context) {
 }
 ''');
 
-  Future<void> materialModalIsTrustedFrameworkImport() =>
+  Future<void> _materialModalIsTrustedFrameworkImport() =>
       _assertModalTrusted(_flutterMaterial, 'showModalBottomSheet<void>');
 
-  Future<void> materialModalIsTrustedStandaloneImport() =>
+  Future<void> _materialModalIsTrustedStandaloneImport() =>
       _assertModalTrusted(_materialUi, 'showModalBottomSheet<void>');
 
-  Future<void> cupertinoModalIsTrustedFrameworkImport() =>
+  Future<void> _cupertinoModalIsTrustedFrameworkImport() =>
       _assertModalTrusted(_flutterCupertino, 'showCupertinoDialog<void>');
 
-  Future<void> cupertinoModalIsTrustedStandaloneImport() =>
+  Future<void> _cupertinoModalIsTrustedStandaloneImport() =>
       _assertModalTrusted(_cupertinoUi, 'showCupertinoDialog<void>');
 
   Future<void> _assertAppLookalikeReports(String import) {
@@ -335,14 +338,14 @@ void open(BuildContext context) {
     return assertDiagnostics(source, [lintAt(source, 'unawaited(showModalBottomSheet')]);
   }
 
-  Future<void> appModalLookalikeStillReportsFrameworkImport() =>
+  Future<void> _appModalLookalikeStillReportsFrameworkImport() =>
       _assertAppLookalikeReports(_flutterMaterial);
 
-  Future<void> appModalLookalikeStillReportsStandaloneImport() =>
+  Future<void> _appModalLookalikeStillReportsStandaloneImport() =>
       _assertAppLookalikeReports(_materialUi);
 }
 
-final class ModalRouteSettingsStandaloneTest extends _ScannerStandaloneUiTest {
+final class _ModalRouteSettingsStandaloneTest extends _ScannerStandaloneUiTest {
   @override
   List<ScannerRule> get rules => dialogSourceRules;
   @override
@@ -359,16 +362,16 @@ Future<void> open(BuildContext context) =>
     return assertDiagnostics(source, [lintAt(source, '$call(')]);
   }
 
-  Future<void> reportsMaterialModalFrameworkImport() =>
+  Future<void> _reportsMaterialModalFrameworkImport() =>
       _assertReports(_flutterMaterial, 'showDialog<void>');
 
-  Future<void> reportsMaterialModalStandaloneImport() =>
+  Future<void> _reportsMaterialModalStandaloneImport() =>
       _assertReports(_materialUi, 'showDialog<void>');
 
-  Future<void> reportsCupertinoModalFrameworkImport() =>
+  Future<void> _reportsCupertinoModalFrameworkImport() =>
       _assertReports(_flutterCupertino, 'showCupertinoDialog<void>');
 
-  Future<void> reportsCupertinoModalStandaloneImport() =>
+  Future<void> _reportsCupertinoModalStandaloneImport() =>
       _assertReports(_cupertinoUi, 'showCupertinoDialog<void>');
 
   Future<void> _assertAllowsRouteSettings(String import) => assertNoDiagnostics('''
@@ -381,14 +384,14 @@ Future<void> open(BuildContext context) => showDialog<void>(
 );
 ''');
 
-  Future<void> allowsModalWithRouteSettingsFrameworkImport() =>
+  Future<void> _allowsModalWithRouteSettingsFrameworkImport() =>
       _assertAllowsRouteSettings(_flutterMaterial);
 
-  Future<void> allowsModalWithRouteSettingsStandaloneImport() =>
+  Future<void> _allowsModalWithRouteSettingsStandaloneImport() =>
       _assertAllowsRouteSettings(_materialUi);
 }
 
-final class StyleRawTokenStandaloneTest extends _ScannerStandaloneUiTest {
+final class _StyleRawTokenStandaloneTest extends _ScannerStandaloneUiTest {
   @override
   List<ScannerRule> get rules => uiSourceRules;
   @override
@@ -404,26 +407,26 @@ $declaration
     return assertDiagnostics(source, [lintAt(source, declaration, lineStart: true)]);
   }
 
-  Future<void> reportsRawIconButtonSizeFrameworkImport() =>
+  Future<void> _reportsRawIconButtonSizeFrameworkImport() =>
       _assertReports(_flutterMaterial, 'Widget button() => const IconButton(iconSize: 24);');
 
-  Future<void> reportsRawIconButtonSizeStandaloneImport() =>
+  Future<void> _reportsRawIconButtonSizeStandaloneImport() =>
       _assertReports(_materialUi, 'Widget button() => const IconButton(iconSize: 24);');
 
-  Future<void> reportsRawMaterialColorFrameworkImport() =>
+  Future<void> _reportsRawMaterialColorFrameworkImport() =>
       _assertReports(_flutterMaterial, 'final accent = Colors.red;');
 
-  Future<void> reportsRawMaterialColorStandaloneImport() =>
+  Future<void> _reportsRawMaterialColorStandaloneImport() =>
       _assertReports(_materialUi, 'final accent = Colors.red;');
 
-  Future<void> reportsRawCupertinoColorFrameworkImport() =>
+  Future<void> _reportsRawCupertinoColorFrameworkImport() =>
       _assertReports(_flutterCupertino, 'final accent = CupertinoColors.systemBlue;');
 
-  Future<void> reportsRawCupertinoColorStandaloneImport() =>
+  Future<void> _reportsRawCupertinoColorStandaloneImport() =>
       _assertReports(_cupertinoUi, 'final accent = CupertinoColors.systemBlue;');
 }
 
-final class WatchIntoFrameworkWidgetStandaloneTest extends _ScannerStandaloneUiTest {
+final class _WatchIntoFrameworkWidgetStandaloneTest extends _ScannerStandaloneUiTest {
   @override
   List<ScannerRule> get rules => riverpodSourceRules;
   @override
@@ -467,10 +470,10 @@ class MyApp {
 }
 ''');
 
-  Future<void> allowsWholeValueIntoMaterialAppFrameworkImport() =>
+  Future<void> _allowsWholeValueIntoMaterialAppFrameworkImport() =>
       _assertFrameworkWidgetAllowed(_flutterMaterial);
 
-  Future<void> allowsWholeValueIntoMaterialAppStandaloneImport() =>
+  Future<void> _allowsWholeValueIntoMaterialAppStandaloneImport() =>
       _assertFrameworkWidgetAllowed(_materialUi);
 
   Future<void> _assertAppWidgetReports(String import) {
@@ -491,14 +494,14 @@ class MyApp {
     return assertDiagnostics(source, [lintAt(source, 'ref.watch(shellConfigProvider)')]);
   }
 
-  Future<void> reportsWholeValueIntoAppWidgetFrameworkImport() =>
+  Future<void> _reportsWholeValueIntoAppWidgetFrameworkImport() =>
       _assertAppWidgetReports(_flutterMaterial);
 
-  Future<void> reportsWholeValueIntoAppWidgetStandaloneImport() =>
+  Future<void> _reportsWholeValueIntoAppWidgetStandaloneImport() =>
       _assertAppWidgetReports(_materialUi);
 }
 
-final class AvoidThrowModalBuilderStandaloneTest extends _StandaloneUiTest {
+final class _AvoidThrowModalBuilderStandaloneTest extends _StandaloneUiTest {
   @override
   AnalysisRule createRule() => AvoidThrow();
 
@@ -520,9 +523,9 @@ void open(BuildContext context) {
     ]);
   }
 
-  Future<void> reportsThrowInModalBuilderFrameworkImport() => _assertReports(_flutterMaterial);
+  Future<void> _reportsThrowInModalBuilderFrameworkImport() => _assertReports(_flutterMaterial);
 
-  Future<void> reportsThrowInModalBuilderStandaloneImport() => _assertReports(_materialUi);
+  Future<void> _reportsThrowInModalBuilderStandaloneImport() => _assertReports(_materialUi);
 }
 
 abstract class _SliverPrefixStandaloneTest extends _StandaloneUiTest {
@@ -541,23 +544,23 @@ class FeedHeader extends StatelessWidget {
     return assertDiagnostics(source, [lint(source.indexOf('FeedHeader'), 'FeedHeader'.length)]);
   }
 
-  Future<void> reportsSliverAppBarWithoutPrefixFrameworkImport() =>
+  Future<void> _reportsSliverAppBarWithoutPrefixFrameworkImport() =>
       _assertReports(_flutterMaterial);
 
-  Future<void> reportsSliverAppBarWithoutPrefixStandaloneImport() => _assertReports(_materialUi);
+  Future<void> _reportsSliverAppBarWithoutPrefixStandaloneImport() => _assertReports(_materialUi);
 }
 
-final class UseSliverPrefixStandaloneTest extends _SliverPrefixStandaloneTest {
+final class _UseSliverPrefixStandaloneTest extends _SliverPrefixStandaloneTest {
   @override
   AnalysisRule createRule() => UseSliverPrefix();
 }
 
-final class PreferSliverPrefixStandaloneTest extends _SliverPrefixStandaloneTest {
+final class _PreferSliverPrefixStandaloneTest extends _SliverPrefixStandaloneTest {
   @override
   AnalysisRule createRule() => PreferSliverPrefix();
 }
 
-final class HostDriverImportsStandaloneTest extends _StandaloneUiTest {
+final class _HostDriverImportsStandaloneTest extends _StandaloneUiTest {
   @override
   AnalysisRule createRule() => AvoidFlutterHostDriverImports();
 
@@ -568,12 +571,12 @@ final class HostDriverImportsStandaloneTest extends _StandaloneUiTest {
     return assertDiagnosticsInFile(path, [lint(source.indexOf("'$uri'"), "'$uri'".length)]);
   }
 
-  Future<void> reportsMaterialImportFrameworkImport() =>
+  Future<void> _reportsMaterialImportFrameworkImport() =>
       _assertReports('package:flutter/material.dart');
 
-  Future<void> reportsMaterialImportStandaloneImport() =>
+  Future<void> _reportsMaterialImportStandaloneImport() =>
       _assertReports('package:material_ui/material_ui.dart');
 
-  Future<void> reportsCupertinoImportStandaloneImport() =>
+  Future<void> _reportsCupertinoImportStandaloneImport() =>
       _assertReports('package:cupertino_ui/cupertino_ui.dart');
 }

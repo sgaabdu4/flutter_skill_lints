@@ -6,22 +6,22 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<AvoidIncorrectImageOpacityTest>(
+  analysisRuleSuite<_AvoidIncorrectImageOpacityTest>(
     'AvoidIncorrectImageOpacityTest',
-    AvoidIncorrectImageOpacityTest.new,
+    _AvoidIncorrectImageOpacityTest.new,
     {
-      'reportsOpacityAroundImage': (t) => t.reportsOpacityAroundImage(),
-      'ignoresOpacityAroundText': (t) => t.ignoresOpacityAroundText(),
-      'ignoresOpacityWithoutChild': (t) => t.ignoresOpacityWithoutChild(),
-      'movesOpacityIntoImage': (t) => t.movesOpacityIntoImage(),
-      'addsOpacityToImageWithoutArguments': (t) => t.addsOpacityToImageWithoutArguments(),
-      'keepsImageThatHasOpacity': (t) => t.keepsImageThatHasOpacity(),
-      'ignoresChildThatIsNotAWidgetCall': (t) => t.ignoresChildThatIsNotAWidgetCall(),
+      'reportsOpacityAroundImage': (t) => t._reportsOpacityAroundImage(),
+      'ignoresOpacityAroundText': (t) => t._ignoresOpacityAroundText(),
+      'ignoresOpacityWithoutChild': (t) => t._ignoresOpacityWithoutChild(),
+      'movesOpacityIntoImage': (t) => t._movesOpacityIntoImage(),
+      'addsOpacityToImageWithoutArguments': (t) => t._addsOpacityToImageWithoutArguments(),
+      'keepsImageThatHasOpacity': (t) => t._keepsImageThatHasOpacity(),
+      'ignoresChildThatIsNotAWidgetCall': (t) => t._ignoresChildThatIsNotAWidgetCall(),
     },
   );
 }
 
-final class AvoidIncorrectImageOpacityTest extends FixRuleTest {
+final class _AvoidIncorrectImageOpacityTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -35,22 +35,22 @@ import 'package:flutter/widgets.dart';
 Widget build() => Opacity(opacity: 0.5, child: Image.network('a'));
 ''';
 
-  Future<void> reportsOpacityAroundImage() =>
+  Future<void> _reportsOpacityAroundImage() =>
       assertDiagnostics(_wrapped, [lint(_wrapped.indexOf('Opacity('), 'Opacity'.length)]);
 
-  Future<void> ignoresOpacityAroundText() => assertNoDiagnostics('''
+  Future<void> _ignoresOpacityAroundText() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Opacity(opacity: 0.5, child: Text('a'));
 ''');
 
-  Future<void> ignoresOpacityWithoutChild() => assertNoDiagnostics('''
+  Future<void> _ignoresOpacityWithoutChild() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Opacity(opacity: 0.5);
 ''');
 
-  Future<void> movesOpacityIntoImage() => expectFix(
+  Future<void> _movesOpacityIntoImage() => expectFix(
     _wrapped,
     (context) => AvoidIncorrectImageOpacityFix(context: context),
     expected: '''
@@ -60,7 +60,7 @@ Widget build() => Image.network('a', opacity: AlwaysStoppedAnimation(0.5));
 ''',
   );
 
-  Future<void> addsOpacityToImageWithoutArguments() => expectFix(
+  Future<void> _addsOpacityToImageWithoutArguments() => expectFix(
     '''
 import 'package:flutter/widgets.dart';
 
@@ -74,7 +74,7 @@ Widget build() => Image(opacity: AlwaysStoppedAnimation(0.25));
 ''',
   );
 
-  Future<void> keepsImageThatHasOpacity() => expectNoFix('''
+  Future<void> _keepsImageThatHasOpacity() => expectNoFix('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Opacity(
@@ -83,7 +83,7 @@ Widget build() => Opacity(
 );
 ''', (context) => AvoidIncorrectImageOpacityFix(context: context));
 
-  Future<void> ignoresChildThatIsNotAWidgetCall() => assertNoDiagnostics('''
+  Future<void> _ignoresChildThatIsNotAWidgetCall() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build(Widget other) => Opacity(opacity: 0.5, child: other);

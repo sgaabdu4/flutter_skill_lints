@@ -5,22 +5,22 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<AvoidSingleFieldDestructuringTest>(
+  analysisRuleSuite<_AvoidSingleFieldDestructuringTest>(
     'AvoidSingleFieldDestructuringTest',
-    AvoidSingleFieldDestructuringTest.new,
+    _AvoidSingleFieldDestructuringTest.new,
     {
-      'reportsSingleFieldObjectPattern': (t) => t.reportsSingleFieldObjectPattern(),
-      'reportsSingleNamedRecordField': (t) => t.reportsSingleNamedRecordField(),
-      'acceptsTwoFieldPattern': (t) => t.acceptsTwoFieldPattern(),
-      'replacesObjectPatternWithPropertyRead': (t) => t.replacesObjectPatternWithPropertyRead(),
-      'replacesRecordPatternWithPropertyRead': (t) => t.replacesRecordPatternWithPropertyRead(),
-      'keepsPositionalRecordPattern': (t) => t.keepsPositionalRecordPattern(),
-      'keepsNestedPatterns': (t) => t.keepsNestedPatterns(),
+      'reportsSingleFieldObjectPattern': (t) => t._reportsSingleFieldObjectPattern(),
+      'reportsSingleNamedRecordField': (t) => t._reportsSingleNamedRecordField(),
+      'acceptsTwoFieldPattern': (t) => t._acceptsTwoFieldPattern(),
+      'replacesObjectPatternWithPropertyRead': (t) => t._replacesObjectPatternWithPropertyRead(),
+      'replacesRecordPatternWithPropertyRead': (t) => t._replacesRecordPatternWithPropertyRead(),
+      'keepsPositionalRecordPattern': (t) => t._keepsPositionalRecordPattern(),
+      'keepsNestedPatterns': (t) => t._keepsNestedPatterns(),
     },
   );
 }
 
-final class AvoidSingleFieldDestructuringTest extends FixRuleTest {
+final class _AvoidSingleFieldDestructuringTest extends FixRuleTest {
   @override
   void setUp() {
     rule = AvoidSingleFieldDestructuring();
@@ -39,11 +39,11 @@ int f(P p) {
 }
 ''';
 
-  Future<void> reportsSingleFieldObjectPattern() => assertDiagnostics(_object, [
+  Future<void> _reportsSingleFieldObjectPattern() => assertDiagnostics(_object, [
     lint(_object.indexOf('final P(:x) = p'), 'final P(:x) = p'.length),
   ]);
 
-  Future<void> reportsSingleNamedRecordField() async {
+  Future<void> _reportsSingleNamedRecordField() async {
     const source = '''
 int f(({int x}) r) {
   final (x: a) = r;
@@ -55,7 +55,7 @@ int f(({int x}) r) {
     ]);
   }
 
-  Future<void> acceptsTwoFieldPattern() => assertNoDiagnostics('''
+  Future<void> _acceptsTwoFieldPattern() => assertNoDiagnostics('''
 class P {
   final int x = 0;
   final int y = 0;
@@ -67,7 +67,7 @@ int f(P p) {
 }
 ''');
 
-  Future<void> replacesObjectPatternWithPropertyRead() => expectFix(
+  Future<void> _replacesObjectPatternWithPropertyRead() => expectFix(
     _object,
     (context) => AvoidSingleFieldDestructuringFix(context: context),
     expected: '''
@@ -83,7 +83,7 @@ int f(P p) {
 ''',
   );
 
-  Future<void> replacesRecordPatternWithPropertyRead() => expectFix(
+  Future<void> _replacesRecordPatternWithPropertyRead() => expectFix(
     '''
 int f(({int x}) r) {
   final (x: a) = r;
@@ -99,14 +99,14 @@ int f(({int x}) r) {
 ''',
   );
 
-  Future<void> keepsPositionalRecordPattern() => expectNoFix('''
+  Future<void> _keepsPositionalRecordPattern() => expectNoFix('''
 int f((int, int) r) {
   final (a,) = r;
   return a;
 }
 ''', (context) => AvoidSingleFieldDestructuringFix(context: context));
 
-  Future<void> keepsNestedPatterns() => expectNoFix(
+  Future<void> _keepsNestedPatterns() => expectNoFix(
     '''
 class P {
   final (int, int) pair = (1, 2);

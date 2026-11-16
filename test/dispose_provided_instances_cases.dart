@@ -4,26 +4,26 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/dispose_provided_
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<DisposeProvidedInstancesTest>(
+  analysisRuleSuite<_DisposeProvidedInstancesTest>(
     'DisposeProvidedInstancesTest',
-    DisposeProvidedInstancesTest.new,
+    _DisposeProvidedInstancesTest.new,
     {
-      'reportsInstanceInProviderCallback': (t) => t.reportsInstanceInProviderCallback(),
-      'reportsInstanceInNotifierBuild': (t) => t.reportsInstanceInNotifierBuild(),
+      'reportsInstanceInProviderCallback': (t) => t._reportsInstanceInProviderCallback(),
+      'reportsInstanceInNotifierBuild': (t) => t._reportsInstanceInNotifierBuild(),
       'reportsInstanceWhenOnDisposeCleansAnotherOne': (t) =>
-          t.reportsInstanceWhenOnDisposeCleansAnotherOne(),
-      'acceptsTearOffCleanup': (t) => t.acceptsTearOffCleanup(),
-      'acceptsNullAwareTearOffCleanup': (t) => t.acceptsNullAwareTearOffCleanup(),
-      'acceptsExpressionCallbackCleanup': (t) => t.acceptsExpressionCallbackCleanup(),
-      'acceptsBlockCallbackCleanup': (t) => t.acceptsBlockCallbackCleanup(),
-      'acceptsCleanupInNotifierBuild': (t) => t.acceptsCleanupInNotifierBuild(),
-      'ignoresOtherNotifierMethods': (t) => t.ignoresOtherNotifierMethods(),
-      'ignoresClassesThatAreNotNotifiers': (t) => t.ignoresClassesThatAreNotNotifiers(),
+          t._reportsInstanceWhenOnDisposeCleansAnotherOne(),
+      'acceptsTearOffCleanup': (t) => t._acceptsTearOffCleanup(),
+      'acceptsNullAwareTearOffCleanup': (t) => t._acceptsNullAwareTearOffCleanup(),
+      'acceptsExpressionCallbackCleanup': (t) => t._acceptsExpressionCallbackCleanup(),
+      'acceptsBlockCallbackCleanup': (t) => t._acceptsBlockCallbackCleanup(),
+      'acceptsCleanupInNotifierBuild': (t) => t._acceptsCleanupInNotifierBuild(),
+      'ignoresOtherNotifierMethods': (t) => t._ignoresOtherNotifierMethods(),
+      'ignoresClassesThatAreNotNotifiers': (t) => t._ignoresClassesThatAreNotNotifiers(),
     },
   );
 }
 
-final class DisposeProvidedInstancesTest extends AnalysisRuleTest {
+final class _DisposeProvidedInstancesTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = DisposeProvidedInstances();
@@ -71,12 +71,12 @@ $members
 }
 ''';
 
-  Future<void> reportsInstanceInProviderCallback() async {
+  Future<void> _reportsInstanceInProviderCallback() async {
     final source = _providerSource('  final controller = Controller();');
     await assertDiagnostics(source, [lint(source.indexOf('controller ='), 'controller'.length)]);
   }
 
-  Future<void> reportsInstanceInNotifierBuild() async {
+  Future<void> _reportsInstanceInNotifierBuild() async {
     final source = _notifierSource('''
   @override
   int build() {
@@ -87,7 +87,7 @@ $members
     await assertDiagnostics(source, [lint(source.indexOf('controller ='), 'controller'.length)]);
   }
 
-  Future<void> reportsInstanceWhenOnDisposeCleansAnotherOne() async {
+  Future<void> _reportsInstanceWhenOnDisposeCleansAnotherOne() async {
     final source = _providerSource('''
   final first = Controller();
   final second = Controller();
@@ -96,28 +96,28 @@ $members
     await assertDiagnostics(source, [lint(source.indexOf('second ='), 'second'.length)]);
   }
 
-  Future<void> acceptsTearOffCleanup() => assertNoDiagnostics(
+  Future<void> _acceptsTearOffCleanup() => assertNoDiagnostics(
     _providerSource('''
   final controller = Controller();
   ref.onDispose(controller.dispose);
 '''),
   );
 
-  Future<void> acceptsNullAwareTearOffCleanup() => assertNoDiagnostics(
+  Future<void> _acceptsNullAwareTearOffCleanup() => assertNoDiagnostics(
     _providerSource('''
   final Controller? controller = Controller();
   ref.onDispose(controller?.dispose);
 '''),
   );
 
-  Future<void> acceptsExpressionCallbackCleanup() => assertNoDiagnostics(
+  Future<void> _acceptsExpressionCallbackCleanup() => assertNoDiagnostics(
     _providerSource('''
   final controller = Controller();
   ref.onDispose(() => controller.dispose());
 '''),
   );
 
-  Future<void> acceptsBlockCallbackCleanup() => assertNoDiagnostics(
+  Future<void> _acceptsBlockCallbackCleanup() => assertNoDiagnostics(
     _providerSource('''
   final controller = Controller();
   ref.onDispose(() {
@@ -126,7 +126,7 @@ $members
 '''),
   );
 
-  Future<void> acceptsCleanupInNotifierBuild() => assertNoDiagnostics(
+  Future<void> _acceptsCleanupInNotifierBuild() => assertNoDiagnostics(
     _notifierSource('''
   @override
   int build() {
@@ -137,7 +137,7 @@ $members
 '''),
   );
 
-  Future<void> ignoresOtherNotifierMethods() => assertNoDiagnostics(
+  Future<void> _ignoresOtherNotifierMethods() => assertNoDiagnostics(
     _notifierSource('''
   @override
   int build() => 1;
@@ -148,7 +148,7 @@ $members
 '''),
   );
 
-  Future<void> ignoresClassesThatAreNotNotifiers() => assertNoDiagnostics('''
+  Future<void> _ignoresClassesThatAreNotNotifiers() => assertNoDiagnostics('''
 class Controller {
   void dispose() {}
 }

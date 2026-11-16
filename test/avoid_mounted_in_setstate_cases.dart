@@ -5,23 +5,23 @@ import 'analysis_rule_suite.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<AvoidMountedInSetstateTest>(
+  analysisRuleSuite<_AvoidMountedInSetstateTest>(
     'AvoidMountedInSetstateTest',
-    AvoidMountedInSetstateTest.new,
+    _AvoidMountedInSetstateTest.new,
     {
-      'reportsBareMounted': (t) => t.reportsBareMounted(),
-      'reportsContextMounted': (t) => t.reportsContextMounted(),
-      'reportsThisMounted': (t) => t.reportsThisMounted(),
-      'reportsMountedInNestedClosure': (t) => t.reportsMountedInNestedClosure(),
-      'acceptsMountedBeforeSetState': (t) => t.acceptsMountedBeforeSetState(),
-      'acceptsMethodReferenceCallback': (t) => t.acceptsMethodReferenceCallback(),
-      'acceptsSetStateOutsideState': (t) => t.acceptsSetStateOutsideState(),
-      'acceptsCallbackWithoutMounted': (t) => t.acceptsCallbackWithoutMounted(),
+      'reportsBareMounted': (t) => t._reportsBareMounted(),
+      'reportsContextMounted': (t) => t._reportsContextMounted(),
+      'reportsThisMounted': (t) => t._reportsThisMounted(),
+      'reportsMountedInNestedClosure': (t) => t._reportsMountedInNestedClosure(),
+      'acceptsMountedBeforeSetState': (t) => t._acceptsMountedBeforeSetState(),
+      'acceptsMethodReferenceCallback': (t) => t._acceptsMethodReferenceCallback(),
+      'acceptsSetStateOutsideState': (t) => t._acceptsSetStateOutsideState(),
+      'acceptsCallbackWithoutMounted': (t) => t._acceptsCallbackWithoutMounted(),
     },
   );
 }
 
-final class AvoidMountedInSetstateTest extends AnalysisRuleTest {
+final class _AvoidMountedInSetstateTest extends AnalysisRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -54,39 +54,39 @@ $body
     await assertDiagnostics(source, [lint(source.indexOf(reported), reported.length)]);
   }
 
-  Future<void> reportsBareMounted() =>
+  Future<void> _reportsBareMounted() =>
       _expectReported('    setState(() { if (mounted) count++; });', 'mounted');
 
-  Future<void> reportsContextMounted() =>
+  Future<void> _reportsContextMounted() =>
       _expectReported('    setState(() { if (context.mounted) count++; });', 'context.mounted');
 
-  Future<void> reportsThisMounted() =>
+  Future<void> _reportsThisMounted() =>
       _expectReported('    setState(() { if (this.mounted) count++; });', 'this.mounted');
 
-  Future<void> reportsMountedInNestedClosure() => _expectReported('''
+  Future<void> _reportsMountedInNestedClosure() => _expectReported('''
     setState(() {
       [1].forEach((_) {
         if (mounted) count++;
       });
     });''', 'mounted');
 
-  Future<void> acceptsMountedBeforeSetState() => assertNoDiagnostics(
+  Future<void> _acceptsMountedBeforeSetState() => assertNoDiagnostics(
     _state('''
     if (!mounted) return;
     setState(() => count++);'''),
   );
 
-  Future<void> acceptsMethodReferenceCallback() => assertNoDiagnostics(
+  Future<void> _acceptsMethodReferenceCallback() => assertNoDiagnostics(
     _state('''
     setState(run);'''),
   );
 
-  Future<void> acceptsCallbackWithoutMounted() => assertNoDiagnostics(
+  Future<void> _acceptsCallbackWithoutMounted() => assertNoDiagnostics(
     _state('''
     setState(() => count++);'''),
   );
 
-  Future<void> acceptsSetStateOutsideState() => assertNoDiagnostics('''
+  Future<void> _acceptsSetStateOutsideState() => assertNoDiagnostics('''
 class Plain {
   bool get mounted => true;
 

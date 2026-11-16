@@ -6,23 +6,24 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<AvoidUnnecessaryStatefulWidgetsTest>(
+  analysisRuleSuite<_AvoidUnnecessaryStatefulWidgetsTest>(
     'AvoidUnnecessaryStatefulWidgetsTest',
-    AvoidUnnecessaryStatefulWidgetsTest.new,
+    _AvoidUnnecessaryStatefulWidgetsTest.new,
     {
-      'reportsStatefulWidgetWithStatelessState': (t) => t.reportsStatefulWidgetWithStatelessState(),
-      'acceptsMutableField': (t) => t.acceptsMutableField(),
-      'acceptsLifecycleMethod': (t) => t.acceptsLifecycleMethod(),
-      'acceptsSetStateCall': (t) => t.acceptsSetStateCall(),
-      'acceptsFinalAndStaticFields': (t) => t.acceptsFinalAndStaticFields(),
-      'ignoresWidgetWithoutStateClass': (t) => t.ignoresWidgetWithoutStateClass(),
-      'convertsToStatelessWidget': (t) => t.convertsToStatelessWidget(),
-      'keepsHelperMembersAndAnnotations': (t) => t.keepsHelperMembersAndAnnotations(),
+      'reportsStatefulWidgetWithStatelessState': (t) =>
+          t._reportsStatefulWidgetWithStatelessState(),
+      'acceptsMutableField': (t) => t._acceptsMutableField(),
+      'acceptsLifecycleMethod': (t) => t._acceptsLifecycleMethod(),
+      'acceptsSetStateCall': (t) => t._acceptsSetStateCall(),
+      'acceptsFinalAndStaticFields': (t) => t._acceptsFinalAndStaticFields(),
+      'ignoresWidgetWithoutStateClass': (t) => t._ignoresWidgetWithoutStateClass(),
+      'convertsToStatelessWidget': (t) => t._convertsToStatelessWidget(),
+      'keepsHelperMembersAndAnnotations': (t) => t._keepsHelperMembersAndAnnotations(),
     },
   );
 }
 
-final class AvoidUnnecessaryStatefulWidgetsTest extends FixRuleTest {
+final class _AvoidUnnecessaryStatefulWidgetsTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -64,12 +65,12 @@ $stateMembers
 }
 ''';
 
-  Future<void> reportsStatefulWidgetWithStatelessState() =>
+  Future<void> _reportsStatefulWidgetWithStatelessState() =>
       assertDiagnostics(_simple, [lint(_simple.indexOf('Tile extends'), 'Tile'.length)]);
 
-  Future<void> acceptsMutableField() => assertNoDiagnostics(_stateful('  int count = 0;\n'));
+  Future<void> _acceptsMutableField() => assertNoDiagnostics(_stateful('  int count = 0;\n'));
 
-  Future<void> acceptsLifecycleMethod() => assertNoDiagnostics(
+  Future<void> _acceptsLifecycleMethod() => assertNoDiagnostics(
     _stateful('''
   @override
   void initState() {
@@ -78,7 +79,7 @@ $stateMembers
 '''),
   );
 
-  Future<void> acceptsSetStateCall() => assertNoDiagnostics(
+  Future<void> _acceptsSetStateCall() => assertNoDiagnostics(
     _stateful('''
   void bump() {
     setState(() {});
@@ -86,12 +87,12 @@ $stateMembers
 '''),
   );
 
-  Future<void> acceptsFinalAndStaticFields() async {
+  Future<void> _acceptsFinalAndStaticFields() async {
     final source = _stateful('  static int shared = 0;\n  final int fixed = 1;\n');
     await assertDiagnostics(source, [lint(source.indexOf('Tile extends'), 'Tile'.length)]);
   }
 
-  Future<void> ignoresWidgetWithoutStateClass() => assertNoDiagnostics('''
+  Future<void> _ignoresWidgetWithoutStateClass() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 class Tile extends StatefulWidget {
@@ -99,7 +100,7 @@ class Tile extends StatefulWidget {
 }
 ''');
 
-  Future<void> convertsToStatelessWidget() => expectFix(
+  Future<void> _convertsToStatelessWidget() => expectFix(
     _simple,
     (context) => AvoidUnnecessaryStatefulWidgetsFix(context: context),
     expected: '''
@@ -113,7 +114,7 @@ class Tile extends StatelessWidget {
 ''',
   );
 
-  Future<void> keepsHelperMembersAndAnnotations() => expectFix(
+  Future<void> _keepsHelperMembersAndAnnotations() => expectFix(
     '''
 import 'package:flutter/widgets.dart';
 

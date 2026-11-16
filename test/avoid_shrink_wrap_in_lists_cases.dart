@@ -5,19 +5,19 @@ import 'analysis_rule_suite.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<AvoidShrinkWrapInListsTest>(
+  analysisRuleSuite<_AvoidShrinkWrapInListsTest>(
     'AvoidShrinkWrapInListsTest',
-    AvoidShrinkWrapInListsTest.new,
+    _AvoidShrinkWrapInListsTest.new,
     {
-      'reportsShrinkWrapTrue': (t) => t.reportsShrinkWrapTrue(),
-      'acceptsShrinkWrapFalse': (t) => t.acceptsShrinkWrapFalse(),
-      'acceptsNonLiteralValue': (t) => t.acceptsNonLiteralValue(),
-      'ignoresOtherWidgets': (t) => t.ignoresOtherWidgets(),
+      'reportsShrinkWrapTrue': (t) => t._reportsShrinkWrapTrue(),
+      'acceptsShrinkWrapFalse': (t) => t._acceptsShrinkWrapFalse(),
+      'acceptsNonLiteralValue': (t) => t._acceptsNonLiteralValue(),
+      'ignoresOtherWidgets': (t) => t._ignoresOtherWidgets(),
     },
   );
 }
 
-final class AvoidShrinkWrapInListsTest extends AnalysisRuleTest {
+final class _AvoidShrinkWrapInListsTest extends AnalysisRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -25,7 +25,7 @@ final class AvoidShrinkWrapInListsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> reportsShrinkWrapTrue() async {
+  Future<void> _reportsShrinkWrapTrue() async {
     const source = '''
 import 'package:flutter/widgets.dart';
 
@@ -36,19 +36,19 @@ Widget build() => ListView(shrinkWrap: true);
     ]);
   }
 
-  Future<void> acceptsShrinkWrapFalse() => assertNoDiagnostics('''
+  Future<void> _acceptsShrinkWrapFalse() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => ListView(shrinkWrap: false);
 ''');
 
-  Future<void> acceptsNonLiteralValue() => assertNoDiagnostics('''
+  Future<void> _acceptsNonLiteralValue() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build(bool wrap) => ListView(shrinkWrap: wrap);
 ''');
 
-  Future<void> ignoresOtherWidgets() => assertNoDiagnostics('''
+  Future<void> _ignoresOtherWidgets() => assertNoDiagnostics('''
 import 'package:flutter/widgets.dart';
 
 Widget build() => Column();

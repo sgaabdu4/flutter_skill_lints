@@ -8,40 +8,41 @@ import 'fix_test_support.dart';
 import 'support/flutter_widgets_stub.dart';
 
 void main() {
-  analysisRuleSuite<AvoidUnnecessaryOverridesTest>(
+  analysisRuleSuite<_AvoidUnnecessaryOverridesTest>(
     'AvoidUnnecessaryOverridesTest',
-    AvoidUnnecessaryOverridesTest.new,
+    _AvoidUnnecessaryOverridesTest.new,
     {
-      'reportsMethodThatOnlyCallsSuper': (t) => t.reportsMethodThatOnlyCallsSuper(),
-      'reportsMethodWithBlockBody': (t) => t.reportsMethodWithBlockBody(),
-      'reportsPassThroughParameters': (t) => t.reportsPassThroughParameters(),
-      'reportsGetterThatOnlyReturnsSuper': (t) => t.reportsGetterThatOnlyReturnsSuper(),
-      'reportsSetterThatOnlyAssignsSuper': (t) => t.reportsSetterThatOnlyAssignsSuper(),
-      'reportsOperatorThatOnlyCallsSuper': (t) => t.reportsOperatorThatOnlyCallsSuper(),
-      'reportsOverridesInMixins': (t) => t.reportsOverridesInMixins(),
-      'acceptsMethodsThatAddLogic': (t) => t.acceptsMethodsThatAddLogic(),
-      'acceptsReorderedOrChangedArguments': (t) => t.acceptsReorderedOrChangedArguments(),
-      'acceptsMethodsWithoutOverrideAnnotation': (t) => t.acceptsMethodsWithoutOverrideAnnotation(),
+      'reportsMethodThatOnlyCallsSuper': (t) => t._reportsMethodThatOnlyCallsSuper(),
+      'reportsMethodWithBlockBody': (t) => t._reportsMethodWithBlockBody(),
+      'reportsPassThroughParameters': (t) => t._reportsPassThroughParameters(),
+      'reportsGetterThatOnlyReturnsSuper': (t) => t._reportsGetterThatOnlyReturnsSuper(),
+      'reportsSetterThatOnlyAssignsSuper': (t) => t._reportsSetterThatOnlyAssignsSuper(),
+      'reportsOperatorThatOnlyCallsSuper': (t) => t._reportsOperatorThatOnlyCallsSuper(),
+      'reportsOverridesInMixins': (t) => t._reportsOverridesInMixins(),
+      'acceptsMethodsThatAddLogic': (t) => t._acceptsMethodsThatAddLogic(),
+      'acceptsReorderedOrChangedArguments': (t) => t._acceptsReorderedOrChangedArguments(),
+      'acceptsMethodsWithoutOverrideAnnotation': (t) =>
+          t._acceptsMethodsWithoutOverrideAnnotation(),
       'acceptsGettersAndSettersThatChangeValues': (t) =>
-          t.acceptsGettersAndSettersThatChangeValues(),
-      'acceptsDifferentSuperMember': (t) => t.acceptsDifferentSuperMember(),
+          t._acceptsGettersAndSettersThatChangeValues(),
+      'acceptsDifferentSuperMember': (t) => t._acceptsDifferentSuperMember(),
       'removesUnnecessaryOverrideWithItsAnnotation': (t) =>
-          t.removesUnnecessaryOverrideWithItsAnnotation(),
+          t._removesUnnecessaryOverrideWithItsAnnotation(),
     },
   );
-  analysisRuleSuite<AvoidUnnecessaryOverridesInStateTest>(
+  analysisRuleSuite<_AvoidUnnecessaryOverridesInStateTest>(
     'AvoidUnnecessaryOverridesInStateTest',
-    AvoidUnnecessaryOverridesInStateTest.new,
+    _AvoidUnnecessaryOverridesInStateTest.new,
     {
-      'reportsStateOverridesThatOnlyCallSuper': (t) => t.reportsStateOverridesThatOnlyCallSuper(),
-      'acceptsStateOverridesWithLogic': (t) => t.acceptsStateOverridesWithLogic(),
-      'ignoresClassesThatAreNotState': (t) => t.ignoresClassesThatAreNotState(),
-      'removesStateOverride': (t) => t.removesStateOverride(),
+      'reportsStateOverridesThatOnlyCallSuper': (t) => t._reportsStateOverridesThatOnlyCallSuper(),
+      'acceptsStateOverridesWithLogic': (t) => t._acceptsStateOverridesWithLogic(),
+      'ignoresClassesThatAreNotState': (t) => t._ignoresClassesThatAreNotState(),
+      'removesStateOverride': (t) => t._removesStateOverride(),
     },
   );
 }
 
-final class AvoidUnnecessaryOverridesTest extends FixRuleTest {
+final class _AvoidUnnecessaryOverridesTest extends FixRuleTest {
   @override
   void setUp() {
     rule = AvoidUnnecessaryOverrides();
@@ -65,37 +66,37 @@ class Base {
     await assertDiagnostics(source, [lint(source.indexOf(reported), reported.length)]);
   }
 
-  Future<void> reportsMethodThatOnlyCallsSuper() {
+  Future<void> _reportsMethodThatOnlyCallsSuper() {
     const member = '  void run(int a, {int b = 0}) => super.run(a, b: b);';
     return _expectReported(member);
   }
 
-  Future<void> reportsMethodWithBlockBody() {
+  Future<void> _reportsMethodWithBlockBody() {
     const member = '  void run(int a, {int b = 0}) {\n    super.run(a, b: b);\n  }';
     return _expectReported(member);
   }
 
-  Future<void> reportsPassThroughParameters() {
+  Future<void> _reportsPassThroughParameters() {
     const member = '  void run(int a, {int b = 0}) { return super.run(a, b: b); }';
     return _expectReported(member);
   }
 
-  Future<void> reportsGetterThatOnlyReturnsSuper() {
+  Future<void> _reportsGetterThatOnlyReturnsSuper() {
     const member = '  int get size => super.size;';
     return _expectReported(member);
   }
 
-  Future<void> reportsSetterThatOnlyAssignsSuper() {
+  Future<void> _reportsSetterThatOnlyAssignsSuper() {
     const member = '  set size(int v) => super.size = v;';
     return _expectReported(member);
   }
 
-  Future<void> reportsOperatorThatOnlyCallsSuper() {
+  Future<void> _reportsOperatorThatOnlyCallsSuper() {
     const member = '  Base operator +(Base other) => super + other;';
     return _expectReported(member);
   }
 
-  Future<void> reportsOverridesInMixins() async {
+  Future<void> _reportsOverridesInMixins() async {
     const source = '''
 class Base {
   void run() {}
@@ -110,7 +111,7 @@ mixin Helper on Base {
     await assertDiagnostics(source, [lint(source.indexOf(member), member.length)]);
   }
 
-  Future<void> acceptsMethodsThatAddLogic() => assertNoDiagnostics('''
+  Future<void> _acceptsMethodsThatAddLogic() => assertNoDiagnostics('''
 ${_base}class Child extends Base {
   @override
   void run(int a, {int b = 0}) {
@@ -120,14 +121,14 @@ ${_base}class Child extends Base {
 }
 ''');
 
-  Future<void> acceptsReorderedOrChangedArguments() => assertNoDiagnostics('''
+  Future<void> _acceptsReorderedOrChangedArguments() => assertNoDiagnostics('''
 ${_base}class Child extends Base {
   @override
   void run(int a, {int b = 0}) => super.run(b, b: a);
 }
 ''');
 
-  Future<void> acceptsMethodsWithoutOverrideAnnotation() => assertNoDiagnostics('''
+  Future<void> _acceptsMethodsWithoutOverrideAnnotation() => assertNoDiagnostics('''
 class Base {
   void run() {}
 }
@@ -137,7 +138,7 @@ class Child extends Base {
 }
 ''');
 
-  Future<void> acceptsGettersAndSettersThatChangeValues() => assertNoDiagnostics('''
+  Future<void> _acceptsGettersAndSettersThatChangeValues() => assertNoDiagnostics('''
 ${_base}class Child extends Base {
   @override
   int get size => super.size + 1;
@@ -147,7 +148,7 @@ ${_base}class Child extends Base {
 }
 ''');
 
-  Future<void> acceptsDifferentSuperMember() => assertNoDiagnostics('''
+  Future<void> _acceptsDifferentSuperMember() => assertNoDiagnostics('''
 class Base {
   void run() {}
   void stop() {}
@@ -159,7 +160,7 @@ class Child extends Base {
 }
 ''');
 
-  Future<void> removesUnnecessaryOverrideWithItsAnnotation() => expectFix(
+  Future<void> _removesUnnecessaryOverrideWithItsAnnotation() => expectFix(
     '''
 class Base {
   void run() {}
@@ -195,7 +196,7 @@ class Child extends Base {
   );
 }
 
-final class AvoidUnnecessaryOverridesInStateTest extends FixRuleTest {
+final class _AvoidUnnecessaryOverridesInStateTest extends FixRuleTest {
   @override
   void setUp() {
     addFlutterWidgets(this);
@@ -218,7 +219,7 @@ $members
 }
 ''';
 
-  Future<void> reportsStateOverridesThatOnlyCallSuper() async {
+  Future<void> _reportsStateOverridesThatOnlyCallSuper() async {
     final source = _state('''
   @override
   void initState() => super.initState();
@@ -240,7 +241,7 @@ $members
     ]);
   }
 
-  Future<void> acceptsStateOverridesWithLogic() => assertNoDiagnostics(
+  Future<void> _acceptsStateOverridesWithLogic() => assertNoDiagnostics(
     _state('''
   @override
   void initState() {
@@ -250,7 +251,7 @@ $members
 '''),
   );
 
-  Future<void> ignoresClassesThatAreNotState() => assertNoDiagnostics('''
+  Future<void> _ignoresClassesThatAreNotState() => assertNoDiagnostics('''
 class Base {
   void initState() {}
 }
@@ -261,7 +262,7 @@ class Child extends Base {
 }
 ''');
 
-  Future<void> removesStateOverride() => expectFix(
+  Future<void> _removesStateOverride() => expectFix(
     _state('''
   @override
   void initState() => super.initState();

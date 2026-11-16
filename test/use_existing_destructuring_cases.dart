@@ -5,24 +5,24 @@ import 'analysis_rule_suite.dart';
 import 'fix_test_support.dart';
 
 void main() {
-  analysisRuleSuite<UseExistingDestructuringCasesTest>(
+  analysisRuleSuite<_UseExistingDestructuringCasesTest>(
     'UseExistingDestructuringCasesTest',
-    UseExistingDestructuringCasesTest.new,
+    _UseExistingDestructuringCasesTest.new,
     {
       'reportsDirectAccessOfUndestructuredField': (t) =>
-          t.reportsDirectAccessOfUndestructuredField(),
-      'reportsPropertyAccessForm': (t) => t.reportsPropertyAccessForm(),
-      'acceptsAlreadyDestructuredField': (t) => t.acceptsAlreadyDestructuredField(),
-      'acceptsAssignmentToField': (t) => t.acceptsAssignmentToField(),
-      'acceptsAccessBeforeDestructuring': (t) => t.acceptsAccessBeforeDestructuring(),
-      'acceptsOtherVariables': (t) => t.acceptsOtherVariables(),
-      'ignoresNestedClosures': (t) => t.ignoresNestedClosures(),
-      'addsFieldToExistingPattern': (t) => t.addsFieldToExistingPattern(),
+          t._reportsDirectAccessOfUndestructuredField(),
+      'reportsPropertyAccessForm': (t) => t._reportsPropertyAccessForm(),
+      'acceptsAlreadyDestructuredField': (t) => t._acceptsAlreadyDestructuredField(),
+      'acceptsAssignmentToField': (t) => t._acceptsAssignmentToField(),
+      'acceptsAccessBeforeDestructuring': (t) => t._acceptsAccessBeforeDestructuring(),
+      'acceptsOtherVariables': (t) => t._acceptsOtherVariables(),
+      'ignoresNestedClosures': (t) => t._ignoresNestedClosures(),
+      'addsFieldToExistingPattern': (t) => t._addsFieldToExistingPattern(),
     },
   );
 }
 
-final class UseExistingDestructuringCasesTest extends FixRuleTest {
+final class _UseExistingDestructuringCasesTest extends FixRuleTest {
   @override
   void setUp() {
     rule = UseExistingDestructuring();
@@ -46,10 +46,10 @@ ${_model}int f(P p) {
 }
 ''';
 
-  Future<void> reportsDirectAccessOfUndestructuredField() =>
+  Future<void> _reportsDirectAccessOfUndestructuredField() =>
       assertDiagnostics(_direct, [lint(_direct.indexOf('p.y'), 'p.y'.length)]);
 
-  Future<void> reportsPropertyAccessForm() async {
+  Future<void> _reportsPropertyAccessForm() async {
     const source =
         '''
 ${_model}int f(P p) {
@@ -60,14 +60,14 @@ ${_model}int f(P p) {
     await assertDiagnostics(source, [lint(source.indexOf('p.next'), 'p.next'.length)]);
   }
 
-  Future<void> acceptsAlreadyDestructuredField() => assertNoDiagnostics('''
+  Future<void> _acceptsAlreadyDestructuredField() => assertNoDiagnostics('''
 ${_model}int f(P p) {
   final P(:x) = p;
   return x + p.x;
 }
 ''');
 
-  Future<void> acceptsAssignmentToField() => assertNoDiagnostics('''
+  Future<void> _acceptsAssignmentToField() => assertNoDiagnostics('''
 class M {
   int x = 0;
   int y = 0;
@@ -79,7 +79,7 @@ void f(M m) {
 }
 ''');
 
-  Future<void> acceptsAccessBeforeDestructuring() => assertNoDiagnostics('''
+  Future<void> _acceptsAccessBeforeDestructuring() => assertNoDiagnostics('''
 ${_model}int f(P p) {
   final a = p.y;
   final P(:x) = p;
@@ -87,21 +87,21 @@ ${_model}int f(P p) {
 }
 ''');
 
-  Future<void> acceptsOtherVariables() => assertNoDiagnostics('''
+  Future<void> _acceptsOtherVariables() => assertNoDiagnostics('''
 ${_model}int f(P p, P q) {
   final P(:x) = p;
   return x + q.y;
 }
 ''');
 
-  Future<void> ignoresNestedClosures() => assertNoDiagnostics('''
+  Future<void> _ignoresNestedClosures() => assertNoDiagnostics('''
 ${_model}int Function() f(P p) {
   final P(:x) = p;
   return () => x + p.y;
 }
 ''');
 
-  Future<void> addsFieldToExistingPattern() => expectFix(
+  Future<void> _addsFieldToExistingPattern() => expectFix(
     _direct,
     (context) => UseExistingDestructuringFix(context: context),
     expected:

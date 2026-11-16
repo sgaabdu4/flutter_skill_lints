@@ -23,11 +23,8 @@ class AvoidUnnecessarySetstateFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
-    if (targetNode is! SimpleIdentifier) return;
-
-    final invocation = targetNode.parent;
-    if (invocation is! MethodInvocation) return;
+    final invocation = node.thisOrAncestorOfType<MethodInvocation>();
+    if (invocation == null) return;
 
     // Get the callback argument
     final args = invocation.argumentList.arguments;

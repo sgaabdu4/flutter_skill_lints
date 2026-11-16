@@ -7,6 +7,7 @@ import 'package:flutter_skill_lints/src/rules/persistence_crash_source_rules.dar
 import 'analysis_rule_suite.dart';
 
 part 'persistence_crash_source_rules_test/persistence_crash_source_rules_part_01.dart';
+part 'persistence_crash_source_rules_test/persistence_crash_source_rules_part_01_b.dart';
 
 void main() {
   analysisRuleSuite<_CrashDirectFirebaseCallTest>(
@@ -20,6 +21,7 @@ void main() {
     _CrashInitBeforeRunAppTest._allCases,
   );
   _definePersistenceCrashSourceRulesPart01Tests();
+  _definePersistenceCrashSourceRulesPart01BTests();
 }
 
 abstract class _PersistenceCrashRuleTest extends AnalysisRuleTest {

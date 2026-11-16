@@ -335,10 +335,20 @@ class MainShellRoute {
 
   Future<void> _allowsMaterialRouteContentAndTransitionsOverrides() async {
     await assertNoDiagnostics(r'''
-// ignore_for_file: override_on_non_overriding_member
 import 'package:flutter/widgets.dart';
 
-class EditorRoute {
+class RouteBase {
+  Object buildContent(BuildContext context) => 0;
+
+  Object buildTransitions(
+    BuildContext context,
+    Object animation,
+    Object secondaryAnimation,
+    Widget child,
+  ) => 0;
+}
+
+class EditorRoute extends RouteBase {
   @override
   Widget buildContent(BuildContext context) => const Widget();
 

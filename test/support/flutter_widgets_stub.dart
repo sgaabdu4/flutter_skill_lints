@@ -17,6 +17,7 @@ class Alignment {
 }
 
 class EdgeInsets {
+  static const EdgeInsets zero = EdgeInsets.all(0);
   const EdgeInsets.all(double value);
   const EdgeInsets.only({double left = 0, double top = 0, double right = 0, double bottom = 0});
   const EdgeInsets.symmetric({double vertical = 0, double horizontal = 0});
@@ -100,6 +101,7 @@ class Opacity extends Widget {
 class Container extends Widget {
   const Container({
     super.key,
+    EdgeInsets? margin,
     Alignment? alignment,
     EdgeInsets? padding,
     Color? color,
@@ -190,6 +192,10 @@ class BorderSide {
 class Border {
   const Border.all({double width = 1});
   const Border.fromBorderSide(BorderSide side);
+}
+
+class ListView extends Widget {
+  const ListView({super.key, bool shrinkWrap = false, List<Widget> children = const []});
 }
 
 class Text extends Widget {

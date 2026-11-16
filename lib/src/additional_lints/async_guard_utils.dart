@@ -36,9 +36,8 @@ bool isMountedGuardWithReturn(Statement statement) {
 
 void scanStatementsAfterAwait(
   NodeList<Statement> statements,
-  void Function(Statement statement) onUnsafeStatement, {
-  bool inspectStatementsContainingAwait = false,
-}) {
+  void Function(Statement statement) onUnsafeStatement,
+) {
   var seenAwait = false;
 
   for (final statement in statements) {
@@ -49,11 +48,6 @@ void scanStatementsAfterAwait(
 
     if (isMountedGuardWithReturn(statement)) {
       seenAwait = false;
-      continue;
-    }
-
-    if (inspectStatementsContainingAwait && containsAwait(statement)) {
-      onUnsafeStatement(statement);
       continue;
     }
 

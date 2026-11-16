@@ -6,6 +6,7 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.dart';
 
 /// Fix that replaces RichText with Text.rich.
 class PreferTextRichFix extends ResolvedCorrectionProducer {
@@ -25,27 +26,15 @@ class PreferTextRichFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
-
+    final replacementNode = reportedWidgetExpression(node);
     final ArgumentList argumentList;
-    final AstNode replacementNode;
-
-    if (targetNode is ConstructorName) {
-      // InstanceCreationExpression case (const RichText(...) or RichText<T>(...))
-      final parent = targetNode.parent;
-      if (parent is! InstanceCreationExpression) return;
-      argumentList = parent.argumentList;
-      replacementNode = parent;
-    } else if (targetNode is SimpleIdentifier) {
-      // MethodInvocation case (RichText(...) without const/new/type args)
-      final parent = targetNode.parent;
-      if (parent is! MethodInvocation) return;
-      argumentList = parent.argumentList;
-      replacementNode = parent;
+    if (replacementNode is InstanceCreationExpression) {
+      argumentList = replacementNode.argumentList;
+    } else if (replacementNode is MethodInvocation) {
+      argumentList = replacementNode.argumentList;
     } else {
       return;
     }
-
     final arguments = argumentList.arguments;
 
     // Find the `text` argument (the TextSpan)

@@ -7,5 +7,8 @@
   ],
   "ignore_patterns": [
     ".agents/**"
-  ]
+  ],
+  "health": {
+    "max_crap": 30
+  }
 }

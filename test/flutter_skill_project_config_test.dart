@@ -59,6 +59,9 @@ final class _FlutterSkillProjectConfigTest extends AnalysisRuleTest {
           'test_reportsGapsInsideIncludedOptionsFile': (t) =>
               t._reportsGapsInsideIncludedOptionsFile(),
           'test_followsListFormInclude': (t) => t._followsListFormInclude(),
+          'test_followsListIncludeWithCommentsAndQuotes': (t) =>
+              t._followsListIncludeWithCommentsAndQuotes(),
+          'test_ignoresIncludeTextInsideComments': (t) => t._ignoresIncludeTextInsideComments(),
           'test_allowsMissingArbExcludeWhenArbFilesAreInToolFolders': (t) =>
               t._allowsMissingArbExcludeWhenArbFilesAreInToolFolders(),
           'test_followsFlowListInclude': (t) => t._followsFlowListInclude(),
@@ -701,6 +704,34 @@ dependencies:
     );
 
     await assertNoDiagnostics('void main() {}');
+  }
+
+  Future<void> _followsListIncludeWithCommentsAndQuotes() async {
+    newFile(
+      '$testPackageRootPath/base_options.yaml',
+      _canonicalOptions.replaceAll('    - avoid_print\n', ''),
+    );
+    newFile('$testPackageRootPath/extra_options.yaml', 'linter:\n  rules:\n    - avoid_print\n');
+    newFile(
+      '$testPackageRootPath/analysis_options.yaml',
+      "include:  # shared options\n  # the base set\n  - 'base_options.yaml'\n\n  # lints split out\n  - \"extra_options.yaml\" # extra\n",
+    );
+
+    await assertNoDiagnostics('void main() {}');
+  }
+
+  Future<void> _ignoresIncludeTextInsideComments() async {
+    newFile('$testPackageRootPath/base_options.yaml', _canonicalOptions);
+    newFile(
+      '$testPackageRootPath/analysis_options.yaml',
+      '# include: base_options.yaml\nplugins:\n  flutter_skill_lints:\nlinter:\n  rules:\n    - flutter_skill_project_config\n',
+    );
+
+    await assertDiagnostics('void main() {}', [
+      projectLint('cfg_strict_analysis'),
+      projectLint('cfg_required_lints'),
+      projectLint('cfg_generated_exclude'),
+    ]);
   }
 
   void _writeCanonicalAnalysisOptions() {

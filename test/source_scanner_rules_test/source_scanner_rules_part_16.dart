@@ -179,7 +179,7 @@ class ProviderListenable<T> {
   @override
   Future<void> _reportsDiagnostic() async {
     _addProductNotifier(keepAlive: false);
-    await super._reportsDiagnostic();
+    await _assertReportsDiagnostic();
   }
 
   Future<void> _allowsKeepAliveSourceFromAnotherFile() async {

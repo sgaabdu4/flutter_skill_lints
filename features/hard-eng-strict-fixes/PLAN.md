@@ -41,11 +41,16 @@ Risk: new tests add run time. Recovery: the suite stays far under the 180 s pre-
 
 N/A — analyzer diagnostics have no visual interface.
 
+## Sources + coverage
+
+Sources: N/A — the request is the only source.
+
 ## Verification
 
 Result: Pending
 Evidence: Pending.
 E2E: N/A — no user journey; the rule tests run the real analyzer on an in-memory project.
+Real service: N/A — the change calls no outside service; it only changes analyzer rule code and its tests.
 Retro: Pending
 
 Delivery target: PR

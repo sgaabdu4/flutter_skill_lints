@@ -200,8 +200,6 @@ final _finalRepositoryDatasourcePattern = RegExp(
 
 final _classDeclarationLinePattern = RegExp(r'^\s*(?:abstract\s+interface\s+)?class\b');
 
-final _classRepositoryDatasourcePattern = RegExp(r'\bclass\s+\w+(?:Repository|Datasource)\b');
-
 final _mapStringDynamicPattern = RegExp(r'\bMap\s*<\s*String\s*,\s*dynamic\s*>\s+\w+\s*\(');
 
 final _toJsonFromJsonToMapPattern = RegExp(r'\b(?:toJson|fromJson|toMap)\s*\(');
@@ -315,10 +313,6 @@ final class SourceScannerContext {
 
   int? initStateReadColumn(int lineIndex) => _immediateInitStateReadColumn(this, lineIndex);
 
-  bool hasStringNavigation(String code, String masked) {
-    return stringNavigationColumn(code, masked) != null;
-  }
-
   int? stringNavigationColumn(String code, String masked) {
     final patterns = [
       _contextStringNavigationPattern,
@@ -394,15 +388,6 @@ final class SourceScannerContext {
       line.contains('textScaleFactor:') ||
       line.contains('TextScaler.linear(1');
 
-  bool hasConcreteLayerClass() {
-    for (final line in source.masked) {
-      if (_classRepositoryDatasourcePattern.hasMatch(line)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   bool hasConcreteLayerDependencyLine(String line) {
     if (_classDeclarationLinePattern.hasMatch(line)) {
       return false;
@@ -457,15 +442,6 @@ final class SourceScannerContext {
       for (final name in names) {
         if (RegExp('^@${RegExp.escape(name)}\\b').hasMatch(line)) return true;
       }
-    }
-    return false;
-  }
-
-  bool hasImmediateGuard(int awaitLine, int methodEnd, String target) {
-    for (var i = awaitLine + 1; i <= methodEnd && i < source.length; i++) {
-      final line = source.masked[i].trim();
-      if (line.isEmpty) continue;
-      return line.contains('if (!$target.mounted)') && line.contains('return');
     }
     return false;
   }

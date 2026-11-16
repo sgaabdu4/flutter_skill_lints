@@ -35,17 +35,31 @@
   callbacks chained on a microtask, a cascade on it, and a load passed as an
   `onError` callback, in `avoid_sync_notifier_state_read`.
 - Add the diagnostic `avoid_provider_turn_hop` to the same rule. A provider body
-  (`@riverpod` function, sync or async, or a classic `Provider((ref) { ... })`),
-  and any closure in it, must not hop a zero-delay turn. It reports
-  `Future.microtask`, `scheduleMicrotask`, `Future(...)`, `Timer.run`,
-  `Timer(...)` and `Future.delayed(...)` with `Duration.zero` or a literal
-  `Duration` under one millisecond, `then`, `catchError` or `whenComplete` on
-  an already completed future (`Future.value`, `Future.sync`, also through a
-  local variable, parentheses or a cascade), and a call to a top-level helper in
-  the same file whose body holds one of these. It reports the hop itself, not
-  the callback, and also when the hop is awaited or returned. A real delay (a
-  `Duration` of one millisecond or more, or a non-constant `Duration`) is not
-  reported. A helper that calls another helper that hops is not followed.
+  (`@riverpod` function, sync or async, a classic `Provider((ref) { ... })`, a
+  top-level function passed to a provider as a tear-off, or the `build` method of
+  a `@riverpod` class or a `Notifier`, `AsyncNotifier` or `StreamNotifier`
+  subclass, sync or async), and any closure in it, must not hop a zero-delay
+  turn. It reports
+  `Future.microtask`, `scheduleMicrotask`, `Zone.scheduleMicrotask`,
+  `Future(...)`, `Timer.run`, `Timer(...)`, `Timer.periodic(...)` and
+  `Future.delayed(...)` with a `Duration` under one millisecond, `then`,
+  `catchError`, `whenComplete` or `listen` on an already completed source
+  (`Future.value` of a non-future, `Future.sync` of a callback that returns no
+  future, `Future.error`, `Stream.value`, `Stream.error`, `Stream.fromIterable`,
+  also through a local variable, parentheses or a cascade, and the `future` of a
+  `Completer` that was completed earlier in the same body), `await` of such a
+  future or of `null`, and a call to a top-level helper in the same file whose
+  body holds one of these. The `Duration` is judged by its value: a constant
+  (`Duration.zero`, a `const` variable, `Duration(milliseconds: kMs)` with a
+  `const kMs`) or a dot shorthand (`.new()`, `const .new(milliseconds: 0)`).
+  `Future.sync(() => repo.load())` and `Future.value(repo.load())` wait for real
+  work and are not reported. It reports the hop itself, not the callback, and
+  also when the hop is awaited or returned. A real delay (a `Duration` of one
+  millisecond or more, or a non-constant `Duration`) is not reported. A helper
+  that calls another helper that hops is not followed. Known limits: a
+  `Completer` is judged only inside the one body that creates it and by source
+  order, and a provider tear-off is followed only when the function is a
+  top-level function in the same file.
   Return the value from the provider, or start the work from the event that
   causes it. This replaces the unreleased `avoid_provider_deferred_state_work`,
   which judged the callback instead of the hop.

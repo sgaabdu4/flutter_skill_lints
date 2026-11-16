@@ -161,6 +161,13 @@ final class _AvoidSyncNotifierStateReadTest extends _FlutterSkillRuleTest {
     super.setUp();
   }
 
+  @override
+  void assertDiagnosticsIn(List<Diagnostic> diagnostics, List<Object?> expectedDiagnostics) =>
+      super.assertDiagnosticsIn([
+        for (final diagnostic in diagnostics)
+          if (diagnostic.diagnosticCode != AvoidSyncNotifierStateRead.providerCode) diagnostic,
+      ], expectedDiagnostics.cast());
+
   Future<void> _reportsStateReadInSyncBuild() async {
     const source = r'''
 import 'package:riverpod/riverpod.dart';

@@ -2,8 +2,8 @@
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 229 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 237 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 228 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 236 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 273 additional diagnostics.
 - Total unique diagnostics: 509.
 
@@ -165,7 +165,7 @@ Core skill rules already covered before this pass:
   `presentation_widget_controller_state`,
   `presentation_widget_infrastructure_dependency`.
 - UI/performance/date: `avoid_widget_build_helpers`, `avoid_shrink_wrap`,
-  `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`,
+  `style_raw_token`, `style_raw_text_style`,
   `l10n_context_direct_access`, `l10n_string_concatenation`,
   `l10n_notifier_localized_copy`, `widget_preview_import_leak`,
   `widget_preview_platform_dependency`, `widget_preview_screen`,
@@ -218,7 +218,7 @@ hover description and correction text.
 | `analysis-options.md` | `cfg_analysis_options_canonical`, `cfg_strict_analysis`, `cfg_required_lints`, `cfg_generated_exclude`, `cfg_prohibited_lint_plugins`, `avoid_flutter_skill_lint_suppression` |
 | `analysis_options.yaml` | Canonical include/plugins/analyzer/linter block; duplicate checks leave `flutter_lints` and `riverpod_lint` owned rules to those packages |
 | `architecture.md` | `arch_domain_import`, `arch_storage_sdk_import`, `arch_domain_serialization`, `arch_interface_contract`, `arch_repository_generated_extends`, `arch_concrete_dependency`, `arch_widget_path`, `arch_model_missing_to_entity`, `arch_repository_inline_entity_mapping`, `arch_model_extends_entity`, `atomic_provider_access`, `avoid_object_map_cast`, `avoid_inline_error_codes`, `avoid_local_contract_key_constants`, runtime boundary for dual persistence owners |
-| `atomic-design.md` | `style_raw_token`, `style_raw_text_style`, `strings_hardcoded`, `atomic_provider_access`, `atomic_page_consumer_widget`, `arch_widget_path`, `widget_material_boundary`, runtime boundary for cross-feature widget promotion |
+| `atomic-design.md` | `style_raw_token`, `style_raw_text_style`, `atomic_provider_access`, `atomic_page_consumer_widget`, `arch_widget_path`, `widget_material_boundary`, runtime boundary for cross-feature widget promotion |
 | `common-patterns.md` | `router_string_nav`, `router_gorouter_of`, `router_untyped_navigator_push`, `router_direct_route_call`, `router_raw_route_definition`, `router_modal_local_helpers`, `router_container_navigation_escape`, `router_context_navigation_extension`, `router_navigation_wrapper_api`, `router_pop_then_push`, `pop_fallback_helper_must_check_navigator_stack` (mounted + root/local Navigator fallback), `router_redirect_watch`, `router_redirect_loading_bounce`, `router_splash_waits_for_initial_sync`, `router_complex_extra`, `router_impure_redirect`, `router_shell_tab_push`, `guard_context_pop`, `use_context_is_current_modal_route`, `avoid_route_param_throw_in_build`, `state_broad_invalidation`, `widget_local_mutation_flag`, `storage_clear_preserves_migration_state`, runtime boundary for UX-specific debounce duration |
 | `dart-mcp-e2e-testing.md` | `cfg_e2e_entrypoint`, `avoid_flutter_host_driver_imports`, `test_inline_value_key`, `test_tap_at`, `test_first_match_finder`, `riverpod_notifier_override_with_value`, `test_e2e_blind_sleep`, runtime boundary for real device, logs, source-of-truth, cleanup, and multi-actor proof |
 | `dart-patterns-records.md` | `record_use_outside_ffi`, `records_map_return`, `typed_id_raw_id`, `avoid_null_bang`, `prefer_wildcard_pattern`, `prefer_class_destructuring`, `use_existing_destructuring` |
@@ -228,7 +228,7 @@ hover description and correction text.
 | `freezed-sealed.md` | `use_sealed_freezed_classes`, `use_freezed_instead_of_immutable`, `freezed_one_class_per_file`, `freezed_missing_private_constructor`, `freezed_per_class_explicit_to_json`, `freezed_to_json_with_from_json`, `freezed_legacy_when_map`, `async_value_switch_over_when`, `arch_domain_json_annotation`, `cfg_explicit_to_json` |
 | `hive-persistence.md` | `hive_reserved_type_ids_missing`, `hive_duplicate_type_id`, `hive_duplicate_field_id`, `hive_type_on_freezed_class`, `hive_adapter_spec_domain_type`, `notifier_hive_access`, `hive_test_close_missing`, `avoid_unvalidated_persisted_map_cast`, runtime boundary for historical TypeId permanence |
 | `layout-diagnostics.md` | `avoid_shrink_wrap`, `avoid_shrink_wrap_in_lists`, `avoid_flexible_outside_flex`, `avoid_positioned_outside_stack`, `avoid_unbounded_list_in_column`, `avoid_unbounded_text_field_in_row`, `avoid_orientation_layout`, `use_dedicated_media_query_methods`, `prefer_spacing` limited to repeated uniform gaps, runtime boundary for device-type layout checks |
-| `localization.md` | `strings_hardcoded`, `avoid_hardcoded_strings`, `l10n_context_direct_access`, `l10n_string_concatenation`, `l10n_notifier_localized_copy` |
+| `localization.md` | `avoid_hardcoded_strings`, `l10n_context_direct_access`, `l10n_string_concatenation`, `l10n_notifier_localized_copy` |
 | `mixins.md` | `mixin_mixin_class`, `mixin_name_suffix`, `mixin_mutable_state` |
 | `networking.md` | `network_http_call_in_widget_or_notifier`, `datasource_concrete_http_client`, `network_failure_null_fallback`, `network_secret_in_widget`, `network_raw_http_failure_in_widget_or_notifier`, `appwrite_blocking_function_execution_in_client` (name heuristic), `destructive_failure_logged_before_reconcile`, runtime boundary for base-URL constants in widgets, source-of-truth refresh after mutations, and retry safety |
 | `performance.md` | `riverpod_watch_no_select`, `avoid_widget_build_helpers`, `avoid_shrink_wrap`, `avoid_private_widget_classes`, `perf_listview_children`, `perf_build_work`, `state_empty_string_sentinel`, `state_bool_string_sentinel`, `state_raw_response`, `state_raw_error_to_string`, `a11y_text_scale_clamp`, `user_visible_duration_too_long`, `notifier_timer_without_on_dispose`, `flutter_*` optimization rules |

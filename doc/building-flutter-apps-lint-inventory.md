@@ -201,7 +201,6 @@ state_freezed_nullable_error
 state_raw_error_to_string
 state_raw_response
 storage_clear_preserves_migration_state
-strings_hardcoded
 style_raw_text_style
 style_raw_token
 sync_save_all_no_dirty_guard

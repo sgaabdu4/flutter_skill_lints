@@ -614,110 +614,6 @@ void main() {
   }
 }
 
-final class _StringsHardcodedTest extends _UiRuleTest {
-  static Map<String, Future<void> Function(_StringsHardcodedTest)> get _allCases =>
-      caseSet<_StringsHardcodedTest>(
-        parent: _SourceRuleTest._allCases,
-        own: {
-          'test_severityIsError': (t) => t._severityIsError(),
-          'test_reportsStringsDefinitionFiles': (t) => t._reportsStringsDefinitionFiles(),
-          'test_allowsSampleTextInsideResolvedPreview': (t) =>
-              t._allowsSampleTextInsideResolvedPreview(),
-          'test_reportsTextUnderLookalikePreviewAnnotation': (t) =>
-              t._reportsTextUnderLookalikePreviewAnnotation(),
-          'test_allowsHardcodedLookingTextInsideDebugPrintWithParen': (t) =>
-              t._allowsHardcodedLookingTextInsideDebugPrintWithParen(),
-        },
-      );
-
-  @override
-  String get ruleName => 'strings_hardcoded';
-
-  Future<void> _severityIsError() async {
-    expect((rule as ScannerRule).diagnosticCode.severity, DiagnosticSeverity.ERROR);
-  }
-
-  @override
-  String get needle => "Text('Save'";
-  @override
-  bool get lineStart => true;
-  @override
-  String get source => r'''
-class Text {
-  Text(String data);
-}
-
-final text = Text('Save');
-''';
-
-  Future<void> _reportsStringsDefinitionFiles() async {
-    final filePath = '$testPackageLibPath/features/settings/settings_strings.dart';
-    const source = r'''
-class Text {
-  Text(String data);
-}
-
-final text = Text('Save');
-''';
-    newFile(filePath, source);
-
-    await assertDiagnosticsInFile(filePath, [
-      compatLint(source, "final text = Text('Save')", ruleName),
-    ]);
-  }
-
-  Future<void> _allowsSampleTextInsideResolvedPreview() async {
-    await assertAllows(r'''
-import 'package:flutter/widget_previews.dart';
-
-class Text {
-  Text(String data);
-}
-
-@Preview(name: 'Card')
-Text cardPreview() => Text('Suture Kit');
-''', path: '$testPackageLibPath/features/probe/presentation/widgets/card_preview.dart');
-  }
-
-  Future<void> _reportsTextUnderLookalikePreviewAnnotation() async {
-    final filePath = '$testPackageLibPath/features/probe/presentation/widgets/card_preview.dart';
-    final analyzedSource = _analyzedSource(r'''
-class Preview {
-  const Preview({String? name});
-}
-
-class Text {
-  Text(String data);
-}
-
-@Preview(name: 'Card')
-Text cardPreview() => Text('Suture Kit');
-''', addIgnorePrefix: addIgnorePrefix);
-    newFile(filePath, analyzedSource);
-
-    await assertDiagnosticsInFile(filePath, [
-      compatLint(
-        analyzedSource,
-        "Text cardPreview() => Text('Suture Kit')",
-        ruleName,
-        lineStart: true,
-      ),
-    ]);
-  }
-
-  Future<void> _allowsHardcodedLookingTextInsideDebugPrintWithParen() async {
-    await assertAllows(r'''
-class Text {
-  Text(String data);
-}
-
-void log() {
-  debugPrint(") Text('Save')");
-}
-''');
-  }
-}
-
 final class _L10nContextDirectAccessTest extends _UiRuleTest {
   static Map<String, Future<void> Function(_L10nContextDirectAccessTest)> get _allCases =>
       caseSet<_L10nContextDirectAccessTest>(
@@ -958,11 +854,6 @@ void _defineSourceScannerRulesPart05Tests() {
     'StyleRawTextStyleTest',
     _StyleRawTextStyleTest.new,
     _StyleRawTextStyleTest._allCases,
-  );
-  analysisRuleSuite<_StringsHardcodedTest>(
-    'StringsHardcodedTest',
-    _StringsHardcodedTest.new,
-    _StringsHardcodedTest._allCases,
   );
   analysisRuleSuite<_L10nContextDirectAccessTest>(
     'L10nContextDirectAccessTest',

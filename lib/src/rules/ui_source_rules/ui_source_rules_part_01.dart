@@ -52,26 +52,6 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     },
   ),
 
-  /// Avoid hardcoded UI strings.
-  scannerRule(
-    code: const LintCode(
-      'strings_hardcoded',
-      'Avoid hardcoded UI strings.',
-      correctionMessage: 'Move user-facing text into the gen-l10n ARB files and read it through AppLocalizations (context.l10n).',
-      severity: DiagnosticSeverity.ERROR,
-    ),
-    description:
-        'Flags hardcoded UI strings so the Flutter skill violation is shown during analysis.',
-    scan: (reporter, context) {
-      for (var i = 0; i < context.source.length; i++) {
-        if (context.hasHardcodedUiString(context.source.code[i]) &&
-            !context.isWidgetPreviewLine(i)) {
-          reporter.report(context, i, 0);
-        }
-      }
-    },
-  ),
-
   /// Bind localizations once before reading localized strings.
   scannerRule(
     code: const LintCode(

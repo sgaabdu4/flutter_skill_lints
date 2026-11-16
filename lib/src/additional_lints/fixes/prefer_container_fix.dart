@@ -85,7 +85,7 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
+    final targetNode = reportedConstructorName(node);
 
     // Find the outermost widget expression
     final Expression outerWidget;

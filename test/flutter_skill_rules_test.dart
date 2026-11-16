@@ -20,11 +20,15 @@ import 'package:test/test.dart';
 
 import 'analysis_rule_suite.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_01.dart';
+part 'flutter_skill_rules_test/flutter_skill_rules_part_01_b.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_02.dart';
+part 'flutter_skill_rules_test/flutter_skill_rules_part_02_b.dart';
 
 void main() {
   _defineFlutterSkillRulesPart01Tests();
+  _defineFlutterSkillRulesPart01BTests();
   _defineFlutterSkillRulesPart02Tests();
+  _defineFlutterSkillRulesPart02BTests();
 }
 
 abstract class _FlutterSkillRuleTest extends AnalysisRuleTest {

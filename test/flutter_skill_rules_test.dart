@@ -20,7 +20,7 @@ import 'package:flutter_skill_lints/src/rules/use_unawaited_for_fire_and_forget_
 import 'package:test/test.dart';
 
 import 'analysis_rule_suite.dart';
-import 'provider_turn_hop_rows.dart';
+import 'provider_turn_hop_more_rows.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_01.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_01_b.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_02.dart';

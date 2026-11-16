@@ -53,6 +53,19 @@ final class _AvoidHardcodedStringsTest extends AnalysisRuleTest {
           'test_globalFunctionVariableProseInWidget_noLint': (t) =>
               t._globalFunctionVariableProseInWidgetNoLint(),
           'test_titleLiteralPassedToFunction_lint': (t) => t._titleLiteralPassedToFunctionLint(),
+          'test_hintTextInDotShorthandConstructor_lint': (t) =>
+              t._hintTextInDotShorthandConstructorLint(),
+          'test_titleInDotShorthandStaticMethod_lint': (t) =>
+              t._titleInDotShorthandStaticMethodLint(),
+          'test_titleInEnumConstantArguments_lint': (t) => t._titleInEnumConstantArgumentsLint(),
+          'test_titleInSuperConstructorCall_lint': (t) => t._titleInSuperConstructorCallLint(),
+          'test_titleInRedirectingConstructorCall_lint': (t) =>
+              t._titleInRedirectingConstructorCallLint(),
+          'test_titleInFunctionTypedValueCall_lint': (t) => t._titleInFunctionTypedValueCallLint(),
+          'test_labelInBinEntrypoint_lint': (t) => t._labelInBinEntrypointLint(),
+          'test_labelInRepositoryDebugCall_noLint': (t) => t._labelInRepositoryDebugCallNoLint(),
+          'test_labelInAnalyticsCall_noLint': (t) => t._labelInAnalyticsCallNoLint(),
+          'test_titleToPlainNonUiFunction_noLint': (t) => t._titleToPlainNonUiFunctionNoLint(),
           'test_titleLiteralPassedToMethod_lint': (t) => t._titleLiteralPassedToMethodLint(),
           'test_labelLiteralAfterPositionalArgument_lint': (t) =>
               t._labelLiteralAfterPositionalArgumentLint(),
@@ -107,6 +120,26 @@ class InputField extends Widget {
 
 class BuildContext {}
 
+class InputDecoration {
+  const InputDecoration({this.hintText});
+  final String? hintText;
+}
+
+class Field extends Widget {
+  const Field({this.decoration});
+  final InputDecoration? decoration;
+}
+
+class Toast extends Widget {
+  const Toast();
+  static Toast make({String? title}) => const Toast();
+}
+
+class Parent extends Widget {
+  const Parent({this.title});
+  final String? title;
+}
+
 typedef ValueChanged<T> = void Function(T value);
 
 typedef DebugPrintCallback = void Function(String? message);
@@ -127,6 +160,9 @@ abstract class State<T extends StatefulWidget> {
   T get widget => throw UnimplementedError();
   Widget build(BuildContext context);
 }
+''')
+      ..addFile('lib/foundation.dart', r'''
+void debugPrintStack({StackTrace? stackTrace, String? label}) {}
 ''')
       ..addFile('lib/widget_previews.dart', r'''
 base class Preview {
@@ -468,10 +504,12 @@ class SavePanel extends StatelessWidget {
 
   Future<void> _titleLiteralPassedToFunctionLint() async {
     const source = '''
-void show({String? title}) {}
+import 'package:flutter/widgets.dart';
 
-void open() {
-  show(title: 'Saved changes');
+void show(BuildContext context, {String? title}) {}
+
+void open(BuildContext context) {
+  show(context, title: 'Saved changes');
 }
 ''';
     await assertDiagnostics(source, [
@@ -481,8 +519,10 @@ void open() {
 
   Future<void> _titleLiteralPassedToMethodLint() async {
     const source = '''
+import 'package:flutter/widgets.dart';
+
 class Toaster {
-  void show({String? tooltip}) {}
+  Widget show({String? tooltip}) => const Toast();
 }
 
 void open(Toaster toaster) {
@@ -496,9 +536,11 @@ void open(Toaster toaster) {
 
   Future<void> _labelLiteralAfterPositionalArgumentLint() async {
     const source = '''
-void showConfirmDialog(Object context, {String? title}) {}
+import 'package:flutter/widgets.dart';
 
-void open(Object context) {
+void showConfirmDialog(BuildContext context, {String? title}) {}
+
+void open(BuildContext context) {
   showConfirmDialog(context, title: 'Delete item?');
 }
 ''';
@@ -533,6 +575,127 @@ void show({String? title}) {}
 
 void open() {
   show(title: '123');
+}
+''');
+  }
+
+  Future<void> _hintTextInDotShorthandConstructorLint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+Widget build() => const Field(decoration: .new(hintText: 'Search'));
+''';
+    await assertDiagnostics(source, [lint(source.indexOf("'Search'"), "'Search'".length)]);
+  }
+
+  Future<void> _titleInDotShorthandStaticMethodLint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+Toast pick() => .make(title: 'Saved');
+''';
+    await assertDiagnostics(source, [lint(source.indexOf("'Saved'"), "'Saved'".length)]);
+  }
+
+  Future<void> _titleInEnumConstantArgumentsLint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+Widget? tabContent;
+
+enum Tab {
+  home(title: 'Home');
+
+  const Tab({required this.title});
+  final String title;
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf("'Home'"), "'Home'".length)]);
+  }
+
+  Future<void> _titleInSuperConstructorCallLint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class Child extends Parent {
+  const Child() : super(title: 'Home');
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf("'Home'"), "'Home'".length)]);
+  }
+
+  Future<void> _titleInRedirectingConstructorCallLint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class Child extends Parent {
+  const Child() : this.named(title: 'Home');
+  const Child.named({super.title});
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf("'Home'"), "'Home'".length)]);
+  }
+
+  Future<void> _titleInFunctionTypedValueCallLint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class Row extends StatelessWidget {
+  const Row({required this.onShow});
+  final void Function({String? title}) onShow;
+
+  @override
+  Widget build(BuildContext context) {
+    onShow(title: 'Save');
+    return const Text('');
+  }
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf("'Save'"), "'Save'".length)]);
+  }
+
+  Future<void> _labelInBinEntrypointLint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+Widget build() => const AppButton(label: 'Save');
+''';
+    final path = '$testPackageRootPath/bin/main.dart';
+    newFile(path, source);
+
+    await assertDiagnosticsInFile(path, [lint(source.indexOf("'Save'"), "'Save'".length)]);
+  }
+
+  Future<void> _labelInRepositoryDebugCallNoLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/foundation.dart';
+
+class SyncRepository {
+  void fail(StackTrace stack) {
+    debugPrintStack(stackTrace: stack, label: 'Sync failed');
+  }
+}
+''');
+  }
+
+  Future<void> _labelInAnalyticsCallNoLint() async {
+    await assertNoDiagnostics(r'''
+class Analytics {
+  void track(String event, {String? label}) {}
+}
+
+void use(Analytics analytics) {
+  analytics.track('button_tap', label: 'checkout_button');
+}
+''');
+  }
+
+  Future<void> _titleToPlainNonUiFunctionNoLint() async {
+    await assertNoDiagnostics('''
+void show({String? title}) {}
+
+void open() {
+  show(title: 'Saved changes');
 }
 ''');
   }

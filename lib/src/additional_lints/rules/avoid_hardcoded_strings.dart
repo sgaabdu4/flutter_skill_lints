@@ -38,6 +38,7 @@ class AvoidHardcodedStrings extends AnalysisRule {
     registry.addInstanceCreationExpression(this, visitor);
     registry.addFunctionExpressionInvocation(this, visitor);
     registry.addMethodInvocation(this, visitor);
+    registry.addNamedArgument(this, visitor);
   }
 }
 
@@ -47,6 +48,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   final AvoidHardcodedStrings rule;
 
   static const _textChecker = TypeChecker.fromName('Text', packageName: 'flutter');
+  static const _contextChecker = TypeChecker.fromName('BuildContext', packageName: 'flutter');
   static const _widgetOrStateChecker = TypeChecker.any([
     TypeChecker.fromName('Widget', packageName: 'flutter'),
     flutterStateChecker,
@@ -88,17 +90,38 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (node.methodName.name == 'call' && target?.staticType is FunctionType) {
       _reportCallbackProse(node, target, node.argumentList);
     }
-    _reportLabelArguments(node);
   }
 
-  void _reportLabelArguments(MethodInvocation node) {
-    if (enclosingWidgetPreview(node) != null) return;
-    for (final argument in node.argumentList.arguments.whereType<NamedArgument>()) {
-      if (!_callLabelNames.contains(argument.name.lexeme)) continue;
-      if (_isUserFacingLiteral(argument.argumentExpression)) {
-        rule.reportAtNode(argument.argumentExpression);
-      }
-    }
+  @override
+  void visitNamedArgument(NamedArgument node) {
+    if (!_callLabelNames.contains(node.name.lexeme)) return;
+    if (node.parent?.parent is InstanceCreationExpression) return;
+    if (!_isUserFacingLiteral(node.argumentExpression)) return;
+    if (enclosingWidgetPreview(node) != null || !_isUiCall(node)) return;
+    rule.reportAtNode(node.argumentExpression);
+  }
+
+  bool _isUiCall(NamedArgument argument) {
+    final callee = argument.correspondingParameter?.enclosingElement;
+    if (callee is ExecutableElement) return _isUiExecutable(callee);
+    final call = argument.parent?.parent;
+    final function = switch (call) {
+      FunctionExpressionInvocation() => call.function,
+      MethodInvocation() => call.methodName,
+      _ => null,
+    };
+    return function != null &&
+        !_isGlobalFunctionVariable(function) &&
+        isEnclosedClassAssignableTo(argument, _widgetOrStateChecker);
+  }
+
+  bool _isUiExecutable(ExecutableElement callee) {
+    final enclosing = callee.enclosingElement;
+    return _isFlutterUiLibrary(callee.library) ||
+        _widgetOrStateChecker.isAssignableFromType(callee.returnType) ||
+        (enclosing is InterfaceElement && _widgetOrStateChecker.isSuperOf(enclosing)) ||
+        callee.formalParameters.any((parameter) => _contextChecker.isExactlyType(parameter.type)) ||
+        (callee is ConstructorElement && _importsFlutterUi(callee.library));
   }
 
   void _reportCallbackProse(AstNode node, Expression? callee, ArgumentList arguments) {
@@ -138,11 +161,25 @@ Expression? _firstPositional(NodeList<Argument> arguments) {
   return arguments.isEmpty ? null : arguments.first.argumentExpression;
 }
 
-bool _isExcludedContext(RuleContext context) {
-  final path = productionLibPath(context);
-  if (path == null) return true;
-  return path.contains('/l10n/') || path.contains('/generated/');
+bool _isExcludedContext(RuleContext context) =>
+    isTestSourceContext(context) ||
+    isGeneratedRuleContext(context) ||
+    context.definingUnit.file.path.replaceAll('\\', '/').contains('/l10n/');
+
+final RegExp _nonUiFlutterLibrary = RegExp(
+  r'^package:flutter/(?:src/)?(?:foundation|services|scheduler)\b',
+);
+
+bool _isFlutterUiLibrary(LibraryElement library) {
+  final uri = library.uri.toString();
+  return uri.startsWith('package:flutter/') && !_nonUiFlutterLibrary.hasMatch(uri);
 }
+
+bool _importsFlutterUi(LibraryElement library) =>
+    library.firstFragment.libraryImports.any((import) {
+      final imported = import.importedLibrary;
+      return imported != null && _isFlutterUiLibrary(imported);
+    });
 
 bool _isUserFacingLiteral(Expression expression) {
   final text = stringLiteralText(expression) ?? _constantStringText(expression);

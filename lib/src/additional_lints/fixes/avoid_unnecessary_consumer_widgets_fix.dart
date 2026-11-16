@@ -25,11 +25,8 @@ class AvoidUnnecessaryConsumerWidgetsFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
-    if (targetNode is! SimpleIdentifier) return;
-
-    final classDecl = targetNode.parent;
-    if (classDecl is! ClassDeclaration) return;
+    final classDecl = node.thisOrAncestorOfType<ClassDeclaration>();
+    if (classDecl == null) return;
 
     final superclass = classDecl.extendsClause?.superclass;
     if (superclass == null) return;

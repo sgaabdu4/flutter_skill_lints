@@ -4,7 +4,7 @@ Status: Complete
 
 ## Outcome + scope
 
-The package passes HE-COMMENT-LINES, HE-NO-SWITCH-OFF (except the lint sample strings judged false) and the dart-decimate health gate with `max_crap` 30. No rule, test or behavior is removed. The 129 `ignore_for_file: non_constant_identifier_names` lines are gone: each `test_` method is a private lowerCamel method that `main()` registers through `analysisRuleSuite`, with the old test names. Non-goal: change the lints include.
+The package passes HE-COMMENT-LINES, HE-NO-SWITCH-OFF (except the lint sample strings judged false) and the dart-decimate health gate with `max_crap` 30. Two rules that reported the same sites as another rule are removed: `avoid_banned_types` (same `dynamic` sites as `avoid_dynamic_except_json_maps`) and `strings_hardcoded` (same lines as `avoid_hardcoded_strings`). The project config rule reads `include:` files, accepts the `rule: true` map form, and asks for `riverpod_lint` and the `*.arb` exclude only when they apply. Two correction messages no longer advise an ignore. Sync `Notifier.build()` also reports load work started from `then`, `catchError` or `whenComplete` on a microtask. The 129 `ignore_for_file: non_constant_identifier_names` lines are gone: each `test_` method is a private lowerCamel method, and each class lists its cases once in a `_allCases` getter that `analysisRuleSuite` runs, with the old test names. A class or method left out of a registration fails `dart analyze --fatal-infos` as an unused element. Non-goal: change the lints include.
 
 ## Repository context
 

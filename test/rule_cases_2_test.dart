@@ -13,7 +13,8 @@ import 'prefer_correct_edge_insets_constructor_cases.dart' as c11;
 import 'prefer_enums_by_name_cases.dart' as c12;
 import 'prefer_use_callback_cases.dart' as c13;
 import 'text_distance_cases.dart' as c14;
-import 'use_ref_and_state_synchronously_cases.dart' as c15;
+import 'use_existing_destructuring_cases.dart' as c15;
+import 'use_ref_and_state_synchronously_cases.dart' as c16;
 
 void main() {
   c0.main();
@@ -32,4 +33,5 @@ void main() {
   c13.main();
   c14.main();
   c15.main();
+  c16.main();
 }

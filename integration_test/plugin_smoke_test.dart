@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
-import '../test/provider_turn_hop_rows.dart';
+import '../test/provider_turn_hop_more_rows.dart';
 
 void main() {
   test('loads canonical configuration with riverpod_lint in a real Flutter analysis server run', () async {
@@ -279,7 +279,7 @@ void sentryOptionsOutsideBuilder(SentryFlutterOptions options) {
         '${app.path}/packages/data/lib/data.dart',
         'class Repo {\n  Future<void> load() async {}\n}\n',
       );
-      for (final row in providerTurnHopRows) {
+      for (final row in allProviderTurnHopRows) {
         await _writeFile('${app.path}/lib/rows/${row.id}.dart', row.source);
       }
 
@@ -613,7 +613,7 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
         );
       }
       expect(output, contains('riverpod_select_identity_forbidden'));
-      for (final row in providerTurnHopRows) {
+      for (final row in allProviderTurnHopRows) {
         final lines = [
           for (final line in output.split('\n'))
             if (line.contains('avoid_provider_turn_hop'))

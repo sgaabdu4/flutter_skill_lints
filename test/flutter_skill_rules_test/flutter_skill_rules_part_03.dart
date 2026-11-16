@@ -7,7 +7,7 @@ final class _ProviderTurnHopTest extends _FlutterSkillRuleTest {
       caseSet<_ProviderTurnHopTest>(
         parent: const {},
         own: {
-          for (final row in providerTurnHopRows.where((row) => !row.realSdkOnly))
+          for (final row in allProviderTurnHopRows.where((row) => !row.realSdkOnly))
             'test_${row.id}': (t) => t._row(row),
         },
       );

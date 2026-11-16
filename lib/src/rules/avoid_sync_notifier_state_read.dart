@@ -6,16 +6,27 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
+import 'package:flutter_skill_lints/src/rules/provider_turn_hop_visitor.dart';
 
 /// Don't read state or run immediate loading work in sync Notifier.build().
-final class AvoidSyncNotifierStateRead extends AnalysisRule {
+final class AvoidSyncNotifierStateRead extends MultiAnalysisRule {
   static const LintCode code = LintCode(
     'avoid_sync_notifier_state_read',
     "Don't read state or run immediate loading work in sync Notifier.build().",
     correctionMessage:
         'Return initial state from build(). Move the load into AsyncNotifier.build(), '
         'or start it from the event that causes it.',
+    severity: DiagnosticSeverity.ERROR,
+  );
+
+  static const LintCode providerCode = LintCode(
+    'avoid_provider_turn_hop',
+    "Don't hop a zero-delay turn in a provider body.",
+    correctionMessage:
+        'Return the value from the provider. Start the work from the event that causes it, '
+        'or move it into a Notifier or AsyncNotifier whose build() returns initial state.',
     severity: DiagnosticSeverity.ERROR,
   );
 
@@ -27,12 +38,18 @@ final class AvoidSyncNotifierStateRead extends AnalysisRule {
       );
 
   @override
-  LintCode get diagnosticCode => code;
+  List<DiagnosticCode> get diagnosticCodes => [code, providerCode];
+
+  void reportBuild(AstNode node) => reportAtNode(node, diagnosticCode: code);
+
+  void reportProvider(AstNode node) => reportAtNode(node, diagnosticCode: providerCode);
 
   @override
   void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
     if (isGeneratedRuleContext(context)) return;
     registry.addMethodDeclaration(this, _Visitor(this));
+    registry.addFunctionDeclaration(this, _Visitor(this));
+    registry.addFunctionExpression(this, _Visitor(this));
   }
 }
 
@@ -40,6 +57,24 @@ final class _Visitor extends RecursiveAstVisitor<void> {
   _Visitor(this.rule);
 
   final AvoidSyncNotifierStateRead rule;
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    if (hasRiverpodCodegenAnnotation(node)) {
+      final body = node.functionExpression.body;
+      body.accept(ProviderTurnHopVisitor(rule.reportProvider, body));
+    }
+  }
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {
+    final parameters = node.parameters?.parameters;
+    if (node.parent is! ArgumentList || parameters == null || parameters.isEmpty) return;
+    final type = parameters.first.declaredFragment?.element.type;
+    if (type != null && _riverpodRefChecker.isAssignableFromType(type)) {
+      node.body.accept(ProviderTurnHopVisitor(rule.reportProvider, node.body));
+    }
+  }
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
@@ -52,42 +87,28 @@ final class _Visitor extends RecursiveAstVisitor<void> {
 
 final _loadInitFetchPattern = RegExp(r'^_(?:load|init|fetch|listen|refresh|setup)[A-Za-z0-9_]*$');
 
-final class _BodyVisitor extends RecursiveAstVisitor<void> {
-  _BodyVisitor(this.rule, this.classNode);
+const _riverpodRefChecker = TypeChecker.fromName('Ref', packageName: 'riverpod');
+
+abstract base class _HopVisitor extends RecursiveAstVisitor<void> {
+  _HopVisitor(this.rule, this.loadPattern);
 
   final AvoidSyncNotifierStateRead rule;
-  final ClassDeclaration classNode;
+  final RegExp loadPattern;
+  bool inHop = false;
 
-  @override
-  void visitSimpleIdentifier(SimpleIdentifier node) {
-    if (_isNotifierStateRead(node)) rule.reportAtNode(node);
-  }
-
-  @override
-  void visitMethodInvocation(MethodInvocation node) {
-    final name = node.methodName.name;
+  void reportCompletionTearOffs(MethodInvocation node) {
     if (_isCompletionChainOfMicrotask(node)) _reportLoadTearOffs(node.argumentList);
-    if (_loadInitFetchPattern.hasMatch(name)) {
-      rule.reportAtNode(node);
-      return;
-    }
-    final helper = _ownHelper(classNode, node);
-    if (helper != null && _helperReadsState(classNode, helper, {})) {
-      rule.reportAtNode(node);
-      return;
-    }
-    super.visitMethodInvocation(node);
   }
 
-  @override
-  void visitNamedArgument(NamedArgument node) {
-    if (node.name.lexeme != 'fireImmediately') {
-      super.visitNamedArgument(node);
-      return;
-    }
-    final expression = node.argumentExpression;
-    if (expression is BooleanLiteral && expression.value) {
-      rule.reportAtNode(node);
+  void _reportLoadTearOffs(ArgumentList arguments) {
+    for (final argument in arguments.arguments) {
+      final expression = argument.argumentExpression;
+      final name = switch (expression) {
+        SimpleIdentifier() => expression.name,
+        PrefixedIdentifier() => expression.identifier.name,
+        _ => null,
+      };
+      if (name != null && loadPattern.hasMatch(name)) rule.reportBuild(expression);
     }
   }
 
@@ -103,24 +124,56 @@ final class _BodyVisitor extends RecursiveAstVisitor<void> {
     super.visitDotShorthandConstructorInvocation(node);
   }
 
-  void _reportLoadTearOffs(ArgumentList arguments) {
-    for (final argument in arguments.arguments) {
-      final expression = argument.argumentExpression;
-      if (expression is SimpleIdentifier && _loadInitFetchPattern.hasMatch(expression.name)) {
-        rule.reportAtNode(expression);
-      }
-    }
-  }
-
   @override
   void visitFunctionExpression(FunctionExpression node) {
-    if (_isMicrotaskCall(node.parent?.parent) || _isCompletionOfMicrotask(node)) {
-      super.visitFunctionExpression(node);
-    }
+    if (!_isMicrotaskCall(node.parent?.parent) && !_isCompletionOfMicrotask(node)) return;
+    final wasInHop = inHop;
+    inHop = true;
+    super.visitFunctionExpression(node);
+    inHop = wasInHop;
   }
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {}
+}
+
+final class _BodyVisitor extends _HopVisitor {
+  _BodyVisitor(AvoidSyncNotifierStateRead rule, this.classNode)
+    : super(rule, _loadInitFetchPattern);
+
+  final ClassDeclaration classNode;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (_isNotifierStateRead(node)) rule.reportBuild(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    reportCompletionTearOffs(node);
+    if (loadPattern.hasMatch(node.methodName.name)) {
+      rule.reportBuild(node);
+      return;
+    }
+    final helper = _ownHelper(classNode, node);
+    if (helper != null && _helperReadsState(classNode, helper, {})) {
+      rule.reportBuild(node);
+      return;
+    }
+    super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitNamedArgument(NamedArgument node) {
+    if (node.name.lexeme != 'fireImmediately') {
+      super.visitNamedArgument(node);
+      return;
+    }
+    final expression = node.argumentExpression;
+    if (expression is BooleanLiteral && expression.value) {
+      rule.reportBuild(node);
+    }
+  }
 }
 
 bool _isNotifierStateRead(SimpleIdentifier node) {

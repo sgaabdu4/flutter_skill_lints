@@ -176,6 +176,8 @@ final _includeBlockPattern = RegExp(
   r'^include\s*:[ \t]*(?:\[([^\]]*)\]|([^\s#\[][^\n#]*))?[ \t]*(?:#.*)?\n?((?:[ \t]+-[^\n]*\n?)*)',
   multiLine: true,
 );
+final _listDashPattern = RegExp(r'^\s*-');
+
 final _includeItemPattern = RegExp(r'''['"]?([^'",\s#]+)''');
 
 const _riverpodPackages = ['flutter_riverpod', 'hooks_riverpod', 'riverpod', 'riverpod_annotation'];
@@ -298,7 +300,7 @@ final class _ProjectConfigScanner {
     if (match == null) return;
     final listText = [
       match.group(1) ?? match.group(2) ?? '',
-      ...(match.group(3) ?? '').split('\n').map((line) => line.replaceFirst(RegExp(r'^\s*-'), '')),
+      ...(match.group(3) ?? '').split('\n').map((line) => line.replaceFirst(_listDashPattern, '')),
     ];
     for (final part in listText) {
       for (final item in _includeItemPattern.allMatches(part)) {

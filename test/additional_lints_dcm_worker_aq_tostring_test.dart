@@ -6,38 +6,35 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_stream_tost
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidDefaultToStringTest>(
+  analysisRuleSuite<_AvoidDefaultToStringTest>(
     'AvoidDefaultToStringTest',
-    AvoidDefaultToStringTest.new,
-    {
-      'test_localClassWithoutToString_lint': (t) => t._localClassWithoutToStringLint(),
-      'test_localClassWithToString_noLint': (t) => t._localClassWithToStringNoLint(),
-      'test_inheritsLocalToString_noLint': (t) => t._inheritsLocalToStringNoLint(),
-      'test_coreObjectTarget_noLint': (t) => t._coreObjectTargetNoLint(),
-    },
+    _AvoidDefaultToStringTest.new,
+    _AvoidDefaultToStringTest._allCases,
   );
-  analysisRuleSuite<AvoidRecursiveToStringTest>(
+  analysisRuleSuite<_AvoidRecursiveToStringTest>(
     'AvoidRecursiveToStringTest',
-    AvoidRecursiveToStringTest.new,
-    {
-      'test_directCall_lint': (t) => t._directCallLint(),
-      'test_thisCall_lint': (t) => t._thisCallLint(),
-      'test_thisInterpolation_lint': (t) => t._thisInterpolationLint(),
-      'test_fieldToString_noLint': (t) => t._fieldToStringNoLint(),
-      'test_nestedClosure_noLint': (t) => t._nestedClosureNoLint(),
-    },
+    _AvoidRecursiveToStringTest.new,
+    _AvoidRecursiveToStringTest._allCases,
   );
-  analysisRuleSuite<AvoidStreamToStringTest>(
+  analysisRuleSuite<_AvoidStreamToStringTest>(
     'AvoidStreamToStringTest',
-    AvoidStreamToStringTest.new,
-    {
-      'test_streamToString_lint': (t) => t._streamToStringLint(),
-      'test_nonStreamToString_noLint': (t) => t._nonStreamToStringNoLint(),
-    },
+    _AvoidStreamToStringTest.new,
+    _AvoidStreamToStringTest._allCases,
   );
 }
 
-final class AvoidDefaultToStringTest extends AnalysisRuleTest {
+final class _AvoidDefaultToStringTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidDefaultToStringTest)> get _allCases =>
+      caseSet<_AvoidDefaultToStringTest>(
+        parent: const {},
+        own: {
+          'test_localClassWithoutToString_lint': (t) => t._localClassWithoutToStringLint(),
+          'test_localClassWithToString_noLint': (t) => t._localClassWithToStringNoLint(),
+          'test_inheritsLocalToString_noLint': (t) => t._inheritsLocalToStringNoLint(),
+          'test_coreObjectTarget_noLint': (t) => t._coreObjectTargetNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidDefaultToString();
@@ -93,7 +90,19 @@ String label(Object value) => value.toString();
   }
 }
 
-final class AvoidRecursiveToStringTest extends AnalysisRuleTest {
+final class _AvoidRecursiveToStringTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidRecursiveToStringTest)> get _allCases =>
+      caseSet<_AvoidRecursiveToStringTest>(
+        parent: const {},
+        own: {
+          'test_directCall_lint': (t) => t._directCallLint(),
+          'test_thisCall_lint': (t) => t._thisCallLint(),
+          'test_thisInterpolation_lint': (t) => t._thisInterpolationLint(),
+          'test_fieldToString_noLint': (t) => t._fieldToStringNoLint(),
+          'test_nestedClosure_noLint': (t) => t._nestedClosureNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidRecursiveToString();
@@ -159,7 +168,16 @@ class User {
   }
 }
 
-final class AvoidStreamToStringTest extends AnalysisRuleTest {
+final class _AvoidStreamToStringTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidStreamToStringTest)> get _allCases =>
+      caseSet<_AvoidStreamToStringTest>(
+        parent: const {},
+        own: {
+          'test_streamToString_lint': (t) => t._streamToStringLint(),
+          'test_nonStreamToString_noLint': (t) => t._nonStreamToStringNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidStreamToString();

@@ -6,48 +6,55 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidHardcodedStringsTest>(
+  analysisRuleSuite<_AvoidHardcodedStringsTest>(
     'AvoidHardcodedStringsTest',
-    AvoidHardcodedStringsTest.new,
-    {
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_textPositionalLiteral_lint': (t) => t._textPositionalLiteralLint(),
-      'test_sampleTextInsideResolvedPreview_noLint': (t) =>
-          t._sampleTextInsideResolvedPreviewNoLint(),
-      'test_textUnderLookalikePreviewAnnotation_lint': (t) =>
-          t._textUnderLookalikePreviewAnnotationLint(),
-      'test_textFromStringsConstantsClass_lint': (t) => t._textFromStringsConstantsClassLint(),
-      'test_labelFromTopLevelConstant_lint': (t) => t._labelFromTopLevelConstantLint(),
-      'test_textFromLocalizationsGetter_noLint': (t) => t._textFromLocalizationsGetterNoLint(),
-      'test_constantWithoutLetters_noLint': (t) => t._constantWithoutLettersNoLint(),
-      'test_stringsFileWidget_lint': (t) => t._stringsFileWidgetLint(),
-      'test_textFromVariable_noLint': (t) => t._textFromVariableNoLint(),
-      'test_emptyText_noLint': (t) => t._emptyTextNoLint(),
-      'test_numericText_noLint': (t) => t._numericTextNoLint(),
-      'test_namedLabelLiteral_lint': (t) => t._namedLabelLiteralLint(),
-      'test_namedHintTextLiteral_lint': (t) => t._namedHintTextLiteralLint(),
-      'test_namedSemanticLabelLiteral_lint': (t) => t._namedSemanticLabelLiteralLint(),
-      'test_namedLabelFromVariable_noLint': (t) => t._namedLabelFromVariableNoLint(),
-      'test_interpolationWithLiteralText_lint': (t) => t._interpolationWithLiteralTextLint(),
-      'test_interpolationWithoutLiteralText_noLint': (t) =>
-          t._interpolationWithoutLiteralTextNoLint(),
-      'test_callbackProseInState_lint': (t) => t._callbackProseInStateLint(),
-      'test_callbackProseInStatelessWidget_lint': (t) => t._callbackProseInStatelessWidgetLint(),
-      'test_callbackIdentifiersKeysAndProtocolStrings_noLint': (t) =>
-          t._callbackIdentifiersKeysAndProtocolStringsNoLint(),
-      'test_declaredMethodAndFunctionProse_noLint': (t) =>
-          t._declaredMethodAndFunctionProseNoLint(),
-      'test_callbackProseOutsideWidgetClass_noLint': (t) =>
-          t._callbackProseOutsideWidgetClassNoLint(),
-      'test_callbackProseInsideResolvedPreview_noLint': (t) =>
-          t._callbackProseInsideResolvedPreviewNoLint(),
-      'test_globalFunctionVariableProseInWidget_noLint': (t) =>
-          t._globalFunctionVariableProseInWidgetNoLint(),
-    },
+    _AvoidHardcodedStringsTest.new,
+    _AvoidHardcodedStringsTest._allCases,
   );
 }
 
-final class AvoidHardcodedStringsTest extends AnalysisRuleTest {
+final class _AvoidHardcodedStringsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidHardcodedStringsTest)> get _allCases =>
+      caseSet<_AvoidHardcodedStringsTest>(
+        parent: const {},
+        own: {
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_textPositionalLiteral_lint': (t) => t._textPositionalLiteralLint(),
+          'test_sampleTextInsideResolvedPreview_noLint': (t) =>
+              t._sampleTextInsideResolvedPreviewNoLint(),
+          'test_textUnderLookalikePreviewAnnotation_lint': (t) =>
+              t._textUnderLookalikePreviewAnnotationLint(),
+          'test_textFromStringsConstantsClass_lint': (t) => t._textFromStringsConstantsClassLint(),
+          'test_labelFromTopLevelConstant_lint': (t) => t._labelFromTopLevelConstantLint(),
+          'test_textFromLocalizationsGetter_noLint': (t) => t._textFromLocalizationsGetterNoLint(),
+          'test_constantWithoutLetters_noLint': (t) => t._constantWithoutLettersNoLint(),
+          'test_stringsFileWidget_lint': (t) => t._stringsFileWidgetLint(),
+          'test_textFromVariable_noLint': (t) => t._textFromVariableNoLint(),
+          'test_emptyText_noLint': (t) => t._emptyTextNoLint(),
+          'test_numericText_noLint': (t) => t._numericTextNoLint(),
+          'test_namedLabelLiteral_lint': (t) => t._namedLabelLiteralLint(),
+          'test_namedHintTextLiteral_lint': (t) => t._namedHintTextLiteralLint(),
+          'test_namedSemanticLabelLiteral_lint': (t) => t._namedSemanticLabelLiteralLint(),
+          'test_namedLabelFromVariable_noLint': (t) => t._namedLabelFromVariableNoLint(),
+          'test_interpolationWithLiteralText_lint': (t) => t._interpolationWithLiteralTextLint(),
+          'test_interpolationWithoutLiteralText_noLint': (t) =>
+              t._interpolationWithoutLiteralTextNoLint(),
+          'test_callbackProseInState_lint': (t) => t._callbackProseInStateLint(),
+          'test_callbackProseInStatelessWidget_lint': (t) =>
+              t._callbackProseInStatelessWidgetLint(),
+          'test_callbackIdentifiersKeysAndProtocolStrings_noLint': (t) =>
+              t._callbackIdentifiersKeysAndProtocolStringsNoLint(),
+          'test_declaredMethodAndFunctionProse_noLint': (t) =>
+              t._declaredMethodAndFunctionProseNoLint(),
+          'test_callbackProseOutsideWidgetClass_noLint': (t) =>
+              t._callbackProseOutsideWidgetClassNoLint(),
+          'test_callbackProseInsideResolvedPreview_noLint': (t) =>
+              t._callbackProseInsideResolvedPreviewNoLint(),
+          'test_globalFunctionVariableProseInWidget_noLint': (t) =>
+              t._globalFunctionVariableProseInWidgetNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     _addFlutterPackage();

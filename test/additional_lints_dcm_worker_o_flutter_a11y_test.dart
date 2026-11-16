@@ -9,61 +9,26 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<PreferActionButtonTooltipTest>(
+  analysisRuleSuite<_PreferActionButtonTooltipTest>(
     'PreferActionButtonTooltipTest',
-    PreferActionButtonTooltipTest.new,
-    {
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_iconButtonMissingTooltip_lint': (t) => t._iconButtonMissingTooltipLint(),
-      'test_floatingActionButtonMissingTooltip_lint': (t) =>
-          t._floatingActionButtonMissingTooltipLint(),
-      'test_actionButtonWithTooltip_noLint': (t) => t._actionButtonWithTooltipNoLint(),
-      'test_methodReturningActionButton_noLint': (t) => t._methodReturningActionButtonNoLint(),
-      'test_nonActionButton_noLint': (t) => t._nonActionButtonNoLint(),
-    },
+    _PreferActionButtonTooltipTest.new,
+    _PreferActionButtonTooltipTest._allCases,
   );
-  analysisRuleSuite<AvoidMissingImageAltTest>(
+  analysisRuleSuite<_AvoidMissingImageAltTest>(
     'AvoidMissingImageAltTest',
-    AvoidMissingImageAltTest.new,
-    {
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_imageMissingSemanticLabel_lint': (t) => t._imageMissingSemanticLabelLint(),
-      'test_assetImageMissingSemanticLabel_lint': (t) => t._assetImageMissingSemanticLabelLint(),
-      'test_memoryAndNetworkImagesMissingSemanticLabel_lint': (t) =>
-          t._memoryAndNetworkImagesMissingSemanticLabelLint(),
-      'test_dotShorthandImageConstructorMissingSemanticLabel_lint': (t) =>
-          t._dotShorthandImageConstructorMissingSemanticLabelLint(),
-      'test_methodsReturningImage_noLint': (t) => t._methodsReturningImageNoLint(),
-      'test_dotShorthandStaticMethodReturningImage_noLint': (t) =>
-          t._dotShorthandStaticMethodReturningImageNoLint(),
-      'test_constructorTearOff_noLint': (t) => t._constructorTearOffNoLint(),
-      'test_unrelatedImageClass_noLint': (t) => t._unrelatedImageClassNoLint(),
-      'test_nullLabelAndFalseSemanticsExclusion_lint': (t) =>
-          t._nullLabelAndFalseSemanticsExclusionLint(),
-      'test_imageWithSemanticLabel_noLint': (t) => t._imageWithSemanticLabelNoLint(),
-      'test_decorativeImageExcludedFromSemantics_noLint': (t) =>
-          t._decorativeImageExcludedFromSemanticsNoLint(),
-    },
+    _AvoidMissingImageAltTest.new,
+    _AvoidMissingImageAltTest._allCases,
   );
-  analysisRuleSuite<PreferDefineHeroTagTest>(
+  analysisRuleSuite<_PreferDefineHeroTagTest>(
     'PreferDefineHeroTagTest',
-    PreferDefineHeroTagTest.new,
-    {
-      'test_floatingActionButtonMissingHeroTag_lint': (t) =>
-          t._floatingActionButtonMissingHeroTagLint(),
-      'test_extendedFloatingActionButtonMissingHeroTag_lint': (t) =>
-          t._extendedFloatingActionButtonMissingHeroTagLint(),
-      'test_floatingActionButtonWithHeroTag_noLint': (t) =>
-          t._floatingActionButtonWithHeroTagNoLint(),
-      'test_floatingActionButtonWithNullHeroTag_noLint': (t) =>
-          t._floatingActionButtonWithNullHeroTagNoLint(),
-    },
+    _PreferDefineHeroTagTest.new,
+    _PreferDefineHeroTagTest._allCases,
   );
-  analysisRuleSuite<PreferTextRichTest>('PreferTextRichTest', PreferTextRichTest.new, {
-    'test_severityIsError': (t) => t._severityIsError(),
-    'test_richText_lint': (t) => t._richTextLint(),
-    'test_text_noLint': (t) => t._textNoLint(),
-  });
+  analysisRuleSuite<_PreferTextRichTest>(
+    'PreferTextRichTest',
+    _PreferTextRichTest.new,
+    _PreferTextRichTest._allCases,
+  );
 }
 
 abstract class _FlutterA11yRuleTest extends AnalysisRuleTest {
@@ -156,7 +121,21 @@ T findWidget<T extends Widget>() => throw StateError('test helper');
   }
 }
 
-final class PreferActionButtonTooltipTest extends _FlutterA11yRuleTest {
+final class _PreferActionButtonTooltipTest extends _FlutterA11yRuleTest {
+  static Map<String, Future<void> Function(_PreferActionButtonTooltipTest)> get _allCases =>
+      caseSet<_PreferActionButtonTooltipTest>(
+        parent: const {},
+        own: {
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_iconButtonMissingTooltip_lint': (t) => t._iconButtonMissingTooltipLint(),
+          'test_floatingActionButtonMissingTooltip_lint': (t) =>
+              t._floatingActionButtonMissingTooltipLint(),
+          'test_actionButtonWithTooltip_noLint': (t) => t._actionButtonWithTooltipNoLint(),
+          'test_methodReturningActionButton_noLint': (t) => t._methodReturningActionButtonNoLint(),
+          'test_nonActionButton_noLint': (t) => t._nonActionButtonNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferActionButtonTooltip();
@@ -231,7 +210,32 @@ Widget build() => const Text('Create');
   }
 }
 
-final class AvoidMissingImageAltTest extends _FlutterA11yRuleTest {
+final class _AvoidMissingImageAltTest extends _FlutterA11yRuleTest {
+  static Map<String, Future<void> Function(_AvoidMissingImageAltTest)> get _allCases =>
+      caseSet<_AvoidMissingImageAltTest>(
+        parent: const {},
+        own: {
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_imageMissingSemanticLabel_lint': (t) => t._imageMissingSemanticLabelLint(),
+          'test_assetImageMissingSemanticLabel_lint': (t) =>
+              t._assetImageMissingSemanticLabelLint(),
+          'test_memoryAndNetworkImagesMissingSemanticLabel_lint': (t) =>
+              t._memoryAndNetworkImagesMissingSemanticLabelLint(),
+          'test_dotShorthandImageConstructorMissingSemanticLabel_lint': (t) =>
+              t._dotShorthandImageConstructorMissingSemanticLabelLint(),
+          'test_methodsReturningImage_noLint': (t) => t._methodsReturningImageNoLint(),
+          'test_dotShorthandStaticMethodReturningImage_noLint': (t) =>
+              t._dotShorthandStaticMethodReturningImageNoLint(),
+          'test_constructorTearOff_noLint': (t) => t._constructorTearOffNoLint(),
+          'test_unrelatedImageClass_noLint': (t) => t._unrelatedImageClassNoLint(),
+          'test_nullLabelAndFalseSemanticsExclusion_lint': (t) =>
+              t._nullLabelAndFalseSemanticsExclusionLint(),
+          'test_imageWithSemanticLabel_noLint': (t) => t._imageWithSemanticLabelNoLint(),
+          'test_decorativeImageExcludedFromSemantics_noLint': (t) =>
+              t._decorativeImageExcludedFromSemanticsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidMissingImageAlt();
@@ -367,7 +371,22 @@ Widget build() => const Image.asset(
   }
 }
 
-final class PreferDefineHeroTagTest extends _FlutterA11yRuleTest {
+final class _PreferDefineHeroTagTest extends _FlutterA11yRuleTest {
+  static Map<String, Future<void> Function(_PreferDefineHeroTagTest)> get _allCases =>
+      caseSet<_PreferDefineHeroTagTest>(
+        parent: const {},
+        own: {
+          'test_floatingActionButtonMissingHeroTag_lint': (t) =>
+              t._floatingActionButtonMissingHeroTagLint(),
+          'test_extendedFloatingActionButtonMissingHeroTag_lint': (t) =>
+              t._extendedFloatingActionButtonMissingHeroTagLint(),
+          'test_floatingActionButtonWithHeroTag_noLint': (t) =>
+              t._floatingActionButtonWithHeroTagNoLint(),
+          'test_floatingActionButtonWithNullHeroTag_noLint': (t) =>
+              t._floatingActionButtonWithNullHeroTagNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferDefineHeroTag();
@@ -441,7 +460,17 @@ Widget build() {
   }
 }
 
-final class PreferTextRichTest extends _FlutterA11yRuleTest {
+final class _PreferTextRichTest extends _FlutterA11yRuleTest {
+  static Map<String, Future<void> Function(_PreferTextRichTest)> get _allCases =>
+      caseSet<_PreferTextRichTest>(
+        parent: const {},
+        own: {
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_richText_lint': (t) => t._richTextLint(),
+          'test_text_noLint': (t) => t._textNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferTextRich();

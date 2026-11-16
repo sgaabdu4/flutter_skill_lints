@@ -1,6 +1,24 @@
 part of '../source_scanner_rules_test.dart';
 
-final class RiverpodEventCounterSignalForbiddenTest extends _RiverpodRuleTest {
+final class _RiverpodEventCounterSignalForbiddenTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodEventCounterSignalForbiddenTest)>
+  get _allCases => caseSet<_RiverpodEventCounterSignalForbiddenTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_reportsStatePlusOneVariant': (t) => t._reportsStatePlusOneVariant(),
+      'test_reportsPayloadSignalProvider': (t) => t._reportsPayloadSignalProvider(),
+      'test_reportsFunctionEventProvider': (t) => t._reportsFunctionEventProvider(),
+      'test_reportsNotifierSuffixedEventClassAndNestedGenericFunction': (t) =>
+          t._reportsNotifierSuffixedEventClassAndNestedGenericFunction(),
+      'test_allowsEventNamesWithoutRiverpodAnnotation': (t) =>
+          t._allowsEventNamesWithoutRiverpodAnnotation(),
+      'test_allowsPayloadStreamName': (t) => t._allowsPayloadStreamName(),
+      'test_allowsOwningNotifierStateSerial': (t) => t._allowsOwningNotifierStateSerial(),
+      'test_allowsDomainCounterNotifier': (t) => t._allowsDomainCounterNotifier(),
+      'test_allowsDurableStatusNotifier': (t) => t._allowsDurableStatusNotifier(),
+    },
+  );
+
   @override
   String get ruleName => 'riverpod_event_counter_signal_forbidden';
   @override
@@ -243,7 +261,57 @@ class InitialSyncStatusNotifier extends _$InitialSyncStatusNotifier {
   }
 }
 
-final class RiverpodWatchNoSelectTest extends _RiverpodRuleTest {
+final class _RiverpodWatchNoSelectTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodWatchNoSelectTest)> get _allCases =>
+      caseSet<_RiverpodWatchNoSelectTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsGeneratedNotifierBuildDependencies': (t) =>
+              t._allowsGeneratedNotifierBuildDependencies(),
+          'test_allowsResolvedScalarResults': (t) => t._allowsResolvedScalarResults(),
+          'test_reportsStructuredWatchBesideScalarOnSameLine': (t) =>
+              t._reportsStructuredWatchBesideScalarOnSameLine(),
+          'test_allowsMultilineFamilyProviderSelect': (t) =>
+              t._allowsMultilineFamilyProviderSelect(),
+          'test_allowsDirectWatchOfComputedProjectionProvider': (t) =>
+              t._allowsDirectWatchOfComputedProjectionProvider(),
+          'test_reportsFieldReadOfComputedProvider': (t) => t._reportsFieldReadOfComputedProvider(),
+          'test_reportsFieldReadOfNotifierProvider': (t) => t._reportsFieldReadOfNotifierProvider(),
+          'test_reportsProjectionNamedNotifierProvider': (t) =>
+              t._reportsProjectionNamedNotifierProvider(),
+          'test_allowsWholeListAndDtoPassedToWidgets': (t) =>
+              t._allowsWholeListAndDtoPassedToWidgets(),
+          'test_allowsWholeValuesThroughLocalBindings': (t) =>
+              t._allowsWholeValuesThroughLocalBindings(),
+          'test_reportsWholeMultiFieldStateIntoAppWidget': (t) =>
+              t._reportsWholeMultiFieldStateIntoAppWidget(),
+          'test_reportsWholeMultiFieldStateLocalIntoAppWidget': (t) =>
+              t._reportsWholeMultiFieldStateLocalIntoAppWidget(),
+          'test_reportsFreezedStateIntoAppWidget': (t) => t._reportsFreezedStateIntoAppWidget(),
+          'test_allowsWholeViewValuesIntoAppWidget': (t) => t._allowsWholeViewValuesIntoAppWidget(),
+          'test_allowsWholeValueIntoFrameworkWidget': (t) =>
+              t._allowsWholeValueIntoFrameworkWidget(),
+          'test_allowsWholeListIteration': (t) => t._allowsWholeListIteration(),
+          'test_reportsSelectingOneIndexedListItem': (t) => t._reportsSelectingOneIndexedListItem(),
+          'test_reportsWholeAsyncValueWhenDispatch': (t) => t._reportsWholeAsyncValueWhenDispatch(),
+          'test_reportsWholeDispatchOnSameNamedLocalAsyncValue': (t) =>
+              t._reportsWholeDispatchOnSameNamedLocalAsyncValue(),
+          'test_allowsWholeAsyncStatusSwitch': (t) => t._allowsWholeAsyncStatusSwitch(),
+          'test_allowsSealedUnionVariantSwitch': (t) => t._allowsSealedUnionVariantSwitch(),
+          'test_allowsAsyncValueVariantDestructuring': (t) =>
+              t._allowsAsyncValueVariantDestructuring(),
+          'test_reportsSealedBaseTypeFieldPattern': (t) => t._reportsSealedBaseTypeFieldPattern(),
+          'test_reportsPartialObjectPatternSwitch': (t) => t._reportsPartialObjectPatternSwitch(),
+          'test_reportsPartialStateReads': (t) => t._reportsPartialStateReads(),
+          'test_allowsMutationStateFlags': (t) => t._allowsMutationStateFlags(),
+          'test_reportsLocalMutationStateLookalike': (t) => t._reportsLocalMutationStateLookalike(),
+          'test_conditionalWholeListClearButPartialStateWarns': (t) =>
+              t._conditionalWholeListClearButPartialStateWarns(),
+          'test_reportsWatchSplitAcrossLines': (t) => t._reportsWatchSplitAcrossLines(),
+          'test_allowsWatchOnNonRiverpodReceiver': (t) => t._allowsWatchOnNonRiverpodReceiver(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('riverpod').addFile('lib/riverpod.dart', r'''
@@ -960,68 +1028,14 @@ class ProfileView {
 }
 
 void _defineSourceScannerRulesPart02Tests() {
-  analysisRuleSuite<RiverpodEventCounterSignalForbiddenTest>(
+  analysisRuleSuite<_RiverpodEventCounterSignalForbiddenTest>(
     'RiverpodEventCounterSignalForbiddenTest',
-    RiverpodEventCounterSignalForbiddenTest.new,
-    {
-      'test_reportsStatePlusOneVariant': (t) => t._reportsStatePlusOneVariant(),
-      'test_reportsPayloadSignalProvider': (t) => t._reportsPayloadSignalProvider(),
-      'test_reportsFunctionEventProvider': (t) => t._reportsFunctionEventProvider(),
-      'test_reportsNotifierSuffixedEventClassAndNestedGenericFunction': (t) =>
-          t._reportsNotifierSuffixedEventClassAndNestedGenericFunction(),
-      'test_allowsEventNamesWithoutRiverpodAnnotation': (t) =>
-          t._allowsEventNamesWithoutRiverpodAnnotation(),
-      'test_allowsPayloadStreamName': (t) => t._allowsPayloadStreamName(),
-      'test_allowsOwningNotifierStateSerial': (t) => t._allowsOwningNotifierStateSerial(),
-      'test_allowsDomainCounterNotifier': (t) => t._allowsDomainCounterNotifier(),
-      'test_allowsDurableStatusNotifier': (t) => t._allowsDurableStatusNotifier(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodEventCounterSignalForbiddenTest.new,
+    _RiverpodEventCounterSignalForbiddenTest._allCases,
   );
-  analysisRuleSuite<RiverpodWatchNoSelectTest>(
+  analysisRuleSuite<_RiverpodWatchNoSelectTest>(
     'RiverpodWatchNoSelectTest',
-    RiverpodWatchNoSelectTest.new,
-    {
-      'test_allowsGeneratedNotifierBuildDependencies': (t) =>
-          t._allowsGeneratedNotifierBuildDependencies(),
-      'test_allowsResolvedScalarResults': (t) => t._allowsResolvedScalarResults(),
-      'test_reportsStructuredWatchBesideScalarOnSameLine': (t) =>
-          t._reportsStructuredWatchBesideScalarOnSameLine(),
-      'test_allowsMultilineFamilyProviderSelect': (t) => t._allowsMultilineFamilyProviderSelect(),
-      'test_allowsDirectWatchOfComputedProjectionProvider': (t) =>
-          t._allowsDirectWatchOfComputedProjectionProvider(),
-      'test_reportsFieldReadOfComputedProvider': (t) => t._reportsFieldReadOfComputedProvider(),
-      'test_reportsFieldReadOfNotifierProvider': (t) => t._reportsFieldReadOfNotifierProvider(),
-      'test_reportsProjectionNamedNotifierProvider': (t) =>
-          t._reportsProjectionNamedNotifierProvider(),
-      'test_allowsWholeListAndDtoPassedToWidgets': (t) => t._allowsWholeListAndDtoPassedToWidgets(),
-      'test_allowsWholeValuesThroughLocalBindings': (t) =>
-          t._allowsWholeValuesThroughLocalBindings(),
-      'test_reportsWholeMultiFieldStateIntoAppWidget': (t) =>
-          t._reportsWholeMultiFieldStateIntoAppWidget(),
-      'test_reportsWholeMultiFieldStateLocalIntoAppWidget': (t) =>
-          t._reportsWholeMultiFieldStateLocalIntoAppWidget(),
-      'test_reportsFreezedStateIntoAppWidget': (t) => t._reportsFreezedStateIntoAppWidget(),
-      'test_allowsWholeViewValuesIntoAppWidget': (t) => t._allowsWholeViewValuesIntoAppWidget(),
-      'test_allowsWholeValueIntoFrameworkWidget': (t) => t._allowsWholeValueIntoFrameworkWidget(),
-      'test_allowsWholeListIteration': (t) => t._allowsWholeListIteration(),
-      'test_reportsSelectingOneIndexedListItem': (t) => t._reportsSelectingOneIndexedListItem(),
-      'test_reportsWholeAsyncValueWhenDispatch': (t) => t._reportsWholeAsyncValueWhenDispatch(),
-      'test_reportsWholeDispatchOnSameNamedLocalAsyncValue': (t) =>
-          t._reportsWholeDispatchOnSameNamedLocalAsyncValue(),
-      'test_allowsWholeAsyncStatusSwitch': (t) => t._allowsWholeAsyncStatusSwitch(),
-      'test_allowsSealedUnionVariantSwitch': (t) => t._allowsSealedUnionVariantSwitch(),
-      'test_allowsAsyncValueVariantDestructuring': (t) => t._allowsAsyncValueVariantDestructuring(),
-      'test_reportsSealedBaseTypeFieldPattern': (t) => t._reportsSealedBaseTypeFieldPattern(),
-      'test_reportsPartialObjectPatternSwitch': (t) => t._reportsPartialObjectPatternSwitch(),
-      'test_reportsPartialStateReads': (t) => t._reportsPartialStateReads(),
-      'test_allowsMutationStateFlags': (t) => t._allowsMutationStateFlags(),
-      'test_reportsLocalMutationStateLookalike': (t) => t._reportsLocalMutationStateLookalike(),
-      'test_conditionalWholeListClearButPartialStateWarns': (t) =>
-          t._conditionalWholeListClearButPartialStateWarns(),
-      'test_reportsWatchSplitAcrossLines': (t) => t._reportsWatchSplitAcrossLines(),
-      'test_allowsWatchOnNonRiverpodReceiver': (t) => t._allowsWatchOnNonRiverpodReceiver(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodWatchNoSelectTest.new,
+    _RiverpodWatchNoSelectTest._allCases,
   );
 }

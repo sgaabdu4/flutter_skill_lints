@@ -6,34 +6,35 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_reco
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidNestedRecordsTest>('AvoidNestedRecordsTest', AvoidNestedRecordsTest.new, {
-    'test_nestedLiteralPositionalField_lint': (t) => t._nestedLiteralPositionalFieldLint(),
-    'test_nestedLiteralNamedField_lint': (t) => t._nestedLiteralNamedFieldLint(),
-    'test_nestedTypeNamedField_lint': (t) => t._nestedTypeNamedFieldLint(),
-    'test_flatRecords_noLint': (t) => t._flatRecordsNoLint(),
-  });
-  analysisRuleSuite<AvoidMixingNamedAndPositionalFieldsTest>(
-    'AvoidMixingNamedAndPositionalFieldsTest',
-    AvoidMixingNamedAndPositionalFieldsTest.new,
-    {
-      'test_recordLiteralMixedFields_lint': (t) => t._recordLiteralMixedFieldsLint(),
-      'test_recordTypeMixedFields_lint': (t) => t._recordTypeMixedFieldsLint(),
-      'test_singleStyleRecords_noLint': (t) => t._singleStyleRecordsNoLint(),
-    },
+  analysisRuleSuite<_AvoidNestedRecordsTest>(
+    'AvoidNestedRecordsTest',
+    _AvoidNestedRecordsTest.new,
+    _AvoidNestedRecordsTest._allCases,
   );
-  analysisRuleSuite<AvoidFunctionTypeInRecordsTest>(
+  analysisRuleSuite<_AvoidMixingNamedAndPositionalFieldsTest>(
+    'AvoidMixingNamedAndPositionalFieldsTest',
+    _AvoidMixingNamedAndPositionalFieldsTest.new,
+    _AvoidMixingNamedAndPositionalFieldsTest._allCases,
+  );
+  analysisRuleSuite<_AvoidFunctionTypeInRecordsTest>(
     'AvoidFunctionTypeInRecordsTest',
-    AvoidFunctionTypeInRecordsTest.new,
-    {
-      'test_functionLiteralField_lint': (t) => t._functionLiteralFieldLint(),
-      'test_genericFunctionTypeField_lint': (t) => t._genericFunctionTypeFieldLint(),
-      'test_functionNamedTypeField_lint': (t) => t._functionNamedTypeFieldLint(),
-      'test_valueFields_noLint': (t) => t._valueFieldsNoLint(),
-    },
+    _AvoidFunctionTypeInRecordsTest.new,
+    _AvoidFunctionTypeInRecordsTest._allCases,
   );
 }
 
-final class AvoidNestedRecordsTest extends AnalysisRuleTest {
+final class _AvoidNestedRecordsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNestedRecordsTest)> get _allCases =>
+      caseSet<_AvoidNestedRecordsTest>(
+        parent: const {},
+        own: {
+          'test_nestedLiteralPositionalField_lint': (t) => t._nestedLiteralPositionalFieldLint(),
+          'test_nestedLiteralNamedField_lint': (t) => t._nestedLiteralNamedFieldLint(),
+          'test_nestedTypeNamedField_lint': (t) => t._nestedTypeNamedFieldLint(),
+          'test_flatRecords_noLint': (t) => t._flatRecordsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNestedRecords();
@@ -82,7 +83,17 @@ void f() {
   }
 }
 
-final class AvoidMixingNamedAndPositionalFieldsTest extends AnalysisRuleTest {
+final class _AvoidMixingNamedAndPositionalFieldsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidMixingNamedAndPositionalFieldsTest)>
+  get _allCases => caseSet<_AvoidMixingNamedAndPositionalFieldsTest>(
+    parent: const {},
+    own: {
+      'test_recordLiteralMixedFields_lint': (t) => t._recordLiteralMixedFieldsLint(),
+      'test_recordTypeMixedFields_lint': (t) => t._recordTypeMixedFieldsLint(),
+      'test_singleStyleRecords_noLint': (t) => t._singleStyleRecordsNoLint(),
+    },
+  );
+
   @override
   void setUp() {
     rule = AvoidMixingNamedAndPositionalFields();
@@ -124,7 +135,18 @@ void f() {
   }
 }
 
-final class AvoidFunctionTypeInRecordsTest extends AnalysisRuleTest {
+final class _AvoidFunctionTypeInRecordsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidFunctionTypeInRecordsTest)> get _allCases =>
+      caseSet<_AvoidFunctionTypeInRecordsTest>(
+        parent: const {},
+        own: {
+          'test_functionLiteralField_lint': (t) => t._functionLiteralFieldLint(),
+          'test_genericFunctionTypeField_lint': (t) => t._genericFunctionTypeFieldLint(),
+          'test_functionNamedTypeField_lint': (t) => t._functionNamedTypeFieldLint(),
+          'test_valueFields_noLint': (t) => t._valueFieldsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidFunctionTypeInRecords();

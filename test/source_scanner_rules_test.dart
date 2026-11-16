@@ -83,6 +83,12 @@ void main() {
 }
 
 abstract class _SourceRuleTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_SourceRuleTest)> get _allCases =>
+      caseSet<_SourceRuleTest>(
+        parent: const {},
+        own: {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+      );
+
   List<ScannerRule> get rules;
   String get ruleName;
   String get source;

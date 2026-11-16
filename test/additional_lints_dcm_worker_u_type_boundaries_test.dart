@@ -6,35 +6,34 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_private_ex
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidBottomTypeInRecordsTest>(
+  analysisRuleSuite<_AvoidBottomTypeInRecordsTest>(
     'AvoidBottomTypeInRecordsTest',
-    AvoidBottomTypeInRecordsTest.new,
-    {
-      'test_namedNeverField_lint': (t) => t._namedNeverFieldLint(),
-      'test_positionalNeverField_lint': (t) => t._positionalNeverFieldLint(),
-      'test_recordValueTypes_noLint': (t) => t._recordValueTypesNoLint(),
-    },
+    _AvoidBottomTypeInRecordsTest.new,
+    _AvoidBottomTypeInRecordsTest._allCases,
   );
-  analysisRuleSuite<AvoidTypeCastsTest>('AvoidTypeCastsTest', AvoidTypeCastsTest.new, {
-    'test_objectToStringCast_lint': (t) => t._objectToStringCastLint(),
-    'test_dynamicToIntCast_lint': (t) => t._dynamicToIntCastLint(),
-    'test_jsonMapCast_noLint': (t) => t._jsonMapCastNoLint(),
-    'test_objectCast_noLint': (t) => t._objectCastNoLint(),
-  });
-  analysisRuleSuite<PreferPrivateExtensionTypeFieldTest>(
+  analysisRuleSuite<_AvoidTypeCastsTest>(
+    'AvoidTypeCastsTest',
+    _AvoidTypeCastsTest.new,
+    _AvoidTypeCastsTest._allCases,
+  );
+  analysisRuleSuite<_PreferPrivateExtensionTypeFieldTest>(
     'PreferPrivateExtensionTypeFieldTest',
-    PreferPrivateExtensionTypeFieldTest.new,
-    {
-      'test_publicRepresentationField_lint': (t) => t._publicRepresentationFieldLint(),
-      'test_publicValueRepresentationField_noLint': (t) =>
-          t._publicValueRepresentationFieldNoLint(),
-      'test_privateRepresentationField_noLint': (t) => t._privateRepresentationFieldNoLint(),
-      'test_memberParameterNames_noLint': (t) => t._memberParameterNamesNoLint(),
-    },
+    _PreferPrivateExtensionTypeFieldTest.new,
+    _PreferPrivateExtensionTypeFieldTest._allCases,
   );
 }
 
-final class AvoidBottomTypeInRecordsTest extends AnalysisRuleTest {
+final class _AvoidBottomTypeInRecordsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidBottomTypeInRecordsTest)> get _allCases =>
+      caseSet<_AvoidBottomTypeInRecordsTest>(
+        parent: const {},
+        own: {
+          'test_namedNeverField_lint': (t) => t._namedNeverFieldLint(),
+          'test_positionalNeverField_lint': (t) => t._positionalNeverFieldLint(),
+          'test_recordValueTypes_noLint': (t) => t._recordValueTypesNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidBottomTypeInRecords();
@@ -69,7 +68,18 @@ void useRecord() {
   }
 }
 
-final class AvoidTypeCastsTest extends AnalysisRuleTest {
+final class _AvoidTypeCastsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidTypeCastsTest)> get _allCases =>
+      caseSet<_AvoidTypeCastsTest>(
+        parent: const {},
+        own: {
+          'test_objectToStringCast_lint': (t) => t._objectToStringCastLint(),
+          'test_dynamicToIntCast_lint': (t) => t._dynamicToIntCastLint(),
+          'test_jsonMapCast_noLint': (t) => t._jsonMapCastNoLint(),
+          'test_objectCast_noLint': (t) => t._objectCastNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidTypeCasts();
@@ -107,7 +117,19 @@ Object normalize(String value) => value as Object;
   }
 }
 
-final class PreferPrivateExtensionTypeFieldTest extends AnalysisRuleTest {
+final class _PreferPrivateExtensionTypeFieldTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferPrivateExtensionTypeFieldTest)> get _allCases =>
+      caseSet<_PreferPrivateExtensionTypeFieldTest>(
+        parent: const {},
+        own: {
+          'test_publicRepresentationField_lint': (t) => t._publicRepresentationFieldLint(),
+          'test_publicValueRepresentationField_noLint': (t) =>
+              t._publicValueRepresentationFieldNoLint(),
+          'test_privateRepresentationField_noLint': (t) => t._privateRepresentationFieldNoLint(),
+          'test_memberParameterNames_noLint': (t) => t._memberParameterNamesNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferPrivateExtensionTypeField();

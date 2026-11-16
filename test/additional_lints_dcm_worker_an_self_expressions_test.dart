@@ -6,35 +6,35 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_self_compar
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidEqualExpressionsTest>(
+  analysisRuleSuite<_AvoidEqualExpressionsTest>(
     'AvoidEqualExpressionsTest',
-    AvoidEqualExpressionsTest.new,
-    {
-      'test_logicalAndSameExpression_lint': (t) => t._logicalAndSameExpressionLint(),
-      'test_ifNullSameExpression_lint': (t) => t._ifNullSameExpressionLint(),
-      'test_differentLogicalOperands_noLint': (t) => t._differentLogicalOperandsNoLint(),
-      'test_repeatedCall_noLint': (t) => t._repeatedCallNoLint(),
-    },
+    _AvoidEqualExpressionsTest.new,
+    _AvoidEqualExpressionsTest._allCases,
   );
-  analysisRuleSuite<AvoidSelfAssignmentTest>(
+  analysisRuleSuite<_AvoidSelfAssignmentTest>(
     'AvoidSelfAssignmentTest',
-    AvoidSelfAssignmentTest.new,
-    {
-      'test_localSelfAssignment_lint': (t) => t._localSelfAssignmentLint(),
-      'test_fieldSelfAssignment_lint': (t) => t._fieldSelfAssignmentLint(),
-      'test_compoundAssignment_noLint': (t) => t._compoundAssignmentNoLint(),
-      'test_differentAssignment_noLint': (t) => t._differentAssignmentNoLint(),
-    },
+    _AvoidSelfAssignmentTest.new,
+    _AvoidSelfAssignmentTest._allCases,
   );
-  analysisRuleSuite<AvoidSelfCompareTest>('AvoidSelfCompareTest', AvoidSelfCompareTest.new, {
-    'test_identifierSelfCompare_lint': (t) => t._identifierSelfCompareLint(),
-    'test_propertySelfCompare_lint': (t) => t._propertySelfCompareLint(),
-    'test_differentCompare_noLint': (t) => t._differentCompareNoLint(),
-    'test_repeatedCall_noLint': (t) => t._repeatedCallNoLint(),
-  });
+  analysisRuleSuite<_AvoidSelfCompareTest>(
+    'AvoidSelfCompareTest',
+    _AvoidSelfCompareTest.new,
+    _AvoidSelfCompareTest._allCases,
+  );
 }
 
-final class AvoidEqualExpressionsTest extends AnalysisRuleTest {
+final class _AvoidEqualExpressionsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidEqualExpressionsTest)> get _allCases =>
+      caseSet<_AvoidEqualExpressionsTest>(
+        parent: const {},
+        own: {
+          'test_logicalAndSameExpression_lint': (t) => t._logicalAndSameExpressionLint(),
+          'test_ifNullSameExpression_lint': (t) => t._ifNullSameExpressionLint(),
+          'test_differentLogicalOperands_noLint': (t) => t._differentLogicalOperandsNoLint(),
+          'test_repeatedCall_noLint': (t) => t._repeatedCallNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidEqualExpressions();
@@ -75,7 +75,18 @@ bool ready(bool Function() enabled) => enabled() && enabled();
   }
 }
 
-final class AvoidSelfAssignmentTest extends AnalysisRuleTest {
+final class _AvoidSelfAssignmentTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidSelfAssignmentTest)> get _allCases =>
+      caseSet<_AvoidSelfAssignmentTest>(
+        parent: const {},
+        own: {
+          'test_localSelfAssignment_lint': (t) => t._localSelfAssignmentLint(),
+          'test_fieldSelfAssignment_lint': (t) => t._fieldSelfAssignmentLint(),
+          'test_compoundAssignment_noLint': (t) => t._compoundAssignmentNoLint(),
+          'test_differentAssignment_noLint': (t) => t._differentAssignmentNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidSelfAssignment();
@@ -128,7 +139,18 @@ void normalize(int value) {
   }
 }
 
-final class AvoidSelfCompareTest extends AnalysisRuleTest {
+final class _AvoidSelfCompareTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidSelfCompareTest)> get _allCases =>
+      caseSet<_AvoidSelfCompareTest>(
+        parent: const {},
+        own: {
+          'test_identifierSelfCompare_lint': (t) => t._identifierSelfCompareLint(),
+          'test_propertySelfCompare_lint': (t) => t._propertySelfCompareLint(),
+          'test_differentCompare_noLint': (t) => t._differentCompareNoLint(),
+          'test_repeatedCall_noLint': (t) => t._repeatedCallNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidSelfCompare();

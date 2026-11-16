@@ -6,36 +6,35 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/no_equal_then_els
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidInvertedBooleanChecksTest>(
+  analysisRuleSuite<_AvoidInvertedBooleanChecksTest>(
     'AvoidInvertedBooleanChecksTest',
-    AvoidInvertedBooleanChecksTest.new,
-    {
-      'test_negatedEqualityCondition_lint': (t) => t._negatedEqualityConditionLint(),
-      'test_negatedIsCondition_lint': (t) => t._negatedIsConditionLint(),
-      'test_plainBooleanNegation_noLint': (t) => t._plainBooleanNegationNoLint(),
-      'test_negatedMethodCall_noLint': (t) => t._negatedMethodCallNoLint(),
-    },
+    _AvoidInvertedBooleanChecksTest.new,
+    _AvoidInvertedBooleanChecksTest._allCases,
   );
-  analysisRuleSuite<AvoidNegationsInEqualityChecksTest>(
+  analysisRuleSuite<_AvoidNegationsInEqualityChecksTest>(
     'AvoidNegationsInEqualityChecksTest',
-    AvoidNegationsInEqualityChecksTest.new,
-    {
-      'test_leftNegatedEquality_lint': (t) => t._leftNegatedEqualityLint(),
-      'test_rightNegatedInequality_lint': (t) => t._rightNegatedInequalityLint(),
-      'test_bothSidesNegated_noLint': (t) => t._bothSidesNegatedNoLint(),
-      'test_plainEquality_noLint': (t) => t._plainEqualityNoLint(),
-    },
+    _AvoidNegationsInEqualityChecksTest.new,
+    _AvoidNegationsInEqualityChecksTest._allCases,
   );
-  analysisRuleSuite<NoEqualThenElseTest>('NoEqualThenElseTest', NoEqualThenElseTest.new, {
-    'test_conditionalSameExpressions_lint': (t) => t._conditionalSameExpressionsLint(),
-    'test_ifElseSameReturns_lint': (t) => t._ifElseSameReturnsLint(),
-    'test_conditionalDifferentExpressions_noLint': (t) =>
-        t._conditionalDifferentExpressionsNoLint(),
-    'test_ifElseIf_noLint': (t) => t._ifElseIfNoLint(),
-  });
+  analysisRuleSuite<_NoEqualThenElseTest>(
+    'NoEqualThenElseTest',
+    _NoEqualThenElseTest.new,
+    _NoEqualThenElseTest._allCases,
+  );
 }
 
-final class AvoidInvertedBooleanChecksTest extends AnalysisRuleTest {
+final class _AvoidInvertedBooleanChecksTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidInvertedBooleanChecksTest)> get _allCases =>
+      caseSet<_AvoidInvertedBooleanChecksTest>(
+        parent: const {},
+        own: {
+          'test_negatedEqualityCondition_lint': (t) => t._negatedEqualityConditionLint(),
+          'test_negatedIsCondition_lint': (t) => t._negatedIsConditionLint(),
+          'test_plainBooleanNegation_noLint': (t) => t._plainBooleanNegationNoLint(),
+          'test_negatedMethodCall_noLint': (t) => t._negatedMethodCallNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidInvertedBooleanChecks();
@@ -85,7 +84,18 @@ bool missing(String value) => !value.isEmpty;
   }
 }
 
-final class AvoidNegationsInEqualityChecksTest extends AnalysisRuleTest {
+final class _AvoidNegationsInEqualityChecksTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNegationsInEqualityChecksTest)> get _allCases =>
+      caseSet<_AvoidNegationsInEqualityChecksTest>(
+        parent: const {},
+        own: {
+          'test_leftNegatedEquality_lint': (t) => t._leftNegatedEqualityLint(),
+          'test_rightNegatedInequality_lint': (t) => t._rightNegatedInequalityLint(),
+          'test_bothSidesNegated_noLint': (t) => t._bothSidesNegatedNoLint(),
+          'test_plainEquality_noLint': (t) => t._plainEqualityNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNegationsInEqualityChecks();
@@ -125,7 +135,19 @@ bool matches(bool left, bool right) => left == right;
   }
 }
 
-final class NoEqualThenElseTest extends AnalysisRuleTest {
+final class _NoEqualThenElseTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_NoEqualThenElseTest)> get _allCases =>
+      caseSet<_NoEqualThenElseTest>(
+        parent: const {},
+        own: {
+          'test_conditionalSameExpressions_lint': (t) => t._conditionalSameExpressionsLint(),
+          'test_ifElseSameReturns_lint': (t) => t._ifElseSameReturnsLint(),
+          'test_conditionalDifferentExpressions_noLint': (t) =>
+              t._conditionalDifferentExpressionsNoLint(),
+          'test_ifElseIf_noLint': (t) => t._ifElseIfNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = NoEqualThenElse();

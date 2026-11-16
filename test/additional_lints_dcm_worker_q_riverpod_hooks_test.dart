@@ -7,46 +7,21 @@ import 'analysis_rule_suite.dart';
 import 'support/flutter_hooks_stub.dart';
 
 void main() {
-  analysisRuleSuite<AvoidRefWatchOutsideBuildTest>(
+  analysisRuleSuite<_AvoidRefWatchOutsideBuildTest>(
     'AvoidRefWatchOutsideBuildTest',
-    AvoidRefWatchOutsideBuildTest.new,
-    {
-      'test_consumerWidgetBuild_noLint': (t) => t._consumerWidgetBuildNoLint(),
-      'test_consumerBuilder_noLint': (t) => t._consumerBuilderNoLint(),
-      'test_hookConsumerBuilder_noLint': (t) => t._hookConsumerBuilderNoLint(),
-      'test_consumerNestedCallback_lint': (t) => t._consumerNestedCallbackLint(),
-      'test_outerRefInsideConsumerBuilder_lint': (t) => t._outerRefInsideConsumerBuilderLint(),
-      'test_unrelatedConsumerBuilder_lint': (t) => t._unrelatedConsumerBuilderLint(),
-      'test_callbackInsideBuild_lint': (t) => t._callbackInsideBuildLint(),
-      'test_consumerStateHelper_lint': (t) => t._consumerStateHelperLint(),
-      'test_riverpodFunctionProvider_noLint': (t) => t._riverpodFunctionProviderNoLint(),
-      'test_callbackInsideRiverpodFunctionProvider_lint': (t) =>
-          t._callbackInsideRiverpodFunctionProviderLint(),
-    },
+    _AvoidRefWatchOutsideBuildTest.new,
+    _AvoidRefWatchOutsideBuildTest._allCases,
   );
-  analysisRuleSuite<AvoidHooksOutsideBuildTest>(
+  analysisRuleSuite<_AvoidHooksOutsideBuildTest>(
     'AvoidHooksOutsideBuildTest',
-    AvoidHooksOutsideBuildTest.new,
-    {
-      'test_nonHookUsePrefixedPackageFunction_noLint': (t) =>
-          t._nonHookUsePrefixedPackageFunctionNoLint(),
-      'test_localUsePrefixedFunctionWithoutHooks_noLint': (t) =>
-          t._localUsePrefixedFunctionWithoutHooksNoLint(),
-      'test_localCustomHookInPlainFunction_lint': (t) => t._localCustomHookInPlainFunctionLint(),
-      'test_importedCustomHookInPlainFunction_lint': (t) =>
-          t._importedCustomHookInPlainFunctionLint(),
-      'test_hookWidgetBuild_noLint': (t) => t._hookWidgetBuildNoLint(),
-      'test_customHook_noLint': (t) => t._customHookNoLint(),
-      'test_plainFunction_lint': (t) => t._plainFunctionLint(),
-      'test_hookBuilder_noLint': (t) => t._hookBuilderNoLint(),
-    },
+    _AvoidHooksOutsideBuildTest.new,
+    _AvoidHooksOutsideBuildTest._allCases,
   );
-  analysisRuleSuite<AvoidMisusedHooksTest>('AvoidMisusedHooksTest', AvoidMisusedHooksTest.new, {
-    'test_topLevelHookWidgetBuild_noLint': (t) => t._topLevelHookWidgetBuildNoLint(),
-    'test_loopInBuild_lint': (t) => t._loopInBuildLint(),
-    'test_callbackInCustomHook_lint': (t) => t._callbackInCustomHookLint(),
-    'test_tryBlockInHookBuilder_lint': (t) => t._tryBlockInHookBuilderLint(),
-  });
+  analysisRuleSuite<_AvoidMisusedHooksTest>(
+    'AvoidMisusedHooksTest',
+    _AvoidMisusedHooksTest.new,
+    _AvoidMisusedHooksTest._allCases,
+  );
 }
 
 abstract class _RiverpodHooksRuleTest extends AnalysisRuleTest {
@@ -57,7 +32,25 @@ abstract class _RiverpodHooksRuleTest extends AnalysisRuleTest {
   }
 }
 
-final class AvoidRefWatchOutsideBuildTest extends _RiverpodHooksRuleTest {
+final class _AvoidRefWatchOutsideBuildTest extends _RiverpodHooksRuleTest {
+  static Map<String, Future<void> Function(_AvoidRefWatchOutsideBuildTest)> get _allCases =>
+      caseSet<_AvoidRefWatchOutsideBuildTest>(
+        parent: const {},
+        own: {
+          'test_consumerWidgetBuild_noLint': (t) => t._consumerWidgetBuildNoLint(),
+          'test_consumerBuilder_noLint': (t) => t._consumerBuilderNoLint(),
+          'test_hookConsumerBuilder_noLint': (t) => t._hookConsumerBuilderNoLint(),
+          'test_consumerNestedCallback_lint': (t) => t._consumerNestedCallbackLint(),
+          'test_outerRefInsideConsumerBuilder_lint': (t) => t._outerRefInsideConsumerBuilderLint(),
+          'test_unrelatedConsumerBuilder_lint': (t) => t._unrelatedConsumerBuilderLint(),
+          'test_callbackInsideBuild_lint': (t) => t._callbackInsideBuildLint(),
+          'test_consumerStateHelper_lint': (t) => t._consumerStateHelperLint(),
+          'test_riverpodFunctionProvider_noLint': (t) => t._riverpodFunctionProviderNoLint(),
+          'test_callbackInsideRiverpodFunctionProvider_lint': (t) =>
+              t._callbackInsideRiverpodFunctionProviderLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidRefWatchOutsideBuild();
@@ -253,7 +246,26 @@ int count(Ref ref) {
   }
 }
 
-final class AvoidHooksOutsideBuildTest extends _RiverpodHooksRuleTest {
+final class _AvoidHooksOutsideBuildTest extends _RiverpodHooksRuleTest {
+  static Map<String, Future<void> Function(_AvoidHooksOutsideBuildTest)> get _allCases =>
+      caseSet<_AvoidHooksOutsideBuildTest>(
+        parent: const {},
+        own: {
+          'test_nonHookUsePrefixedPackageFunction_noLint': (t) =>
+              t._nonHookUsePrefixedPackageFunctionNoLint(),
+          'test_localUsePrefixedFunctionWithoutHooks_noLint': (t) =>
+              t._localUsePrefixedFunctionWithoutHooksNoLint(),
+          'test_localCustomHookInPlainFunction_lint': (t) =>
+              t._localCustomHookInPlainFunctionLint(),
+          'test_importedCustomHookInPlainFunction_lint': (t) =>
+              t._importedCustomHookInPlainFunctionLint(),
+          'test_hookWidgetBuild_noLint': (t) => t._hookWidgetBuildNoLint(),
+          'test_customHook_noLint': (t) => t._customHookNoLint(),
+          'test_plainFunction_lint': (t) => t._plainFunctionLint(),
+          'test_hookBuilder_noLint': (t) => t._hookBuilderNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidHooksOutsideBuild();
@@ -362,7 +374,18 @@ Widget build() {
   }
 }
 
-final class AvoidMisusedHooksTest extends _RiverpodHooksRuleTest {
+final class _AvoidMisusedHooksTest extends _RiverpodHooksRuleTest {
+  static Map<String, Future<void> Function(_AvoidMisusedHooksTest)> get _allCases =>
+      caseSet<_AvoidMisusedHooksTest>(
+        parent: const {},
+        own: {
+          'test_topLevelHookWidgetBuild_noLint': (t) => t._topLevelHookWidgetBuildNoLint(),
+          'test_loopInBuild_lint': (t) => t._loopInBuildLint(),
+          'test_callbackInCustomHook_lint': (t) => t._callbackInCustomHookLint(),
+          'test_tryBlockInHookBuilder_lint': (t) => t._tryBlockInHookBuilderLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidMisusedHooks();

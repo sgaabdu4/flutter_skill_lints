@@ -6,42 +6,20 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_using_list
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<PreferUsingListViewTest>(
+  analysisRuleSuite<_PreferUsingListViewTest>(
     'PreferUsingListViewTest',
-    PreferUsingListViewTest.new,
-    {
-      'test_verticalScrollViewWrappingDynamicColumn_lint': (t) =>
-          t._verticalScrollViewWrappingDynamicColumnLint(),
-      'test_horizontalScrollViewWrappingDynamicRow_lint': (t) =>
-          t._horizontalScrollViewWrappingDynamicRowLint(),
-      'test_verticalScrollViewWrappingSizedBox_noLint': (t) =>
-          t._verticalScrollViewWrappingSizedBoxNoLint(),
-      'test_verticalScrollViewWrappingFixedColumn_noLint': (t) =>
-          t._verticalScrollViewWrappingFixedColumnNoLint(),
-      'test_horizontalScrollViewWrappingColumn_noLint': (t) =>
-          t._horizontalScrollViewWrappingColumnNoLint(),
-    },
+    _PreferUsingListViewTest.new,
+    _PreferUsingListViewTest._allCases,
   );
-  analysisRuleSuite<AvoidUnnecessarySafeAreaTest>(
+  analysisRuleSuite<_AvoidUnnecessarySafeAreaTest>(
     'AvoidUnnecessarySafeAreaTest',
-    AvoidUnnecessarySafeAreaTest.new,
-    {
-      'test_allEdgesDisabled_lint': (t) => t._allEdgesDisabledLint(),
-      'test_nestedSafeArea_lint': (t) => t._nestedSafeAreaLint(),
-      'test_defaultSafeArea_noLint': (t) => t._defaultSafeAreaNoLint(),
-    },
+    _AvoidUnnecessarySafeAreaTest.new,
+    _AvoidUnnecessarySafeAreaTest._allCases,
   );
-  analysisRuleSuite<AvoidUnnecessaryTypeAssertionsTest>(
+  analysisRuleSuite<_AvoidUnnecessaryTypeAssertionsTest>(
     'AvoidUnnecessaryTypeAssertionsTest',
-    AvoidUnnecessaryTypeAssertionsTest.new,
-    {
-      'test_isSameType_lint': (t) => t._isSameTypeLint(),
-      'test_asSameType_lint': (t) => t._asSameTypeLint(),
-      'test_isObjectFromNonNullableValue_lint': (t) => t._isObjectFromNonNullableValueLint(),
-      'test_nullableIsNonNullable_noLint': (t) => t._nullableIsNonNullableNoLint(),
-      'test_downcast_noLint': (t) => t._downcastNoLint(),
-      'test_negatedIsCheck_noLint': (t) => t._negatedIsCheckNoLint(),
-    },
+    _AvoidUnnecessaryTypeAssertionsTest.new,
+    _AvoidUnnecessaryTypeAssertionsTest._allCases,
   );
 }
 
@@ -92,7 +70,24 @@ class SafeArea extends Widget {
   }
 }
 
-final class PreferUsingListViewTest extends _FlutterRuleTest {
+final class _PreferUsingListViewTest extends _FlutterRuleTest {
+  static Map<String, Future<void> Function(_PreferUsingListViewTest)> get _allCases =>
+      caseSet<_PreferUsingListViewTest>(
+        parent: const {},
+        own: {
+          'test_verticalScrollViewWrappingDynamicColumn_lint': (t) =>
+              t._verticalScrollViewWrappingDynamicColumnLint(),
+          'test_horizontalScrollViewWrappingDynamicRow_lint': (t) =>
+              t._horizontalScrollViewWrappingDynamicRowLint(),
+          'test_verticalScrollViewWrappingSizedBox_noLint': (t) =>
+              t._verticalScrollViewWrappingSizedBoxNoLint(),
+          'test_verticalScrollViewWrappingFixedColumn_noLint': (t) =>
+              t._verticalScrollViewWrappingFixedColumnNoLint(),
+          'test_horizontalScrollViewWrappingColumn_noLint': (t) =>
+              t._horizontalScrollViewWrappingColumnNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferUsingListView();
@@ -171,7 +166,17 @@ Widget build() {
   }
 }
 
-final class AvoidUnnecessarySafeAreaTest extends _FlutterRuleTest {
+final class _AvoidUnnecessarySafeAreaTest extends _FlutterRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnnecessarySafeAreaTest)> get _allCases =>
+      caseSet<_AvoidUnnecessarySafeAreaTest>(
+        parent: const {},
+        own: {
+          'test_allEdgesDisabled_lint': (t) => t._allEdgesDisabledLint(),
+          'test_nestedSafeArea_lint': (t) => t._nestedSafeAreaLint(),
+          'test_defaultSafeArea_noLint': (t) => t._defaultSafeAreaNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnnecessarySafeArea();
@@ -219,7 +224,20 @@ Widget build() {
   }
 }
 
-final class AvoidUnnecessaryTypeAssertionsTest extends AnalysisRuleTest {
+final class _AvoidUnnecessaryTypeAssertionsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnnecessaryTypeAssertionsTest)> get _allCases =>
+      caseSet<_AvoidUnnecessaryTypeAssertionsTest>(
+        parent: const {},
+        own: {
+          'test_isSameType_lint': (t) => t._isSameTypeLint(),
+          'test_asSameType_lint': (t) => t._asSameTypeLint(),
+          'test_isObjectFromNonNullableValue_lint': (t) => t._isObjectFromNonNullableValueLint(),
+          'test_nullableIsNonNullable_noLint': (t) => t._nullableIsNonNullableNoLint(),
+          'test_downcast_noLint': (t) => t._downcastNoLint(),
+          'test_negatedIsCheck_noLint': (t) => t._negatedIsCheckNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnnecessaryTypeAssertions();

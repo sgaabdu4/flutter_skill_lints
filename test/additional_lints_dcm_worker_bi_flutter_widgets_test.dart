@@ -6,34 +6,20 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_extracting
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidSingleChildColumnOrRowTest>(
+  analysisRuleSuite<_AvoidSingleChildColumnOrRowTest>(
     'AvoidSingleChildColumnOrRowTest',
-    AvoidSingleChildColumnOrRowTest.new,
-    {
-      'test_columnWithSingleChild_lint': (t) => t._columnWithSingleChildLint(),
-      'test_rowWithSingleChild_lint': (t) => t._rowWithSingleChildLint(),
-      'test_columnWithTwoChildren_noLint': (t) => t._columnWithTwoChildrenNoLint(),
-      'test_conditionalChild_noLint': (t) => t._conditionalChildNoLint(),
-    },
+    _AvoidSingleChildColumnOrRowTest.new,
+    _AvoidSingleChildColumnOrRowTest._allCases,
   );
-  analysisRuleSuite<PreferExtractingCallbacksTest>(
+  analysisRuleSuite<_PreferExtractingCallbacksTest>(
     'PreferExtractingCallbacksTest',
-    PreferExtractingCallbacksTest.new,
-    {
-      'test_blockCallbackWithTwoStatements_lint': (t) => t._blockCallbackWithTwoStatementsLint(),
-      'test_callbackWithControlFlow_lint': (t) => t._callbackWithControlFlowLint(),
-      'test_trivialExpressionCallback_noLint': (t) => t._trivialExpressionCallbackNoLint(),
-      'test_callbackReference_noLint': (t) => t._callbackReferenceNoLint(),
-    },
+    _PreferExtractingCallbacksTest.new,
+    _PreferExtractingCallbacksTest._allCases,
   );
-  analysisRuleSuite<PreferCorrectStaticIconProviderTest>(
+  analysisRuleSuite<_PreferCorrectStaticIconProviderTest>(
     'PreferCorrectStaticIconProviderTest',
-    PreferCorrectStaticIconProviderTest.new,
-    {
-      'test_topLevelIconDataConstant_lint': (t) => t._topLevelIconDataConstantLint(),
-      'test_staticProviderIconData_noLint': (t) => t._staticProviderIconDataNoLint(),
-      'test_nonIconDataConstant_noLint': (t) => t._nonIconDataConstantNoLint(),
-    },
+    _PreferCorrectStaticIconProviderTest.new,
+    _PreferCorrectStaticIconProviderTest._allCases,
   );
 }
 
@@ -75,7 +61,18 @@ class IconData {
   }
 }
 
-final class AvoidSingleChildColumnOrRowTest extends _FlutterRuleTest {
+final class _AvoidSingleChildColumnOrRowTest extends _FlutterRuleTest {
+  static Map<String, Future<void> Function(_AvoidSingleChildColumnOrRowTest)> get _allCases =>
+      caseSet<_AvoidSingleChildColumnOrRowTest>(
+        parent: const {},
+        own: {
+          'test_columnWithSingleChild_lint': (t) => t._columnWithSingleChildLint(),
+          'test_rowWithSingleChild_lint': (t) => t._rowWithSingleChildLint(),
+          'test_columnWithTwoChildren_noLint': (t) => t._columnWithTwoChildrenNoLint(),
+          'test_conditionalChild_noLint': (t) => t._conditionalChildNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidSingleChildColumnOrRow();
@@ -127,7 +124,19 @@ Widget build(bool show) {
   }
 }
 
-final class PreferExtractingCallbacksTest extends _FlutterRuleTest {
+final class _PreferExtractingCallbacksTest extends _FlutterRuleTest {
+  static Map<String, Future<void> Function(_PreferExtractingCallbacksTest)> get _allCases =>
+      caseSet<_PreferExtractingCallbacksTest>(
+        parent: const {},
+        own: {
+          'test_blockCallbackWithTwoStatements_lint': (t) =>
+              t._blockCallbackWithTwoStatementsLint(),
+          'test_callbackWithControlFlow_lint': (t) => t._callbackWithControlFlowLint(),
+          'test_trivialExpressionCallback_noLint': (t) => t._trivialExpressionCallbackNoLint(),
+          'test_callbackReference_noLint': (t) => t._callbackReferenceNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferExtractingCallbacks();
@@ -209,7 +218,17 @@ Widget build() {
   }
 }
 
-final class PreferCorrectStaticIconProviderTest extends _FlutterRuleTest {
+final class _PreferCorrectStaticIconProviderTest extends _FlutterRuleTest {
+  static Map<String, Future<void> Function(_PreferCorrectStaticIconProviderTest)> get _allCases =>
+      caseSet<_PreferCorrectStaticIconProviderTest>(
+        parent: const {},
+        own: {
+          'test_topLevelIconDataConstant_lint': (t) => t._topLevelIconDataConstantLint(),
+          'test_staticProviderIconData_noLint': (t) => t._staticProviderIconDataNoLint(),
+          'test_nonIconDataConstant_noLint': (t) => t._nonIconDataConstantNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferCorrectStaticIconProvider();

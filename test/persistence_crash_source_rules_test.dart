@@ -9,70 +9,15 @@ import 'analysis_rule_suite.dart';
 part 'persistence_crash_source_rules_test/persistence_crash_source_rules_part_01.dart';
 
 void main() {
-  analysisRuleSuite<CrashDirectFirebaseCallTest>(
+  analysisRuleSuite<_CrashDirectFirebaseCallTest>(
     'CrashDirectFirebaseCallTest',
-    CrashDirectFirebaseCallTest.new,
-    {
-      'test_reportsOutsideBackend': (t) => t._reportsOutsideBackend(),
-      'test_crashService_noDiagnostic': (t) => t._crashServiceNoDiagnostic(),
-      'test_reportsOtherCoreCrashFiles': (t) => t._reportsOtherCoreCrashFiles(),
-    },
+    _CrashDirectFirebaseCallTest.new,
+    _CrashDirectFirebaseCallTest._allCases,
   );
-  analysisRuleSuite<CrashInitBeforeRunAppTest>(
+  analysisRuleSuite<_CrashInitBeforeRunAppTest>(
     'CrashInitBeforeRunAppTest',
-    CrashInitBeforeRunAppTest.new,
-    {
-      'test_reportsMissingInit': (t) => t._reportsMissingInit(),
-      'test_noErrorReporting_noDiagnostic': (t) => t._noErrorReportingNoDiagnostic(),
-      'test_reachableCrashFacadeWithoutInit_reports': (t) =>
-          t._reachableCrashFacadeWithoutInitReports(),
-      'test_crashFacadeBeforeUnrelatedSiblingImport_reports': (t) =>
-          t._crashFacadeBeforeUnrelatedSiblingImportReports(),
-      'test_sentryProviderWithoutCrashInit_reports': (t) =>
-          t._sentryProviderWithoutCrashInitReports(),
-      'test_crashlyticsProviderInImportedFileWithoutCrashInit_reports': (t) =>
-          t._crashlyticsProviderInImportedFileWithoutCrashInitReports(),
-      'test_initBeforeRunApp_noDiagnostic': (t) => t._initBeforeRunAppNoDiagnostic(),
-      'test_crashAppRunner_noDiagnostic': (t) => t._crashAppRunnerNoDiagnostic(),
-      'test_awaitedTopLevelAppRunnerAfterMain_noDiagnostic': (t) =>
-          t._awaitedTopLevelAppRunnerAfterMainNoDiagnostic(),
-      'test_forwardedTopLevelAppRunnerBeforeMain_noDiagnostic': (t) =>
-          t._forwardedTopLevelAppRunnerBeforeMainNoDiagnostic(),
-      'test_unawaitedTopLevelAppRunner_stillReports': (t) =>
-          t._unawaitedTopLevelAppRunnerStillReports(),
-      'test_conditionalTopLevelAppRunner_stillReports': (t) =>
-          t._conditionalTopLevelAppRunnerStillReports(),
-      'test_unreachableTopLevelAppRunner_stillReports': (t) =>
-          t._unreachableTopLevelAppRunnerStillReports(),
-      'test_conditionalCallToTopLevelAppRunner_stillReports': (t) =>
-          t._conditionalCallToTopLevelAppRunnerStillReports(),
-      'test_callCycleDoesNotReachTopLevelAppRunner_stillReports': (t) =>
-          t._callCycleDoesNotReachTopLevelAppRunnerStillReports(),
-      'test_topLevelAppRunnerAfterDirectRunApp_stillReports': (t) =>
-          t._topLevelAppRunnerAfterDirectRunAppStillReports(),
-      'test_runAppBeforeCrashInitInHelper_stillReports': (t) =>
-          t._runAppBeforeCrashInitInHelperStillReports(),
-      'test_returnBeforeCrashAppRunner_stillReports': (t) =>
-          t._returnBeforeCrashAppRunnerStillReports(),
-      'test_throwBeforeAwaitedRunner_stillReports': (t) =>
-          t._throwBeforeAwaitedRunnerStillReports(),
-      'test_awaitedResolvedInitializer_noDiagnostic': (t) =>
-          t._awaitedResolvedInitializerNoDiagnostic(),
-      'test_shadowedCrashParameterInWrapper_stillReports': (t) =>
-          t._shadowedCrashParameterInWrapperStillReports(),
-      'test_shadowedCrashLocalInWrapper_stillReports': (t) =>
-          t._shadowedCrashLocalInWrapperStillReports(),
-      'test_unrelatedAwaitedInitializer_stillReports': (t) =>
-          t._unrelatedAwaitedInitializerStillReports(),
-      'test_initializerInDifferentFunction_stillReports': (t) =>
-          t._initializerInDifferentFunctionStillReports(),
-      'test_conditionalCrashInitInWrapper_stillReports': (t) =>
-          t._conditionalCrashInitInWrapperStillReports(),
-      'test_unawaitedCrashInitInWrapper_stillReports': (t) =>
-          t._unawaitedCrashInitInWrapperStillReports(),
-      'test_conditionalDirectCrashInit_stillReports': (t) =>
-          t._conditionalDirectCrashInitStillReports(),
-    },
+    _CrashInitBeforeRunAppTest.new,
+    _CrashInitBeforeRunAppTest._allCases,
   );
   _definePersistenceCrashSourceRulesPart01Tests();
 }
@@ -122,7 +67,17 @@ abstract class _PersistenceCrashRuleTest extends AnalysisRuleTest {
 $source''';
 }
 
-final class CrashDirectFirebaseCallTest extends _PersistenceCrashRuleTest {
+final class _CrashDirectFirebaseCallTest extends _PersistenceCrashRuleTest {
+  static Map<String, Future<void> Function(_CrashDirectFirebaseCallTest)> get _allCases =>
+      caseSet<_CrashDirectFirebaseCallTest>(
+        parent: const {},
+        own: {
+          'test_reportsOutsideBackend': (t) => t._reportsOutsideBackend(),
+          'test_crashService_noDiagnostic': (t) => t._crashServiceNoDiagnostic(),
+          'test_reportsOtherCoreCrashFiles': (t) => t._reportsOtherCoreCrashFiles(),
+        },
+      );
+
   @override
   String get ruleName => 'crash_direct_firebase_call';
 
@@ -173,7 +128,64 @@ Future<void> installHandlers() async {
   }
 }
 
-final class CrashInitBeforeRunAppTest extends _PersistenceCrashRuleTest {
+final class _CrashInitBeforeRunAppTest extends _PersistenceCrashRuleTest {
+  static Map<String, Future<void> Function(_CrashInitBeforeRunAppTest)> get _allCases =>
+      caseSet<_CrashInitBeforeRunAppTest>(
+        parent: const {},
+        own: {
+          'test_reportsMissingInit': (t) => t._reportsMissingInit(),
+          'test_noErrorReporting_noDiagnostic': (t) => t._noErrorReportingNoDiagnostic(),
+          'test_reachableCrashFacadeWithoutInit_reports': (t) =>
+              t._reachableCrashFacadeWithoutInitReports(),
+          'test_crashFacadeBeforeUnrelatedSiblingImport_reports': (t) =>
+              t._crashFacadeBeforeUnrelatedSiblingImportReports(),
+          'test_sentryProviderWithoutCrashInit_reports': (t) =>
+              t._sentryProviderWithoutCrashInitReports(),
+          'test_crashlyticsProviderInImportedFileWithoutCrashInit_reports': (t) =>
+              t._crashlyticsProviderInImportedFileWithoutCrashInitReports(),
+          'test_initBeforeRunApp_noDiagnostic': (t) => t._initBeforeRunAppNoDiagnostic(),
+          'test_crashAppRunner_noDiagnostic': (t) => t._crashAppRunnerNoDiagnostic(),
+          'test_awaitedTopLevelAppRunnerAfterMain_noDiagnostic': (t) =>
+              t._awaitedTopLevelAppRunnerAfterMainNoDiagnostic(),
+          'test_forwardedTopLevelAppRunnerBeforeMain_noDiagnostic': (t) =>
+              t._forwardedTopLevelAppRunnerBeforeMainNoDiagnostic(),
+          'test_unawaitedTopLevelAppRunner_stillReports': (t) =>
+              t._unawaitedTopLevelAppRunnerStillReports(),
+          'test_conditionalTopLevelAppRunner_stillReports': (t) =>
+              t._conditionalTopLevelAppRunnerStillReports(),
+          'test_unreachableTopLevelAppRunner_stillReports': (t) =>
+              t._unreachableTopLevelAppRunnerStillReports(),
+          'test_conditionalCallToTopLevelAppRunner_stillReports': (t) =>
+              t._conditionalCallToTopLevelAppRunnerStillReports(),
+          'test_callCycleDoesNotReachTopLevelAppRunner_stillReports': (t) =>
+              t._callCycleDoesNotReachTopLevelAppRunnerStillReports(),
+          'test_topLevelAppRunnerAfterDirectRunApp_stillReports': (t) =>
+              t._topLevelAppRunnerAfterDirectRunAppStillReports(),
+          'test_runAppBeforeCrashInitInHelper_stillReports': (t) =>
+              t._runAppBeforeCrashInitInHelperStillReports(),
+          'test_returnBeforeCrashAppRunner_stillReports': (t) =>
+              t._returnBeforeCrashAppRunnerStillReports(),
+          'test_throwBeforeAwaitedRunner_stillReports': (t) =>
+              t._throwBeforeAwaitedRunnerStillReports(),
+          'test_awaitedResolvedInitializer_noDiagnostic': (t) =>
+              t._awaitedResolvedInitializerNoDiagnostic(),
+          'test_shadowedCrashParameterInWrapper_stillReports': (t) =>
+              t._shadowedCrashParameterInWrapperStillReports(),
+          'test_shadowedCrashLocalInWrapper_stillReports': (t) =>
+              t._shadowedCrashLocalInWrapperStillReports(),
+          'test_unrelatedAwaitedInitializer_stillReports': (t) =>
+              t._unrelatedAwaitedInitializerStillReports(),
+          'test_initializerInDifferentFunction_stillReports': (t) =>
+              t._initializerInDifferentFunctionStillReports(),
+          'test_conditionalCrashInitInWrapper_stillReports': (t) =>
+              t._conditionalCrashInitInWrapperStillReports(),
+          'test_unawaitedCrashInitInWrapper_stillReports': (t) =>
+              t._unawaitedCrashInitInWrapperStillReports(),
+          'test_conditionalDirectCrashInit_stillReports': (t) =>
+              t._conditionalDirectCrashInitStillReports(),
+        },
+      );
+
   @override
   String get ruleName => 'crash_init_before_run_app';
 

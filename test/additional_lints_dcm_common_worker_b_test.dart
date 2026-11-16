@@ -6,38 +6,34 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_non_empty_c
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidAssignmentsAsConditionsTest>(
+  analysisRuleSuite<_AvoidAssignmentsAsConditionsTest>(
     'AvoidAssignmentsAsConditionsTest',
-    AvoidAssignmentsAsConditionsTest.new,
-    {
-      'test_assignmentInForCondition_lint': (t) => t._assignmentInForConditionLint(),
-      'test_assignmentInIfCondition_lint': (t) => t._assignmentInIfConditionLint(),
-      'test_assignmentStatement_noLint': (t) => t._assignmentStatementNoLint(),
-    },
+    _AvoidAssignmentsAsConditionsTest.new,
+    _AvoidAssignmentsAsConditionsTest._allCases,
   );
-  analysisRuleSuite<AvoidExtensionsOnRecordsTest>(
+  analysisRuleSuite<_AvoidExtensionsOnRecordsTest>(
     'AvoidExtensionsOnRecordsTest',
-    AvoidExtensionsOnRecordsTest.new,
-    {
-      'test_namedRecordExtension_lint': (t) => t._namedRecordExtensionLint(),
-      'test_positionalRecordExtension_lint': (t) => t._positionalRecordExtensionLint(),
-      'test_valueTypeExtension_noLint': (t) => t._valueTypeExtensionNoLint(),
-    },
+    _AvoidExtensionsOnRecordsTest.new,
+    _AvoidExtensionsOnRecordsTest._allCases,
   );
-  analysisRuleSuite<AvoidNonEmptyConstructorBodiesTest>(
+  analysisRuleSuite<_AvoidNonEmptyConstructorBodiesTest>(
     'AvoidNonEmptyConstructorBodiesTest',
-    AvoidNonEmptyConstructorBodiesTest.new,
-    {
-      'test_emptyConstructorBody_noLint': (t) => t._emptyConstructorBodyNoLint(),
-      'test_initializerList_noLint': (t) => t._initializerListNoLint(),
-      'test_statementBody_lint': (t) => t._statementBodyLint(),
-      'test_freezedFactoryConstructorExpressionBody_noLint': (t) =>
-          t._freezedFactoryConstructorExpressionBodyNoLint(),
-    },
+    _AvoidNonEmptyConstructorBodiesTest.new,
+    _AvoidNonEmptyConstructorBodiesTest._allCases,
   );
 }
 
-final class AvoidAssignmentsAsConditionsTest extends AnalysisRuleTest {
+final class _AvoidAssignmentsAsConditionsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidAssignmentsAsConditionsTest)> get _allCases =>
+      caseSet<_AvoidAssignmentsAsConditionsTest>(
+        parent: const {},
+        own: {
+          'test_assignmentInForCondition_lint': (t) => t._assignmentInForConditionLint(),
+          'test_assignmentInIfCondition_lint': (t) => t._assignmentInIfConditionLint(),
+          'test_assignmentStatement_noLint': (t) => t._assignmentStatementNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidAssignmentsAsConditions();
@@ -83,7 +79,17 @@ void f() {
   }
 }
 
-final class AvoidExtensionsOnRecordsTest extends AnalysisRuleTest {
+final class _AvoidExtensionsOnRecordsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidExtensionsOnRecordsTest)> get _allCases =>
+      caseSet<_AvoidExtensionsOnRecordsTest>(
+        parent: const {},
+        own: {
+          'test_namedRecordExtension_lint': (t) => t._namedRecordExtensionLint(),
+          'test_positionalRecordExtension_lint': (t) => t._positionalRecordExtensionLint(),
+          'test_valueTypeExtension_noLint': (t) => t._valueTypeExtensionNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidExtensionsOnRecords();
@@ -128,7 +134,19 @@ extension PairMath on Pair {
   }
 }
 
-final class AvoidNonEmptyConstructorBodiesTest extends AnalysisRuleTest {
+final class _AvoidNonEmptyConstructorBodiesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNonEmptyConstructorBodiesTest)> get _allCases =>
+      caseSet<_AvoidNonEmptyConstructorBodiesTest>(
+        parent: const {},
+        own: {
+          'test_emptyConstructorBody_noLint': (t) => t._emptyConstructorBodyNoLint(),
+          'test_initializerList_noLint': (t) => t._initializerListNoLint(),
+          'test_statementBody_lint': (t) => t._statementBodyLint(),
+          'test_freezedFactoryConstructorExpressionBody_noLint': (t) =>
+              t._freezedFactoryConstructorExpressionBodyNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNonEmptyConstructorBodies();

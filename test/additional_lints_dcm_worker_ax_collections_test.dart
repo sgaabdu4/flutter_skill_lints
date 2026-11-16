@@ -8,39 +8,36 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidMapKeysContainsTest>(
+  analysisRuleSuite<_AvoidMapKeysContainsTest>(
     'AvoidMapKeysContainsTest',
-    AvoidMapKeysContainsTest.new,
-    {
-      'test_complexTarget_lint': (t) => t._complexTargetLint(),
-      'test_mapKeysContains_lint': (t) => t._mapKeysContainsLint(),
-      'test_containsKey_noLint': (t) => t._containsKeyNoLint(),
-      'test_iterableContains_noLint': (t) => t._iterableContainsNoLint(),
-      'test_severity_error': (t) => t._severityError(),
-    },
+    _AvoidMapKeysContainsTest.new,
+    _AvoidMapKeysContainsTest._allCases,
   );
-  analysisRuleSuite<AvoidEmptySpreadTest>('AvoidEmptySpreadTest', AvoidEmptySpreadTest.new, {
-    'test_emptyListSpread_lint': (t) => t._emptyListSpreadLint(),
-    'test_emptyMapSpread_lint': (t) => t._emptyMapSpreadLint(),
-    'test_emptySetSpread_lint': (t) => t._emptySetSpreadLint(),
-    'test_nonEmptySpread_noLint': (t) => t._nonEmptySpreadNoLint(),
-    'test_severity_error': (t) => t._severityError(),
-  });
-  analysisRuleSuite<AvoidMisusedSetLiteralsTest>(
+  analysisRuleSuite<_AvoidEmptySpreadTest>(
+    'AvoidEmptySpreadTest',
+    _AvoidEmptySpreadTest.new,
+    _AvoidEmptySpreadTest._allCases,
+  );
+  analysisRuleSuite<_AvoidMisusedSetLiteralsTest>(
     'AvoidMisusedSetLiteralsTest',
-    AvoidMisusedSetLiteralsTest.new,
-    {
-      'test_setLiteralAsExpressionStatement_lint': (t) => t._setLiteralAsExpressionStatementLint(),
-      'test_setLiteralInIfCondition_lint': (t) => t._setLiteralInIfConditionLint(),
-      'test_setLiteralInWhenClause_lint': (t) => t._setLiteralInWhenClauseLint(),
-      'test_setLiteralValue_noLint': (t) => t._setLiteralValueNoLint(),
-      'test_setLiteralMethodCondition_noLint': (t) => t._setLiteralMethodConditionNoLint(),
-      'test_severity_error': (t) => t._severityError(),
-    },
+    _AvoidMisusedSetLiteralsTest.new,
+    _AvoidMisusedSetLiteralsTest._allCases,
   );
 }
 
-final class AvoidMapKeysContainsTest extends AnalysisRuleTest {
+final class _AvoidMapKeysContainsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidMapKeysContainsTest)> get _allCases =>
+      caseSet<_AvoidMapKeysContainsTest>(
+        parent: const {},
+        own: {
+          'test_complexTarget_lint': (t) => t._complexTargetLint(),
+          'test_mapKeysContains_lint': (t) => t._mapKeysContainsLint(),
+          'test_containsKey_noLint': (t) => t._containsKeyNoLint(),
+          'test_iterableContains_noLint': (t) => t._iterableContainsNoLint(),
+          'test_severity_error': (t) => t._severityError(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidMapKeysContains();
@@ -99,7 +96,19 @@ void f(Iterable<String> values) {
   }
 }
 
-final class AvoidEmptySpreadTest extends AnalysisRuleTest {
+final class _AvoidEmptySpreadTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidEmptySpreadTest)> get _allCases =>
+      caseSet<_AvoidEmptySpreadTest>(
+        parent: const {},
+        own: {
+          'test_emptyListSpread_lint': (t) => t._emptyListSpreadLint(),
+          'test_emptyMapSpread_lint': (t) => t._emptyMapSpreadLint(),
+          'test_emptySetSpread_lint': (t) => t._emptySetSpreadLint(),
+          'test_nonEmptySpread_noLint': (t) => t._nonEmptySpreadNoLint(),
+          'test_severity_error': (t) => t._severityError(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidEmptySpread();
@@ -155,7 +164,21 @@ void f() {
   }
 }
 
-final class AvoidMisusedSetLiteralsTest extends AnalysisRuleTest {
+final class _AvoidMisusedSetLiteralsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidMisusedSetLiteralsTest)> get _allCases =>
+      caseSet<_AvoidMisusedSetLiteralsTest>(
+        parent: const {},
+        own: {
+          'test_setLiteralAsExpressionStatement_lint': (t) =>
+              t._setLiteralAsExpressionStatementLint(),
+          'test_setLiteralInIfCondition_lint': (t) => t._setLiteralInIfConditionLint(),
+          'test_setLiteralInWhenClause_lint': (t) => t._setLiteralInWhenClauseLint(),
+          'test_setLiteralValue_noLint': (t) => t._setLiteralValueNoLint(),
+          'test_setLiteralMethodCondition_noLint': (t) => t._setLiteralMethodConditionNoLint(),
+          'test_severity_error': (t) => t._severityError(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidMisusedSetLiterals();

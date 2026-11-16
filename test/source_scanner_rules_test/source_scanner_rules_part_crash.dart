@@ -5,7 +5,25 @@ abstract class _DataCrashRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => dataCrashSourceRules;
 }
 
-final class DataLogRethrowTest extends _DataCrashRuleTest {
+final class _DataLogRethrowTest extends _DataCrashRuleTest {
+  static Map<String, Future<void> Function(_DataLogRethrowTest)> get _allCases =>
+      caseSet<_DataLogRethrowTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsReportingCallsBeforeRethrow': (t) => t._reportsReportingCallsBeforeRethrow(),
+          'test_reportsFlutterDebugPrintBeforeRethrow': (t) =>
+              t._reportsFlutterDebugPrintBeforeRethrow(),
+          'test_allowsSkillDataLayerCatches': (t) => t._allowsSkillDataLayerCatches(),
+          'test_reportsRollbackThatReportsBeforeRethrow': (t) =>
+              t._reportsRollbackThatReportsBeforeRethrow(),
+          'test_reportsCrashReportThenRethrow': (t) => t._reportsCrashReportThenRethrow(),
+          'test_reportsCrashReportThenThrowCaughtError': (t) =>
+              t._reportsCrashReportThenThrowCaughtError(),
+          'test_allowsReportThenMappedTypedError': (t) => t._allowsReportThenMappedTypedError(),
+          'test_allowsRethrowWithoutReport': (t) => t._allowsRethrowWithoutReport(),
+        },
+      );
+
   @override
   String get ruleName => 'data_log_rethrow';
   @override
@@ -244,7 +262,10 @@ Future<int> load(Future<int> Function() source) async {
   }
 }
 
-final class CrashPossiblePiiTest extends _DataCrashRuleTest {
+final class _CrashPossiblePiiTest extends _DataCrashRuleTest {
+  static Map<String, Future<void> Function(_CrashPossiblePiiTest)> get _allCases =>
+      caseSet<_CrashPossiblePiiTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'crash_possible_pii';
   @override
@@ -322,7 +343,18 @@ class PlatformDispatcher {
   String get crashServicePath => '$testPackageLibPath/core/crash/crash_service.dart';
 }
 
-final class CrashDirectSentryCallTest extends _CrashSdkRuleTest {
+final class _CrashDirectSentryCallTest extends _CrashSdkRuleTest {
+  static Map<String, Future<void> Function(_CrashDirectSentryCallTest)> get _allCases =>
+      caseSet<_CrashDirectSentryCallTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsImportAndCaptureCall': (t) => t._reportsImportAndCaptureCall(),
+          'test_reportsSdkUseInOtherCoreCrashFiles': (t) => t._reportsSdkUseInOtherCoreCrashFiles(),
+          'test_allowsCrashService': (t) => t._allowsCrashService(),
+          'test_allowsCrashFacadeCalls': (t) => t._allowsCrashFacadeCalls(),
+        },
+      );
+
   @override
   String get ruleName => 'crash_direct_sentry_call';
   @override
@@ -391,7 +423,31 @@ void submit(Object error) {
   }
 }
 
-final class CrashCustomGlobalErrorHandlerTest extends _CrashSdkRuleTest {
+final class _CrashCustomGlobalErrorHandlerTest extends _CrashSdkRuleTest {
+  static Map<String, Future<void> Function(_CrashCustomGlobalErrorHandlerTest)> get _allCases =>
+      caseSet<_CrashCustomGlobalErrorHandlerTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsPlatformDispatcherHandler': (t) => t._reportsPlatformDispatcherHandler(),
+          'test_reportsCustomHandlerInCrashService': (t) => t._reportsCustomHandlerInCrashService(),
+          'test_reportsCustomHandlerInsideCrashFacade': (t) =>
+              t._reportsCustomHandlerInsideCrashFacade(),
+          'test_reportsCrashlyticsHandlersOutsideCrashFacade': (t) =>
+              t._reportsCrashlyticsHandlersOutsideCrashFacade(),
+          'test_reportsBootstrapHandlers': (t) => t._reportsBootstrapHandlers(),
+          'test_allowsCrashlyticsHandlersInsideCrashFacade': (t) =>
+              t._allowsCrashlyticsHandlersInsideCrashFacade(),
+          'test_allowsReadingHandler': (t) => t._allowsReadingHandler(),
+          'test_allowsStartupForwardingToLocalDiagnosticsOnly': (t) =>
+              t._allowsStartupForwardingToLocalDiagnosticsOnly(),
+          'test_reportsLocalHandlerOverwritingSdkFromExternalHelper': (t) =>
+              t._reportsLocalHandlerOverwritingSdkFromExternalHelper(),
+          'test_reportsRemoteArbitraryAndRecursiveFacadeHandlers': (t) =>
+              t._reportsRemoteArbitraryAndRecursiveFacadeHandlers(),
+          'test_reportsThrowAfterLocalForwarding': (t) => t._reportsThrowAfterLocalForwarding(),
+        },
+      );
+
   @override
   String get ruleName => 'crash_custom_global_error_handler';
   @override
@@ -654,7 +710,16 @@ abstract final class Crash {
   }
 }
 
-final class CrashSentrySendDefaultPiiTest extends _CrashSdkRuleTest {
+final class _CrashSentrySendDefaultPiiTest extends _CrashSdkRuleTest {
+  static Map<String, Future<void> Function(_CrashSentrySendDefaultPiiTest)> get _allCases =>
+      caseSet<_CrashSentrySendDefaultPiiTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsFalse': (t) => t._allowsFalse(),
+          'test_allowsUnrelatedOptionClass': (t) => t._allowsUnrelatedOptionClass(),
+        },
+      );
+
   @override
   String get ruleName => 'crash_sentry_send_default_pii';
   @override
@@ -693,7 +758,16 @@ void configure(AnalyticsOptions options) {
   }
 }
 
-final class CrashSentryCaptureOptInTest extends _CrashSdkRuleTest {
+final class _CrashSentryCaptureOptInTest extends _CrashSdkRuleTest {
+  static Map<String, Future<void> Function(_CrashSentryCaptureOptInTest)> get _allCases =>
+      caseSet<_CrashSentryCaptureOptInTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsViewHierarchy': (t) => t._reportsViewHierarchy(),
+          'test_allowsDisabledCapture': (t) => t._allowsDisabledCapture(),
+        },
+      );
+
   @override
   String get ruleName => 'crash_sentry_capture_opt_in';
   @override
@@ -736,7 +810,17 @@ Future<void> init() => SentryFlutter.init((options) {
   }
 }
 
-final class CrashFacadePublicApiTest extends _DataCrashRuleTest {
+final class _CrashFacadePublicApiTest extends _DataCrashRuleTest {
+  static Map<String, Future<void> Function(_CrashFacadePublicApiTest)> get _allCases =>
+      caseSet<_CrashFacadePublicApiTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsPublicField': (t) => t._reportsPublicField(),
+          'test_allowsInitLogErrorAndPrivateMembers': (t) =>
+              t._allowsInitLogErrorAndPrivateMembers(),
+        },
+      );
+
   @override
   String get ruleName => 'crash_facade_public_api';
   @override
@@ -780,7 +864,20 @@ abstract final class Crash {
   }
 }
 
-final class CrashErrorRecursionTest extends _CrashSdkRuleTest {
+final class _CrashErrorRecursionTest extends _CrashSdkRuleTest {
+  static Map<String, Future<void> Function(_CrashErrorRecursionTest)> get _allCases =>
+      caseSet<_CrashErrorRecursionTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsContainedSendFailure': (t) => t._allowsContainedSendFailure(),
+          'test_allowsStartupCallbacksForwardingToTerminalError': (t) =>
+              t._allowsStartupCallbacksForwardingToTerminalError(),
+          'test_reportsSendFailureFromStartupCallback': (t) =>
+              t._reportsSendFailureFromStartupCallback(),
+          'test_allowsFeatureCallsToCrashError': (t) => t._allowsFeatureCallsToCrashError(),
+        },
+      );
+
   @override
   String get ruleName => 'crash_error_recursion';
   @override
@@ -875,7 +972,16 @@ void submit(Object error) {
   }
 }
 
-final class CrashSentryAuthTokenInSourceTest extends _DataCrashRuleTest {
+final class _CrashSentryAuthTokenInSourceTest extends _DataCrashRuleTest {
+  static Map<String, Future<void> Function(_CrashSentryAuthTokenInSourceTest)> get _allCases =>
+      caseSet<_CrashSentryAuthTokenInSourceTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsEnvironmentBundledToken': (t) => t._reportsEnvironmentBundledToken(),
+          'test_allowsPublicDsnConfig': (t) => t._allowsPublicDsnConfig(),
+        },
+      );
+
   @override
   String get ruleName => 'crash_sentry_auth_token_in_source';
   @override
@@ -906,104 +1012,49 @@ const sentryDsn = String.fromEnvironment('SENTRY_DSN');
 }
 
 void _defineSourceScannerRulesPartCrashTests() {
-  analysisRuleSuite<DataLogRethrowTest>('DataLogRethrowTest', DataLogRethrowTest.new, {
-    'test_reportsReportingCallsBeforeRethrow': (t) => t._reportsReportingCallsBeforeRethrow(),
-    'test_reportsFlutterDebugPrintBeforeRethrow': (t) => t._reportsFlutterDebugPrintBeforeRethrow(),
-    'test_allowsSkillDataLayerCatches': (t) => t._allowsSkillDataLayerCatches(),
-    'test_reportsRollbackThatReportsBeforeRethrow': (t) =>
-        t._reportsRollbackThatReportsBeforeRethrow(),
-    'test_reportsCrashReportThenRethrow': (t) => t._reportsCrashReportThenRethrow(),
-    'test_reportsCrashReportThenThrowCaughtError': (t) =>
-        t._reportsCrashReportThenThrowCaughtError(),
-    'test_allowsReportThenMappedTypedError': (t) => t._allowsReportThenMappedTypedError(),
-    'test_allowsRethrowWithoutReport': (t) => t._allowsRethrowWithoutReport(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<CrashPossiblePiiTest>('CrashPossiblePiiTest', CrashPossiblePiiTest.new, {
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<CrashDirectSentryCallTest>(
+  analysisRuleSuite<_DataLogRethrowTest>(
+    'DataLogRethrowTest',
+    _DataLogRethrowTest.new,
+    _DataLogRethrowTest._allCases,
+  );
+  analysisRuleSuite<_CrashPossiblePiiTest>(
+    'CrashPossiblePiiTest',
+    _CrashPossiblePiiTest.new,
+    _CrashPossiblePiiTest._allCases,
+  );
+  analysisRuleSuite<_CrashDirectSentryCallTest>(
     'CrashDirectSentryCallTest',
-    CrashDirectSentryCallTest.new,
-    {
-      'test_reportsImportAndCaptureCall': (t) => t._reportsImportAndCaptureCall(),
-      'test_reportsSdkUseInOtherCoreCrashFiles': (t) => t._reportsSdkUseInOtherCoreCrashFiles(),
-      'test_allowsCrashService': (t) => t._allowsCrashService(),
-      'test_allowsCrashFacadeCalls': (t) => t._allowsCrashFacadeCalls(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _CrashDirectSentryCallTest.new,
+    _CrashDirectSentryCallTest._allCases,
   );
-  analysisRuleSuite<CrashCustomGlobalErrorHandlerTest>(
+  analysisRuleSuite<_CrashCustomGlobalErrorHandlerTest>(
     'CrashCustomGlobalErrorHandlerTest',
-    CrashCustomGlobalErrorHandlerTest.new,
-    {
-      'test_reportsPlatformDispatcherHandler': (t) => t._reportsPlatformDispatcherHandler(),
-      'test_reportsCustomHandlerInCrashService': (t) => t._reportsCustomHandlerInCrashService(),
-      'test_reportsCustomHandlerInsideCrashFacade': (t) =>
-          t._reportsCustomHandlerInsideCrashFacade(),
-      'test_reportsCrashlyticsHandlersOutsideCrashFacade': (t) =>
-          t._reportsCrashlyticsHandlersOutsideCrashFacade(),
-      'test_reportsBootstrapHandlers': (t) => t._reportsBootstrapHandlers(),
-      'test_allowsCrashlyticsHandlersInsideCrashFacade': (t) =>
-          t._allowsCrashlyticsHandlersInsideCrashFacade(),
-      'test_allowsReadingHandler': (t) => t._allowsReadingHandler(),
-      'test_allowsStartupForwardingToLocalDiagnosticsOnly': (t) =>
-          t._allowsStartupForwardingToLocalDiagnosticsOnly(),
-      'test_reportsLocalHandlerOverwritingSdkFromExternalHelper': (t) =>
-          t._reportsLocalHandlerOverwritingSdkFromExternalHelper(),
-      'test_reportsRemoteArbitraryAndRecursiveFacadeHandlers': (t) =>
-          t._reportsRemoteArbitraryAndRecursiveFacadeHandlers(),
-      'test_reportsThrowAfterLocalForwarding': (t) => t._reportsThrowAfterLocalForwarding(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _CrashCustomGlobalErrorHandlerTest.new,
+    _CrashCustomGlobalErrorHandlerTest._allCases,
   );
-  analysisRuleSuite<CrashSentrySendDefaultPiiTest>(
+  analysisRuleSuite<_CrashSentrySendDefaultPiiTest>(
     'CrashSentrySendDefaultPiiTest',
-    CrashSentrySendDefaultPiiTest.new,
-    {
-      'test_allowsFalse': (t) => t._allowsFalse(),
-      'test_allowsUnrelatedOptionClass': (t) => t._allowsUnrelatedOptionClass(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _CrashSentrySendDefaultPiiTest.new,
+    _CrashSentrySendDefaultPiiTest._allCases,
   );
-  analysisRuleSuite<CrashSentryCaptureOptInTest>(
+  analysisRuleSuite<_CrashSentryCaptureOptInTest>(
     'CrashSentryCaptureOptInTest',
-    CrashSentryCaptureOptInTest.new,
-    {
-      'test_reportsViewHierarchy': (t) => t._reportsViewHierarchy(),
-      'test_allowsDisabledCapture': (t) => t._allowsDisabledCapture(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _CrashSentryCaptureOptInTest.new,
+    _CrashSentryCaptureOptInTest._allCases,
   );
-  analysisRuleSuite<CrashFacadePublicApiTest>(
+  analysisRuleSuite<_CrashFacadePublicApiTest>(
     'CrashFacadePublicApiTest',
-    CrashFacadePublicApiTest.new,
-    {
-      'test_reportsPublicField': (t) => t._reportsPublicField(),
-      'test_allowsInitLogErrorAndPrivateMembers': (t) => t._allowsInitLogErrorAndPrivateMembers(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _CrashFacadePublicApiTest.new,
+    _CrashFacadePublicApiTest._allCases,
   );
-  analysisRuleSuite<CrashErrorRecursionTest>(
+  analysisRuleSuite<_CrashErrorRecursionTest>(
     'CrashErrorRecursionTest',
-    CrashErrorRecursionTest.new,
-    {
-      'test_allowsContainedSendFailure': (t) => t._allowsContainedSendFailure(),
-      'test_allowsStartupCallbacksForwardingToTerminalError': (t) =>
-          t._allowsStartupCallbacksForwardingToTerminalError(),
-      'test_reportsSendFailureFromStartupCallback': (t) =>
-          t._reportsSendFailureFromStartupCallback(),
-      'test_allowsFeatureCallsToCrashError': (t) => t._allowsFeatureCallsToCrashError(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _CrashErrorRecursionTest.new,
+    _CrashErrorRecursionTest._allCases,
   );
-  analysisRuleSuite<CrashSentryAuthTokenInSourceTest>(
+  analysisRuleSuite<_CrashSentryAuthTokenInSourceTest>(
     'CrashSentryAuthTokenInSourceTest',
-    CrashSentryAuthTokenInSourceTest.new,
-    {
-      'test_reportsEnvironmentBundledToken': (t) => t._reportsEnvironmentBundledToken(),
-      'test_allowsPublicDsnConfig': (t) => t._allowsPublicDsnConfig(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _CrashSentryAuthTokenInSourceTest.new,
+    _CrashSentryAuthTokenInSourceTest._allCases,
   );
 }

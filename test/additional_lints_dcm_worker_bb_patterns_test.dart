@@ -8,43 +8,35 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidKeywordsInWildcardPatternTest>(
+  analysisRuleSuite<_AvoidKeywordsInWildcardPatternTest>(
     'AvoidKeywordsInWildcardPatternTest',
-    AvoidKeywordsInWildcardPatternTest.new,
-    {
-      'test_finalWildcard_lint': (t) => t._finalWildcardLint(),
-      'test_varWildcard_lint': (t) => t._varWildcardLint(),
-      'test_plainWildcard_noLint': (t) => t._plainWildcardNoLint(),
-      'test_severity_info': (t) => t._severityInfo(),
-    },
+    _AvoidKeywordsInWildcardPatternTest.new,
+    _AvoidKeywordsInWildcardPatternTest._allCases,
   );
-  analysisRuleSuite<AvoidMisusedWildcardPatternTest>(
+  analysisRuleSuite<_AvoidMisusedWildcardPatternTest>(
     'AvoidMisusedWildcardPatternTest',
-    AvoidMisusedWildcardPatternTest.new,
-    {
-      'test_leftWildcardInLogicalOr_lint': (t) => t._leftWildcardInLogicalOrLint(),
-      'test_rightWildcardInLogicalOr_lint': (t) => t._rightWildcardInLogicalOrLint(),
-      'test_typedWildcardInLogicalOr_noLint': (t) => t._typedWildcardInLogicalOrNoLint(),
-      'test_withoutWildcardInLogicalOr_noLint': (t) => t._withoutWildcardInLogicalOrNoLint(),
-      'test_severity_error': (t) => t._severityError(),
-    },
+    _AvoidMisusedWildcardPatternTest.new,
+    _AvoidMisusedWildcardPatternTest._allCases,
   );
-  analysisRuleSuite<AvoidExplicitPatternFieldNameTest>(
+  analysisRuleSuite<_AvoidExplicitPatternFieldNameTest>(
     'AvoidExplicitPatternFieldNameTest',
-    AvoidExplicitPatternFieldNameTest.new,
-    {
-      'test_explicitObjectPatternFieldName_lint': (t) => t._explicitObjectPatternFieldNameLint(),
-      'test_shorthandObjectPatternFieldName_noLint': (t) =>
-          t._shorthandObjectPatternFieldNameNoLint(),
-      'test_differentVariableName_noLint': (t) => t._differentVariableNameNoLint(),
-      'test_typedPattern_noLint': (t) => t._typedPatternNoLint(),
-      'test_recordPattern_noLint': (t) => t._recordPatternNoLint(),
-      'test_severity_info': (t) => t._severityInfo(),
-    },
+    _AvoidExplicitPatternFieldNameTest.new,
+    _AvoidExplicitPatternFieldNameTest._allCases,
   );
 }
 
-final class AvoidKeywordsInWildcardPatternTest extends AnalysisRuleTest {
+final class _AvoidKeywordsInWildcardPatternTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidKeywordsInWildcardPatternTest)> get _allCases =>
+      caseSet<_AvoidKeywordsInWildcardPatternTest>(
+        parent: const {},
+        own: {
+          'test_finalWildcard_lint': (t) => t._finalWildcardLint(),
+          'test_varWildcard_lint': (t) => t._varWildcardLint(),
+          'test_plainWildcard_noLint': (t) => t._plainWildcardNoLint(),
+          'test_severity_info': (t) => t._severityInfo(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidKeywordsInWildcardPattern();
@@ -84,7 +76,19 @@ String describe(Object value) => switch (value) {
   }
 }
 
-final class AvoidMisusedWildcardPatternTest extends AnalysisRuleTest {
+final class _AvoidMisusedWildcardPatternTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidMisusedWildcardPatternTest)> get _allCases =>
+      caseSet<_AvoidMisusedWildcardPatternTest>(
+        parent: const {},
+        own: {
+          'test_leftWildcardInLogicalOr_lint': (t) => t._leftWildcardInLogicalOrLint(),
+          'test_rightWildcardInLogicalOr_lint': (t) => t._rightWildcardInLogicalOrLint(),
+          'test_typedWildcardInLogicalOr_noLint': (t) => t._typedWildcardInLogicalOrNoLint(),
+          'test_withoutWildcardInLogicalOr_noLint': (t) => t._withoutWildcardInLogicalOrNoLint(),
+          'test_severity_error': (t) => t._severityError(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidMisusedWildcardPattern();
@@ -136,7 +140,22 @@ String describe(Object value) => switch (value) {
   }
 }
 
-final class AvoidExplicitPatternFieldNameTest extends AnalysisRuleTest {
+final class _AvoidExplicitPatternFieldNameTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidExplicitPatternFieldNameTest)> get _allCases =>
+      caseSet<_AvoidExplicitPatternFieldNameTest>(
+        parent: const {},
+        own: {
+          'test_explicitObjectPatternFieldName_lint': (t) =>
+              t._explicitObjectPatternFieldNameLint(),
+          'test_shorthandObjectPatternFieldName_noLint': (t) =>
+              t._shorthandObjectPatternFieldNameNoLint(),
+          'test_differentVariableName_noLint': (t) => t._differentVariableNameNoLint(),
+          'test_typedPattern_noLint': (t) => t._typedPatternNoLint(),
+          'test_recordPattern_noLint': (t) => t._recordPatternNoLint(),
+          'test_severity_info': (t) => t._severityInfo(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidExplicitPatternFieldName();

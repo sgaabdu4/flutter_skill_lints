@@ -1,6 +1,20 @@
 part of '../source_scanner_rules_test.dart';
 
-final class NotifierEnsureDepsTest extends _NotifierFixtureTest {
+final class _NotifierEnsureDepsTest extends _NotifierFixtureTest {
+  static Map<String, Future<void> Function(_NotifierEnsureDepsTest)> get _allCases =>
+      caseSet<_NotifierEnsureDepsTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsConstructorInjectedFinalRepository': (t) =>
+              t._allowsConstructorInjectedFinalRepository(),
+          'test_reportsUninitializedLateRepository': (t) => t._reportsUninitializedLateRepository(),
+          'test_reportsNullableConstructorInjectedRepository': (t) =>
+              t._reportsNullableConstructorInjectedRepository(),
+          'test_reportsDynamicConstructorInjectedRepository': (t) =>
+              t._reportsDynamicConstructorInjectedRepository(),
+        },
+      );
+
   @override
   String get ruleName => 'notifier_ensure_deps';
 
@@ -64,7 +78,16 @@ class TestableItemsNotifier {
   }
 }
 
-final class NotifierWatchMethodTest extends _NotifierFixtureTest {
+final class _NotifierWatchMethodTest extends _NotifierFixtureTest {
+  static Map<String, Future<void> Function(_NotifierWatchMethodTest)> get _allCases =>
+      caseSet<_NotifierWatchMethodTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsListenOutsideBuild': (t) => t._reportsListenOutsideBuild(),
+          'test_allowsWatchAndListenInBuild': (t) => t._allowsWatchAndListenInBuild(),
+        },
+      );
+
   @override
   String get ruleName => 'notifier_watch_method';
 
@@ -122,7 +145,30 @@ abstract class _ServicesExtendedRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => servicesExtendedSourceRules;
 }
 
-final class ServiceSingletonTest extends _ServicesMixinsRuleTest {
+final class _ServiceSingletonTest extends _ServicesMixinsRuleTest {
+  static Map<String, Future<void> Function(_ServiceSingletonTest)> get _allCases =>
+      caseSet<_ServiceSingletonTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsPlainBoringSingleton': (t) => t._allowsPlainBoringSingleton(),
+          'test_allowsFireAndForgetMethodsOnly': (t) => t._allowsFireAndForgetMethodsOnly(),
+          'test_allowsPrivateBackingFieldWithTrivialGetter': (t) =>
+              t._allowsPrivateBackingFieldWithTrivialGetter(),
+          'test_reportsMutableStateEvenWithResetForTest': (t) =>
+              t._reportsMutableStateEvenWithResetForTest(),
+          'test_reportsPublicDataReturningMethod': (t) => t._reportsPublicDataReturningMethod(),
+          'test_reportsPublicGetterState': (t) => t._reportsPublicGetterState(),
+          'test_reportsPublicConstructorNextToPrivateConstructor': (t) =>
+              t._reportsPublicConstructorNextToPrivateConstructor(),
+          'test_reportsPublicGetterOverPrivateField': (t) =>
+              t._reportsPublicGetterOverPrivateField(),
+          'test_reportsFactoryAndInstanceCacheSingletons': (t) =>
+              t._reportsFactoryAndInstanceCacheSingletons(),
+          'test_allowsConstantAndRegistryInstances': (t) => t._allowsConstantAndRegistryInstances(),
+          'test_reportsDebugInjectionSeam': (t) => t._reportsDebugInjectionSeam(),
+        },
+      );
+
   @override
   String get ruleName => 'service_singleton';
   @override
@@ -317,7 +363,16 @@ final class UserService {
   }
 }
 
-final class ServiceInlineConcreteDependencyTest extends _ServicesExtendedRuleTest {
+final class _ServiceInlineConcreteDependencyTest extends _ServicesExtendedRuleTest {
+  static Map<String, Future<void> Function(_ServiceInlineConcreteDependencyTest)> get _allCases =>
+      caseSet<_ServiceInlineConcreteDependencyTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsProviderValue': (t) => t._allowsProviderValue(),
+          'test_skipsTests': (t) => t._skipsTests(),
+        },
+      );
+
   @override
   String get ruleName => 'service_inline_concrete_dependency';
   @override
@@ -361,7 +416,16 @@ Object backgroundAlarmService(Ref ref) {
   }
 }
 
-final class HiddenDependencyDefaultParamTest extends _ServicesExtendedRuleTest {
+final class _HiddenDependencyDefaultParamTest extends _ServicesExtendedRuleTest {
+  static Map<String, Future<void> Function(_HiddenDependencyDefaultParamTest)> get _allCases =>
+      caseSet<_HiddenDependencyDefaultParamTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsDefaultedFunctionSeam': (t) => t._reportsDefaultedFunctionSeam(),
+          'test_allowsRequiredFunctionSeam': (t) => t._allowsRequiredFunctionSeam(),
+        },
+      );
+
   @override
   String get ruleName => 'hidden_dependency_default_param';
   @override
@@ -413,7 +477,18 @@ class AuthRemoteDatasource {
   }
 }
 
-final class RiverpodConfigDestructuringTest extends _ServicesExtendedRuleTest {
+final class _RiverpodConfigDestructuringTest extends _ServicesExtendedRuleTest {
+  static Map<String, Future<void> Function(_RiverpodConfigDestructuringTest)> get _allCases =>
+      caseSet<_RiverpodConfigDestructuringTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsAwaitedReadConfigLocal': (t) => t._reportsAwaitedReadConfigLocal(),
+          'test_allowsSkillDestructuredConfig': (t) => t._allowsSkillDestructuredConfig(),
+          'test_allowsConfigUsedBeyondPropertyReads': (t) =>
+              t._allowsConfigUsedBeyondPropertyReads(),
+        },
+      );
+
   static const _stubs = r'''
 class Riverpod {
   const Riverpod({bool keepAlive = false});
@@ -512,7 +587,10 @@ int nonConfigValue(Ref ref) {
   }
 }
 
-final class MixinMixinClassTest extends _ServicesMixinsRuleTest {
+final class _MixinMixinClassTest extends _ServicesMixinsRuleTest {
+  static Map<String, Future<void> Function(_MixinMixinClassTest)> get _allCases =>
+      caseSet<_MixinMixinClassTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'mixin_mixin_class';
   @override
@@ -521,7 +599,10 @@ final class MixinMixinClassTest extends _ServicesMixinsRuleTest {
   String get source => 'mixin class Trackable {}';
 }
 
-final class MixinNameSuffixTest extends _ServicesMixinsRuleTest {
+final class _MixinNameSuffixTest extends _ServicesMixinsRuleTest {
+  static Map<String, Future<void> Function(_MixinNameSuffixTest)> get _allCases =>
+      caseSet<_MixinNameSuffixTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'mixin_name_suffix';
   @override
@@ -530,7 +611,24 @@ final class MixinNameSuffixTest extends _ServicesMixinsRuleTest {
   String get source => 'mixin class Trackable {}';
 }
 
-final class MixinMutableStateTest extends _ServicesMixinsRuleTest {
+final class _MixinMutableStateTest extends _ServicesMixinsRuleTest {
+  static Map<String, Future<void> Function(_MixinMutableStateTest)> get _allCases =>
+      caseSet<_MixinMutableStateTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsPrivateLifecycleFieldsInConsumerStateMixin': (t) =>
+              t._allowsPrivateLifecycleFieldsInConsumerStateMixin(),
+          'test_reportsPublicMutableFieldInStateMixin': (t) =>
+              t._reportsPublicMutableFieldInStateMixin(),
+          'test_reportsPrivateMutableFieldInUnconstrainedMixin': (t) =>
+              t._reportsPrivateMutableFieldInUnconstrainedMixin(),
+          'test_reportsUninitializedLateAndStaticMutableFields': (t) =>
+              t._reportsUninitializedLateAndStaticMutableFields(),
+          'test_allowsExpressionBodiedMethodsAndGetters': (t) =>
+              t._allowsExpressionBodiedMethodsAndGetters(),
+        },
+      );
+
   @override
   String get ruleName => 'mixin_mutable_state';
   @override
@@ -651,7 +749,10 @@ abstract class _TestFileRuleTest extends _TestRuleTest {
   String get path => '$testPackageRootPath/test/widget_test.dart';
 }
 
-final class TestProviderContainerTest extends _TestFileRuleTest {
+final class _TestProviderContainerTest extends _TestFileRuleTest {
+  static Map<String, Future<void> Function(_TestProviderContainerTest)> get _allCases =>
+      caseSet<_TestProviderContainerTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'test_provider_container';
   @override
@@ -660,7 +761,10 @@ final class TestProviderContainerTest extends _TestFileRuleTest {
   String get source => 'void main() { ProviderContainer(); }';
 }
 
-final class TestUncontrolledScopeTest extends _TestFileRuleTest {
+final class _TestUncontrolledScopeTest extends _TestFileRuleTest {
+  static Map<String, Future<void> Function(_TestUncontrolledScopeTest)> get _allCases =>
+      caseSet<_TestUncontrolledScopeTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'test_uncontrolled_scope';
   @override
@@ -669,7 +773,10 @@ final class TestUncontrolledScopeTest extends _TestFileRuleTest {
   String get source => 'void main() { ProviderScope(); }';
 }
 
-final class TestCreateContainerTest extends _TestFileRuleTest {
+final class _TestCreateContainerTest extends _TestFileRuleTest {
+  static Map<String, Future<void> Function(_TestCreateContainerTest)> get _allCases =>
+      caseSet<_TestCreateContainerTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'test_create_container';
   @override
@@ -679,102 +786,64 @@ final class TestCreateContainerTest extends _TestFileRuleTest {
 }
 
 void _defineSourceScannerRulesPart11Tests() {
-  analysisRuleSuite<NotifierEnsureDepsTest>('NotifierEnsureDepsTest', NotifierEnsureDepsTest.new, {
-    'test_allowsConstructorInjectedFinalRepository': (t) =>
-        t._allowsConstructorInjectedFinalRepository(),
-    'test_reportsUninitializedLateRepository': (t) => t._reportsUninitializedLateRepository(),
-    'test_reportsNullableConstructorInjectedRepository': (t) =>
-        t._reportsNullableConstructorInjectedRepository(),
-    'test_reportsDynamicConstructorInjectedRepository': (t) =>
-        t._reportsDynamicConstructorInjectedRepository(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<NotifierWatchMethodTest>(
+  analysisRuleSuite<_NotifierEnsureDepsTest>(
+    'NotifierEnsureDepsTest',
+    _NotifierEnsureDepsTest.new,
+    _NotifierEnsureDepsTest._allCases,
+  );
+  analysisRuleSuite<_NotifierWatchMethodTest>(
     'NotifierWatchMethodTest',
-    NotifierWatchMethodTest.new,
-    {
-      'test_reportsListenOutsideBuild': (t) => t._reportsListenOutsideBuild(),
-      'test_allowsWatchAndListenInBuild': (t) => t._allowsWatchAndListenInBuild(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _NotifierWatchMethodTest.new,
+    _NotifierWatchMethodTest._allCases,
   );
-  analysisRuleSuite<ServiceSingletonTest>('ServiceSingletonTest', ServiceSingletonTest.new, {
-    'test_allowsPlainBoringSingleton': (t) => t._allowsPlainBoringSingleton(),
-    'test_allowsFireAndForgetMethodsOnly': (t) => t._allowsFireAndForgetMethodsOnly(),
-    'test_allowsPrivateBackingFieldWithTrivialGetter': (t) =>
-        t._allowsPrivateBackingFieldWithTrivialGetter(),
-    'test_reportsMutableStateEvenWithResetForTest': (t) =>
-        t._reportsMutableStateEvenWithResetForTest(),
-    'test_reportsPublicDataReturningMethod': (t) => t._reportsPublicDataReturningMethod(),
-    'test_reportsPublicGetterState': (t) => t._reportsPublicGetterState(),
-    'test_reportsPublicConstructorNextToPrivateConstructor': (t) =>
-        t._reportsPublicConstructorNextToPrivateConstructor(),
-    'test_reportsPublicGetterOverPrivateField': (t) => t._reportsPublicGetterOverPrivateField(),
-    'test_reportsFactoryAndInstanceCacheSingletons': (t) =>
-        t._reportsFactoryAndInstanceCacheSingletons(),
-    'test_allowsConstantAndRegistryInstances': (t) => t._allowsConstantAndRegistryInstances(),
-    'test_reportsDebugInjectionSeam': (t) => t._reportsDebugInjectionSeam(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<ServiceInlineConcreteDependencyTest>(
+  analysisRuleSuite<_ServiceSingletonTest>(
+    'ServiceSingletonTest',
+    _ServiceSingletonTest.new,
+    _ServiceSingletonTest._allCases,
+  );
+  analysisRuleSuite<_ServiceInlineConcreteDependencyTest>(
     'ServiceInlineConcreteDependencyTest',
-    ServiceInlineConcreteDependencyTest.new,
-    {
-      'test_allowsProviderValue': (t) => t._allowsProviderValue(),
-      'test_skipsTests': (t) => t._skipsTests(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ServiceInlineConcreteDependencyTest.new,
+    _ServiceInlineConcreteDependencyTest._allCases,
   );
-  analysisRuleSuite<HiddenDependencyDefaultParamTest>(
+  analysisRuleSuite<_HiddenDependencyDefaultParamTest>(
     'HiddenDependencyDefaultParamTest',
-    HiddenDependencyDefaultParamTest.new,
-    {
-      'test_reportsDefaultedFunctionSeam': (t) => t._reportsDefaultedFunctionSeam(),
-      'test_allowsRequiredFunctionSeam': (t) => t._allowsRequiredFunctionSeam(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _HiddenDependencyDefaultParamTest.new,
+    _HiddenDependencyDefaultParamTest._allCases,
   );
-  analysisRuleSuite<RiverpodConfigDestructuringTest>(
+  analysisRuleSuite<_RiverpodConfigDestructuringTest>(
     'RiverpodConfigDestructuringTest',
-    RiverpodConfigDestructuringTest.new,
-    {
-      'test_reportsAwaitedReadConfigLocal': (t) => t._reportsAwaitedReadConfigLocal(),
-      'test_allowsSkillDestructuredConfig': (t) => t._allowsSkillDestructuredConfig(),
-      'test_allowsConfigUsedBeyondPropertyReads': (t) => t._allowsConfigUsedBeyondPropertyReads(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodConfigDestructuringTest.new,
+    _RiverpodConfigDestructuringTest._allCases,
   );
-  analysisRuleSuite<MixinMixinClassTest>('MixinMixinClassTest', MixinMixinClassTest.new, {
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<MixinNameSuffixTest>('MixinNameSuffixTest', MixinNameSuffixTest.new, {
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<MixinMutableStateTest>('MixinMutableStateTest', MixinMutableStateTest.new, {
-    'test_allowsPrivateLifecycleFieldsInConsumerStateMixin': (t) =>
-        t._allowsPrivateLifecycleFieldsInConsumerStateMixin(),
-    'test_reportsPublicMutableFieldInStateMixin': (t) => t._reportsPublicMutableFieldInStateMixin(),
-    'test_reportsPrivateMutableFieldInUnconstrainedMixin': (t) =>
-        t._reportsPrivateMutableFieldInUnconstrainedMixin(),
-    'test_reportsUninitializedLateAndStaticMutableFields': (t) =>
-        t._reportsUninitializedLateAndStaticMutableFields(),
-    'test_allowsExpressionBodiedMethodsAndGetters': (t) =>
-        t._allowsExpressionBodiedMethodsAndGetters(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<TestProviderContainerTest>(
+  analysisRuleSuite<_MixinMixinClassTest>(
+    'MixinMixinClassTest',
+    _MixinMixinClassTest.new,
+    _MixinMixinClassTest._allCases,
+  );
+  analysisRuleSuite<_MixinNameSuffixTest>(
+    'MixinNameSuffixTest',
+    _MixinNameSuffixTest.new,
+    _MixinNameSuffixTest._allCases,
+  );
+  analysisRuleSuite<_MixinMutableStateTest>(
+    'MixinMutableStateTest',
+    _MixinMutableStateTest.new,
+    _MixinMutableStateTest._allCases,
+  );
+  analysisRuleSuite<_TestProviderContainerTest>(
     'TestProviderContainerTest',
-    TestProviderContainerTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _TestProviderContainerTest.new,
+    _TestProviderContainerTest._allCases,
   );
-  analysisRuleSuite<TestUncontrolledScopeTest>(
+  analysisRuleSuite<_TestUncontrolledScopeTest>(
     'TestUncontrolledScopeTest',
-    TestUncontrolledScopeTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _TestUncontrolledScopeTest.new,
+    _TestUncontrolledScopeTest._allCases,
   );
-  analysisRuleSuite<TestCreateContainerTest>(
+  analysisRuleSuite<_TestCreateContainerTest>(
     'TestCreateContainerTest',
-    TestCreateContainerTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _TestCreateContainerTest.new,
+    _TestCreateContainerTest._allCases,
   );
 }

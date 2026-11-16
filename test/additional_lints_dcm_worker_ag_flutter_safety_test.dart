@@ -8,94 +8,35 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/use_setstate_sync
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidFlexibleOutsideFlexTest>(
+  analysisRuleSuite<_AvoidFlexibleOutsideFlexTest>(
     'AvoidFlexibleOutsideFlexTest',
-    AvoidFlexibleOutsideFlexTest.new,
-    {
-      'test_containerWithPadding_lint': (t) => t._containerWithPaddingLint(),
-      'test_containerWithWidth_lint': (t) => t._containerWithWidthLint(),
-      'test_transparentContainerBelowPadding_lint': (t) =>
-          t._transparentContainerBelowPaddingLint(),
-      'test_nullAndUnknownContainerProperties_noLint': (t) =>
-          t._nullAndUnknownContainerPropertiesNoLint(),
-      'test_nonNullableGenericContainerProperty_lint': (t) =>
-          t._nonNullableGenericContainerPropertyLint(),
-      'test_transparentContainer_noLint': (t) => t._transparentContainerNoLint(),
-      'test_nullableContainerPaddingIsNotProvenInvalid_noLint': (t) =>
-          t._nullableContainerPaddingIsNotProvenInvalidNoLint(),
-      'test_expandedUnderScrollViews_lint': (t) => t._expandedUnderScrollViewsLint(),
-      'test_expandedInListBuilderOrAroundList_noLint': (t) =>
-          t._expandedInListBuilderOrAroundListNoLint(),
-      'test_extractedExpandedWidget_noLint': (t) => t._extractedExpandedWidgetNoLint(),
-      'test_composedFlexParent_noLint': (t) => t._composedFlexParentNoLint(),
-      'test_directFlexParent_noLint': (t) => t._directFlexParentNoLint(),
-      'test_incompatibleRenderObjectParent_lint': (t) => t._incompatibleRenderObjectParentLint(),
-    },
+    _AvoidFlexibleOutsideFlexTest.new,
+    _AvoidFlexibleOutsideFlexTest._allCases,
   );
-  analysisRuleSuite<AvoidUndisposedInstancesTest>(
+  analysisRuleSuite<_AvoidUndisposedInstancesTest>(
     'AvoidUndisposedInstancesTest',
-    AvoidUndisposedInstancesTest.new,
-    {
-      'test_createdDisposableWithoutCleanup_lint': (t) => t._createdDisposableWithoutCleanupLint(),
-      'test_createdDisposableWithCleanup_noLint': (t) => t._createdDisposableWithCleanupNoLint(),
-      'test_createdCloseableWithoutCleanup_lint': (t) => t._createdCloseableWithoutCleanupLint(),
-      'test_userDefinedPathCloseStillRequiresCleanup_lint': (t) =>
-          t._userDefinedPathCloseStillRequiresCleanupLint(),
-      'test_createdCancelableWithoutCleanup_lint': (t) => t._createdCancelableWithoutCleanupLint(),
-      'test_createdDisposableRegisteredWithAddTearDown_noLint': (t) =>
-          t._createdDisposableRegisteredWithAddTearDownNoLint(),
-      'test_futureCompletionOwnsCleanup_noLint': (t) => t._futureCompletionOwnsCleanupNoLint(),
-      'test_riverpodOnDisposeOwnsCleanup_noLint': (t) => t._riverpodOnDisposeOwnsCleanupNoLint(),
-      'test_unregisteredTearOffDoesNotOwnCleanup_lint': (t) =>
-          t._unregisteredTearOffDoesNotOwnCleanupLint(),
-      'test_unrelatedOnDisposeDoesNotOwnCleanup_lint': (t) =>
-          t._unrelatedOnDisposeDoesNotOwnCleanupLint(),
-      'test_returnedDisposable_noLint': (t) => t._returnedDisposableNoLint(),
-      'test_nonDisposable_noLint': (t) => t._nonDisposableNoLint(),
-    },
+    _AvoidUndisposedInstancesTest.new,
+    _AvoidUndisposedInstancesTest._allCases,
   );
-  analysisRuleSuite<AvoidUndisposedDartUiPathTest>(
+  analysisRuleSuite<_AvoidUndisposedDartUiPathTest>(
     'AvoidUndisposedDartUiPathTest',
-    AvoidUndisposedDartUiPathTest.new,
-    {
-      'test_geometricPathCloseIsNotDisposal_noLint': (t) =>
-          t._geometricPathCloseIsNotDisposalNoLint(),
-    },
+    _AvoidUndisposedDartUiPathTest.new,
+    _AvoidUndisposedDartUiPathTest._allCases,
   );
-  analysisRuleSuite<AvoidUnnecessaryStatefulWidgetsTest>(
+  analysisRuleSuite<_AvoidUnnecessaryStatefulWidgetsTest>(
     'AvoidUnnecessaryStatefulWidgetsTest',
-    AvoidUnnecessaryStatefulWidgetsTest.new,
-    {
-      'test_mixinLifecycle_noLint': (t) => t._mixinLifecycleNoLint(),
-      'test_mixinMutableState_noLint': (t) => t._mixinMutableStateNoLint(),
-      'test_superclassLifecycle_noLint': (t) => t._superclassLifecycleNoLint(),
-      'test_lifecycleInterface_lint': (t) => t._lifecycleInterfaceLint(),
-      'test_emptyMixin_lint': (t) => t._emptyMixinLint(),
-      'test_finalMixinField_lint': (t) => t._finalMixinFieldLint(),
-      'test_ownLifecycle_noLint': (t) => t._ownLifecycleNoLint(),
-      'test_plainState_lint': (t) => t._plainStateLint(),
-    },
+    _AvoidUnnecessaryStatefulWidgetsTest.new,
+    _AvoidUnnecessaryStatefulWidgetsTest._allCases,
   );
-  analysisRuleSuite<UseSetstateSynchronouslyTest>(
+  analysisRuleSuite<_UseSetstateSynchronouslyTest>(
     'UseSetstateSynchronouslyTest',
-    UseSetstateSynchronouslyTest.new,
-    {
-      'test_setStateAfterAwait_lint': (t) => t._setStateAfterAwaitLint(),
-      'test_setStateAfterMountedGuard_noLint': (t) => t._setStateAfterMountedGuardNoLint(),
-      'test_setStateInAsyncCallbackAfterAwait_lint': (t) =>
-          t._setStateInAsyncCallbackAfterAwaitLint(),
-      'test_nonStateSetState_noLint': (t) => t._nonStateSetStateNoLint(),
-    },
+    _UseSetstateSynchronouslyTest.new,
+    _UseSetstateSynchronouslyTest._allCases,
   );
-  analysisRuleSuite<AvoidRecursiveWidgetCallsTest>(
+  analysisRuleSuite<_AvoidRecursiveWidgetCallsTest>(
     'AvoidRecursiveWidgetCallsTest',
-    AvoidRecursiveWidgetCallsTest.new,
-    {
-      'test_recursiveWidgetFunction_lint': (t) => t._recursiveWidgetFunctionLint(),
-      'test_recursiveBuildMethod_lint': (t) => t._recursiveBuildMethodLint(),
-      'test_nonRecursiveWidgetFunction_noLint': (t) => t._nonRecursiveWidgetFunctionNoLint(),
-      'test_recursiveNonWidgetFunction_noLint': (t) => t._recursiveNonWidgetFunctionNoLint(),
-    },
+    _AvoidRecursiveWidgetCallsTest.new,
+    _AvoidRecursiveWidgetCallsTest._allCases,
   );
 }
 
@@ -180,7 +121,35 @@ class SingleChildScrollView extends StatelessWidget {
   }
 }
 
-final class AvoidUndisposedInstancesTest extends _FlutterSafetyRuleTest {
+final class _AvoidUndisposedInstancesTest extends _FlutterSafetyRuleTest {
+  static Map<String, Future<void> Function(_AvoidUndisposedInstancesTest)> get _allCases =>
+      caseSet<_AvoidUndisposedInstancesTest>(
+        parent: const {},
+        own: {
+          'test_createdDisposableWithoutCleanup_lint': (t) =>
+              t._createdDisposableWithoutCleanupLint(),
+          'test_createdDisposableWithCleanup_noLint': (t) =>
+              t._createdDisposableWithCleanupNoLint(),
+          'test_createdCloseableWithoutCleanup_lint': (t) =>
+              t._createdCloseableWithoutCleanupLint(),
+          'test_userDefinedPathCloseStillRequiresCleanup_lint': (t) =>
+              t._userDefinedPathCloseStillRequiresCleanupLint(),
+          'test_createdCancelableWithoutCleanup_lint': (t) =>
+              t._createdCancelableWithoutCleanupLint(),
+          'test_createdDisposableRegisteredWithAddTearDown_noLint': (t) =>
+              t._createdDisposableRegisteredWithAddTearDownNoLint(),
+          'test_futureCompletionOwnsCleanup_noLint': (t) => t._futureCompletionOwnsCleanupNoLint(),
+          'test_riverpodOnDisposeOwnsCleanup_noLint': (t) =>
+              t._riverpodOnDisposeOwnsCleanupNoLint(),
+          'test_unregisteredTearOffDoesNotOwnCleanup_lint': (t) =>
+              t._unregisteredTearOffDoesNotOwnCleanupLint(),
+          'test_unrelatedOnDisposeDoesNotOwnCleanup_lint': (t) =>
+              t._unrelatedOnDisposeDoesNotOwnCleanupLint(),
+          'test_returnedDisposable_noLint': (t) => t._returnedDisposableNoLint(),
+          'test_nonDisposable_noLint': (t) => t._nonDisposableNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUndisposedInstances();
@@ -336,7 +305,19 @@ void buildResource() {
   }
 }
 
-final class UseSetstateSynchronouslyTest extends _FlutterSafetyRuleTest {
+final class _UseSetstateSynchronouslyTest extends _FlutterSafetyRuleTest {
+  static Map<String, Future<void> Function(_UseSetstateSynchronouslyTest)> get _allCases =>
+      caseSet<_UseSetstateSynchronouslyTest>(
+        parent: const {},
+        own: {
+          'test_setStateAfterAwait_lint': (t) => t._setStateAfterAwaitLint(),
+          'test_setStateAfterMountedGuard_noLint': (t) => t._setStateAfterMountedGuardNoLint(),
+          'test_setStateInAsyncCallbackAfterAwait_lint': (t) =>
+              t._setStateInAsyncCallbackAfterAwaitLint(),
+          'test_nonStateSetState_noLint': (t) => t._nonStateSetStateNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = UseSetstateSynchronously();
@@ -421,7 +402,18 @@ Future<void> update() async {
   }
 }
 
-final class AvoidRecursiveWidgetCallsTest extends _FlutterSafetyRuleTest {
+final class _AvoidRecursiveWidgetCallsTest extends _FlutterSafetyRuleTest {
+  static Map<String, Future<void> Function(_AvoidRecursiveWidgetCallsTest)> get _allCases =>
+      caseSet<_AvoidRecursiveWidgetCallsTest>(
+        parent: const {},
+        own: {
+          'test_recursiveWidgetFunction_lint': (t) => t._recursiveWidgetFunctionLint(),
+          'test_recursiveBuildMethod_lint': (t) => t._recursiveBuildMethodLint(),
+          'test_nonRecursiveWidgetFunction_noLint': (t) => t._nonRecursiveWidgetFunctionNoLint(),
+          'test_recursiveNonWidgetFunction_noLint': (t) => t._recursiveNonWidgetFunctionNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidRecursiveWidgetCalls();
@@ -477,7 +469,22 @@ int countDown(int value) {
   }
 }
 
-final class AvoidUnnecessaryStatefulWidgetsTest extends _FlutterSafetyRuleTest {
+final class _AvoidUnnecessaryStatefulWidgetsTest extends _FlutterSafetyRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnnecessaryStatefulWidgetsTest)> get _allCases =>
+      caseSet<_AvoidUnnecessaryStatefulWidgetsTest>(
+        parent: const {},
+        own: {
+          'test_mixinLifecycle_noLint': (t) => t._mixinLifecycleNoLint(),
+          'test_mixinMutableState_noLint': (t) => t._mixinMutableStateNoLint(),
+          'test_superclassLifecycle_noLint': (t) => t._superclassLifecycleNoLint(),
+          'test_lifecycleInterface_lint': (t) => t._lifecycleInterfaceLint(),
+          'test_emptyMixin_lint': (t) => t._emptyMixinLint(),
+          'test_finalMixinField_lint': (t) => t._finalMixinFieldLint(),
+          'test_ownLifecycle_noLint': (t) => t._ownLifecycleNoLint(),
+          'test_plainState_lint': (t) => t._plainStateLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnnecessaryStatefulWidgets();
@@ -548,7 +555,33 @@ class DemoState extends State<Demo> $clause {
 ''';
 }
 
-final class AvoidFlexibleOutsideFlexTest extends _FlutterSafetyRuleTest {
+final class _AvoidFlexibleOutsideFlexTest extends _FlutterSafetyRuleTest {
+  static Map<String, Future<void> Function(_AvoidFlexibleOutsideFlexTest)> get _allCases =>
+      caseSet<_AvoidFlexibleOutsideFlexTest>(
+        parent: const {},
+        own: {
+          'test_containerWithPadding_lint': (t) => t._containerWithPaddingLint(),
+          'test_containerWithWidth_lint': (t) => t._containerWithWidthLint(),
+          'test_transparentContainerBelowPadding_lint': (t) =>
+              t._transparentContainerBelowPaddingLint(),
+          'test_nullAndUnknownContainerProperties_noLint': (t) =>
+              t._nullAndUnknownContainerPropertiesNoLint(),
+          'test_nonNullableGenericContainerProperty_lint': (t) =>
+              t._nonNullableGenericContainerPropertyLint(),
+          'test_transparentContainer_noLint': (t) => t._transparentContainerNoLint(),
+          'test_nullableContainerPaddingIsNotProvenInvalid_noLint': (t) =>
+              t._nullableContainerPaddingIsNotProvenInvalidNoLint(),
+          'test_expandedUnderScrollViews_lint': (t) => t._expandedUnderScrollViewsLint(),
+          'test_expandedInListBuilderOrAroundList_noLint': (t) =>
+              t._expandedInListBuilderOrAroundListNoLint(),
+          'test_extractedExpandedWidget_noLint': (t) => t._extractedExpandedWidgetNoLint(),
+          'test_composedFlexParent_noLint': (t) => t._composedFlexParentNoLint(),
+          'test_directFlexParent_noLint': (t) => t._directFlexParentNoLint(),
+          'test_incompatibleRenderObjectParent_lint': (t) =>
+              t._incompatibleRenderObjectParentLint(),
+        },
+      );
+
   Future<void> _containerWithPaddingLint() async {
     const source = r'''
 import 'package:flutter/widgets.dart';
@@ -676,7 +709,16 @@ Widget build() => Row(children: [Padding(child: Expanded(child: const SizedBox()
   }
 }
 
-final class AvoidUndisposedDartUiPathTest extends AnalysisRuleTest {
+final class _AvoidUndisposedDartUiPathTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUndisposedDartUiPathTest)> get _allCases =>
+      caseSet<_AvoidUndisposedDartUiPathTest>(
+        parent: const {},
+        own: {
+          'test_geometricPathCloseIsNotDisposal_noLint': (t) =>
+              t._geometricPathCloseIsNotDisposalNoLint(),
+        },
+      );
+
   @override
   bool get addFlutterPackageDep => true;
 

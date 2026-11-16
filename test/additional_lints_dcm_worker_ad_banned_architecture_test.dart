@@ -6,30 +6,35 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_banned_impo
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidBannedImportsTest>('AvoidBannedImportsTest', AvoidBannedImportsTest.new, {
-    'test_stateManagementImport_lint': (t) => t._stateManagementImportLint(),
-    'test_lintPluginImport_lint': (t) => t._lintPluginImportLint(),
-    'test_allowedAppImports_noLint': (t) => t._allowedAppImportsNoLint(),
-    'test_bannedImportOutsideLib_noLint': (t) => t._bannedImportOutsideLibNoLint(),
-  });
-  analysisRuleSuite<AvoidBannedExportsTest>('AvoidBannedExportsTest', AvoidBannedExportsTest.new, {
-    'test_stateManagementExport_lint': (t) => t._stateManagementExportLint(),
-    'test_customLintExport_lint': (t) => t._customLintExportLint(),
-    'test_allowedExports_noLint': (t) => t._allowedExportsNoLint(),
-  });
-  analysisRuleSuite<AvoidBannedFileNamesTest>(
+  analysisRuleSuite<_AvoidBannedImportsTest>(
+    'AvoidBannedImportsTest',
+    _AvoidBannedImportsTest.new,
+    _AvoidBannedImportsTest._allCases,
+  );
+  analysisRuleSuite<_AvoidBannedExportsTest>(
+    'AvoidBannedExportsTest',
+    _AvoidBannedExportsTest.new,
+    _AvoidBannedExportsTest._allCases,
+  );
+  analysisRuleSuite<_AvoidBannedFileNamesTest>(
     'AvoidBannedFileNamesTest',
-    AvoidBannedFileNamesTest.new,
-    {
-      'test_uppercaseBasename_lint': (t) => t._uppercaseBasenameLint(),
-      'test_spaceInBasename_lint': (t) => t._spaceInBasenameLint(),
-      'test_snakeCaseBasename_noLint': (t) => t._snakeCaseBasenameNoLint(),
-      'test_generatedBasename_noLint': (t) => t._generatedBasenameNoLint(),
-    },
+    _AvoidBannedFileNamesTest.new,
+    _AvoidBannedFileNamesTest._allCases,
   );
 }
 
-final class AvoidBannedImportsTest extends _BannedArchitectureRuleTest {
+final class _AvoidBannedImportsTest extends _BannedArchitectureRuleTest {
+  static Map<String, Future<void> Function(_AvoidBannedImportsTest)> get _allCases =>
+      caseSet<_AvoidBannedImportsTest>(
+        parent: const {},
+        own: {
+          'test_stateManagementImport_lint': (t) => t._stateManagementImportLint(),
+          'test_lintPluginImport_lint': (t) => t._lintPluginImportLint(),
+          'test_allowedAppImports_noLint': (t) => t._allowedAppImportsNoLint(),
+          'test_bannedImportOutsideLib_noLint': (t) => t._bannedImportOutsideLibNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidBannedImports();
@@ -106,7 +111,17 @@ void main() {}
   }
 }
 
-final class AvoidBannedExportsTest extends _BannedArchitectureRuleTest {
+final class _AvoidBannedExportsTest extends _BannedArchitectureRuleTest {
+  static Map<String, Future<void> Function(_AvoidBannedExportsTest)> get _allCases =>
+      caseSet<_AvoidBannedExportsTest>(
+        parent: const {},
+        own: {
+          'test_stateManagementExport_lint': (t) => t._stateManagementExportLint(),
+          'test_customLintExport_lint': (t) => t._customLintExportLint(),
+          'test_allowedExports_noLint': (t) => t._allowedExportsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidBannedExports();
@@ -174,7 +189,18 @@ abstract class _BannedArchitectureRuleTest extends AnalysisRuleTest {
   }
 }
 
-final class AvoidBannedFileNamesTest extends AnalysisRuleTest {
+final class _AvoidBannedFileNamesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidBannedFileNamesTest)> get _allCases =>
+      caseSet<_AvoidBannedFileNamesTest>(
+        parent: const {},
+        own: {
+          'test_uppercaseBasename_lint': (t) => t._uppercaseBasenameLint(),
+          'test_spaceInBasename_lint': (t) => t._spaceInBasenameLint(),
+          'test_snakeCaseBasename_noLint': (t) => t._snakeCaseBasenameNoLint(),
+          'test_generatedBasename_noLint': (t) => t._generatedBasenameNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidBannedFileNames();

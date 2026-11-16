@@ -9,44 +9,26 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<PreferImmutableProviderArgumentsTest>(
+  analysisRuleSuite<_PreferImmutableProviderArgumentsTest>(
     'PreferImmutableProviderArgumentsTest',
-    PreferImmutableProviderArgumentsTest.new,
-    {
-      'test_functionProviderListArgument_lint': (t) => t._functionProviderListArgumentLint(),
-      'test_notifierBuildMutableArgument_lint': (t) => t._notifierBuildMutableArgumentLint(),
-      'test_functionProviderImmutableArguments_noLint': (t) =>
-          t._functionProviderImmutableArgumentsNoLint(),
-      'test_notifierBuildImmutableArgument_noLint': (t) =>
-          t._notifierBuildImmutableArgumentNoLint(),
-    },
+    _PreferImmutableProviderArgumentsTest.new,
+    _PreferImmutableProviderArgumentsTest._allCases,
   );
-  analysisRuleSuite<AvoidPublicNotifierPropertiesTest>(
+  analysisRuleSuite<_AvoidPublicNotifierPropertiesTest>(
     'AvoidPublicNotifierPropertiesTest',
-    AvoidPublicNotifierPropertiesTest.new,
-    {
-      'test_publicFieldAndGetter_lint': (t) => t._publicFieldAndGetterLint(),
-      'test_privatePropertiesAndPublicMethods_noLint': (t) =>
-          t._privatePropertiesAndPublicMethodsNoLint(),
-    },
+    _AvoidPublicNotifierPropertiesTest.new,
+    _AvoidPublicNotifierPropertiesTest._allCases,
   );
-  analysisRuleSuite<AvoidRefInsideStateDisposeTest>(
+  analysisRuleSuite<_AvoidRefInsideStateDisposeTest>(
     'AvoidRefInsideStateDisposeTest',
-    AvoidRefInsideStateDisposeTest.new,
-    {
-      'test_refReadInDispose_lint': (t) => t._refReadInDisposeLint(),
-      'test_privateSubscriptionCloseInDispose_noLint': (t) =>
-          t._privateSubscriptionCloseInDisposeNoLint(),
-    },
+    _AvoidRefInsideStateDisposeTest.new,
+    _AvoidRefInsideStateDisposeTest._allCases,
   );
-  analysisRuleSuite<UseNotifierSuffixTest>('UseNotifierSuffixTest', UseNotifierSuffixTest.new, {
-    'test_generatedBaseWithoutSuffix_lint': (t) => t._generatedBaseWithoutSuffixLint(),
-    'test_annotatedClassBeforeCodegen_lint': (t) => t._annotatedClassBeforeCodegenLint(),
-    'test_manualNotifierWithoutSuffix_lint': (t) => t._manualNotifierWithoutSuffixLint(),
-    'test_suffixedNotifiersAndNonNotifiers_noLint': (t) =>
-        t._suffixedNotifiersAndNonNotifiersNoLint(),
-    'test_severityIsError': (t) => t._severityIsError(),
-  });
+  analysisRuleSuite<_UseNotifierSuffixTest>(
+    'UseNotifierSuffixTest',
+    _UseNotifierSuffixTest.new,
+    _UseNotifierSuffixTest._allCases,
+  );
 }
 
 abstract class _RiverpodContractRuleTest extends AnalysisRuleTest {
@@ -135,7 +117,20 @@ abstract class HookConsumerState<T extends Widget> extends ConsumerState<Consume
   }
 }
 
-final class PreferImmutableProviderArgumentsTest extends _RiverpodContractRuleTest {
+final class _PreferImmutableProviderArgumentsTest extends _RiverpodContractRuleTest {
+  static Map<String, Future<void> Function(_PreferImmutableProviderArgumentsTest)> get _allCases =>
+      caseSet<_PreferImmutableProviderArgumentsTest>(
+        parent: const {},
+        own: {
+          'test_functionProviderListArgument_lint': (t) => t._functionProviderListArgumentLint(),
+          'test_notifierBuildMutableArgument_lint': (t) => t._notifierBuildMutableArgumentLint(),
+          'test_functionProviderImmutableArguments_noLint': (t) =>
+              t._functionProviderImmutableArgumentsNoLint(),
+          'test_notifierBuildImmutableArgument_noLint': (t) =>
+              t._notifierBuildImmutableArgumentNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferImmutableProviderArguments();
@@ -197,7 +192,17 @@ class SearchNotifier extends Notifier<int> {
   }
 }
 
-final class AvoidPublicNotifierPropertiesTest extends _RiverpodContractRuleTest {
+final class _AvoidPublicNotifierPropertiesTest extends _RiverpodContractRuleTest {
+  static Map<String, Future<void> Function(_AvoidPublicNotifierPropertiesTest)> get _allCases =>
+      caseSet<_AvoidPublicNotifierPropertiesTest>(
+        parent: const {},
+        own: {
+          'test_publicFieldAndGetter_lint': (t) => t._publicFieldAndGetterLint(),
+          'test_privatePropertiesAndPublicMethods_noLint': (t) =>
+              t._privatePropertiesAndPublicMethodsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidPublicNotifierProperties();
@@ -240,7 +245,17 @@ class SearchNotifier extends Notifier<int> {
   }
 }
 
-final class AvoidRefInsideStateDisposeTest extends _RiverpodContractRuleTest {
+final class _AvoidRefInsideStateDisposeTest extends _RiverpodContractRuleTest {
+  static Map<String, Future<void> Function(_AvoidRefInsideStateDisposeTest)> get _allCases =>
+      caseSet<_AvoidRefInsideStateDisposeTest>(
+        parent: const {},
+        own: {
+          'test_refReadInDispose_lint': (t) => t._refReadInDisposeLint(),
+          'test_privateSubscriptionCloseInDispose_noLint': (t) =>
+              t._privateSubscriptionCloseInDisposeNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidRefInsideStateDispose();
@@ -296,7 +311,20 @@ class HostState extends ConsumerState<ConsumerStatefulWidget> {
   }
 }
 
-final class UseNotifierSuffixTest extends _RiverpodContractRuleTest {
+final class _UseNotifierSuffixTest extends _RiverpodContractRuleTest {
+  static Map<String, Future<void> Function(_UseNotifierSuffixTest)> get _allCases =>
+      caseSet<_UseNotifierSuffixTest>(
+        parent: const {},
+        own: {
+          'test_generatedBaseWithoutSuffix_lint': (t) => t._generatedBaseWithoutSuffixLint(),
+          'test_annotatedClassBeforeCodegen_lint': (t) => t._annotatedClassBeforeCodegenLint(),
+          'test_manualNotifierWithoutSuffix_lint': (t) => t._manualNotifierWithoutSuffixLint(),
+          'test_suffixedNotifiersAndNonNotifiers_noLint': (t) =>
+              t._suffixedNotifiersAndNonNotifiersNoLint(),
+          'test_severityIsError': (t) => t._severityIsError(),
+        },
+      );
+
   @override
   void setUp() {
     rule = UseNotifierSuffix();

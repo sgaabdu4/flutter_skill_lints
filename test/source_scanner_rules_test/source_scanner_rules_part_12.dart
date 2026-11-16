@@ -1,6 +1,31 @@
 part of '../source_scanner_rules_test.dart';
 
-final class TestMockConcreteTest extends _TestFileRuleTest {
+final class _TestMockConcreteTest extends _TestFileRuleTest {
+  static Map<String, Future<void> Function(_TestMockConcreteTest)> get _allCases =>
+      caseSet<_TestMockConcreteTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsAbstractContractsWithoutNamingPrefix': (t) =>
+              t._allowsAbstractContractsWithoutNamingPrefix(),
+          'test_reportsConcreteContractWithInterfacePrefix': (t) =>
+              t._reportsConcreteContractWithInterfacePrefix(),
+          'test_reportsExternalSdkPartDeclarations': (t) => t._reportsExternalSdkPartDeclarations(),
+          'test_allowsExternalAbstractPartDeclaration': (t) =>
+              t._allowsExternalAbstractPartDeclaration(),
+          'test_reportsExternalPluginControllerMocks': (t) =>
+              t._reportsExternalPluginControllerMocks(),
+          'test_localConcreteSdkNameStillReports': (t) => t._localConcreteSdkNameStillReports(),
+          'test_localFunctionsAndStorageConcreteNamesStillReport': (t) =>
+              t._localFunctionsAndStorageConcreteNamesStillReport(),
+          'test_allowsLocalFunctionsAndStorageInterfaces': (t) =>
+              t._allowsLocalFunctionsAndStorageInterfaces(),
+          'test_concreteAliasStillReports': (t) => t._concreteAliasStillReports(),
+          'test_reportsFakeOfConcreteContract': (t) => t._reportsFakeOfConcreteContract(),
+          'test_allowsSkillFakeOfInterface': (t) => t._allowsSkillFakeOfInterface(),
+          'test_allowsLocalClassNamedMock': (t) => t._allowsLocalClassNamedMock(),
+        },
+      );
+
   @override
   void setUp() {
     final appwrite = newPackage('appwrite');
@@ -218,7 +243,13 @@ class MockProductRepository extends Mock implements ProductRepository {}
   }
 }
 
-final class TestPumpAndSettleTest extends _TestFileRuleTest {
+final class _TestPumpAndSettleTest extends _TestFileRuleTest {
+  static Map<String, Future<void> Function(_TestPumpAndSettleTest)> get _allCases =>
+      caseSet<_TestPumpAndSettleTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_allowsExplicitDurationArgument': (t) => t._allowsExplicitDurationArgument()},
+      );
+
   @override
   String get ruleName => 'test_pump_and_settle';
   @override
@@ -238,7 +269,10 @@ void main(tester) {
   }
 }
 
-final class TestTapAtTest extends _TestFileRuleTest {
+final class _TestTapAtTest extends _TestFileRuleTest {
+  static Map<String, Future<void> Function(_TestTapAtTest)> get _allCases =>
+      caseSet<_TestTapAtTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'test_tap_at';
   @override
@@ -247,7 +281,16 @@ final class TestTapAtTest extends _TestFileRuleTest {
   String get source => 'void main(tester) { tester.tapAt(Object()); }';
 }
 
-final class TestInlineValueKeyTest extends _TestRuleTest {
+final class _TestInlineValueKeyTest extends _TestRuleTest {
+  static Map<String, Future<void> Function(_TestInlineValueKeyTest)> get _allCases =>
+      caseSet<_TestInlineValueKeyTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsInlineKeyFactoryString': (t) => t._reportsInlineKeyFactoryString(),
+          'test_allowsRegistryConstantKeys': (t) => t._allowsRegistryConstantKeys(),
+        },
+      );
+
   @override
   void setUp() {
     _addTestingNavigationPackages();
@@ -297,7 +340,18 @@ void main() {
   }
 }
 
-final class TestFirstMatchFinderTest extends _TestFileRuleTest {
+final class _TestFirstMatchFinderTest extends _TestFileRuleTest {
+  static Map<String, Future<void> Function(_TestFirstMatchFinderTest)> get _allCases =>
+      caseSet<_TestFirstMatchFinderTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsIterableFirstAccess': (t) => t._allowsIterableFirstAccess(),
+          'test_reportsFirstOnFinder': (t) => t._reportsFirstOnFinder(),
+          'test_allowsIterableFirstInsideFinderArgument': (t) =>
+              t._allowsIterableFirstInsideFinderArgument(),
+        },
+      );
+
   @override
   void setUp() {
     _addTestingNavigationPackages();
@@ -352,7 +406,18 @@ void main() {
   }
 }
 
-final class TestNotifierOverrideTest extends _TestFileRuleTest {
+final class _TestNotifierOverrideTest extends _TestFileRuleTest {
+  static Map<String, Future<void> Function(_TestNotifierOverrideTest)> get _allCases =>
+      caseSet<_TestNotifierOverrideTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsFamilyNotifierOverride': (t) => t._reportsFamilyNotifierOverride(),
+          'test_allowsSkillBuildValueAndRepositoryOverrides': (t) =>
+              t._allowsSkillBuildValueAndRepositoryOverrides(),
+          'test_allowsNotifierOverrideOutsideTests': (t) => t._allowsNotifierOverrideOutsideTests(),
+        },
+      );
+
   @override
   void setUp() {
     _addTestingNavigationPackages();
@@ -445,7 +510,18 @@ final overrides = [authProvider.overrideWith(SignedOutAuth.new)];
   }
 }
 
-final class TestE2eBlindSleepTest extends _TestRuleTest {
+final class _TestE2eBlindSleepTest extends _TestRuleTest {
+  static Map<String, Future<void> Function(_TestE2eBlindSleepTest)> get _allCases =>
+      caseSet<_TestE2eBlindSleepTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsHostDriverDelay': (t) => t._reportsHostDriverDelay(),
+          'test_allowsPollingLoopAndUnawaitedDelay': (t) => t._allowsPollingLoopAndUnawaitedDelay(),
+          'test_allowsDelayOutsideE2e': (t) => t._allowsDelayOutsideE2e(),
+          'test_allowsLocalDelayedLookalike': (t) => t._allowsLocalDelayedLookalike(),
+        },
+      );
+
   @override
   void setUp() {
     _addTestingNavigationPackages();
@@ -521,7 +597,20 @@ Future<void> main() async {
   }
 }
 
-final class TestTextLabelSelectorTest extends _TestFileRuleTest {
+final class _TestTextLabelSelectorTest extends _TestFileRuleTest {
+  static Map<String, Future<void> Function(_TestTextLabelSelectorTest)> get _allCases =>
+      caseSet<_TestTextLabelSelectorTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsWidgetWithTextAndNestedLabelFinders': (t) =>
+              t._reportsWidgetWithTextAndNestedLabelFinders(),
+          'test_allowsSkillTextAssertionsAndKeyTaps': (t) =>
+              t._allowsSkillTextAssertionsAndKeyTaps(),
+          'test_allowsStableTextInE2e': (t) => t._allowsStableTextInE2e(),
+          'test_allowsNonLiteralLabel': (t) => t._allowsNonLiteralLabel(),
+        },
+      );
+
   @override
   void setUp() {
     _addTestingNavigationPackages();
@@ -614,7 +703,17 @@ abstract class _ValueObjectRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => valueObjectSourceRules;
 }
 
-final class DomainEmptyStringSentinelTest extends _ValueObjectRuleTest {
+final class _DomainEmptyStringSentinelTest extends _ValueObjectRuleTest {
+  static Map<String, Future<void> Function(_DomainEmptyStringSentinelTest)> get _allCases =>
+      caseSet<_DomainEmptyStringSentinelTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsConstructorDefaultThisField': (t) => t._reportsConstructorDefaultThisField(),
+          'test_allowsOptionalDomainTextAsNullable': (t) => t._allowsOptionalDomainTextAsNullable(),
+          'test_allowsDataModelWireEmptyDefault': (t) => t._allowsDataModelWireEmptyDefault(),
+        },
+      );
+
   @override
   String get ruleName => 'domain_empty_string_sentinel';
   @override
@@ -669,7 +768,30 @@ class UserModel {
   }
 }
 
-final class VoPublicRawConstructorTest extends _ValueObjectRuleTest {
+final class _VoPublicRawConstructorTest extends _ValueObjectRuleTest {
+  static Map<String, Future<void> Function(_VoPublicRawConstructorTest)> get _allCases =>
+      caseSet<_VoPublicRawConstructorTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsPrivateRawRedirect': (t) => t._allowsPrivateRawRedirect(),
+          'test_allowsValidatedFactoryWithoutRedirect': (t) =>
+              t._allowsValidatedFactoryWithoutRedirect(),
+          'test_allowsRedirectOutsideValueObjectsPath': (t) =>
+              t._allowsRedirectOutsideValueObjectsPath(),
+          'test_allowsParameterlessPublicRedirect': (t) => t._allowsParameterlessPublicRedirect(),
+          'test_reportsAnonymousPublicRawRedirect': (t) => t._reportsAnonymousPublicRawRedirect(),
+          'test_reportsNullablePrimitiveParam': (t) => t._reportsNullablePrimitiveParam(),
+          'test_reportsMultiParamPublicRawRedirect': (t) => t._reportsMultiParamPublicRawRedirect(),
+          'test_allowsCompositeCanonicalRedirect': (t) => t._allowsCompositeCanonicalRedirect(),
+          'test_reportsSingleFieldAndNonConstPublicRedirects': (t) =>
+              t._reportsSingleFieldAndNonConstPublicRedirects(),
+          'test_reportsPassthroughPublicFactory': (t) => t._reportsPassthroughPublicFactory(),
+          'test_allowsValidatedFactoryWithAssert': (t) => t._allowsValidatedFactoryWithAssert(),
+          'test_allowsTransformingFactory': (t) => t._allowsTransformingFactory(),
+          'test_reportsMultiLinePublicRawRedirect': (t) => t._reportsMultiLinePublicRawRedirect(),
+        },
+      );
+
   @override
   String get ruleName => 'vo_public_raw_constructor';
   @override
@@ -934,109 +1056,50 @@ class _Meters extends Distance {
 }
 
 void _defineSourceScannerRulesPart12Tests() {
-  analysisRuleSuite<TestMockConcreteTest>('TestMockConcreteTest', TestMockConcreteTest.new, {
-    'test_allowsAbstractContractsWithoutNamingPrefix': (t) =>
-        t._allowsAbstractContractsWithoutNamingPrefix(),
-    'test_reportsConcreteContractWithInterfacePrefix': (t) =>
-        t._reportsConcreteContractWithInterfacePrefix(),
-    'test_reportsExternalSdkPartDeclarations': (t) => t._reportsExternalSdkPartDeclarations(),
-    'test_allowsExternalAbstractPartDeclaration': (t) => t._allowsExternalAbstractPartDeclaration(),
-    'test_reportsExternalPluginControllerMocks': (t) => t._reportsExternalPluginControllerMocks(),
-    'test_localConcreteSdkNameStillReports': (t) => t._localConcreteSdkNameStillReports(),
-    'test_localFunctionsAndStorageConcreteNamesStillReport': (t) =>
-        t._localFunctionsAndStorageConcreteNamesStillReport(),
-    'test_allowsLocalFunctionsAndStorageInterfaces': (t) =>
-        t._allowsLocalFunctionsAndStorageInterfaces(),
-    'test_concreteAliasStillReports': (t) => t._concreteAliasStillReports(),
-    'test_reportsFakeOfConcreteContract': (t) => t._reportsFakeOfConcreteContract(),
-    'test_allowsSkillFakeOfInterface': (t) => t._allowsSkillFakeOfInterface(),
-    'test_allowsLocalClassNamedMock': (t) => t._allowsLocalClassNamedMock(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<TestPumpAndSettleTest>('TestPumpAndSettleTest', TestPumpAndSettleTest.new, {
-    'test_allowsExplicitDurationArgument': (t) => t._allowsExplicitDurationArgument(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<TestTapAtTest>('TestTapAtTest', TestTapAtTest.new, {
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<TestInlineValueKeyTest>('TestInlineValueKeyTest', TestInlineValueKeyTest.new, {
-    'test_reportsInlineKeyFactoryString': (t) => t._reportsInlineKeyFactoryString(),
-    'test_allowsRegistryConstantKeys': (t) => t._allowsRegistryConstantKeys(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<TestFirstMatchFinderTest>(
+  analysisRuleSuite<_TestMockConcreteTest>(
+    'TestMockConcreteTest',
+    _TestMockConcreteTest.new,
+    _TestMockConcreteTest._allCases,
+  );
+  analysisRuleSuite<_TestPumpAndSettleTest>(
+    'TestPumpAndSettleTest',
+    _TestPumpAndSettleTest.new,
+    _TestPumpAndSettleTest._allCases,
+  );
+  analysisRuleSuite<_TestTapAtTest>('TestTapAtTest', _TestTapAtTest.new, _TestTapAtTest._allCases);
+  analysisRuleSuite<_TestInlineValueKeyTest>(
+    'TestInlineValueKeyTest',
+    _TestInlineValueKeyTest.new,
+    _TestInlineValueKeyTest._allCases,
+  );
+  analysisRuleSuite<_TestFirstMatchFinderTest>(
     'TestFirstMatchFinderTest',
-    TestFirstMatchFinderTest.new,
-    {
-      'test_allowsIterableFirstAccess': (t) => t._allowsIterableFirstAccess(),
-      'test_reportsFirstOnFinder': (t) => t._reportsFirstOnFinder(),
-      'test_allowsIterableFirstInsideFinderArgument': (t) =>
-          t._allowsIterableFirstInsideFinderArgument(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _TestFirstMatchFinderTest.new,
+    _TestFirstMatchFinderTest._allCases,
   );
-  analysisRuleSuite<TestNotifierOverrideTest>(
+  analysisRuleSuite<_TestNotifierOverrideTest>(
     'TestNotifierOverrideTest',
-    TestNotifierOverrideTest.new,
-    {
-      'test_reportsFamilyNotifierOverride': (t) => t._reportsFamilyNotifierOverride(),
-      'test_allowsSkillBuildValueAndRepositoryOverrides': (t) =>
-          t._allowsSkillBuildValueAndRepositoryOverrides(),
-      'test_allowsNotifierOverrideOutsideTests': (t) => t._allowsNotifierOverrideOutsideTests(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _TestNotifierOverrideTest.new,
+    _TestNotifierOverrideTest._allCases,
   );
-  analysisRuleSuite<TestE2eBlindSleepTest>('TestE2eBlindSleepTest', TestE2eBlindSleepTest.new, {
-    'test_reportsHostDriverDelay': (t) => t._reportsHostDriverDelay(),
-    'test_allowsPollingLoopAndUnawaitedDelay': (t) => t._allowsPollingLoopAndUnawaitedDelay(),
-    'test_allowsDelayOutsideE2e': (t) => t._allowsDelayOutsideE2e(),
-    'test_allowsLocalDelayedLookalike': (t) => t._allowsLocalDelayedLookalike(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<TestTextLabelSelectorTest>(
+  analysisRuleSuite<_TestE2eBlindSleepTest>(
+    'TestE2eBlindSleepTest',
+    _TestE2eBlindSleepTest.new,
+    _TestE2eBlindSleepTest._allCases,
+  );
+  analysisRuleSuite<_TestTextLabelSelectorTest>(
     'TestTextLabelSelectorTest',
-    TestTextLabelSelectorTest.new,
-    {
-      'test_reportsWidgetWithTextAndNestedLabelFinders': (t) =>
-          t._reportsWidgetWithTextAndNestedLabelFinders(),
-      'test_allowsSkillTextAssertionsAndKeyTaps': (t) => t._allowsSkillTextAssertionsAndKeyTaps(),
-      'test_allowsStableTextInE2e': (t) => t._allowsStableTextInE2e(),
-      'test_allowsNonLiteralLabel': (t) => t._allowsNonLiteralLabel(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _TestTextLabelSelectorTest.new,
+    _TestTextLabelSelectorTest._allCases,
   );
-  analysisRuleSuite<DomainEmptyStringSentinelTest>(
+  analysisRuleSuite<_DomainEmptyStringSentinelTest>(
     'DomainEmptyStringSentinelTest',
-    DomainEmptyStringSentinelTest.new,
-    {
-      'test_reportsConstructorDefaultThisField': (t) => t._reportsConstructorDefaultThisField(),
-      'test_allowsOptionalDomainTextAsNullable': (t) => t._allowsOptionalDomainTextAsNullable(),
-      'test_allowsDataModelWireEmptyDefault': (t) => t._allowsDataModelWireEmptyDefault(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _DomainEmptyStringSentinelTest.new,
+    _DomainEmptyStringSentinelTest._allCases,
   );
-  analysisRuleSuite<VoPublicRawConstructorTest>(
+  analysisRuleSuite<_VoPublicRawConstructorTest>(
     'VoPublicRawConstructorTest',
-    VoPublicRawConstructorTest.new,
-    {
-      'test_allowsPrivateRawRedirect': (t) => t._allowsPrivateRawRedirect(),
-      'test_allowsValidatedFactoryWithoutRedirect': (t) =>
-          t._allowsValidatedFactoryWithoutRedirect(),
-      'test_allowsRedirectOutsideValueObjectsPath': (t) =>
-          t._allowsRedirectOutsideValueObjectsPath(),
-      'test_allowsParameterlessPublicRedirect': (t) => t._allowsParameterlessPublicRedirect(),
-      'test_reportsAnonymousPublicRawRedirect': (t) => t._reportsAnonymousPublicRawRedirect(),
-      'test_reportsNullablePrimitiveParam': (t) => t._reportsNullablePrimitiveParam(),
-      'test_reportsMultiParamPublicRawRedirect': (t) => t._reportsMultiParamPublicRawRedirect(),
-      'test_allowsCompositeCanonicalRedirect': (t) => t._allowsCompositeCanonicalRedirect(),
-      'test_reportsSingleFieldAndNonConstPublicRedirects': (t) =>
-          t._reportsSingleFieldAndNonConstPublicRedirects(),
-      'test_reportsPassthroughPublicFactory': (t) => t._reportsPassthroughPublicFactory(),
-      'test_allowsValidatedFactoryWithAssert': (t) => t._allowsValidatedFactoryWithAssert(),
-      'test_allowsTransformingFactory': (t) => t._allowsTransformingFactory(),
-      'test_reportsMultiLinePublicRawRedirect': (t) => t._reportsMultiLinePublicRawRedirect(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _VoPublicRawConstructorTest.new,
+    _VoPublicRawConstructorTest._allCases,
   );
 }

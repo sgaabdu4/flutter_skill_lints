@@ -168,7 +168,19 @@ class ProductRepository implements IProductRepository {
   }
 }
 
-final class NetworkHttpCallInWidgetOrNotifierTest extends _NetworkRuleTest {
+final class _NetworkHttpCallInWidgetOrNotifierTest extends _NetworkRuleTest {
+  static Map<String, Future<void> Function(_NetworkHttpCallInWidgetOrNotifierTest)> get _allCases =>
+      caseSet<_NetworkHttpCallInWidgetOrNotifierTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsNotifierClientCalls': (t) => t._reportsNotifierClientCalls(),
+          'test_reportsStateCallOnHttpServiceWrapper': (t) =>
+              t._reportsStateCallOnHttpServiceWrapper(),
+          'test_allowsRepositoryDatasourceHttpChain': (t) =>
+              t._allowsRepositoryDatasourceHttpChain(),
+        },
+      );
+
   @override
   String get ruleName => 'network_http_call_in_widget_or_notifier';
   @override
@@ -271,7 +283,16 @@ class ProductNotifier extends AnyNotifier<int> {
   }
 }
 
-final class DatasourceConcreteHttpClientTest extends _NetworkRuleTest {
+final class _DatasourceConcreteHttpClientTest extends _NetworkRuleTest {
+  static Map<String, Future<void> Function(_DatasourceConcreteHttpClientTest)> get _allCases =>
+      caseSet<_DatasourceConcreteHttpClientTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsConcreteClientsAndWrappers': (t) => t._reportsConcreteClientsAndWrappers(),
+          'test_allowsHttpServiceInterface': (t) => t._allowsHttpServiceInterface(),
+        },
+      );
+
   @override
   String get ruleName => 'datasource_concrete_http_client';
   @override
@@ -321,7 +342,18 @@ class OrderApi implements IOrderRemoteDataSource {
   }
 }
 
-final class NetworkFailureNullFallbackTest extends _NetworkRuleTest {
+final class _NetworkFailureNullFallbackTest extends _NetworkRuleTest {
+  static Map<String, Future<void> Function(_NetworkFailureNullFallbackTest)> get _allCases =>
+      caseSet<_NetworkFailureNullFallbackTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsEmptyCollectionFallbacks': (t) => t._reportsEmptyCollectionFallbacks(),
+          'test_allowsTypedAbsenceAndClassifiedStatus': (t) =>
+              t._allowsTypedAbsenceAndClassifiedStatus(),
+          'test_allowsLocalPersistenceRecovery': (t) => t._allowsLocalPersistenceRecovery(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('hive_ce').addFile('lib/hive_ce.dart', r'''
@@ -447,7 +479,18 @@ class ProductLocalDatasource {
   }
 }
 
-final class NetworkSecretInWidgetTest extends _NetworkRuleTest {
+final class _NetworkSecretInWidgetTest extends _NetworkRuleTest {
+  static Map<String, Future<void> Function(_NetworkSecretInWidgetTest)> get _allCases =>
+      caseSet<_NetworkSecretInWidgetTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsAuthorizationHeaderAndBaseUrlInState': (t) =>
+              t._reportsAuthorizationHeaderAndBaseUrlInState(),
+          'test_allowsInfrastructureAuthAndPlainWidgetLinks': (t) =>
+              t._allowsInfrastructureAuthAndPlainWidgetLinks(),
+        },
+      );
+
   @override
   String get ruleName => 'network_secret_in_widget';
   @override
@@ -526,7 +569,17 @@ class HelpLink extends StatelessWidget {
   }
 }
 
-final class NetworkRawHttpFailureInWidgetOrNotifierTest extends _NetworkRuleTest {
+final class _NetworkRawHttpFailureInWidgetOrNotifierTest extends _NetworkRuleTest {
+  static Map<String, Future<void> Function(_NetworkRawHttpFailureInWidgetOrNotifierTest)>
+  get _allCases => caseSet<_NetworkRawHttpFailureInWidgetOrNotifierTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_reportsStatusReadsAndRawTypeTests': (t) => t._reportsStatusReadsAndRawTypeTests(),
+      'test_allowsTypedFailuresAndDatasourceClassification': (t) =>
+          t._allowsTypedFailuresAndDatasourceClassification(),
+    },
+  );
+
   @override
   String get ruleName => 'network_raw_http_failure_in_widget_or_notifier';
   @override
@@ -649,55 +702,29 @@ class ProductRemoteDatasource {
 }
 
 void _defineSourceScannerRulesPartNetworkTests() {
-  analysisRuleSuite<NetworkHttpCallInWidgetOrNotifierTest>(
+  analysisRuleSuite<_NetworkHttpCallInWidgetOrNotifierTest>(
     'NetworkHttpCallInWidgetOrNotifierTest',
-    NetworkHttpCallInWidgetOrNotifierTest.new,
-    {
-      'test_reportsNotifierClientCalls': (t) => t._reportsNotifierClientCalls(),
-      'test_reportsStateCallOnHttpServiceWrapper': (t) => t._reportsStateCallOnHttpServiceWrapper(),
-      'test_allowsRepositoryDatasourceHttpChain': (t) => t._allowsRepositoryDatasourceHttpChain(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _NetworkHttpCallInWidgetOrNotifierTest.new,
+    _NetworkHttpCallInWidgetOrNotifierTest._allCases,
   );
-  analysisRuleSuite<DatasourceConcreteHttpClientTest>(
+  analysisRuleSuite<_DatasourceConcreteHttpClientTest>(
     'DatasourceConcreteHttpClientTest',
-    DatasourceConcreteHttpClientTest.new,
-    {
-      'test_reportsConcreteClientsAndWrappers': (t) => t._reportsConcreteClientsAndWrappers(),
-      'test_allowsHttpServiceInterface': (t) => t._allowsHttpServiceInterface(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _DatasourceConcreteHttpClientTest.new,
+    _DatasourceConcreteHttpClientTest._allCases,
   );
-  analysisRuleSuite<NetworkFailureNullFallbackTest>(
+  analysisRuleSuite<_NetworkFailureNullFallbackTest>(
     'NetworkFailureNullFallbackTest',
-    NetworkFailureNullFallbackTest.new,
-    {
-      'test_reportsEmptyCollectionFallbacks': (t) => t._reportsEmptyCollectionFallbacks(),
-      'test_allowsTypedAbsenceAndClassifiedStatus': (t) =>
-          t._allowsTypedAbsenceAndClassifiedStatus(),
-      'test_allowsLocalPersistenceRecovery': (t) => t._allowsLocalPersistenceRecovery(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _NetworkFailureNullFallbackTest.new,
+    _NetworkFailureNullFallbackTest._allCases,
   );
-  analysisRuleSuite<NetworkSecretInWidgetTest>(
+  analysisRuleSuite<_NetworkSecretInWidgetTest>(
     'NetworkSecretInWidgetTest',
-    NetworkSecretInWidgetTest.new,
-    {
-      'test_reportsAuthorizationHeaderAndBaseUrlInState': (t) =>
-          t._reportsAuthorizationHeaderAndBaseUrlInState(),
-      'test_allowsInfrastructureAuthAndPlainWidgetLinks': (t) =>
-          t._allowsInfrastructureAuthAndPlainWidgetLinks(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _NetworkSecretInWidgetTest.new,
+    _NetworkSecretInWidgetTest._allCases,
   );
-  analysisRuleSuite<NetworkRawHttpFailureInWidgetOrNotifierTest>(
+  analysisRuleSuite<_NetworkRawHttpFailureInWidgetOrNotifierTest>(
     'NetworkRawHttpFailureInWidgetOrNotifierTest',
-    NetworkRawHttpFailureInWidgetOrNotifierTest.new,
-    {
-      'test_reportsStatusReadsAndRawTypeTests': (t) => t._reportsStatusReadsAndRawTypeTests(),
-      'test_allowsTypedFailuresAndDatasourceClassification': (t) =>
-          t._allowsTypedFailuresAndDatasourceClassification(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _NetworkRawHttpFailureInWidgetOrNotifierTest.new,
+    _NetworkRawHttpFailureInWidgetOrNotifierTest._allCases,
   );
 }

@@ -1,6 +1,19 @@
 part of '../source_scanner_rules_test.dart';
 
-final class ArchInterfaceContractTest extends _ArchitectureRuleTest {
+final class _ArchInterfaceContractTest extends _ArchitectureRuleTest {
+  static Map<String, Future<void> Function(_ArchInterfaceContractTest)> get _allCases =>
+      caseSet<_ArchInterfaceContractTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsResolvedImportedInterface': (t) => t._allowsResolvedImportedInterface(),
+          'test_reportsSecondClassWithoutInterface': (t) => t._reportsSecondClassWithoutInterface(),
+          'test_reportsConcreteInterfaceClassWithoutContract': (t) =>
+              t._reportsConcreteInterfaceClassWithoutContract(),
+          'test_allowsAbstractInterfaceContractDeclaration': (t) =>
+              t._allowsAbstractInterfaceContractDeclaration(),
+        },
+      );
+
   @override
   String get ruleName => 'arch_interface_contract';
   @override
@@ -53,7 +66,19 @@ class MissingRepository {}
   }
 }
 
-final class ArchRepositoryGeneratedExtendsTest extends _ArchitectureRuleTest {
+final class _ArchRepositoryGeneratedExtendsTest extends _ArchitectureRuleTest {
+  static Map<String, Future<void> Function(_ArchRepositoryGeneratedExtendsTest)> get _allCases =>
+      caseSet<_ArchRepositoryGeneratedExtendsTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsRepositoryInterfaceImplementation': (t) =>
+              t._allowsRepositoryInterfaceImplementation(),
+          'test_allowsGeneratedNotifierClasses': (t) => t._allowsGeneratedNotifierClasses(),
+          'test_allowsRiverpodGeneratedProviderClass': (t) =>
+              t._allowsRiverpodGeneratedProviderClass(),
+        },
+      );
+
   @override
   String get ruleName => 'arch_repository_generated_extends';
   @override
@@ -93,7 +118,18 @@ class OrderRepository extends _$OrderRepository {}
   }
 }
 
-final class ArchConcreteDependencyTest extends _ArchitectureRuleTest {
+final class _ArchConcreteDependencyTest extends _ArchitectureRuleTest {
+  static Map<String, Future<void> Function(_ArchConcreteDependencyTest)> get _allCases =>
+      caseSet<_ArchConcreteDependencyTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsProviderReturningConcreteRepository': (t) =>
+              t._reportsProviderReturningConcreteRepository(),
+          'test_allowsProviderReturningRepositoryInterface': (t) =>
+              t._allowsProviderReturningRepositoryInterface(),
+        },
+      );
+
   @override
   String get ruleName => 'arch_concrete_dependency';
   @override
@@ -156,7 +192,18 @@ Future<IOrderRepository> asyncOrderRepository(Ref ref) async => HiveOrderReposit
   }
 }
 
-final class RiverpodWidgetRefOutsideWidgetTest extends _RiverpodRuleTest {
+final class _RiverpodWidgetRefOutsideWidgetTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodWidgetRefOutsideWidgetTest)> get _allCases =>
+      caseSet<_RiverpodWidgetRefOutsideWidgetTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsServiceMethodParameter': (t) => t._reportsServiceMethodParameter(),
+          'test_allowsWidgetsStatesAndMixinsOnState': (t) =>
+              t._allowsWidgetsStatesAndMixinsOnState(),
+          'test_severityIsError': (t) => t._severityIsError(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('flutter_riverpod').addFile('lib/flutter_riverpod.dart', r'''
@@ -240,7 +287,19 @@ extension CartRef on WidgetRef {
   }
 }
 
-final class RiverpodGeneratedProviderAliasTest extends _RiverpodRuleTest {
+final class _RiverpodGeneratedProviderAliasTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodGeneratedProviderAliasTest)> get _allCases =>
+      caseSet<_RiverpodGeneratedProviderAliasTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsGetterStaticAndFamilyAliases': (t) =>
+              t._reportsGetterStaticAndFamilyAliases(),
+          'test_allowsGeneratedDeclarationsLocalsAndManualProviders': (t) =>
+              t._allowsGeneratedDeclarationsLocalsAndManualProviders(),
+          'test_severityIsError': (t) => t._severityIsError(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('riverpod').addFile('lib/riverpod.dart', _riverpodProviderStub);
@@ -319,7 +378,44 @@ int read() {
   }
 }
 
-final class ServiceProviderWatchDependencyTest extends _ServicesExtendedRuleTest {
+final class _ServiceProviderWatchDependencyTest extends _ServicesExtendedRuleTest {
+  static Map<String, Future<void> Function(_ServiceProviderWatchDependencyTest)> get _allCases =>
+      caseSet<_ServiceProviderWatchDependencyTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsRepositoryFactoryWatch': (t) => t._reportsRepositoryFactoryWatch(),
+          'test_allowsCollectionProjectionNamedQueue': (t) =>
+              t._allowsCollectionProjectionNamedQueue(),
+          'test_allowsCollectionProjectionWhoseElementLooksLikeService': (t) =>
+              t._allowsCollectionProjectionWhoseElementLooksLikeService(),
+          'test_reportsTypedStableServiceWatchWithGenericFactoryName': (t) =>
+              t._reportsTypedStableServiceWatchWithGenericFactoryName(),
+          'test_reportsGenericInfrastructureReturnType': (t) =>
+              t._reportsGenericInfrastructureReturnType(),
+          'test_reportsQualifiedInfrastructureReturnTypeThroughFuture': (t) =>
+              t._reportsQualifiedInfrastructureReturnTypeThroughFuture(),
+          'test_reportsAppwriteTablesAndAccountServicesByResolvedBase': (t) =>
+              t._reportsAppwriteTablesAndAccountServicesByResolvedBase(),
+          'test_allowsLocalServiceBaseLookalike': (t) => t._allowsLocalServiceBaseLookalike(),
+          'test_doesNotUnwrapUserDefinedFutureName': (t) => t._doesNotUnwrapUserDefinedFutureName(),
+          'test_allowsReadDependency': (t) => t._allowsReadDependency(),
+          'test_allowsComputedProviderWatch': (t) => t._allowsComputedProviderWatch(),
+          'test_allowsWatchedReactiveCredentialState': (t) =>
+              t._allowsWatchedReactiveCredentialState(),
+          'test_allowsClientRebuiltFromLiveConfig': (t) => t._allowsClientRebuiltFromLiveConfig(),
+          'test_reportsStableClientWatchBesideReactiveCredential': (t) =>
+              t._reportsStableClientWatchBesideReactiveCredential(),
+          'test_reportsStableDependencyValuesThroughAsyncWrappers': (t) =>
+              t._reportsStableDependencyValuesThroughAsyncWrappers(),
+          'test_reportsNotifierMembersWatchingStableInfrastructure': (t) =>
+              t._reportsNotifierMembersWatchingStableInfrastructure(),
+          'test_allowsNotifierBuildWatchingStateAndConfig': (t) =>
+              t._allowsNotifierBuildWatchingStateAndConfig(),
+          'test_allowsNotifierPersistStorageWatch': (t) => t._allowsNotifierPersistStorageWatch(),
+          'test_allowsLookalikeNotifierBase': (t) => t._allowsLookalikeNotifierBase(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('sdk').addFile('lib/sdk.dart', r'''
@@ -843,95 +939,34 @@ class ProductsNotifier extends AnyNotifier {
 }
 
 void _defineSourceScannerRulesPart19Tests() {
-  analysisRuleSuite<RiverpodGeneratedProviderAliasTest>(
+  analysisRuleSuite<_RiverpodGeneratedProviderAliasTest>(
     'RiverpodGeneratedProviderAliasTest',
-    RiverpodGeneratedProviderAliasTest.new,
-    {
-      'test_reportsGetterStaticAndFamilyAliases': (t) => t._reportsGetterStaticAndFamilyAliases(),
-      'test_allowsGeneratedDeclarationsLocalsAndManualProviders': (t) =>
-          t._allowsGeneratedDeclarationsLocalsAndManualProviders(),
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodGeneratedProviderAliasTest.new,
+    _RiverpodGeneratedProviderAliasTest._allCases,
   );
-  analysisRuleSuite<RiverpodWidgetRefOutsideWidgetTest>(
+  analysisRuleSuite<_RiverpodWidgetRefOutsideWidgetTest>(
     'RiverpodWidgetRefOutsideWidgetTest',
-    RiverpodWidgetRefOutsideWidgetTest.new,
-    {
-      'test_reportsServiceMethodParameter': (t) => t._reportsServiceMethodParameter(),
-      'test_allowsWidgetsStatesAndMixinsOnState': (t) => t._allowsWidgetsStatesAndMixinsOnState(),
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodWidgetRefOutsideWidgetTest.new,
+    _RiverpodWidgetRefOutsideWidgetTest._allCases,
   );
-  analysisRuleSuite<ArchInterfaceContractTest>(
+  analysisRuleSuite<_ArchInterfaceContractTest>(
     'ArchInterfaceContractTest',
-    ArchInterfaceContractTest.new,
-    {
-      'test_allowsResolvedImportedInterface': (t) => t._allowsResolvedImportedInterface(),
-      'test_reportsSecondClassWithoutInterface': (t) => t._reportsSecondClassWithoutInterface(),
-      'test_reportsConcreteInterfaceClassWithoutContract': (t) =>
-          t._reportsConcreteInterfaceClassWithoutContract(),
-      'test_allowsAbstractInterfaceContractDeclaration': (t) =>
-          t._allowsAbstractInterfaceContractDeclaration(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ArchInterfaceContractTest.new,
+    _ArchInterfaceContractTest._allCases,
   );
-  analysisRuleSuite<ArchRepositoryGeneratedExtendsTest>(
+  analysisRuleSuite<_ArchRepositoryGeneratedExtendsTest>(
     'ArchRepositoryGeneratedExtendsTest',
-    ArchRepositoryGeneratedExtendsTest.new,
-    {
-      'test_allowsRepositoryInterfaceImplementation': (t) =>
-          t._allowsRepositoryInterfaceImplementation(),
-      'test_allowsGeneratedNotifierClasses': (t) => t._allowsGeneratedNotifierClasses(),
-      'test_allowsRiverpodGeneratedProviderClass': (t) => t._allowsRiverpodGeneratedProviderClass(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ArchRepositoryGeneratedExtendsTest.new,
+    _ArchRepositoryGeneratedExtendsTest._allCases,
   );
-  analysisRuleSuite<ArchConcreteDependencyTest>(
+  analysisRuleSuite<_ArchConcreteDependencyTest>(
     'ArchConcreteDependencyTest',
-    ArchConcreteDependencyTest.new,
-    {
-      'test_reportsProviderReturningConcreteRepository': (t) =>
-          t._reportsProviderReturningConcreteRepository(),
-      'test_allowsProviderReturningRepositoryInterface': (t) =>
-          t._allowsProviderReturningRepositoryInterface(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ArchConcreteDependencyTest.new,
+    _ArchConcreteDependencyTest._allCases,
   );
-  analysisRuleSuite<ServiceProviderWatchDependencyTest>(
+  analysisRuleSuite<_ServiceProviderWatchDependencyTest>(
     'ServiceProviderWatchDependencyTest',
-    ServiceProviderWatchDependencyTest.new,
-    {
-      'test_reportsRepositoryFactoryWatch': (t) => t._reportsRepositoryFactoryWatch(),
-      'test_allowsCollectionProjectionNamedQueue': (t) => t._allowsCollectionProjectionNamedQueue(),
-      'test_allowsCollectionProjectionWhoseElementLooksLikeService': (t) =>
-          t._allowsCollectionProjectionWhoseElementLooksLikeService(),
-      'test_reportsTypedStableServiceWatchWithGenericFactoryName': (t) =>
-          t._reportsTypedStableServiceWatchWithGenericFactoryName(),
-      'test_reportsGenericInfrastructureReturnType': (t) =>
-          t._reportsGenericInfrastructureReturnType(),
-      'test_reportsQualifiedInfrastructureReturnTypeThroughFuture': (t) =>
-          t._reportsQualifiedInfrastructureReturnTypeThroughFuture(),
-      'test_reportsAppwriteTablesAndAccountServicesByResolvedBase': (t) =>
-          t._reportsAppwriteTablesAndAccountServicesByResolvedBase(),
-      'test_allowsLocalServiceBaseLookalike': (t) => t._allowsLocalServiceBaseLookalike(),
-      'test_doesNotUnwrapUserDefinedFutureName': (t) => t._doesNotUnwrapUserDefinedFutureName(),
-      'test_allowsReadDependency': (t) => t._allowsReadDependency(),
-      'test_allowsComputedProviderWatch': (t) => t._allowsComputedProviderWatch(),
-      'test_allowsWatchedReactiveCredentialState': (t) => t._allowsWatchedReactiveCredentialState(),
-      'test_allowsClientRebuiltFromLiveConfig': (t) => t._allowsClientRebuiltFromLiveConfig(),
-      'test_reportsStableClientWatchBesideReactiveCredential': (t) =>
-          t._reportsStableClientWatchBesideReactiveCredential(),
-      'test_reportsStableDependencyValuesThroughAsyncWrappers': (t) =>
-          t._reportsStableDependencyValuesThroughAsyncWrappers(),
-      'test_reportsNotifierMembersWatchingStableInfrastructure': (t) =>
-          t._reportsNotifierMembersWatchingStableInfrastructure(),
-      'test_allowsNotifierBuildWatchingStateAndConfig': (t) =>
-          t._allowsNotifierBuildWatchingStateAndConfig(),
-      'test_allowsNotifierPersistStorageWatch': (t) => t._allowsNotifierPersistStorageWatch(),
-      'test_allowsLookalikeNotifierBase': (t) => t._allowsLookalikeNotifierBase(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ServiceProviderWatchDependencyTest.new,
+    _ServiceProviderWatchDependencyTest._allCases,
   );
 }

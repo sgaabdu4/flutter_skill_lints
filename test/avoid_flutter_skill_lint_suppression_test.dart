@@ -4,18 +4,24 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_flutter_ski
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidFlutterSkillLintSuppressionTest>(
+  analysisRuleSuite<_AvoidFlutterSkillLintSuppressionTest>(
     'AvoidFlutterSkillLintSuppressionTest',
-    AvoidFlutterSkillLintSuppressionTest.new,
-    {
-      'test_reportsFileIgnoreForMagicLiterals': (t) => t._reportsFileIgnoreForMagicLiterals(),
-      'test_reportsLineIgnoreForContractKeys': (t) => t._reportsLineIgnoreForContractKeys(),
-      'test_allowsAnalyzerIgnores': (t) => t._allowsAnalyzerIgnores(),
-    },
+    _AvoidFlutterSkillLintSuppressionTest.new,
+    _AvoidFlutterSkillLintSuppressionTest._allCases,
   );
 }
 
-final class AvoidFlutterSkillLintSuppressionTest extends AnalysisRuleTest {
+final class _AvoidFlutterSkillLintSuppressionTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidFlutterSkillLintSuppressionTest)> get _allCases =>
+      caseSet<_AvoidFlutterSkillLintSuppressionTest>(
+        parent: const {},
+        own: {
+          'test_reportsFileIgnoreForMagicLiterals': (t) => t._reportsFileIgnoreForMagicLiterals(),
+          'test_reportsLineIgnoreForContractKeys': (t) => t._reportsLineIgnoreForContractKeys(),
+          'test_allowsAnalyzerIgnores': (t) => t._allowsAnalyzerIgnores(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidFlutterSkillLintSuppression();

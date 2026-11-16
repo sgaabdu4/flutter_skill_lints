@@ -6,32 +6,20 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/use_dedicated_med
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<UseDedicatedMediaQueryMethodsTest>(
+  analysisRuleSuite<_UseDedicatedMediaQueryMethodsTest>(
     'UseDedicatedMediaQueryMethodsTest',
-    UseDedicatedMediaQueryMethodsTest.new,
-    {
-      'test_sizePaddingAndViewInsets_lint': (t) => t._sizePaddingAndViewInsetsLint(),
-      'test_dedicatedMethods_noLint': (t) => t._dedicatedMethodsNoLint(),
-      'test_otherMediaQueryProperty_noLint': (t) => t._otherMediaQueryPropertyNoLint(),
-    },
+    _UseDedicatedMediaQueryMethodsTest.new,
+    _UseDedicatedMediaQueryMethodsTest._allCases,
   );
-  analysisRuleSuite<PreferSliverPrefixTest>('PreferSliverPrefixTest', PreferSliverPrefixTest.new, {
-    'test_statelessWidgetReturningSliverWithoutPrefix_lint': (t) =>
-        t._statelessWidgetReturningSliverWithoutPrefixLint(),
-    'test_sliverNameOnlyInsideClassName_lint': (t) => t._sliverNameOnlyInsideClassNameLint(),
-    'test_prefixedStatelessWidget_noLint': (t) => t._prefixedStatelessWidgetNoLint(),
-    'test_statefulWidgetReturningSliver_lint': (t) => t._statefulWidgetReturningSliverLint(),
-    'test_boxWidgetReturn_noLint': (t) => t._boxWidgetReturnNoLint(),
-  });
-  analysisRuleSuite<ConsistentUpdateRenderObjectTest>(
+  analysisRuleSuite<_PreferSliverPrefixTest>(
+    'PreferSliverPrefixTest',
+    _PreferSliverPrefixTest.new,
+    _PreferSliverPrefixTest._allCases,
+  );
+  analysisRuleSuite<_ConsistentUpdateRenderObjectTest>(
     'ConsistentUpdateRenderObjectTest',
-    ConsistentUpdateRenderObjectTest.new,
-    {
-      'test_constructorFieldMissingFromUpdateRenderObject_lint': (t) =>
-          t._constructorFieldMissingFromUpdateRenderObjectLint(),
-      'test_allConstructorFieldsAssigned_noLint': (t) => t._allConstructorFieldsAssignedNoLint(),
-      'test_nonConstructorField_noLint': (t) => t._nonConstructorFieldNoLint(),
-    },
+    _ConsistentUpdateRenderObjectTest.new,
+    _ConsistentUpdateRenderObjectTest._allCases,
   );
 }
 
@@ -113,7 +101,17 @@ abstract class LeafRenderObjectWidget extends RenderObjectWidget {
   }
 }
 
-final class UseDedicatedMediaQueryMethodsTest extends _FlutterRuleTest {
+final class _UseDedicatedMediaQueryMethodsTest extends _FlutterRuleTest {
+  static Map<String, Future<void> Function(_UseDedicatedMediaQueryMethodsTest)> get _allCases =>
+      caseSet<_UseDedicatedMediaQueryMethodsTest>(
+        parent: const {},
+        own: {
+          'test_sizePaddingAndViewInsets_lint': (t) => t._sizePaddingAndViewInsetsLint(),
+          'test_dedicatedMethods_noLint': (t) => t._dedicatedMethodsNoLint(),
+          'test_otherMediaQueryProperty_noLint': (t) => t._otherMediaQueryPropertyNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = UseDedicatedMediaQueryMethods();
@@ -164,7 +162,20 @@ void build(BuildContext context) {
   }
 }
 
-final class PreferSliverPrefixTest extends _FlutterRuleTest {
+final class _PreferSliverPrefixTest extends _FlutterRuleTest {
+  static Map<String, Future<void> Function(_PreferSliverPrefixTest)> get _allCases =>
+      caseSet<_PreferSliverPrefixTest>(
+        parent: const {},
+        own: {
+          'test_statelessWidgetReturningSliverWithoutPrefix_lint': (t) =>
+              t._statelessWidgetReturningSliverWithoutPrefixLint(),
+          'test_sliverNameOnlyInsideClassName_lint': (t) => t._sliverNameOnlyInsideClassNameLint(),
+          'test_prefixedStatelessWidget_noLint': (t) => t._prefixedStatelessWidgetNoLint(),
+          'test_statefulWidgetReturningSliver_lint': (t) => t._statefulWidgetReturningSliverLint(),
+          'test_boxWidgetReturn_noLint': (t) => t._boxWidgetReturnNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferSliverPrefix();
@@ -250,7 +261,19 @@ class FeedBox extends StatelessWidget {
   }
 }
 
-final class ConsistentUpdateRenderObjectTest extends _FlutterRuleTest {
+final class _ConsistentUpdateRenderObjectTest extends _FlutterRuleTest {
+  static Map<String, Future<void> Function(_ConsistentUpdateRenderObjectTest)> get _allCases =>
+      caseSet<_ConsistentUpdateRenderObjectTest>(
+        parent: const {},
+        own: {
+          'test_constructorFieldMissingFromUpdateRenderObject_lint': (t) =>
+              t._constructorFieldMissingFromUpdateRenderObjectLint(),
+          'test_allConstructorFieldsAssigned_noLint': (t) =>
+              t._allConstructorFieldsAssignedNoLint(),
+          'test_nonConstructorField_noLint': (t) => t._nonConstructorFieldNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = ConsistentUpdateRenderObject();

@@ -1,6 +1,18 @@
 part of '../source_scanner_rules_test.dart';
 
-final class WidgetTryCatchBoundaryTest extends _UiRuleTest {
+final class _WidgetTryCatchBoundaryTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_WidgetTryCatchBoundaryTest)> get _allCases =>
+      caseSet<_WidgetTryCatchBoundaryTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsCleanupWithoutCatching': (t) => t._allowsCleanupWithoutCatching(),
+          'test_reportsNestedCatchInsideCleanup': (t) => t._reportsNestedCatchInsideCleanup(),
+          'test_allowsTryCatchInNotifier': (t) => t._allowsTryCatchInNotifier(),
+          'test_reportsTryCatchInWidgetFileHelperClass': (t) =>
+              t._reportsTryCatchInWidgetFileHelperClass(),
+        },
+      );
+
   @override
   String get ruleName => 'widget_try_catch_boundary';
   @override
@@ -85,7 +97,25 @@ class TodoBackend {
   }
 }
 
-final class WidgetAwaitsNotifierResultTest extends _UiRuleTest {
+final class _WidgetAwaitsNotifierResultTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_WidgetAwaitsNotifierResultTest)> get _allCases =>
+      caseSet<_WidgetAwaitsNotifierResultTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsAwaitedDialogBeforeSynchronousNotifierDispatch': (t) =>
+              t._allowsAwaitedDialogBeforeSynchronousNotifierDispatch(),
+          'test_reportsMultilineAwaitedNotifierResult': (t) =>
+              t._reportsMultilineAwaitedNotifierResult(),
+          'test_reportsIfAwaitedNotifierResult': (t) => t._reportsIfAwaitedNotifierResult(),
+          'test_reportsNotifierThenResultBranch': (t) => t._reportsNotifierThenResultBranch(),
+          'test_reportsMultilineNotifierThenResultBranch': (t) =>
+              t._reportsMultilineNotifierThenResultBranch(),
+          'test_allowsNavigatorThenWithoutNotifierResult': (t) =>
+              t._allowsNavigatorThenWithoutNotifierResult(),
+          'test_allowsDispatchWithoutResultBranch': (t) => t._allowsDispatchWithoutResultBranch(),
+        },
+      );
+
   @override
   String get ruleName => 'widget_awaits_notifier_result';
   @override
@@ -230,7 +260,19 @@ class TodoScreen extends ConsumerWidget {
   }
 }
 
-final class WidgetLocalMutationFlagTest extends _UiRuleTest {
+final class _WidgetLocalMutationFlagTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_WidgetLocalMutationFlagTest)> get _allCases =>
+      caseSet<_WidgetLocalMutationFlagTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsGetterBackedNotifierMutation': (t) =>
+              t._reportsGetterBackedNotifierMutation(),
+          'test_allowsUiOnlyBusyFlag': (t) => t._allowsUiOnlyBusyFlag(),
+          'test_allowsNotifierOwnedSavingStateWatch': (t) =>
+              t._allowsNotifierOwnedSavingStateWatch(),
+        },
+      );
+
   @override
   String get ruleName => 'widget_local_mutation_flag';
   @override
@@ -304,7 +346,27 @@ class SaveButton extends ConsumerWidget {
   }
 }
 
-final class WidgetDerivedCollectionLogicTest extends _UiRuleTest {
+final class _WidgetDerivedCollectionLogicTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_WidgetDerivedCollectionLogicTest)> get _allCases =>
+      caseSet<_WidgetDerivedCollectionLogicTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsComputedProviderCollectionLogic': (t) =>
+              t._allowsComputedProviderCollectionLogic(),
+          'test_reportsDataNamespaceCollectionLogic': (t) =>
+              t._reportsDataNamespaceCollectionLogic(),
+          'test_reportsDataNamespaceLoopCollectionLogic': (t) =>
+              t._reportsDataNamespaceLoopCollectionLogic(),
+          'test_reportsExpressionBodiedPrivateHelper': (t) =>
+              t._reportsExpressionBodiedPrivateHelper(),
+          'test_reportsWrappedExpressionBodiedDataNamespaceHelper': (t) =>
+              t._reportsWrappedExpressionBodiedDataNamespaceHelper(),
+          'test_allowsExpressionBodiedHelperWithoutCollectionWork': (t) =>
+              t._allowsExpressionBodiedHelperWithoutCollectionWork(),
+          'test_reportsTopLevelDerivedCollection': (t) => t._reportsTopLevelDerivedCollection(),
+        },
+      );
+
   @override
   String get ruleName => 'widget_derived_collection_logic';
   @override
@@ -421,7 +483,10 @@ final _visibleExercises = Exercise.values
   }
 }
 
-final class A11yTextScaleClampTest extends _UiRuleTest {
+final class _A11yTextScaleClampTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_A11yTextScaleClampTest)> get _allCases =>
+      caseSet<_A11yTextScaleClampTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'a11y_text_scale_clamp';
   @override
@@ -434,7 +499,17 @@ final class A11yTextScaleClampTest extends _UiRuleTest {
   String get source => 'final scaler = TextScaler.linear(1);';
 }
 
-final class AppShellBootstrapSideEffectsTest extends _UiRuleTest {
+final class _AppShellBootstrapSideEffectsTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_AppShellBootstrapSideEffectsTest)> get _allCases =>
+      caseSet<_AppShellBootstrapSideEffectsTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsDeclarativeAppShell': (t) => t._allowsDeclarativeAppShell(),
+          'test_allowsBootstrapWidgetListeners': (t) => t._allowsBootstrapWidgetListeners(),
+          'test_allowsFeatureWidgetListeners': (t) => t._allowsFeatureWidgetListeners(),
+        },
+      );
+
   @override
   String get ruleName => 'app_shell_bootstrap_side_effects';
   @override
@@ -507,75 +582,34 @@ class AccountScreen extends ConsumerWidget {
 }
 
 void _defineSourceScannerRulesPart06Tests() {
-  analysisRuleSuite<WidgetTryCatchBoundaryTest>(
+  analysisRuleSuite<_WidgetTryCatchBoundaryTest>(
     'WidgetTryCatchBoundaryTest',
-    WidgetTryCatchBoundaryTest.new,
-    {
-      'test_allowsCleanupWithoutCatching': (t) => t._allowsCleanupWithoutCatching(),
-      'test_reportsNestedCatchInsideCleanup': (t) => t._reportsNestedCatchInsideCleanup(),
-      'test_allowsTryCatchInNotifier': (t) => t._allowsTryCatchInNotifier(),
-      'test_reportsTryCatchInWidgetFileHelperClass': (t) =>
-          t._reportsTryCatchInWidgetFileHelperClass(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _WidgetTryCatchBoundaryTest.new,
+    _WidgetTryCatchBoundaryTest._allCases,
   );
-  analysisRuleSuite<WidgetAwaitsNotifierResultTest>(
+  analysisRuleSuite<_WidgetAwaitsNotifierResultTest>(
     'WidgetAwaitsNotifierResultTest',
-    WidgetAwaitsNotifierResultTest.new,
-    {
-      'test_allowsAwaitedDialogBeforeSynchronousNotifierDispatch': (t) =>
-          t._allowsAwaitedDialogBeforeSynchronousNotifierDispatch(),
-      'test_reportsMultilineAwaitedNotifierResult': (t) =>
-          t._reportsMultilineAwaitedNotifierResult(),
-      'test_reportsIfAwaitedNotifierResult': (t) => t._reportsIfAwaitedNotifierResult(),
-      'test_reportsNotifierThenResultBranch': (t) => t._reportsNotifierThenResultBranch(),
-      'test_reportsMultilineNotifierThenResultBranch': (t) =>
-          t._reportsMultilineNotifierThenResultBranch(),
-      'test_allowsNavigatorThenWithoutNotifierResult': (t) =>
-          t._allowsNavigatorThenWithoutNotifierResult(),
-      'test_allowsDispatchWithoutResultBranch': (t) => t._allowsDispatchWithoutResultBranch(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _WidgetAwaitsNotifierResultTest.new,
+    _WidgetAwaitsNotifierResultTest._allCases,
   );
-  analysisRuleSuite<WidgetLocalMutationFlagTest>(
+  analysisRuleSuite<_WidgetLocalMutationFlagTest>(
     'WidgetLocalMutationFlagTest',
-    WidgetLocalMutationFlagTest.new,
-    {
-      'test_reportsGetterBackedNotifierMutation': (t) => t._reportsGetterBackedNotifierMutation(),
-      'test_allowsUiOnlyBusyFlag': (t) => t._allowsUiOnlyBusyFlag(),
-      'test_allowsNotifierOwnedSavingStateWatch': (t) => t._allowsNotifierOwnedSavingStateWatch(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _WidgetLocalMutationFlagTest.new,
+    _WidgetLocalMutationFlagTest._allCases,
   );
-  analysisRuleSuite<WidgetDerivedCollectionLogicTest>(
+  analysisRuleSuite<_WidgetDerivedCollectionLogicTest>(
     'WidgetDerivedCollectionLogicTest',
-    WidgetDerivedCollectionLogicTest.new,
-    {
-      'test_allowsComputedProviderCollectionLogic': (t) =>
-          t._allowsComputedProviderCollectionLogic(),
-      'test_reportsDataNamespaceCollectionLogic': (t) => t._reportsDataNamespaceCollectionLogic(),
-      'test_reportsDataNamespaceLoopCollectionLogic': (t) =>
-          t._reportsDataNamespaceLoopCollectionLogic(),
-      'test_reportsExpressionBodiedPrivateHelper': (t) => t._reportsExpressionBodiedPrivateHelper(),
-      'test_reportsWrappedExpressionBodiedDataNamespaceHelper': (t) =>
-          t._reportsWrappedExpressionBodiedDataNamespaceHelper(),
-      'test_allowsExpressionBodiedHelperWithoutCollectionWork': (t) =>
-          t._allowsExpressionBodiedHelperWithoutCollectionWork(),
-      'test_reportsTopLevelDerivedCollection': (t) => t._reportsTopLevelDerivedCollection(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _WidgetDerivedCollectionLogicTest.new,
+    _WidgetDerivedCollectionLogicTest._allCases,
   );
-  analysisRuleSuite<A11yTextScaleClampTest>('A11yTextScaleClampTest', A11yTextScaleClampTest.new, {
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<AppShellBootstrapSideEffectsTest>(
+  analysisRuleSuite<_A11yTextScaleClampTest>(
+    'A11yTextScaleClampTest',
+    _A11yTextScaleClampTest.new,
+    _A11yTextScaleClampTest._allCases,
+  );
+  analysisRuleSuite<_AppShellBootstrapSideEffectsTest>(
     'AppShellBootstrapSideEffectsTest',
-    AppShellBootstrapSideEffectsTest.new,
-    {
-      'test_allowsDeclarativeAppShell': (t) => t._allowsDeclarativeAppShell(),
-      'test_allowsBootstrapWidgetListeners': (t) => t._allowsBootstrapWidgetListeners(),
-      'test_allowsFeatureWidgetListeners': (t) => t._allowsFeatureWidgetListeners(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _AppShellBootstrapSideEffectsTest.new,
+    _AppShellBootstrapSideEffectsTest._allCases,
   );
 }

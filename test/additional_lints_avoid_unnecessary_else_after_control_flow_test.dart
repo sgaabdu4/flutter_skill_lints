@@ -4,10 +4,18 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidUnnecessaryElseAfterControlFlowTest>(
+  analysisRuleSuite<_AvoidUnnecessaryElseAfterControlFlowTest>(
     'AvoidUnnecessaryElseAfterControlFlowTest',
-    AvoidUnnecessaryElseAfterControlFlowTest.new,
-    {
+    _AvoidUnnecessaryElseAfterControlFlowTest.new,
+    _AvoidUnnecessaryElseAfterControlFlowTest._allCases,
+  );
+}
+
+class _AvoidUnnecessaryElseAfterControlFlowTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnnecessaryElseAfterControlFlowTest)>
+  get _allCases => caseSet<_AvoidUnnecessaryElseAfterControlFlowTest>(
+    parent: const {},
+    own: {
       'test_returnBranch_lint': (t) => t._returnBranchLint(),
       'test_throwBranch_lint': (t) => t._throwBranchLint(),
       'test_rethrowBranch_lint': (t) => t._rethrowBranchLint(),
@@ -26,9 +34,7 @@ void main() {
           t._throwExpressionBranchWithoutBlockLint(),
     },
   );
-}
 
-class AvoidUnnecessaryElseAfterControlFlowTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = AvoidUnnecessaryElseAfterControlFlow();

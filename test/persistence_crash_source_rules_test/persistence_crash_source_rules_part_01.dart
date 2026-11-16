@@ -54,7 +54,17 @@ abstract class Notifier<T> {
   void newLibFile(String name, String content) => newFile('$testPackageLibPath/$name', content);
 }
 
-final class HiveDuplicateFieldIdTest extends _HiveRuleTest {
+final class _HiveDuplicateFieldIdTest extends _HiveRuleTest {
+  static Map<String, Future<void> Function(_HiveDuplicateFieldIdTest)> get _allCases =>
+      caseSet<_HiveDuplicateFieldIdTest>(
+        parent: const {},
+        own: {
+          'test_reportsDuplicateField': (t) => t._reportsDuplicateField(),
+          'test_allowsSameIndexesInSeparateHiveTypes': (t) =>
+              t._allowsSameIndexesInSeparateHiveTypes(),
+        },
+      );
+
   @override
   String get ruleName => 'hive_duplicate_field_id';
 
@@ -98,7 +108,24 @@ class SecondEntry {
   }
 }
 
-final class HiveDuplicateTypeIdTest extends _HiveRuleTest {
+final class _HiveDuplicateTypeIdTest extends _HiveRuleTest {
+  static Map<String, Future<void> Function(_HiveDuplicateTypeIdTest)> get _allCases =>
+      caseSet<_HiveDuplicateTypeIdTest>(
+        parent: const {},
+        own: {
+          'test_reportsDuplicateTypeId': (t) => t._reportsDuplicateTypeId(),
+          'test_reportsDuplicateWithImportedHiveType': (t) =>
+              t._reportsDuplicateWithImportedHiveType(),
+          'test_reportsDuplicatesJoinedThroughGeneratedRegistrar': (t) =>
+              t._reportsDuplicatesJoinedThroughGeneratedRegistrar(),
+          'test_reportsDuplicatesJoinedByDirectImports': (t) =>
+              t._reportsDuplicatesJoinedByDirectImports(),
+          'test_leavesDeeperJoinToTheImportedLibrary': (t) =>
+              t._leavesDeeperJoinToTheImportedLibrary(),
+          'test_allowsDistinctTypeIdsAcrossFiles': (t) => t._allowsDistinctTypeIdsAcrossFiles(),
+        },
+      );
+
   @override
   String get ruleName => 'hive_duplicate_type_id';
 
@@ -192,7 +219,23 @@ class SecondEntry {}
   }
 }
 
-final class HiveReservedTypeIdsMissingTest extends _HiveRuleTest {
+final class _HiveReservedTypeIdsMissingTest extends _HiveRuleTest {
+  static Map<String, Future<void> Function(_HiveReservedTypeIdsMissingTest)> get _allCases =>
+      caseSet<_HiveReservedTypeIdsMissingTest>(
+        parent: const {},
+        own: {
+          'test_reportsMissingReservedTypeIds': (t) => t._reportsMissingReservedTypeIds(),
+          'test_reportsReservationThatOmitsTheHiveTypeId': (t) =>
+              t._reportsReservationThatOmitsTheHiveTypeId(),
+          'test_reservedTypeIdsPresent_noDiagnostic': (t) =>
+              t._reservedTypeIdsPresentNoDiagnostic(),
+          'test_reportsHiveTypeInAnotherFileOfTheRegistrationScope': (t) =>
+              t._reportsHiveTypeInAnotherFileOfTheRegistrationScope(),
+          'test_allowsReservedHiveTypeInAnotherFile': (t) =>
+              t._allowsReservedHiveTypeInAnotherFile(),
+        },
+      );
+
   @override
   String get ruleName => 'hive_reserved_type_ids_missing';
 
@@ -280,7 +323,16 @@ void hiveAdapters() {}
   }
 }
 
-final class HiveTypeOnFreezedClassTest extends _HiveRuleTest {
+final class _HiveTypeOnFreezedClassTest extends _HiveRuleTest {
+  static Map<String, Future<void> Function(_HiveTypeOnFreezedClassTest)> get _allCases =>
+      caseSet<_HiveTypeOnFreezedClassTest>(
+        parent: const {},
+        own: {
+          'test_reportsHiveTypeOnFreezedClass': (t) => t._reportsHiveTypeOnFreezedClass(),
+          'test_allowsHiveTypeOnPlainClass': (t) => t._allowsHiveTypeOnPlainClass(),
+        },
+      );
+
   @override
   String get ruleName => 'hive_type_on_freezed_class';
 
@@ -310,7 +362,16 @@ class CacheEntry {
   }
 }
 
-final class HiveAdapterSpecDomainTypeTest extends _HiveRuleTest {
+final class _HiveAdapterSpecDomainTypeTest extends _HiveRuleTest {
+  static Map<String, Future<void> Function(_HiveAdapterSpecDomainTypeTest)> get _allCases =>
+      caseSet<_HiveAdapterSpecDomainTypeTest>(
+        parent: const {},
+        own: {
+          'test_reportsDomainEntitySpec': (t) => t._reportsDomainEntitySpec(),
+          'test_allowsDataModelSpec': (t) => t._allowsDataModelSpec(),
+        },
+      );
+
   @override
   String get ruleName => 'hive_adapter_spec_domain_type';
 
@@ -341,7 +402,17 @@ void hiveAdapters() {}
   }
 }
 
-final class NotifierHiveAccessTest extends _HiveRuleTest {
+final class _NotifierHiveAccessTest extends _HiveRuleTest {
+  static Map<String, Future<void> Function(_NotifierHiveAccessTest)> get _allCases =>
+      caseSet<_NotifierHiveAccessTest>(
+        parent: const {},
+        own: {
+          'test_reportsHiveInNotifier': (t) => t._reportsHiveInNotifier(),
+          'test_allowsRepositoryNotifierAndHiveDatasource': (t) =>
+              t._allowsRepositoryNotifierAndHiveDatasource(),
+        },
+      );
+
   @override
   String get ruleName => 'notifier_hive_access';
 
@@ -395,7 +466,16 @@ class CountNotifier extends Notifier<int> {
   }
 }
 
-final class HiveTestCloseMissingTest extends _PersistenceCrashRuleTest {
+final class _HiveTestCloseMissingTest extends _PersistenceCrashRuleTest {
+  static Map<String, Future<void> Function(_HiveTestCloseMissingTest)> get _allCases =>
+      caseSet<_HiveTestCloseMissingTest>(
+        parent: const {},
+        own: {
+          'test_reportsMissingCloseInTest': (t) => t._reportsMissingCloseInTest(),
+          'test_closePresent_noDiagnostic': (t) => t._closePresentNoDiagnostic(),
+        },
+      );
+
   @override
   String get ruleName => 'hive_test_close_missing';
 
@@ -433,7 +513,36 @@ Future<void> tearDownStorage() async {
   }
 }
 
-final class FireAndForgetMissingCatchTest extends _PersistenceCrashRuleTest {
+final class _FireAndForgetMissingCatchTest extends _PersistenceCrashRuleTest {
+  static Map<String, Future<void> Function(_FireAndForgetMissingCatchTest)> get _allCases =>
+      caseSet<_FireAndForgetMissingCatchTest>(
+        parent: const {},
+        own: {
+          'test_reportsInlineAsyncMissingCatch': (t) => t._reportsInlineAsyncMissingCatch(),
+          'test_inlineAsyncWithCatch_noDiagnostic': (t) => t._inlineAsyncWithCatchNoDiagnostic(),
+          'test_calleeThatCatchesInternally_noDiagnostic': (t) =>
+              t._calleeThatCatchesInternallyNoDiagnostic(),
+          'test_reportsCalleeWithoutCatch': (t) => t._reportsCalleeWithoutCatch(),
+          'test_resolvesCalleesInImportedLibraries': (t) => t._resolvesCalleesInImportedLibraries(),
+          'test_emptyCalleeBody_noDiagnostic': (t) => t._emptyCalleeBodyNoDiagnostic(),
+          'test_mutationRunCallee_noDiagnostic': (t) => t._mutationRunCalleeNoDiagnostic(),
+          'test_reportsLocalMutationLookalike': (t) => t._reportsLocalMutationLookalike(),
+          'test_navigationCallee_noDiagnostic': (t) => t._navigationCalleeNoDiagnostic(),
+          'test_maybePopCallee_noDiagnostic': (t) => t._maybePopCalleeNoDiagnostic(),
+          'test_reportsNavigationThenUncaughtRemoteWork': (t) =>
+              t._reportsNavigationThenUncaughtRemoteWork(),
+          'test_calleeDelegatingToCatchingMethod_noDiagnostic': (t) =>
+              t._calleeDelegatingToCatchingMethodNoDiagnostic(),
+          'test_importedNotifierDelegatingToCatchingMethod_noDiagnostic': (t) =>
+              t._importedNotifierDelegatingToCatchingMethodNoDiagnostic(),
+          'test_reportsImportedNotifierDelegatingToUncaughtMethod': (t) =>
+              t._reportsImportedNotifierDelegatingToUncaughtMethod(),
+          'test_reportsCalleeThrowingBeforeCaughtWork': (t) =>
+              t._reportsCalleeThrowingBeforeCaughtWork(),
+          'test_guardedHelper_noDiagnostic': (t) => t._guardedHelperNoDiagnostic(),
+        },
+      );
+
   @override
   String get ruleName => 'fire_and_forget_missing_catch';
 
@@ -910,96 +1019,44 @@ extension GoRouterHelper on BuildContext {
 }
 
 void _definePersistenceCrashSourceRulesPart01Tests() {
-  analysisRuleSuite<FireAndForgetMissingCatchTest>(
+  analysisRuleSuite<_FireAndForgetMissingCatchTest>(
     'FireAndForgetMissingCatchTest',
-    FireAndForgetMissingCatchTest.new,
-    {
-      'test_reportsInlineAsyncMissingCatch': (t) => t._reportsInlineAsyncMissingCatch(),
-      'test_inlineAsyncWithCatch_noDiagnostic': (t) => t._inlineAsyncWithCatchNoDiagnostic(),
-      'test_calleeThatCatchesInternally_noDiagnostic': (t) =>
-          t._calleeThatCatchesInternallyNoDiagnostic(),
-      'test_reportsCalleeWithoutCatch': (t) => t._reportsCalleeWithoutCatch(),
-      'test_resolvesCalleesInImportedLibraries': (t) => t._resolvesCalleesInImportedLibraries(),
-      'test_emptyCalleeBody_noDiagnostic': (t) => t._emptyCalleeBodyNoDiagnostic(),
-      'test_mutationRunCallee_noDiagnostic': (t) => t._mutationRunCalleeNoDiagnostic(),
-      'test_reportsLocalMutationLookalike': (t) => t._reportsLocalMutationLookalike(),
-      'test_navigationCallee_noDiagnostic': (t) => t._navigationCalleeNoDiagnostic(),
-      'test_maybePopCallee_noDiagnostic': (t) => t._maybePopCalleeNoDiagnostic(),
-      'test_reportsNavigationThenUncaughtRemoteWork': (t) =>
-          t._reportsNavigationThenUncaughtRemoteWork(),
-      'test_calleeDelegatingToCatchingMethod_noDiagnostic': (t) =>
-          t._calleeDelegatingToCatchingMethodNoDiagnostic(),
-      'test_importedNotifierDelegatingToCatchingMethod_noDiagnostic': (t) =>
-          t._importedNotifierDelegatingToCatchingMethodNoDiagnostic(),
-      'test_reportsImportedNotifierDelegatingToUncaughtMethod': (t) =>
-          t._reportsImportedNotifierDelegatingToUncaughtMethod(),
-      'test_reportsCalleeThrowingBeforeCaughtWork': (t) =>
-          t._reportsCalleeThrowingBeforeCaughtWork(),
-      'test_guardedHelper_noDiagnostic': (t) => t._guardedHelperNoDiagnostic(),
-    },
+    _FireAndForgetMissingCatchTest.new,
+    _FireAndForgetMissingCatchTest._allCases,
   );
-  analysisRuleSuite<HiveDuplicateFieldIdTest>(
+  analysisRuleSuite<_HiveDuplicateFieldIdTest>(
     'HiveDuplicateFieldIdTest',
-    HiveDuplicateFieldIdTest.new,
-    {
-      'test_reportsDuplicateField': (t) => t._reportsDuplicateField(),
-      'test_allowsSameIndexesInSeparateHiveTypes': (t) => t._allowsSameIndexesInSeparateHiveTypes(),
-    },
+    _HiveDuplicateFieldIdTest.new,
+    _HiveDuplicateFieldIdTest._allCases,
   );
-  analysisRuleSuite<HiveDuplicateTypeIdTest>(
+  analysisRuleSuite<_HiveDuplicateTypeIdTest>(
     'HiveDuplicateTypeIdTest',
-    HiveDuplicateTypeIdTest.new,
-    {
-      'test_reportsDuplicateTypeId': (t) => t._reportsDuplicateTypeId(),
-      'test_reportsDuplicateWithImportedHiveType': (t) => t._reportsDuplicateWithImportedHiveType(),
-      'test_reportsDuplicatesJoinedThroughGeneratedRegistrar': (t) =>
-          t._reportsDuplicatesJoinedThroughGeneratedRegistrar(),
-      'test_reportsDuplicatesJoinedByDirectImports': (t) =>
-          t._reportsDuplicatesJoinedByDirectImports(),
-      'test_leavesDeeperJoinToTheImportedLibrary': (t) => t._leavesDeeperJoinToTheImportedLibrary(),
-      'test_allowsDistinctTypeIdsAcrossFiles': (t) => t._allowsDistinctTypeIdsAcrossFiles(),
-    },
+    _HiveDuplicateTypeIdTest.new,
+    _HiveDuplicateTypeIdTest._allCases,
   );
-  analysisRuleSuite<HiveReservedTypeIdsMissingTest>(
+  analysisRuleSuite<_HiveReservedTypeIdsMissingTest>(
     'HiveReservedTypeIdsMissingTest',
-    HiveReservedTypeIdsMissingTest.new,
-    {
-      'test_reportsMissingReservedTypeIds': (t) => t._reportsMissingReservedTypeIds(),
-      'test_reportsReservationThatOmitsTheHiveTypeId': (t) =>
-          t._reportsReservationThatOmitsTheHiveTypeId(),
-      'test_reservedTypeIdsPresent_noDiagnostic': (t) => t._reservedTypeIdsPresentNoDiagnostic(),
-      'test_reportsHiveTypeInAnotherFileOfTheRegistrationScope': (t) =>
-          t._reportsHiveTypeInAnotherFileOfTheRegistrationScope(),
-      'test_allowsReservedHiveTypeInAnotherFile': (t) => t._allowsReservedHiveTypeInAnotherFile(),
-    },
+    _HiveReservedTypeIdsMissingTest.new,
+    _HiveReservedTypeIdsMissingTest._allCases,
   );
-  analysisRuleSuite<HiveTestCloseMissingTest>(
+  analysisRuleSuite<_HiveTestCloseMissingTest>(
     'HiveTestCloseMissingTest',
-    HiveTestCloseMissingTest.new,
-    {
-      'test_reportsMissingCloseInTest': (t) => t._reportsMissingCloseInTest(),
-      'test_closePresent_noDiagnostic': (t) => t._closePresentNoDiagnostic(),
-    },
+    _HiveTestCloseMissingTest.new,
+    _HiveTestCloseMissingTest._allCases,
   );
-  analysisRuleSuite<HiveTypeOnFreezedClassTest>(
+  analysisRuleSuite<_HiveTypeOnFreezedClassTest>(
     'HiveTypeOnFreezedClassTest',
-    HiveTypeOnFreezedClassTest.new,
-    {
-      'test_reportsHiveTypeOnFreezedClass': (t) => t._reportsHiveTypeOnFreezedClass(),
-      'test_allowsHiveTypeOnPlainClass': (t) => t._allowsHiveTypeOnPlainClass(),
-    },
+    _HiveTypeOnFreezedClassTest.new,
+    _HiveTypeOnFreezedClassTest._allCases,
   );
-  analysisRuleSuite<HiveAdapterSpecDomainTypeTest>(
+  analysisRuleSuite<_HiveAdapterSpecDomainTypeTest>(
     'HiveAdapterSpecDomainTypeTest',
-    HiveAdapterSpecDomainTypeTest.new,
-    {
-      'test_reportsDomainEntitySpec': (t) => t._reportsDomainEntitySpec(),
-      'test_allowsDataModelSpec': (t) => t._allowsDataModelSpec(),
-    },
+    _HiveAdapterSpecDomainTypeTest.new,
+    _HiveAdapterSpecDomainTypeTest._allCases,
   );
-  analysisRuleSuite<NotifierHiveAccessTest>('NotifierHiveAccessTest', NotifierHiveAccessTest.new, {
-    'test_reportsHiveInNotifier': (t) => t._reportsHiveInNotifier(),
-    'test_allowsRepositoryNotifierAndHiveDatasource': (t) =>
-        t._allowsRepositoryNotifierAndHiveDatasource(),
-  });
+  analysisRuleSuite<_NotifierHiveAccessTest>(
+    'NotifierHiveAccessTest',
+    _NotifierHiveAccessTest.new,
+    _NotifierHiveAccessTest._allCases,
+  );
 }

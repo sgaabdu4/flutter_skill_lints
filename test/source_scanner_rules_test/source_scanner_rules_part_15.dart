@@ -1,6 +1,16 @@
 part of '../source_scanner_rules_test.dart';
 
-final class SyncSaveAllNoDirtyGuardTest extends _RuntimeBugRuleTest {
+final class _SyncSaveAllNoDirtyGuardTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_SyncSaveAllNoDirtyGuardTest)> get _allCases =>
+      caseSet<_SyncSaveAllNoDirtyGuardTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsWhenGuarded': (t) => t._allowsWhenGuarded(),
+          'test_allowsNonEntitySaveAll': (t) => t._allowsNonEntitySaveAll(),
+          'test_reportsMultilineSaveAll': (t) => t._reportsMultilineSaveAll(),
+        },
+      );
+
   @override
   String get ruleName => 'sync_save_all_no_dirty_guard';
   @override
@@ -51,7 +61,13 @@ class SyncService {
   }
 }
 
-final class SaveAllFullCollectionAfterSubsetMutationTest extends _RuntimeBugRuleTest {
+final class _SaveAllFullCollectionAfterSubsetMutationTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_SaveAllFullCollectionAfterSubsetMutationTest)>
+  get _allCases => caseSet<_SaveAllFullCollectionAfterSubsetMutationTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {'test_allowsChangedSubsetWrite': (t) => t._allowsChangedSubsetWrite()},
+  );
+
   @override
   String get ruleName => 'save_all_full_collection_after_subset_mutation';
   @override
@@ -86,7 +102,13 @@ class ItemRepository {
   }
 }
 
-final class CollectionGetterAllocatesEachAccessTest extends _RuntimeBugRuleTest {
+final class _CollectionGetterAllocatesEachAccessTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_CollectionGetterAllocatesEachAccessTest)>
+  get _allCases => caseSet<_CollectionGetterAllocatesEachAccessTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {'test_allowsLateFinalCachedGetter': (t) => t._allowsLateFinalCachedGetter()},
+  );
+
   @override
   String get ruleName => 'collection_getter_allocates_each_access';
   @override
@@ -121,7 +143,16 @@ class ItemState {
   }
 }
 
-final class ExpandoDerivedCacheForbiddenTest extends _RuntimeBugRuleTest {
+final class _ExpandoDerivedCacheForbiddenTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_ExpandoDerivedCacheForbiddenTest)> get _allCases =>
+      caseSet<_ExpandoDerivedCacheForbiddenTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsLateFinalDerivedIndex': (t) => t._allowsLateFinalDerivedIndex(),
+          'test_skipsTestFiles': (t) => t._skipsTestFiles(),
+        },
+      );
+
   @override
   String get ruleName => 'expando_derived_cache_forbidden';
   @override
@@ -151,7 +182,19 @@ final _cache = Expando<Map<String, Object>>('test cache');
   }
 }
 
-final class AdHocIdIndexLookupTest extends _RuntimeBugRuleTest {
+final class _AdHocIdIndexLookupTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_AdHocIdIndexLookupTest)> get _allCases =>
+      caseSet<_AdHocIdIndexLookupTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsSharedLookupExtension': (t) => t._allowsSharedLookupExtension(),
+          'test_reportsIndexOfByKeySubscriptedInPlace': (t) =>
+              t._reportsIndexOfByKeySubscriptedInPlace(),
+          'test_allowsSkillCachedIndexOfByKey': (t) => t._allowsSkillCachedIndexOfByKey(),
+          'test_allowsReturnedIndexMap': (t) => t._allowsReturnedIndexMap(),
+        },
+      );
+
   @override
   String get ruleName => 'ad_hoc_id_index_lookup';
   @override
@@ -211,7 +254,38 @@ Map<String, Item> itemsById(List<Item> items) {
   }
 }
 
-final class LinearIdLookupInHotPathTest extends _RuntimeBugRuleTest {
+final class _LinearIdLookupInHotPathTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_LinearIdLookupInHotPathTest)> get _allCases =>
+      caseSet<_LinearIdLookupInHotPathTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsMultilineLookupInIterationCallback': (t) =>
+              t._reportsMultilineLookupInIterationCallback(),
+          'test_reportsLookupInForEachCallback': (t) => t._reportsLookupInForEachCallback(),
+          'test_reportsLookupInCollectionFor': (t) => t._reportsLookupInCollectionFor(),
+          'test_reportsNestedIndexWhereLookup': (t) => t._reportsNestedIndexWhereLookup(),
+          'test_reportsManualLookupLoopInsideLoop': (t) => t._reportsManualLookupLoopInsideLoop(),
+          'test_reportsLookupInBuild': (t) => t._reportsLookupInBuild(),
+          'test_reportsIndexedManualLookupInsideCallback': (t) =>
+              t._reportsIndexedManualLookupInsideCallback(),
+          'test_reportsLookupInWidgetBuilderFunction': (t) =>
+              t._reportsLookupInWidgetBuilderFunction(),
+          'test_allowsLookupInSingleCallMapCallback': (t) =>
+              t._allowsLookupInSingleCallMapCallback(),
+          'test_reportsLookupOverIdListInNotifier': (t) => t._reportsLookupOverIdListInNotifier(),
+          'test_reportsCompoundAndBlockPredicatesInLoop': (t) =>
+              t._reportsCompoundAndBlockPredicatesInLoop(),
+          'test_reportsLookupInGetters': (t) => t._reportsLookupInGetters(),
+          'test_allowsOneOffRepositoryMutation': (t) => t._allowsOneOffRepositoryMutation(),
+          'test_allowsOneOffNotifierLookup': (t) => t._allowsOneOffNotifierLookup(),
+          'test_allowsSingleManualLookupLoop': (t) => t._allowsSingleManualLookupLoop(),
+          'test_allowsLookupInTapCallbackInsideBuild': (t) =>
+              t._allowsLookupInTapCallbackInsideBuild(),
+          'test_allowsLookupInLoopIterable': (t) => t._allowsLookupInLoopIterable(),
+          'test_allowsMapIndex': (t) => t._allowsMapIndex(),
+        },
+      );
+
   static const _item = r'''
 import 'package:flutter/widgets.dart';
 
@@ -556,7 +630,22 @@ void apply(Map<String, Item> itemsById, List<String> ids) {
   }
 }
 
-final class NestedLinearLookupByIdTest extends _RuntimeBugRuleTest {
+final class _NestedLinearLookupByIdTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_NestedLinearLookupByIdTest)> get _allCases =>
+      caseSet<_NestedLinearLookupByIdTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsMultilineIndexWhereLookup': (t) => t._reportsMultilineIndexWhereLookup(),
+          'test_reportsLookupOverIdListInNotifier': (t) => t._reportsLookupOverIdListInNotifier(),
+          'test_allowsLookupByUnrelatedLongerName': (t) => t._allowsLookupByUnrelatedLongerName(),
+          'test_reportsNestedLookupInTopLevelFunction': (t) =>
+              t._reportsNestedLookupInTopLevelFunction(),
+          'test_reportsNestedLookupInCollectionFor': (t) => t._reportsNestedLookupInCollectionFor(),
+          'test_allowsLookupNotKeyedByLoopVariable': (t) => t._allowsLookupNotKeyedByLoopVariable(),
+          'test_allowsPreIndexedMap': (t) => t._allowsPreIndexedMap(),
+        },
+      );
+
   @override
   String get ruleName => 'nested_linear_lookup_by_id';
   @override
@@ -671,7 +760,24 @@ class ItemRepository {
   }
 }
 
-final class AppwriteBlockingFunctionExecutionInClientTest extends _RuntimeBugRuleTest {
+final class _AppwriteBlockingFunctionExecutionInClientTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_AppwriteBlockingFunctionExecutionInClientTest)>
+  get _allCases => caseSet<_AppwriteBlockingFunctionExecutionInClientTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_reportsOmittedXasyncInLongRunningMethod': (t) =>
+          t._reportsOmittedXasyncInLongRunningMethod(),
+      'test_reportsClientWaitingForBackendCompletion': (t) =>
+          t._reportsClientWaitingForBackendCompletion(),
+      'test_allowsUnresolvedWaitForCompletionLookalike': (t) =>
+          t._allowsUnresolvedWaitForCompletionLookalike(),
+      'test_allowsAsyncExecution': (t) => t._allowsAsyncExecution(),
+      'test_allowsForwardingWrapperWithXasyncParameter': (t) =>
+          t._allowsForwardingWrapperWithXasyncParameter(),
+      'test_allowsShortInteractiveFunction': (t) => t._allowsShortInteractiveFunction(),
+    },
+  );
+
   @override
   String get ruleName => 'appwrite_blocking_function_execution_in_client';
   @override
@@ -806,7 +912,21 @@ class AuthRemoteDatasource {
   }
 }
 
-final class DestructiveFailureLoggedBeforeReconcileTest extends _RuntimeBugRuleTest {
+final class _DestructiveFailureLoggedBeforeReconcileTest extends _RuntimeBugRuleTest {
+  static Map<String, Future<void> Function(_DestructiveFailureLoggedBeforeReconcileTest)>
+  get _allCases => caseSet<_DestructiveFailureLoggedBeforeReconcileTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_allowsReconcileBeforeTelemetry': (t) => t._allowsReconcileBeforeTelemetry(),
+      'test_reportsSkillTelemetryBeforeWaitForReconcile': (t) =>
+          t._reportsSkillTelemetryBeforeWaitForReconcile(),
+      'test_reportsTelemetryWithoutReconcileAfterAsyncStart': (t) =>
+          t._reportsTelemetryWithoutReconcileAfterAsyncStart(),
+      'test_allowsSkillAsyncStartThenReconcile': (t) => t._allowsSkillAsyncStartThenReconcile(),
+      'test_allowsOrdinaryDestructiveTelemetry': (t) => t._allowsOrdinaryDestructiveTelemetry(),
+    },
+  );
+
   @override
   String get ruleName => 'destructive_failure_logged_before_reconcile';
   @override
@@ -954,120 +1074,49 @@ class ProductNotifier {
 }
 
 void _defineSourceScannerRulesPart15Tests() {
-  analysisRuleSuite<SyncSaveAllNoDirtyGuardTest>(
+  analysisRuleSuite<_SyncSaveAllNoDirtyGuardTest>(
     'SyncSaveAllNoDirtyGuardTest',
-    SyncSaveAllNoDirtyGuardTest.new,
-    {
-      'test_allowsWhenGuarded': (t) => t._allowsWhenGuarded(),
-      'test_allowsNonEntitySaveAll': (t) => t._allowsNonEntitySaveAll(),
-      'test_reportsMultilineSaveAll': (t) => t._reportsMultilineSaveAll(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _SyncSaveAllNoDirtyGuardTest.new,
+    _SyncSaveAllNoDirtyGuardTest._allCases,
   );
-  analysisRuleSuite<SaveAllFullCollectionAfterSubsetMutationTest>(
+  analysisRuleSuite<_SaveAllFullCollectionAfterSubsetMutationTest>(
     'SaveAllFullCollectionAfterSubsetMutationTest',
-    SaveAllFullCollectionAfterSubsetMutationTest.new,
-    {
-      'test_allowsChangedSubsetWrite': (t) => t._allowsChangedSubsetWrite(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _SaveAllFullCollectionAfterSubsetMutationTest.new,
+    _SaveAllFullCollectionAfterSubsetMutationTest._allCases,
   );
-  analysisRuleSuite<CollectionGetterAllocatesEachAccessTest>(
+  analysisRuleSuite<_CollectionGetterAllocatesEachAccessTest>(
     'CollectionGetterAllocatesEachAccessTest',
-    CollectionGetterAllocatesEachAccessTest.new,
-    {
-      'test_allowsLateFinalCachedGetter': (t) => t._allowsLateFinalCachedGetter(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _CollectionGetterAllocatesEachAccessTest.new,
+    _CollectionGetterAllocatesEachAccessTest._allCases,
   );
-  analysisRuleSuite<ExpandoDerivedCacheForbiddenTest>(
+  analysisRuleSuite<_ExpandoDerivedCacheForbiddenTest>(
     'ExpandoDerivedCacheForbiddenTest',
-    ExpandoDerivedCacheForbiddenTest.new,
-    {
-      'test_allowsLateFinalDerivedIndex': (t) => t._allowsLateFinalDerivedIndex(),
-      'test_skipsTestFiles': (t) => t._skipsTestFiles(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _ExpandoDerivedCacheForbiddenTest.new,
+    _ExpandoDerivedCacheForbiddenTest._allCases,
   );
-  analysisRuleSuite<AdHocIdIndexLookupTest>('AdHocIdIndexLookupTest', AdHocIdIndexLookupTest.new, {
-    'test_allowsSharedLookupExtension': (t) => t._allowsSharedLookupExtension(),
-    'test_reportsIndexOfByKeySubscriptedInPlace': (t) => t._reportsIndexOfByKeySubscriptedInPlace(),
-    'test_allowsSkillCachedIndexOfByKey': (t) => t._allowsSkillCachedIndexOfByKey(),
-    'test_allowsReturnedIndexMap': (t) => t._allowsReturnedIndexMap(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<LinearIdLookupInHotPathTest>(
+  analysisRuleSuite<_AdHocIdIndexLookupTest>(
+    'AdHocIdIndexLookupTest',
+    _AdHocIdIndexLookupTest.new,
+    _AdHocIdIndexLookupTest._allCases,
+  );
+  analysisRuleSuite<_LinearIdLookupInHotPathTest>(
     'LinearIdLookupInHotPathTest',
-    LinearIdLookupInHotPathTest.new,
-    {
-      'test_reportsMultilineLookupInIterationCallback': (t) =>
-          t._reportsMultilineLookupInIterationCallback(),
-      'test_reportsLookupInForEachCallback': (t) => t._reportsLookupInForEachCallback(),
-      'test_reportsLookupInCollectionFor': (t) => t._reportsLookupInCollectionFor(),
-      'test_reportsNestedIndexWhereLookup': (t) => t._reportsNestedIndexWhereLookup(),
-      'test_reportsManualLookupLoopInsideLoop': (t) => t._reportsManualLookupLoopInsideLoop(),
-      'test_reportsLookupInBuild': (t) => t._reportsLookupInBuild(),
-      'test_reportsIndexedManualLookupInsideCallback': (t) =>
-          t._reportsIndexedManualLookupInsideCallback(),
-      'test_reportsLookupInWidgetBuilderFunction': (t) => t._reportsLookupInWidgetBuilderFunction(),
-      'test_allowsLookupInSingleCallMapCallback': (t) => t._allowsLookupInSingleCallMapCallback(),
-      'test_reportsLookupOverIdListInNotifier': (t) => t._reportsLookupOverIdListInNotifier(),
-      'test_reportsCompoundAndBlockPredicatesInLoop': (t) =>
-          t._reportsCompoundAndBlockPredicatesInLoop(),
-      'test_reportsLookupInGetters': (t) => t._reportsLookupInGetters(),
-      'test_allowsOneOffRepositoryMutation': (t) => t._allowsOneOffRepositoryMutation(),
-      'test_allowsOneOffNotifierLookup': (t) => t._allowsOneOffNotifierLookup(),
-      'test_allowsSingleManualLookupLoop': (t) => t._allowsSingleManualLookupLoop(),
-      'test_allowsLookupInTapCallbackInsideBuild': (t) => t._allowsLookupInTapCallbackInsideBuild(),
-      'test_allowsLookupInLoopIterable': (t) => t._allowsLookupInLoopIterable(),
-      'test_allowsMapIndex': (t) => t._allowsMapIndex(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _LinearIdLookupInHotPathTest.new,
+    _LinearIdLookupInHotPathTest._allCases,
   );
-  analysisRuleSuite<NestedLinearLookupByIdTest>(
+  analysisRuleSuite<_NestedLinearLookupByIdTest>(
     'NestedLinearLookupByIdTest',
-    NestedLinearLookupByIdTest.new,
-    {
-      'test_reportsMultilineIndexWhereLookup': (t) => t._reportsMultilineIndexWhereLookup(),
-      'test_reportsLookupOverIdListInNotifier': (t) => t._reportsLookupOverIdListInNotifier(),
-      'test_allowsLookupByUnrelatedLongerName': (t) => t._allowsLookupByUnrelatedLongerName(),
-      'test_reportsNestedLookupInTopLevelFunction': (t) =>
-          t._reportsNestedLookupInTopLevelFunction(),
-      'test_reportsNestedLookupInCollectionFor': (t) => t._reportsNestedLookupInCollectionFor(),
-      'test_allowsLookupNotKeyedByLoopVariable': (t) => t._allowsLookupNotKeyedByLoopVariable(),
-      'test_allowsPreIndexedMap': (t) => t._allowsPreIndexedMap(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _NestedLinearLookupByIdTest.new,
+    _NestedLinearLookupByIdTest._allCases,
   );
-  analysisRuleSuite<AppwriteBlockingFunctionExecutionInClientTest>(
+  analysisRuleSuite<_AppwriteBlockingFunctionExecutionInClientTest>(
     'AppwriteBlockingFunctionExecutionInClientTest',
-    AppwriteBlockingFunctionExecutionInClientTest.new,
-    {
-      'test_reportsOmittedXasyncInLongRunningMethod': (t) =>
-          t._reportsOmittedXasyncInLongRunningMethod(),
-      'test_reportsClientWaitingForBackendCompletion': (t) =>
-          t._reportsClientWaitingForBackendCompletion(),
-      'test_allowsUnresolvedWaitForCompletionLookalike': (t) =>
-          t._allowsUnresolvedWaitForCompletionLookalike(),
-      'test_allowsAsyncExecution': (t) => t._allowsAsyncExecution(),
-      'test_allowsForwardingWrapperWithXasyncParameter': (t) =>
-          t._allowsForwardingWrapperWithXasyncParameter(),
-      'test_allowsShortInteractiveFunction': (t) => t._allowsShortInteractiveFunction(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _AppwriteBlockingFunctionExecutionInClientTest.new,
+    _AppwriteBlockingFunctionExecutionInClientTest._allCases,
   );
-  analysisRuleSuite<DestructiveFailureLoggedBeforeReconcileTest>(
+  analysisRuleSuite<_DestructiveFailureLoggedBeforeReconcileTest>(
     'DestructiveFailureLoggedBeforeReconcileTest',
-    DestructiveFailureLoggedBeforeReconcileTest.new,
-    {
-      'test_allowsReconcileBeforeTelemetry': (t) => t._allowsReconcileBeforeTelemetry(),
-      'test_reportsSkillTelemetryBeforeWaitForReconcile': (t) =>
-          t._reportsSkillTelemetryBeforeWaitForReconcile(),
-      'test_reportsTelemetryWithoutReconcileAfterAsyncStart': (t) =>
-          t._reportsTelemetryWithoutReconcileAfterAsyncStart(),
-      'test_allowsSkillAsyncStartThenReconcile': (t) => t._allowsSkillAsyncStartThenReconcile(),
-      'test_allowsOrdinaryDestructiveTelemetry': (t) => t._allowsOrdinaryDestructiveTelemetry(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _DestructiveFailureLoggedBeforeReconcileTest.new,
+    _DestructiveFailureLoggedBeforeReconcileTest._allCases,
   );
 }

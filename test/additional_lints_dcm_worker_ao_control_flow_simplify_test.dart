@@ -6,29 +6,35 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidCollapsibleIfTest>('AvoidCollapsibleIfTest', AvoidCollapsibleIfTest.new, {
-    'test_singleNestedIf_lint': (t) => t._singleNestedIfLint(),
-    'test_outerElse_noLint': (t) => t._outerElseNoLint(),
-    'test_innerElse_noLint': (t) => t._innerElseNoLint(),
-    'test_extraStatement_noLint': (t) => t._extraStatementNoLint(),
-  });
-  analysisRuleSuite<AvoidRedundantElseTest>('AvoidRedundantElseTest', AvoidRedundantElseTest.new, {
-    'test_returnBranch_lint': (t) => t._returnBranchLint(),
-    'test_throwBranch_lint': (t) => t._throwBranchLint(),
-    'test_elseIf_noLint': (t) => t._elseIfNoLint(),
-    'test_nonExitingBranch_noLint': (t) => t._nonExitingBranchNoLint(),
-    'test_nestedConditionalExit_noLint': (t) => t._nestedConditionalExitNoLint(),
-  });
-  analysisRuleSuite<AvoidUnnecessaryIfTest>('AvoidUnnecessaryIfTest', AvoidUnnecessaryIfTest.new, {
-    'test_oppositeBooleanReturns_lint': (t) => t._oppositeBooleanReturnsLint(),
-    'test_oppositeBooleanAssignments_lint': (t) => t._oppositeBooleanAssignmentsLint(),
-    'test_sameBooleanReturns_noLint': (t) => t._sameBooleanReturnsNoLint(),
-    'test_differentAssignmentTargets_noLint': (t) => t._differentAssignmentTargetsNoLint(),
-    'test_elseIf_noLint': (t) => t._elseIfNoLint(),
-  });
+  analysisRuleSuite<_AvoidCollapsibleIfTest>(
+    'AvoidCollapsibleIfTest',
+    _AvoidCollapsibleIfTest.new,
+    _AvoidCollapsibleIfTest._allCases,
+  );
+  analysisRuleSuite<_AvoidRedundantElseTest>(
+    'AvoidRedundantElseTest',
+    _AvoidRedundantElseTest.new,
+    _AvoidRedundantElseTest._allCases,
+  );
+  analysisRuleSuite<_AvoidUnnecessaryIfTest>(
+    'AvoidUnnecessaryIfTest',
+    _AvoidUnnecessaryIfTest.new,
+    _AvoidUnnecessaryIfTest._allCases,
+  );
 }
 
-final class AvoidCollapsibleIfTest extends AnalysisRuleTest {
+final class _AvoidCollapsibleIfTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidCollapsibleIfTest)> get _allCases =>
+      caseSet<_AvoidCollapsibleIfTest>(
+        parent: const {},
+        own: {
+          'test_singleNestedIf_lint': (t) => t._singleNestedIfLint(),
+          'test_outerElse_noLint': (t) => t._outerElseNoLint(),
+          'test_innerElse_noLint': (t) => t._innerElseNoLint(),
+          'test_extraStatement_noLint': (t) => t._extraStatementNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidCollapsibleIf();
@@ -91,7 +97,19 @@ void f(bool ready, bool enabled) {
   }
 }
 
-final class AvoidRedundantElseTest extends AnalysisRuleTest {
+final class _AvoidRedundantElseTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidRedundantElseTest)> get _allCases =>
+      caseSet<_AvoidRedundantElseTest>(
+        parent: const {},
+        own: {
+          'test_returnBranch_lint': (t) => t._returnBranchLint(),
+          'test_throwBranch_lint': (t) => t._throwBranchLint(),
+          'test_elseIf_noLint': (t) => t._elseIfNoLint(),
+          'test_nonExitingBranch_noLint': (t) => t._nonExitingBranchNoLint(),
+          'test_nestedConditionalExit_noLint': (t) => t._nestedConditionalExitNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidRedundantElse();
@@ -168,7 +186,19 @@ int f(bool outer, bool inner) {
   }
 }
 
-final class AvoidUnnecessaryIfTest extends AnalysisRuleTest {
+final class _AvoidUnnecessaryIfTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnnecessaryIfTest)> get _allCases =>
+      caseSet<_AvoidUnnecessaryIfTest>(
+        parent: const {},
+        own: {
+          'test_oppositeBooleanReturns_lint': (t) => t._oppositeBooleanReturnsLint(),
+          'test_oppositeBooleanAssignments_lint': (t) => t._oppositeBooleanAssignmentsLint(),
+          'test_sameBooleanReturns_noLint': (t) => t._sameBooleanReturnsNoLint(),
+          'test_differentAssignmentTargets_noLint': (t) => t._differentAssignmentTargetsNoLint(),
+          'test_elseIf_noLint': (t) => t._elseIfNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnnecessaryIf();

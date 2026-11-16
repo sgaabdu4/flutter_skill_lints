@@ -7,53 +7,40 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_redundant_p
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidOneFieldRecordsTest>(
+  analysisRuleSuite<_AvoidOneFieldRecordsTest>(
     'AvoidOneFieldRecordsTest',
-    AvoidOneFieldRecordsTest.new,
-    {
-      'test_oneNamedFieldLiteral_lint': (t) => t._oneNamedFieldLiteralLint(),
-      'test_onePositionalFieldType_lint': (t) => t._onePositionalFieldTypeLint(),
-      'test_parenthesizedExpression_noLint': (t) => t._parenthesizedExpressionNoLint(),
-      'test_twoFieldRecords_noLint': (t) => t._twoFieldRecordsNoLint(),
-    },
+    _AvoidOneFieldRecordsTest.new,
+    _AvoidOneFieldRecordsTest._allCases,
   );
-  analysisRuleSuite<AvoidPositionalRecordFieldsTest>(
+  analysisRuleSuite<_AvoidPositionalRecordFieldsTest>(
     'AvoidPositionalRecordFieldsTest',
-    AvoidPositionalRecordFieldsTest.new,
-    {
-      'test_positionalLiteral_lint': (t) => t._positionalLiteralLint(),
-      'test_skillPositionalPairAndWildcardDestructuring_noLint': (t) =>
-          t._skillPositionalPairAndWildcardDestructuringNoLint(),
-      'test_threePositionalFieldsBoundToVariable_lint': (t) =>
-          t._threePositionalFieldsBoundToVariableLint(),
-      'test_positionalType_lint': (t) => t._positionalTypeLint(),
-      'test_namedRecord_noLint': (t) => t._namedRecordNoLint(),
-      'test_sdkFutureRecordWait_noLint': (t) => t._sdkFutureRecordWaitNoLint(),
-      'test_unrelatedWaitGetter_stillReports': (t) => t._unrelatedWaitGetterStillReports(),
-    },
+    _AvoidPositionalRecordFieldsTest.new,
+    _AvoidPositionalRecordFieldsTest._allCases,
   );
-  analysisRuleSuite<AvoidPositionalRecordFieldAccessTest>(
+  analysisRuleSuite<_AvoidPositionalRecordFieldAccessTest>(
     'AvoidPositionalRecordFieldAccessTest',
-    AvoidPositionalRecordFieldAccessTest.new,
-    {
-      'test_prefixedIdentifier_lint': (t) => t._prefixedIdentifierLint(),
-      'test_propertyAccess_lint': (t) => t._propertyAccessLint(),
-      'test_namedRecordAccess_noLint': (t) => t._namedRecordAccessNoLint(),
-      'test_nonRecordDollarGetter_noLint': (t) => t._nonRecordDollarGetterNoLint(),
-    },
+    _AvoidPositionalRecordFieldAccessTest.new,
+    _AvoidPositionalRecordFieldAccessTest._allCases,
   );
-  analysisRuleSuite<AvoidRedundantPositionalFieldNameTest>(
+  analysisRuleSuite<_AvoidRedundantPositionalFieldNameTest>(
     'AvoidRedundantPositionalFieldNameTest',
-    AvoidRedundantPositionalFieldNameTest.new,
-    {
-      'test_positionalFieldName_lint': (t) => t._positionalFieldNameLint(),
-      'test_namedFields_noLint': (t) => t._namedFieldsNoLint(),
-      'test_unnamedPositionalFields_noLint': (t) => t._unnamedPositionalFieldsNoLint(),
-    },
+    _AvoidRedundantPositionalFieldNameTest.new,
+    _AvoidRedundantPositionalFieldNameTest._allCases,
   );
 }
 
-final class AvoidOneFieldRecordsTest extends AnalysisRuleTest {
+final class _AvoidOneFieldRecordsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidOneFieldRecordsTest)> get _allCases =>
+      caseSet<_AvoidOneFieldRecordsTest>(
+        parent: const {},
+        own: {
+          'test_oneNamedFieldLiteral_lint': (t) => t._oneNamedFieldLiteralLint(),
+          'test_onePositionalFieldType_lint': (t) => t._onePositionalFieldTypeLint(),
+          'test_parenthesizedExpression_noLint': (t) => t._parenthesizedExpressionNoLint(),
+          'test_twoFieldRecords_noLint': (t) => t._twoFieldRecordsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidOneFieldRecords();
@@ -100,7 +87,23 @@ void f() {
   }
 }
 
-final class AvoidPositionalRecordFieldsTest extends AnalysisRuleTest {
+final class _AvoidPositionalRecordFieldsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidPositionalRecordFieldsTest)> get _allCases =>
+      caseSet<_AvoidPositionalRecordFieldsTest>(
+        parent: const {},
+        own: {
+          'test_positionalLiteral_lint': (t) => t._positionalLiteralLint(),
+          'test_skillPositionalPairAndWildcardDestructuring_noLint': (t) =>
+              t._skillPositionalPairAndWildcardDestructuringNoLint(),
+          'test_threePositionalFieldsBoundToVariable_lint': (t) =>
+              t._threePositionalFieldsBoundToVariableLint(),
+          'test_positionalType_lint': (t) => t._positionalTypeLint(),
+          'test_namedRecord_noLint': (t) => t._namedRecordNoLint(),
+          'test_sdkFutureRecordWait_noLint': (t) => t._sdkFutureRecordWaitNoLint(),
+          'test_unrelatedWaitGetter_stillReports': (t) => t._unrelatedWaitGetterStillReports(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidPositionalRecordFields();
@@ -212,7 +215,18 @@ void load() {
   }
 }
 
-final class AvoidPositionalRecordFieldAccessTest extends AnalysisRuleTest {
+final class _AvoidPositionalRecordFieldAccessTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidPositionalRecordFieldAccessTest)> get _allCases =>
+      caseSet<_AvoidPositionalRecordFieldAccessTest>(
+        parent: const {},
+        own: {
+          'test_prefixedIdentifier_lint': (t) => t._prefixedIdentifierLint(),
+          'test_propertyAccess_lint': (t) => t._propertyAccessLint(),
+          'test_namedRecordAccess_noLint': (t) => t._namedRecordAccessNoLint(),
+          'test_nonRecordDollarGetter_noLint': (t) => t._nonRecordDollarGetterNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidPositionalRecordFieldAccess();
@@ -260,7 +274,17 @@ void f(Value value) {
   }
 }
 
-final class AvoidRedundantPositionalFieldNameTest extends AnalysisRuleTest {
+final class _AvoidRedundantPositionalFieldNameTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidRedundantPositionalFieldNameTest)> get _allCases =>
+      caseSet<_AvoidRedundantPositionalFieldNameTest>(
+        parent: const {},
+        own: {
+          'test_positionalFieldName_lint': (t) => t._positionalFieldNameLint(),
+          'test_namedFields_noLint': (t) => t._namedFieldsNoLint(),
+          'test_unnamedPositionalFields_noLint': (t) => t._unnamedPositionalFieldsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidRedundantPositionalFieldName();

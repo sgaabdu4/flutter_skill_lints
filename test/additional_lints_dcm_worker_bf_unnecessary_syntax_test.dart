@@ -6,40 +6,36 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidUnnecessaryParenthesesTest>(
+  analysisRuleSuite<_AvoidUnnecessaryParenthesesTest>(
     'AvoidUnnecessaryParenthesesTest',
-    AvoidUnnecessaryParenthesesTest.new,
-    {
-      'test_returnExpression_lint': (t) => t._returnExpressionLint(),
-      'test_variableInitializer_lint': (t) => t._variableInitializerLint(),
-      'test_argument_lint': (t) => t._argumentLint(),
-      'test_precedenceContext_noLint': (t) => t._precedenceContextNoLint(),
-      'test_conditionContext_noLint': (t) => t._conditionContextNoLint(),
-    },
+    _AvoidUnnecessaryParenthesesTest.new,
+    _AvoidUnnecessaryParenthesesTest._allCases,
   );
-  analysisRuleSuite<AvoidUnnecessaryBlockTest>(
+  analysisRuleSuite<_AvoidUnnecessaryBlockTest>(
     'AvoidUnnecessaryBlockTest',
-    AvoidUnnecessaryBlockTest.new,
-    {
-      'test_blockOnlyContainsNestedBlock_lint': (t) => t._blockOnlyContainsNestedBlockLint(),
-      'test_ifBlockOnlyContainsNestedBlock_lint': (t) => t._ifBlockOnlyContainsNestedBlockLint(),
-      'test_extraStatement_noLint': (t) => t._extraStatementNoLint(),
-    },
+    _AvoidUnnecessaryBlockTest.new,
+    _AvoidUnnecessaryBlockTest._allCases,
   );
-  analysisRuleSuite<AvoidUnnecessaryReturnTest>(
+  analysisRuleSuite<_AvoidUnnecessaryReturnTest>(
     'AvoidUnnecessaryReturnTest',
-    AvoidUnnecessaryReturnTest.new,
-    {
-      'test_trailingReturnInVoidFunction_lint': (t) => t._trailingReturnInVoidFunctionLint(),
-      'test_trailingReturnInVoidMethod_lint': (t) => t._trailingReturnInVoidMethodLint(),
-      'test_nonTrailingReturn_noLint': (t) => t._nonTrailingReturnNoLint(),
-      'test_valueReturn_noLint': (t) => t._valueReturnNoLint(),
-      'test_futureVoidReturn_noLint': (t) => t._futureVoidReturnNoLint(),
-    },
+    _AvoidUnnecessaryReturnTest.new,
+    _AvoidUnnecessaryReturnTest._allCases,
   );
 }
 
-final class AvoidUnnecessaryParenthesesTest extends AnalysisRuleTest {
+final class _AvoidUnnecessaryParenthesesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnnecessaryParenthesesTest)> get _allCases =>
+      caseSet<_AvoidUnnecessaryParenthesesTest>(
+        parent: const {},
+        own: {
+          'test_returnExpression_lint': (t) => t._returnExpressionLint(),
+          'test_variableInitializer_lint': (t) => t._variableInitializerLint(),
+          'test_argument_lint': (t) => t._argumentLint(),
+          'test_precedenceContext_noLint': (t) => t._precedenceContextNoLint(),
+          'test_conditionContext_noLint': (t) => t._conditionContextNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnnecessaryParentheses();
@@ -96,7 +92,18 @@ void f(bool ready) {
   }
 }
 
-final class AvoidUnnecessaryBlockTest extends AnalysisRuleTest {
+final class _AvoidUnnecessaryBlockTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnnecessaryBlockTest)> get _allCases =>
+      caseSet<_AvoidUnnecessaryBlockTest>(
+        parent: const {},
+        own: {
+          'test_blockOnlyContainsNestedBlock_lint': (t) => t._blockOnlyContainsNestedBlockLint(),
+          'test_ifBlockOnlyContainsNestedBlock_lint': (t) =>
+              t._ifBlockOnlyContainsNestedBlockLint(),
+          'test_extraStatement_noLint': (t) => t._extraStatementNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnnecessaryBlock();
@@ -151,7 +158,19 @@ void f() {
   }
 }
 
-final class AvoidUnnecessaryReturnTest extends AnalysisRuleTest {
+final class _AvoidUnnecessaryReturnTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnnecessaryReturnTest)> get _allCases =>
+      caseSet<_AvoidUnnecessaryReturnTest>(
+        parent: const {},
+        own: {
+          'test_trailingReturnInVoidFunction_lint': (t) => t._trailingReturnInVoidFunctionLint(),
+          'test_trailingReturnInVoidMethod_lint': (t) => t._trailingReturnInVoidMethodLint(),
+          'test_nonTrailingReturn_noLint': (t) => t._nonTrailingReturnNoLint(),
+          'test_valueReturn_noLint': (t) => t._valueReturnNoLint(),
+          'test_futureVoidReturn_noLint': (t) => t._futureVoidReturnNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnnecessaryReturn();

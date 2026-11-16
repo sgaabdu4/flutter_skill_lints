@@ -12,45 +12,51 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<PreferDotShorthandsTest>(
+  analysisRuleSuite<_PreferDotShorthandsTest>(
     'PreferDotShorthandsTest',
-    PreferDotShorthandsTest.new,
-    {
-      'test_contextuallyTypedForms_lint': (t) => t._contextuallyTypedFormsLint(),
-      'test_nullableContext_lint': (t) => t._nullableContextLint(),
-      'test_importPrefixedType_lint': (t) => t._importPrefixedTypeLint(),
-      'test_extensionTypeStaticAndConstructor_lint': (t) =>
-          t._extensionTypeStaticAndConstructorLint(),
-      'test_conditionalSwitchPatternAndDefault_lint': (t) =>
-          t._conditionalSwitchPatternAndDefaultLint(),
-      'test_inferredOrWrongNamespace_noLint': (t) => t._inferredOrWrongNamespaceNoLint(),
-      'test_namedExtensionStaticHelpers_noLint': (t) => t._namedExtensionStaticHelpersNoLint(),
-      'test_inferredGenericArgument_noLint': (t) => t._inferredGenericArgumentNoLint(),
-      'test_narrowerExplicitGenericConstructor_noLint': (t) =>
-          t._narrowerExplicitGenericConstructorNoLint(),
-      'test_explicitGenericArgument_lint': (t) => t._explicitGenericArgumentLint(),
-      'test_asyncReturn_usesFlattenedValueContext': (t) =>
-          t._asyncReturnUsesFlattenedValueContext(),
-      'test_subtypeStaticNamespace_noLint': (t) => t._subtypeStaticNamespaceNoLint(),
-      'test_selectorChainWithContextNamespace_lint': (t) =>
-          t._selectorChainWithContextNamespaceLint(),
-      'test_fix_constructorForms_areValid': (t) => t._fixConstructorFormsAreValid(),
-      'test_fix_staticGenericMethod_preservesTypeArguments': (t) =>
-          t._fixStaticGenericMethodPreservesTypeArguments(),
-      'test_fix_typeAliasNamespace_isValid': (t) => t._fixTypeAliasNamespaceIsValid(),
-      'test_fix_extensionTypeMembers_areValid': (t) => t._fixExtensionTypeMembersAreValid(),
-      'test_fix_selectorChain_isValid': (t) => t._fixSelectorChainIsValid(),
-      'test_alreadyShorthand_noLint': (t) => t._alreadyShorthandNoLint(),
-      'test_unnamedConstructorCalls_noLint': (t) => t._unnamedConstructorCallsNoLint(),
-      'test_namedConstructorControl_lint': (t) => t._namedConstructorControlLint(),
-      'test_untypedClosureReturn_noLint': (t) => t._untypedClosureReturnNoLint(),
-      'test_bulkFix_leavesForeignDiagnosticUnchanged': (t) =>
-          t._bulkFixLeavesForeignDiagnosticUnchanged(),
-    },
+    _PreferDotShorthandsTest.new,
+    _PreferDotShorthandsTest._allCases,
   );
 }
 
-final class PreferDotShorthandsTest extends AnalysisRuleTest {
+final class _PreferDotShorthandsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferDotShorthandsTest)> get _allCases =>
+      caseSet<_PreferDotShorthandsTest>(
+        parent: const {},
+        own: {
+          'test_contextuallyTypedForms_lint': (t) => t._contextuallyTypedFormsLint(),
+          'test_nullableContext_lint': (t) => t._nullableContextLint(),
+          'test_importPrefixedType_lint': (t) => t._importPrefixedTypeLint(),
+          'test_extensionTypeStaticAndConstructor_lint': (t) =>
+              t._extensionTypeStaticAndConstructorLint(),
+          'test_conditionalSwitchPatternAndDefault_lint': (t) =>
+              t._conditionalSwitchPatternAndDefaultLint(),
+          'test_inferredOrWrongNamespace_noLint': (t) => t._inferredOrWrongNamespaceNoLint(),
+          'test_namedExtensionStaticHelpers_noLint': (t) => t._namedExtensionStaticHelpersNoLint(),
+          'test_inferredGenericArgument_noLint': (t) => t._inferredGenericArgumentNoLint(),
+          'test_narrowerExplicitGenericConstructor_noLint': (t) =>
+              t._narrowerExplicitGenericConstructorNoLint(),
+          'test_explicitGenericArgument_lint': (t) => t._explicitGenericArgumentLint(),
+          'test_asyncReturn_usesFlattenedValueContext': (t) =>
+              t._asyncReturnUsesFlattenedValueContext(),
+          'test_subtypeStaticNamespace_noLint': (t) => t._subtypeStaticNamespaceNoLint(),
+          'test_selectorChainWithContextNamespace_lint': (t) =>
+              t._selectorChainWithContextNamespaceLint(),
+          'test_fix_constructorForms_areValid': (t) => t._fixConstructorFormsAreValid(),
+          'test_fix_staticGenericMethod_preservesTypeArguments': (t) =>
+              t._fixStaticGenericMethodPreservesTypeArguments(),
+          'test_fix_typeAliasNamespace_isValid': (t) => t._fixTypeAliasNamespaceIsValid(),
+          'test_fix_extensionTypeMembers_areValid': (t) => t._fixExtensionTypeMembersAreValid(),
+          'test_fix_selectorChain_isValid': (t) => t._fixSelectorChainIsValid(),
+          'test_alreadyShorthand_noLint': (t) => t._alreadyShorthandNoLint(),
+          'test_unnamedConstructorCalls_noLint': (t) => t._unnamedConstructorCallsNoLint(),
+          'test_namedConstructorControl_lint': (t) => t._namedConstructorControlLint(),
+          'test_untypedClosureReturn_noLint': (t) => t._untypedClosureReturnNoLint(),
+          'test_bulkFix_leavesForeignDiagnosticUnchanged': (t) =>
+              t._bulkFixLeavesForeignDiagnosticUnchanged(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferDotShorthands();

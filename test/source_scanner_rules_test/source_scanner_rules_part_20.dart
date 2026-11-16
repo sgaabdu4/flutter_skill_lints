@@ -74,7 +74,22 @@ class NavigatorState extends State<Navigator> {
   }
 }
 
-final class PresentationWidgetNavigationForbiddenTest extends _PresentationWidgetRuleTest {
+final class _PresentationWidgetNavigationForbiddenTest extends _PresentationWidgetRuleTest {
+  static Map<String, Future<void> Function(_PresentationWidgetNavigationForbiddenTest)>
+  get _allCases => caseSet<_PresentationWidgetNavigationForbiddenTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_reportsGoRouterImports': (t) => t._reportsGoRouterImports(),
+      'test_reportsGenericNavigatorPushes': (t) => t._reportsGenericNavigatorPushes(),
+      'test_reportsTypedRouteNavigation': (t) => t._reportsTypedRouteNavigation(),
+      'test_reportsGoRouterContextNavigation': (t) => t._reportsGoRouterContextNavigation(),
+      'test_reportsWorkAfterModalPop': (t) => t._reportsWorkAfterModalPop(),
+      'test_allowsLocalModalDismissal': (t) => t._allowsLocalModalDismissal(),
+      'test_allowsTypedCallbacks': (t) => t._allowsTypedCallbacks(),
+      'test_allowsNavigationInScreens': (t) => t._allowsNavigationInScreens(),
+    },
+  );
+
   @override
   String get ruleName => 'presentation_widget_navigation_forbidden';
   @override
@@ -222,7 +237,19 @@ void open(BuildContext context, Route<void> route) {
   }
 }
 
-final class PresentationWidgetControllerStateTest extends _PresentationWidgetRuleTest {
+final class _PresentationWidgetControllerStateTest extends _PresentationWidgetRuleTest {
+  static Map<String, Future<void> Function(_PresentationWidgetControllerStateTest)> get _allCases =>
+      caseSet<_PresentationWidgetControllerStateTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsDomainRecordUnderAnyName': (t) => t._reportsDomainRecordUnderAnyName(),
+          'test_reportsProviderSnapshot': (t) => t._reportsProviderSnapshot(),
+          'test_reportsAsyncWorkflowFlag': (t) => t._reportsAsyncWorkflowFlag(),
+          'test_allowsUiLifecycleState': (t) => t._allowsUiLifecycleState(),
+          'test_allowsControllerStateInScreens': (t) => t._allowsControllerStateInScreens(),
+        },
+      );
+
   static const _header = r'''
 import 'package:flutter/widgets.dart';
 import 'package:riverpod/riverpod.dart';
@@ -333,7 +360,18 @@ class _ContentScreenState extends State<ContentView> {
   }
 }
 
-final class PresentationWidgetInfrastructureDependencyTest extends _PresentationWidgetRuleTest {
+final class _PresentationWidgetInfrastructureDependencyTest extends _PresentationWidgetRuleTest {
+  static Map<String, Future<void> Function(_PresentationWidgetInfrastructureDependencyTest)>
+  get _allCases => caseSet<_PresentationWidgetInfrastructureDependencyTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_reportsRepositoryImports': (t) => t._reportsRepositoryImports(),
+      'test_reportsStorageSdkImports': (t) => t._reportsStorageSdkImports(),
+      'test_reportsProviderReads': (t) => t._reportsProviderReads(),
+      'test_allowsInfrastructureInScreens': (t) => t._allowsInfrastructureInScreens(),
+    },
+  );
+
   @override
   String get ruleName => 'presentation_widget_infrastructure_dependency';
   @override
@@ -394,7 +432,21 @@ void build(WidgetRef ref) {
   }
 }
 
-final class NotifierLocalDependencyCacheTest extends _NotifierRuleTest {
+final class _NotifierLocalDependencyCacheTest extends _NotifierRuleTest {
+  static Map<String, Future<void> Function(_NotifierLocalDependencyCacheTest)> get _allCases =>
+      caseSet<_NotifierLocalDependencyCacheTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsServiceCache': (t) => t._reportsServiceCache(),
+          'test_allowsStatelessProviderHelper': (t) => t._allowsStatelessProviderHelper(),
+          'test_reportsInferredAndAssignedProviderReads': (t) =>
+              t._reportsInferredAndAssignedProviderReads(),
+          'test_allowsValueReadsConstructedClientsAndRefFields': (t) =>
+              t._allowsValueReadsConstructedClientsAndRefFields(),
+          'test_allowsLifecycleResourceField': (t) => t._allowsLifecycleResourceField(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('riverpod').addFile('lib/riverpod.dart', r'''
@@ -535,56 +587,24 @@ class ThingNotifier extends Notifier<int> {
 }
 
 void _defineSourceScannerRulesPart20Tests() {
-  analysisRuleSuite<NotifierLocalDependencyCacheTest>(
+  analysisRuleSuite<_NotifierLocalDependencyCacheTest>(
     'NotifierLocalDependencyCacheTest',
-    NotifierLocalDependencyCacheTest.new,
-    {
-      'test_reportsServiceCache': (t) => t._reportsServiceCache(),
-      'test_allowsStatelessProviderHelper': (t) => t._allowsStatelessProviderHelper(),
-      'test_reportsInferredAndAssignedProviderReads': (t) =>
-          t._reportsInferredAndAssignedProviderReads(),
-      'test_allowsValueReadsConstructedClientsAndRefFields': (t) =>
-          t._allowsValueReadsConstructedClientsAndRefFields(),
-      'test_allowsLifecycleResourceField': (t) => t._allowsLifecycleResourceField(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _NotifierLocalDependencyCacheTest.new,
+    _NotifierLocalDependencyCacheTest._allCases,
   );
-  analysisRuleSuite<PresentationWidgetNavigationForbiddenTest>(
+  analysisRuleSuite<_PresentationWidgetNavigationForbiddenTest>(
     'PresentationWidgetNavigationForbiddenTest',
-    PresentationWidgetNavigationForbiddenTest.new,
-    {
-      'test_reportsGoRouterImports': (t) => t._reportsGoRouterImports(),
-      'test_reportsGenericNavigatorPushes': (t) => t._reportsGenericNavigatorPushes(),
-      'test_reportsTypedRouteNavigation': (t) => t._reportsTypedRouteNavigation(),
-      'test_reportsGoRouterContextNavigation': (t) => t._reportsGoRouterContextNavigation(),
-      'test_reportsWorkAfterModalPop': (t) => t._reportsWorkAfterModalPop(),
-      'test_allowsLocalModalDismissal': (t) => t._allowsLocalModalDismissal(),
-      'test_allowsTypedCallbacks': (t) => t._allowsTypedCallbacks(),
-      'test_allowsNavigationInScreens': (t) => t._allowsNavigationInScreens(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _PresentationWidgetNavigationForbiddenTest.new,
+    _PresentationWidgetNavigationForbiddenTest._allCases,
   );
-  analysisRuleSuite<PresentationWidgetControllerStateTest>(
+  analysisRuleSuite<_PresentationWidgetControllerStateTest>(
     'PresentationWidgetControllerStateTest',
-    PresentationWidgetControllerStateTest.new,
-    {
-      'test_reportsDomainRecordUnderAnyName': (t) => t._reportsDomainRecordUnderAnyName(),
-      'test_reportsProviderSnapshot': (t) => t._reportsProviderSnapshot(),
-      'test_reportsAsyncWorkflowFlag': (t) => t._reportsAsyncWorkflowFlag(),
-      'test_allowsUiLifecycleState': (t) => t._allowsUiLifecycleState(),
-      'test_allowsControllerStateInScreens': (t) => t._allowsControllerStateInScreens(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _PresentationWidgetControllerStateTest.new,
+    _PresentationWidgetControllerStateTest._allCases,
   );
-  analysisRuleSuite<PresentationWidgetInfrastructureDependencyTest>(
+  analysisRuleSuite<_PresentationWidgetInfrastructureDependencyTest>(
     'PresentationWidgetInfrastructureDependencyTest',
-    PresentationWidgetInfrastructureDependencyTest.new,
-    {
-      'test_reportsRepositoryImports': (t) => t._reportsRepositoryImports(),
-      'test_reportsStorageSdkImports': (t) => t._reportsStorageSdkImports(),
-      'test_reportsProviderReads': (t) => t._reportsProviderReads(),
-      'test_allowsInfrastructureInScreens': (t) => t._allowsInfrastructureInScreens(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _PresentationWidgetInfrastructureDependencyTest.new,
+    _PresentationWidgetInfrastructureDependencyTest._allCases,
   );
 }

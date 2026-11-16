@@ -7,77 +7,45 @@ import 'package:flutter_skill_lints/src/rules/flutter_optimization_source_rules.
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<FlutterKeyCreatedInBuildTest>(
+  analysisRuleSuite<_FlutterKeyCreatedInBuildTest>(
     'FlutterKeyCreatedInBuildTest',
-    FlutterKeyCreatedInBuildTest.new,
-    {
-      'test_allowsStableFieldKey': (t) => t._allowsStableFieldKey(),
-      'test_reportsKeyLocalInBuild': (t) => t._reportsKeyLocalInBuild(),
-    },
+    _FlutterKeyCreatedInBuildTest.new,
+    _FlutterKeyCreatedInBuildTest._allCases,
   );
-  analysisRuleSuite<FlutterUniqueOrGlobalKeyTest>(
+  analysisRuleSuite<_FlutterUniqueOrGlobalKeyTest>(
     'FlutterUniqueOrGlobalKeyTest',
-    FlutterUniqueOrGlobalKeyTest.new,
-    {
-      'test_allowsValueKey': (t) => t._allowsValueKey(),
-      'test_reportsGlobalKey': (t) => t._reportsGlobalKey(),
-      'test_allowsGlobalKeyInKeyRegistry': (t) => t._allowsGlobalKeyInKeyRegistry(),
-      'test_allowsTypedStateAccessGlobalKey': (t) => t._allowsTypedStateAccessGlobalKey(),
-      'test_allowsRepaintBoundaryCaptureGlobalKey': (t) =>
-          t._allowsRepaintBoundaryCaptureGlobalKey(),
-      'test_allowsGlobalKeyInTests': (t) => t._allowsGlobalKeyInTests(),
-      'test_reportsUniqueKey': (t) => t._reportsUniqueKey(),
-    },
+    _FlutterUniqueOrGlobalKeyTest.new,
+    _FlutterUniqueOrGlobalKeyTest._allCases,
   );
-  analysisRuleSuite<FlutterOpacityWidgetTest>(
+  analysisRuleSuite<_FlutterOpacityWidgetTest>(
     'FlutterOpacityWidgetTest',
-    FlutterOpacityWidgetTest.new,
-    {
-      'test_allowsFadeTransition': (t) => t._allowsFadeTransition(),
-      'test_reportsOpacity': (t) => t._reportsOpacity(),
-    },
+    _FlutterOpacityWidgetTest.new,
+    _FlutterOpacityWidgetTest._allCases,
   );
-  analysisRuleSuite<FlutterSaveLayerFilterTest>(
+  analysisRuleSuite<_FlutterSaveLayerFilterTest>(
     'FlutterSaveLayerFilterTest',
-    FlutterSaveLayerFilterTest.new,
-    {
-      'test_allowsContainerWithoutFilter': (t) => t._allowsContainerWithoutFilter(),
-      'test_reportsColorFiltered': (t) => t._reportsColorFiltered(),
-      'test_reportsShaderMask': (t) => t._reportsShaderMask(),
-    },
+    _FlutterSaveLayerFilterTest.new,
+    _FlutterSaveLayerFilterTest._allCases,
   );
-  analysisRuleSuite<FlutterClipSaveLayerTest>(
+  analysisRuleSuite<_FlutterClipSaveLayerTest>(
     'FlutterClipSaveLayerTest',
-    FlutterClipSaveLayerTest.new,
-    {
-      'test_allowsAntiAliasClip': (t) => t._allowsAntiAliasClip(),
-      'test_reportsAntiAliasWithSaveLayer': (t) => t._reportsAntiAliasWithSaveLayer(),
-    },
+    _FlutterClipSaveLayerTest.new,
+    _FlutterClipSaveLayerTest._allCases,
   );
-  analysisRuleSuite<FlutterIntrinsicLayoutTest>(
+  analysisRuleSuite<_FlutterIntrinsicLayoutTest>(
     'FlutterIntrinsicLayoutTest',
-    FlutterIntrinsicLayoutTest.new,
-    {
-      'test_allowsSizedBox': (t) => t._allowsSizedBox(),
-      'test_reportsIntrinsicHeight': (t) => t._reportsIntrinsicHeight(),
-      'test_reportsIntrinsicWidth': (t) => t._reportsIntrinsicWidth(),
-    },
+    _FlutterIntrinsicLayoutTest.new,
+    _FlutterIntrinsicLayoutTest._allCases,
   );
-  analysisRuleSuite<FlutterAnimatedBuilderChildTest>(
+  analysisRuleSuite<_FlutterAnimatedBuilderChildTest>(
     'FlutterAnimatedBuilderChildTest',
-    FlutterAnimatedBuilderChildTest.new,
-    {
-      'test_allowsChildParameter': (t) => t._allowsChildParameter(),
-      'test_reportsMissingChildParameter': (t) => t._reportsMissingChildParameter(),
-    },
+    _FlutterAnimatedBuilderChildTest.new,
+    _FlutterAnimatedBuilderChildTest._allCases,
   );
-  analysisRuleSuite<FlutterWidgetOperatorEqualsTest>(
+  analysisRuleSuite<_FlutterWidgetOperatorEqualsTest>(
     'FlutterWidgetOperatorEqualsTest',
-    FlutterWidgetOperatorEqualsTest.new,
-    {
-      'test_allowsNonWidgetEquality': (t) => t._allowsNonWidgetEquality(),
-      'test_reportsStatelessWidgetEquality': (t) => t._reportsStatelessWidgetEquality(),
-    },
+    _FlutterWidgetOperatorEqualsTest.new,
+    _FlutterWidgetOperatorEqualsTest._allCases,
   );
 }
 
@@ -207,7 +175,16 @@ class RepaintBoundary extends Widget {
   }
 }
 
-final class FlutterKeyCreatedInBuildTest extends _FlutterOptimizationRuleTest {
+final class _FlutterKeyCreatedInBuildTest extends _FlutterOptimizationRuleTest {
+  static Map<String, Future<void> Function(_FlutterKeyCreatedInBuildTest)> get _allCases =>
+      caseSet<_FlutterKeyCreatedInBuildTest>(
+        parent: const {},
+        own: {
+          'test_allowsStableFieldKey': (t) => t._allowsStableFieldKey(),
+          'test_reportsKeyLocalInBuild': (t) => t._reportsKeyLocalInBuild(),
+        },
+      );
+
   @override
   String get ruleName => 'flutter_key_created_in_build';
 
@@ -245,7 +222,22 @@ class Tile extends StatelessWidget {
   }
 }
 
-final class FlutterUniqueOrGlobalKeyTest extends _FlutterOptimizationRuleTest {
+final class _FlutterUniqueOrGlobalKeyTest extends _FlutterOptimizationRuleTest {
+  static Map<String, Future<void> Function(_FlutterUniqueOrGlobalKeyTest)> get _allCases =>
+      caseSet<_FlutterUniqueOrGlobalKeyTest>(
+        parent: const {},
+        own: {
+          'test_allowsValueKey': (t) => t._allowsValueKey(),
+          'test_reportsGlobalKey': (t) => t._reportsGlobalKey(),
+          'test_allowsGlobalKeyInKeyRegistry': (t) => t._allowsGlobalKeyInKeyRegistry(),
+          'test_allowsTypedStateAccessGlobalKey': (t) => t._allowsTypedStateAccessGlobalKey(),
+          'test_allowsRepaintBoundaryCaptureGlobalKey': (t) =>
+              t._allowsRepaintBoundaryCaptureGlobalKey(),
+          'test_allowsGlobalKeyInTests': (t) => t._allowsGlobalKeyInTests(),
+          'test_reportsUniqueKey': (t) => t._reportsUniqueKey(),
+        },
+      );
+
   @override
   String get ruleName => 'flutter_unique_or_global_key';
 
@@ -321,7 +313,16 @@ final rowKey = UniqueKey();
   }
 }
 
-final class FlutterOpacityWidgetTest extends _FlutterOptimizationRuleTest {
+final class _FlutterOpacityWidgetTest extends _FlutterOptimizationRuleTest {
+  static Map<String, Future<void> Function(_FlutterOpacityWidgetTest)> get _allCases =>
+      caseSet<_FlutterOpacityWidgetTest>(
+        parent: const {},
+        own: {
+          'test_allowsFadeTransition': (t) => t._allowsFadeTransition(),
+          'test_reportsOpacity': (t) => t._reportsOpacity(),
+        },
+      );
+
   @override
   String get ruleName => 'flutter_opacity_widget';
 
@@ -342,7 +343,17 @@ final widget = Opacity(opacity: 0.5, child: child);
   }
 }
 
-final class FlutterSaveLayerFilterTest extends _FlutterOptimizationRuleTest {
+final class _FlutterSaveLayerFilterTest extends _FlutterOptimizationRuleTest {
+  static Map<String, Future<void> Function(_FlutterSaveLayerFilterTest)> get _allCases =>
+      caseSet<_FlutterSaveLayerFilterTest>(
+        parent: const {},
+        own: {
+          'test_allowsContainerWithoutFilter': (t) => t._allowsContainerWithoutFilter(),
+          'test_reportsColorFiltered': (t) => t._reportsColorFiltered(),
+          'test_reportsShaderMask': (t) => t._reportsShaderMask(),
+        },
+      );
+
   @override
   String get ruleName => 'flutter_save_layer_filter';
 
@@ -371,7 +382,16 @@ final widget = ShaderMask(shaderCallback: shader, child: child);
   }
 }
 
-final class FlutterClipSaveLayerTest extends _FlutterOptimizationRuleTest {
+final class _FlutterClipSaveLayerTest extends _FlutterOptimizationRuleTest {
+  static Map<String, Future<void> Function(_FlutterClipSaveLayerTest)> get _allCases =>
+      caseSet<_FlutterClipSaveLayerTest>(
+        parent: const {},
+        own: {
+          'test_allowsAntiAliasClip': (t) => t._allowsAntiAliasClip(),
+          'test_reportsAntiAliasWithSaveLayer': (t) => t._reportsAntiAliasWithSaveLayer(),
+        },
+      );
+
   @override
   String get ruleName => 'flutter_clip_save_layer';
 
@@ -395,7 +415,17 @@ final widget = ClipRRect(
   }
 }
 
-final class FlutterIntrinsicLayoutTest extends _FlutterOptimizationRuleTest {
+final class _FlutterIntrinsicLayoutTest extends _FlutterOptimizationRuleTest {
+  static Map<String, Future<void> Function(_FlutterIntrinsicLayoutTest)> get _allCases =>
+      caseSet<_FlutterIntrinsicLayoutTest>(
+        parent: const {},
+        own: {
+          'test_allowsSizedBox': (t) => t._allowsSizedBox(),
+          'test_reportsIntrinsicHeight': (t) => t._reportsIntrinsicHeight(),
+          'test_reportsIntrinsicWidth': (t) => t._reportsIntrinsicWidth(),
+        },
+      );
+
   @override
   String get ruleName => 'flutter_intrinsic_layout';
 
@@ -424,7 +454,16 @@ final widget = IntrinsicWidth(child: child);
   }
 }
 
-final class FlutterAnimatedBuilderChildTest extends _FlutterOptimizationRuleTest {
+final class _FlutterAnimatedBuilderChildTest extends _FlutterOptimizationRuleTest {
+  static Map<String, Future<void> Function(_FlutterAnimatedBuilderChildTest)> get _allCases =>
+      caseSet<_FlutterAnimatedBuilderChildTest>(
+        parent: const {},
+        own: {
+          'test_allowsChildParameter': (t) => t._allowsChildParameter(),
+          'test_reportsMissingChildParameter': (t) => t._reportsMissingChildParameter(),
+        },
+      );
+
   @override
   String get ruleName => 'flutter_animated_builder_child';
 
@@ -452,7 +491,16 @@ final widget = AnimatedBuilder(
   }
 }
 
-final class FlutterWidgetOperatorEqualsTest extends _FlutterOptimizationRuleTest {
+final class _FlutterWidgetOperatorEqualsTest extends _FlutterOptimizationRuleTest {
+  static Map<String, Future<void> Function(_FlutterWidgetOperatorEqualsTest)> get _allCases =>
+      caseSet<_FlutterWidgetOperatorEqualsTest>(
+        parent: const {},
+        own: {
+          'test_allowsNonWidgetEquality': (t) => t._allowsNonWidgetEquality(),
+          'test_reportsStatelessWidgetEquality': (t) => t._reportsStatelessWidgetEquality(),
+        },
+      );
+
   @override
   String get ruleName => 'flutter_widget_operator_equals';
 

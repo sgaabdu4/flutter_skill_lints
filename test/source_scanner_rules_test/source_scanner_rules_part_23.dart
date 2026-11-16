@@ -5,7 +5,31 @@ abstract class _StateRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => stateSourceRules;
 }
 
-final class NullableCollectionTypeTest extends _StateRuleTest {
+final class _NullableCollectionTypeTest extends _StateRuleTest {
+  static Map<String, Future<void> Function(_NullableCollectionTypeTest)> get _allCases =>
+      caseSet<_NullableCollectionTypeTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsFutureNullableCollectionReturn': (t) =>
+              t._reportsFutureNullableCollectionReturn(),
+          'test_allowsNullableCollectionParametersAndLocals': (t) =>
+              t._allowsNullableCollectionParametersAndLocals(),
+          'test_reportsFreezedFactoryParameterAndGetter': (t) =>
+              t._reportsFreezedFactoryParameterAndGetter(),
+          'test_allowsNonNullableCollectionDefault': (t) => t._allowsNonNullableCollectionDefault(),
+          'test_allowsNullableElementCollection': (t) => t._allowsNullableElementCollection(),
+          'test_allowsMapTypeFollowedBySameLineTernary': (t) =>
+              t._allowsMapTypeFollowedBySameLineTernary(),
+          'test_allowsMapTypeFollowedByMultilineTernary': (t) =>
+              t._allowsMapTypeFollowedByMultilineTernary(),
+          'test_allowsNullableCallbackAcceptingNonNullableSet': (t) =>
+              t._allowsNullableCallbackAcceptingNonNullableSet(),
+          'test_reportsNullableCollectionTypes': (t) => t._reportsNullableCollectionTypes(),
+          'test_allowsNullableWireCollectionInDataModel': (t) =>
+              t._allowsNullableWireCollectionInDataModel(),
+        },
+      );
+
   @override
   String get ruleName => 'nullable_collection_type';
   @override
@@ -129,7 +153,18 @@ class ProductModel {
   }
 }
 
-final class StateEmptyStringSentinelTest extends _StateRuleTest {
+final class _StateEmptyStringSentinelTest extends _StateRuleTest {
+  static Map<String, Future<void> Function(_StateEmptyStringSentinelTest)> get _allCases =>
+      caseSet<_StateEmptyStringSentinelTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsConstructorDefaultThisField': (t) => t._reportsConstructorDefaultThisField(),
+          'test_allowsSearchQueryText': (t) => t._allowsSearchQueryText(),
+          'test_allowsDraftText': (t) => t._allowsDraftText(),
+          'test_allowsOptionalDomainTextAsNullable': (t) => t._allowsOptionalDomainTextAsNullable(),
+        },
+      );
+
   @override
   String get ruleName => 'state_empty_string_sentinel';
   @override
@@ -215,7 +250,17 @@ class ProfileState {
   }
 }
 
-final class StateBoolStringSentinelTest extends _StateRuleTest {
+final class _StateBoolStringSentinelTest extends _StateRuleTest {
+  static Map<String, Future<void> Function(_StateBoolStringSentinelTest)> get _allCases =>
+      caseSet<_StateBoolStringSentinelTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsZeroOneVariant': (t) => t._reportsZeroOneVariant(),
+          'test_allowsTypedBooleanRecordField': (t) => t._allowsTypedBooleanRecordField(),
+          'test_allowsNonSentinelTernary': (t) => t._allowsNonSentinelTernary(),
+        },
+      );
+
   @override
   String get ruleName => 'state_bool_string_sentinel';
   @override
@@ -249,7 +294,20 @@ String f(bool isLoading) => isLoading ? 'loading' : 'ready';
   }
 }
 
-final class StateRawResponseTest extends _StateRuleTest {
+final class _StateRawResponseTest extends _StateRuleTest {
+  static Map<String, Future<void> Function(_StateRawResponseTest)> get _allCases =>
+      caseSet<_StateRawResponseTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsFormattedMultilineCopyWith': (t) => t._reportsFormattedMultilineCopyWith(),
+          'test_reportsFreezedCallableCopyWith': (t) => t._reportsFreezedCallableCopyWith(),
+          'test_reportsDirectlyStoredResponseValue': (t) => t._reportsDirectlyStoredResponseValue(),
+          'test_allowsExtractedFields': (t) => t._allowsExtractedFields(),
+          'test_allowsFreezedCallableCopyWithExtractedFields': (t) =>
+              t._allowsFreezedCallableCopyWithExtractedFields(),
+        },
+      );
+
   @override
   String get ruleName => 'state_raw_response';
   @override
@@ -347,7 +405,17 @@ class RawNotifier {
   }
 }
 
-final class StateRawErrorToStringTest extends _StateRuleTest {
+final class _StateRawErrorToStringTest extends _StateRuleTest {
+  static Map<String, Future<void> Function(_StateRawErrorToStringTest)> get _allCases =>
+      caseSet<_StateRawErrorToStringTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsStructuredErrorMessage': (t) => t._allowsStructuredErrorMessage(),
+          'test_reportsCaughtExceptionText': (t) => t._reportsCaughtExceptionText(),
+          'test_allowsTypedAppError': (t) => t._allowsTypedAppError(),
+        },
+      );
+
   @override
   String get ruleName => 'state_raw_error_to_string';
   @override
@@ -432,7 +500,21 @@ class SearchNotifier {
   }
 }
 
-final class StateFreezedNullableErrorTest extends _StateRuleTest {
+final class _StateFreezedNullableErrorTest extends _StateRuleTest {
+  static Map<String, Future<void> Function(_StateFreezedNullableErrorTest)> get _allCases =>
+      caseSet<_StateFreezedNullableErrorTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsStructuredFailure': (t) => t._allowsStructuredFailure(),
+          'test_reportsStringErrorsInAnyNotifierState': (t) =>
+              t._reportsStringErrorsInAnyNotifierState(),
+          'test_allowsNonStringErrorsAndWidgetState': (t) =>
+              t._allowsNonStringErrorsAndWidgetState(),
+          'test_allowsFreezedDtoWithNullableErrorField': (t) =>
+              t._allowsFreezedDtoWithNullableErrorField(),
+        },
+      );
+
   @override
   String get ruleName => 'state_freezed_nullable_error';
   @override
@@ -528,7 +610,10 @@ class ApiErrorModel {
   }
 }
 
-final class StateBroadInvalidationTest extends _StateRuleTest {
+final class _StateBroadInvalidationTest extends _StateRuleTest {
+  static Map<String, Future<void> Function(_StateBroadInvalidationTest)> get _allCases =>
+      caseSet<_StateBroadInvalidationTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'state_broad_invalidation';
   @override
@@ -544,7 +629,10 @@ class Todos {
 ''';
 }
 
-final class AsyncContextMountedStyleTest extends _StateRuleTest {
+final class _AsyncContextMountedStyleTest extends _StateRuleTest {
+  static Map<String, Future<void> Function(_AsyncContextMountedStyleTest)> get _allCases =>
+      caseSet<_AsyncContextMountedStyleTest>(parent: _SourceRuleTest._allCases, own: {});
+
   @override
   String get ruleName => 'async_context_mounted_style';
   @override
@@ -561,91 +649,44 @@ class Screen {
 }
 
 void _defineSourceScannerRulesPart23Tests() {
-  analysisRuleSuite<NullableCollectionTypeTest>(
+  analysisRuleSuite<_NullableCollectionTypeTest>(
     'NullableCollectionTypeTest',
-    NullableCollectionTypeTest.new,
-    {
-      'test_reportsFutureNullableCollectionReturn': (t) =>
-          t._reportsFutureNullableCollectionReturn(),
-      'test_allowsNullableCollectionParametersAndLocals': (t) =>
-          t._allowsNullableCollectionParametersAndLocals(),
-      'test_reportsFreezedFactoryParameterAndGetter': (t) =>
-          t._reportsFreezedFactoryParameterAndGetter(),
-      'test_allowsNonNullableCollectionDefault': (t) => t._allowsNonNullableCollectionDefault(),
-      'test_allowsNullableElementCollection': (t) => t._allowsNullableElementCollection(),
-      'test_allowsMapTypeFollowedBySameLineTernary': (t) =>
-          t._allowsMapTypeFollowedBySameLineTernary(),
-      'test_allowsMapTypeFollowedByMultilineTernary': (t) =>
-          t._allowsMapTypeFollowedByMultilineTernary(),
-      'test_allowsNullableCallbackAcceptingNonNullableSet': (t) =>
-          t._allowsNullableCallbackAcceptingNonNullableSet(),
-      'test_reportsNullableCollectionTypes': (t) => t._reportsNullableCollectionTypes(),
-      'test_allowsNullableWireCollectionInDataModel': (t) =>
-          t._allowsNullableWireCollectionInDataModel(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _NullableCollectionTypeTest.new,
+    _NullableCollectionTypeTest._allCases,
   );
-  analysisRuleSuite<StateEmptyStringSentinelTest>(
+  analysisRuleSuite<_StateEmptyStringSentinelTest>(
     'StateEmptyStringSentinelTest',
-    StateEmptyStringSentinelTest.new,
-    {
-      'test_reportsConstructorDefaultThisField': (t) => t._reportsConstructorDefaultThisField(),
-      'test_allowsSearchQueryText': (t) => t._allowsSearchQueryText(),
-      'test_allowsDraftText': (t) => t._allowsDraftText(),
-      'test_allowsOptionalDomainTextAsNullable': (t) => t._allowsOptionalDomainTextAsNullable(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _StateEmptyStringSentinelTest.new,
+    _StateEmptyStringSentinelTest._allCases,
   );
-  analysisRuleSuite<StateBoolStringSentinelTest>(
+  analysisRuleSuite<_StateBoolStringSentinelTest>(
     'StateBoolStringSentinelTest',
-    StateBoolStringSentinelTest.new,
-    {
-      'test_reportsZeroOneVariant': (t) => t._reportsZeroOneVariant(),
-      'test_allowsTypedBooleanRecordField': (t) => t._allowsTypedBooleanRecordField(),
-      'test_allowsNonSentinelTernary': (t) => t._allowsNonSentinelTernary(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _StateBoolStringSentinelTest.new,
+    _StateBoolStringSentinelTest._allCases,
   );
-  analysisRuleSuite<StateRawResponseTest>('StateRawResponseTest', StateRawResponseTest.new, {
-    'test_reportsFormattedMultilineCopyWith': (t) => t._reportsFormattedMultilineCopyWith(),
-    'test_reportsFreezedCallableCopyWith': (t) => t._reportsFreezedCallableCopyWith(),
-    'test_reportsDirectlyStoredResponseValue': (t) => t._reportsDirectlyStoredResponseValue(),
-    'test_allowsExtractedFields': (t) => t._allowsExtractedFields(),
-    'test_allowsFreezedCallableCopyWithExtractedFields': (t) =>
-        t._allowsFreezedCallableCopyWithExtractedFields(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<StateRawErrorToStringTest>(
+  analysisRuleSuite<_StateRawResponseTest>(
+    'StateRawResponseTest',
+    _StateRawResponseTest.new,
+    _StateRawResponseTest._allCases,
+  );
+  analysisRuleSuite<_StateRawErrorToStringTest>(
     'StateRawErrorToStringTest',
-    StateRawErrorToStringTest.new,
-    {
-      'test_allowsStructuredErrorMessage': (t) => t._allowsStructuredErrorMessage(),
-      'test_reportsCaughtExceptionText': (t) => t._reportsCaughtExceptionText(),
-      'test_allowsTypedAppError': (t) => t._allowsTypedAppError(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _StateRawErrorToStringTest.new,
+    _StateRawErrorToStringTest._allCases,
   );
-  analysisRuleSuite<StateFreezedNullableErrorTest>(
+  analysisRuleSuite<_StateFreezedNullableErrorTest>(
     'StateFreezedNullableErrorTest',
-    StateFreezedNullableErrorTest.new,
-    {
-      'test_allowsStructuredFailure': (t) => t._allowsStructuredFailure(),
-      'test_reportsStringErrorsInAnyNotifierState': (t) =>
-          t._reportsStringErrorsInAnyNotifierState(),
-      'test_allowsNonStringErrorsAndWidgetState': (t) => t._allowsNonStringErrorsAndWidgetState(),
-      'test_allowsFreezedDtoWithNullableErrorField': (t) =>
-          t._allowsFreezedDtoWithNullableErrorField(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _StateFreezedNullableErrorTest.new,
+    _StateFreezedNullableErrorTest._allCases,
   );
-  analysisRuleSuite<StateBroadInvalidationTest>(
+  analysisRuleSuite<_StateBroadInvalidationTest>(
     'StateBroadInvalidationTest',
-    StateBroadInvalidationTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _StateBroadInvalidationTest.new,
+    _StateBroadInvalidationTest._allCases,
   );
-  analysisRuleSuite<AsyncContextMountedStyleTest>(
+  analysisRuleSuite<_AsyncContextMountedStyleTest>(
     'AsyncContextMountedStyleTest',
-    AsyncContextMountedStyleTest.new,
-    {'test_reportsDiagnostic': (t) => t._reportsDiagnostic()},
+    _AsyncContextMountedStyleTest.new,
+    _AsyncContextMountedStyleTest._allCases,
   );
 }

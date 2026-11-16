@@ -6,35 +6,38 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_async_awai
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidAsyncCallInSyncFunctionTest>(
+  analysisRuleSuite<_AvoidAsyncCallInSyncFunctionTest>(
     'AvoidAsyncCallInSyncFunctionTest',
-    AvoidAsyncCallInSyncFunctionTest.new,
-    {
-      'test_futureCallInSyncFunction_lint': (t) => t._futureCallInSyncFunctionLint(),
-      'test_asyncFunctionAwait_noLint': (t) => t._asyncFunctionAwaitNoLint(),
-      'test_returnedFutureFromSyncFunction_noLint': (t) =>
-          t._returnedFutureFromSyncFunctionNoLint(),
-      'test_assignedFutureInSyncFunction_noLint': (t) => t._assignedFutureInSyncFunctionNoLint(),
-      'test_explicitUnawaited_noLint': (t) => t._explicitUnawaitedNoLint(),
-    },
+    _AvoidAsyncCallInSyncFunctionTest.new,
+    _AvoidAsyncCallInSyncFunctionTest._allCases,
   );
-  analysisRuleSuite<PreferAsyncAwaitTest>('PreferAsyncAwaitTest', PreferAsyncAwaitTest.new, {
-    'test_futureThen_lint': (t) => t._futureThenLint(),
-    'test_futureCatchError_lint': (t) => t._futureCatchErrorLint(),
-    'test_futureThenInDatasource_noLint': (t) => t._futureThenInDatasourceNoLint(),
-    'test_streamListen_noLint': (t) => t._streamListenNoLint(),
-    'test_userTypeThen_noLint': (t) => t._userTypeThenNoLint(),
-  });
-  analysisRuleSuite<AvoidMissedCallsTest>('AvoidMissedCallsTest', AvoidMissedCallsTest.new, {
-    'test_bareFutureCall_lint': (t) => t._bareFutureCallLint(),
-    'test_awaitedFuture_noLint': (t) => t._awaitedFutureNoLint(),
-    'test_assignedFuture_noLint': (t) => t._assignedFutureNoLint(),
-    'test_futureAssignmentStatement_noLint': (t) => t._futureAssignmentStatementNoLint(),
-    'test_returnedFuture_noLint': (t) => t._returnedFutureNoLint(),
-  });
+  analysisRuleSuite<_PreferAsyncAwaitTest>(
+    'PreferAsyncAwaitTest',
+    _PreferAsyncAwaitTest.new,
+    _PreferAsyncAwaitTest._allCases,
+  );
+  analysisRuleSuite<_AvoidMissedCallsTest>(
+    'AvoidMissedCallsTest',
+    _AvoidMissedCallsTest.new,
+    _AvoidMissedCallsTest._allCases,
+  );
 }
 
-final class AvoidAsyncCallInSyncFunctionTest extends AnalysisRuleTest {
+final class _AvoidAsyncCallInSyncFunctionTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidAsyncCallInSyncFunctionTest)> get _allCases =>
+      caseSet<_AvoidAsyncCallInSyncFunctionTest>(
+        parent: const {},
+        own: {
+          'test_futureCallInSyncFunction_lint': (t) => t._futureCallInSyncFunctionLint(),
+          'test_asyncFunctionAwait_noLint': (t) => t._asyncFunctionAwaitNoLint(),
+          'test_returnedFutureFromSyncFunction_noLint': (t) =>
+              t._returnedFutureFromSyncFunctionNoLint(),
+          'test_assignedFutureInSyncFunction_noLint': (t) =>
+              t._assignedFutureInSyncFunctionNoLint(),
+          'test_explicitUnawaited_noLint': (t) => t._explicitUnawaitedNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidAsyncCallInSyncFunction();
@@ -96,7 +99,19 @@ void start() {
   }
 }
 
-final class PreferAsyncAwaitTest extends AnalysisRuleTest {
+final class _PreferAsyncAwaitTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferAsyncAwaitTest)> get _allCases =>
+      caseSet<_PreferAsyncAwaitTest>(
+        parent: const {},
+        own: {
+          'test_futureThen_lint': (t) => t._futureThenLint(),
+          'test_futureCatchError_lint': (t) => t._futureCatchErrorLint(),
+          'test_futureThenInDatasource_noLint': (t) => t._futureThenInDatasourceNoLint(),
+          'test_streamListen_noLint': (t) => t._streamListenNoLint(),
+          'test_userTypeThen_noLint': (t) => t._userTypeThenNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferAsyncAwait();
@@ -162,7 +177,19 @@ void start(Task task) {
   }
 }
 
-final class AvoidMissedCallsTest extends AnalysisRuleTest {
+final class _AvoidMissedCallsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidMissedCallsTest)> get _allCases =>
+      caseSet<_AvoidMissedCallsTest>(
+        parent: const {},
+        own: {
+          'test_bareFutureCall_lint': (t) => t._bareFutureCallLint(),
+          'test_awaitedFuture_noLint': (t) => t._awaitedFutureNoLint(),
+          'test_assignedFuture_noLint': (t) => t._assignedFutureNoLint(),
+          'test_futureAssignmentStatement_noLint': (t) => t._futureAssignmentStatementNoLint(),
+          'test_returnedFuture_noLint': (t) => t._returnedFutureNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidMissedCalls();

@@ -6,28 +6,34 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nested_reco
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidFunctionTypeInRecordsTest>(
+  analysisRuleSuite<_AvoidFunctionTypeInRecordsTest>(
     'AvoidFunctionTypeInRecordsTest',
-    AvoidFunctionTypeInRecordsTest.new,
-    {
-      'test_functionLiteralField_lint': (t) => t._functionLiteralFieldLint(),
-      'test_functionTypedField_lint': (t) => t._functionTypedFieldLint(),
-      'test_valueFields_noLint': (t) => t._valueFieldsNoLint(),
-    },
+    _AvoidFunctionTypeInRecordsTest.new,
+    _AvoidFunctionTypeInRecordsTest._allCases,
   );
-  analysisRuleSuite<AvoidNestedRecordsTest>('AvoidNestedRecordsTest', AvoidNestedRecordsTest.new, {
-    'test_nestedLiteralField_lint': (t) => t._nestedLiteralFieldLint(),
-    'test_nestedTypeField_lint': (t) => t._nestedTypeFieldLint(),
-    'test_flatRecord_noLint': (t) => t._flatRecordNoLint(),
-  });
-  analysisRuleSuite<AvoidLongRecordsTest>('AvoidLongRecordsTest', AvoidLongRecordsTest.new, {
-    'test_fourFieldLiteral_lint': (t) => t._fourFieldLiteralLint(),
-    'test_fourFieldType_lint': (t) => t._fourFieldTypeLint(),
-    'test_threeFields_noLint': (t) => t._threeFieldsNoLint(),
-  });
+  analysisRuleSuite<_AvoidNestedRecordsTest>(
+    'AvoidNestedRecordsTest',
+    _AvoidNestedRecordsTest.new,
+    _AvoidNestedRecordsTest._allCases,
+  );
+  analysisRuleSuite<_AvoidLongRecordsTest>(
+    'AvoidLongRecordsTest',
+    _AvoidLongRecordsTest.new,
+    _AvoidLongRecordsTest._allCases,
+  );
 }
 
-final class AvoidFunctionTypeInRecordsTest extends AnalysisRuleTest {
+final class _AvoidFunctionTypeInRecordsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidFunctionTypeInRecordsTest)> get _allCases =>
+      caseSet<_AvoidFunctionTypeInRecordsTest>(
+        parent: const {},
+        own: {
+          'test_functionLiteralField_lint': (t) => t._functionLiteralFieldLint(),
+          'test_functionTypedField_lint': (t) => t._functionTypedFieldLint(),
+          'test_valueFields_noLint': (t) => t._valueFieldsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidFunctionTypeInRecords();
@@ -67,7 +73,17 @@ void f() {
   }
 }
 
-final class AvoidNestedRecordsTest extends AnalysisRuleTest {
+final class _AvoidNestedRecordsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNestedRecordsTest)> get _allCases =>
+      caseSet<_AvoidNestedRecordsTest>(
+        parent: const {},
+        own: {
+          'test_nestedLiteralField_lint': (t) => t._nestedLiteralFieldLint(),
+          'test_nestedTypeField_lint': (t) => t._nestedTypeFieldLint(),
+          'test_flatRecord_noLint': (t) => t._flatRecordNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNestedRecords();
@@ -105,7 +121,17 @@ void f() {
   }
 }
 
-final class AvoidLongRecordsTest extends AnalysisRuleTest {
+final class _AvoidLongRecordsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidLongRecordsTest)> get _allCases =>
+      caseSet<_AvoidLongRecordsTest>(
+        parent: const {},
+        own: {
+          'test_fourFieldLiteral_lint': (t) => t._fourFieldLiteralLint(),
+          'test_fourFieldType_lint': (t) => t._fourFieldTypeLint(),
+          'test_threeFields_noLint': (t) => t._threeFieldsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidLongRecords();

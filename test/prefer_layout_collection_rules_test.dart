@@ -5,48 +5,15 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_spacing.da
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<PreferSpacingLayoutTest>(
+  analysisRuleSuite<_PreferSpacingLayoutTest>(
     'PreferSpacingLayoutTest',
-    PreferSpacingLayoutTest.new,
-    {
-      'test_uniformInteriorSeparators_lint': (t) => t._uniformInteriorSeparatorsLint(),
-      'test_verticalInteriorSeparator_lint': (t) => t._verticalInteriorSeparatorLint(),
-      'test_skillSingleGapAndSpaceBetweenGaps_noLint': (t) =>
-          t._skillSingleGapAndSpaceBetweenGapsNoLint(),
-      'test_constantTokenWithCenterAlignment_lint': (t) =>
-          t._constantTokenWithCenterAlignmentLint(),
-      'test_dotShorthandAndConstAlias_lint': (t) => t._dotShorthandAndConstAliasLint(),
-      'test_missingLeadingTrailingOrInteriorSeparator_noLint': (t) =>
-          t._missingLeadingTrailingOrInteriorSeparatorNoLint(),
-      'test_axisAndConditionalChildren_noLint': (t) => t._axisAndConditionalChildrenNoLint(),
-      'test_distributedEdgesAndEvaluatedGapExpressions_noLint': (t) =>
-          t._distributedEdgesAndEvaluatedGapExpressionsNoLint(),
-      'test_realFlutterSizedBoxAndLiteralFlexAxis_lint': (t) =>
-          t._realFlutterSizedBoxAndLiteralFlexAxisLint(),
-      'test_localSizedBoxLookalike_noLint': (t) => t._localSizedBoxLookalikeNoLint(),
-      'test_axisGetterLookalike_noLint': (t) => t._axisGetterLookalikeNoLint(),
-    },
+    _PreferSpacingLayoutTest.new,
+    _PreferSpacingLayoutTest._allCases,
   );
-  analysisRuleSuite<PreferForLoopWidgetListTest>(
+  analysisRuleSuite<_PreferForLoopWidgetListTest>(
     'PreferForLoopWidgetListTest',
-    PreferForLoopWidgetListTest.new,
-    {
-      'test_numericDataTransforms_noLint': (t) => t._numericDataTransformsNoLint(),
-      'test_flutterWidgetTransforms_lint': (t) => t._flutterWidgetTransformsLint(),
-      'test_localWidgetLookalike_noLint': (t) => t._localWidgetLookalikeNoLint(),
-      'test_filteredReorderedAndAccumulatorDependentFolds_noLint': (t) =>
-          t._filteredReorderedAndAccumulatorDependentFoldsNoLint(),
-      'test_immutableFoldAndFixedLengthCollections_noLint': (t) =>
-          t._immutableFoldAndFixedLengthCollectionsNoLint(),
-      'test_explicitGrowableCollections_lint': (t) => t._explicitGrowableCollectionsLint(),
-      'test_cascadeAppendOnceFold_lint': (t) => t._cascadeAppendOnceFoldLint(),
-      'test_blockReturnCascadeAppendOnceFold_lint': (t) =>
-          t._blockReturnCascadeAppendOnceFoldLint(),
-      'test_customMapMethodReturningFlutterWidgets_noLint': (t) =>
-          t._customMapMethodReturningFlutterWidgetsNoLint(),
-      'test_customListGenerateReturningFlutterWidgets_noLint': (t) =>
-          t._customListGenerateReturningFlutterWidgetsNoLint(),
-    },
+    _PreferForLoopWidgetListTest.new,
+    _PreferForLoopWidgetListTest._allCases,
   );
 }
 
@@ -98,7 +65,30 @@ class Flex extends Widget {
   }
 }
 
-final class PreferSpacingLayoutTest extends _FlutterWidgetRuleTest {
+final class _PreferSpacingLayoutTest extends _FlutterWidgetRuleTest {
+  static Map<String, Future<void> Function(_PreferSpacingLayoutTest)> get _allCases =>
+      caseSet<_PreferSpacingLayoutTest>(
+        parent: const {},
+        own: {
+          'test_uniformInteriorSeparators_lint': (t) => t._uniformInteriorSeparatorsLint(),
+          'test_verticalInteriorSeparator_lint': (t) => t._verticalInteriorSeparatorLint(),
+          'test_skillSingleGapAndSpaceBetweenGaps_noLint': (t) =>
+              t._skillSingleGapAndSpaceBetweenGapsNoLint(),
+          'test_constantTokenWithCenterAlignment_lint': (t) =>
+              t._constantTokenWithCenterAlignmentLint(),
+          'test_dotShorthandAndConstAlias_lint': (t) => t._dotShorthandAndConstAliasLint(),
+          'test_missingLeadingTrailingOrInteriorSeparator_noLint': (t) =>
+              t._missingLeadingTrailingOrInteriorSeparatorNoLint(),
+          'test_axisAndConditionalChildren_noLint': (t) => t._axisAndConditionalChildrenNoLint(),
+          'test_distributedEdgesAndEvaluatedGapExpressions_noLint': (t) =>
+              t._distributedEdgesAndEvaluatedGapExpressionsNoLint(),
+          'test_realFlutterSizedBoxAndLiteralFlexAxis_lint': (t) =>
+              t._realFlutterSizedBoxAndLiteralFlexAxisLint(),
+          'test_localSizedBoxLookalike_noLint': (t) => t._localSizedBoxLookalikeNoLint(),
+          'test_axisGetterLookalike_noLint': (t) => t._axisGetterLookalikeNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferSpacing();
@@ -297,7 +287,29 @@ f.Widget build(AxisHolder holder) => f.Flex(
   }
 }
 
-final class PreferForLoopWidgetListTest extends _FlutterWidgetRuleTest {
+final class _PreferForLoopWidgetListTest extends _FlutterWidgetRuleTest {
+  static Map<String, Future<void> Function(_PreferForLoopWidgetListTest)> get _allCases =>
+      caseSet<_PreferForLoopWidgetListTest>(
+        parent: const {},
+        own: {
+          'test_numericDataTransforms_noLint': (t) => t._numericDataTransformsNoLint(),
+          'test_flutterWidgetTransforms_lint': (t) => t._flutterWidgetTransformsLint(),
+          'test_localWidgetLookalike_noLint': (t) => t._localWidgetLookalikeNoLint(),
+          'test_filteredReorderedAndAccumulatorDependentFolds_noLint': (t) =>
+              t._filteredReorderedAndAccumulatorDependentFoldsNoLint(),
+          'test_immutableFoldAndFixedLengthCollections_noLint': (t) =>
+              t._immutableFoldAndFixedLengthCollectionsNoLint(),
+          'test_explicitGrowableCollections_lint': (t) => t._explicitGrowableCollectionsLint(),
+          'test_cascadeAppendOnceFold_lint': (t) => t._cascadeAppendOnceFoldLint(),
+          'test_blockReturnCascadeAppendOnceFold_lint': (t) =>
+              t._blockReturnCascadeAppendOnceFoldLint(),
+          'test_customMapMethodReturningFlutterWidgets_noLint': (t) =>
+              t._customMapMethodReturningFlutterWidgetsNoLint(),
+          'test_customListGenerateReturningFlutterWidgets_noLint': (t) =>
+              t._customListGenerateReturningFlutterWidgetsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferForLoopInChildren();

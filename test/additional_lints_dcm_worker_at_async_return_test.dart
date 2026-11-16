@@ -6,35 +6,35 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_unnecessary
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidRedundantAsyncTest>(
+  analysisRuleSuite<_AvoidRedundantAsyncTest>(
     'AvoidRedundantAsyncTest',
-    AvoidRedundantAsyncTest.new,
-    {
-      'test_expressionBodyReturnsFuture_lint': (t) => t._expressionBodyReturnsFutureLint(),
-      'test_blockBodyOnlyReturnsFuture_lint': (t) => t._blockBodyOnlyReturnsFutureLint(),
-      'test_awaitedFuture_noLint': (t) => t._awaitedFutureNoLint(),
-      'test_extraStatement_noLint': (t) => t._extraStatementNoLint(),
-    },
+    _AvoidRedundantAsyncTest.new,
+    _AvoidRedundantAsyncTest._allCases,
   );
-  analysisRuleSuite<AvoidReturningVoidTest>('AvoidReturningVoidTest', AvoidReturningVoidTest.new, {
-    'test_returnVoidExpression_lint': (t) => t._returnVoidExpressionLint(),
-    'test_returnWithoutExpression_noLint': (t) => t._returnWithoutExpressionNoLint(),
-    'test_returnValue_noLint': (t) => t._returnValueNoLint(),
-  });
-  analysisRuleSuite<AvoidUnnecessaryFuturesTest>(
+  analysisRuleSuite<_AvoidReturningVoidTest>(
+    'AvoidReturningVoidTest',
+    _AvoidReturningVoidTest.new,
+    _AvoidReturningVoidTest._allCases,
+  );
+  analysisRuleSuite<_AvoidUnnecessaryFuturesTest>(
     'AvoidUnnecessaryFuturesTest',
-    AvoidUnnecessaryFuturesTest.new,
-    {
-      'test_asyncReturnsImmediateValue_lint': (t) => t._asyncReturnsImmediateValueLint(),
-      'test_blockReturnsImmediateValue_lint': (t) => t._blockReturnsImmediateValueLint(),
-      'test_awaitedValue_noLint': (t) => t._awaitedValueNoLint(),
-      'test_futureVoid_noLint': (t) => t._futureVoidNoLint(),
-      'test_returnsExistingFuture_noLint': (t) => t._returnsExistingFutureNoLint(),
-    },
+    _AvoidUnnecessaryFuturesTest.new,
+    _AvoidUnnecessaryFuturesTest._allCases,
   );
 }
 
-final class AvoidRedundantAsyncTest extends AnalysisRuleTest {
+final class _AvoidRedundantAsyncTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidRedundantAsyncTest)> get _allCases =>
+      caseSet<_AvoidRedundantAsyncTest>(
+        parent: const {},
+        own: {
+          'test_expressionBodyReturnsFuture_lint': (t) => t._expressionBodyReturnsFutureLint(),
+          'test_blockBodyOnlyReturnsFuture_lint': (t) => t._blockBodyOnlyReturnsFutureLint(),
+          'test_awaitedFuture_noLint': (t) => t._awaitedFutureNoLint(),
+          'test_extraStatement_noLint': (t) => t._extraStatementNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidRedundantAsync();
@@ -85,7 +85,17 @@ Future<int> start() async {
   }
 }
 
-final class AvoidReturningVoidTest extends AnalysisRuleTest {
+final class _AvoidReturningVoidTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidReturningVoidTest)> get _allCases =>
+      caseSet<_AvoidReturningVoidTest>(
+        parent: const {},
+        own: {
+          'test_returnVoidExpression_lint': (t) => t._returnVoidExpressionLint(),
+          'test_returnWithoutExpression_noLint': (t) => t._returnWithoutExpressionNoLint(),
+          'test_returnValue_noLint': (t) => t._returnValueNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidReturningVoid();
@@ -123,7 +133,19 @@ int start() {
   }
 }
 
-final class AvoidUnnecessaryFuturesTest extends AnalysisRuleTest {
+final class _AvoidUnnecessaryFuturesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnnecessaryFuturesTest)> get _allCases =>
+      caseSet<_AvoidUnnecessaryFuturesTest>(
+        parent: const {},
+        own: {
+          'test_asyncReturnsImmediateValue_lint': (t) => t._asyncReturnsImmediateValueLint(),
+          'test_blockReturnsImmediateValue_lint': (t) => t._blockReturnsImmediateValueLint(),
+          'test_awaitedValue_noLint': (t) => t._awaitedValueNoLint(),
+          'test_futureVoid_noLint': (t) => t._futureVoidNoLint(),
+          'test_returnsExistingFuture_noLint': (t) => t._returnsExistingFutureNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnnecessaryFutures();

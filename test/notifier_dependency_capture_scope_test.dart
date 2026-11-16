@@ -4,39 +4,47 @@ import 'package:flutter_skill_lints/src/rules/notifier_source_rules.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<NotifierDependencyCaptureScopeTest>(
+  analysisRuleSuite<_NotifierDependencyCaptureScopeTest>(
     'NotifierDependencyCaptureScopeTest',
-    NotifierDependencyCaptureScopeTest.new,
-    {
-      'test_allowsNullableRepositoryAcquisitionInsideTryBody': (t) =>
-          t._allowsNullableRepositoryAcquisitionInsideTryBody(),
-      'test_allowsNullableRecordAcquisitionAndDestructureInsideTryBody': (t) =>
-          t._allowsNullableRecordAcquisitionAndDestructureInsideTryBody(),
-      'test_allowsSimpleTerminalMountedBranchBeforeTryAcquisition': (t) =>
-          t._allowsSimpleTerminalMountedBranchBeforeTryAcquisition(),
-      'test_reportsTryAcquisitionAfterUnrelatedAwait': (t) =>
-          t._reportsTryAcquisitionAfterUnrelatedAwait(),
-      'test_reportsEarlyTerminalBranchThatReadsAndAwaitsRepository': (t) =>
-          t._reportsEarlyTerminalBranchThatReadsAndAwaitsRepository(),
-      'test_allowsSkillSaveShapeWithCatchCapture': (t) => t._allowsSkillSaveShapeWithCatchCapture(),
-      'test_leavesUnguardedAwaitAfterClosureToMountedRule': (t) =>
-          t._leavesUnguardedAwaitAfterClosureToMountedRule(),
-      'test_allowsDirectReadAfterSafeTryCapture': (t) => t._allowsDirectReadAfterSafeTryCapture(),
-      'test_allowsDirectReadInCatchBesideSafeTryCapture': (t) =>
-          t._allowsDirectReadInCatchBesideSafeTryCapture(),
-      'test_allowsDirectReadInFinallyBesideSafeTryCapture': (t) =>
-          t._allowsDirectReadInFinallyBesideSafeTryCapture(),
-      'test_allowsResolvedResourceFreeFreezedStateReadAfterMutation': (t) =>
-          t._allowsResolvedResourceFreeFreezedStateReadAfterMutation(),
-      'test_allowsUnannotatedStateReadAfterMutation': (t) =>
-          t._allowsUnannotatedStateReadAfterMutation(),
-      'test_allowsFreezedStateContainingRepositoryReadAfterMutation': (t) =>
-          t._allowsFreezedStateContainingRepositoryReadAfterMutation(),
-    },
+    _NotifierDependencyCaptureScopeTest.new,
+    _NotifierDependencyCaptureScopeTest._allCases,
   );
 }
 
-final class NotifierDependencyCaptureScopeTest extends AnalysisRuleTest {
+final class _NotifierDependencyCaptureScopeTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_NotifierDependencyCaptureScopeTest)> get _allCases =>
+      caseSet<_NotifierDependencyCaptureScopeTest>(
+        parent: const {},
+        own: {
+          'test_allowsNullableRepositoryAcquisitionInsideTryBody': (t) =>
+              t._allowsNullableRepositoryAcquisitionInsideTryBody(),
+          'test_allowsNullableRecordAcquisitionAndDestructureInsideTryBody': (t) =>
+              t._allowsNullableRecordAcquisitionAndDestructureInsideTryBody(),
+          'test_allowsSimpleTerminalMountedBranchBeforeTryAcquisition': (t) =>
+              t._allowsSimpleTerminalMountedBranchBeforeTryAcquisition(),
+          'test_reportsTryAcquisitionAfterUnrelatedAwait': (t) =>
+              t._reportsTryAcquisitionAfterUnrelatedAwait(),
+          'test_reportsEarlyTerminalBranchThatReadsAndAwaitsRepository': (t) =>
+              t._reportsEarlyTerminalBranchThatReadsAndAwaitsRepository(),
+          'test_allowsSkillSaveShapeWithCatchCapture': (t) =>
+              t._allowsSkillSaveShapeWithCatchCapture(),
+          'test_leavesUnguardedAwaitAfterClosureToMountedRule': (t) =>
+              t._leavesUnguardedAwaitAfterClosureToMountedRule(),
+          'test_allowsDirectReadAfterSafeTryCapture': (t) =>
+              t._allowsDirectReadAfterSafeTryCapture(),
+          'test_allowsDirectReadInCatchBesideSafeTryCapture': (t) =>
+              t._allowsDirectReadInCatchBesideSafeTryCapture(),
+          'test_allowsDirectReadInFinallyBesideSafeTryCapture': (t) =>
+              t._allowsDirectReadInFinallyBesideSafeTryCapture(),
+          'test_allowsResolvedResourceFreeFreezedStateReadAfterMutation': (t) =>
+              t._allowsResolvedResourceFreeFreezedStateReadAfterMutation(),
+          'test_allowsUnannotatedStateReadAfterMutation': (t) =>
+              t._allowsUnannotatedStateReadAfterMutation(),
+          'test_allowsFreezedStateContainingRepositoryReadAfterMutation': (t) =>
+              t._allowsFreezedStateContainingRepositoryReadAfterMutation(),
+        },
+      );
+
   static const _ruleName = 'notifier_ensure_deps';
 
   @override

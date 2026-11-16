@@ -6,46 +6,36 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_public_late
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidFutureOrReturnTypeTest>(
+  analysisRuleSuite<_AvoidFutureOrReturnTypeTest>(
     'AvoidFutureOrReturnTypeTest',
-    AvoidFutureOrReturnTypeTest.new,
-    {
-      'test_functionReturn_lint': (t) => t._functionReturnLint(),
-      'test_methodReturn_lint': (t) => t._methodReturnLint(),
-      'test_parameter_noLint': (t) => t._parameterNoLint(),
-      'test_callbackReturn_noLint': (t) => t._callbackReturnNoLint(),
-      'test_userTypeNamedFutureOr_noLint': (t) => t._userTypeNamedFutureOrNoLint(),
-    },
+    _AvoidFutureOrReturnTypeTest.new,
+    _AvoidFutureOrReturnTypeTest._allCases,
   );
-  analysisRuleSuite<AvoidNullableAsyncOrCollectionReturnTypeTest>(
+  analysisRuleSuite<_AvoidNullableAsyncOrCollectionReturnTypeTest>(
     'AvoidNullableAsyncOrCollectionReturnTypeTest',
-    AvoidNullableAsyncOrCollectionReturnTypeTest.new,
-    {
-      'test_nullableFutureReturn_lint': (t) => t._nullableFutureReturnLint(),
-      'test_nullableStreamReturn_lint': (t) => t._nullableStreamReturnLint(),
-      'test_nullableCollectionReturn_lint': (t) => t._nullableCollectionReturnLint(),
-      'test_nestedNullableCollectionReturn_lint': (t) => t._nestedNullableCollectionReturnLint(),
-      'test_nullableValueInsideFuture_noLint': (t) => t._nullableValueInsideFutureNoLint(),
-      'test_nullableElementInsideCollection_noLint': (t) =>
-          t._nullableElementInsideCollectionNoLint(),
-      'test_parameter_noLint': (t) => t._parameterNoLint(),
-      'test_overrideFrameworkSignature_noLint': (t) => t._overrideFrameworkSignatureNoLint(),
-    },
+    _AvoidNullableAsyncOrCollectionReturnTypeTest.new,
+    _AvoidNullableAsyncOrCollectionReturnTypeTest._allCases,
   );
-  analysisRuleSuite<AvoidPublicLateFinalWithoutInitializerTest>(
+  analysisRuleSuite<_AvoidPublicLateFinalWithoutInitializerTest>(
     'AvoidPublicLateFinalWithoutInitializerTest',
-    AvoidPublicLateFinalWithoutInitializerTest.new,
-    {
-      'test_publicLateFinalField_lint': (t) => t._publicLateFinalFieldLint(),
-      'test_privateLateFinalField_noLint': (t) => t._privateLateFinalFieldNoLint(),
-      'test_initializedLateFinalField_noLint': (t) => t._initializedLateFinalFieldNoLint(),
-      'test_localLateFinal_noLint': (t) => t._localLateFinalNoLint(),
-      'test_mutableLateField_noLint': (t) => t._mutableLateFieldNoLint(),
-    },
+    _AvoidPublicLateFinalWithoutInitializerTest.new,
+    _AvoidPublicLateFinalWithoutInitializerTest._allCases,
   );
 }
 
-class AvoidFutureOrReturnTypeTest extends AnalysisRuleTest {
+class _AvoidFutureOrReturnTypeTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidFutureOrReturnTypeTest)> get _allCases =>
+      caseSet<_AvoidFutureOrReturnTypeTest>(
+        parent: const {},
+        own: {
+          'test_functionReturn_lint': (t) => t._functionReturnLint(),
+          'test_methodReturn_lint': (t) => t._methodReturnLint(),
+          'test_parameter_noLint': (t) => t._parameterNoLint(),
+          'test_callbackReturn_noLint': (t) => t._callbackReturnNoLint(),
+          'test_userTypeNamedFutureOr_noLint': (t) => t._userTypeNamedFutureOrNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidFutureOrReturnType();
@@ -105,7 +95,23 @@ FutureOr<int> loadValue() => const FutureOr<int>();
   }
 }
 
-class AvoidNullableAsyncOrCollectionReturnTypeTest extends AnalysisRuleTest {
+class _AvoidNullableAsyncOrCollectionReturnTypeTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNullableAsyncOrCollectionReturnTypeTest)>
+  get _allCases => caseSet<_AvoidNullableAsyncOrCollectionReturnTypeTest>(
+    parent: const {},
+    own: {
+      'test_nullableFutureReturn_lint': (t) => t._nullableFutureReturnLint(),
+      'test_nullableStreamReturn_lint': (t) => t._nullableStreamReturnLint(),
+      'test_nullableCollectionReturn_lint': (t) => t._nullableCollectionReturnLint(),
+      'test_nestedNullableCollectionReturn_lint': (t) => t._nestedNullableCollectionReturnLint(),
+      'test_nullableValueInsideFuture_noLint': (t) => t._nullableValueInsideFutureNoLint(),
+      'test_nullableElementInsideCollection_noLint': (t) =>
+          t._nullableElementInsideCollectionNoLint(),
+      'test_parameter_noLint': (t) => t._parameterNoLint(),
+      'test_overrideFrameworkSignature_noLint': (t) => t._overrideFrameworkSignatureNoLint(),
+    },
+  );
+
   @override
   void setUp() {
     rule = AvoidNullableAsyncOrCollectionReturnType();
@@ -177,7 +183,19 @@ class FakeHeaders implements Headers {
   }
 }
 
-class AvoidPublicLateFinalWithoutInitializerTest extends AnalysisRuleTest {
+class _AvoidPublicLateFinalWithoutInitializerTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidPublicLateFinalWithoutInitializerTest)>
+  get _allCases => caseSet<_AvoidPublicLateFinalWithoutInitializerTest>(
+    parent: const {},
+    own: {
+      'test_publicLateFinalField_lint': (t) => t._publicLateFinalFieldLint(),
+      'test_privateLateFinalField_noLint': (t) => t._privateLateFinalFieldNoLint(),
+      'test_initializedLateFinalField_noLint': (t) => t._initializedLateFinalFieldNoLint(),
+      'test_localLateFinal_noLint': (t) => t._localLateFinalNoLint(),
+      'test_mutableLateField_noLint': (t) => t._mutableLateFieldNoLint(),
+    },
+  );
+
   @override
   void setUp() {
     rule = AvoidPublicLateFinalWithoutInitializer();

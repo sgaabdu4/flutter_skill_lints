@@ -7,74 +7,74 @@ import 'analysis_rule_suite.dart';
 import 'support/mocktail_stub.dart';
 
 void main() {
-  analysisRuleSuite<MissingTestAssertionTest>(
+  analysisRuleSuite<_MissingTestAssertionTest>(
     'MissingTestAssertionTest',
-    MissingTestAssertionTest.new,
-    {
-      'test_testWithoutAssertion_lint': (t) => t._testWithoutAssertionLint(),
-      'test_testWithExpect_noLint': (t) => t._testWithExpectNoLint(),
-      'test_resolvedLocalHelperAssertion_noLint': (t) => t._resolvedLocalHelperAssertionNoLint(),
-      'test_helperDoesNotCountUnrelatedOrDeferredAssertions': (t) =>
-          t._helperDoesNotCountUnrelatedOrDeferredAssertions(),
-      'test_helperWrapperPreservesResolvedAssertionIdentity': (t) =>
-          t._helperWrapperPreservesResolvedAssertionIdentity(),
-      'test_testWidgetsWithExpectLater_noLint': (t) => t._testWidgetsWithExpectLaterNoLint(),
-      'test_assertionInsideFakeAsync_noLint': (t) => t._assertionInsideFakeAsyncNoLint(),
-      'test_unitStubVerifyOnlyTest_lint': (t) => t._unitStubVerifyOnlyTestLint(),
-      'test_mocktailGetterVerifyOnlyTest_noLint': (t) => t._mocktailGetterVerifyOnlyTestNoLint(),
-      'test_prefixedMocktailGetterVerifyOnlyTest_noLint': (t) =>
-          t._prefixedMocktailGetterVerifyOnlyTestNoLint(),
-      'test_asyncVerifyOnlyTest_noLint': (t) => t._asyncVerifyOnlyTestNoLint(),
-      'test_mocktailVerifyInOrderOnlyTest_noLint': (t) => t._mocktailVerifyInOrderOnlyTestNoLint(),
-      'test_prefixedMocktailVerifyInOrderOnlyTest_noLint': (t) =>
-          t._prefixedMocktailVerifyInOrderOnlyTestNoLint(),
-      'test_mocktailVerifyNeverOnlyTest_noLint': (t) => t._mocktailVerifyNeverOnlyTestNoLint(),
-      'test_prefixedMocktailVerifyNeverOnlyTest_noLint': (t) =>
-          t._prefixedMocktailVerifyNeverOnlyTestNoLint(),
-      'test_mockitoVerifyGetterOnlyTest_noLint': (t) => t._mockitoVerifyGetterOnlyTestNoLint(),
-      'test_prefixedMockitoVerifyGetterOnlyTest_noLint': (t) =>
-          t._prefixedMockitoVerifyGetterOnlyTestNoLint(),
-      'test_mockitoVerifyNeverGetterOnlyTest_noLint': (t) =>
-          t._mockitoVerifyNeverGetterOnlyTestNoLint(),
-      'test_prefixedMockitoVerifyNeverGetterOnlyTest_noLint': (t) =>
-          t._prefixedMockitoVerifyNeverGetterOnlyTestNoLint(),
-      'test_mockitoVerifyInOrderGetterOnlyTest_noLint': (t) =>
-          t._mockitoVerifyInOrderGetterOnlyTestNoLint(),
-      'test_prefixedMockitoVerifyInOrderGetterOnlyTest_noLint': (t) =>
-          t._prefixedMockitoVerifyInOrderGetterOnlyTestNoLint(),
-      'test_fakeMemberVerifyGetter_lint': (t) => t._fakeMemberVerifyGetterLint(),
-      'test_differentLibraryVerifyGetter_lint': (t) => t._differentLibraryVerifyGetterLint(),
-      'test_localVerifyGetter_lint': (t) => t._localVerifyGetterLint(),
-      'test_deferredMocktailGetter_lint': (t) => t._deferredMocktailGetterLint(),
-      'test_resolvedMocktailHelperAssertion_noLint': (t) =>
-          t._resolvedMocktailHelperAssertionNoLint(),
-      'test_shadowedMocktailBindingsInHelper_lint': (t) =>
-          t._shadowedMocktailBindingsInHelperLint(),
-      'test_assertionOnlyInNestedHelper_lint': (t) => t._assertionOnlyInNestedHelperLint(),
-    },
+    _MissingTestAssertionTest.new,
+    _MissingTestAssertionTest._allCases,
   );
-  analysisRuleSuite<PreferCorrectTestFileNameTest>(
+  analysisRuleSuite<_PreferCorrectTestFileNameTest>(
     'PreferCorrectTestFileNameTest',
-    PreferCorrectTestFileNameTest.new,
-    {
-      'test_fileWithTestButWrongName_lint': (t) => t._fileWithTestButWrongNameLint(),
-      'test_correctTestFileName_noLint': (t) => t._correctTestFileNameNoLint(),
-      'test_prefixedTestApis_lint': (t) => t._prefixedTestApisLint(),
-      'test_unrelatedSameNamedCalls_noLint': (t) => t._unrelatedSameNamedCallsNoLint(),
-    },
+    _PreferCorrectTestFileNameTest.new,
+    _PreferCorrectTestFileNameTest._allCases,
   );
-  analysisRuleSuite<PreferUniqueTestNamesTest>(
+  analysisRuleSuite<_PreferUniqueTestNamesTest>(
     'PreferUniqueTestNamesTest',
-    PreferUniqueTestNamesTest.new,
-    {
-      'test_duplicateSiblingTestName_lint': (t) => t._duplicateSiblingTestNameLint(),
-      'test_sameNameInDifferentGroups_noLint': (t) => t._sameNameInDifferentGroupsNoLint(),
-      'test_dynamicNames_noLint': (t) => t._dynamicNamesNoLint(),
-    },
+    _PreferUniqueTestNamesTest.new,
+    _PreferUniqueTestNamesTest._allCases,
   );
 }
 
-final class MissingTestAssertionTest extends AnalysisRuleTest {
+final class _MissingTestAssertionTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_MissingTestAssertionTest)> get _allCases =>
+      caseSet<_MissingTestAssertionTest>(
+        parent: const {},
+        own: {
+          'test_testWithoutAssertion_lint': (t) => t._testWithoutAssertionLint(),
+          'test_testWithExpect_noLint': (t) => t._testWithExpectNoLint(),
+          'test_resolvedLocalHelperAssertion_noLint': (t) =>
+              t._resolvedLocalHelperAssertionNoLint(),
+          'test_helperDoesNotCountUnrelatedOrDeferredAssertions': (t) =>
+              t._helperDoesNotCountUnrelatedOrDeferredAssertions(),
+          'test_helperWrapperPreservesResolvedAssertionIdentity': (t) =>
+              t._helperWrapperPreservesResolvedAssertionIdentity(),
+          'test_testWidgetsWithExpectLater_noLint': (t) => t._testWidgetsWithExpectLaterNoLint(),
+          'test_assertionInsideFakeAsync_noLint': (t) => t._assertionInsideFakeAsyncNoLint(),
+          'test_unitStubVerifyOnlyTest_lint': (t) => t._unitStubVerifyOnlyTestLint(),
+          'test_mocktailGetterVerifyOnlyTest_noLint': (t) =>
+              t._mocktailGetterVerifyOnlyTestNoLint(),
+          'test_prefixedMocktailGetterVerifyOnlyTest_noLint': (t) =>
+              t._prefixedMocktailGetterVerifyOnlyTestNoLint(),
+          'test_asyncVerifyOnlyTest_noLint': (t) => t._asyncVerifyOnlyTestNoLint(),
+          'test_mocktailVerifyInOrderOnlyTest_noLint': (t) =>
+              t._mocktailVerifyInOrderOnlyTestNoLint(),
+          'test_prefixedMocktailVerifyInOrderOnlyTest_noLint': (t) =>
+              t._prefixedMocktailVerifyInOrderOnlyTestNoLint(),
+          'test_mocktailVerifyNeverOnlyTest_noLint': (t) => t._mocktailVerifyNeverOnlyTestNoLint(),
+          'test_prefixedMocktailVerifyNeverOnlyTest_noLint': (t) =>
+              t._prefixedMocktailVerifyNeverOnlyTestNoLint(),
+          'test_mockitoVerifyGetterOnlyTest_noLint': (t) => t._mockitoVerifyGetterOnlyTestNoLint(),
+          'test_prefixedMockitoVerifyGetterOnlyTest_noLint': (t) =>
+              t._prefixedMockitoVerifyGetterOnlyTestNoLint(),
+          'test_mockitoVerifyNeverGetterOnlyTest_noLint': (t) =>
+              t._mockitoVerifyNeverGetterOnlyTestNoLint(),
+          'test_prefixedMockitoVerifyNeverGetterOnlyTest_noLint': (t) =>
+              t._prefixedMockitoVerifyNeverGetterOnlyTestNoLint(),
+          'test_mockitoVerifyInOrderGetterOnlyTest_noLint': (t) =>
+              t._mockitoVerifyInOrderGetterOnlyTestNoLint(),
+          'test_prefixedMockitoVerifyInOrderGetterOnlyTest_noLint': (t) =>
+              t._prefixedMockitoVerifyInOrderGetterOnlyTestNoLint(),
+          'test_fakeMemberVerifyGetter_lint': (t) => t._fakeMemberVerifyGetterLint(),
+          'test_differentLibraryVerifyGetter_lint': (t) => t._differentLibraryVerifyGetterLint(),
+          'test_localVerifyGetter_lint': (t) => t._localVerifyGetterLint(),
+          'test_deferredMocktailGetter_lint': (t) => t._deferredMocktailGetterLint(),
+          'test_resolvedMocktailHelperAssertion_noLint': (t) =>
+              t._resolvedMocktailHelperAssertionNoLint(),
+          'test_shadowedMocktailBindingsInHelper_lint': (t) =>
+              t._shadowedMocktailBindingsInHelperLint(),
+          'test_assertionOnlyInNestedHelper_lint': (t) => t._assertionOnlyInNestedHelperLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = MissingTestAssertion();
@@ -649,7 +649,17 @@ void main() {
   }
 }
 
-final class PreferUniqueTestNamesTest extends AnalysisRuleTest {
+final class _PreferUniqueTestNamesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferUniqueTestNamesTest)> get _allCases =>
+      caseSet<_PreferUniqueTestNamesTest>(
+        parent: const {},
+        own: {
+          'test_duplicateSiblingTestName_lint': (t) => t._duplicateSiblingTestNameLint(),
+          'test_sameNameInDifferentGroups_noLint': (t) => t._sameNameInDifferentGroupsNoLint(),
+          'test_dynamicNames_noLint': (t) => t._dynamicNamesNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferUniqueTestNames();
@@ -700,7 +710,18 @@ void main() {
   }
 }
 
-final class PreferCorrectTestFileNameTest extends AnalysisRuleTest {
+final class _PreferCorrectTestFileNameTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_PreferCorrectTestFileNameTest)> get _allCases =>
+      caseSet<_PreferCorrectTestFileNameTest>(
+        parent: const {},
+        own: {
+          'test_fileWithTestButWrongName_lint': (t) => t._fileWithTestButWrongNameLint(),
+          'test_correctTestFileName_noLint': (t) => t._correctTestFileNameNoLint(),
+          'test_prefixedTestApis_lint': (t) => t._prefixedTestApisLint(),
+          'test_unrelatedSameNamedCalls_noLint': (t) => t._unrelatedSameNamedCallsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferCorrectTestFileName();

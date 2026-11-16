@@ -4,30 +4,36 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_constant_sw
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidConstantSwitchesTest>(
+  analysisRuleSuite<_AvoidConstantSwitchesTest>(
     'AvoidConstantSwitchesTest',
-    AvoidConstantSwitchesTest.new,
-    {
-      'test_switchStatementOnIntLiteral': (t) => t._switchStatementOnIntLiteral(),
-      'test_switchStatementOnStringLiteral': (t) => t._switchStatementOnStringLiteral(),
-      'test_switchStatementOnConstVariable': (t) => t._switchStatementOnConstVariable(),
-      'test_switchStatementOnStaticConstField': (t) => t._switchStatementOnStaticConstField(),
-      'test_switchExpressionOnIntLiteral': (t) => t._switchExpressionOnIntLiteral(),
-      'test_switchExpressionOnConstVariable': (t) => t._switchExpressionOnConstVariable(),
-      'test_switchStatementOnBoolLiteral': (t) => t._switchStatementOnBoolLiteral(),
-      'test_switchStatementOnNegativeNumber': (t) => t._switchStatementOnNegativeNumber(),
-      'test_switchStatementOnParameter_noLint': (t) => t._switchStatementOnParameterNoLint(),
-      'test_switchExpressionOnParameter_noLint': (t) => t._switchExpressionOnParameterNoLint(),
-      'test_switchStatementOnMethodCall_noLint': (t) => t._switchStatementOnMethodCallNoLint(),
-      'test_switchStatementOnNonConstFinal_noLint': (t) =>
-          t._switchStatementOnNonConstFinalNoLint(),
-      'test_switchStatementOnPropertyAccess_noLint': (t) =>
-          t._switchStatementOnPropertyAccessNoLint(),
-    },
+    _AvoidConstantSwitchesTest.new,
+    _AvoidConstantSwitchesTest._allCases,
   );
 }
 
-class AvoidConstantSwitchesTest extends AnalysisRuleTest {
+class _AvoidConstantSwitchesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidConstantSwitchesTest)> get _allCases =>
+      caseSet<_AvoidConstantSwitchesTest>(
+        parent: const {},
+        own: {
+          'test_switchStatementOnIntLiteral': (t) => t._switchStatementOnIntLiteral(),
+          'test_switchStatementOnStringLiteral': (t) => t._switchStatementOnStringLiteral(),
+          'test_switchStatementOnConstVariable': (t) => t._switchStatementOnConstVariable(),
+          'test_switchStatementOnStaticConstField': (t) => t._switchStatementOnStaticConstField(),
+          'test_switchExpressionOnIntLiteral': (t) => t._switchExpressionOnIntLiteral(),
+          'test_switchExpressionOnConstVariable': (t) => t._switchExpressionOnConstVariable(),
+          'test_switchStatementOnBoolLiteral': (t) => t._switchStatementOnBoolLiteral(),
+          'test_switchStatementOnNegativeNumber': (t) => t._switchStatementOnNegativeNumber(),
+          'test_switchStatementOnParameter_noLint': (t) => t._switchStatementOnParameterNoLint(),
+          'test_switchExpressionOnParameter_noLint': (t) => t._switchExpressionOnParameterNoLint(),
+          'test_switchStatementOnMethodCall_noLint': (t) => t._switchStatementOnMethodCallNoLint(),
+          'test_switchStatementOnNonConstFinal_noLint': (t) =>
+              t._switchStatementOnNonConstFinalNoLint(),
+          'test_switchStatementOnPropertyAccess_noLint': (t) =>
+              t._switchStatementOnPropertyAccessNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidConstantSwitches();

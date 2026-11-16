@@ -6,35 +6,33 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_duplicate_m
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidDuplicateExportsTest>(
+  analysisRuleSuite<_AvoidDuplicateExportsTest>(
     'AvoidDuplicateExportsTest',
-    AvoidDuplicateExportsTest.new,
-    {
-      'test_sameSimpleExportUri_lint': (t) => t._sameSimpleExportUriLint(),
-      'test_exportWithCombinators_noLint': (t) => t._exportWithCombinatorsNoLint(),
-    },
+    _AvoidDuplicateExportsTest.new,
+    _AvoidDuplicateExportsTest._allCases,
   );
-  analysisRuleSuite<AvoidDuplicateMapKeysTest>(
+  analysisRuleSuite<_AvoidDuplicateMapKeysTest>(
     'AvoidDuplicateMapKeysTest',
-    AvoidDuplicateMapKeysTest.new,
-    {
-      'test_constMapDuplicateStringKey_lint': (t) => t._constMapDuplicateStringKeyLint(),
-      'test_nonConstMapDuplicateKey_noLint': (t) => t._nonConstMapDuplicateKeyNoLint(),
-      'test_nonLiteralMapKeys_noLint': (t) => t._nonLiteralMapKeysNoLint(),
-    },
+    _AvoidDuplicateMapKeysTest.new,
+    _AvoidDuplicateMapKeysTest._allCases,
   );
-  analysisRuleSuite<AvoidDuplicateConstantValuesTest>(
+  analysisRuleSuite<_AvoidDuplicateConstantValuesTest>(
     'AvoidDuplicateConstantValuesTest',
-    AvoidDuplicateConstantValuesTest.new,
-    {
-      'test_sameConstDeclarationGroupValue_lint': (t) => t._sameConstDeclarationGroupValueLint(),
-      'test_separateConstDeclarations_noLint': (t) => t._separateConstDeclarationsNoLint(),
-      'test_nonLiteralConstValues_noLint': (t) => t._nonLiteralConstValuesNoLint(),
-    },
+    _AvoidDuplicateConstantValuesTest.new,
+    _AvoidDuplicateConstantValuesTest._allCases,
   );
 }
 
-final class AvoidDuplicateExportsTest extends AnalysisRuleTest {
+final class _AvoidDuplicateExportsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidDuplicateExportsTest)> get _allCases =>
+      caseSet<_AvoidDuplicateExportsTest>(
+        parent: const {},
+        own: {
+          'test_sameSimpleExportUri_lint': (t) => t._sameSimpleExportUriLint(),
+          'test_exportWithCombinators_noLint': (t) => t._exportWithCombinatorsNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidDuplicateExports();
@@ -67,7 +65,17 @@ export 'src/a.dart' show B;
   }
 }
 
-final class AvoidDuplicateMapKeysTest extends AnalysisRuleTest {
+final class _AvoidDuplicateMapKeysTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidDuplicateMapKeysTest)> get _allCases =>
+      caseSet<_AvoidDuplicateMapKeysTest>(
+        parent: const {},
+        own: {
+          'test_constMapDuplicateStringKey_lint': (t) => t._constMapDuplicateStringKeyLint(),
+          'test_nonConstMapDuplicateKey_noLint': (t) => t._nonConstMapDuplicateKeyNoLint(),
+          'test_nonLiteralMapKeys_noLint': (t) => t._nonLiteralMapKeysNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidDuplicateMapKeys();
@@ -113,7 +121,18 @@ const values = {
   }
 }
 
-final class AvoidDuplicateConstantValuesTest extends AnalysisRuleTest {
+final class _AvoidDuplicateConstantValuesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidDuplicateConstantValuesTest)> get _allCases =>
+      caseSet<_AvoidDuplicateConstantValuesTest>(
+        parent: const {},
+        own: {
+          'test_sameConstDeclarationGroupValue_lint': (t) =>
+              t._sameConstDeclarationGroupValueLint(),
+          'test_separateConstDeclarations_noLint': (t) => t._separateConstDeclarationsNoLint(),
+          'test_nonLiteralConstValues_noLint': (t) => t._nonLiteralConstValuesNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidDuplicateConstantValues();

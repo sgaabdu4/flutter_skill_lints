@@ -5,27 +5,30 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_nullable_to
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidNullableInterpolationTest>(
+  analysisRuleSuite<_AvoidNullableInterpolationTest>(
     'AvoidNullableInterpolationTest',
-    AvoidNullableInterpolationTest.new,
-    {
-      'test_nullableExpression_lint': (t) => t._nullableExpressionLint(),
-      'test_nullableInterpolatedExpression_lint': (t) => t._nullableInterpolatedExpressionLint(),
-      'test_nonNullableExpression_noLint': (t) => t._nonNullableExpressionNoLint(),
-    },
+    _AvoidNullableInterpolationTest.new,
+    _AvoidNullableInterpolationTest._allCases,
   );
-  analysisRuleSuite<AvoidNullableToStringTest>(
+  analysisRuleSuite<_AvoidNullableToStringTest>(
     'AvoidNullableToStringTest',
-    AvoidNullableToStringTest.new,
-    {
-      'test_nullableTarget_lint': (t) => t._nullableTargetLint(),
-      'test_nullableCascadeTarget_lint': (t) => t._nullableCascadeTargetLint(),
-      'test_nonNullableTarget_noLint': (t) => t._nonNullableTargetNoLint(),
-    },
+    _AvoidNullableToStringTest.new,
+    _AvoidNullableToStringTest._allCases,
   );
 }
 
-final class AvoidNullableInterpolationTest extends AnalysisRuleTest {
+final class _AvoidNullableInterpolationTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNullableInterpolationTest)> get _allCases =>
+      caseSet<_AvoidNullableInterpolationTest>(
+        parent: const {},
+        own: {
+          'test_nullableExpression_lint': (t) => t._nullableExpressionLint(),
+          'test_nullableInterpolatedExpression_lint': (t) =>
+              t._nullableInterpolatedExpressionLint(),
+          'test_nonNullableExpression_noLint': (t) => t._nonNullableExpressionNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNullableInterpolation();
@@ -55,7 +58,17 @@ String label(String name) => 'Hello $name';
   }
 }
 
-final class AvoidNullableToStringTest extends AnalysisRuleTest {
+final class _AvoidNullableToStringTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNullableToStringTest)> get _allCases =>
+      caseSet<_AvoidNullableToStringTest>(
+        parent: const {},
+        own: {
+          'test_nullableTarget_lint': (t) => t._nullableTargetLint(),
+          'test_nullableCascadeTarget_lint': (t) => t._nullableCascadeTargetLint(),
+          'test_nonNullableTarget_noLint': (t) => t._nonNullableTargetNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNullableToString();

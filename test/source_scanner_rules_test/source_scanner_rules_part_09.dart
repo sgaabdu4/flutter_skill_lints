@@ -1,6 +1,19 @@
 part of '../source_scanner_rules_test.dart';
 
-final class RouterGoRouterOfTest extends _RouterRuleTest {
+final class _RouterGoRouterOfTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_RouterGoRouterOfTest)> get _allCases =>
+      caseSet<_RouterGoRouterOfTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsGoCall': (t) => t._reportsGoCall(),
+          'test_reportsPushNamed': (t) => t._reportsPushNamed(),
+          'test_reportsTypedGenericPush': (t) => t._reportsTypedGenericPush(),
+          'test_allowsTypedRoutePush': (t) => t._allowsTypedRoutePush(),
+          'test_reportsGoRouterOfInsideCoreRouter': (t) => t._reportsGoRouterOfInsideCoreRouter(),
+          'test_reportsMultilineGoRouterOfPush': (t) => t._reportsMultilineGoRouterOfPush(),
+        },
+      );
+
   @override
   String get ruleName => 'router_gorouter_of';
   @override
@@ -93,7 +106,20 @@ void open(context) {
   }
 }
 
-final class RouterUntypedNavigatorPushTest extends _RouterRuleTest {
+final class _RouterUntypedNavigatorPushTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_RouterUntypedNavigatorPushTest)> get _allCases =>
+      caseSet<_RouterUntypedNavigatorPushTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsCupertinoPageRoute': (t) => t._reportsCupertinoPageRoute(),
+          'test_reportsPageRouteBuilder': (t) => t._reportsPageRouteBuilder(),
+          'test_reportsPushReplacement': (t) => t._reportsPushReplacement(),
+          'test_reportsPushAndRemoveUntil': (t) => t._reportsPushAndRemoveUntil(),
+          'test_allowsNavigatorPop': (t) => t._allowsNavigatorPop(),
+          'test_allowsTypedRoutePush': (t) => t._allowsTypedRoutePush(),
+        },
+      );
+
   @override
   String get ruleName => 'router_untyped_navigator_push';
   @override
@@ -233,7 +259,38 @@ void open(context) {
   }
 }
 
-final class RouterContextNavigationExtensionTest extends _RouterRuleTest {
+final class _RouterContextNavigationExtensionTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_RouterContextNavigationExtensionTest)> get _allCases =>
+      caseSet<_RouterContextNavigationExtensionTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsBottomSheetExtension': (t) => t._allowsBottomSheetExtension(),
+          'test_allowsTypedFallbackContextExtension': (t) =>
+              t._allowsTypedFallbackContextExtension(),
+          'test_reportsTypedFallbackContextExtensionWithoutPopIfCan': (t) =>
+              t._reportsTypedFallbackContextExtensionWithoutPopIfCan(),
+          'test_reportsMultilineContextExtensionDeclaration': (t) =>
+              t._reportsMultilineContextExtensionDeclaration(),
+          'test_reportsPrefixedContextExtensionDeclaration': (t) =>
+              t._reportsPrefixedContextExtensionDeclaration(),
+          'test_reportsContextExtensionCallingTopLevelFallbackHelper': (t) =>
+              t._reportsContextExtensionCallingTopLevelFallbackHelper(),
+          'test_reportsRouteVariableContextExtension': (t) =>
+              t._reportsRouteVariableContextExtension(),
+          'test_allowsNonNavigationContextExtension': (t) =>
+              t._allowsNonNavigationContextExtension(),
+          'test_allowsTopLevelFallbackHelperAfterContextExtension': (t) =>
+              t._allowsTopLevelFallbackHelperAfterContextExtension(),
+          'test_reportsStringFallbackThroughGoRouterHelper': (t) =>
+              t._reportsStringFallbackThroughGoRouterHelper(),
+          'test_reportsStringPushThroughGoRouterInExtension': (t) =>
+              t._reportsStringPushThroughGoRouterInExtension(),
+          'test_allowsSkillGoRouterPopX': (t) => t._allowsSkillGoRouterPopX(),
+          'test_allowsSameNamedLocalExtensionMethod': (t) =>
+              t._allowsSameNamedLocalExtensionMethod(),
+        },
+      );
+
   @override
   void setUp() {
     _addTestingNavigationPackages();
@@ -497,7 +554,22 @@ extension LocalGoX on BuildContext {
   }
 }
 
-final class RouterNavigationWrapperApiTest extends _RouterRuleTest {
+final class _RouterNavigationWrapperApiTest extends _RouterRuleTest {
+  static Map<String, Future<void> Function(_RouterNavigationWrapperApiTest)> get _allCases =>
+      caseSet<_RouterNavigationWrapperApiTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsPrivateNavigationCoordinatorImplementation': (t) =>
+              t._reportsPrivateNavigationCoordinatorImplementation(),
+          'test_reportsFeatureNavigationInterface': (t) => t._reportsFeatureNavigationInterface(),
+          'test_reportsFeatureNavigationCoordinator': (t) =>
+              t._reportsFeatureNavigationCoordinator(),
+          'test_reportsRouteWrapperFunctionCall': (t) => t._reportsRouteWrapperFunctionCall(),
+          'test_reportsRouteWrapperFunctionDeclaration': (t) =>
+              t._reportsRouteWrapperFunctionDeclaration(),
+        },
+      );
+
   @override
   String get ruleName => 'router_navigation_wrapper_api';
   @override
@@ -561,67 +633,24 @@ void navigateToHomeRoute(router) {}
 }
 
 void _defineSourceScannerRulesPart09Tests() {
-  analysisRuleSuite<RouterGoRouterOfTest>('RouterGoRouterOfTest', RouterGoRouterOfTest.new, {
-    'test_reportsGoCall': (t) => t._reportsGoCall(),
-    'test_reportsPushNamed': (t) => t._reportsPushNamed(),
-    'test_reportsTypedGenericPush': (t) => t._reportsTypedGenericPush(),
-    'test_allowsTypedRoutePush': (t) => t._allowsTypedRoutePush(),
-    'test_reportsGoRouterOfInsideCoreRouter': (t) => t._reportsGoRouterOfInsideCoreRouter(),
-    'test_reportsMultilineGoRouterOfPush': (t) => t._reportsMultilineGoRouterOfPush(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<RouterUntypedNavigatorPushTest>(
+  analysisRuleSuite<_RouterGoRouterOfTest>(
+    'RouterGoRouterOfTest',
+    _RouterGoRouterOfTest.new,
+    _RouterGoRouterOfTest._allCases,
+  );
+  analysisRuleSuite<_RouterUntypedNavigatorPushTest>(
     'RouterUntypedNavigatorPushTest',
-    RouterUntypedNavigatorPushTest.new,
-    {
-      'test_reportsCupertinoPageRoute': (t) => t._reportsCupertinoPageRoute(),
-      'test_reportsPageRouteBuilder': (t) => t._reportsPageRouteBuilder(),
-      'test_reportsPushReplacement': (t) => t._reportsPushReplacement(),
-      'test_reportsPushAndRemoveUntil': (t) => t._reportsPushAndRemoveUntil(),
-      'test_allowsNavigatorPop': (t) => t._allowsNavigatorPop(),
-      'test_allowsTypedRoutePush': (t) => t._allowsTypedRoutePush(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RouterUntypedNavigatorPushTest.new,
+    _RouterUntypedNavigatorPushTest._allCases,
   );
-  analysisRuleSuite<RouterContextNavigationExtensionTest>(
+  analysisRuleSuite<_RouterContextNavigationExtensionTest>(
     'RouterContextNavigationExtensionTest',
-    RouterContextNavigationExtensionTest.new,
-    {
-      'test_allowsBottomSheetExtension': (t) => t._allowsBottomSheetExtension(),
-      'test_allowsTypedFallbackContextExtension': (t) => t._allowsTypedFallbackContextExtension(),
-      'test_reportsTypedFallbackContextExtensionWithoutPopIfCan': (t) =>
-          t._reportsTypedFallbackContextExtensionWithoutPopIfCan(),
-      'test_reportsMultilineContextExtensionDeclaration': (t) =>
-          t._reportsMultilineContextExtensionDeclaration(),
-      'test_reportsPrefixedContextExtensionDeclaration': (t) =>
-          t._reportsPrefixedContextExtensionDeclaration(),
-      'test_reportsContextExtensionCallingTopLevelFallbackHelper': (t) =>
-          t._reportsContextExtensionCallingTopLevelFallbackHelper(),
-      'test_reportsRouteVariableContextExtension': (t) => t._reportsRouteVariableContextExtension(),
-      'test_allowsNonNavigationContextExtension': (t) => t._allowsNonNavigationContextExtension(),
-      'test_allowsTopLevelFallbackHelperAfterContextExtension': (t) =>
-          t._allowsTopLevelFallbackHelperAfterContextExtension(),
-      'test_reportsStringFallbackThroughGoRouterHelper': (t) =>
-          t._reportsStringFallbackThroughGoRouterHelper(),
-      'test_reportsStringPushThroughGoRouterInExtension': (t) =>
-          t._reportsStringPushThroughGoRouterInExtension(),
-      'test_allowsSkillGoRouterPopX': (t) => t._allowsSkillGoRouterPopX(),
-      'test_allowsSameNamedLocalExtensionMethod': (t) => t._allowsSameNamedLocalExtensionMethod(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RouterContextNavigationExtensionTest.new,
+    _RouterContextNavigationExtensionTest._allCases,
   );
-  analysisRuleSuite<RouterNavigationWrapperApiTest>(
+  analysisRuleSuite<_RouterNavigationWrapperApiTest>(
     'RouterNavigationWrapperApiTest',
-    RouterNavigationWrapperApiTest.new,
-    {
-      'test_reportsPrivateNavigationCoordinatorImplementation': (t) =>
-          t._reportsPrivateNavigationCoordinatorImplementation(),
-      'test_reportsFeatureNavigationInterface': (t) => t._reportsFeatureNavigationInterface(),
-      'test_reportsFeatureNavigationCoordinator': (t) => t._reportsFeatureNavigationCoordinator(),
-      'test_reportsRouteWrapperFunctionCall': (t) => t._reportsRouteWrapperFunctionCall(),
-      'test_reportsRouteWrapperFunctionDeclaration': (t) =>
-          t._reportsRouteWrapperFunctionDeclaration(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RouterNavigationWrapperApiTest.new,
+    _RouterNavigationWrapperApiTest._allCases,
   );
 }

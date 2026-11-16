@@ -6,29 +6,20 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/pass_existing_str
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidLateContextTest>('AvoidLateContextTest', AvoidLateContextTest.new, {
-    'test_lateBuildContextField_lint': (t) => t._lateBuildContextFieldLint(),
-    'test_lateBuildContextLocal_lint': (t) => t._lateBuildContextLocalLint(),
-    'test_eagerBuildContext_noLint': (t) => t._eagerBuildContextNoLint(),
-    'test_lateNonContext_noLint': (t) => t._lateNonContextNoLint(),
-  });
-  analysisRuleSuite<PassExistingFutureToFutureBuilderTest>(
-    'PassExistingFutureToFutureBuilderTest',
-    PassExistingFutureToFutureBuilderTest.new,
-    {
-      'test_methodInvocationFuture_lint': (t) => t._methodInvocationFutureLint(),
-      'test_futureConstructor_lint': (t) => t._futureConstructorLint(),
-      'test_existingFuture_noLint': (t) => t._existingFutureNoLint(),
-    },
+  analysisRuleSuite<_AvoidLateContextTest>(
+    'AvoidLateContextTest',
+    _AvoidLateContextTest.new,
+    _AvoidLateContextTest._allCases,
   );
-  analysisRuleSuite<PassExistingStreamToStreamBuilderTest>(
+  analysisRuleSuite<_PassExistingFutureToFutureBuilderTest>(
+    'PassExistingFutureToFutureBuilderTest',
+    _PassExistingFutureToFutureBuilderTest.new,
+    _PassExistingFutureToFutureBuilderTest._allCases,
+  );
+  analysisRuleSuite<_PassExistingStreamToStreamBuilderTest>(
     'PassExistingStreamToStreamBuilderTest',
-    PassExistingStreamToStreamBuilderTest.new,
-    {
-      'test_methodInvocationStream_lint': (t) => t._methodInvocationStreamLint(),
-      'test_streamConstructor_lint': (t) => t._streamConstructorLint(),
-      'test_existingStream_noLint': (t) => t._existingStreamNoLint(),
-    },
+    _PassExistingStreamToStreamBuilderTest.new,
+    _PassExistingStreamToStreamBuilderTest._allCases,
   );
 }
 
@@ -71,7 +62,18 @@ class StreamBuilder<T> extends Widget {
   }
 }
 
-final class AvoidLateContextTest extends _FlutterLifecycleRuleTest {
+final class _AvoidLateContextTest extends _FlutterLifecycleRuleTest {
+  static Map<String, Future<void> Function(_AvoidLateContextTest)> get _allCases =>
+      caseSet<_AvoidLateContextTest>(
+        parent: const {},
+        own: {
+          'test_lateBuildContextField_lint': (t) => t._lateBuildContextFieldLint(),
+          'test_lateBuildContextLocal_lint': (t) => t._lateBuildContextLocalLint(),
+          'test_eagerBuildContext_noLint': (t) => t._eagerBuildContextNoLint(),
+          'test_lateNonContext_noLint': (t) => t._lateNonContextNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidLateContext();
@@ -126,7 +128,17 @@ void f() {
   }
 }
 
-final class PassExistingFutureToFutureBuilderTest extends _FlutterLifecycleRuleTest {
+final class _PassExistingFutureToFutureBuilderTest extends _FlutterLifecycleRuleTest {
+  static Map<String, Future<void> Function(_PassExistingFutureToFutureBuilderTest)> get _allCases =>
+      caseSet<_PassExistingFutureToFutureBuilderTest>(
+        parent: const {},
+        own: {
+          'test_methodInvocationFuture_lint': (t) => t._methodInvocationFutureLint(),
+          'test_futureConstructor_lint': (t) => t._futureConstructorLint(),
+          'test_existingFuture_noLint': (t) => t._existingFutureNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PassExistingFutureToFutureBuilder();
@@ -183,7 +195,17 @@ Widget build() {
   }
 }
 
-final class PassExistingStreamToStreamBuilderTest extends _FlutterLifecycleRuleTest {
+final class _PassExistingStreamToStreamBuilderTest extends _FlutterLifecycleRuleTest {
+  static Map<String, Future<void> Function(_PassExistingStreamToStreamBuilderTest)> get _allCases =>
+      caseSet<_PassExistingStreamToStreamBuilderTest>(
+        parent: const {},
+        own: {
+          'test_methodInvocationStream_lint': (t) => t._methodInvocationStreamLint(),
+          'test_streamConstructor_lint': (t) => t._streamConstructorLint(),
+          'test_existingStream_noLint': (t) => t._existingStreamNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PassExistingStreamToStreamBuilder();

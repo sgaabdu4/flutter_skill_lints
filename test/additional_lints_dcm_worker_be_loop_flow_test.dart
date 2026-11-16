@@ -8,44 +8,36 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidUnnecessaryContinueTest>(
+  analysisRuleSuite<_AvoidUnnecessaryContinueTest>(
     'AvoidUnnecessaryContinueTest',
-    AvoidUnnecessaryContinueTest.new,
-    {
-      'test_continueAsLastBlockStatement_lint': (t) => t._continueAsLastBlockStatementLint(),
-      'test_continueAsDirectLoopBody_lint': (t) => t._continueAsDirectLoopBodyLint(),
-      'test_continueBeforeStatement_noLint': (t) => t._continueBeforeStatementNoLint(),
-      'test_labeledContinue_noLint': (t) => t._labeledContinueNoLint(),
-      'test_severity_error': (t) => t._severityError(),
-    },
+    _AvoidUnnecessaryContinueTest.new,
+    _AvoidUnnecessaryContinueTest._allCases,
   );
-  analysisRuleSuite<AvoidUnconditionalBreakTest>(
+  analysisRuleSuite<_AvoidUnconditionalBreakTest>(
     'AvoidUnconditionalBreakTest',
-    AvoidUnconditionalBreakTest.new,
-    {
-      'test_breakAsFirstLoopBlockStatement_lint': (t) => t._breakAsFirstLoopBlockStatementLint(),
-      'test_breakAsDirectLoopBody_lint': (t) => t._breakAsDirectLoopBodyLint(),
-      'test_breakAsFirstSwitchCaseStatement_lint': (t) => t._breakAsFirstSwitchCaseStatementLint(),
-      'test_conditionalBreak_noLint': (t) => t._conditionalBreakNoLint(),
-      'test_breakAfterStatement_noLint': (t) => t._breakAfterStatementNoLint(),
-      'test_labeledBreak_noLint': (t) => t._labeledBreakNoLint(),
-      'test_severity_info': (t) => t._severityInfo(),
-    },
+    _AvoidUnconditionalBreakTest.new,
+    _AvoidUnconditionalBreakTest._allCases,
   );
-  analysisRuleSuite<AvoidUnreachableForLoopTest>(
+  analysisRuleSuite<_AvoidUnreachableForLoopTest>(
     'AvoidUnreachableForLoopTest',
-    AvoidUnreachableForLoopTest.new,
-    {
-      'test_literalFalseCondition_lint': (t) => t._literalFalseConditionLint(),
-      'test_literalTrueCondition_noLint': (t) => t._literalTrueConditionNoLint(),
-      'test_missingCondition_noLint': (t) => t._missingConditionNoLint(),
-      'test_nonLiteralFalseCondition_noLint': (t) => t._nonLiteralFalseConditionNoLint(),
-      'test_severity_error': (t) => t._severityError(),
-    },
+    _AvoidUnreachableForLoopTest.new,
+    _AvoidUnreachableForLoopTest._allCases,
   );
 }
 
-final class AvoidUnnecessaryContinueTest extends AnalysisRuleTest {
+final class _AvoidUnnecessaryContinueTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnnecessaryContinueTest)> get _allCases =>
+      caseSet<_AvoidUnnecessaryContinueTest>(
+        parent: const {},
+        own: {
+          'test_continueAsLastBlockStatement_lint': (t) => t._continueAsLastBlockStatementLint(),
+          'test_continueAsDirectLoopBody_lint': (t) => t._continueAsDirectLoopBodyLint(),
+          'test_continueBeforeStatement_noLint': (t) => t._continueBeforeStatementNoLint(),
+          'test_labeledContinue_noLint': (t) => t._labeledContinueNoLint(),
+          'test_severity_error': (t) => t._severityError(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnnecessaryContinue();
@@ -107,7 +99,23 @@ void f(List<int> values) {
   }
 }
 
-final class AvoidUnconditionalBreakTest extends AnalysisRuleTest {
+final class _AvoidUnconditionalBreakTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnconditionalBreakTest)> get _allCases =>
+      caseSet<_AvoidUnconditionalBreakTest>(
+        parent: const {},
+        own: {
+          'test_breakAsFirstLoopBlockStatement_lint': (t) =>
+              t._breakAsFirstLoopBlockStatementLint(),
+          'test_breakAsDirectLoopBody_lint': (t) => t._breakAsDirectLoopBodyLint(),
+          'test_breakAsFirstSwitchCaseStatement_lint': (t) =>
+              t._breakAsFirstSwitchCaseStatementLint(),
+          'test_conditionalBreak_noLint': (t) => t._conditionalBreakNoLint(),
+          'test_breakAfterStatement_noLint': (t) => t._breakAfterStatementNoLint(),
+          'test_labeledBreak_noLint': (t) => t._labeledBreakNoLint(),
+          'test_severity_info': (t) => t._severityInfo(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnconditionalBreak();
@@ -193,7 +201,19 @@ void f(List<int> values) {
   }
 }
 
-final class AvoidUnreachableForLoopTest extends AnalysisRuleTest {
+final class _AvoidUnreachableForLoopTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidUnreachableForLoopTest)> get _allCases =>
+      caseSet<_AvoidUnreachableForLoopTest>(
+        parent: const {},
+        own: {
+          'test_literalFalseCondition_lint': (t) => t._literalFalseConditionLint(),
+          'test_literalTrueCondition_noLint': (t) => t._literalTrueConditionNoLint(),
+          'test_missingCondition_noLint': (t) => t._missingConditionNoLint(),
+          'test_nonLiteralFalseCondition_noLint': (t) => t._nonLiteralFalseConditionNoLint(),
+          'test_severity_error': (t) => t._severityError(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidUnreachableForLoop();

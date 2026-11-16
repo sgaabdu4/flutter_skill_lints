@@ -50,7 +50,19 @@ abstract class _RiverpodRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => riverpodSourceRules;
 }
 
-final class RiverpodReadInitStateTest extends _RiverpodRuleTest {
+final class _RiverpodReadInitStateTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodReadInitStateTest)> get _allCases =>
+      caseSet<_RiverpodReadInitStateTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsReadInAnotherMethod': (t) => t._allowsReadInAnotherMethod(),
+          'test_reportsReadInsidePostFrameCallback': (t) => t._reportsReadInsidePostFrameCallback(),
+          'test_reportsReadInsideMicrotask': (t) => t._reportsReadInsideMicrotask(),
+          'test_reportsImmediatelyInvokedRead': (t) => t._reportsImmediatelyInvokedRead(),
+          'test_reportsSynchronousCallback': (t) => t._reportsSynchronousCallback(),
+        },
+      );
+
   @override
   void setUp() {
     super.setUp();
@@ -154,7 +166,18 @@ class TodosState {
 ''';
 }
 
-final class RiverpodServiceLocatorTest extends _RiverpodRuleTest {
+final class _RiverpodServiceLocatorTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodServiceLocatorTest)> get _allCases =>
+      caseSet<_RiverpodServiceLocatorTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsPrefixedLocatorAndFactoryClasses': (t) =>
+              t._reportsPrefixedLocatorAndFactoryClasses(),
+          'test_allowsNamesThatOnlyContainTheBannedWords': (t) =>
+              t._allowsNamesThatOnlyContainTheBannedWords(),
+        },
+      );
+
   @override
   String get ruleName => 'riverpod_service_locator';
   @override
@@ -189,7 +212,28 @@ const note = 'class ServiceLocator {}';
   }
 }
 
-final class RiverpodManualProviderTest extends _RiverpodRuleTest {
+final class _RiverpodManualProviderTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodManualProviderTest)> get _allCases =>
+      caseSet<_RiverpodManualProviderTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsTypedManualProvider': (t) => t._reportsTypedManualProvider(),
+          'test_reportsFamilyProvider': (t) => t._reportsFamilyProvider(),
+          'test_reportsGenericFamilyProvider': (t) => t._reportsGenericFamilyProvider(),
+          'test_reportsMultilineGenericFamilyProvider': (t) =>
+              t._reportsMultilineGenericFamilyProvider(),
+          'test_reportsOtherManualProviderTypes': (t) => t._reportsOtherManualProviderTypes(),
+          'test_allowsGeneratedProviderDeclaration': (t) => t._allowsGeneratedProviderDeclaration(),
+          'test_allowsProviderScope': (t) => t._allowsProviderScope(),
+          'test_reportsResolvedTypedAndReturnedProviders': (t) =>
+              t._reportsResolvedTypedAndReturnedProviders(),
+          'test_reportsResolvedUntypedProvidersOnce': (t) =>
+              t._reportsResolvedUntypedProvidersOnce(),
+          'test_allowsGeneratedProviderSubclassesAndFamilyCalls': (t) =>
+              t._allowsGeneratedProviderSubclassesAndFamilyCalls(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('riverpod').addFile('lib/riverpod.dart', _riverpodProviderStub);
@@ -374,7 +418,20 @@ int read(Ref ref, ProviderFamily<int, String> family) {
   }
 }
 
-final class RiverpodNotifierOverrideWithValueTest extends _RiverpodRuleTest {
+final class _RiverpodNotifierOverrideWithValueTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodNotifierOverrideWithValueTest)> get _allCases =>
+      caseSet<_RiverpodNotifierOverrideWithValueTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsSingleLineStateConstructorOverride': (t) =>
+              t._reportsSingleLineStateConstructorOverride(),
+          'test_allowsNotifierFactoryOverride': (t) => t._allowsNotifierFactoryOverride(),
+          'test_allowsRepositoryValueOverride': (t) => t._allowsRepositoryValueOverride(),
+          'test_allowsAsyncValueOverride': (t) => t._allowsAsyncValueOverride(),
+          'test_allowsTestFileStateOverride': (t) => t._allowsTestFileStateOverride(),
+        },
+      );
+
   @override
   String get ruleName => 'riverpod_notifier_override_with_value';
   @override
@@ -463,7 +520,25 @@ class AuthState {
   }
 }
 
-final class RiverpodConsumerStateDerivedCacheTest extends _RiverpodRuleTest {
+final class _RiverpodConsumerStateDerivedCacheTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodConsumerStateDerivedCacheTest)> get _allCases =>
+      caseSet<_RiverpodConsumerStateDerivedCacheTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsDayStartMemoizationField': (t) => t._reportsDayStartMemoizationField(),
+          'test_reportsDerivedIndexField': (t) => t._reportsDerivedIndexField(),
+          'test_reportsResolvedProviderDerivedFields': (t) =>
+              t._reportsResolvedProviderDerivedFields(),
+          'test_allowsLifecycleHandlesSeededFromProviders': (t) =>
+              t._allowsLifecycleHandlesSeededFromProviders(),
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_allowsControllerStateWithProviderWatch': (t) =>
+              t._allowsControllerStateWithProviderWatch(),
+          'test_allowsNonConsumerStateMemoizationHelper': (t) =>
+              t._allowsNonConsumerStateMemoizationHelper(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('flutter_riverpod').addFile('lib/flutter_riverpod.dart', _flutterRiverpodWidgetStub);
@@ -640,7 +715,21 @@ class HistoryPresenter {
   }
 }
 
-final class RiverpodWidgetProviderArgWrapperTest extends _RiverpodRuleTest {
+final class _RiverpodWidgetProviderArgWrapperTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodWidgetProviderArgWrapperTest)> get _allCases =>
+      caseSet<_RiverpodWidgetProviderArgWrapperTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsConsumerStateProviderArgField': (t) =>
+              t._reportsConsumerStateProviderArgField(),
+          'test_reportsBuildLocalProviderArgWrapper': (t) =>
+              t._reportsBuildLocalProviderArgWrapper(),
+          'test_reportsInlineProviderArgWrapper': (t) => t._reportsInlineProviderArgWrapper(),
+          'test_allowsDirectProviderIdArg': (t) => t._allowsDirectProviderIdArg(),
+          'test_allowsUiConfigNotPassedToProvider': (t) => t._allowsUiConfigNotPassedToProvider(),
+        },
+      );
+
   @override
   String get ruleName => 'riverpod_widget_provider_arg_wrapper';
   @override
@@ -771,7 +860,20 @@ class FormSection {
   }
 }
 
-final class RiverpodConsumerStateProviderSubscriptionTest extends _RiverpodRuleTest {
+final class _RiverpodConsumerStateProviderSubscriptionTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodConsumerStateProviderSubscriptionTest)>
+  get _allCases => caseSet<_RiverpodConsumerStateProviderSubscriptionTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_reportsPrefixedProviderSubscriptionField': (t) =>
+          t._reportsPrefixedProviderSubscriptionField(),
+      'test_allowsRefListenInBuildWithoutStoredHandle': (t) =>
+          t._allowsRefListenInBuildWithoutStoredHandle(),
+      'test_allowsProviderSubscriptionOutsideWidgetState': (t) =>
+          t._allowsProviderSubscriptionOutsideWidgetState(),
+    },
+  );
+
   @override
   String get ruleName => 'riverpod_consumer_state_provider_subscription';
   @override
@@ -839,7 +941,17 @@ class ExerciseLifecycleCoordinator {
   }
 }
 
-final class RiverpodListenManualForbiddenTest extends _RiverpodRuleTest {
+final class _RiverpodListenManualForbiddenTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodListenManualForbiddenTest)> get _allCases =>
+      caseSet<_RiverpodListenManualForbiddenTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsAssignedListenManual': (t) => t._reportsAssignedListenManual(),
+          'test_reportsListenManualInTests': (t) => t._reportsListenManualInTests(),
+          'test_allowsRefListenInBuild': (t) => t._allowsRefListenInBuild(),
+        },
+      );
+
   @override
   String get ruleName => 'riverpod_listen_manual_forbidden';
   @override
@@ -903,112 +1015,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 }
 
 void _defineSourceScannerRulesPart01Tests() {
-  analysisRuleSuite<RiverpodReadInitStateTest>(
+  analysisRuleSuite<_RiverpodReadInitStateTest>(
     'RiverpodReadInitStateTest',
-    RiverpodReadInitStateTest.new,
-    {
-      'test_allowsReadInAnotherMethod': (t) => t._allowsReadInAnotherMethod(),
-      'test_reportsReadInsidePostFrameCallback': (t) => t._reportsReadInsidePostFrameCallback(),
-      'test_reportsReadInsideMicrotask': (t) => t._reportsReadInsideMicrotask(),
-      'test_reportsImmediatelyInvokedRead': (t) => t._reportsImmediatelyInvokedRead(),
-      'test_reportsSynchronousCallback': (t) => t._reportsSynchronousCallback(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodReadInitStateTest.new,
+    _RiverpodReadInitStateTest._allCases,
   );
-  analysisRuleSuite<RiverpodServiceLocatorTest>(
+  analysisRuleSuite<_RiverpodServiceLocatorTest>(
     'RiverpodServiceLocatorTest',
-    RiverpodServiceLocatorTest.new,
-    {
-      'test_reportsPrefixedLocatorAndFactoryClasses': (t) =>
-          t._reportsPrefixedLocatorAndFactoryClasses(),
-      'test_allowsNamesThatOnlyContainTheBannedWords': (t) =>
-          t._allowsNamesThatOnlyContainTheBannedWords(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodServiceLocatorTest.new,
+    _RiverpodServiceLocatorTest._allCases,
   );
-  analysisRuleSuite<RiverpodManualProviderTest>(
+  analysisRuleSuite<_RiverpodManualProviderTest>(
     'RiverpodManualProviderTest',
-    RiverpodManualProviderTest.new,
-    {
-      'test_reportsTypedManualProvider': (t) => t._reportsTypedManualProvider(),
-      'test_reportsFamilyProvider': (t) => t._reportsFamilyProvider(),
-      'test_reportsGenericFamilyProvider': (t) => t._reportsGenericFamilyProvider(),
-      'test_reportsMultilineGenericFamilyProvider': (t) =>
-          t._reportsMultilineGenericFamilyProvider(),
-      'test_reportsOtherManualProviderTypes': (t) => t._reportsOtherManualProviderTypes(),
-      'test_allowsGeneratedProviderDeclaration': (t) => t._allowsGeneratedProviderDeclaration(),
-      'test_allowsProviderScope': (t) => t._allowsProviderScope(),
-      'test_reportsResolvedTypedAndReturnedProviders': (t) =>
-          t._reportsResolvedTypedAndReturnedProviders(),
-      'test_reportsResolvedUntypedProvidersOnce': (t) => t._reportsResolvedUntypedProvidersOnce(),
-      'test_allowsGeneratedProviderSubclassesAndFamilyCalls': (t) =>
-          t._allowsGeneratedProviderSubclassesAndFamilyCalls(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodManualProviderTest.new,
+    _RiverpodManualProviderTest._allCases,
   );
-  analysisRuleSuite<RiverpodNotifierOverrideWithValueTest>(
+  analysisRuleSuite<_RiverpodNotifierOverrideWithValueTest>(
     'RiverpodNotifierOverrideWithValueTest',
-    RiverpodNotifierOverrideWithValueTest.new,
-    {
-      'test_reportsSingleLineStateConstructorOverride': (t) =>
-          t._reportsSingleLineStateConstructorOverride(),
-      'test_allowsNotifierFactoryOverride': (t) => t._allowsNotifierFactoryOverride(),
-      'test_allowsRepositoryValueOverride': (t) => t._allowsRepositoryValueOverride(),
-      'test_allowsAsyncValueOverride': (t) => t._allowsAsyncValueOverride(),
-      'test_allowsTestFileStateOverride': (t) => t._allowsTestFileStateOverride(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodNotifierOverrideWithValueTest.new,
+    _RiverpodNotifierOverrideWithValueTest._allCases,
   );
-  analysisRuleSuite<RiverpodConsumerStateDerivedCacheTest>(
+  analysisRuleSuite<_RiverpodConsumerStateDerivedCacheTest>(
     'RiverpodConsumerStateDerivedCacheTest',
-    RiverpodConsumerStateDerivedCacheTest.new,
-    {
-      'test_reportsDayStartMemoizationField': (t) => t._reportsDayStartMemoizationField(),
-      'test_reportsDerivedIndexField': (t) => t._reportsDerivedIndexField(),
-      'test_reportsResolvedProviderDerivedFields': (t) => t._reportsResolvedProviderDerivedFields(),
-      'test_allowsLifecycleHandlesSeededFromProviders': (t) =>
-          t._allowsLifecycleHandlesSeededFromProviders(),
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_allowsControllerStateWithProviderWatch': (t) =>
-          t._allowsControllerStateWithProviderWatch(),
-      'test_allowsNonConsumerStateMemoizationHelper': (t) =>
-          t._allowsNonConsumerStateMemoizationHelper(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodConsumerStateDerivedCacheTest.new,
+    _RiverpodConsumerStateDerivedCacheTest._allCases,
   );
-  analysisRuleSuite<RiverpodWidgetProviderArgWrapperTest>(
+  analysisRuleSuite<_RiverpodWidgetProviderArgWrapperTest>(
     'RiverpodWidgetProviderArgWrapperTest',
-    RiverpodWidgetProviderArgWrapperTest.new,
-    {
-      'test_reportsConsumerStateProviderArgField': (t) => t._reportsConsumerStateProviderArgField(),
-      'test_reportsBuildLocalProviderArgWrapper': (t) => t._reportsBuildLocalProviderArgWrapper(),
-      'test_reportsInlineProviderArgWrapper': (t) => t._reportsInlineProviderArgWrapper(),
-      'test_allowsDirectProviderIdArg': (t) => t._allowsDirectProviderIdArg(),
-      'test_allowsUiConfigNotPassedToProvider': (t) => t._allowsUiConfigNotPassedToProvider(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodWidgetProviderArgWrapperTest.new,
+    _RiverpodWidgetProviderArgWrapperTest._allCases,
   );
-  analysisRuleSuite<RiverpodConsumerStateProviderSubscriptionTest>(
+  analysisRuleSuite<_RiverpodConsumerStateProviderSubscriptionTest>(
     'RiverpodConsumerStateProviderSubscriptionTest',
-    RiverpodConsumerStateProviderSubscriptionTest.new,
-    {
-      'test_reportsPrefixedProviderSubscriptionField': (t) =>
-          t._reportsPrefixedProviderSubscriptionField(),
-      'test_allowsRefListenInBuildWithoutStoredHandle': (t) =>
-          t._allowsRefListenInBuildWithoutStoredHandle(),
-      'test_allowsProviderSubscriptionOutsideWidgetState': (t) =>
-          t._allowsProviderSubscriptionOutsideWidgetState(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodConsumerStateProviderSubscriptionTest.new,
+    _RiverpodConsumerStateProviderSubscriptionTest._allCases,
   );
-  analysisRuleSuite<RiverpodListenManualForbiddenTest>(
+  analysisRuleSuite<_RiverpodListenManualForbiddenTest>(
     'RiverpodListenManualForbiddenTest',
-    RiverpodListenManualForbiddenTest.new,
-    {
-      'test_reportsAssignedListenManual': (t) => t._reportsAssignedListenManual(),
-      'test_reportsListenManualInTests': (t) => t._reportsListenManualInTests(),
-      'test_allowsRefListenInBuild': (t) => t._allowsRefListenInBuild(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodListenManualForbiddenTest.new,
+    _RiverpodListenManualForbiddenTest._allCases,
   );
 }

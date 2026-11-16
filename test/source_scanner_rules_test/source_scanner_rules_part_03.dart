@@ -1,6 +1,18 @@
 part of '../source_scanner_rules_test.dart';
 
-final class RiverpodSelectIdentityForbiddenTest extends _RiverpodRuleTest {
+final class _RiverpodSelectIdentityForbiddenTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodSelectIdentityForbiddenTest)> get _allCases =>
+      caseSet<_RiverpodSelectIdentityForbiddenTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsFieldSelect': (t) => t._allowsFieldSelect(),
+          'test_allowsRecordSelect': (t) => t._allowsRecordSelect(),
+          'test_allowsNonRiverpodIdentitySelectApi': (t) => t._allowsNonRiverpodIdentitySelectApi(),
+          'test_reportsTypedIdentitySelect': (t) => t._reportsTypedIdentitySelect(),
+          'test_reportsMultilineIdentitySelect': (t) => t._reportsMultilineIdentitySelect(),
+        },
+      );
+
   @override
   String get ruleName => 'riverpod_select_identity_forbidden';
   @override
@@ -187,7 +199,21 @@ abstract class _RiverpodMutationRuleTest extends _RiverpodRuleTest {
   }
 }
 
-final class RiverpodMutationExperimentalWarningTest extends _RiverpodMutationRuleTest {
+final class _RiverpodMutationExperimentalWarningTest extends _RiverpodMutationRuleTest {
+  static Map<String, Future<void> Function(_RiverpodMutationExperimentalWarningTest)>
+  get _allCases => caseSet<_RiverpodMutationExperimentalWarningTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_allowsDocumentedTrailingExperimentalNote': (t) =>
+          t._allowsDocumentedTrailingExperimentalNote(),
+      'test_allowsLeadingExperimentalNote': (t) => t._allowsLeadingExperimentalNote(),
+      'test_reportsMutationBesideNeighbourExperimentalNote': (t) =>
+          t._reportsMutationBesideNeighbourExperimentalNote(),
+      'test_allowsLocalMutationLookalike': (t) => t._allowsLocalMutationLookalike(),
+      'test_allowsQualifiedNonRiverpodMutation': (t) => t._allowsQualifiedNonRiverpodMutation(),
+    },
+  );
+
   @override
   String get ruleName => 'riverpod_mutation_experimental_warning';
   @override
@@ -254,7 +280,18 @@ final saveMutation = graphql.Mutation<int>();
   }
 }
 
-final class RiverpodMutationTopLevelTest extends _RiverpodMutationRuleTest {
+final class _RiverpodMutationTopLevelTest extends _RiverpodMutationRuleTest {
+  static Map<String, Future<void> Function(_RiverpodMutationTopLevelTest)> get _allCases =>
+      caseSet<_RiverpodMutationTopLevelTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsDocumentedFileScopeFinal': (t) => t._allowsDocumentedFileScopeFinal(),
+          'test_reportsStaticClassField': (t) => t._reportsStaticClassField(),
+          'test_reportsNonFinalTopLevel': (t) => t._reportsNonFinalTopLevel(),
+          'test_allowsLocalMutationLookalike': (t) => t._allowsLocalMutationLookalike(),
+        },
+      );
+
   @override
   String get ruleName => 'riverpod_mutation_top_level';
   @override
@@ -311,7 +348,18 @@ Object build() {
   }
 }
 
-final class RiverpodMutationRefReadTest extends _RiverpodMutationRuleTest {
+final class _RiverpodMutationRefReadTest extends _RiverpodMutationRuleTest {
+  static Map<String, Future<void> Function(_RiverpodMutationRefReadTest)> get _allCases =>
+      caseSet<_RiverpodMutationRefReadTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsDocumentedTransactionGet': (t) => t._allowsDocumentedTransactionGet(),
+          'test_allowsRefReadOutsideMutationCallback': (t) =>
+              t._allowsRefReadOutsideMutationCallback(),
+          'test_allowsReadInLookalikeRun': (t) => t._allowsReadInLookalikeRun(),
+        },
+      );
+
   @override
   String get ruleName => 'riverpod_mutation_ref_read';
   @override
@@ -411,7 +459,17 @@ extension AsyncValueExtensions<T> on AsyncValue<T> {
 ''';
 
 /// freezed-sealed.md:9 matches unions with `switch`, never `.when()`/`.map()`; Riverpod AsyncValue is sealed (freezed-sealed.md:136-146).
-final class AsyncValueSwitchOverWhenTest extends _RiverpodRuleTest {
+final class _AsyncValueSwitchOverWhenTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_AsyncValueSwitchOverWhenTest)> get _allCases =>
+      caseSet<_AsyncValueSwitchOverWhenTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsEveryWhenAndMapHelper': (t) => t._reportsEveryWhenAndMapHelper(),
+          'test_allowsSkillSealedSwitchAndWhenData': (t) => t._allowsSkillSealedSwitchAndWhenData(),
+          'test_allowsSameNamedLocalAsyncValue': (t) => t._allowsSameNamedLocalAsyncValue(),
+        },
+      );
+
   @override
   void setUp() {
     newPackage('riverpod').addFile('lib/riverpod.dart', _asyncValueDispatchStub);
@@ -486,7 +544,22 @@ Object label(AsyncValue<int> result) => (
   }
 }
 
-final class RiverpodAutoDisposeKeepAliveDependenciesTest extends _RiverpodRuleTest {
+final class _RiverpodAutoDisposeKeepAliveDependenciesTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodAutoDisposeKeepAliveDependenciesTest)>
+  get _allCases => caseSet<_RiverpodAutoDisposeKeepAliveDependenciesTest>(
+    parent: _SourceRuleTest._allCases,
+    own: {
+      'test_reportsSameFileClassNotifier': (t) => t._reportsSameFileClassNotifier(),
+      'test_allowsMixedKeepAliveAndAutoDisposeDependencies': (t) =>
+          t._allowsMixedKeepAliveAndAutoDisposeDependencies(),
+      'test_allowsUnresolvedDependency': (t) => t._allowsUnresolvedDependency(),
+      'test_allowsAlreadyKeepAlive': (t) => t._allowsAlreadyKeepAlive(),
+      'test_allowsFamilyProviderTarget': (t) => t._allowsFamilyProviderTarget(),
+      'test_allowsFamilyNotifierTarget': (t) => t._allowsFamilyNotifierTarget(),
+      'test_allowsReadOnlyKeepAliveProviderUse': (t) => t._allowsReadOnlyKeepAliveProviderUse(),
+    },
+  );
+
   @override
   String get ruleName => 'riverpod_auto_dispose_keepalive_dependencies';
   @override
@@ -637,7 +710,24 @@ int cartTotal(Ref ref) => ref.read(cartItemsProvider).length;
   }
 }
 
-final class RiverpodFeatureNotifierKeepaliveTest extends _RiverpodRuleTest {
+final class _RiverpodFeatureNotifierKeepaliveTest extends _RiverpodRuleTest {
+  static Map<String, Future<void> Function(_RiverpodFeatureNotifierKeepaliveTest)> get _allCases =>
+      caseSet<_RiverpodFeatureNotifierKeepaliveTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsExplicitKeepAliveFalse': (t) => t._reportsExplicitKeepAliveFalse(),
+          'test_allowsKeepAliveFeatureNotifier': (t) => t._allowsKeepAliveFeatureNotifier(),
+          'test_allowsFamilyFeatureNotifier': (t) => t._allowsFamilyFeatureNotifier(),
+          'test_allowsComputedFunctionProviderInNotifierFile': (t) =>
+              t._allowsComputedFunctionProviderInNotifierFile(),
+          'test_allowsDocumentedEphemeralNotifier': (t) => t._allowsDocumentedEphemeralNotifier(),
+          'test_allowsLifecycleCleanupNotifier': (t) => t._allowsLifecycleCleanupNotifier(),
+          'test_allowsNotifierOutsideFeaturePresentationNotifiers': (t) =>
+              t._allowsNotifierOutsideFeaturePresentationNotifiers(),
+          'test_severityIsError': (t) => t._severityIsError(),
+        },
+      );
+
   @override
   String get ruleName => 'riverpod_feature_notifier_keepalive';
   @override
@@ -761,93 +851,39 @@ class DraftNotifier {
 }
 
 void _defineSourceScannerRulesPart03Tests() {
-  analysisRuleSuite<RiverpodSelectIdentityForbiddenTest>(
+  analysisRuleSuite<_RiverpodSelectIdentityForbiddenTest>(
     'RiverpodSelectIdentityForbiddenTest',
-    RiverpodSelectIdentityForbiddenTest.new,
-    {
-      'test_allowsFieldSelect': (t) => t._allowsFieldSelect(),
-      'test_allowsRecordSelect': (t) => t._allowsRecordSelect(),
-      'test_allowsNonRiverpodIdentitySelectApi': (t) => t._allowsNonRiverpodIdentitySelectApi(),
-      'test_reportsTypedIdentitySelect': (t) => t._reportsTypedIdentitySelect(),
-      'test_reportsMultilineIdentitySelect': (t) => t._reportsMultilineIdentitySelect(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodSelectIdentityForbiddenTest.new,
+    _RiverpodSelectIdentityForbiddenTest._allCases,
   );
-  analysisRuleSuite<RiverpodMutationExperimentalWarningTest>(
+  analysisRuleSuite<_RiverpodMutationExperimentalWarningTest>(
     'RiverpodMutationExperimentalWarningTest',
-    RiverpodMutationExperimentalWarningTest.new,
-    {
-      'test_allowsDocumentedTrailingExperimentalNote': (t) =>
-          t._allowsDocumentedTrailingExperimentalNote(),
-      'test_allowsLeadingExperimentalNote': (t) => t._allowsLeadingExperimentalNote(),
-      'test_reportsMutationBesideNeighbourExperimentalNote': (t) =>
-          t._reportsMutationBesideNeighbourExperimentalNote(),
-      'test_allowsLocalMutationLookalike': (t) => t._allowsLocalMutationLookalike(),
-      'test_allowsQualifiedNonRiverpodMutation': (t) => t._allowsQualifiedNonRiverpodMutation(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodMutationExperimentalWarningTest.new,
+    _RiverpodMutationExperimentalWarningTest._allCases,
   );
-  analysisRuleSuite<RiverpodMutationTopLevelTest>(
+  analysisRuleSuite<_RiverpodMutationTopLevelTest>(
     'RiverpodMutationTopLevelTest',
-    RiverpodMutationTopLevelTest.new,
-    {
-      'test_allowsDocumentedFileScopeFinal': (t) => t._allowsDocumentedFileScopeFinal(),
-      'test_reportsStaticClassField': (t) => t._reportsStaticClassField(),
-      'test_reportsNonFinalTopLevel': (t) => t._reportsNonFinalTopLevel(),
-      'test_allowsLocalMutationLookalike': (t) => t._allowsLocalMutationLookalike(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodMutationTopLevelTest.new,
+    _RiverpodMutationTopLevelTest._allCases,
   );
-  analysisRuleSuite<RiverpodMutationRefReadTest>(
+  analysisRuleSuite<_RiverpodMutationRefReadTest>(
     'RiverpodMutationRefReadTest',
-    RiverpodMutationRefReadTest.new,
-    {
-      'test_allowsDocumentedTransactionGet': (t) => t._allowsDocumentedTransactionGet(),
-      'test_allowsRefReadOutsideMutationCallback': (t) => t._allowsRefReadOutsideMutationCallback(),
-      'test_allowsReadInLookalikeRun': (t) => t._allowsReadInLookalikeRun(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodMutationRefReadTest.new,
+    _RiverpodMutationRefReadTest._allCases,
   );
-  analysisRuleSuite<AsyncValueSwitchOverWhenTest>(
+  analysisRuleSuite<_AsyncValueSwitchOverWhenTest>(
     'AsyncValueSwitchOverWhenTest',
-    AsyncValueSwitchOverWhenTest.new,
-    {
-      'test_reportsEveryWhenAndMapHelper': (t) => t._reportsEveryWhenAndMapHelper(),
-      'test_allowsSkillSealedSwitchAndWhenData': (t) => t._allowsSkillSealedSwitchAndWhenData(),
-      'test_allowsSameNamedLocalAsyncValue': (t) => t._allowsSameNamedLocalAsyncValue(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _AsyncValueSwitchOverWhenTest.new,
+    _AsyncValueSwitchOverWhenTest._allCases,
   );
-  analysisRuleSuite<RiverpodAutoDisposeKeepAliveDependenciesTest>(
+  analysisRuleSuite<_RiverpodAutoDisposeKeepAliveDependenciesTest>(
     'RiverpodAutoDisposeKeepAliveDependenciesTest',
-    RiverpodAutoDisposeKeepAliveDependenciesTest.new,
-    {
-      'test_reportsSameFileClassNotifier': (t) => t._reportsSameFileClassNotifier(),
-      'test_allowsMixedKeepAliveAndAutoDisposeDependencies': (t) =>
-          t._allowsMixedKeepAliveAndAutoDisposeDependencies(),
-      'test_allowsUnresolvedDependency': (t) => t._allowsUnresolvedDependency(),
-      'test_allowsAlreadyKeepAlive': (t) => t._allowsAlreadyKeepAlive(),
-      'test_allowsFamilyProviderTarget': (t) => t._allowsFamilyProviderTarget(),
-      'test_allowsFamilyNotifierTarget': (t) => t._allowsFamilyNotifierTarget(),
-      'test_allowsReadOnlyKeepAliveProviderUse': (t) => t._allowsReadOnlyKeepAliveProviderUse(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodAutoDisposeKeepAliveDependenciesTest.new,
+    _RiverpodAutoDisposeKeepAliveDependenciesTest._allCases,
   );
-  analysisRuleSuite<RiverpodFeatureNotifierKeepaliveTest>(
+  analysisRuleSuite<_RiverpodFeatureNotifierKeepaliveTest>(
     'RiverpodFeatureNotifierKeepaliveTest',
-    RiverpodFeatureNotifierKeepaliveTest.new,
-    {
-      'test_reportsExplicitKeepAliveFalse': (t) => t._reportsExplicitKeepAliveFalse(),
-      'test_allowsKeepAliveFeatureNotifier': (t) => t._allowsKeepAliveFeatureNotifier(),
-      'test_allowsFamilyFeatureNotifier': (t) => t._allowsFamilyFeatureNotifier(),
-      'test_allowsComputedFunctionProviderInNotifierFile': (t) =>
-          t._allowsComputedFunctionProviderInNotifierFile(),
-      'test_allowsDocumentedEphemeralNotifier': (t) => t._allowsDocumentedEphemeralNotifier(),
-      'test_allowsLifecycleCleanupNotifier': (t) => t._allowsLifecycleCleanupNotifier(),
-      'test_allowsNotifierOutsideFeaturePresentationNotifiers': (t) =>
-          t._allowsNotifierOutsideFeaturePresentationNotifiers(),
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _RiverpodFeatureNotifierKeepaliveTest.new,
+    _RiverpodFeatureNotifierKeepaliveTest._allCases,
   );
 }

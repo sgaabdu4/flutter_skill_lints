@@ -6,38 +6,20 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_widget_pri
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<KeepStateBelowItsWidgetTest>(
+  analysisRuleSuite<_KeepStateBelowItsWidgetTest>(
     'KeepStateBelowItsWidgetTest',
-    KeepStateBelowItsWidgetTest.new,
-    {
-      'test_stateBeforeWidget_lint': (t) => t._stateBeforeWidgetLint(),
-      'test_stateBelowWidget_noLint': (t) => t._stateBelowWidgetNoLint(),
-      'test_stateWithoutSameFileWidget_noLint': (t) => t._stateWithoutSameFileWidgetNoLint(),
-    },
+    _KeepStateBelowItsWidgetTest.new,
+    _KeepStateBelowItsWidgetTest._allCases,
   );
-  analysisRuleSuite<PreferWidgetPrivateMembersTest>(
+  analysisRuleSuite<_PreferWidgetPrivateMembersTest>(
     'PreferWidgetPrivateMembersTest',
-    PreferWidgetPrivateMembersTest.new,
-    {
-      'test_publicField_lint': (t) => t._publicFieldLint(),
-      'test_constructorBackedFinalField_noLint': (t) => t._constructorBackedFinalFieldNoLint(),
-      'test_constructorBackedDefaultFinalField_noLint': (t) =>
-          t._constructorBackedDefaultFinalFieldNoLint(),
-      'test_initializerListBackedFinalField_noLint': (t) =>
-          t._initializerListBackedFinalFieldNoLint(),
-      'test_constructorBackedMutableField_lint': (t) => t._constructorBackedMutableFieldLint(),
-      'test_publicMethod_lint': (t) => t._publicMethodLint(),
-      'test_privateAndFrameworkMembers_noLint': (t) => t._privateAndFrameworkMembersNoLint(),
-    },
+    _PreferWidgetPrivateMembersTest.new,
+    _PreferWidgetPrivateMembersTest._allCases,
   );
-  analysisRuleSuite<CheckForEqualsInRenderObjectSettersTest>(
+  analysisRuleSuite<_CheckForEqualsInRenderObjectSettersTest>(
     'CheckForEqualsInRenderObjectSettersTest',
-    CheckForEqualsInRenderObjectSettersTest.new,
-    {
-      'test_setterWithoutEqualityGuard_lint': (t) => t._setterWithoutEqualityGuardLint(),
-      'test_setterWithEqualityGuard_noLint': (t) => t._setterWithEqualityGuardNoLint(),
-      'test_nonInvalidatingSetter_noLint': (t) => t._nonInvalidatingSetterNoLint(),
-    },
+    _CheckForEqualsInRenderObjectSettersTest.new,
+    _CheckForEqualsInRenderObjectSettersTest._allCases,
   );
 }
 
@@ -84,7 +66,17 @@ class RenderBox extends RenderObject {
   }
 }
 
-final class KeepStateBelowItsWidgetTest extends _FlutterStructureRuleTest {
+final class _KeepStateBelowItsWidgetTest extends _FlutterStructureRuleTest {
+  static Map<String, Future<void> Function(_KeepStateBelowItsWidgetTest)> get _allCases =>
+      caseSet<_KeepStateBelowItsWidgetTest>(
+        parent: const {},
+        own: {
+          'test_stateBeforeWidget_lint': (t) => t._stateBeforeWidgetLint(),
+          'test_stateBelowWidget_noLint': (t) => t._stateBelowWidgetNoLint(),
+          'test_stateWithoutSameFileWidget_noLint': (t) => t._stateWithoutSameFileWidgetNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = KeepStateBelowItsWidget();
@@ -128,7 +120,23 @@ class _GenericState extends State<StatefulWidget> {}
   }
 }
 
-final class PreferWidgetPrivateMembersTest extends _FlutterStructureRuleTest {
+final class _PreferWidgetPrivateMembersTest extends _FlutterStructureRuleTest {
+  static Map<String, Future<void> Function(_PreferWidgetPrivateMembersTest)> get _allCases =>
+      caseSet<_PreferWidgetPrivateMembersTest>(
+        parent: const {},
+        own: {
+          'test_publicField_lint': (t) => t._publicFieldLint(),
+          'test_constructorBackedFinalField_noLint': (t) => t._constructorBackedFinalFieldNoLint(),
+          'test_constructorBackedDefaultFinalField_noLint': (t) =>
+              t._constructorBackedDefaultFinalFieldNoLint(),
+          'test_initializerListBackedFinalField_noLint': (t) =>
+              t._initializerListBackedFinalFieldNoLint(),
+          'test_constructorBackedMutableField_lint': (t) => t._constructorBackedMutableFieldLint(),
+          'test_publicMethod_lint': (t) => t._publicMethodLint(),
+          'test_privateAndFrameworkMembers_noLint': (t) => t._privateAndFrameworkMembersNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = PreferWidgetPrivateMembers();
@@ -231,7 +239,17 @@ class Counter extends StatelessWidget {
   }
 }
 
-final class CheckForEqualsInRenderObjectSettersTest extends _FlutterStructureRuleTest {
+final class _CheckForEqualsInRenderObjectSettersTest extends _FlutterStructureRuleTest {
+  static Map<String, Future<void> Function(_CheckForEqualsInRenderObjectSettersTest)>
+  get _allCases => caseSet<_CheckForEqualsInRenderObjectSettersTest>(
+    parent: const {},
+    own: {
+      'test_setterWithoutEqualityGuard_lint': (t) => t._setterWithoutEqualityGuardLint(),
+      'test_setterWithEqualityGuard_noLint': (t) => t._setterWithEqualityGuardNoLint(),
+      'test_nonInvalidatingSetter_noLint': (t) => t._nonInvalidatingSetterNoLint(),
+    },
+  );
+
   @override
   void setUp() {
     rule = CheckForEqualsInRenderObjectSetters();

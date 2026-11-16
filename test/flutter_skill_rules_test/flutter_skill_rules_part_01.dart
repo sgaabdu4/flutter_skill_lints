@@ -1,6 +1,20 @@
 part of '../flutter_skill_rules_test.dart';
 
-final class AvoidPrivateWidgetClassesTest extends _FlutterSkillRuleTest {
+final class _AvoidPrivateWidgetClassesTest extends _FlutterSkillRuleTest {
+  static Map<String, Future<void> Function(_AvoidPrivateWidgetClassesTest)> get _allCases =>
+      caseSet<_AvoidPrivateWidgetClassesTest>(
+        parent: const {},
+        own: {
+          'test_reportsPrivateStatelessWidget': (t) => t._reportsPrivateStatelessWidget(),
+          'test_allowsPublicWidgetClasses': (t) => t._allowsPublicWidgetClasses(),
+          'test_allowsPrivateStateSubclasses': (t) => t._allowsPrivateStateSubclasses(),
+          'test_allowsPrivateWidgetClassesInTestFiles': (t) =>
+              t._allowsPrivateWidgetClassesInTestFiles(),
+          'test_reportsPrivateWidgetClassesInPartFiles': (t) =>
+              t._reportsPrivateWidgetClassesInPartFiles(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidPrivateWidgetClasses();
@@ -94,7 +108,28 @@ class _SheetContent extends StatelessWidget {
   }
 }
 
-final class UseContextMountedAfterAwaitTest extends _FlutterSkillRuleTest {
+final class _UseContextMountedAfterAwaitTest extends _FlutterSkillRuleTest {
+  static Map<String, Future<void> Function(_UseContextMountedAfterAwaitTest)> get _allCases =>
+      caseSet<_UseContextMountedAfterAwaitTest>(
+        parent: const {},
+        own: {
+          'test_reportsContextAfterAwait': (t) => t._reportsContextAfterAwait(),
+          'test_allowsMountedGuard': (t) => t._allowsMountedGuard(),
+          'test_reportsStateContextMountedGuardAfterAwait': (t) =>
+              t._reportsStateContextMountedGuardAfterAwait(),
+          'test_reportsExplicitStateContextMountedGuardAfterAwait': (t) =>
+              t._reportsExplicitStateContextMountedGuardAfterAwait(),
+          'test_allowsCapturedStateContextMountedGuardAfterAwait': (t) =>
+              t._allowsCapturedStateContextMountedGuardAfterAwait(),
+          'test_reportsContextAfterAwaitInAsyncCallback': (t) =>
+              t._reportsContextAfterAwaitInAsyncCallback(),
+          'test_reportsContextAfterAwaitInNestedBlocks': (t) =>
+              t._reportsContextAfterAwaitInNestedBlocks(),
+          'test_allowsGuardsInNestedBlocksAndSkillExamples': (t) =>
+              t._allowsGuardsInNestedBlocksAndSkillExamples(),
+        },
+      );
+
   @override
   void setUp() {
     rule = UseContextMountedAfterAwait();
@@ -337,7 +372,23 @@ Future<void> namedArgumentLabel(BuildContext context, BuildContext sheetContext)
   }
 }
 
-final class AvoidLegacyRiverpodApisTest extends _FlutterSkillRuleTest {
+final class _AvoidLegacyRiverpodApisTest extends _FlutterSkillRuleTest {
+  static Map<String, Future<void> Function(_AvoidLegacyRiverpodApisTest)> get _allCases =>
+      caseSet<_AvoidLegacyRiverpodApisTest>(
+        parent: const {},
+        own: {
+          'test_reportsLegacyProvider': (t) => t._reportsLegacyProvider(),
+          'test_allowsUnifiedRef': (t) => t._allowsUnifiedRef(),
+          'test_reportsLegacyImportAndStateNotifier': (t) =>
+              t._reportsLegacyImportAndStateNotifier(),
+          'test_reportsRiverpodLegacyImport': (t) => t._reportsRiverpodLegacyImport(),
+          'test_reportsRefAliasAndLegacyRefTypes': (t) => t._reportsRefAliasAndLegacyRefTypes(),
+          'test_allowsUserTypesNamedLikeRiverpodApis': (t) =>
+              t._allowsUserTypesNamedLikeRiverpodApis(),
+          'test_severityIsError': (t) => t._severityIsError(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidLegacyRiverpodApis();
@@ -423,7 +474,23 @@ StateNotifier<int>? notifier;
   }
 }
 
-final class AvoidDynamicExceptJsonMapsTest extends _FlutterSkillRuleTest {
+final class _AvoidDynamicExceptJsonMapsTest extends _FlutterSkillRuleTest {
+  static Map<String, Future<void> Function(_AvoidDynamicExceptJsonMapsTest)> get _allCases =>
+      caseSet<_AvoidDynamicExceptJsonMapsTest>(
+        parent: const {},
+        own: {
+          'test_reportsBareDynamic': (t) => t._reportsBareDynamic(),
+          'test_allowsJsonMapDynamic': (t) => t._allowsJsonMapDynamic(),
+          'test_allowsJsonMapCastDynamic': (t) => t._allowsJsonMapCastDynamic(),
+          'test_allowsJsonMapLiteralDynamic': (t) => t._allowsJsonMapLiteralDynamic(),
+          'test_reportsNonJsonLiteralDynamic': (t) => t._reportsNonJsonLiteralDynamic(),
+          'test_reportsUntypedRuntimeBoundaryDynamic': (t) =>
+              t._reportsUntypedRuntimeBoundaryDynamic(),
+          'test_allowsGeneratedLocalizationsDynamic': (t) =>
+              t._allowsGeneratedLocalizationsDynamic(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidDynamicExceptJsonMaps();
@@ -513,7 +580,16 @@ abstract class AppLocalizations {
   }
 }
 
-final class AvoidNullBangTest extends _FlutterSkillRuleTest {
+final class _AvoidNullBangTest extends _FlutterSkillRuleTest {
+  static Map<String, Future<void> Function(_AvoidNullBangTest)> get _allCases =>
+      caseSet<_AvoidNullBangTest>(
+        parent: const {},
+        own: {
+          'test_reportsNullBang': (t) => t._reportsNullBang(),
+          'test_allowsNullCheck': (t) => t._allowsNullCheck(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNullBang();
@@ -540,7 +616,16 @@ void f(String? value) {
   }
 }
 
-final class AvoidWidgetBuildHelpersTest extends _FlutterSkillRuleTest {
+final class _AvoidWidgetBuildHelpersTest extends _FlutterSkillRuleTest {
+  static Map<String, Future<void> Function(_AvoidWidgetBuildHelpersTest)> get _allCases =>
+      caseSet<_AvoidWidgetBuildHelpersTest>(
+        parent: const {},
+        own: {
+          'test_reportsBuildHelper': (t) => t._reportsBuildHelper(),
+          'test_allowsNamedWidgetClass': (t) => t._allowsNamedWidgetClass(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidWidgetBuildHelpers();
@@ -577,7 +662,16 @@ class ScreenTitle extends StatelessWidget {
   }
 }
 
-final class AvoidShrinkWrapTest extends _FlutterSkillRuleTest {
+final class _AvoidShrinkWrapTest extends _FlutterSkillRuleTest {
+  static Map<String, Future<void> Function(_AvoidShrinkWrapTest)> get _allCases =>
+      caseSet<_AvoidShrinkWrapTest>(
+        parent: const {},
+        own: {
+          'test_reportsShrinkWrapTrue': (t) => t._reportsShrinkWrapTrue(),
+          'test_allowsDefaultListView': (t) => t._allowsDefaultListView(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidShrinkWrap();
@@ -602,7 +696,16 @@ final widget = ListView();
   }
 }
 
-final class GuardContextPopTest extends _FlutterSkillRuleTest {
+final class _GuardContextPopTest extends _FlutterSkillRuleTest {
+  static Map<String, Future<void> Function(_GuardContextPopTest)> get _allCases =>
+      caseSet<_GuardContextPopTest>(
+        parent: const {},
+        own: {
+          'test_reportsUnguardedPop': (t) => t._reportsUnguardedPop(),
+          'test_allowsCanPopGuardWithTypedFallback': (t) => t._allowsCanPopGuardWithTypedFallback(),
+        },
+      );
+
   @override
   void setUp() {
     rule = GuardContextPop();
@@ -640,7 +743,17 @@ void close(BuildContext context) {
   }
 }
 
-final class UseRefInvalidateTest extends _FlutterSkillRuleTest {
+final class _UseRefInvalidateTest extends _FlutterSkillRuleTest {
+  static Map<String, Future<void> Function(_UseRefInvalidateTest)> get _allCases =>
+      caseSet<_UseRefInvalidateTest>(
+        parent: const {},
+        own: {
+          'test_reportsIgnoredRefresh': (t) => t._reportsIgnoredRefresh(),
+          'test_allowsUsedRefreshResult': (t) => t._allowsUsedRefreshResult(),
+          'test_severityIsError': (t) => t._severityIsError(),
+        },
+      );
+
   @override
   void setUp() {
     rule = UseRefInvalidate();
@@ -678,7 +791,19 @@ void reset(Ref ref) {
   }
 }
 
-final class UseSealedFreezedClassesTest extends _FlutterSkillRuleTest {
+final class _UseSealedFreezedClassesTest extends _FlutterSkillRuleTest {
+  static Map<String, Future<void> Function(_UseSealedFreezedClassesTest)> get _allCases =>
+      caseSet<_UseSealedFreezedClassesTest>(
+        parent: const {},
+        own: {
+          'test_reportsAbstractFreezed': (t) => t._reportsAbstractFreezed(),
+          'test_allowsSealedFreezed': (t) => t._allowsSealedFreezed(),
+          'test_reportsPlainFreezedClass': (t) => t._reportsPlainFreezedClass(),
+          'test_ignoresSameNamedNonFreezedAnnotation': (t) =>
+              t._ignoresSameNamedNonFreezedAnnotation(),
+        },
+      );
+
   @override
   void setUp() {
     rule = UseSealedFreezedClasses();
@@ -730,7 +855,22 @@ class User {}
   }
 }
 
-final class AvoidRouteParamThrowInBuildTest extends _FlutterSkillRuleTest {
+final class _AvoidRouteParamThrowInBuildTest extends _FlutterSkillRuleTest {
+  static Map<String, Future<void> Function(_AvoidRouteParamThrowInBuildTest)> get _allCases =>
+      caseSet<_AvoidRouteParamThrowInBuildTest>(
+        parent: const {},
+        own: {
+          'test_reportsFirstWhereThrowInBuild': (t) => t._reportsFirstWhereThrowInBuild(),
+          'test_allowsFallbackValue': (t) => t._allowsFallbackValue(),
+          'test_reportsDirectThrowAndUnguardedFirstWhereInBuild': (t) =>
+              t._reportsDirectThrowAndUnguardedFirstWhereInBuild(),
+          'test_allowsThrowInsideBuildClosure': (t) => t._allowsThrowInsideBuildClosure(),
+          'test_allowsThrowInNonWidgetBuild': (t) => t._allowsThrowInNonWidgetBuild(),
+          'test_allowsSameNamedFirstWhereOnNonIterable': (t) =>
+              t._allowsSameNamedFirstWhereOnNonIterable(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidRouteParamThrowInBuild();
@@ -852,112 +992,59 @@ class Screen extends StatelessWidget {
 }
 
 void _defineFlutterSkillRulesPart01Tests() {
-  analysisRuleSuite<UseContextMountedAfterAwaitTest>(
+  analysisRuleSuite<_UseContextMountedAfterAwaitTest>(
     'UseContextMountedAfterAwaitTest',
-    UseContextMountedAfterAwaitTest.new,
-    {
-      'test_reportsContextAfterAwait': (t) => t._reportsContextAfterAwait(),
-      'test_allowsMountedGuard': (t) => t._allowsMountedGuard(),
-      'test_reportsStateContextMountedGuardAfterAwait': (t) =>
-          t._reportsStateContextMountedGuardAfterAwait(),
-      'test_reportsExplicitStateContextMountedGuardAfterAwait': (t) =>
-          t._reportsExplicitStateContextMountedGuardAfterAwait(),
-      'test_allowsCapturedStateContextMountedGuardAfterAwait': (t) =>
-          t._allowsCapturedStateContextMountedGuardAfterAwait(),
-      'test_reportsContextAfterAwaitInAsyncCallback': (t) =>
-          t._reportsContextAfterAwaitInAsyncCallback(),
-      'test_reportsContextAfterAwaitInNestedBlocks': (t) =>
-          t._reportsContextAfterAwaitInNestedBlocks(),
-      'test_allowsGuardsInNestedBlocksAndSkillExamples': (t) =>
-          t._allowsGuardsInNestedBlocksAndSkillExamples(),
-    },
+    _UseContextMountedAfterAwaitTest.new,
+    _UseContextMountedAfterAwaitTest._allCases,
   );
-  analysisRuleSuite<AvoidLegacyRiverpodApisTest>(
+  analysisRuleSuite<_AvoidLegacyRiverpodApisTest>(
     'AvoidLegacyRiverpodApisTest',
-    AvoidLegacyRiverpodApisTest.new,
-    {
-      'test_reportsLegacyProvider': (t) => t._reportsLegacyProvider(),
-      'test_allowsUnifiedRef': (t) => t._allowsUnifiedRef(),
-      'test_reportsLegacyImportAndStateNotifier': (t) => t._reportsLegacyImportAndStateNotifier(),
-      'test_reportsRiverpodLegacyImport': (t) => t._reportsRiverpodLegacyImport(),
-      'test_reportsRefAliasAndLegacyRefTypes': (t) => t._reportsRefAliasAndLegacyRefTypes(),
-      'test_allowsUserTypesNamedLikeRiverpodApis': (t) => t._allowsUserTypesNamedLikeRiverpodApis(),
-      'test_severityIsError': (t) => t._severityIsError(),
-    },
+    _AvoidLegacyRiverpodApisTest.new,
+    _AvoidLegacyRiverpodApisTest._allCases,
   );
-  analysisRuleSuite<AvoidDynamicExceptJsonMapsTest>(
+  analysisRuleSuite<_AvoidDynamicExceptJsonMapsTest>(
     'AvoidDynamicExceptJsonMapsTest',
-    AvoidDynamicExceptJsonMapsTest.new,
-    {
-      'test_reportsBareDynamic': (t) => t._reportsBareDynamic(),
-      'test_allowsJsonMapDynamic': (t) => t._allowsJsonMapDynamic(),
-      'test_allowsJsonMapCastDynamic': (t) => t._allowsJsonMapCastDynamic(),
-      'test_allowsJsonMapLiteralDynamic': (t) => t._allowsJsonMapLiteralDynamic(),
-      'test_reportsNonJsonLiteralDynamic': (t) => t._reportsNonJsonLiteralDynamic(),
-      'test_reportsUntypedRuntimeBoundaryDynamic': (t) => t._reportsUntypedRuntimeBoundaryDynamic(),
-      'test_allowsGeneratedLocalizationsDynamic': (t) => t._allowsGeneratedLocalizationsDynamic(),
-    },
+    _AvoidDynamicExceptJsonMapsTest.new,
+    _AvoidDynamicExceptJsonMapsTest._allCases,
   );
-  analysisRuleSuite<AvoidNullBangTest>('AvoidNullBangTest', AvoidNullBangTest.new, {
-    'test_reportsNullBang': (t) => t._reportsNullBang(),
-    'test_allowsNullCheck': (t) => t._allowsNullCheck(),
-  });
-  analysisRuleSuite<AvoidPrivateWidgetClassesTest>(
+  analysisRuleSuite<_AvoidNullBangTest>(
+    'AvoidNullBangTest',
+    _AvoidNullBangTest.new,
+    _AvoidNullBangTest._allCases,
+  );
+  analysisRuleSuite<_AvoidPrivateWidgetClassesTest>(
     'AvoidPrivateWidgetClassesTest',
-    AvoidPrivateWidgetClassesTest.new,
-    {
-      'test_reportsPrivateStatelessWidget': (t) => t._reportsPrivateStatelessWidget(),
-      'test_allowsPublicWidgetClasses': (t) => t._allowsPublicWidgetClasses(),
-      'test_allowsPrivateStateSubclasses': (t) => t._allowsPrivateStateSubclasses(),
-      'test_allowsPrivateWidgetClassesInTestFiles': (t) =>
-          t._allowsPrivateWidgetClassesInTestFiles(),
-      'test_reportsPrivateWidgetClassesInPartFiles': (t) =>
-          t._reportsPrivateWidgetClassesInPartFiles(),
-    },
+    _AvoidPrivateWidgetClassesTest.new,
+    _AvoidPrivateWidgetClassesTest._allCases,
   );
-  analysisRuleSuite<AvoidWidgetBuildHelpersTest>(
+  analysisRuleSuite<_AvoidWidgetBuildHelpersTest>(
     'AvoidWidgetBuildHelpersTest',
-    AvoidWidgetBuildHelpersTest.new,
-    {
-      'test_reportsBuildHelper': (t) => t._reportsBuildHelper(),
-      'test_allowsNamedWidgetClass': (t) => t._allowsNamedWidgetClass(),
-    },
+    _AvoidWidgetBuildHelpersTest.new,
+    _AvoidWidgetBuildHelpersTest._allCases,
   );
-  analysisRuleSuite<AvoidShrinkWrapTest>('AvoidShrinkWrapTest', AvoidShrinkWrapTest.new, {
-    'test_reportsShrinkWrapTrue': (t) => t._reportsShrinkWrapTrue(),
-    'test_allowsDefaultListView': (t) => t._allowsDefaultListView(),
-  });
-  analysisRuleSuite<GuardContextPopTest>('GuardContextPopTest', GuardContextPopTest.new, {
-    'test_reportsUnguardedPop': (t) => t._reportsUnguardedPop(),
-    'test_allowsCanPopGuardWithTypedFallback': (t) => t._allowsCanPopGuardWithTypedFallback(),
-  });
-  analysisRuleSuite<UseRefInvalidateTest>('UseRefInvalidateTest', UseRefInvalidateTest.new, {
-    'test_reportsIgnoredRefresh': (t) => t._reportsIgnoredRefresh(),
-    'test_allowsUsedRefreshResult': (t) => t._allowsUsedRefreshResult(),
-    'test_severityIsError': (t) => t._severityIsError(),
-  });
-  analysisRuleSuite<UseSealedFreezedClassesTest>(
+  analysisRuleSuite<_AvoidShrinkWrapTest>(
+    'AvoidShrinkWrapTest',
+    _AvoidShrinkWrapTest.new,
+    _AvoidShrinkWrapTest._allCases,
+  );
+  analysisRuleSuite<_GuardContextPopTest>(
+    'GuardContextPopTest',
+    _GuardContextPopTest.new,
+    _GuardContextPopTest._allCases,
+  );
+  analysisRuleSuite<_UseRefInvalidateTest>(
+    'UseRefInvalidateTest',
+    _UseRefInvalidateTest.new,
+    _UseRefInvalidateTest._allCases,
+  );
+  analysisRuleSuite<_UseSealedFreezedClassesTest>(
     'UseSealedFreezedClassesTest',
-    UseSealedFreezedClassesTest.new,
-    {
-      'test_reportsAbstractFreezed': (t) => t._reportsAbstractFreezed(),
-      'test_allowsSealedFreezed': (t) => t._allowsSealedFreezed(),
-      'test_reportsPlainFreezedClass': (t) => t._reportsPlainFreezedClass(),
-      'test_ignoresSameNamedNonFreezedAnnotation': (t) => t._ignoresSameNamedNonFreezedAnnotation(),
-    },
+    _UseSealedFreezedClassesTest.new,
+    _UseSealedFreezedClassesTest._allCases,
   );
-  analysisRuleSuite<AvoidRouteParamThrowInBuildTest>(
+  analysisRuleSuite<_AvoidRouteParamThrowInBuildTest>(
     'AvoidRouteParamThrowInBuildTest',
-    AvoidRouteParamThrowInBuildTest.new,
-    {
-      'test_reportsFirstWhereThrowInBuild': (t) => t._reportsFirstWhereThrowInBuild(),
-      'test_allowsFallbackValue': (t) => t._allowsFallbackValue(),
-      'test_reportsDirectThrowAndUnguardedFirstWhereInBuild': (t) =>
-          t._reportsDirectThrowAndUnguardedFirstWhereInBuild(),
-      'test_allowsThrowInsideBuildClosure': (t) => t._allowsThrowInsideBuildClosure(),
-      'test_allowsThrowInNonWidgetBuild': (t) => t._allowsThrowInNonWidgetBuild(),
-      'test_allowsSameNamedFirstWhereOnNonIterable': (t) =>
-          t._allowsSameNamedFirstWhereOnNonIterable(),
-    },
+    _AvoidRouteParamThrowInBuildTest.new,
+    _AvoidRouteParamThrowInBuildTest._allCases,
   );
 }

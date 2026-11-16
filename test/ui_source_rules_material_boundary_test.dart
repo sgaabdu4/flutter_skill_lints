@@ -7,32 +7,34 @@ import 'package:flutter_skill_lints/src/rules/material_source_rules.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<WidgetMaterialBoundaryTest>(
+  analysisRuleSuite<_WidgetMaterialBoundaryTest>(
     'WidgetMaterialBoundaryTest',
-    WidgetMaterialBoundaryTest.new,
-    {
-      'test_reportsCoreOrganismMaterialSurface': (t) => t._reportsCoreOrganismMaterialSurface(),
-      'test_reportsCoreOrganismInkWellSurface': (t) => t._reportsCoreOrganismInkWellSurface(),
-      'test_reportsCoreMoleculeInkSurface': (t) => t._reportsCoreMoleculeInkSurface(),
-      'test_reportsFeatureWidgetMaterialSurface': (t) => t._reportsFeatureWidgetMaterialSurface(),
-      'test_allowsAtomMaterialOwner': (t) => t._allowsAtomMaterialOwner(),
-      'test_allowsAppShellMaterialOwner': (t) => t._allowsAppShellMaterialOwner(),
-      'test_allowsTests': (t) => t._allowsTests(),
-    },
+    _WidgetMaterialBoundaryTest.new,
+    _WidgetMaterialBoundaryTest._allCases,
   );
-  analysisRuleSuite<AtomWidgetLayerDependencyTest>(
+  analysisRuleSuite<_AtomWidgetLayerDependencyTest>(
     'AtomWidgetLayerDependencyTest',
-    AtomWidgetLayerDependencyTest.new,
-    {
-      'test_reportsAtomImportingFeaturePresentationWidget': (t) =>
-          t._reportsAtomImportingFeaturePresentationWidget(),
-      'test_reportsAtomImportingMolecule': (t) => t._reportsAtomImportingMolecule(),
-      'test_allowsAtomImportingAtom': (t) => t._allowsAtomImportingAtom(),
-    },
+    _AtomWidgetLayerDependencyTest.new,
+    _AtomWidgetLayerDependencyTest._allCases,
   );
 }
 
-final class WidgetMaterialBoundaryTest extends AnalysisRuleTest {
+final class _WidgetMaterialBoundaryTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_WidgetMaterialBoundaryTest)> get _allCases =>
+      caseSet<_WidgetMaterialBoundaryTest>(
+        parent: const {},
+        own: {
+          'test_reportsCoreOrganismMaterialSurface': (t) => t._reportsCoreOrganismMaterialSurface(),
+          'test_reportsCoreOrganismInkWellSurface': (t) => t._reportsCoreOrganismInkWellSurface(),
+          'test_reportsCoreMoleculeInkSurface': (t) => t._reportsCoreMoleculeInkSurface(),
+          'test_reportsFeatureWidgetMaterialSurface': (t) =>
+              t._reportsFeatureWidgetMaterialSurface(),
+          'test_allowsAtomMaterialOwner': (t) => t._allowsAtomMaterialOwner(),
+          'test_allowsAppShellMaterialOwner': (t) => t._allowsAppShellMaterialOwner(),
+          'test_allowsTests': (t) => t._allowsTests(),
+        },
+      );
+
   static const _ruleName = 'widget_material_boundary';
 
   @override
@@ -220,7 +222,18 @@ class InkWell extends Widget {
   }
 }
 
-final class AtomWidgetLayerDependencyTest extends AnalysisRuleTest {
+final class _AtomWidgetLayerDependencyTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AtomWidgetLayerDependencyTest)> get _allCases =>
+      caseSet<_AtomWidgetLayerDependencyTest>(
+        parent: const {},
+        own: {
+          'test_reportsAtomImportingFeaturePresentationWidget': (t) =>
+              t._reportsAtomImportingFeaturePresentationWidget(),
+          'test_reportsAtomImportingMolecule': (t) => t._reportsAtomImportingMolecule(),
+          'test_allowsAtomImportingAtom': (t) => t._allowsAtomImportingAtom(),
+        },
+      );
+
   static const _ruleName = 'atom_widget_layer_dependency';
 
   @override

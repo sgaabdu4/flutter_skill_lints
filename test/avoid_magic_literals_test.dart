@@ -6,65 +6,77 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidMagicLiteralsTest>('AvoidMagicLiteralsTest', AvoidMagicLiteralsTest.new, {
-    'test_severityIsError': (t) => t._severityIsError(),
-    'test_allowsSampleDataInsideResolvedPreviewFunction': (t) =>
-        t._allowsSampleDataInsideResolvedPreviewFunction(),
-    'test_allowsSampleDataInsideResolvedPreviewMethodAndConstructor': (t) =>
-        t._allowsSampleDataInsideResolvedPreviewMethodAndConstructor(),
-    'test_reportsBoundaryLiteralInsideMultiPreviewClass': (t) =>
-        t._reportsBoundaryLiteralInsideMultiPreviewClass(),
-    'test_reportsSampleDataUnderLookalikePreviewAnnotation': (t) =>
-        t._reportsSampleDataUnderLookalikePreviewAnnotation(),
-    'test_reportsSampleDataOutsidePreview': (t) => t._reportsSampleDataOutsidePreview(),
-    'test_reportsRawNumberLiteral': (t) => t._reportsRawNumberLiteral(),
-    'test_reportsNumericComparisonBoundaries': (t) => t._reportsNumericComparisonBoundaries(),
-    'test_allowsStatusCodeComparisonsForDedicatedRule': (t) =>
-        t._allowsStatusCodeComparisonsForDedicatedRule(),
-    'test_reportsGeneratedLiteralAppeasementConstants': (t) =>
-        t._reportsGeneratedLiteralAppeasementConstants(),
-    'test_allowsVersionAndProtocolNumbersInNames': (t) =>
-        t._allowsVersionAndProtocolNumbersInNames(),
-    'test_allowsDedicatedErrorCodeOwnerClasses': (t) => t._allowsDedicatedErrorCodeOwnerClasses(),
-    'test_allowsDedicatedErrorCodeOwnerFiles': (t) => t._allowsDedicatedErrorCodeOwnerFiles(),
-    'test_allowsCommonNumericSentinelComparisons': (t) =>
-        t._allowsCommonNumericSentinelComparisons(),
-    'test_reportsRawStringLiteral': (t) => t._reportsRawStringLiteral(),
-    'test_allowsUserFeedbackThroughWidgetCallbacks': (t) =>
-        t._allowsUserFeedbackThroughWidgetCallbacks(),
-    'test_reportsProtocolHeaderKeyBesideCallbackProse': (t) =>
-        t._reportsProtocolHeaderKeyBesideCallbackProse(),
-    'test_reportsInlineDateFormatPatternArgument': (t) =>
-        t._reportsInlineDateFormatPatternArgument(),
-    'test_reportsInlineDateFormatConstructorPattern': (t) =>
-        t._reportsInlineDateFormatConstructorPattern(),
-    'test_reportsNamedDateFormatPatternReference': (t) =>
-        t._reportsNamedDateFormatPatternReference(),
-    'test_reportsNamedDateFormatConstructorPatternReference': (t) =>
-        t._reportsNamedDateFormatConstructorPatternReference(),
-    'test_reportsStringInterpolationWithRawText': (t) => t._reportsStringInterpolationWithRawText(),
-    'test_allowsNamedConstDefinitionsAndReferences': (t) =>
-        t._allowsNamedConstDefinitionsAndReferences(),
-    'test_allowsCommonSentinelNumbers': (t) => t._allowsCommonSentinelNumbers(),
-    'test_allowsImportsAndAnnotations': (t) => t._allowsImportsAndAnnotations(),
-    'test_allowsConstantRegistryFiles': (t) => t._allowsConstantRegistryFiles(),
-    'test_allowsJsonKeysInModelCodecOwner': (t) => t._allowsJsonKeysInModelCodecOwner(),
-    'test_allowsJsonKeysInDataModelsFile': (t) => t._allowsJsonKeysInDataModelsFile(),
-    'test_reportsNumericThresholdInModelCodecOwner': (t) =>
-        t._reportsNumericThresholdInModelCodecOwner(),
-    'test_reportsJsonKeysOutsideCodecOwner': (t) => t._reportsJsonKeysOutsideCodecOwner(),
-    'test_allowsStorageKeysAndApiPathsOwners': (t) => t._allowsStorageKeysAndApiPathsOwners(),
-    'test_reportsStorageKeysOwnerBodyOutsideOwnerPath': (t) =>
-        t._reportsStorageKeysOwnerBodyOutsideOwnerPath(),
-    'test_allowsResolvedRouteNameAndFlutterRouteSettingsName': (t) =>
-        t._allowsResolvedRouteNameAndFlutterRouteSettingsName(),
-    'test_reportsKeyAndLookalikeRouteSettingsName': (t) =>
-        t._reportsKeyAndLookalikeRouteSettingsName(),
-    'test_allowsTestFiles': (t) => t._allowsTestFiles(),
-  });
+  analysisRuleSuite<_AvoidMagicLiteralsTest>(
+    'AvoidMagicLiteralsTest',
+    _AvoidMagicLiteralsTest.new,
+    _AvoidMagicLiteralsTest._allCases,
+  );
 }
 
-final class AvoidMagicLiteralsTest extends AnalysisRuleTest {
+final class _AvoidMagicLiteralsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidMagicLiteralsTest)> get _allCases =>
+      caseSet<_AvoidMagicLiteralsTest>(
+        parent: const {},
+        own: {
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_allowsSampleDataInsideResolvedPreviewFunction': (t) =>
+              t._allowsSampleDataInsideResolvedPreviewFunction(),
+          'test_allowsSampleDataInsideResolvedPreviewMethodAndConstructor': (t) =>
+              t._allowsSampleDataInsideResolvedPreviewMethodAndConstructor(),
+          'test_reportsBoundaryLiteralInsideMultiPreviewClass': (t) =>
+              t._reportsBoundaryLiteralInsideMultiPreviewClass(),
+          'test_reportsSampleDataUnderLookalikePreviewAnnotation': (t) =>
+              t._reportsSampleDataUnderLookalikePreviewAnnotation(),
+          'test_reportsSampleDataOutsidePreview': (t) => t._reportsSampleDataOutsidePreview(),
+          'test_reportsRawNumberLiteral': (t) => t._reportsRawNumberLiteral(),
+          'test_reportsNumericComparisonBoundaries': (t) => t._reportsNumericComparisonBoundaries(),
+          'test_allowsStatusCodeComparisonsForDedicatedRule': (t) =>
+              t._allowsStatusCodeComparisonsForDedicatedRule(),
+          'test_reportsGeneratedLiteralAppeasementConstants': (t) =>
+              t._reportsGeneratedLiteralAppeasementConstants(),
+          'test_allowsVersionAndProtocolNumbersInNames': (t) =>
+              t._allowsVersionAndProtocolNumbersInNames(),
+          'test_allowsDedicatedErrorCodeOwnerClasses': (t) =>
+              t._allowsDedicatedErrorCodeOwnerClasses(),
+          'test_allowsDedicatedErrorCodeOwnerFiles': (t) => t._allowsDedicatedErrorCodeOwnerFiles(),
+          'test_allowsCommonNumericSentinelComparisons': (t) =>
+              t._allowsCommonNumericSentinelComparisons(),
+          'test_reportsRawStringLiteral': (t) => t._reportsRawStringLiteral(),
+          'test_allowsUserFeedbackThroughWidgetCallbacks': (t) =>
+              t._allowsUserFeedbackThroughWidgetCallbacks(),
+          'test_reportsProtocolHeaderKeyBesideCallbackProse': (t) =>
+              t._reportsProtocolHeaderKeyBesideCallbackProse(),
+          'test_reportsInlineDateFormatPatternArgument': (t) =>
+              t._reportsInlineDateFormatPatternArgument(),
+          'test_reportsInlineDateFormatConstructorPattern': (t) =>
+              t._reportsInlineDateFormatConstructorPattern(),
+          'test_reportsNamedDateFormatPatternReference': (t) =>
+              t._reportsNamedDateFormatPatternReference(),
+          'test_reportsNamedDateFormatConstructorPatternReference': (t) =>
+              t._reportsNamedDateFormatConstructorPatternReference(),
+          'test_reportsStringInterpolationWithRawText': (t) =>
+              t._reportsStringInterpolationWithRawText(),
+          'test_allowsNamedConstDefinitionsAndReferences': (t) =>
+              t._allowsNamedConstDefinitionsAndReferences(),
+          'test_allowsCommonSentinelNumbers': (t) => t._allowsCommonSentinelNumbers(),
+          'test_allowsImportsAndAnnotations': (t) => t._allowsImportsAndAnnotations(),
+          'test_allowsConstantRegistryFiles': (t) => t._allowsConstantRegistryFiles(),
+          'test_allowsJsonKeysInModelCodecOwner': (t) => t._allowsJsonKeysInModelCodecOwner(),
+          'test_allowsJsonKeysInDataModelsFile': (t) => t._allowsJsonKeysInDataModelsFile(),
+          'test_reportsNumericThresholdInModelCodecOwner': (t) =>
+              t._reportsNumericThresholdInModelCodecOwner(),
+          'test_reportsJsonKeysOutsideCodecOwner': (t) => t._reportsJsonKeysOutsideCodecOwner(),
+          'test_allowsStorageKeysAndApiPathsOwners': (t) => t._allowsStorageKeysAndApiPathsOwners(),
+          'test_reportsStorageKeysOwnerBodyOutsideOwnerPath': (t) =>
+              t._reportsStorageKeysOwnerBodyOutsideOwnerPath(),
+          'test_allowsResolvedRouteNameAndFlutterRouteSettingsName': (t) =>
+              t._allowsResolvedRouteNameAndFlutterRouteSettingsName(),
+          'test_reportsKeyAndLookalikeRouteSettingsName': (t) =>
+              t._reportsKeyAndLookalikeRouteSettingsName(),
+          'test_allowsTestFiles': (t) => t._allowsTestFiles(),
+        },
+      );
+
   @override
   void setUp() {
     _addFlutterPreviewPackage();

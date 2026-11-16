@@ -4,10 +4,18 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/resolve_platform_
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<ResolvePlatformSpecificImplementationBeforeUseTest>(
+  analysisRuleSuite<_ResolvePlatformSpecificImplementationBeforeUseTest>(
     'ResolvePlatformSpecificImplementationBeforeUseTest',
-    ResolvePlatformSpecificImplementationBeforeUseTest.new,
-    {
+    _ResolvePlatformSpecificImplementationBeforeUseTest.new,
+    _ResolvePlatformSpecificImplementationBeforeUseTest._allCases,
+  );
+}
+
+class _ResolvePlatformSpecificImplementationBeforeUseTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_ResolvePlatformSpecificImplementationBeforeUseTest)>
+  get _allCases => caseSet<_ResolvePlatformSpecificImplementationBeforeUseTest>(
+    parent: const {},
+    own: {
       'test_optionalChainedPlatformMethod_lint': (t) => t._optionalChainedPlatformMethodLint(),
       'test_nullAssertChainedPlatformMethod_lint': (t) => t._nullAssertChainedPlatformMethodLint(),
       'test_chainedPlatformProperty_lint': (t) => t._chainedPlatformPropertyLint(),
@@ -16,9 +24,7 @@ void main() {
       'test_resolutionOnly_noLint': (t) => t._resolutionOnlyNoLint(),
     },
   );
-}
 
-class ResolvePlatformSpecificImplementationBeforeUseTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = ResolvePlatformSpecificImplementationBeforeUse();

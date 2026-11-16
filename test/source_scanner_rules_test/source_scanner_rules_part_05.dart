@@ -1,6 +1,12 @@
 part of '../source_scanner_rules_test.dart';
 
-final class ArchWidgetPathTest extends _ArchitectureRuleTest {
+final class _ArchWidgetPathTest extends _ArchitectureRuleTest {
+  static Map<String, Future<void> Function(_ArchWidgetPathTest)> get _allCases =>
+      caseSet<_ArchWidgetPathTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_allowsFeatureWidgetTestFiles': (t) => t._allowsFeatureWidgetTestFiles()},
+      );
+
   @override
   String get ruleName => 'arch_widget_path';
   @override
@@ -20,7 +26,17 @@ final class ArchWidgetPathTest extends _ArchitectureRuleTest {
   }
 }
 
-final class AtomicProviderAccessTest extends _ArchitectureRuleTest {
+final class _AtomicProviderAccessTest extends _ArchitectureRuleTest {
+  static Map<String, Future<void> Function(_AtomicProviderAccessTest)> get _allCases =>
+      caseSet<_AtomicProviderAccessTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsNavigationProviderRead': (t) => t._reportsNavigationProviderRead(),
+          'test_reportsSharedOrganismProviderWatch': (t) => t._reportsSharedOrganismProviderWatch(),
+          'test_allowsProviderAccessInScreens': (t) => t._allowsProviderAccessInScreens(),
+        },
+      );
+
   @override
   String get ruleName => 'atomic_provider_access';
   @override
@@ -67,7 +83,19 @@ void build(ref, provider) {
   }
 }
 
-final class AtomicPageConsumerWidgetTest extends _ArchitectureRuleTest {
+final class _AtomicPageConsumerWidgetTest extends _ArchitectureRuleTest {
+  static Map<String, Future<void> Function(_AtomicPageConsumerWidgetTest)> get _allCases =>
+      caseSet<_AtomicPageConsumerWidgetTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsAsError': (t) async => t._reportsAsError(),
+          'test_reportsStatefulScreen': (t) => t._reportsStatefulScreen(),
+          'test_allowsConsumerScreens': (t) => t._allowsConsumerScreens(),
+          'test_allowsStatelessWidgetsOutsideScreens': (t) =>
+              t._allowsStatelessWidgetsOutsideScreens(),
+        },
+      );
+
   @override
   String get ruleName => 'atomic_page_consumer_widget';
   @override
@@ -144,7 +172,16 @@ class OrderTile extends StatelessWidget {}
   }
 }
 
-final class TypedIdRawIdTest extends _ArchitectureRuleTest {
+final class _TypedIdRawIdTest extends _ArchitectureRuleTest {
+  static Map<String, Future<void> Function(_TypedIdRawIdTest)> get _allCases =>
+      caseSet<_TypedIdRawIdTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsFreezedRawIntIds': (t) => t._reportsFreezedRawIntIds(),
+          'test_allowsTypedIdsAndSingleRawId': (t) => t._allowsTypedIdsAndSingleRawId(),
+        },
+      );
+
   @override
   String get ruleName => 'typed_id_raw_id';
   @override
@@ -185,7 +222,13 @@ class Order {
   }
 }
 
-final class RecordsMapReturnTest extends _ArchitectureRuleTest {
+final class _RecordsMapReturnTest extends _ArchitectureRuleTest {
+  static Map<String, Future<void> Function(_RecordsMapReturnTest)> get _allCases =>
+      caseSet<_RecordsMapReturnTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {'test_allowsToMapPayloadBoundary': (t) => t._allowsToMapPayloadBoundary()},
+      );
+
   @override
   String get ruleName => 'records_map_return';
   @override
@@ -221,7 +264,16 @@ final class RestTimerActivityData {
   }
 }
 
-final class ObjectMapCastTest extends _ArchitectureRuleTest {
+final class _ObjectMapCastTest extends _ArchitectureRuleTest {
+  static Map<String, Future<void> Function(_ObjectMapCastTest)> get _allCases =>
+      caseSet<_ObjectMapCastTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_allowsObjectMapDeclarations': (t) => t._allowsObjectMapDeclarations(),
+          'test_allowsDynamicMapCasts': (t) => t._allowsDynamicMapCasts(),
+        },
+      );
+
   @override
   String get ruleName => 'avoid_object_map_cast';
   @override
@@ -255,7 +307,31 @@ abstract class _UiRuleTest extends _SourceRuleTest {
   List<ScannerRule> get rules => uiSourceRules;
 }
 
-final class StyleRawTokenTest extends _UiRuleTest {
+final class _StyleRawTokenTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_StyleRawTokenTest)> get _allCases =>
+      caseSet<_StyleRawTokenTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsAsError': (t) async => t._reportsAsError(),
+          'test_reportsResolvedRawColors': (t) => t._reportsResolvedRawColors(),
+          'test_reportsResolvedRawSizes': (t) => t._reportsResolvedRawSizes(),
+          'test_allowsTokenSizesAndUnrelatedPalettes': (t) =>
+              t._allowsTokenSizesAndUnrelatedPalettes(),
+          'test_allowsRawTokensInThemeDefinitions': (t) => t._allowsRawTokensInThemeDefinitions(),
+          'test_allowsRawTokensInTests': (t) => t._allowsRawTokensInTests(),
+          'test_allowsDesignTokensWithDigits': (t) => t._allowsDesignTokensWithDigits(),
+          'test_allowsZeroAndDerivedGeometry': (t) => t._allowsZeroAndDerivedGeometry(),
+          'test_allowsSwitchArmIndicesNearTokenConstructors': (t) =>
+              t._allowsSwitchArmIndicesNearTokenConstructors(),
+          'test_allowsCollectionBoundArithmeticNearTokenConstructors': (t) =>
+              t._allowsCollectionBoundArithmeticNearTokenConstructors(),
+          'test_allowsTokenNamesEndingInDigits': (t) => t._allowsTokenNamesEndingInDigits(),
+          'test_allowsLiteralsOutsideTheStyleValue': (t) => t._allowsLiteralsOutsideTheStyleValue(),
+          'test_reportsRawLiteralOnWrappedArgumentLine': (t) =>
+              t._reportsRawLiteralOnWrappedArgumentLine(),
+        },
+      );
+
   @override
   String get ruleName => 'style_raw_token';
   @override
@@ -493,7 +569,17 @@ final padding = EdgeInsets.symmetric(
   }
 }
 
-final class StyleRawTextStyleTest extends _UiRuleTest {
+final class _StyleRawTextStyleTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_StyleRawTextStyleTest)> get _allCases =>
+      caseSet<_StyleRawTextStyleTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsAsError': (t) async => t._reportsAsError(),
+          'test_allowsTextStyleInThemeDefinitions': (t) => t._allowsTextStyleInThemeDefinitions(),
+          'test_allowsTextStyleInTests': (t) => t._allowsTextStyleInTests(),
+        },
+      );
+
   @override
   String get ruleName => 'style_raw_text_style';
   @override
@@ -528,7 +614,22 @@ void main() {
   }
 }
 
-final class StringsHardcodedTest extends _UiRuleTest {
+final class _StringsHardcodedTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_StringsHardcodedTest)> get _allCases =>
+      caseSet<_StringsHardcodedTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_reportsStringsDefinitionFiles': (t) => t._reportsStringsDefinitionFiles(),
+          'test_allowsSampleTextInsideResolvedPreview': (t) =>
+              t._allowsSampleTextInsideResolvedPreview(),
+          'test_reportsTextUnderLookalikePreviewAnnotation': (t) =>
+              t._reportsTextUnderLookalikePreviewAnnotation(),
+          'test_allowsHardcodedLookingTextInsideDebugPrintWithParen': (t) =>
+              t._allowsHardcodedLookingTextInsideDebugPrintWithParen(),
+        },
+      );
+
   @override
   String get ruleName => 'strings_hardcoded';
 
@@ -617,7 +718,18 @@ void log() {
   }
 }
 
-final class L10nContextDirectAccessTest extends _UiRuleTest {
+final class _L10nContextDirectAccessTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_L10nContextDirectAccessTest)> get _allCases =>
+      caseSet<_L10nContextDirectAccessTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_severityIsError': (t) => t._severityIsError(),
+          'test_allowsLocalBinding': (t) => t._allowsLocalBinding(),
+          'test_reportsSplitAccess': (t) => t._reportsSplitAccess(),
+          'test_allowsTests': (t) => t._allowsTests(),
+        },
+      );
+
   @override
   String get ruleName => 'l10n_context_direct_access';
 
@@ -690,7 +802,21 @@ void build(context) {
   }
 }
 
-final class UiSnackbarBoundaryTest extends _UiRuleTest {
+final class _UiSnackbarBoundaryTest extends _UiRuleTest {
+  static Map<String, Future<void> Function(_UiSnackbarBoundaryTest)> get _allCases =>
+      caseSet<_UiSnackbarBoundaryTest>(
+        parent: _SourceRuleTest._allCases,
+        own: {
+          'test_reportsCodegenNotifierSnackBarUtilsCall': (t) =>
+              t._reportsCodegenNotifierSnackBarUtilsCall(),
+          'test_reportsRepositorySnackBarUtilsCall': (t) => t._reportsRepositorySnackBarUtilsCall(),
+          'test_allowsNonSnackBarUtilsShowInNotifier': (t) =>
+              t._allowsNonSnackBarUtilsShowInNotifier(),
+          'test_allowsUiHelperWrappingSnackBarUtils': (t) =>
+              t._allowsUiHelperWrappingSnackBarUtils(),
+        },
+      );
+
   @override
   String get ruleName => 'ui_snackbar_boundary';
   @override
@@ -793,97 +919,59 @@ void showProfileSaveFailedSnackBar(String message) {
 }
 
 void _defineSourceScannerRulesPart05Tests() {
-  analysisRuleSuite<ArchWidgetPathTest>('ArchWidgetPathTest', ArchWidgetPathTest.new, {
-    'test_allowsFeatureWidgetTestFiles': (t) => t._allowsFeatureWidgetTestFiles(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<AtomicProviderAccessTest>(
+  analysisRuleSuite<_ArchWidgetPathTest>(
+    'ArchWidgetPathTest',
+    _ArchWidgetPathTest.new,
+    _ArchWidgetPathTest._allCases,
+  );
+  analysisRuleSuite<_AtomicProviderAccessTest>(
     'AtomicProviderAccessTest',
-    AtomicProviderAccessTest.new,
-    {
-      'test_reportsNavigationProviderRead': (t) => t._reportsNavigationProviderRead(),
-      'test_reportsSharedOrganismProviderWatch': (t) => t._reportsSharedOrganismProviderWatch(),
-      'test_allowsProviderAccessInScreens': (t) => t._allowsProviderAccessInScreens(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _AtomicProviderAccessTest.new,
+    _AtomicProviderAccessTest._allCases,
   );
-  analysisRuleSuite<AtomicPageConsumerWidgetTest>(
+  analysisRuleSuite<_AtomicPageConsumerWidgetTest>(
     'AtomicPageConsumerWidgetTest',
-    AtomicPageConsumerWidgetTest.new,
-    {
-      'test_reportsAsError': (t) async => t._reportsAsError(),
-      'test_reportsStatefulScreen': (t) => t._reportsStatefulScreen(),
-      'test_allowsConsumerScreens': (t) => t._allowsConsumerScreens(),
-      'test_allowsStatelessWidgetsOutsideScreens': (t) => t._allowsStatelessWidgetsOutsideScreens(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _AtomicPageConsumerWidgetTest.new,
+    _AtomicPageConsumerWidgetTest._allCases,
   );
-  analysisRuleSuite<TypedIdRawIdTest>('TypedIdRawIdTest', TypedIdRawIdTest.new, {
-    'test_reportsFreezedRawIntIds': (t) => t._reportsFreezedRawIntIds(),
-    'test_allowsTypedIdsAndSingleRawId': (t) => t._allowsTypedIdsAndSingleRawId(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<RecordsMapReturnTest>('RecordsMapReturnTest', RecordsMapReturnTest.new, {
-    'test_allowsToMapPayloadBoundary': (t) => t._allowsToMapPayloadBoundary(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<ObjectMapCastTest>('ObjectMapCastTest', ObjectMapCastTest.new, {
-    'test_allowsObjectMapDeclarations': (t) => t._allowsObjectMapDeclarations(),
-    'test_allowsDynamicMapCasts': (t) => t._allowsDynamicMapCasts(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<StyleRawTokenTest>('StyleRawTokenTest', StyleRawTokenTest.new, {
-    'test_reportsAsError': (t) async => t._reportsAsError(),
-    'test_reportsResolvedRawColors': (t) => t._reportsResolvedRawColors(),
-    'test_reportsResolvedRawSizes': (t) => t._reportsResolvedRawSizes(),
-    'test_allowsTokenSizesAndUnrelatedPalettes': (t) => t._allowsTokenSizesAndUnrelatedPalettes(),
-    'test_allowsRawTokensInThemeDefinitions': (t) => t._allowsRawTokensInThemeDefinitions(),
-    'test_allowsRawTokensInTests': (t) => t._allowsRawTokensInTests(),
-    'test_allowsDesignTokensWithDigits': (t) => t._allowsDesignTokensWithDigits(),
-    'test_allowsZeroAndDerivedGeometry': (t) => t._allowsZeroAndDerivedGeometry(),
-    'test_allowsSwitchArmIndicesNearTokenConstructors': (t) =>
-        t._allowsSwitchArmIndicesNearTokenConstructors(),
-    'test_allowsCollectionBoundArithmeticNearTokenConstructors': (t) =>
-        t._allowsCollectionBoundArithmeticNearTokenConstructors(),
-    'test_allowsTokenNamesEndingInDigits': (t) => t._allowsTokenNamesEndingInDigits(),
-    'test_allowsLiteralsOutsideTheStyleValue': (t) => t._allowsLiteralsOutsideTheStyleValue(),
-    'test_reportsRawLiteralOnWrappedArgumentLine': (t) =>
-        t._reportsRawLiteralOnWrappedArgumentLine(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<StyleRawTextStyleTest>('StyleRawTextStyleTest', StyleRawTextStyleTest.new, {
-    'test_reportsAsError': (t) async => t._reportsAsError(),
-    'test_allowsTextStyleInThemeDefinitions': (t) => t._allowsTextStyleInThemeDefinitions(),
-    'test_allowsTextStyleInTests': (t) => t._allowsTextStyleInTests(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<StringsHardcodedTest>('StringsHardcodedTest', StringsHardcodedTest.new, {
-    'test_severityIsError': (t) => t._severityIsError(),
-    'test_reportsStringsDefinitionFiles': (t) => t._reportsStringsDefinitionFiles(),
-    'test_allowsSampleTextInsideResolvedPreview': (t) => t._allowsSampleTextInsideResolvedPreview(),
-    'test_reportsTextUnderLookalikePreviewAnnotation': (t) =>
-        t._reportsTextUnderLookalikePreviewAnnotation(),
-    'test_allowsHardcodedLookingTextInsideDebugPrintWithParen': (t) =>
-        t._allowsHardcodedLookingTextInsideDebugPrintWithParen(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
-  analysisRuleSuite<L10nContextDirectAccessTest>(
+  analysisRuleSuite<_TypedIdRawIdTest>(
+    'TypedIdRawIdTest',
+    _TypedIdRawIdTest.new,
+    _TypedIdRawIdTest._allCases,
+  );
+  analysisRuleSuite<_RecordsMapReturnTest>(
+    'RecordsMapReturnTest',
+    _RecordsMapReturnTest.new,
+    _RecordsMapReturnTest._allCases,
+  );
+  analysisRuleSuite<_ObjectMapCastTest>(
+    'ObjectMapCastTest',
+    _ObjectMapCastTest.new,
+    _ObjectMapCastTest._allCases,
+  );
+  analysisRuleSuite<_StyleRawTokenTest>(
+    'StyleRawTokenTest',
+    _StyleRawTokenTest.new,
+    _StyleRawTokenTest._allCases,
+  );
+  analysisRuleSuite<_StyleRawTextStyleTest>(
+    'StyleRawTextStyleTest',
+    _StyleRawTextStyleTest.new,
+    _StyleRawTextStyleTest._allCases,
+  );
+  analysisRuleSuite<_StringsHardcodedTest>(
+    'StringsHardcodedTest',
+    _StringsHardcodedTest.new,
+    _StringsHardcodedTest._allCases,
+  );
+  analysisRuleSuite<_L10nContextDirectAccessTest>(
     'L10nContextDirectAccessTest',
-    L10nContextDirectAccessTest.new,
-    {
-      'test_severityIsError': (t) => t._severityIsError(),
-      'test_allowsLocalBinding': (t) => t._allowsLocalBinding(),
-      'test_reportsSplitAccess': (t) => t._reportsSplitAccess(),
-      'test_allowsTests': (t) => t._allowsTests(),
-      'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-    },
+    _L10nContextDirectAccessTest.new,
+    _L10nContextDirectAccessTest._allCases,
   );
-  analysisRuleSuite<UiSnackbarBoundaryTest>('UiSnackbarBoundaryTest', UiSnackbarBoundaryTest.new, {
-    'test_reportsCodegenNotifierSnackBarUtilsCall': (t) =>
-        t._reportsCodegenNotifierSnackBarUtilsCall(),
-    'test_reportsRepositorySnackBarUtilsCall': (t) => t._reportsRepositorySnackBarUtilsCall(),
-    'test_allowsNonSnackBarUtilsShowInNotifier': (t) => t._allowsNonSnackBarUtilsShowInNotifier(),
-    'test_allowsUiHelperWrappingSnackBarUtils': (t) => t._allowsUiHelperWrappingSnackBarUtils(),
-    'test_reportsDiagnostic': (t) => t._reportsDiagnostic(),
-  });
+  analysisRuleSuite<_UiSnackbarBoundaryTest>(
+    'UiSnackbarBoundaryTest',
+    _UiSnackbarBoundaryTest.new,
+    _UiSnackbarBoundaryTest._allCases,
+  );
 }

@@ -7,68 +7,25 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/consistent_update
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidGlobalStateTest>('AvoidGlobalStateTest', AvoidGlobalStateTest.new, {
-    'test_mutableStaticField_lint': (t) => t._mutableStaticFieldLint(),
-    'test_mutableTopLevelVariable_lint': (t) => t._mutableTopLevelVariableLint(),
-    'test_finalAndLocalVariables_noLint': (t) => t._finalAndLocalVariablesNoLint(),
-  });
-  analysisRuleSuite<AvoidMutatingParametersTest>(
+  analysisRuleSuite<_AvoidGlobalStateTest>(
+    'AvoidGlobalStateTest',
+    _AvoidGlobalStateTest.new,
+    _AvoidGlobalStateTest._allCases,
+  );
+  analysisRuleSuite<_AvoidMutatingParametersTest>(
     'AvoidMutatingParametersTest',
-    AvoidMutatingParametersTest.new,
-    {
-      'test_updateRenderObjectWritesRenderObjectParameter_noLint': (t) =>
-          t._updateRenderObjectWritesRenderObjectParameterNoLint(),
-      'test_updateRenderObjectCascadeWritesRenderObjectParameter_noLint': (t) =>
-          t._updateRenderObjectCascadeWritesRenderObjectParameterNoLint(),
-      'test_updateRenderObjectReassignsRenderObjectParameter_lint': (t) =>
-          t._updateRenderObjectReassignsRenderObjectParameterLint(),
-      'test_updateRenderObjectWritesContextParameter_lint': (t) =>
-          t._updateRenderObjectWritesContextParameterLint(),
-      'test_otherMethodWritesRenderObjectParameter_lint': (t) =>
-          t._otherMethodWritesRenderObjectParameterLint(),
-      'test_updateRenderObjectOutsideRenderObjectWidget_lint': (t) =>
-          t._updateRenderObjectOutsideRenderObjectWidgetLint(),
-      'test_assignmentToParameter_lint': (t) => t._assignmentToParameterLint(),
-      'test_parameterPropertyWrite_lint': (t) => t._parameterPropertyWriteLint(),
-      'test_parameterCascadePropertyWrite_lint': (t) => t._parameterCascadePropertyWriteLint(),
-      'test_shadowedLocalCascadeDoesNotMutateParameter': (t) =>
-          t._shadowedLocalCascadeDoesNotMutateParameter(),
-      'test_sentryFlutterOptionsBuilderCallback_noLint': (t) =>
-          t._sentryFlutterOptionsBuilderCallbackNoLint(),
-      'test_sentryFlutterOptionsBuilderCascade_noLint': (t) =>
-          t._sentryFlutterOptionsBuilderCascadeNoLint(),
-      'test_shadowedSdkOptionsMutationInCallback_noLint': (t) =>
-          t._shadowedSdkOptionsMutationInCallbackNoLint(),
-      'test_sentryFlutterOptionsCallbackReassignment_lint': (t) =>
-          t._sentryFlutterOptionsCallbackReassignmentLint(),
-      'test_sentryFlutterOptionsMutationOutsideBuilderCallback_lint': (t) =>
-          t._sentryFlutterOptionsMutationOutsideBuilderCallbackLint(),
-      'test_sentryFlutterOptionsMutationInDeferredClosure_lint': (t) =>
-          t._sentryFlutterOptionsMutationInDeferredClosureLint(),
-      'test_sentryFlutterOptionsCascadeMutationInDeferredClosure_lint': (t) =>
-          t._sentryFlutterOptionsCascadeMutationInDeferredClosureLint(),
-      'test_shadowedOptionsMutationInDeferredClosure_noLint': (t) =>
-          t._shadowedOptionsMutationInDeferredClosureNoLint(),
-      'test_localFakeSentryFlutterTypes_lint': (t) => t._localFakeSentryFlutterTypesLint(),
-      'test_localMutation_noLint': (t) => t._localMutationNoLint(),
-    },
+    _AvoidMutatingParametersTest.new,
+    _AvoidMutatingParametersTest._allCases,
   );
-  analysisRuleSuite<ConsistentUpdateRenderObjectSharedWidgetTest>(
+  analysisRuleSuite<_ConsistentUpdateRenderObjectSharedWidgetTest>(
     'ConsistentUpdateRenderObjectSharedWidgetTest',
-    ConsistentUpdateRenderObjectSharedWidgetTest.new,
-    {
-      'test_widgetThatWritesRenderObjectParameter_noLint': (t) =>
-          t._widgetThatWritesRenderObjectParameterNoLint(),
-    },
+    _ConsistentUpdateRenderObjectSharedWidgetTest.new,
+    _ConsistentUpdateRenderObjectSharedWidgetTest._allCases,
   );
-  analysisRuleSuite<AvoidCollectionMutatingMethodsTest>(
+  analysisRuleSuite<_AvoidCollectionMutatingMethodsTest>(
     'AvoidCollectionMutatingMethodsTest',
-    AvoidCollectionMutatingMethodsTest.new,
-    {
-      'test_globalCollectionMutation_lint': (t) => t._globalCollectionMutationLint(),
-      'test_parameterCollectionMutation_lint': (t) => t._parameterCollectionMutationLint(),
-      'test_localCollectionMutation_noLint': (t) => t._localCollectionMutationNoLint(),
-    },
+    _AvoidCollectionMutatingMethodsTest.new,
+    _AvoidCollectionMutatingMethodsTest._allCases,
   );
 }
 
@@ -119,7 +76,17 @@ class CounterWidget extends LeafRenderObjectWidget {
 }
 ''';
 
-final class AvoidGlobalStateTest extends AnalysisRuleTest {
+final class _AvoidGlobalStateTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidGlobalStateTest)> get _allCases =>
+      caseSet<_AvoidGlobalStateTest>(
+        parent: const {},
+        own: {
+          'test_mutableStaticField_lint': (t) => t._mutableStaticFieldLint(),
+          'test_mutableTopLevelVariable_lint': (t) => t._mutableTopLevelVariableLint(),
+          'test_finalAndLocalVariables_noLint': (t) => t._finalAndLocalVariablesNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidGlobalState();
@@ -160,7 +127,49 @@ void f() {
   }
 }
 
-final class AvoidMutatingParametersTest extends AnalysisRuleTest {
+final class _AvoidMutatingParametersTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidMutatingParametersTest)> get _allCases =>
+      caseSet<_AvoidMutatingParametersTest>(
+        parent: const {},
+        own: {
+          'test_updateRenderObjectWritesRenderObjectParameter_noLint': (t) =>
+              t._updateRenderObjectWritesRenderObjectParameterNoLint(),
+          'test_updateRenderObjectCascadeWritesRenderObjectParameter_noLint': (t) =>
+              t._updateRenderObjectCascadeWritesRenderObjectParameterNoLint(),
+          'test_updateRenderObjectReassignsRenderObjectParameter_lint': (t) =>
+              t._updateRenderObjectReassignsRenderObjectParameterLint(),
+          'test_updateRenderObjectWritesContextParameter_lint': (t) =>
+              t._updateRenderObjectWritesContextParameterLint(),
+          'test_otherMethodWritesRenderObjectParameter_lint': (t) =>
+              t._otherMethodWritesRenderObjectParameterLint(),
+          'test_updateRenderObjectOutsideRenderObjectWidget_lint': (t) =>
+              t._updateRenderObjectOutsideRenderObjectWidgetLint(),
+          'test_assignmentToParameter_lint': (t) => t._assignmentToParameterLint(),
+          'test_parameterPropertyWrite_lint': (t) => t._parameterPropertyWriteLint(),
+          'test_parameterCascadePropertyWrite_lint': (t) => t._parameterCascadePropertyWriteLint(),
+          'test_shadowedLocalCascadeDoesNotMutateParameter': (t) =>
+              t._shadowedLocalCascadeDoesNotMutateParameter(),
+          'test_sentryFlutterOptionsBuilderCallback_noLint': (t) =>
+              t._sentryFlutterOptionsBuilderCallbackNoLint(),
+          'test_sentryFlutterOptionsBuilderCascade_noLint': (t) =>
+              t._sentryFlutterOptionsBuilderCascadeNoLint(),
+          'test_shadowedSdkOptionsMutationInCallback_noLint': (t) =>
+              t._shadowedSdkOptionsMutationInCallbackNoLint(),
+          'test_sentryFlutterOptionsCallbackReassignment_lint': (t) =>
+              t._sentryFlutterOptionsCallbackReassignmentLint(),
+          'test_sentryFlutterOptionsMutationOutsideBuilderCallback_lint': (t) =>
+              t._sentryFlutterOptionsMutationOutsideBuilderCallbackLint(),
+          'test_sentryFlutterOptionsMutationInDeferredClosure_lint': (t) =>
+              t._sentryFlutterOptionsMutationInDeferredClosureLint(),
+          'test_sentryFlutterOptionsCascadeMutationInDeferredClosure_lint': (t) =>
+              t._sentryFlutterOptionsCascadeMutationInDeferredClosureLint(),
+          'test_shadowedOptionsMutationInDeferredClosure_noLint': (t) =>
+              t._shadowedOptionsMutationInDeferredClosureNoLint(),
+          'test_localFakeSentryFlutterTypes_lint': (t) => t._localFakeSentryFlutterTypesLint(),
+          'test_localMutation_noLint': (t) => t._localMutationNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     _addSentryFlutterPackage();
@@ -462,7 +471,16 @@ void normalize(int value) {
   }
 }
 
-final class ConsistentUpdateRenderObjectSharedWidgetTest extends AnalysisRuleTest {
+final class _ConsistentUpdateRenderObjectSharedWidgetTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_ConsistentUpdateRenderObjectSharedWidgetTest)>
+  get _allCases => caseSet<_ConsistentUpdateRenderObjectSharedWidgetTest>(
+    parent: const {},
+    own: {
+      'test_widgetThatWritesRenderObjectParameter_noLint': (t) =>
+          t._widgetThatWritesRenderObjectParameterNoLint(),
+    },
+  );
+
   @override
   void setUp() {
     newPackage('flutter').addFile('lib/widgets.dart', _flutterRenderObjectLibrary);
@@ -475,7 +493,17 @@ final class ConsistentUpdateRenderObjectSharedWidgetTest extends AnalysisRuleTes
   }
 }
 
-final class AvoidCollectionMutatingMethodsTest extends AnalysisRuleTest {
+final class _AvoidCollectionMutatingMethodsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidCollectionMutatingMethodsTest)> get _allCases =>
+      caseSet<_AvoidCollectionMutatingMethodsTest>(
+        parent: const {},
+        own: {
+          'test_globalCollectionMutation_lint': (t) => t._globalCollectionMutationLint(),
+          'test_parameterCollectionMutation_lint': (t) => t._parameterCollectionMutationLint(),
+          'test_localCollectionMutation_noLint': (t) => t._localCollectionMutationNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidCollectionMutatingMethods();

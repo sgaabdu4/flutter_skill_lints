@@ -8,10 +8,28 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 
 void main() {
-  analysisRuleSuite<AvoidDuplicateSwitchCaseConditionsTest>(
+  analysisRuleSuite<_AvoidDuplicateSwitchCaseConditionsTest>(
     'AvoidDuplicateSwitchCaseConditionsTest',
-    AvoidDuplicateSwitchCaseConditionsTest.new,
-    {
+    _AvoidDuplicateSwitchCaseConditionsTest.new,
+    _AvoidDuplicateSwitchCaseConditionsTest._allCases,
+  );
+  analysisRuleSuite<_AvoidNestedSwitchesTest>(
+    'AvoidNestedSwitchesTest',
+    _AvoidNestedSwitchesTest.new,
+    _AvoidNestedSwitchesTest._allCases,
+  );
+  analysisRuleSuite<_AvoidNestedSwitchExpressionsTest>(
+    'AvoidNestedSwitchExpressionsTest',
+    _AvoidNestedSwitchExpressionsTest.new,
+    _AvoidNestedSwitchExpressionsTest._allCases,
+  );
+}
+
+final class _AvoidDuplicateSwitchCaseConditionsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidDuplicateSwitchCaseConditionsTest)>
+  get _allCases => caseSet<_AvoidDuplicateSwitchCaseConditionsTest>(
+    parent: const {},
+    own: {
       'test_severity_error': (t) => t._severityError(),
       'test_switchStatementDuplicateSimpleCaseExpression_lint': (t) =>
           t._switchStatementDuplicateSimpleCaseExpressionLint(),
@@ -25,30 +43,7 @@ void main() {
       'test_nonSimplePatterns_noLint': (t) => t._nonSimplePatternsNoLint(),
     },
   );
-  analysisRuleSuite<AvoidNestedSwitchesTest>(
-    'AvoidNestedSwitchesTest',
-    AvoidNestedSwitchesTest.new,
-    {
-      'test_severity_info': (t) => t._severityInfo(),
-      'test_nestedSwitchStatementDirectInCase_lint': (t) =>
-          t._nestedSwitchStatementDirectInCaseLint(),
-      'test_switchInsideBlock_noLint': (t) => t._switchInsideBlockNoLint(),
-    },
-  );
-  analysisRuleSuite<AvoidNestedSwitchExpressionsTest>(
-    'AvoidNestedSwitchExpressionsTest',
-    AvoidNestedSwitchExpressionsTest.new,
-    {
-      'test_severity_info': (t) => t._severityInfo(),
-      'test_nestedSwitchExpressionDirectInArm_lint': (t) =>
-          t._nestedSwitchExpressionDirectInArmLint(),
-      'test_switchExpressionInsideOtherExpression_noLint': (t) =>
-          t._switchExpressionInsideOtherExpressionNoLint(),
-    },
-  );
-}
 
-final class AvoidDuplicateSwitchCaseConditionsTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = AvoidDuplicateSwitchCaseConditions();
@@ -150,7 +145,18 @@ String describe(Object value) => switch (value) {
   }
 }
 
-final class AvoidNestedSwitchesTest extends AnalysisRuleTest {
+final class _AvoidNestedSwitchesTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNestedSwitchesTest)> get _allCases =>
+      caseSet<_AvoidNestedSwitchesTest>(
+        parent: const {},
+        own: {
+          'test_severity_info': (t) => t._severityInfo(),
+          'test_nestedSwitchStatementDirectInCase_lint': (t) =>
+              t._nestedSwitchStatementDirectInCaseLint(),
+          'test_switchInsideBlock_noLint': (t) => t._switchInsideBlockNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNestedSwitches();
@@ -202,7 +208,19 @@ String describe(int outer, int inner) {
   }
 }
 
-final class AvoidNestedSwitchExpressionsTest extends AnalysisRuleTest {
+final class _AvoidNestedSwitchExpressionsTest extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_AvoidNestedSwitchExpressionsTest)> get _allCases =>
+      caseSet<_AvoidNestedSwitchExpressionsTest>(
+        parent: const {},
+        own: {
+          'test_severity_info': (t) => t._severityInfo(),
+          'test_nestedSwitchExpressionDirectInArm_lint': (t) =>
+              t._nestedSwitchExpressionDirectInArmLint(),
+          'test_switchExpressionInsideOtherExpression_noLint': (t) =>
+              t._switchExpressionInsideOtherExpressionNoLint(),
+        },
+      );
+
   @override
   void setUp() {
     rule = AvoidNestedSwitchExpressions();

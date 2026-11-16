@@ -55,6 +55,9 @@
   constructor such as `Draggable`.
 - Add `test/registration_completeness_test.dart`, which fails when a case file
   does not run or a test class does not take the cases of its base class.
+- `avoid_returning_widgets` no longer reports the `buildContent` and
+  `buildTransitions` overrides that a custom Material page route must write.
+  A method with these names and no `@override` is still reported.
 
 ## [0.14.0] - 2026-11-15
 

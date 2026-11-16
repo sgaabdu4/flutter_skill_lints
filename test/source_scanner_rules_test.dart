@@ -50,12 +50,6 @@ part 'source_scanner_rules_test/source_scanner_rules_part_crash.dart';
 part 'source_scanner_rules_test/source_scanner_rules_part_network.dart';
 part 'source_scanner_rules_test/source_scanner_rules_part_riverpod_select.dart';
 part 'source_scanner_rules_test/source_scanner_rules_part_architecture.dart';
-part 'source_scanner_rules_test/source_scanner_rules_part_crash_registry.dart';
-part 'source_scanner_rules_test/source_scanner_rules_part_01_registry.dart';
-part 'source_scanner_rules_test/source_scanner_rules_part_02_registry.dart';
-part 'source_scanner_rules_test/source_scanner_rules_part_14_registry.dart';
-part 'source_scanner_rules_test/source_scanner_rules_part_15_registry.dart';
-part 'source_scanner_rules_test/source_scanner_rules_part_12_registry.dart';
 
 void main() {
   _defineSourceScannerRulesPart10Tests();

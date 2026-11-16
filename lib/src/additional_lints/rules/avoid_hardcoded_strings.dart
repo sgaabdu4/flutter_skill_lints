@@ -88,6 +88,17 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (node.methodName.name == 'call' && target?.staticType is FunctionType) {
       _reportCallbackProse(node, target, node.argumentList);
     }
+    _reportLabelArguments(node);
+  }
+
+  void _reportLabelArguments(MethodInvocation node) {
+    if (enclosingWidgetPreview(node) != null) return;
+    for (final argument in node.argumentList.arguments.whereType<NamedArgument>()) {
+      if (!_callLabelNames.contains(argument.name.lexeme)) continue;
+      if (_isUserFacingLiteral(argument.argumentExpression)) {
+        rule.reportAtNode(argument.argumentExpression);
+      }
+    }
   }
 
   void _reportCallbackProse(AstNode node, Expression? callee, ArgumentList arguments) {
@@ -103,6 +114,8 @@ final class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 }
+
+const _callLabelNames = {'title', 'label', 'tooltip', 'hintText', 'helperText', 'errorText'};
 
 /// The literal text of a callback argument; interpolated values become `$`.
 String? _callbackArgumentText(Expression expression) => switch (expression) {

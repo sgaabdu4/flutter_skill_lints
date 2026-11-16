@@ -66,6 +66,7 @@ final class _BodyVisitor extends RecursiveAstVisitor<void> {
   @override
   void visitMethodInvocation(MethodInvocation node) {
     final name = node.methodName.name;
+    if (_isCompletionChainOfMicrotask(node)) _reportLoadTearOffs(node.argumentList);
     if (_loadInitFetchPattern.hasMatch(name)) {
       rule.reportAtNode(node);
       return;
@@ -92,21 +93,21 @@ final class _BodyVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    _reportLoadTearOffs(node, node.argumentList);
+    if (_isMicrotaskCall(node)) _reportLoadTearOffs(node.argumentList);
     super.visitInstanceCreationExpression(node);
   }
 
   @override
   void visitDotShorthandConstructorInvocation(DotShorthandConstructorInvocation node) {
-    _reportLoadTearOffs(node, node.argumentList);
+    if (_isMicrotaskCall(node)) _reportLoadTearOffs(node.argumentList);
     super.visitDotShorthandConstructorInvocation(node);
   }
 
-  void _reportLoadTearOffs(AstNode call, ArgumentList arguments) {
-    if (!_isMicrotaskCall(call)) return;
+  void _reportLoadTearOffs(ArgumentList arguments) {
     for (final argument in arguments.arguments) {
-      if (argument is SimpleIdentifier && _loadInitFetchPattern.hasMatch(argument.name)) {
-        rule.reportAtNode(argument);
+      final expression = argument.argumentExpression;
+      if (expression is SimpleIdentifier && _loadInitFetchPattern.hasMatch(expression.name)) {
+        rule.reportAtNode(expression);
       }
     }
   }
@@ -162,7 +163,8 @@ bool _isMicrotaskCall(AstNode? call) {
 const _completionMethods = {'then', 'catchError', 'whenComplete'};
 
 bool _isCompletionOfMicrotask(FunctionExpression node) {
-  final call = node.parent?.parent;
+  final parent = node.parent;
+  final call = (parent is NamedArgument ? parent.parent : parent)?.parent;
   return call is MethodInvocation && _isCompletionChainOfMicrotask(call);
 }
 

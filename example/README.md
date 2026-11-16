@@ -4,7 +4,7 @@ Enable the plugin in a consuming package's `analysis_options.yaml`:
 
 ```yaml
 plugins:
-  flutter_skill_lints: ^0.14.0
+  flutter_skill_lints: ^0.15.0
 ```
 
 Run the package's analyzer to apply the plugin's diagnostics.

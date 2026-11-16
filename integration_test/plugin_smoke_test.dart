@@ -612,7 +612,6 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
         'avoid_returning_widgets',
         'avoid_throw',
         'prefer_dot_shorthands',
-        'strings_hardcoded',
       };
       expect(
         contexts.where(

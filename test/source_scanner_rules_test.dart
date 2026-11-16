@@ -133,7 +133,9 @@ abstract class _SourceRuleTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> _reportsDiagnostic() async {
+  Future<void> _reportsDiagnostic() => _assertReportsDiagnostic();
+
+  Future<void> _assertReportsDiagnostic() async {
     final analyzedSource = _analyzedSource(source, addIgnorePrefix: addIgnorePrefix);
     final filePath = path;
     if (filePath == null) {

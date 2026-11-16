@@ -535,7 +535,11 @@ String? _read(File file) {
   }
 }
 
-Iterable<String> _dartFiles(Folder folder) sync* {
+Iterable<String> _dartFiles(Folder folder) => _filePaths(folder).where(_isDartSource);
+
+bool _hasArbFiles(Folder folder) => _filePaths(folder).any((path) => path.endsWith('.arb'));
+
+Iterable<String> _filePaths(Folder folder) sync* {
   if (!folder.exists) return;
 
   List<Resource> children;
@@ -547,32 +551,14 @@ Iterable<String> _dartFiles(Folder folder) sync* {
 
   for (final child in children) {
     if (child is File) {
-      if (_isDartSource(child.path)) yield child.path;
-    } else if (child is Folder) {
-      yield* _dartFiles(child);
+      yield child.path;
+    } else if (child is Folder && !_skippedFolders.contains(child.shortName)) {
+      yield* _filePaths(child);
     }
   }
 }
 
-bool _hasArbFiles(Folder folder) {
-  List<Resource> children;
-  try {
-    children = folder.getChildren();
-  } on FileSystemException {
-    return false;
-  }
-
-  for (final child in children) {
-    if (child is File) {
-      if (child.path.endsWith('.arb')) return true;
-    } else if (child is Folder) {
-      final name = child.shortName;
-      if (name.startsWith('.') || name == 'build' || name == 'node_modules') continue;
-      if (_hasArbFiles(child)) return true;
-    }
-  }
-  return false;
-}
+const _skippedFolders = {'.dart_tool', '.git', 'build', 'node_modules'};
 
 bool _isDartSource(String path) {
   if (!path.endsWith('.dart')) return false;

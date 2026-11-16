@@ -4,7 +4,6 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/prefer_spacing.da
 import 'analysis_rule_suite.dart';
 import 'support/flutter_widgets_stub.dart';
 
-
 void main() {
   analysisRuleSuite<PreferSpacingTest>('PreferSpacingTest', PreferSpacingTest.new, {
     'reportsUniformColumnSpacers': (t) => t.reportsUniformColumnSpacers(),

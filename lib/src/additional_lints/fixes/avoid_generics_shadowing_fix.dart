@@ -103,7 +103,8 @@ class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
 
   /// Finds the AST node that scopes this type parameter (class, method, etc.).
   AstNode? _findDeclaringScope(TypeParameter typeParam) {
-    final current = typeParam.parent?.parent;
+    final owner = typeParam.parent?.parent;
+    final current = owner is NameWithTypeParameters ? owner.parent : owner;
     if (current is ClassDeclaration ||
         current is MixinDeclaration ||
         current is EnumDeclaration ||

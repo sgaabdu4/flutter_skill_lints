@@ -9,6 +9,12 @@ enum FlexAxis { vertical, horizontal }
 /// Lightweight info about a widget node in the AST.
 typedef WidgetInfo = ({String name, ArgumentList argumentList, Expression node});
 
+/// The constructor name when [node] is the type name inside it, which is what a diagnostic on a constructor name selects.
+AstNode reportedConstructorName(AstNode node) {
+  final parent = node.parent;
+  return node is NamedType && parent is ConstructorName ? parent : node;
+}
+
 bool isRenderObjectWidgetClass(Element? element) =>
     element != null && _renderObjectWidgetChecker.isSuperOf(element);
 

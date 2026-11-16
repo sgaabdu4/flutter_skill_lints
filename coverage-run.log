@@ -1,0 +1,13 @@
+The Dart VM service is listening on http://127.0.0.1:52080/
+The Dart DevTools debugger and profiler is available at: http://127.0.0.1:52080/devtools/?uri=ws://127.0.0.1:52080/ws
+00:00 +0: loading test/prefer_container_test.dart
+00:00 +0: PreferContainerTest reportsThreeNestedWidgets
+00:06 +1: PreferContainerTest ignoresTwoNestedWidgets
+00:07 +2: PreferContainerTest ignoresRepeatedContainerParameter
+00:07 +3: PreferContainerTest reportsOnlyOutermostWidget
+00:07 +4: PreferContainerTest ignoresNonFlutterWidgetsWithSameNames
+00:08 +5: PreferContainerTest mergesChainIntoContainer
+00:08 +6: PreferContainerTest centerBecomesCenterAlignment
+00:08 +7: PreferContainerTest keepsFirstKey
+00:09 +8: PreferContainerTest mapsSizedBoxDimensions
+00:09 +9: All tests passed!

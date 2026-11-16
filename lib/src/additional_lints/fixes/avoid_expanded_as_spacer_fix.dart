@@ -6,6 +6,7 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.dart';
 
 /// Fix that replaces `Expanded(child: SizedBox())` with `Spacer()`.
 class AvoidExpandedAsSpacerFix extends ResolvedCorrectionProducer {
@@ -25,7 +26,7 @@ class AvoidExpandedAsSpacerFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
+    final targetNode = reportedWidgetExpression(node);
 
     final NodeList<Argument> arguments;
     final String constPrefix;

@@ -20,7 +20,7 @@ final class FlutterSkillProjectConfig extends MultiAnalysisRule {
     'cfg_analysis_options_canonical': LintCode(
       'cfg_analysis_options_canonical',
       'Use the canonical Flutter skill analysis_options.yaml plugin setup.',
-      correctionMessage: 'Configure flutter_skill_lints and riverpod_lint under top-level plugins.',
+      correctionMessage: 'Configure flutter_skill_lints (and riverpod_lint when the package uses Riverpod) under top-level plugins.',
       severity: DiagnosticSeverity.ERROR,
     ),
     'cfg_strict_analysis': LintCode(
@@ -39,7 +39,8 @@ final class FlutterSkillProjectConfig extends MultiAnalysisRule {
     'cfg_generated_exclude': LintCode(
       'cfg_generated_exclude',
       'Exclude generated files from analysis.',
-      correctionMessage: 'Exclude *.g.dart, *.freezed.dart, *.gr.dart, and *.arb.',
+      correctionMessage:
+          'Exclude *.g.dart, *.freezed.dart, *.gr.dart, and *.arb when the package has ARB files.',
       severity: DiagnosticSeverity.ERROR,
     ),
     'cfg_prohibited_lint_plugins': LintCode(
@@ -171,6 +172,10 @@ final _anyPattern = RegExp(r'''^\s*['"]?[\w-]+['"]?\s*:\s*['"]?any['"]?\s*(?:#.*
 
 final _manyLintsPattern = RegExp(r'(^|\n)\s*many_lints\s*:');
 
+final _includePattern = RegExp(r'''^include\s*:\s*['"]?([^'"\s#]+)''', multiLine: true);
+
+const _riverpodPackages = ['flutter_riverpod', 'hooks_riverpod', 'riverpod', 'riverpod_annotation'];
+
 final _riverpodLintPattern = RegExp(r'(^|\n)\s*riverpod_lint\s*:', multiLine: true);
 
 final _flutterSkillLintsPattern = RegExp(r'(^|\n)\s*flutter_skill_lints\s*:', multiLine: true);
@@ -206,13 +211,16 @@ final class _ProjectConfigScanner {
       }
     }
 
-    final analysisOptions = root.getFile('analysis_options.yaml');
-    final analysisOptionsText = _read(analysisOptions);
+    final analysisOptionsText = _readWithIncludes(root.getFile('analysis_options.yaml'), {});
 
     if (analysisOptionsText == null) {
       issues.add('cfg_analysis_options_canonical');
     } else {
-      _scanAnalysisOptions(analysisOptionsText, issues);
+      _scanAnalysisOptions(
+        analysisOptionsText,
+        issues,
+        dependsOnRiverpod: pubspecText != null && _dependsOnRiverpod(pubspecText),
+      );
     }
 
     if (_hasJsonModels()) {
@@ -266,21 +274,41 @@ final class _ProjectConfigScanner {
     return false;
   }
 
-  void _scanAnalysisOptions(String text, Set<String> issues) {
-    _scanCanonicalAnalysisOptions(text, issues);
+  String? _readWithIncludes(File file, Set<String> visited) {
+    final own = _read(file);
+    if (own == null || !visited.add(file.path)) return own;
+    final include = _includePattern.firstMatch(own)?.group(1);
+    if (include == null || include.startsWith('package:')) return own;
+    final context = root.provider.pathContext;
+    final included = _readWithIncludes(
+      root.provider.getFile(context.normalize(context.join(file.parent.path, include))),
+      visited,
+    );
+    return included == null ? own : '$included\n$own';
+  }
+
+  bool _dependsOnRiverpod(String pubspecText) =>
+      _riverpodPackages.any((package) => _hasYamlKey(pubspecText, package));
+
+  void _scanAnalysisOptions(String text, Set<String> issues, {required bool dependsOnRiverpod}) {
+    _scanCanonicalAnalysisOptions(text, issues, requireRiverpodLint: dependsOnRiverpod);
     _scanAllowedAnalyzerPlugins(text, issues);
     _scanStrictAnalysisOptions(text, issues);
     _scanRequiredLints(text, issues);
     _scanGeneratedExcludes(text, issues);
   }
 
-  void _scanCanonicalAnalysisOptions(String text, Set<String> issues) {
+  void _scanCanonicalAnalysisOptions(
+    String text,
+    Set<String> issues, {
+    required bool requireRiverpodLint,
+  }) {
     final hasPlugins = _pluginsPattern.hasMatch(text);
     final hasLintPackage = _flutterSkillLintsPattern.hasMatch(text);
     final hasRiverpodLint = _riverpodLintPattern.hasMatch(text);
     if (!hasPlugins ||
         !hasLintPackage ||
-        !hasRiverpodLint ||
+        (requireRiverpodLint && !hasRiverpodLint) ||
         text.contains('tool/analyzer_plugins') ||
         _manyLintsPattern.hasMatch(text)) {
       issues.add('cfg_analysis_options_canonical');
@@ -337,14 +365,22 @@ final class _ProjectConfigScanner {
       'unawaited_futures',
     ];
     for (final lint in requiredLints) {
-      final enabled = RegExp('^\\s*-\\s*$lint\\b', multiLine: true).hasMatch(text);
+      final enabled =
+          RegExp('^\\s*-\\s*$lint\\b', multiLine: true).hasMatch(text) ||
+          RegExp('^\\s*$lint\\s*:\\s*true\\b', multiLine: true).hasMatch(text);
       final disabled = RegExp('^\\s*$lint\\s*:\\s*false\\b', multiLine: true).hasMatch(text);
       if (!enabled || disabled) issues.add('cfg_required_lints');
     }
   }
 
   void _scanGeneratedExcludes(String text, Set<String> issues) {
-    for (final generated in ['*.g.dart', '*.freezed.dart', '*.gr.dart', '*.arb']) {
+    final generatedPatterns = [
+      '*.g.dart',
+      '*.freezed.dart',
+      '*.gr.dart',
+      if (_hasArbFiles(root)) '*.arb',
+    ];
+    for (final generated in generatedPatterns) {
       if (!text.contains(generated)) issues.add('cfg_generated_exclude');
     }
   }
@@ -516,6 +552,26 @@ Iterable<String> _dartFiles(Folder folder) sync* {
       yield* _dartFiles(child);
     }
   }
+}
+
+bool _hasArbFiles(Folder folder) {
+  List<Resource> children;
+  try {
+    children = folder.getChildren();
+  } on FileSystemException {
+    return false;
+  }
+
+  for (final child in children) {
+    if (child is File) {
+      if (child.path.endsWith('.arb')) return true;
+    } else if (child is Folder) {
+      final name = child.shortName;
+      if (name.startsWith('.') || name == 'build' || name == 'node_modules') continue;
+      if (_hasArbFiles(child)) return true;
+    }
+  }
+  return false;
 }
 
 bool _isDartSource(String path) {

@@ -25,6 +25,25 @@ void main() {
     expect(problems, isEmpty);
   });
 
+  test('reads classes that add mixins or interfaces', () {
+    const source = '''
+abstract class _Base extends AnalysisRuleTest {
+  static Map<String, Future<void> Function(_Base)> get _allCases =>
+      caseSet<_Base>(parent: const {}, own: {});
+}
+
+final class _Child extends _Base with _Helper implements Marker {
+  static Map<String, Future<void> Function(_Child)> get _allCases =>
+      caseSet<_Child>(parent: _Base._allCases, own: {});
+}
+''';
+
+    final classes = {for (final c in _classes(source)) c.name: c};
+
+    expect(classes['_Child']?.base, '_Base');
+    expect(classes['_Child']?.parent, '_Base._allCases');
+  });
+
   test('every test class takes the cases of its nearest base class with cases', () {
     final libraries = <String, List<_TestClass>>{};
     for (final file in _testFiles()) {
@@ -66,12 +85,12 @@ Iterable<File> _testFiles() =>
         .where((file) => file.path.endsWith('.dart'));
 
 final _classPattern = RegExp(
-  r'class (_\w+) extends (\w+)(?:<[^>]*>)? \{\s*static Map<[^{]*?get _allCases =>\s*'
+  r'class (_\w+) extends (\w+)(?:<[^>]*>)?[^{]*\{\s*static Map<[^{]*?get _allCases =>\s*'
   r'caseSet<\w+>\(\s*parent: ([^,]+),',
   dotAll: true,
 );
 
-final _plainClassPattern = RegExp(r'class (_\w+) extends (\w+)(?:<[^>]*>)? \{');
+final _plainClassPattern = RegExp(r'class (_\w+) extends (\w+)(?:<[^>]*>)?[^{]*\{');
 
 List<_TestClass> _classes(String text) {
   final withCases = {

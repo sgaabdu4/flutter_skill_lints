@@ -7,6 +7,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:analyzer/file_system/file_system.dart';
 import 'package:flutter_skill_lints/src/additional_lints/pubspec_rule_utils.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
+import 'package:yaml/yaml.dart';
 
 /// Reports package-level Flutter skill configuration drift.
 final class FlutterSkillProjectConfig extends MultiAnalysisRule {
@@ -172,14 +173,6 @@ final _anyPattern = RegExp(r'''^\s*['"]?[\w-]+['"]?\s*:\s*['"]?any['"]?\s*(?:#.*
 
 final _manyLintsPattern = RegExp(r'(^|\n)\s*many_lints\s*:');
 
-final _includeBlockPattern = RegExp(
-  r'^include\s*:[ \t]*(?:\[([^\]]*)\]|([^\s#\[][^\n#]*))?[ \t]*(?:#.*)?\n?((?:[ \t]+-[^\n]*\n?)*)',
-  multiLine: true,
-);
-final _listDashPattern = RegExp(r'^\s*-');
-
-final _includeItemPattern = RegExp(r'''['"]?([^'",\s#]+)''');
-
 const _riverpodPackages = ['flutter_riverpod', 'hooks_riverpod', 'riverpod', 'riverpod_annotation'];
 
 final _riverpodLintPattern = RegExp(r'(^|\n)\s*riverpod_lint\s*:', multiLine: true);
@@ -295,17 +288,17 @@ final class _ProjectConfigScanner {
     return [...texts, own].join('\n');
   }
 
-  Iterable<String> _includePaths(String text) sync* {
-    final match = _includeBlockPattern.firstMatch(text);
-    if (match == null) return;
-    final listText = [
-      match.group(1) ?? match.group(2) ?? '',
-      ...(match.group(3) ?? '').split('\n').map((line) => line.replaceFirst(_listDashPattern, '')),
-    ];
-    for (final part in listText) {
-      for (final item in _includeItemPattern.allMatches(part)) {
-        yield item.group(1)!;
-      }
+  Iterable<String> _includePaths(String text) {
+    try {
+      final document = loadYaml(text);
+      final include = document is YamlMap ? document['include'] : null;
+      return switch (include) {
+        String() => [include],
+        YamlList() => include.whereType<String>().toList(),
+        _ => const [],
+      };
+    } on YamlException {
+      return const [];
     }
   }
 

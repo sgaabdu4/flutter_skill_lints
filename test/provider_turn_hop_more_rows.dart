@@ -2,8 +2,6 @@ import 'provider_turn_hop_rows.dart';
 
 export 'provider_turn_hop_rows.dart';
 
-final allProviderTurnHopRows = [...providerTurnHopRows, ...providerTurnHopMoreRows];
-
 const providerTurnHopMoreRows = <TurnHopRow>[
   TurnHopRow(
     'notifier_codegen_sync_microtask',

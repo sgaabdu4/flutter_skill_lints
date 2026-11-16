@@ -116,10 +116,10 @@ final class _AvoidSyncNotifierStateReadTest extends _FlutterSkillRuleTest {
           'test_allowsPlainWriteOfStateInSyncBuild': (t) => t._allowsPlainWriteOfStateInSyncBuild(),
           'test_reportsLoadAndStateReadInsideMicrotask': (t) =>
               t._reportsLoadAndStateReadInsideMicrotask(),
-          'test_allowsLocalVariableNamedStateInsideMicrotask': (t) =>
-              t._allowsLocalVariableNamedStateInsideMicrotask(),
-          'test_allowsStateOfAnotherObjectInsideMicrotask': (t) =>
-              t._allowsStateOfAnotherObjectInsideMicrotask(),
+          'test_reportsNoStateReadForLocalVariableNamedStateInsideMicrotask': (t) =>
+              t._reportsNoStateReadForLocalVariableNamedStateInsideMicrotask(),
+          'test_reportsNoStateReadForStateOfAnotherObjectInsideMicrotask': (t) =>
+              t._reportsNoStateReadForStateOfAnotherObjectInsideMicrotask(),
           'test_reportsLoadInsideShorthandMicrotaskClosure': (t) =>
               t._reportsLoadInsideShorthandMicrotaskClosure(),
           'test_reportsLoadTearOffPassedToMicrotask': (t) =>
@@ -146,7 +146,8 @@ final class _AvoidSyncNotifierStateReadTest extends _FlutterSkillRuleTest {
           'test_reportsLoadTearOffPassedToThenOfMicrotask': (t) =>
               t._reportsLoadTearOffPassedToThenOfMicrotask(),
           'test_allowsMicrotaskOutsideBuild': (t) => t._allowsMicrotaskOutsideBuild(),
-          'test_allowsMicrotaskWithoutLoadWork': (t) => t._allowsMicrotaskWithoutLoadWork(),
+          'test_reportsNoLoadOrStateReadForMicrotaskWithoutLoadWork': (t) =>
+              t._reportsNoLoadOrStateReadForMicrotaskWithoutLoadWork(),
           'test_reportsHelperThatReadsStateTransitively': (t) =>
               t._reportsHelperThatReadsStateTransitively(),
           'test_allowsHelpersThatOnlyWriteOrReadAfterAwait': (t) =>
@@ -301,7 +302,7 @@ class TodosNotifier extends Notifier<int> {
     await assertDiagnostics(source, [lintFor(source, '_loadTodos()'), lintFor(source, 'state')]);
   }
 
-  Future<void> _allowsLocalVariableNamedStateInsideMicrotask() async {
+  Future<void> _reportsNoStateReadForLocalVariableNamedStateInsideMicrotask() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -318,7 +319,7 @@ class TodosNotifier extends Notifier<int> {
 ''');
   }
 
-  Future<void> _allowsStateOfAnotherObjectInsideMicrotask() async {
+  Future<void> _reportsNoStateReadForStateOfAnotherObjectInsideMicrotask() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -587,7 +588,7 @@ class TodosNotifier extends Notifier<int> {
 ''');
   }
 
-  Future<void> _allowsMicrotaskWithoutLoadWork() async {
+  Future<void> _reportsNoLoadOrStateReadForMicrotaskWithoutLoadWork() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 

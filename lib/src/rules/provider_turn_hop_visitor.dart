@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -31,10 +32,28 @@ final class ProviderTurnHopVisitor extends RecursiveAstVisitor<void> {
   }
 
   @override
+  void visitForStatement(ForStatement node) {
+    _reportAwaitFor(node.awaitKeyword, node.forLoopParts);
+    super.visitForStatement(node);
+  }
+
+  @override
+  void visitForElement(ForElement node) {
+    _reportAwaitFor(node.awaitKeyword, node.forLoopParts);
+    super.visitForElement(node);
+  }
+
+  void _reportAwaitFor(Token? awaitKeyword, ForLoopParts parts) {
+    if (awaitKeyword != null && parts is ForEachParts && _isCompleted(parts.iterable)) {
+      report(parts.iterable);
+    }
+  }
+
+  @override
   void visitMethodInvocation(MethodInvocation node) {
     if (_isHopCall(node.methodName.element) ||
         (_completionMethods.contains(node.methodName.name) && _isCompleted(node.realTarget)) ||
-        (followHelpers && _wrapsHop(node.methodName.element))) {
+        (followHelpers && _wrapsHop(node))) {
       report(node);
     }
     super.visitMethodInvocation(node);
@@ -42,24 +61,34 @@ final class ProviderTurnHopVisitor extends RecursiveAstVisitor<void> {
 
   bool _isCompleted(Expression? target) {
     if (target is ParenthesizedExpression) return _isCompleted(target.expression);
-    if (target is SimpleIdentifier) return _isCompletedVariable(target.element);
+    if (target is SimpleIdentifier) return _isCompletedVariable(target);
     if (target is PrefixedIdentifier && target.identifier.name == 'future') {
-      return _isCompletedCompleter(target.prefix, target.offset);
+      return _isCompletedCompleter(target.prefix, target);
     }
     return _isCompletedCreation(target);
   }
 
-  bool _isCompletedVariable(Element? element) {
+  bool _isCompletedVariable(SimpleIdentifier usage) {
+    final element = usage.element;
     if (element is! LocalVariableElement) return false;
-    final finder = _InitializerFinder(element);
+    final finder = _ValueFinder(element);
     _body.accept(finder);
-    return _isCompletedCreation(finder.initializer);
+    Expression? held = finder.initializer;
+    for (final assignment in finder.assignments) {
+      if (assignment.offset > usage.offset) {
+        if (_sharesLoop(usage, assignment)) return false;
+        continue;
+      }
+      if (!_runsBefore(assignment, usage)) return false;
+      held = assignment.rightHandSide;
+    }
+    return _isCompletedCreation(held);
   }
 
-  bool _isCompletedCompleter(Expression holder, int usedAt) {
+  bool _isCompletedCompleter(Expression holder, Expression usage) {
     final element = holder is SimpleIdentifier ? holder.element : null;
     if (element is! LocalVariableElement) return false;
-    final finder = _InitializerFinder(element);
+    final finder = _ValueFinder(element);
     _body.accept(finder);
     final initializer = finder.initializer;
     final creation = initializer is CascadeExpression ? initializer.target : initializer;
@@ -67,18 +96,32 @@ final class ProviderTurnHopVisitor extends RecursiveAstVisitor<void> {
     if (initializer is CascadeExpression && initializer.cascadeSections.any(_isCompleteCall)) {
       return true;
     }
-    final calls = _CompleteCallFinder(element, usedAt);
+    final calls = _CompleteCallFinder(element, usage);
     _body.accept(calls);
     return calls.found;
   }
 
-  bool _wrapsHop(Element? element) {
-    final declaration = topLevelFunctionOf(_body, element);
-    if (declaration == null) return false;
+  bool _wrapsHop(MethodInvocation call) {
+    final body = _helperBody(call);
+    if (body == null) return false;
     var found = false;
-    final body = declaration.functionExpression.body;
     body.accept(ProviderTurnHopVisitor((_) => found = true, body, followHelpers: false));
     return found;
+  }
+
+  FunctionBody? _helperBody(MethodInvocation call) {
+    final element = call.methodName.element;
+    final target = call.realTarget;
+    if (element is MethodElement && (target == null || target is ThisExpression)) {
+      final members = _body.thisOrAncestorOfType<ClassDeclaration>()?.body;
+      for (final member in members is BlockClassBody ? members.members : const <ClassMember>[]) {
+        if (member is MethodDeclaration && member.declaredFragment?.element == element) {
+          return member.body;
+        }
+      }
+      return null;
+    }
+    return topLevelFunctionOf(_body, element)?.functionExpression.body;
   }
 }
 
@@ -92,20 +135,48 @@ FunctionDeclaration? topLevelFunctionOf(AstNode from, Element? element) {
   return null;
 }
 
+bool _runsBefore(AstNode earlier, AstNode usage) {
+  if (earlier.offset >= usage.offset) return false;
+  if (earlier.thisOrAncestorOfType<FunctionBody>() != usage.thisOrAncestorOfType<FunctionBody>()) {
+    return false;
+  }
+  for (AstNode? node = earlier; node != null; node = node.parent) {
+    if (node is Statement &&
+        node is! ExpressionStatement &&
+        node is! VariableDeclarationStatement) {
+      return false;
+    }
+    final parent = node.parent;
+    if (parent is Block) return parent.offset <= usage.offset && usage.end <= parent.end;
+  }
+  return false;
+}
+
+bool _sharesLoop(AstNode usage, AstNode other) {
+  for (AstNode? node = usage; node != null; node = node.parent) {
+    if ((node is ForStatement || node is WhileStatement || node is DoStatement) &&
+        node.offset <= other.offset &&
+        other.end <= node.end) {
+      return true;
+    }
+  }
+  return false;
+}
+
 final class _CompleteCallFinder extends RecursiveAstVisitor<void> {
-  _CompleteCallFinder(this._element, this._before);
+  _CompleteCallFinder(this._element, this._usage);
 
   final LocalVariableElement _element;
-  final int _before;
+  final AstNode _usage;
   bool found = false;
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
     final target = node.realTarget;
-    if (node.offset < _before &&
-        target is SimpleIdentifier &&
+    if (target is SimpleIdentifier &&
         target.element == _element &&
-        _isCompleteCall(node)) {
+        _isCompleteCall(node) &&
+        _runsBefore(node, _usage)) {
       found = true;
     }
     super.visitMethodInvocation(node);
@@ -138,16 +209,27 @@ bool _mayBeFuture(DartType? type) {
       type.allSupertypes.any((supertype) => supertype.isDartAsyncFuture);
 }
 
-final class _InitializerFinder extends RecursiveAstVisitor<void> {
-  _InitializerFinder(this._element);
+final class _ValueFinder extends RecursiveAstVisitor<void> {
+  _ValueFinder(this._element);
 
   final LocalVariableElement _element;
   Expression? initializer;
+  final assignments = <AssignmentExpression>[];
 
   @override
   void visitVariableDeclaration(VariableDeclaration node) {
     if (node.declaredFragment?.element == _element) initializer = node.initializer;
     super.visitVariableDeclaration(node);
+  }
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    final target = node.leftHandSide;
+    if (target is SimpleIdentifier &&
+        (target.element == _element || node.writeElement == _element)) {
+      assignments.add(node);
+    }
+    super.visitAssignmentExpression(node);
   }
 }
 

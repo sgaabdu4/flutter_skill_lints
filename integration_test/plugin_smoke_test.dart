@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
-import '../test/provider_turn_hop_more_rows.dart';
+import '../test/provider_turn_hop_flow_rows.dart';
 
 void main() {
   test('loads canonical configuration with riverpod_lint in a real Flutter analysis server run', () async {

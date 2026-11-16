@@ -20,11 +20,11 @@ Authority: The owner asked for this fix wave and a draft PR first. The coordinat
 
 ## Acceptance + steps
 
-- [ ] No comment block longer than one line in `lib/` or `test/` → the whole-project pass lists no `comment block` hit.
-- [ ] The smoke test has no `skip:` → `integration_test/plugin_smoke_test.dart` runs in the Flutter smoke job without a flag.
-- [ ] Three unused members are gone → dart-decimate reports no `unused-class-member`.
-- [ ] Every function over CRAP 30 is covered by real tests → dart-decimate 0.0.76 reports no `high-crap-score`.
-- [ ] Test count does not fall → the passing test total after the change is at least the total before (2,782 plus new cases).
+- [ ] N/A — the proof is the whole-project pass of HE-COMMENT-LINES, which must list no `comment block` hit in `lib/` or `test/`.
+- [ ] `integration_test/plugin_smoke_test.dart::loads canonical configuration with riverpod_lint in a real Flutter analysis server run` has no `skip:` and runs in the Flutter smoke job without a flag.
+- [ ] N/A — the proof is dart-decimate 0.0.76, which must report no `unused-class-member`.
+- [ ] N/A — the proof is dart-decimate 0.0.76 with `max_crap` 30, which must report no `high-crap-score`; the new tests are the work, not the proof.
+- [ ] N/A — the proof is the passing test total after the change, at least the total before (2,782 plus new cases).
 
 ## Baseline + execution
 

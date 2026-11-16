@@ -62,6 +62,8 @@ final class _FlutterSkillProjectConfigTest extends AnalysisRuleTest {
           'test_followsListIncludeWithCommentsAndQuotes': (t) =>
               t._followsListIncludeWithCommentsAndQuotes(),
           'test_ignoresIncludeTextInsideComments': (t) => t._ignoresIncludeTextInsideComments(),
+          'test_survivesUnreadableIncludedOptionsFile': (t) =>
+              t._survivesUnreadableIncludedOptionsFile(),
           'test_allowsMissingArbExcludeWhenArbFilesAreInToolFolders': (t) =>
               t._allowsMissingArbExcludeWhenArbFilesAreInToolFolders(),
           'test_followsFlowListInclude': (t) => t._followsFlowListInclude(),
@@ -728,6 +730,21 @@ dependencies:
     );
 
     await assertDiagnostics('void main() {}', [
+      projectLint('cfg_strict_analysis'),
+      projectLint('cfg_required_lints'),
+      projectLint('cfg_generated_exclude'),
+    ]);
+  }
+
+  Future<void> _survivesUnreadableIncludedOptionsFile() async {
+    newFile('$testPackageRootPath/base_options.yaml', 'plugins: [\n  - : :\n');
+    newFile(
+      '$testPackageRootPath/analysis_options.yaml',
+      'include: base_options.yaml\nlinter:\n  rules:\n    - flutter_skill_project_config\n',
+    );
+
+    await assertDiagnostics('void main() {}', [
+      projectLint('cfg_analysis_options_canonical'),
       projectLint('cfg_strict_analysis'),
       projectLint('cfg_required_lints'),
       projectLint('cfg_generated_exclude'),

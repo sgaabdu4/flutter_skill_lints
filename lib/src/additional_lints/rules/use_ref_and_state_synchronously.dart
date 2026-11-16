@@ -59,11 +59,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Checks a list of statements for ref/state usage after an await point.
   void _checkStatements(NodeList<Statement> statements) {
-    scanStatementsAfterAwait(
-      statements,
-      (statement) => statement.accept(_RefStateFinder(rule)),
-      inspectStatementsContainingAwait: true,
-    );
+    scanStatementsAfterAwait(statements, (statement) => statement.accept(_RefStateFinder(rule)));
   }
 }
 

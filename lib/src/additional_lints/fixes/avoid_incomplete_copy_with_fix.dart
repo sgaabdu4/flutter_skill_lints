@@ -22,9 +22,8 @@ class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // node is the copyWith method name token — parent is MethodDeclaration
-    final copyWithMethod = node.parent;
-    if (copyWithMethod is! MethodDeclaration) return;
+    final copyWithMethod = node.thisOrAncestorOfType<MethodDeclaration>();
+    if (copyWithMethod == null) return;
 
     final classDecl = copyWithMethod.parent;
     if (classDecl is! BlockClassBody) return;
@@ -80,14 +79,8 @@ class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
 
     await builder.addDartFileEdit(file, (builder) {
       if (hasNamedParams && parameters != null && parameters.isNotEmpty) {
-        // Insert after last existing parameter
         final lastParam = parameters.last;
         builder.addSimpleInsertion(lastParam.end, ', $insertParams');
-      } else if (hasNamedParams) {
-        // Empty named params — insert between { }
-        final leftBrace = parameterList.leftDelimiter;
-        if (leftBrace == null) return;
-        builder.addSimpleInsertion(leftBrace.end, insertParams);
       } else {
         // No named params — wrap in { }
         final rightParen = parameterList.rightParenthesis;

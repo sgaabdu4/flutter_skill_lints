@@ -246,8 +246,6 @@ void navigate(BuildContext context) {
 }
 ''';
 
-  // routing-app-shell.md:285-290 "Safe pop with typed fallback": the
-  // pushReplacement before the pop is a separate flow, not pop-then-push.
   Future<void> test_allowsSkillSafePopAfterEarlierPushReplacement() async {
     await assertAllows(r'''
 import 'package:flutter/material.dart';

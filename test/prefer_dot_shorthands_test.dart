@@ -381,8 +381,6 @@ void example() => consume(.center);
   }
 
   Future<void> test_unnamedConstructorCalls_noLint() async {
-    // The skill prescribes shorthand for enum values, static members and named
-    // constructors; it never shows `.new(...)` for unnamed constructor calls.
     await assertNoDiagnostics(r'''
 class Span {
   const Span(int value);

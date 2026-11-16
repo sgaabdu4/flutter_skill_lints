@@ -880,9 +880,6 @@ class AccountRepository {
     await assertDiagnostics(source, [compatLint(source, 'Crash.error', ruleName)]);
   }
 
-  // networking.md: log/report destructive failures only after reconcile, so a
-  // catch around async-started destructive work that reports and never
-  // reconciles is also wrong.
   Future<void> test_reportsTelemetryWithoutReconcileAfterAsyncStart() async {
     final source = _analyzedSource(r'''
 class AccountRepository {
@@ -913,8 +910,6 @@ class AccountRepository {
     ]);
   }
 
-  // networking.md RIGHT and debounce-gate-batch.md DO: async-start, then
-  // reconcile before any telemetry.
   Future<void> test_allowsSkillAsyncStartThenReconcile() async {
     await assertAllows(r'''
 class DeleteResult {
@@ -944,8 +939,6 @@ class AccountRepository {
 ''');
   }
 
-  // state-management-lifecycle.md: ordinary notifier delete methods catch and
-  // report; no async-started long-running work, so nothing to reconcile.
   Future<void> test_allowsOrdinaryDestructiveTelemetry() async {
     await assertAllows(r'''
 class ProductNotifier {

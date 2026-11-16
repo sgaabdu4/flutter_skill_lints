@@ -416,8 +416,7 @@ extension AsyncValueExtensions<T> on AsyncValue<T> {
 }
 ''';
 
-/// freezed-sealed.md:9 matches unions with `switch`, never `.when()`/`.map()`;
-/// Riverpod AsyncValue is sealed (freezed-sealed.md:136-146).
+/// freezed-sealed.md:9 matches unions with `switch`, never `.when()`/`.map()`; Riverpod AsyncValue is sealed (freezed-sealed.md:136-146).
 @reflectiveTest
 final class AsyncValueSwitchOverWhenTest extends _RiverpodRuleTest {
   @override
@@ -503,8 +502,7 @@ final class RiverpodAutoDisposeKeepAliveDependenciesTest extends _RiverpodRuleTe
   @override
   bool get addIgnorePrefix => false;
 
-  /// performance.md:169: a computed provider over keepAlive providers declared
-  /// in another file (plain and `.select` watches) stays keepAlive.
+  /// performance.md:169: a computed provider over keepAlive providers declared in another file (plain and `.select` watches) stays keepAlive.
   @override
   String get source => r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';

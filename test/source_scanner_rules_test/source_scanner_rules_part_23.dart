@@ -32,8 +32,6 @@ class Repository {
     await assertDiagnostics(analyzedSource, [compatLint(analyzedSource, 'List<Item>?>', ruleName)]);
   }
 
-  // dart-patterns-records.md:193 spreads a nullable `conditionalItems`; only
-  // stored state and return types model "no items" (value-objects.md:45).
   Future<void> test_allowsNullableCollectionParametersAndLocals() async {
     await assertAllows(r'''
 void track({Map<String, Object>? params}) {}
@@ -410,8 +408,7 @@ class SearchNotifier {
     ]);
   }
 
-  /// The skill's AppErrorMapper.from wraps the caught error without storing
-  /// its text (state-management-lifecycle.md "Domain Error Types").
+  /// The skill's AppErrorMapper.from wraps the caught error without storing its text (state-management-lifecycle.md "Domain Error Types").
   Future<void> test_allowsTypedAppError() async {
     await assertAllows(r'''
 class AppError {

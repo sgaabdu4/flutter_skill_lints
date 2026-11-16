@@ -220,8 +220,6 @@ class SharedCache {
   }
 }
 
-// dart-patterns-records.md:56-57: `@RecordUse` is only for dart:ffi/Code
-// Assets bindings; normal Flutter application code does not add it.
 @reflectiveTest
 final class RecordUseOutsideFfiTest extends _FreezedRuleTest {
   @override
@@ -333,8 +331,6 @@ extension UnionPatterns on Union {
     super.setUp();
   }
 
-  // Issue #50 (reopened): map, whenOrNull and mapOrNull are banned like when,
-  // maybeWhen and maybeMap (freezed-sealed.md:9).
   Future<void> test_reportsEveryGeneratedPatternHelper() async {
     const source = r'''
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -498,8 +494,6 @@ class CacheEntry {
     await assertNoDiagnosticsInFile(filePath);
   }
 
-  // riverpod-codegen.md persistence preview: a static-only codec in data/models
-  // cannot be instantiated, so it is not a value class.
   Future<void> test_allowsStaticCodecNamespaceInDataModels() async {
     final filePath = '$testPackageLibPath/features/todos/data/models/todo_list_codec.dart';
     newFile(filePath, r'''

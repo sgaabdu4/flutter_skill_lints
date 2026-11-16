@@ -241,8 +241,7 @@ class MemoryCache {
   }
 }
 
-/// A `;`-terminated constructor has no body; the scanner must not extend its
-/// span over the following method (networking.md repository shape).
+/// A `;`-terminated constructor has no body; the scanner must not extend its span over the following method (networking.md repository shape).
 @reflectiveTest
 final class DestructiveFailureAfterConstConstructorTest extends _RuntimeBugRuleTest {
   @override

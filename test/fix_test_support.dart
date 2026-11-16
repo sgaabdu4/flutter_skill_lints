@@ -9,6 +9,18 @@ import 'package:test/test.dart';
 typedef FixFactory = ResolvedCorrectionProducer Function(CorrectionProducerContext context);
 
 abstract class FixRuleTest extends AnalysisRuleTest {
+  Future<void> expectOnlyRuleDiagnostics(
+    String source,
+    List<({int offset, int length})> expected,
+  ) async {
+    final unit = await resolveFile(newFile(testFilePath, source).path);
+    final found = [
+      for (final d in unit.diagnostics)
+        if (d.diagnosticCode.lowerCaseName == rule.name) (offset: d.offset, length: d.length),
+    ];
+    expect(found, expected);
+  }
+
   Future<String?> applyFix(String source, FixFactory create, {int occurrence = 0}) async {
     final file = newFile(testFilePath, source);
     final unit = await resolveFile(file.path);

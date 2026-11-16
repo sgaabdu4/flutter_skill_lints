@@ -21,6 +21,7 @@ import 'package:test/test.dart';
 import 'analysis_rule_suite.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_01.dart';
 part 'flutter_skill_rules_test/flutter_skill_rules_part_02.dart';
+part 'flutter_skill_rules_test/flutter_skill_rules_part_02_registry.dart';
 
 void main() {
   _defineFlutterSkillRulesPart01Tests();

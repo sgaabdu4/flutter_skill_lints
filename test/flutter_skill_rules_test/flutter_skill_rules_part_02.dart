@@ -126,6 +126,17 @@ final class _AvoidSyncNotifierStateReadTest extends _FlutterSkillRuleTest {
               t._reportsLoadTearOffPassedToMicrotask(),
           'test_reportsLoadTearOffPassedToShorthandMicrotask': (t) =>
               t._reportsLoadTearOffPassedToShorthandMicrotask(),
+          'test_reportsLoadInsideImportPrefixedMicrotask': (t) =>
+              t._reportsLoadInsideImportPrefixedMicrotask(),
+          'test_reportsLoadInsideTypedefAliasedMicrotask': (t) =>
+              t._reportsLoadInsideTypedefAliasedMicrotask(),
+          'test_reportsLoadInsideThenOfMicrotask': (t) => t._reportsLoadInsideThenOfMicrotask(),
+          'test_reportsLoadInsideCascadeOnMicrotask': (t) =>
+              t._reportsLoadInsideCascadeOnMicrotask(),
+          'test_reportsLoadInsideTypedShorthandMicrotask': (t) =>
+              t._reportsLoadInsideTypedShorthandMicrotask(),
+          'test_allowsMicrotaskOutsideBuild': (t) => t._allowsMicrotaskOutsideBuild(),
+          'test_allowsMicrotaskWithoutLoadWork': (t) => t._allowsMicrotaskWithoutLoadWork(),
           'test_reportsHelperThatReadsStateTransitively': (t) =>
               t._reportsHelperThatReadsStateTransitively(),
           'test_allowsHelpersThatOnlyWriteOrReadAfterAwait': (t) =>
@@ -364,6 +375,128 @@ class TodosNotifier extends Notifier<int> {
 }
 ''';
     await assertDiagnostics(source, [lintFor(source, '_loadTodos')]);
+  }
+
+  Future<void> _reportsLoadInsideImportPrefixedMicrotask() async {
+    const source = r'''
+import 'dart:async' as async;
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    async.Future.microtask(() => _loadTodos());
+    return 0;
+  }
+
+  void _loadTodos() {}
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, '_loadTodos()')]);
+  }
+
+  Future<void> _reportsLoadInsideTypedefAliasedMicrotask() async {
+    const source = r'''
+import 'dart:async';
+import 'package:riverpod/riverpod.dart';
+
+typedef Hop = Future<void>;
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    Hop.microtask(() => _loadTodos());
+    return 0;
+  }
+
+  void _loadTodos() {}
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, '_loadTodos()')]);
+  }
+
+  Future<void> _reportsLoadInsideThenOfMicrotask() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    Future.microtask(() {}).then((_) => _loadTodos());
+    return 0;
+  }
+
+  void _loadTodos() {}
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, '_loadTodos()')]);
+  }
+
+  Future<void> _reportsLoadInsideCascadeOnMicrotask() async {
+    const source = r'''
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    Future<void>.microtask(() {})..then((_) => _loadTodos());
+    return 0;
+  }
+
+  void _loadTodos() {}
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, '_loadTodos()')]);
+  }
+
+  Future<void> _reportsLoadInsideTypedShorthandMicrotask() async {
+    const source = r'''
+import 'dart:async';
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    final Future<void> hop = .microtask(() => _loadTodos());
+    return 0;
+  }
+
+  void _loadTodos() {}
+}
+''';
+    await assertDiagnostics(source, [lintFor(source, '_loadTodos()')]);
+  }
+
+  Future<void> _allowsMicrotaskOutsideBuild() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void refresh() {
+    Future.microtask(() => _loadTodos());
+    Future.microtask(() {}).then((_) => _loadTodos());
+  }
+
+  void _loadTodos() {}
+}
+''');
+  }
+
+  Future<void> _allowsMicrotaskWithoutLoadWork() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+class TodosNotifier extends Notifier<int> {
+  @override
+  int build() {
+    Future.microtask(() {}).then((_) => print('done'));
+    return 0;
+  }
+}
+''');
   }
 
   Future<void> _reportsHelperThatReadsStateTransitively() async {

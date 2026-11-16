@@ -113,7 +113,9 @@ final class _BodyVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitFunctionExpression(FunctionExpression node) {
-    if (_isMicrotaskCall(node.parent?.parent)) super.visitFunctionExpression(node);
+    if (_isMicrotaskCall(node.parent?.parent) || _isCompletionOfMicrotask(node)) {
+      super.visitFunctionExpression(node);
+    }
   }
 
   @override
@@ -155,6 +157,23 @@ bool _isMicrotaskCall(AstNode? call) {
   return element != null &&
       element.name == 'microtask' &&
       element.library.identifier == 'dart:async';
+}
+
+const _completionMethods = {'then', 'catchError', 'whenComplete'};
+
+bool _isCompletionOfMicrotask(FunctionExpression node) {
+  final call = node.parent?.parent;
+  return call is MethodInvocation && _isCompletionChainOfMicrotask(call);
+}
+
+bool _isCompletionChainOfMicrotask(MethodInvocation call) {
+  if (!_completionMethods.contains(call.methodName.name)) return false;
+  var target = call.realTarget;
+  while (target is ParenthesizedExpression) {
+    target = target.expression;
+  }
+  return _isMicrotaskCall(target) ||
+      (target is MethodInvocation && _isCompletionChainOfMicrotask(target));
 }
 
 /// A same-class method invoked on the notifier itself.

@@ -174,6 +174,24 @@ class Wrap extends Widget {
   const Wrap({super.key, List<Widget> children = const []});
 }
 
+class Radius {
+  const Radius.circular(double radius);
+}
+
+class BorderRadius {
+  const BorderRadius.circular(double radius);
+  const BorderRadius.all(Radius radius);
+}
+
+class BorderSide {
+  const BorderSide({double width = 1});
+}
+
+class Border {
+  const Border.all({double width = 1});
+  const Border.fromBorderSide(BorderSide side);
+}
+
 class Text extends Widget {
   const Text(String data, {super.key});
 }

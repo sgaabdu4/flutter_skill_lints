@@ -6,7 +6,7 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when `BorderRadius.circular()` is used instead of `BorderRadius.all(Radius.circular())`.
-class PreferConstBorderRadius extends InstanceAndMethodInvocationRule {
+class PreferConstBorderRadius extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'prefer_const_border_radius',
     'Prefer BorderRadius.all(Radius.circular()) over BorderRadius.circular().',

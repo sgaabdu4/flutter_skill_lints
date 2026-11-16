@@ -6,7 +6,7 @@ import 'package:flutter_skill_lints/src/additional_lints/method_invocation_rule.
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 
 /// Warns when `Border.all()` is used instead of `Border.fromBorderSide()`.
-class AvoidBorderAll extends InstanceAndMethodInvocationRule {
+class AvoidBorderAll extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'avoid_border_all',
     'Prefer Border.fromBorderSide over Border.all.',

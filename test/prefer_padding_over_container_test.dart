@@ -15,6 +15,8 @@ void main() {
       'acceptsContainerWithOtherArguments': (t) => t.acceptsContainerWithOtherArguments(),
       'acceptsContainerWithBothPaddingAndMargin': (t) =>
           t.acceptsContainerWithBothPaddingAndMargin(),
+      'acceptsNullPaddingLiteral': (t) => t.acceptsNullPaddingLiteral(),
+      'acceptsNullablePadding': (t) => t.acceptsNullablePadding(),
       'keepsPaddingArgument': (t) => t.keepsPaddingArgument(),
       'renamesMarginToPadding': (t) => t.renamesMarginToPadding(),
     },
@@ -57,6 +59,18 @@ Widget build() => Container(padding: EdgeInsets.all(4), color: Color(1));
 import 'package:flutter/widgets.dart';
 
 Widget build() => Container(padding: EdgeInsets.all(4), margin: EdgeInsets.all(2));
+''');
+
+  Future<void> acceptsNullPaddingLiteral() => assertNoDiagnostics('''
+import 'package:flutter/widgets.dart';
+
+Widget build() => Container(padding: null, child: Text('a'));
+''');
+
+  Future<void> acceptsNullablePadding() => assertNoDiagnostics('''
+import 'package:flutter/widgets.dart';
+
+Widget build(EdgeInsets? inset) => Container(padding: inset, child: Text('a'));
 ''');
 
   Future<void> keepsPaddingArgument() => expectFix(

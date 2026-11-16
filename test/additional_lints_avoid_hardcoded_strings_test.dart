@@ -63,6 +63,25 @@ final class _AvoidHardcodedStringsTest extends AnalysisRuleTest {
               t._titleInRedirectingConstructorCallLint(),
           'test_titleInFunctionTypedValueCall_lint': (t) => t._titleInFunctionTypedValueCallLint(),
           'test_labelInBinEntrypoint_lint': (t) => t._labelInBinEntrypointLint(),
+          'test_constructorInBinNonUi_noLint': (t) => t._constructorInBinNonUiNoLint(),
+          'test_constructorInHookNonUi_noLint': (t) => t._constructorInHookNonUiNoLint(),
+          'test_constructorWithoutFlutterImport_noLint': (t) =>
+              t._constructorWithoutFlutterImportNoLint(),
+          'test_shorthandWithoutFlutterImport_noLint': (t) =>
+              t._shorthandWithoutFlutterImportNoLint(),
+          'test_contextExtensionCall_lint': (t) => t._contextExtensionCallLint(),
+          'test_widgetExtensionCall_lint': (t) => t._widgetExtensionCallLint(),
+          'test_materialUiEnumConstant_lint': (t) => t._materialUiEnumConstantLint(),
+          'test_cupertinoUiShorthand_lint': (t) => t._cupertinoUiShorthandLint(),
+          'test_widgetClassMethod_lint': (t) => t._widgetClassMethodLint(),
+          'test_servicesLibraryCall_noLint': (t) => t._servicesLibraryCallNoLint(),
+          'test_schedulerLibraryCall_noLint': (t) => t._schedulerLibraryCallNoLint(),
+          'test_functionValueInNonWidgetClass_noLint': (t) =>
+              t._functionValueInNonWidgetClassNoLint(),
+          'test_globalFunctionVariableCall_noLint': (t) => t._globalFunctionVariableCallNoLint(),
+          'test_labelCallInsidePreview_noLint': (t) => t._labelCallInsidePreviewNoLint(),
+          'test_labelInTestFile_noLint': (t) => t._labelInTestFileNoLint(),
+          'test_labelInL10nFile_noLint': (t) => t._labelInL10nFileNoLint(),
           'test_labelInRepositoryDebugCall_noLint': (t) => t._labelInRepositoryDebugCallNoLint(),
           'test_labelInAnalyticsCall_noLint': (t) => t._labelInAnalyticsCallNoLint(),
           'test_titleToPlainNonUiFunction_noLint': (t) => t._titleToPlainNonUiFunctionNoLint(),
@@ -90,6 +109,10 @@ final class _AvoidHardcodedStringsTest extends AnalysisRuleTest {
   }
 
   void _addFlutterPackage() {
+    newPackage('material_ui')
+        .addFile('lib/material_ui.dart', "export 'package:flutter/widgets.dart';\n");
+    newPackage('cupertino_ui')
+        .addFile('lib/cupertino_ui.dart', "export 'package:flutter/widgets.dart';\n");
     newPackage('flutter')
       ..addFile('lib/widgets.dart', r'''
 class Widget {
@@ -135,6 +158,11 @@ class Toast extends Widget {
   static Toast make({String? title}) => const Toast();
 }
 
+class Panel extends Widget {
+  const Panel();
+  void announce({String? title}) {}
+}
+
 class Parent extends Widget {
   const Parent({this.title});
   final String? title;
@@ -161,8 +189,17 @@ abstract class State<T extends StatefulWidget> {
   Widget build(BuildContext context);
 }
 ''')
-      ..addFile('lib/foundation.dart', r'''
+      ..addFile('lib/foundation.dart', "export 'src/foundation/print.dart';\n")
+      ..addFile('lib/src/foundation/print.dart', r'''
 void debugPrintStack({StackTrace? stackTrace, String? label}) {}
+''')
+      ..addFile('lib/services.dart', "export 'src/services/announce.dart';\n")
+      ..addFile('lib/src/services/announce.dart', r'''
+void announce({String? label}) {}
+''')
+      ..addFile('lib/scheduler.dart', "export 'src/scheduler/schedule.dart';\n")
+      ..addFile('lib/src/scheduler/schedule.dart', r'''
+void schedule({String? label}) {}
 ''')
       ..addFile('lib/widget_previews.dart', r'''
 base class Preview {
@@ -698,6 +735,221 @@ void open() {
   show(title: 'Saved changes');
 }
 ''');
+  }
+
+  Future<void> _constructorInBinNonUiNoLint() async {
+    final path = '$testPackageRootPath/bin/cli.dart';
+    newFile(path, r'''
+class Job {
+  const Job({this.description});
+  final String? description;
+}
+
+const job = Job(description: 'build the app');
+''');
+
+    await assertNoDiagnosticsInFile(path);
+  }
+
+  Future<void> _constructorInHookNonUiNoLint() async {
+    final path = '$testPackageRootPath/hook/build.dart';
+    newFile(path, r'''
+class Asset {
+  const Asset({this.description});
+  final String? description;
+}
+
+const asset = Asset(description: 'native library');
+''');
+
+    await assertNoDiagnosticsInFile(path);
+  }
+
+  Future<void> _constructorWithoutFlutterImportNoLint() async {
+    await assertNoDiagnostics(r'''
+class Item {
+  const Item({this.title});
+  final String? title;
+}
+
+const item = Item(title: 'x');
+''');
+  }
+
+  Future<void> _shorthandWithoutFlutterImportNoLint() async {
+    await assertNoDiagnostics(r'''
+class Item {
+  const Item({this.title});
+  final String? title;
+}
+
+const Item item = .new(title: 'x');
+''');
+  }
+
+  Future<void> _contextExtensionCallLint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+extension ToastX on BuildContext {
+  void showToast({String? title}) {}
+}
+
+void open(BuildContext context) {
+  context.showToast(title: 'Saved');
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf("'Saved'"), "'Saved'".length)]);
+  }
+
+  Future<void> _widgetExtensionCallLint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+extension PanelX on Panel {
+  void flash({String? title}) {}
+}
+
+void open(Panel panel) {
+  panel.flash(title: 'Saved');
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf("'Saved'"), "'Saved'".length)]);
+  }
+
+  Future<void> _materialUiEnumConstantLint() async {
+    const source = r'''
+import 'package:material_ui/material_ui.dart';
+
+Widget? tabContent;
+
+enum Tab {
+  home(title: 'Home');
+
+  const Tab({required this.title});
+  final String title;
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf("'Home'"), "'Home'".length)]);
+  }
+
+  Future<void> _cupertinoUiShorthandLint() async {
+    const source = r'''
+import 'package:cupertino_ui/cupertino_ui.dart';
+
+class Entry {
+  const Entry({this.label});
+  final String? label;
+}
+
+Widget? entryContent;
+const Entry entry = .new(label: 'x');
+''';
+    await assertDiagnostics(source, [lint(source.indexOf("'x'"), "'x'".length)]);
+  }
+
+  Future<void> _widgetClassMethodLint() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+class UserPanel extends Widget {
+  const UserPanel();
+  void announce({String? title}) {}
+}
+
+void open(UserPanel panel) {
+  panel.announce(title: 'Saved');
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf("'Saved'"), "'Saved'".length)]);
+  }
+
+  Future<void> _servicesLibraryCallNoLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/services.dart';
+
+void open() {
+  announce(label: 'Saved');
+}
+''');
+  }
+
+  Future<void> _schedulerLibraryCallNoLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/scheduler.dart';
+
+void open() {
+  schedule(label: 'Saved');
+}
+''');
+  }
+
+  Future<void> _functionValueInNonWidgetClassNoLint() async {
+    await assertNoDiagnostics(r'''
+class Notifier {
+  Notifier(this.onShow);
+  final void Function({String? title}) onShow;
+
+  void run() {
+    onShow(title: 'Save');
+  }
+}
+''');
+  }
+
+  Future<void> _globalFunctionVariableCallNoLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+void Function({String? title}) globalShow = ({title}) {};
+
+class Row extends StatelessWidget {
+  const Row();
+
+  @override
+  Widget build(BuildContext context) {
+    globalShow(title: 'Save');
+    return const Text('');
+  }
+}
+''');
+  }
+
+  Future<void> _labelCallInsidePreviewNoLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widget_previews.dart';
+import 'package:flutter/widgets.dart';
+
+void show(BuildContext context, {String? title}) {}
+
+@Preview(name: 'Dialog')
+Widget dialogPreview(BuildContext context) {
+  show(context, title: 'Saved changes');
+  return const Panel();
+}
+''');
+  }
+
+  Future<void> _labelInTestFileNoLint() async {
+    final path = '$testPackageRootPath/test/widget_test.dart';
+    newFile(path, r'''
+import 'package:flutter/widgets.dart';
+
+Widget build() => const AppButton(label: 'Save');
+''');
+
+    await assertNoDiagnosticsInFile(path);
+  }
+
+  Future<void> _labelInL10nFileNoLint() async {
+    final path = '$testPackageLibPath/l10n/labels.dart';
+    newFile(path, r'''
+import 'package:flutter/widgets.dart';
+
+Widget build() => const AppButton(label: 'Save');
+''');
+
+    await assertNoDiagnosticsInFile(path);
   }
 
   Future<void> _globalFunctionVariableProseInWidgetNoLint() async {

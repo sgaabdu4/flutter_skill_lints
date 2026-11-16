@@ -67,13 +67,6 @@ final class _Visitor extends SimpleAstVisitor<void> {
         rule.reportAtNode(positional);
       }
     }
-
-    for (final argument in arguments.whereType<NamedArgument>()) {
-      if (!isUserFacingLabel(argument.name.lexeme)) continue;
-      if (_isUserFacingLiteral(argument.argumentExpression)) {
-        rule.reportAtNode(argument.argumentExpression);
-      }
-    }
   }
 
   /// Callback fields, parameters, and locals resolve as function-expression invocations; declared methods and functions do not. Top-level and static function variables such as `debugPrint` are global hooks and are skipped.
@@ -94,8 +87,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitNamedArgument(NamedArgument node) {
-    if (!_callLabelNames.contains(node.name.lexeme)) return;
-    if (node.parent?.parent is InstanceCreationExpression) return;
+    if (!isUserFacingLabel(node.name.lexeme)) return;
     if (!_isUserFacingLiteral(node.argumentExpression)) return;
     if (enclosingWidgetPreview(node) != null || !_isUiCall(node)) return;
     rule.reportAtNode(node.argumentExpression);
@@ -120,9 +112,13 @@ final class _Visitor extends SimpleAstVisitor<void> {
     return _isFlutterUiLibrary(callee.library) ||
         _widgetOrStateChecker.isAssignableFromType(callee.returnType) ||
         (enclosing is InterfaceElement && _widgetOrStateChecker.isSuperOf(enclosing)) ||
+        (enclosing is ExtensionElement && _isUiType(enclosing.extendedType)) ||
         callee.formalParameters.any((parameter) => _contextChecker.isExactlyType(parameter.type)) ||
         (callee is ConstructorElement && _importsFlutterUi(callee.library));
   }
+
+  bool _isUiType(DartType type) =>
+      _contextChecker.isExactlyType(type) || _widgetOrStateChecker.isAssignableFromType(type);
 
   void _reportCallbackProse(AstNode node, Expression? callee, ArgumentList arguments) {
     if (_isGlobalFunctionVariable(callee) ||
@@ -137,8 +133,6 @@ final class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 }
-
-const _callLabelNames = {'title', 'label', 'tooltip', 'hintText', 'helperText', 'errorText'};
 
 /// The literal text of a callback argument; interpolated values become `$`.
 String? _callbackArgumentText(Expression expression) => switch (expression) {
@@ -172,7 +166,9 @@ final RegExp _nonUiFlutterLibrary = RegExp(
 
 bool _isFlutterUiLibrary(LibraryElement library) {
   final uri = library.uri.toString();
-  return uri.startsWith('package:flutter/') && !_nonUiFlutterLibrary.hasMatch(uri);
+  return (uri.startsWith('package:flutter/') && !_nonUiFlutterLibrary.hasMatch(uri)) ||
+      uri.startsWith('package:material_ui/') ||
+      uri.startsWith('package:cupertino_ui/');
 }
 
 bool _importsFlutterUi(LibraryElement library) =>

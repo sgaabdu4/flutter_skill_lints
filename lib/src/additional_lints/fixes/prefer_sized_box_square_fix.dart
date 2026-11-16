@@ -6,6 +6,7 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import 'package:flutter_skill_lints/src/additional_lints/ast_node_analysis.dart';
+import 'package:flutter_skill_lints/src/additional_lints/flutter_widget_helpers.dart';
 
 /// Fix that replaces `SizedBox(width: x, height: x)` with `SizedBox.square(dimension: x)`.
 class PreferSizedBoxSquareFix extends ResolvedCorrectionProducer {
@@ -38,14 +39,10 @@ class PreferSizedBoxSquareFix extends ResolvedCorrectionProducer {
   }
 
   static Expression? _creationExpression(AstNode target) {
-    if (target is ConstructorName) {
-      final parent = target.parent;
-      return parent is InstanceCreationExpression ? parent : null;
-    }
-    if (target is SimpleIdentifier && target.parent is MethodInvocation) {
-      return target.parent! as MethodInvocation;
-    }
-    return null;
+    final widget = reportedWidgetExpression(target);
+    return widget is InstanceCreationExpression || widget is MethodInvocation
+        ? widget as Expression
+        : null;
   }
 
   static ArgumentList? _argumentList(Expression expression) {

@@ -33,6 +33,18 @@ a design token miss in app files that are not theme files. A literal under 14 in
 a `TextStyle` can report all of them: the token rules say where the value must
 live, and this rule says the value is too small.
 
+## Token rule forms
+
+`style_raw_text_style` reports a dot shorthand constructor whose resolved type is
+`TextStyle` (`.new(...)`, `.bold(...)`), as well as the `TextStyle(` text.
+`style_raw_token` reports a non-zero literal in the dot shorthand forms
+`.symmetric`, `.only`, `.all`, `.fromLTRB` and `.circular` when the resolved type
+is `EdgeInsets`, `BorderRadius`, `Radius` or `SizedBox`, the same as the named
+forms. It also reports a literal `fontSize` option on any call other than a
+`TextStyle` constructor (a `TextStyle` has its own rule). A zero, a token and
+other size options such as `gap` are not reported; an `iconSize` follows the
+existing icon size rule.
+
 ## `avoid_conflicting_filled_buttons` filled button boundary
 
 `avoid_conflicting_filled_buttons` reports at error severity, once for each

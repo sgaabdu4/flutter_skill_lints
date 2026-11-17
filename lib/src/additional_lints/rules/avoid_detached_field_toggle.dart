@@ -139,7 +139,8 @@ final class _ToggleFinder extends RecursiveAstVisitor<void> {
     caseSensitive: false,
   );
   static final _eyeIcon = RegExp(
-    r'^(visibility|visibilityOff|visibility_off|removeRedEye|remove_red_eye|eye|eyeSlash|eye_slash)',
+    r'^(visibility|visibilityOff|visibility_off|removeRedEye|remove_red_eye|eye|eyeSlash|eye_slash)'
+    r'(_?(outlined|rounded|sharp|fill)|(Outlined|Rounded|Sharp|Fill))?$',
   );
 
   final String? _stateName;
@@ -203,7 +204,12 @@ final class _ToggleFinder extends RecursiveAstVisitor<void> {
 }
 
 final class _OwnControl extends RecursiveAstVisitor<void> {
-  bool found = false;
+  bool showHideLabel = false;
+  bool eyeIcon = false;
+  bool otherLabel = false;
+
+  /// A "Show" or "Hide" label, or an eye icon on a control with no other text.
+  bool get found => showHideLabel || (eyeIcon && !otherLabel);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
@@ -211,14 +217,18 @@ final class _OwnControl extends RecursiveAstVisitor<void> {
     if (type != null && _ToggleFinder._textChecker.isExactlyType(type)) {
       final text = node.argumentList.arguments.firstOrNull?.argumentExpression;
       final value = text == null ? null : stringLiteralText(text);
-      if (value != null && _ToggleFinder._showHide.hasMatch(value)) found = true;
+      if (value != null && _ToggleFinder._showHide.hasMatch(value)) {
+        showHideLabel = true;
+      } else {
+        otherLabel = true;
+      }
     }
     super.visitInstanceCreationExpression(node);
   }
 
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
-    if (_ToggleFinder._eyeIcon.hasMatch(node.name)) found = true;
+    if (_ToggleFinder._eyeIcon.hasMatch(node.name)) eyeIcon = true;
   }
 }
 

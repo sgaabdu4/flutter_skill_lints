@@ -16,6 +16,11 @@ void main() {
       'reportsShowPasswordCheckbox': (t) => t._reportsShowPasswordCheckbox(),
       'reportsEyeButtonInStack': (t) => t._reportsEyeButtonInStack(),
       'reportsToggleMethodTearOff': (t) => t._reportsToggleMethodTearOff(),
+      'allowsPreviewButtonWithEyeIcon': (t) => t._allowsPreviewButtonWithEyeIcon(),
+      'allowsIconNamedLikeAnEye': (t) => t._allowsIconNamedLikeAnEye(),
+      'reportsOutlinedEyeIconButton': (t) => t._reportsOutlinedEyeIconButton(),
+      'reportsLabelledEyeButtonThatSetsTheFlag': (t) =>
+          t._reportsLabelledEyeButtonThatSetsTheFlag(),
       'allowsShowMoreButton': (t) => t._allowsShowMoreButton(),
       'allowsHelpText': (t) => t._allowsHelpText(),
       'allowsDecorativeIcon': (t) => t._allowsDecorativeIcon(),
@@ -43,6 +48,8 @@ class Icons {
   static const Object visibility = 1;
   static const Object visibilityOff = 2;
   static const Object lock = 3;
+  static const Object visibilityNote = 4;
+  static const Object visibilityOffOutlined = 5;
 }
 
 class Icon extends Widget {
@@ -251,6 +258,70 @@ class Form1 {
     children: [
       TextField(obscureText: hidden),
       TextButton(onPressed: toggle, child: Text('Switch')),
+    ],
+  );
+}
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('TextField'), 'TextField'.length)]);
+  }
+
+  Future<void> _allowsPreviewButtonWithEyeIcon() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+Widget build(void Function() preview) => Row(
+  children: [
+    TextField(obscureText: true),
+    TextButton(
+      onPressed: preview,
+      child: Row(children: [Icon(Icons.visibility), Text('Preview')]),
+    ),
+  ],
+);
+""");
+  }
+
+  Future<void> _allowsIconNamedLikeAnEye() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+Widget build(void Function() open) => Row(
+  children: [
+    TextField(obscureText: true),
+    IconButton(onPressed: open, icon: Icon(Icons.visibilityNote)),
+  ],
+);
+""");
+  }
+
+  Future<void> _reportsOutlinedEyeIconButton() async {
+    const source = r"""
+import 'package:flutter/material.dart';
+
+Widget build(void Function() flip) => Row(
+  children: [
+    TextField(obscureText: true),
+    IconButton(onPressed: flip, icon: Icon(Icons.visibilityOffOutlined)),
+  ],
+);
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('TextField'), 'TextField'.length)]);
+  }
+
+  Future<void> _reportsLabelledEyeButtonThatSetsTheFlag() async {
+    const source = r"""
+import 'package:flutter/material.dart';
+
+class Form1 {
+  bool hidden = true;
+
+  Widget build() => Row(
+    children: [
+      TextField(obscureText: hidden),
+      TextButton(
+        onPressed: () => hidden = !hidden,
+        child: Row(children: [Icon(Icons.visibility), Text('Preview')]),
+      ),
     ],
   );
 }

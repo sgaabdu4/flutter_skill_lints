@@ -140,7 +140,7 @@ final class _ToggleFinder extends RecursiveAstVisitor<void> {
   );
   static final _eyeIcon = RegExp(
     r'^(visibility|visibilityOff|visibility_off|removeRedEye|remove_red_eye|eye|eyeSlash|eye_slash)'
-    r'(_?(outlined|rounded|sharp|fill)|(Outlined|Rounded|Sharp|Fill))?$',
+    r'(_?(outlined|rounded|sharp|fill|solid)|(Outlined|Rounded|Sharp|Fill|Solid))?$',
   );
 
   final String? _stateName;
@@ -228,7 +228,10 @@ final class _OwnControl extends RecursiveAstVisitor<void> {
 
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
-    if (_ToggleFinder._eyeIcon.hasMatch(node.name)) eyeIcon = true;
+    final owner = node.element?.enclosingElement?.name;
+    if (owner != null && owner.endsWith('Icons') && _ToggleFinder._eyeIcon.hasMatch(node.name)) {
+      eyeIcon = true;
+    }
   }
 }
 

@@ -39,6 +39,9 @@ class AvoidHardcodedStrings extends AnalysisRule {
     registry.addFunctionExpressionInvocation(this, visitor);
     registry.addMethodInvocation(this, visitor);
     registry.addNamedArgument(this, visitor);
+    registry.addConstructorDeclaration(this, visitor);
+    registry.addFieldDeclaration(this, visitor);
+    registry.addMethodDeclaration(this, visitor);
   }
 }
 
@@ -63,9 +66,51 @@ final class _Visitor extends SimpleAstVisitor<void> {
     final type = node.staticType;
     if (type != null && node.constructorName.name == null && _textChecker.isExactlyType(type)) {
       final positional = _firstPositional(arguments);
-      if (positional != null && _isUserFacingLiteral(positional)) {
-        rule.reportAtNode(positional);
+      if (positional != null) _reportCopy(positional);
+    }
+  }
+
+  void _reportCopy(Expression expression) {
+    for (final copy in _copyLeaves(expression)) {
+      if (_isUserFacingCopy(copy)) rule.reportAtNode(copy);
+    }
+  }
+
+  @override
+  void visitConstructorDeclaration(ConstructorDeclaration node) {
+    if (!isEnclosedClassAssignableTo(node, _widgetOrStateChecker)) return;
+    for (final parameter in node.parameters.parameters) {
+      final name = parameter.name?.lexeme;
+      final value = parameter.defaultClause?.value;
+      if (name != null && value != null && _isLabelName(name)) _reportCopy(value);
+    }
+    for (final initializer in node.initializers) {
+      if (initializer is ConstructorFieldInitializer && _isLabelName(initializer.fieldName.name)) {
+        _reportCopy(initializer.expression);
       }
+    }
+  }
+
+  @override
+  void visitFieldDeclaration(FieldDeclaration node) {
+    if (!isEnclosedClassAssignableTo(node, _widgetOrStateChecker)) return;
+    for (final variable in node.fields.variables) {
+      final initializer = variable.initializer;
+      if (initializer != null && _isLabelName(variable.name.lexeme)) _reportCopy(initializer);
+    }
+  }
+
+  @override
+  void visitMethodDeclaration(MethodDeclaration node) {
+    if (!node.isGetter || !_isLabelName(node.name.lexeme)) return;
+    final library = node.declaredFragment?.element.library;
+    if (library == null || !_importsFlutterUi(library)) return;
+    if (enclosingWidgetPreview(node) != null) return;
+    final body = node.body;
+    if (body is ExpressionFunctionBody) {
+      _reportCopy(body.expression);
+    } else {
+      body.accept(_ReturnedCopyVisitor(_reportCopy));
     }
   }
 
@@ -87,10 +132,11 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitNamedArgument(NamedArgument node) {
-    if (!isUserFacingLabel(node.name.lexeme)) return;
-    if (!_isUserFacingLiteral(node.argumentExpression)) return;
+    if (!_isLabelName(node.name.lexeme)) return;
+    final copies = _copyLeaves(node.argumentExpression).where(_isUserFacingCopy).toList();
+    if (copies.isEmpty) return;
     if (enclosingWidgetPreview(node) != null || !_isUiCall(node)) return;
-    rule.reportAtNode(node.argumentExpression);
+    copies.forEach(rule.reportAtNode);
   }
 
   bool _isUiCall(NamedArgument argument) {
@@ -180,6 +226,64 @@ bool _importsFlutterUi(LibraryElement library) =>
 bool _isUserFacingLiteral(Expression expression) {
   final text = stringLiteralText(expression) ?? _constantStringText(expression);
   return text != null && hasLetter(text);
+}
+
+bool _isUserFacingCopy(Expression expression) =>
+    _isUserFacingLiteral(expression) || _isConstantListLookup(expression);
+
+/// The values the expression can take: each branch of a conditional or switch, without parentheses.
+Iterable<Expression> _copyLeaves(Expression expression) sync* {
+  switch (expression) {
+    case ParenthesizedExpression(:final expression):
+      yield* _copyLeaves(expression);
+    case ConditionalExpression(:final thenExpression, :final elseExpression):
+      yield* _copyLeaves(thenExpression);
+      yield* _copyLeaves(elseExpression);
+    case SwitchExpression(:final cases):
+      for (final switchCase in cases) {
+        yield* _copyLeaves(switchCase.expression);
+      }
+    default:
+      yield expression;
+  }
+}
+
+/// A lookup such as `_days[index]` into a `const` list that holds user-facing strings.
+bool _isConstantListLookup(Expression expression) {
+  if (expression is! IndexExpression) return false;
+  final variable = _referencedElement(expression.realTarget);
+  if (variable is! VariableElement || !variable.isConst) return false;
+  final items = variable.computeConstantValue()?.toListValue();
+  return items != null &&
+      items.any((item) {
+        final text = item.toStringValue();
+        return text != null && hasLetter(text);
+      });
+}
+
+bool _isLabelName(String name) =>
+    isUserFacingLabel(name) ||
+    const {'caption', 'body'}.contains(name) ||
+    _labelSuffix.hasMatch(name);
+
+final RegExp _labelSuffix = RegExp(
+  r'[a-z](?:Label|Text|Title|Subtitle|Tooltip|Message|Hint|Description|Heading|Caption|Body)$',
+);
+
+/// Collects the `return` expressions of one function body, skipping nested closures.
+final class _ReturnedCopyVisitor extends RecursiveAstVisitor<void> {
+  _ReturnedCopyVisitor(this.onReturn);
+
+  final void Function(Expression expression) onReturn;
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {}
+
+  @override
+  void visitReturnStatement(ReturnStatement node) {
+    final expression = node.expression;
+    if (expression != null) onReturn(expression);
+  }
 }
 
 /// The value of a resolved `const` String variable or static field.

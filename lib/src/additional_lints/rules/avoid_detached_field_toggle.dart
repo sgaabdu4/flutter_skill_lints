@@ -133,6 +133,7 @@ final class _ToggleFinder extends RecursiveAstVisitor<void> {
     TypeChecker.fromName('TextField', packageName: 'flutter'),
     TypeChecker.fromName('TextFormField', packageName: 'flutter'),
   ]);
+  static const _iconDataChecker = TypeChecker.fromName('IconData', packageName: 'flutter');
   static const _callbackNames = {'onPressed', 'onChanged', 'onTap'};
   static final _showHide = RegExp(
     r'^\s*(show|hide)(\s+(password|pass|pin|text|it|characters|secret|code))?\s*[.!]?\s*$',
@@ -228,8 +229,10 @@ final class _OwnControl extends RecursiveAstVisitor<void> {
 
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
-    final owner = node.element?.enclosingElement?.name;
-    if (owner != null && owner.endsWith('Icons') && _ToggleFinder._eyeIcon.hasMatch(node.name)) {
+    final type = node.staticType;
+    if (type != null &&
+        _ToggleFinder._iconDataChecker.isExactlyType(type) &&
+        _ToggleFinder._eyeIcon.hasMatch(node.name)) {
       eyeIcon = true;
     }
   }

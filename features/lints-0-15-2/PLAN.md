@@ -1,6 +1,6 @@
 # Release 0.15.2: async rule follow-ups, hardcoded copy shapes and two UI rules
 
-Status: Draft
+Status: Complete
 
 ## Outcome + scope
 
@@ -20,16 +20,17 @@ Authority: The owner asked for flutter_skill_lints fixes and new Flutter best-pr
 
 ## Acceptance + steps
 
-- [ ] A `??=` fallback with `Future.value` stays clean, and a completed value kept by `??=` still reports → `test/flutter_skill_rules_test.dart` ProviderTurnHopTest rows `clean_null_coalescing_assign_future_value_fallback` and `null_coalescing_assign_keeps_completed_value`
-- [ ] A completer reset before the await stays clean until the new one is completed → rows `clean_completer_reset_before_await` and `completer_reset_then_completed_before_await`
-- [ ] A completer completed in `finally`, a `late` completer and the `!` forms report; `complete` in a `try` body or a later `finally` stays clean → rows `completer_completed_in_finally_before_await`, `late_completer_assigned_then_completed`, `completer_future_through_bang`, `completer_completed_through_bang`, `clean_completer_completed_in_try_body_before_await`, `clean_completer_completed_in_finally_after_await`
-- [ ] A getter, a mixin method and a base class method in the same file are followed one level → rows `notifier_build_reads_getter_that_hops`, `provider_function_awaits_top_level_getter_that_hops`, `notifier_build_calls_mixin_method_that_hops`, `notifier_build_calls_base_class_method_that_hops`, with the clean rows `clean_getter_with_real_delay` and `clean_mixin_method_with_real_delay`
-- [ ] The changelog names a static helper and `overrideWith` as the code does → rows `notifier_build_calls_static_helper_that_hops` and `tear_off_passed_to_provider_override_with`
-- [ ] Hardcoded text in conditional and switch branches, compound label names, widget defaults, initializers and fields, constant list lookups and label getters reports; model constructors, `copyWith` and non-UI services stay clean → `test/additional_lints_avoid_hardcoded_strings_test.dart` cases from `test_conditionalInText_lint` to `test_literalPassedToNonUiService_noLint`
-- [ ] A literal `fontSize` under 14 in a `TextStyle`, a dot shorthand or `copyWith` reports → `test/avoid_small_font_size_test.dart`
-- [ ] Filled buttons with different fills in one `Row` or `Wrap` report; equal fills do not → `test/avoid_conflicting_filled_buttons_test.dart`
-- [ ] The red card fails the four guidelines and the fixed card passes at 390, 768 and 1280 px, and the two rules report the red card only → `test/ui_quality_fixture_test.dart::red card fails and fixed card passes`
-- [ ] The rule count, the inventory and the version agree → `test/plugin_registration_test.dart` and the CI version check
+- [x] A `??=` fallback with `Future.value` stays clean, and a completed value kept by `??=` still reports → `test/provider_turn_hop_state_rows.dart::clean_null_coalescing_assign_future_value_fallback` and `test/provider_turn_hop_state_rows.dart::null_coalescing_assign_keeps_completed_value`
+- [x] A completer reset before the await stays clean until the new one is completed → `test/provider_turn_hop_state_rows.dart::clean_completer_reset_before_await` and `test/provider_turn_hop_state_rows.dart::completer_reset_then_completed_before_await`
+- [x] A completer completed in `finally`, a `late` completer and the `!` forms report; `complete` in a `try` body or in a later `finally` stays clean → `test/provider_turn_hop_state_rows.dart::completer_completed_in_finally_before_await`, `test/provider_turn_hop_state_rows.dart::late_completer_assigned_then_completed`, `test/provider_turn_hop_state_rows.dart::completer_future_through_bang`, `test/provider_turn_hop_state_rows.dart::clean_completer_completed_in_try_body_before_await`
+- [x] A getter, a mixin method and a base class method in the same file are followed one level, and a real delay stays clean → `test/provider_turn_hop_state_rows.dart::notifier_build_reads_getter_that_hops`, `test/provider_turn_hop_state_rows.dart::notifier_build_calls_mixin_method_that_hops`, `test/provider_turn_hop_state_rows.dart::notifier_build_calls_base_class_method_that_hops`, `test/provider_turn_hop_state_rows.dart::clean_getter_with_real_delay`
+- [x] The changelog names a static helper and `overrideWith` as the code does → `test/provider_turn_hop_state_rows.dart::notifier_build_calls_static_helper_that_hops` and `test/provider_turn_hop_state_rows.dart::tear_off_passed_to_provider_override_with`
+- [x] Hardcoded text in conditional and switch branches, compound label names, widget defaults, initializers and fields, constant list lookups and label getters reports → `test/additional_lints_avoid_hardcoded_strings_shapes_test.dart::test_conditionalInText_lint`, `test/additional_lints_avoid_hardcoded_strings_shapes_test.dart::test_compoundLabelNameLiteral_lint`, `test/additional_lints_avoid_hardcoded_strings_shapes_test.dart::test_constructorDefaultLabel_lint`, `test/additional_lints_avoid_hardcoded_strings_shapes_test.dart::test_constantListLookupInText_lint` and `test/additional_lints_avoid_hardcoded_strings_shapes_test.dart::test_enumGetterLabelInFlutterFile_lint`
+- [x] Literals passed to a model constructor, stored through `copyWith` or passed to a service that is not UI stay clean → `test/additional_lints_avoid_hardcoded_strings_shapes_test.dart::test_literalPassedToModelConstructor_noLint`, `test/additional_lints_avoid_hardcoded_strings_shapes_test.dart::test_literalStoredByCopyWith_noLint` and `test/additional_lints_avoid_hardcoded_strings_shapes_test.dart::test_literalPassedToNonUiService_noLint`
+- [x] A literal `fontSize` under 14 in a `TextStyle`, a dot shorthand or `copyWith` reports; 14 and a non-literal do not → `test/avoid_small_font_size_test.dart::reportsIntegerLiteralUnderFourteen` and `test/avoid_small_font_size_test.dart::allowsNonLiteralSizes`
+- [x] Filled buttons with different fills in one `Row` or `Wrap` report; equal fills do not → `test/avoid_conflicting_filled_buttons_test.dart::reportsExplicitColourBesideDefaultFill` and `test/avoid_conflicting_filled_buttons_test.dart::allowsSameExplicitColour`
+- [x] The red card fails the four guidelines and the fixed card passes at 390, 768 and 1280 px, and the two rules report the red card only → `integration_test/ui_quality_fixture_test.dart::red card fails and fixed card passes`
+- [x] The rule count, the inventory and the version agree → `test/plugin_registration_test.dart::registers every additional analyzer rule file` and the CI version check
 
 ## Baseline + execution
 
@@ -51,10 +52,10 @@ Sources: the 0.15.0 round six review list, the Hard Eng builder list of text sha
 
 ## Verification
 
-Result: Pending
-Evidence: Pending until the full run.
+Result: Passed
+Evidence: `dart run coverage:test_with_coverage --branch-coverage` passed 3,515 tests (exit 0). `dart-decimate json .` (0.0.75) gave verdict pass with 0 findings. `dart analyze --fatal-infos .`, `dart format --set-exit-if-changed .` and `dart pub publish --dry-run` (0 warnings) were clean. The Flutter plugin smoke test passed on 0.15.1 and on 0.15.2. The analyzer output of its app has no changed result for any file that both versions analyze (0 removed, 0 added); the 19 new files are the new rows. Every new test was seen failing before its fix: 11 turn hop rows and 9 text cases failed on the old rules, and the card test failed on the first card.
 E2E: N/A — no user journey; the real analyzer server run is the Flutter plugin smoke test and the fixture test.
-Retro: Pending
+Retro: (1) the 0.15.0 review found six async cases that no row covered -> the first four Acceptance rows; (2) the first gate run refused three complex functions and a test file over 1000 lines -> None — the gate caught both before the push, and each repair has its own commit.
 
 Delivery target: PR
 Delivery: Pending — PR checks pass.

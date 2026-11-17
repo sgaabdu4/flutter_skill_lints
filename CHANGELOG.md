@@ -35,13 +35,14 @@
   `backgroundColor` beside a default fill counts as different. Two equal fills
   are not reported. The `TextStyle` and filled button rules come from the Hard
   Eng UI quality plan.
-- Add `test/ui_quality_fixture_test.dart`: one red card and one fixed card must
+- Add `integration_test/ui_quality_fixture_test.dart`: one red card and one fixed card must
   fail and pass the four Flutter accessibility guidelines
   (`textContrastGuideline`, `labeledTapTargetGuideline`, `iOSTapTargetGuideline`,
   `androidTapTargetGuideline`) at 390, 768 and 1280 logical pixels, and the two
   new rules must report the red card only. The test builds a temporary Flutter
-  app, so it needs `flutter` on the path; the test job of the CI now sets up
-  Flutter.
+  app, so it needs `flutter` on the path. It runs in the Flutter smoke job of
+  the CI, beside the plugin smoke test, because it takes about a minute and the
+  tests gate of `test/` has a three minute budget.
 - Correct the 0.15.0 wording for `avoid_provider_turn_hop`: a static method of
   the same class is followed like an instance method, and a tear-off is also
   followed when it is passed to the `overrideWith` of a provider.

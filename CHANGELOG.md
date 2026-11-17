@@ -28,11 +28,13 @@
   stored through `copyWith`, and a call to a service that is not UI are still
   not reported. A name that starts with `debug`, such as `debugLabel` on a
   `GlobalKey` or `FocusNode`, is not user-facing and is not reported. In the name check only (widget defaults, initializers, fields, getters, and arguments with a compound name such as `ctaLabel`), a value with no spaces that reads as a key or path (`level_low`, `start-cta`, `/settings`) is not reported either. `Text('sign-in')`, `Text('/month')` and `Tooltip(message: 'e-mail')` still report; prose and single words such as `Cancel` still are.
-- Add `avoid_small_font_size`, which reports a `fontSize` under 14 in a
+- Add `avoid_small_font_size`, which reports a `fontSize` under 11 (any size from above 0 up to 10.99, such as 10, 9.5 or 8; 11 and larger are allowed) in a
   `TextStyle` constructor, a dot shorthand constructor or `copyWith`. The value
   is evaluated, so a constant (local, top level or class static), `(12)` and
-  `10 + 2` report. `apply(fontSizeFactor:)` and `TextScaler.linear(...)` under 1,
-  and `TextScaler.noScaling`, also report. `fontSize: 0` does not. The floor
+  `10 + 2` report. `apply(fontSizeFactor:)` reports when the known size times the factor is under
+  11, `TextScaler.linear(...)` under 1 reports, and `TextScaler.noScaling` reports
+  unless it is compared with `==` or `!=`. The floor is the Apple minimum and
+  the Material 3 `labelSmall` size, so a platform type scale passes. `fontSize: 0` does not. The floor
   applies in the theme and type scale files too.
 - Add `avoid_detached_field_toggle`, which reports a `TextField` or
   `TextFormField` with `obscureText` whose show or hide control is a sibling

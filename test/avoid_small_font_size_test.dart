@@ -19,7 +19,8 @@ void main() {
       'reportsShrinkingTextScaler': (t) => t._reportsShrinkingTextScaler(),
       'reportsNoScaling': (t) => t._reportsNoScaling(),
       'allowsZeroAndGrowingScale': (t) => t._allowsZeroAndGrowingScale(),
-      'allowsFourteenAndLarger': (t) => t._allowsFourteenAndLarger(),
+      'allowsElevenAndLarger': (t) => t._allowsElevenAndLarger(),
+      'allowsScalerComparisonAndUnknownBase': (t) => t._allowsScalerComparisonAndUnknownBase(),
       'allowsNonLiteralSizes': (t) => t._allowsNonLiteralSizes(),
       'allowsOtherNumbersInTextStyle': (t) => t._allowsOtherNumbersInTextStyle(),
       'allowsLookalikeTextStyle': (t) => t._allowsLookalikeTextStyle(),
@@ -63,22 +64,22 @@ final class _AvoidSmallFontSizeTest extends AnalysisRuleTest {
     const source = r'''
 import 'package:flutter/painting.dart';
 
-final style = TextStyle(fontSize: 12);
+final style = TextStyle(fontSize: 10);
 ''';
 
-    await assertDiagnostics(source, [lint(source.indexOf('12'), '12'.length)]);
+    await assertDiagnostics(source, [lint(source.indexOf('10'), '10'.length)]);
   }
 
   Future<void> _reportsDecimalLiteralUnderFourteen() async {
     const source = r'''
 import 'package:flutter/painting.dart';
 
-final small = TextStyle(fontSize: 13.9);
+final small = TextStyle(fontSize: 10.9);
 final tiny = TextStyle(fontSize: 0.5);
 ''';
 
     await assertDiagnostics(source, [
-      lint(source.indexOf('13.9'), '13.9'.length),
+      lint(source.indexOf('10.9'), '10.9'.length),
       lint(source.indexOf('0.5'), '0.5'.length),
     ]);
   }
@@ -87,10 +88,10 @@ final tiny = TextStyle(fontSize: 0.5);
     const source = r'''
 import 'package:flutter/painting.dart';
 
-const style = TextStyle(color: Color(0xFF000000), fontSize: 11);
+const style = TextStyle(color: Color(0xFF000000), fontSize: 10.5);
 ''';
 
-    await assertDiagnostics(source, [lint(source.indexOf('11'), '11'.length)]);
+    await assertDiagnostics(source, [lint(source.indexOf('10.5'), '10.5'.length)]);
   }
 
   Future<void> _reportsCopyWith() async {
@@ -107,20 +108,20 @@ TextStyle shrink(TextStyle base) => base.copyWith(fontSize: 10);
     const source = r'''
 import 'package:flutter/painting.dart';
 
-TextStyle build() => .new(fontSize: 12);
+TextStyle build() => .new(fontSize: 10);
 ''';
 
-    await assertDiagnostics(source, [lint(source.indexOf('12'), '12'.length)]);
+    await assertDiagnostics(source, [lint(source.indexOf('10'), '10'.length)]);
   }
 
   Future<void> _reportsConstantSizes() async {
     const source = r"""
 import 'package:flutter/painting.dart';
 
-const kTiny = 12.0;
+const kTiny = 10.0;
 
 abstract final class AppSizes {
-  static const double caption = 11.0;
+  static const double caption = 10.0;
 }
 
 TextStyle a() => const TextStyle(fontSize: kTiny);
@@ -141,12 +142,12 @@ TextStyle c() {
     const source = r"""
 import 'package:flutter/painting.dart';
 
-TextStyle a() => const TextStyle(fontSize: (12));
-TextStyle b() => const TextStyle(fontSize: 10 + 2);
+TextStyle a() => const TextStyle(fontSize: (10));
+TextStyle b() => const TextStyle(fontSize: 5 + 5);
 """;
     await assertDiagnostics(source, [
-      lint(source.indexOf('(12)'), '(12)'.length),
-      lint(source.indexOf('10 + 2'), '10 + 2'.length),
+      lint(source.indexOf('(10)'), '(10)'.length),
+      lint(source.indexOf('5 + 5'), '5 + 5'.length),
     ]);
   }
 
@@ -154,7 +155,7 @@ TextStyle b() => const TextStyle(fontSize: 10 + 2);
     const source = r"""
 import 'package:flutter/painting.dart';
 
-TextStyle a(TextStyle base) => base.apply(fontSizeFactor: 0.5);
+TextStyle a() => const TextStyle(fontSize: 14).apply(fontSizeFactor: 0.5);
 """;
     await assertDiagnostics(source, [lint(source.indexOf('0.5'), '0.5'.length)]);
   }
@@ -196,9 +197,23 @@ const c = TextScaler.linear(1.5);
 """);
   }
 
-  Future<void> _allowsFourteenAndLarger() async {
+  Future<void> _allowsScalerComparisonAndUnknownBase() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/painting.dart';
+
+bool plain(TextScaler scaler) => scaler == TextScaler.noScaling;
+bool other(TextScaler scaler) => scaler != TextScaler.noScaling;
+TextStyle unknown(TextStyle base) => base.apply(fontSizeFactor: 0.5);
+TextStyle fine() => const TextStyle(fontSize: 14).apply(fontSizeFactor: 0.9);
+""");
+  }
+
+  Future<void> _allowsElevenAndLarger() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/painting.dart';
+
+final floor = TextStyle(fontSize: 11);
+final twelve = TextStyle(fontSize: 12);
 
 final a = TextStyle(fontSize: 14);
 final b = TextStyle(fontSize: 14.0);
@@ -232,7 +247,7 @@ class TextStyle {
   TextStyle copyWith({double? fontSize}) => this;
 }
 
-final style = TextStyle(fontSize: 12);
+final style = TextStyle(fontSize: 10);
 TextStyle shrink(TextStyle base) => base.copyWith(fontSize: 10);
 ''');
   }
@@ -242,7 +257,7 @@ TextStyle shrink(TextStyle base) => base.copyWith(fontSize: 10);
     newFile(path, r'''
 import 'package:flutter/painting.dart';
 
-final style = TextStyle(fontSize: 12);
+final style = TextStyle(fontSize: 10);
 ''');
 
     await assertNoDiagnosticsInFile(path);
@@ -254,7 +269,7 @@ final style = TextStyle(fontSize: 12);
 // GENERATED CODE - DO NOT MODIFY BY HAND
 import 'package:flutter/painting.dart';
 
-final style = TextStyle(fontSize: 12);
+final style = TextStyle(fontSize: 10);
 ''');
 
     await assertNoDiagnosticsInFile(path);

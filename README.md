@@ -220,12 +220,13 @@ void initState() {
 }
 ```
 
-`avoid_small_font_size` refuses a literal `fontSize` under 14 in a `TextStyle`
-constructor, a dot shorthand constructor or a `copyWith` call. Use 14 or more,
-or a style from the text theme.
+`avoid_small_font_size` refuses a `fontSize` under 11 in a `TextStyle`
+constructor, a dot shorthand constructor or a `copyWith` call. 11 is the Apple
+minimum and the Material 3 `labelSmall` size. Use 11 or more, or a style from the
+text theme.
 
 ```dart
-const TextStyle(fontSize: 12); // avoid_small_font_size
+const TextStyle(fontSize: 10); // avoid_small_font_size
 ```
 
 `avoid_detached_field_toggle` refuses a `TextField` or `TextFormField` with

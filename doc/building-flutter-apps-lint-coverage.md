@@ -23,17 +23,18 @@ not reported. Test files and generated files are skipped. `Timer`,
 
 ## `avoid_small_font_size` text floor
 
-`avoid_small_font_size` reports at error severity. It reports a number under 14
+`avoid_small_font_size` reports at error severity. It reports a number under 11
 (and above 0) passed as `fontSize` to a resolved Flutter `TextStyle` constructor,
 a dot shorthand constructor or `copyWith`. The value is evaluated as a constant,
 so `kTiny`, `AppSizes.caption`, `(12)` and `10 + 2` report. It also reports
-`apply(fontSizeFactor:)` and `TextScaler.linear(...)` with a value under 1, and
-`TextScaler.noScaling`. A size read from a variable that is not constant, `null`,
+`apply(fontSizeFactor:)` when the known size times the factor is under 11,
+`TextScaler.linear(...)` with a value under 1, and `TextScaler.noScaling` unless
+it is compared with `==` or `!=`. A size read from a variable that is not constant, `null`,
 `0` and a same-named class in app code are not reported. The theme and type scale
 files are not exempt: the floor is the rule. Test
 files and generated files are skipped. It does not replace `style_raw_token`
 and `style_raw_text_style`, which report a raw `fontSize` or a raw `TextStyle` as
-a design token miss in app files that are not theme files. A literal under 14 in
+a design token miss in app files that are not theme files. A literal under 11 in
 a `TextStyle` can report all of them: the token rules say where the value must
 live, and this rule says the value is too small.
 

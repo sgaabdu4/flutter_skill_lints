@@ -11,13 +11,13 @@ import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Refuses a literal font size under 14 logical pixels in a `TextStyle`.
 final class AvoidSmallFontSize extends AnalysisRule {
-  static const double minimumFontSize = 14;
+  static const double minimumFontSize = 11;
 
   static const LintCode code = LintCode(
     'avoid_small_font_size',
-    'A font size under 14 logical pixels is hard to read.',
+    'A font size under 11 logical pixels is hard to read.',
     correctionMessage:
-        'Use a font size of 14 or more, or a style from the text theme. '
+        'Use a font size of 11 or more, or a style from the text theme. '
         'Shorten the text instead of shrinking it.',
     severity: DiagnosticSeverity.ERROR,
   );
@@ -26,7 +26,7 @@ final class AvoidSmallFontSize extends AnalysisRule {
     : super(
         name: 'avoid_small_font_size',
         description:
-            'Flags a literal fontSize under 14 in a TextStyle constructor, a dot shorthand '
+            'Flags a fontSize under 11 in a TextStyle constructor, a dot shorthand '
             'constructor or a copyWith call.',
       );
 
@@ -68,27 +68,55 @@ final class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitMethodInvocation(MethodInvocation node) {
     final name = node.methodName.name;
-    final target = node.realTarget?.staticType;
-    if (name == 'copyWith') _checkFontSize(target, node.argumentList);
-    if (name == 'apply' && target != null && _textStyleChecker.isExactlyType(target)) {
-      final factor = namedArgumentExpression(node.argumentList, 'fontSizeFactor');
-      if (factor != null && _isShrinking(factor, 1)) rule.reportAtNode(factor);
+    final target = node.realTarget;
+    final targetType = target?.staticType;
+    if (name == 'copyWith') _checkFontSize(targetType, node.argumentList);
+    if (name == 'apply' && target != null && targetType != null) _checkApply(target, node);
+  }
+
+  void _checkApply(Expression target, MethodInvocation node) {
+    if (!_textStyleChecker.isExactlyType(target.staticType!)) return;
+    final factor = namedArgumentExpression(node.argumentList, 'fontSizeFactor');
+    final scale = factor == null ? null : _numberOf(factor);
+    final size = _sizeOf(target);
+    if (scale != null && size != null && size * scale < AvoidSmallFontSize.minimumFontSize) {
+      rule.reportAtNode(factor!);
     }
+  }
+
+  double? _sizeOf(Expression style) {
+    final arguments = switch (style) {
+      InstanceCreationExpression(:final argumentList) => argumentList,
+      DotShorthandConstructorInvocation(:final argumentList) => argumentList,
+      _ => null,
+    };
+    final size = arguments == null ? null : namedArgumentExpression(arguments, 'fontSize');
+    if (size != null) return _numberOf(size);
+    final field = style.computeConstantValue()?.value?.getField('fontSize');
+    return field?.toDoubleValue() ?? field?.toIntValue()?.toDouble();
   }
 
   @override
   void visitPrefixedIdentifier(PrefixedIdentifier node) {
-    if (node.identifier.name == 'noScaling' && _isScalerMember(node.identifier.element)) {
+    if (node.identifier.name == 'noScaling' &&
+        !_isComparison(node) &&
+        _isScalerMember(node.identifier.element)) {
       rule.reportAtNode(node);
     }
   }
 
   @override
   void visitDotShorthandPropertyAccess(DotShorthandPropertyAccess node) {
-    if (node.propertyName.name == 'noScaling' && _isScalerMember(node.propertyName.element)) {
+    if (node.propertyName.name == 'noScaling' &&
+        !_isComparison(node) &&
+        _isScalerMember(node.propertyName.element)) {
       rule.reportAtNode(node);
     }
   }
+
+  bool _isComparison(Expression node) =>
+      node.parent is BinaryExpression &&
+      const {'==', '!='}.contains((node.parent! as BinaryExpression).operator.lexeme);
 
   bool _isScalerMember(Element? element) {
     final owner = element?.enclosingElement;

@@ -133,6 +133,10 @@ final class _Visitor extends SimpleAstVisitor<void> {
       if (color == null || color is NullLiteral) return '';
       return 'color:${_colourKey(_withoutPropertyWrapper(color))}';
     }
+    return _followIdentifier(style, depth);
+  }
+
+  String? _followIdentifier(Expression style, int depth) {
     final identifier = switch (style) {
       SimpleIdentifier() => style,
       PrefixedIdentifier(:final identifier) => identifier,

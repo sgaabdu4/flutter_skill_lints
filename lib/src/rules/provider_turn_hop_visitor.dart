@@ -65,6 +65,9 @@ final class ProviderTurnHopVisitor extends RecursiveAstVisitor<void> {
     if (target is PrefixedIdentifier && target.identifier.name == 'future') {
       return _isCompletedCompleter(target.prefix, target);
     }
+    if (target is PropertyAccess && target.propertyName.name == 'future') {
+      return _isCompletedCompleter(target.realTarget, target);
+    }
     return _isCompletedCreation(target);
   }
 
@@ -74,36 +77,85 @@ final class ProviderTurnHopVisitor extends RecursiveAstVisitor<void> {
     final finder = _ValueFinder(element);
     _body.accept(finder);
     Expression? held = finder.initializer;
+    var known = true;
     for (final assignment in finder.assignments) {
       if (assignment.offset > usage.offset) {
         if (_sharesLoop(usage, assignment)) return false;
         continue;
       }
       if (!_runsBefore(assignment, usage)) return false;
-      held = assignment.rightHandSide;
+      final operator = assignment.operator.type;
+      if (operator == TokenType.EQ) {
+        held = assignment.rightHandSide;
+        known = true;
+      } else if (operator == TokenType.QUESTION_QUESTION_EQ) {
+        if (known && (held == null || held is NullLiteral)) {
+          held = assignment.rightHandSide;
+        } else if (!known || !_isCompletedCreation(held)) {
+          known = false;
+        }
+      } else {
+        known = false;
+      }
     }
-    return _isCompletedCreation(held);
+    return known && _isCompletedCreation(held);
   }
 
-  bool _isCompletedCompleter(Expression holder, Expression usage) {
-    final element = holder is SimpleIdentifier ? holder.element : null;
+  bool _isCompletedCompleter(Expression? holder, Expression usage) {
+    final unwrapped = _withoutBang(holder);
+    final element = unwrapped is SimpleIdentifier ? unwrapped.element : null;
     if (element is! LocalVariableElement) return false;
     final finder = _ValueFinder(element);
     _body.accept(finder);
-    final initializer = finder.initializer;
-    final creation = initializer is CascadeExpression ? initializer.target : initializer;
-    if (!_isCompleterCreation(creation)) return false;
-    if (initializer is CascadeExpression && initializer.cascadeSections.any(_isCompleteCall)) {
-      return true;
+    Expression? held = finder.initializer;
+    var since = 0;
+    for (final assignment in finder.assignments) {
+      if (assignment.offset > usage.offset) {
+        if (_sharesLoop(usage, assignment)) return false;
+        continue;
+      }
+      if (assignment.operator.type != TokenType.EQ || !_runsBefore(assignment, usage)) {
+        return false;
+      }
+      held = assignment.rightHandSide;
+      since = assignment.end;
     }
-    final calls = _CompleteCallFinder(element, usage);
+    final creation = held is CascadeExpression ? held.target : held;
+    if (!_isCompleterCreation(creation)) return false;
+    if (held is CascadeExpression && held.cascadeSections.any(_isCompleteCall)) return true;
+    final calls = _CompleteCallFinder(element, usage, since);
     _body.accept(calls);
     return calls.found;
   }
 
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (followHelpers && _wrapsHopGetter(node)) report(node);
+    super.visitSimpleIdentifier(node);
+  }
+
   bool _wrapsHop(MethodInvocation call) {
     final body = _helperBody(call);
-    if (body == null) return false;
+    return body != null && _hopsIn(body);
+  }
+
+  bool _wrapsHopGetter(SimpleIdentifier reference) {
+    final element = reference.element;
+    if (element is! GetterElement) return false;
+    final parent = reference.parent;
+    final own = switch (parent) {
+      PrefixedIdentifier(:final identifier) when identifier == reference => false,
+      PropertyAccess(:final propertyName, :final realTarget) when propertyName == reference =>
+        realTarget is ThisExpression,
+      _ => true,
+    };
+    if (!own) return false;
+    final body =
+        _memberBody(element) ?? topLevelFunctionOf(_body, element)?.functionExpression.body;
+    return body != null && _hopsIn(body);
+  }
+
+  bool _hopsIn(FunctionBody body) {
     var found = false;
     body.accept(ProviderTurnHopVisitor((_) => found = true, body, followHelpers: false));
     return found;
@@ -113,15 +165,29 @@ final class ProviderTurnHopVisitor extends RecursiveAstVisitor<void> {
     final element = call.methodName.element;
     final target = call.realTarget;
     if (element is MethodElement && (target == null || target is ThisExpression)) {
-      final members = _body.thisOrAncestorOfType<ClassDeclaration>()?.body;
-      for (final member in members is BlockClassBody ? members.members : const <ClassMember>[]) {
-        if (member is MethodDeclaration && member.declaredFragment?.element == element) {
+      return _memberBody(element);
+    }
+    return topLevelFunctionOf(_body, element)?.functionExpression.body;
+  }
+
+  FunctionBody? _memberBody(ExecutableElement element) {
+    final unit = _body.thisOrAncestorOfType<CompilationUnit>();
+    for (final declaration in unit?.declarations ?? const <CompilationUnitMember>[]) {
+      final members = switch (declaration) {
+        ClassDeclaration(:final body) => body is BlockClassBody ? body.members : null,
+        MixinDeclaration(:final body) => body.members,
+        ExtensionDeclaration(:final body) => body is BlockClassBody ? body.members : null,
+        EnumDeclaration(:final body) => body.members,
+        _ => null,
+      };
+      for (final member in members ?? const <ClassMember>[]) {
+        if (member is MethodDeclaration &&
+            member.declaredFragment?.element.baseElement == element.baseElement) {
           return member.body;
         }
       }
-      return null;
     }
-    return topLevelFunctionOf(_body, element)?.functionExpression.body;
+    return null;
   }
 }
 
@@ -135,19 +201,44 @@ FunctionDeclaration? topLevelFunctionOf(AstNode from, Element? element) {
   return null;
 }
 
+Expression? _withoutBang(Expression? expression) {
+  var current = expression;
+  while (true) {
+    if (current is ParenthesizedExpression) {
+      current = current.expression;
+    } else if (current is PostfixExpression && current.operator.type == TokenType.BANG) {
+      current = current.operand;
+    } else {
+      return current;
+    }
+  }
+}
+
 bool _runsBefore(AstNode earlier, AstNode usage) {
   if (earlier.offset >= usage.offset) return false;
   if (earlier.thisOrAncestorOfType<FunctionBody>() != usage.thisOrAncestorOfType<FunctionBody>()) {
     return false;
   }
-  for (AstNode? node = earlier; node != null; node = node.parent) {
-    if (node is Statement &&
+  AstNode? node = earlier;
+  var leftFinally = false;
+  while (node != null) {
+    if (!leftFinally &&
+        node is Statement &&
         node is! ExpressionStatement &&
         node is! VariableDeclarationStatement) {
       return false;
     }
+    leftFinally = false;
     final parent = node.parent;
-    if (parent is Block) return parent.offset <= usage.offset && usage.end <= parent.end;
+    if (parent is Block) {
+      if (parent.offset <= usage.offset && usage.end <= parent.end) return true;
+      final owner = parent.parent;
+      if (owner is! TryStatement || owner.finallyBlock != parent) return false;
+      node = owner;
+      leftFinally = true;
+    } else {
+      node = parent;
+    }
   }
   return false;
 }
@@ -164,17 +255,19 @@ bool _sharesLoop(AstNode usage, AstNode other) {
 }
 
 final class _CompleteCallFinder extends RecursiveAstVisitor<void> {
-  _CompleteCallFinder(this._element, this._usage);
+  _CompleteCallFinder(this._element, this._usage, this._since);
 
   final LocalVariableElement _element;
   final AstNode _usage;
+  final int _since;
   bool found = false;
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    final target = node.realTarget;
+    final target = _withoutBang(node.realTarget);
     if (target is SimpleIdentifier &&
         target.element == _element &&
+        node.offset >= _since &&
         _isCompleteCall(node) &&
         _runsBefore(node, _usage)) {
       found = true;

@@ -139,8 +139,11 @@ class Notifier<T> {
 
 class AsyncNotifier<T> extends Notifier<T> {}
 
+class Override {}
+
 class Provider<T> {
   Provider(T Function(Ref ref) create);
+  Override overrideWith(T Function(Ref ref) create) => Override();
 }
 
 class StateProvider<T> {

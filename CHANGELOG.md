@@ -37,8 +37,12 @@
 - Add `avoid_conflicting_filled_buttons`, which reports two or more
   `FilledButton` or `ElevatedButton` widgets (with their `.icon` and `.tonal`
   forms) in one `Row` or `Wrap` when their fill colours differ. An explicit
-  `backgroundColor` beside a default fill counts as different. Two equal fills
-  are not reported. The `TextStyle` and filled button rules come from the Hard
+  `backgroundColor` beside a default fill counts as different. A default
+  `FilledButton` beside a default `ElevatedButton` is reported. A style held in
+  a variable, a field or another file is read through its definition; a style
+  with no fill, or a button theme style, is the default fill, and a style that
+  cannot be read skips that button. Buttons in a collection `if` are included.
+  Two equal fills are not reported. The `TextStyle` and filled button rules come from the Hard
   Eng UI quality plan.
 - Close three gaps in the token rules. `style_raw_text_style` now also reports a
   dot shorthand constructor of `TextStyle` such as `.new(fontSize: 18)`.

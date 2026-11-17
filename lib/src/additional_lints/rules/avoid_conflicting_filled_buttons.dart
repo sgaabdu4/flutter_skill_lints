@@ -1,5 +1,7 @@
+import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/instance_creation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
@@ -46,6 +48,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   ]);
   static const _propertyAllNames = {'WidgetStatePropertyAll', 'MaterialStatePropertyAll'};
   static const _maxWrapperDepth = 4;
+  static const _maxStyleDepth = 3;
 
   final AvoidConflictingFilledButtons rule;
 
@@ -58,12 +61,26 @@ final class _Visitor extends SimpleAstVisitor<void> {
     final fills = <String>{};
     var buttons = 0;
     for (final element in children.elements) {
-      final button = element is Expression ? _filledButtonIn(element, 0) : null;
-      if (button == null) continue;
-      buttons++;
-      fills.add(_fillOf(button));
+      for (final button in _buttonsIn(element)) {
+        final fill = _fillOf(button);
+        if (fill == null) continue;
+        buttons++;
+        fills.add(fill);
+      }
     }
     if (buttons >= 2 && fills.length > 1) rule.reportAtNode(node.constructorName);
+  }
+
+  Iterable<InstanceCreationExpression> _buttonsIn(CollectionElement element) sync* {
+    switch (element) {
+      case IfElement(:final thenElement, :final elseElement):
+        yield* _buttonsIn(thenElement);
+        if (elseElement != null) yield* _buttonsIn(elseElement);
+      case Expression():
+        if (_filledButtonIn(element, 0) case final button?) yield button;
+      default:
+        break;
+    }
   }
 
   InstanceCreationExpression? _filledButtonIn(Expression expression, int depth) {
@@ -84,18 +101,82 @@ final class _Visitor extends SimpleAstVisitor<void> {
     };
   }
 
-  String _fillOf(InstanceCreationExpression button) {
+  /// The fill of [button], or null when it cannot be read.
+  String? _fillOf(InstanceCreationExpression button) {
     final style = namedArgumentExpression(button.argumentList, 'style');
-    if (style == null || style is NullLiteral) return 'default';
+    final kind = button.staticType?.element?.name == 'ElevatedButton' ? 'elevated' : 'filled';
+    final fill = style == null ? '' : _styleFill(style, 0);
+    return switch (fill) {
+      null => null,
+      '' => 'default:$kind',
+      _ => fill,
+    };
+  }
+
+  /// '' for the default fill, a key for an explicit fill, null when unreadable.
+  String? _styleFill(Expression style, int depth) {
+    if (style is NullLiteral) return '';
+    if (style is ParenthesizedExpression) return _styleFill(style.expression, depth);
     final arguments = switch (style) {
-      InstanceCreationExpression(:final argumentList) => argumentList,
-      MethodInvocation(:final argumentList) => argumentList,
+      InstanceCreationExpression(:final argumentList, :final constructorName)
+          when constructorName.type.name.lexeme == 'ButtonStyle' =>
+        argumentList,
+      MethodInvocation(:final argumentList, :final methodName)
+          when methodName.name == 'styleFrom' =>
+        argumentList,
       _ => null,
     };
-    if (arguments == null) return 'style:${style.toSource()}';
-    final color = namedArgumentExpression(arguments, 'backgroundColor');
-    if (color == null || color is NullLiteral) return 'default';
-    return 'color:${_colourKey(_withoutPropertyWrapper(color))}';
+    if (arguments != null) {
+      final color = namedArgumentExpression(arguments, 'backgroundColor');
+      if (color == null || color is NullLiteral) return '';
+      return 'color:${_colourKey(_withoutPropertyWrapper(color))}';
+    }
+    final identifier = switch (style) {
+      SimpleIdentifier() => style,
+      PrefixedIdentifier(:final identifier) => identifier,
+      PropertyAccess(:final propertyName) => propertyName,
+      _ => null,
+    };
+    if (identifier == null || depth > _maxStyleDepth) return null;
+    if (identifier.name == 'style' && _isButtonTheme(style)) return '';
+    final initializer = _initializerOf(identifier.element, style.root);
+    return initializer == null ? null : _styleFill(initializer, depth + 1);
+  }
+
+  bool _isButtonTheme(Expression style) {
+    final target = switch (style) {
+      PrefixedIdentifier(:final prefix) => prefix,
+      PropertyAccess(:final target) => target,
+      _ => null,
+    };
+    final name = switch (target) {
+      SimpleIdentifier(:final name) => name,
+      PropertyAccess(:final propertyName) => propertyName.name,
+      _ => null,
+    };
+    return name != null && name.endsWith('ButtonTheme');
+  }
+
+  Expression? _initializerOf(Element? element, AstNode root) {
+    final variable = switch (element) {
+      GetterElement(:final variable) => variable,
+      VariableElement() => element,
+      _ => null,
+    };
+    if (variable == null) return null;
+    final library = variable.library;
+    if (library == null || library.isInSdk) return null;
+    final local = _LocalDeclaration(variable);
+    root.accept(local);
+    if (local.found != null) return local.found?.initializer;
+    final parsed = library.session.getParsedLibraryByElement(library);
+    if (parsed is! ParsedLibraryResult) return null;
+    try {
+      final node = parsed.getFragmentDeclaration(variable.baseElement.firstFragment)?.node;
+      return node is VariableDeclaration ? node.initializer : null;
+    } on ArgumentError {
+      return null;
+    }
   }
 
   Expression _withoutPropertyWrapper(Expression color) {
@@ -116,6 +197,24 @@ final class _Visitor extends SimpleAstVisitor<void> {
     return isWrapper && first != null ? first : color;
   }
 
-  String _colourKey(Expression color) =>
-      color.computeConstantValue()?.value?.toString() ?? color.toSource();
+  String _colourKey(Expression color) {
+    try {
+      return color.computeConstantValue()?.value?.toString() ?? color.toSource();
+    } on ArgumentError {
+      return color.toSource();
+    }
+  }
+}
+
+final class _LocalDeclaration extends RecursiveAstVisitor<void> {
+  _LocalDeclaration(this._variable);
+
+  final VariableElement _variable;
+  VariableDeclaration? found;
+
+  @override
+  void visitVariableDeclaration(VariableDeclaration node) {
+    if (node.declaredFragment?.element == _variable) found = node;
+    super.visitVariableDeclaration(node);
+  }
 }

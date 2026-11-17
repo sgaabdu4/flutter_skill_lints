@@ -54,10 +54,13 @@ wrappers that pass a single `child` (such as `Expanded` or `Padding`), for
 `.tonal` forms. The fill is the `backgroundColor` of `styleFrom(...)` or
 `ButtonStyle(...)`, also inside `WidgetStatePropertyAll` or
 `WidgetStateProperty.all`. A button with no `backgroundColor` has the default
-fill, and every default fill counts as one fill, so `FilledButton` beside
-`FilledButton.tonal` is not reported. Colours are equal when their constant
+fill of its kind: `FilledButton` and `FilledButton.tonal` share one default,
+`ElevatedButton` has its own, so `FilledButton` beside `ElevatedButton` is
+reported and `FilledButton` beside `FilledButton.tonal` is not. Colours are equal when their constant
 values are equal, or when their source text is equal. A style held in a
-variable counts as its own fill. Two or more fills that differ report at the
+variable, field or other file is read through its definition; a style with no
+fill and `filledButtonTheme.style` are the default, and a style that cannot be
+read skips the button. Two or more fills that differ report at the
 `Row` or `Wrap`. Buttons in a `Column`, buttons in separate rows, outlined and
 text buttons, and same-named classes in app code are not reported.
 

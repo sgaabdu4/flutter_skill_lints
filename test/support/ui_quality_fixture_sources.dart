@@ -25,10 +25,10 @@ class RedItemCard extends StatelessWidget {
               child: Text(
                 'Pending review',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Color(0xFF9E9E9E)),
+                style: TextStyle(fontSize: 10, color: Color(0xFF9E9E9E)),
               ),
             ),
-            const Text('Due today', style: TextStyle(fontSize: 12, color: Color(0xFFFFB300))),
+            const Text('Due today', style: TextStyle(fontSize: 10, color: Color(0xFFFFB300))),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -38,7 +38,7 @@ class RedItemCard extends StatelessWidget {
                     backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Approve', style: TextStyle(fontSize: 12)),
+                  child: const Text('Approve', style: TextStyle(fontSize: 10)),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
@@ -47,7 +47,7 @@ class RedItemCard extends StatelessWidget {
                     backgroundColor: const Color(0xFF795548),
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Decline', style: TextStyle(fontSize: 12)),
+                  child: const Text('Decline', style: TextStyle(fontSize: 10)),
                 ),
                 const Spacer(),
                 IconButton(

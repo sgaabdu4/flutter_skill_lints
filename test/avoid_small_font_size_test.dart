@@ -221,7 +221,7 @@ TextStyle b() => const TextStyle(fontSize: 14).apply(fontSizeFactor: 0.9, fontSi
 """;
     await assertDiagnostics(source, [
       lint(source.indexOf('-5'), '-5'.length),
-      lint(source.indexOf('0.9'), '0.9'.length),
+      lint(source.indexOf('-3'), '-3'.length),
     ]);
   }
 
@@ -252,6 +252,10 @@ bool b(TextScaler s) => (TextScaler.noScaling) == s;
 bool c(TextScaler s) => (s == (TextScaler.noScaling));
 int d(TextScaler s) => switch (s) {
   TextScaler.noScaling => 1,
+  _ => 2,
+};
+int e(TextScaler s) => switch (s) {
+  == TextScaler.noScaling => 1,
   _ => 2,
 };
 """);

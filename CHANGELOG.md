@@ -54,7 +54,7 @@
   `backgroundColor` beside a default fill counts as different. A default
   `FilledButton` beside a default `ElevatedButton` is reported. A style held in
   a variable or field of the same file is read through its definition. Fills
-  from other files are not compared: a group with such a style is skipped. A style
+  from other files are not compared; the fills that remain in the group are. A style
   with no fill, or a button theme style, is the default fill, and a style that
   cannot be read skips that button. Buttons in a collection `if` are included.
   The `primary` colour of Flutter's `ColorScheme`, however the scheme is reached,

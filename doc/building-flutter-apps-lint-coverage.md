@@ -69,15 +69,14 @@ fill of its kind: `FilledButton` and `FilledButton.tonal` share one default,
 `ElevatedButton` has its own, so `FilledButton` beside `ElevatedButton` is
 reported and `FilledButton` beside `FilledButton.tonal` is not. Colours are equal when their constant
 values are equal, or when their source text is equal. A style held in a
-variable, field or other file is read through its definition; a style with no
+variable or field of the same file is read through its definition; a style with no
 fill and `filledButtonTheme.style` are the default, and a style that cannot be
 read skips the button. Two or more fills that differ report at the
 `Row` or `Wrap`. The `primary` getter of Flutter's `ColorScheme` (found by its element, so
 `scheme.primary` and `cs.primary` count) is the Material 3 default fill of
 `FilledButton`, so it does not differ from a default `FilledButton`. It differs
-from the default `ElevatedButton` fill (`surfaceContainerLow`). Stated gap: fills from other files are not compared. A group with a button whose
-style comes from another file or package is skipped, because that fill has no
-resolved colour. Accepted gaps: a
+from the default `ElevatedButton` fill (`surfaceContainerLow`). Stated gap: fills from other files are not compared, because such a fill has no
+resolved colour. The fills that remain in the group are still compared. Accepted gaps: a
 fill from a getter, a function or `copyWith`, and a button in a nested `Row`
 (each `Row` is judged alone) are not read. Buttons in a `Column`, buttons in separate rows, outlined and
 text buttons, and same-named classes in app code are not reported.

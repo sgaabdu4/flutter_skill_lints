@@ -19,6 +19,8 @@ void main() {
       'reportsButtonsInsideCollectionIf': (t) => t._reportsButtonsInsideCollectionIf(),
       'reportsStyleVariableWithDifferentFill': (t) => t._reportsStyleVariableWithDifferentFill(),
       'allowsOtherFileFillBesideDefault': (t) => t._allowsOtherFileFillBesideDefault(),
+      'reportsInlineConflictBesideOtherFileFill': (t) =>
+          t._reportsInlineConflictBesideOtherFileFill(),
       'allowsTwoOtherFileStylesRedAndBlue': (t) => t._allowsTwoOtherFileStylesRedAndBlue(),
       'allowsStyleVariableWithoutFill': (t) => t._allowsStyleVariableWithoutFill(),
       'allowsThemeStyleBesideDefault': (t) => t._allowsThemeStyleBesideDefault(),
@@ -557,6 +559,35 @@ final ButtonStyle foreignStyle = FilledButton.styleFrom(backgroundColor: Colors.
       'package:other_pkg/styles.dart',
       "FilledButton(onPressed: null, child: Text('B')),",
     );
+  }
+
+  Future<void> _reportsInlineConflictBesideOtherFileFill() async {
+    newFile('$testPackageLibPath/red.dart', r"""
+import 'package:flutter/material.dart';
+
+final ButtonStyle redStyle = FilledButton.styleFrom(backgroundColor: Colors.green);
+""");
+    const source = r"""
+import 'package:flutter/material.dart';
+import 'red.dart';
+
+Widget build() => Row(
+  children: [
+    FilledButton(
+      onPressed: null,
+      style: FilledButton.styleFrom(backgroundColor: Colors.green),
+      child: Text('A'),
+    ),
+    FilledButton(
+      onPressed: null,
+      style: FilledButton.styleFrom(backgroundColor: Colors.brown),
+      child: Text('B'),
+    ),
+    FilledButton(onPressed: null, style: redStyle, child: Text('C')),
+  ],
+);
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('Row('), 'Row'.length)]);
   }
 
   Future<void> _allowsTwoOtherFileStylesRedAndBlue() async {

@@ -262,9 +262,10 @@ bool _isConstantListLookup(Expression expression) {
 }
 
 bool _isLabelName(String name) =>
-    isUserFacingLabel(name) ||
-    const {'caption', 'body'}.contains(name) ||
-    _labelSuffix.hasMatch(name);
+    !name.startsWith('debug') &&
+    (isUserFacingLabel(name) ||
+        const {'caption', 'body'}.contains(name) ||
+        _labelSuffix.hasMatch(name));
 
 final RegExp _labelSuffix = RegExp(
   r'[a-z](?:Label|Text|Title|Subtitle|Tooltip|Message|Hint|Description|Heading|Caption|Body)$',

@@ -55,6 +55,7 @@ final class _RawStyleTokenVisitor extends RecursiveAstVisitor<void> {
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     _addGeometryLiterals(node.constructorName.type.name.lexeme, node.argumentList);
+    _addFontSizeOption(node.constructorName.type.name.lexeme, node.argumentList);
     final owner = node.constructorName.element?.enclosingElement;
     if (owner != null) {
       final rawArgument = switch (owner) {
@@ -84,15 +85,34 @@ final class _RawStyleTokenVisitor extends RecursiveAstVisitor<void> {
       _ => null,
     };
     if (typeName != null) _addGeometryLiterals(typeName, node.argumentList);
-    final targetType = node.realTarget?.staticType;
-    if (node.methodName.name == 'copyWith' &&
-        targetType != null &&
-        _textStyleChecker.isExactlyType(targetType)) {
-      if (_rawNumericArgument(node.argumentList, 'fontSize') case final argument?) {
-        offsets.add(argument.offset);
-      }
-    }
+    _addFontSizeOption(typeName, node.argumentList);
     super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitDotShorthandConstructorInvocation(DotShorthandConstructorInvocation node) {
+    _addDotShorthandLiterals(node.staticType, node.argumentList);
+    super.visitDotShorthandConstructorInvocation(node);
+  }
+
+  @override
+  void visitDotShorthandInvocation(DotShorthandInvocation node) {
+    _addDotShorthandLiterals(node.staticType, node.argumentList);
+    super.visitDotShorthandInvocation(node);
+  }
+
+  void _addDotShorthandLiterals(DartType? type, ArgumentList arguments) {
+    if (type is! InterfaceType) return;
+    _addGeometryLiterals(type.element.name, arguments);
+    _addFontSizeOption(type.element.name, arguments);
+  }
+
+  /// A literal `fontSize` option on any widget or helper; `TextStyle` itself belongs to `style_raw_text_style`.
+  void _addFontSizeOption(String? typeName, ArgumentList arguments) {
+    if (typeName == 'TextStyle') return;
+    if (_rawNumericArgument(arguments, 'fontSize') case final argument?) {
+      offsets.add(argument.offset);
+    }
   }
 
   @override
@@ -105,8 +125,8 @@ final class _RawStyleTokenVisitor extends RecursiveAstVisitor<void> {
   }
 
   /// Non-zero numeric literals that flow into a spacing, radius, or size constructor's arguments.
-  void _addGeometryLiterals(String typeName, ArgumentList arguments) {
-    if (!_geometryTypeNames.contains(typeName)) return;
+  void _addGeometryLiterals(String? typeName, ArgumentList arguments) {
+    if (typeName == null || !_geometryTypeNames.contains(typeName)) return;
     for (final argument in arguments.arguments) {
       if (argument is NamedArgument) {
         _addStyleValueLiterals(argument.argumentExpression);
@@ -139,6 +159,17 @@ final class _RawStyleTokenVisitor extends RecursiveAstVisitor<void> {
       default:
         break;
     }
+  }
+}
+
+final class _DotShorthandTextStyleVisitor extends RecursiveAstVisitor<void> {
+  final offsets = <int>[];
+
+  @override
+  void visitDotShorthandConstructorInvocation(DotShorthandConstructorInvocation node) {
+    final type = node.staticType;
+    if (type != null && _textStyleChecker.isExactlyType(type)) offsets.add(node.offset);
+    super.visitDotShorthandConstructorInvocation(node);
   }
 }
 

@@ -1,8 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
-import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 import 'package:flutter_skill_lints/src/rules/ui_source_rules.dart';
 
 import 'analysis_rule_suite.dart';
@@ -130,20 +128,16 @@ final class _StyleRawTokenShorthandTest extends _ShorthandRuleTest {
     'const EdgeInsets e = .all(8);',
   ]);
 
-  Future<void> _reportsDotShorthandRadius() => assertReported([
-    'BorderRadius a = .circular(8);',
-    'Radius b = .circular(6);',
-  ]);
+  Future<void> _reportsDotShorthandRadius() =>
+      assertReported(['BorderRadius a = .circular(8);', 'Radius b = .circular(6);']);
 
   Future<void> _reportsLiteralFontSizeOption() => assertReported([
     'Widget a = Pill(fontSize: 13);',
     'Widget b = const Pill.small(fontSize: 12.5);',
   ]);
 
-  Future<void> _reportsLiteralFontSizeOptionOnDotShorthand() => assertReported([
-    'Pill a = .new(fontSize: 13);',
-    'Pill b = .small(fontSize: 11);',
-  ]);
+  Future<void> _reportsLiteralFontSizeOptionOnDotShorthand() =>
+      assertReported(['Pill a = .new(fontSize: 13);', 'Pill b = .small(fontSize: 11);']);
 
   Future<void> _allowsTokenDotShorthandSpacing() => assertClean([
     'abstract final class Spacing {',
@@ -164,15 +158,11 @@ final class _StyleRawTokenShorthandTest extends _ShorthandRuleTest {
     'Widget c = Pill(fontSize: 0);',
   ]);
 
-  Future<void> _leavesTextStyleToItsOwnRule() => assertClean([
-    'TextStyle a = TextStyle(fontSize: 13);',
-    'TextStyle b = .new(fontSize: 13);',
-  ]);
+  Future<void> _leavesTextStyleToItsOwnRule() =>
+      assertClean(['TextStyle a = TextStyle(fontSize: 13);', 'TextStyle b = .new(fontSize: 13);']);
 
-  Future<void> _leavesOtherSizeOptionsToSpacingRules() => assertClean([
-    'Widget a = Pill(gap: 8);',
-    'Widget b = SizedBox(width: 0);',
-  ]);
+  Future<void> _leavesOtherSizeOptionsToSpacingRules() =>
+      assertClean(['Widget a = Pill(gap: 8);', 'Widget b = SizedBox(width: 0);']);
 }
 
 final class _StyleRawTextStyleShorthandTest extends _ShorthandRuleTest {
@@ -187,10 +177,8 @@ final class _StyleRawTextStyleShorthandTest extends _ShorthandRuleTest {
   Future<void> _reportsConstDotShorthandNew() =>
       assertReported(['const TextStyle a = .new(fontSize: 18);'], from: '.');
 
-  Future<void> _allowsDotShorthandOfOtherTypes() => assertClean([
-    'Pill a = .new(fontSize: 18);',
-    'EdgeInsets b = .zero;',
-  ]);
+  Future<void> _allowsDotShorthandOfOtherTypes() =>
+      assertClean(['Pill a = .new(fontSize: 18);', 'EdgeInsets b = .zero;']);
 
   Future<void> _allowsDotShorthandTextStyleInThemeFile() => assertClean([
     'TextStyle a = .new(fontSize: 18);',

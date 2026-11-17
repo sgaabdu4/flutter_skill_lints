@@ -12,6 +12,9 @@ void main() {
     {
       'reportsDotShorthandSpacing': (t) => t._reportsDotShorthandSpacing(),
       'reportsDotShorthandRadius': (t) => t._reportsDotShorthandRadius(),
+      'reportsDotShorthandStaticMethods': (t) => t._reportsDotShorthandStaticMethods(),
+      'reportsGeometrySlots': (t) => t._reportsGeometrySlots(),
+      'allowsGeometrySlotTokens': (t) => t._allowsGeometrySlotTokens(),
       'reportsLiteralFontSizeOption': (t) => t._reportsLiteralFontSizeOption(),
       'reportsLiteralFontSizeOptionOnDotShorthand': (t) =>
           t._reportsLiteralFontSizeOptionOnDotShorthand(),
@@ -44,20 +47,49 @@ class TextStyle {
   const TextStyle.bold({double? fontSize});
 }
 
-class EdgeInsets {
+abstract class EdgeInsetsGeometry {
+  const EdgeInsetsGeometry();
+  const factory EdgeInsetsGeometry.all(double value) = EdgeInsets.all;
+  const factory EdgeInsetsGeometry.symmetric({double vertical, double horizontal}) =
+      EdgeInsets.symmetric;
+  const factory EdgeInsetsGeometry.only({double left, double top, double right, double bottom}) =
+      EdgeInsets.only;
+  const factory EdgeInsetsGeometry.fromLTRB(double left, double top, double right, double bottom) =
+      EdgeInsets.fromLTRB;
+}
+
+class EdgeInsetsDirectional extends EdgeInsetsGeometry {
+  const EdgeInsetsDirectional.only({double start = 0, double end = 0});
+}
+
+class EdgeInsets extends EdgeInsetsGeometry {
   const EdgeInsets.all(double value);
   const EdgeInsets.only({double left = 0, double top = 0, double right = 0, double bottom = 0});
   const EdgeInsets.symmetric({double vertical = 0, double horizontal = 0});
   const EdgeInsets.fromLTRB(double left, double top, double right, double bottom);
   static const EdgeInsets zero = EdgeInsets.all(0);
+  static EdgeInsets scaled(double value) => EdgeInsets.all(value);
 }
 
 class Radius {
   const Radius.circular(double radius);
 }
 
-class BorderRadius {
+abstract class BorderRadiusGeometry {
+  const BorderRadiusGeometry();
+  const factory BorderRadiusGeometry.circular(double radius) = BorderRadius.circular;
+}
+
+class BorderRadiusDirectional extends BorderRadiusGeometry {
+  const BorderRadiusDirectional.circular(double radius);
+}
+
+class BorderRadius extends BorderRadiusGeometry {
   const BorderRadius.circular(double radius);
+}
+
+class Padded extends Widget {
+  const Padded({EdgeInsetsGeometry? padding, EdgeInsetsGeometry? margin, BorderRadiusGeometry? borderRadius});
 }
 
 class SizedBox extends Widget {
@@ -67,6 +99,7 @@ class SizedBox extends Widget {
 class Pill extends Widget {
   const Pill({double? fontSize, double? gap, double? iconSize});
   const Pill.small({double? fontSize});
+  static Pill make({double? fontSize}) => Pill(fontSize: fontSize);
 }
 ''';
 
@@ -130,6 +163,27 @@ final class _StyleRawTokenShorthandTest extends _ShorthandRuleTest {
 
   Future<void> _reportsDotShorthandRadius() =>
       assertReported(['BorderRadius a = .circular(8);', 'Radius b = .circular(6);']);
+
+  Future<void> _reportsDotShorthandStaticMethods() =>
+      assertReported(['EdgeInsets a = .scaled(8);', 'Pill b = .make(fontSize: 13);']);
+
+  Future<void> _reportsGeometrySlots() => assertReported([
+    'Widget a = Padded(padding: .symmetric(horizontal: 16));',
+    'Widget b = Padded(padding: const .all(8));',
+    'Widget c = Padded(borderRadius: .circular(12));',
+    'Widget d = Padded(margin: .fromLTRB(1, 2, 3, 4));',
+    'Widget e = Padded(padding: EdgeInsetsDirectional.only(start: 4));',
+    'Widget f = Padded(borderRadius: BorderRadiusDirectional.circular(4));',
+  ]);
+
+  Future<void> _allowsGeometrySlotTokens() => assertClean([
+    'abstract final class Spacing {',
+    '  static const double s8 = 8;',
+    '}',
+    'Widget a = Padded(padding: .symmetric(horizontal: Spacing.s8));',
+    'Widget b = Padded(borderRadius: .circular(Spacing.s8));',
+    'Widget c = Padded(padding: EdgeInsetsDirectional.only(start: Spacing.s8));',
+  ]);
 
   Future<void> _reportsLiteralFontSizeOption() => assertReported([
     'Widget a = Pill(fontSize: 13);',

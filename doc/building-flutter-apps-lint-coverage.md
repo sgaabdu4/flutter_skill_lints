@@ -39,8 +39,10 @@ live, and this rule says the value is too small.
 `TextStyle` (`.new(...)`, `.bold(...)`), as well as the `TextStyle(` text.
 `style_raw_token` reports a non-zero literal in the dot shorthand forms
 `.symmetric`, `.only`, `.all`, `.fromLTRB` and `.circular` when the resolved type
-is `EdgeInsets`, `BorderRadius`, `Radius` or `SizedBox`, the same as the named
-forms. It also reports a literal `fontSize` option on any call other than a
+is `EdgeInsets`, `EdgeInsetsGeometry`, `EdgeInsetsDirectional`, `BorderRadius`,
+`BorderRadiusGeometry`, `BorderRadiusDirectional`, `Radius` or `SizedBox`, the
+same as the named forms, so slots such as `padding:` and `borderRadius:` are
+checked. It also reports a literal `fontSize` option on any call other than a
 `TextStyle` constructor (a `TextStyle` has its own rule). A zero, a token and
 other size options such as `gap` are not reported; an `iconSize` follows the
 existing icon size rule.

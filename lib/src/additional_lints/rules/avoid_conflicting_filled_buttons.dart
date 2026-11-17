@@ -46,6 +46,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     TypeChecker.fromName('FilledButton', packageName: 'material_ui'),
     TypeChecker.fromName('ElevatedButton', packageName: 'material_ui'),
   ]);
+  static const _colorSchemeChecker = TypeChecker.fromName('ColorScheme', packageName: 'flutter');
   static const _propertyAllNames = {'WidgetStatePropertyAll', 'MaterialStatePropertyAll'};
   static const _maxWrapperDepth = 4;
   static const _maxStyleDepth = 3;
@@ -72,10 +73,15 @@ final class _Visitor extends SimpleAstVisitor<void> {
         fills.add(fill);
       }
     }
-    if (buttons >= 2 && !fills.contains(_foreign) && fills.length > 1) {
+    if (buttons >= 2 && !fills.contains(_foreign) && _distinct(fills) > 1) {
       rule.reportAtNode(node.constructorName);
     }
   }
+
+  /// The scheme primary is the Material 3 default fill, so it does not differ from a default.
+  int _distinct(Set<String> fills) => fills.any((fill) => fill.startsWith('default:'))
+      ? fills.length - (fills.contains(_primaryFill) ? 1 : 0)
+      : fills.length;
 
   Iterable<InstanceCreationExpression> _buttonsIn(CollectionElement element) sync* {
     switch (element) {
@@ -115,7 +121,6 @@ final class _Visitor extends SimpleAstVisitor<void> {
     return switch (fill) {
       null => null,
       '' => 'default:$kind',
-      _primaryFill when kind == 'filled' => 'default:filled',
       _ => fill,
     };
   }
@@ -211,9 +216,20 @@ final class _Visitor extends SimpleAstVisitor<void> {
     return isWrapper && first != null ? first : color;
   }
 
+  /// The `primary` getter of Flutter's `ColorScheme`, however the scheme is reached.
+  bool _isSchemePrimary(Expression color) {
+    final identifier = switch (color) {
+      PrefixedIdentifier(:final identifier) => identifier,
+      PropertyAccess(:final propertyName) => propertyName,
+      _ => null,
+    };
+    final owner = identifier?.element?.enclosingElement;
+    return identifier?.name == 'primary' && owner != null && _colorSchemeChecker.isExactly(owner);
+  }
+
   String _colourKey(Expression color) {
     final source = color.toSource();
-    if (source.endsWith('colorScheme.primary')) return 'primary';
+    if (_isSchemePrimary(color)) return 'primary';
     if (color
         case MethodInvocation(
           methodName: SimpleIdentifier(name: 'resolveWith'),

@@ -225,8 +225,13 @@ bool _importsFlutterUi(LibraryElement library) =>
 
 bool _isUserFacingLiteral(Expression expression) {
   final text = stringLiteralText(expression) ?? _constantStringText(expression);
-  return text != null && hasLetter(text);
+  return text != null && hasLetter(text) && !_isKeyOrPath(text);
 }
+
+/// A value without spaces that reads as an identifier or route: `snake_case`, `kebab-case` or `/path`.
+bool _isKeyOrPath(String text) => _keyOrPath.hasMatch(text);
+
+final RegExp _keyOrPath = RegExp(r'^(?:/\S*|[a-z][a-z0-9]*(?:[_-][a-z0-9]+)+)$');
 
 bool _isUserFacingCopy(Expression expression) =>
     _isUserFacingLiteral(expression) || _isConstantListLookup(expression);

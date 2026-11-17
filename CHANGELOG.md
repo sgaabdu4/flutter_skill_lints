@@ -27,7 +27,7 @@
   Flutter UI. A literal passed to a model constructor by position, a literal
   stored through `copyWith`, and a call to a service that is not UI are still
   not reported. A name that starts with `debug`, such as `debugLabel` on a
-  `GlobalKey` or `FocusNode`, is not user-facing and is not reported.
+  `GlobalKey` or `FocusNode`, is not user-facing and is not reported. A value with no spaces that reads as a key or path (`level_low`, `start-cta`, `/settings`) is not reported either; prose and single words such as `Cancel` still are.
 - Add `avoid_small_font_size`, which reports a literal `fontSize` under 14 in a
   `TextStyle` constructor, a dot shorthand constructor or `copyWith`.
 - Add `avoid_detached_field_toggle`, which reports a `TextField` or

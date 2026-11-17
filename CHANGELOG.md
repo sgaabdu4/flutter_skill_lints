@@ -33,8 +33,10 @@
   is evaluated, so a constant (local, top level or class static), `(12)` and
   `10 + 2` report. `apply(fontSizeFactor:)` reports when the known size times the factor is under
   11, `TextScaler.linear(...)` under 1 reports, and `TextScaler.noScaling` reports
-  unless it is compared with `==` or `!=`. The floor is the Apple minimum and
-  the Material 3 `labelSmall` size, so a platform type scale passes. `fontSize: 0` does not. The floor
+  unless it is compared with `==` or `!=`. The floor is 11: Flutter's Material 3
+  `typography.dart` sets `labelSmall` to 11.0 (and `bodySmall` to 12.0), and
+  Apple's Human Interface Guidelines (Accessibility) give 11 pt as the iOS
+  minimum, so a platform type scale passes. `fontSize: 0` does not. The floor
   applies in the theme and type scale files too.
 - Add `avoid_detached_field_toggle`, which reports a `TextField` or
   `TextFormField` with `obscureText` whose show or hide control is a sibling

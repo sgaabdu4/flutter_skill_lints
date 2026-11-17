@@ -30,8 +30,10 @@ so `kTiny`, `AppSizes.caption`, `(12)` and `10 + 2` report. It also reports
 `apply(fontSizeFactor:)` when the known size times the factor is under 11,
 `TextScaler.linear(...)` with a value under 1, and `TextScaler.noScaling` unless
 it is compared with `==` or `!=`. A size read from a variable that is not constant, `null`,
-`0` and a same-named class in app code are not reported. The theme and type scale
-files are not exempt: the floor is the rule. Test
+`0` and a same-named class in app code are not reported. The floor is 11 because Flutter's Material 3 `typography.dart` sets `labelSmall`
+to 11.0 (and `bodySmall` to 12.0) and Apple's Human Interface Guidelines
+(Accessibility) give 11 pt as the iOS minimum. The theme and type scale files
+are not exempt: the floor is the rule. Test
 files and generated files are skipped. It does not replace `style_raw_token`
 and `style_raw_text_style`, which report a raw `fontSize` or a raw `TextStyle` as
 a design token miss in app files that are not theme files. A literal under 11 in

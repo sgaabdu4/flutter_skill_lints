@@ -70,11 +70,14 @@ text buttons, and same-named classes in app code are not reported.
 `TextField` or `TextFormField` whose `obscureText` is not the literal `false`.
 With no `suffixIcon` or `suffix` in its `decoration`, it looks at the other
 children of the `Row`, `Column`, `Wrap` or `Stack` that holds the field (through
-wrappers such as `Expanded`). A sibling is a toggle when it holds a `Text` that
-starts with "Show" or "Hide", an eye icon (`visibility`, `visibilityOff`), or a
-closure that reads or writes the variable named in `obscureText`. When the
-decoration has a `suffixIcon` or `suffix`, only a `Text` label that starts with
-"Show" or "Hide" inside it is reported, so an `IconButton` with a tooltip passes.
+wrappers such as `Expanded`). A sibling counts only when it is a control, a widget
+with `onPressed`, `onChanged` or `onTap`, and either its own label is "Show" or
+"Hide" (also "Show password" and similar), its own icon is an eye icon, or its
+callback writes the variable named in `obscureText`. A read of that variable
+alone does not count. Plain text, a decorative icon, a submit button, and another
+field (with its own suffix toggle) are not reported. When the
+decoration has a `suffixIcon` or `suffix`, only a `Text` label that is "Show" or
+"Hide" inside it is reported, so an `IconButton` with a tooltip passes.
 An unrelated button, a field that is not obscured, a same-named class in app code
 and test files are not reported. A toggle placed anywhere other than a sibling in
 the same list, and a missing tooltip, are not judged.

@@ -31,9 +31,10 @@
 - Add `avoid_small_font_size`, which reports a `fontSize` under 11 (any size from above 0 up to 10.99, such as 10, 9.5 or 8; 11 and larger are allowed) in a
   `TextStyle` constructor, a dot shorthand constructor or `copyWith`. The value
   is evaluated, so a constant (local, top level or class static), `(12)` and
-  `10 + 2` report. `apply(fontSizeFactor:)` reports when the known size times the factor is under
-  11, `TextScaler.linear(...)` under 1 reports, and `TextScaler.noScaling` reports
-  unless it is compared with `==` or `!=`. The floor is 11: Flutter's Material 3
+  `10 + 2` report. `apply` reports when the known size times `fontSizeFactor` plus `fontSizeDelta`
+  is under 11 (a base of 0 or less is clean), `TextScaler.linear(...)` under 1 reports, and `TextScaler.noScaling` reports
+  unless it is compared with `==` or `!=`, passed to `identical`, or matched in a
+  switch pattern. The floor is 11: Flutter's Material 3
   `typography.dart` sets `labelSmall` to 11.0 (and `bodySmall` to 12.0), and
   Apple's Human Interface Guidelines (Accessibility) give 11 pt as the iOS
   minimum, so a platform type scale passes. `fontSize: 0` does not. The floor

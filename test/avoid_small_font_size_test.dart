@@ -19,6 +19,10 @@ void main() {
       'reportsShrinkingTextScaler': (t) => t._reportsShrinkingTextScaler(),
       'reportsNoScaling': (t) => t._reportsNoScaling(),
       'allowsZeroAndGrowingScale': (t) => t._allowsZeroAndGrowingScale(),
+      'reportsShrinkingFontSizeDelta': (t) => t._reportsShrinkingFontSizeDelta(),
+      'allowsApplyOnNonPositiveBase': (t) => t._allowsApplyOnNonPositiveBase(),
+      'allowsNoScalingComparisons': (t) => t._allowsNoScalingComparisons(),
+      'allowsDeltaThatKeepsTheFloor': (t) => t._allowsDeltaThatKeepsTheFloor(),
       'allowsElevenAndLarger': (t) => t._allowsElevenAndLarger(),
       'allowsScalerComparisonAndUnknownBase': (t) => t._allowsScalerComparisonAndUnknownBase(),
       'allowsNonLiteralSizes': (t) => t._allowsNonLiteralSizes(),
@@ -205,6 +209,51 @@ bool plain(TextScaler scaler) => scaler == TextScaler.noScaling;
 bool other(TextScaler scaler) => scaler != TextScaler.noScaling;
 TextStyle unknown(TextStyle base) => base.apply(fontSizeFactor: 0.5);
 TextStyle fine() => const TextStyle(fontSize: 14).apply(fontSizeFactor: 0.9);
+""");
+  }
+
+  Future<void> _reportsShrinkingFontSizeDelta() async {
+    const source = r"""
+import 'package:flutter/painting.dart';
+
+TextStyle a() => const TextStyle(fontSize: 14).apply(fontSizeDelta: -5);
+TextStyle b() => const TextStyle(fontSize: 14).apply(fontSizeFactor: 0.9, fontSizeDelta: -3);
+""";
+    await assertDiagnostics(source, [
+      lint(source.indexOf('-5'), '-5'.length),
+      lint(source.indexOf('0.9'), '0.9'.length),
+    ]);
+  }
+
+  Future<void> _allowsDeltaThatKeepsTheFloor() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/painting.dart';
+
+TextStyle a() => const TextStyle(fontSize: 14).apply(fontSizeDelta: -3);
+TextStyle b() => const TextStyle(fontSize: 14).apply(fontSizeFactor: 0.9, fontSizeDelta: -1);
+""");
+  }
+
+  Future<void> _allowsApplyOnNonPositiveBase() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/painting.dart';
+
+TextStyle a() => const TextStyle(fontSize: 0).apply(fontSizeFactor: 0.5);
+TextStyle b() => const TextStyle(fontSize: -1).apply(fontSizeDelta: -2);
+""");
+  }
+
+  Future<void> _allowsNoScalingComparisons() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/painting.dart';
+
+bool a(TextScaler s) => identical(s, TextScaler.noScaling);
+bool b(TextScaler s) => (TextScaler.noScaling) == s;
+bool c(TextScaler s) => (s == (TextScaler.noScaling));
+int d(TextScaler s) => switch (s) {
+  TextScaler.noScaling => 1,
+  _ => 2,
+};
 """);
   }
 

@@ -1,5 +1,51 @@
 # Changelog
 
+## [0.15.2] - 2026-11-17
+
+- Fix `avoid_provider_turn_hop`. A `??=` fallback no longer reports: a local
+  holds a completed value after `x ??= Future.value(...)` only when it was null
+  before, and a completed value stays completed. A `Completer` is judged by the
+  value its local holds at the await, so a completer that is reset before the
+  await is clean until the new one is completed. The rule now also reports a
+  completer completed in a `finally` block that runs before the await, a `late`
+  completer, and a `completer!.future` or `completer!.complete(...)` form.
+  A `complete(...)` inside a `try` body, or in a `finally` that runs after the
+  await, is still not counted.
+- Follow more helpers in `avoid_provider_turn_hop`, one level deep as before: an
+  instance, static or mixin method, a method of a base class, and a read of a
+  getter, declared in the same file as the provider body, when it holds a hop.
+  Code in another file is not followed.
+- Report more hardcoded copy in `avoid_hardcoded_strings`, in widget UI only:
+  each literal branch of a conditional or `switch` expression passed to `Text` or
+  a label argument; a literal in a label argument whose name ends in `Label`,
+  `Text`, `Title`, `Subtitle`, `Tooltip`, `Message`, `Hint`, `Description`,
+  `Heading` or `Caption`, or is `body` (for example `ctaLabel`); a literal
+  default value, constructor initializer or field value of such a name in a
+  widget class; a lookup such as `_days[index]` into a `const` list of strings
+  passed to `Text` or a label argument; and a literal returned by a getter of
+  such a name (an enum label, an extension getter) in a file that imports
+  Flutter UI. A literal passed to a model constructor by position, a literal
+  stored through `copyWith`, and a call to a service that is not UI are still
+  not reported.
+- Add `avoid_small_font_size`, which reports a literal `fontSize` under 14 in a
+  `TextStyle` constructor, a dot shorthand constructor or `copyWith`.
+- Add `avoid_conflicting_filled_buttons`, which reports two or more
+  `FilledButton` or `ElevatedButton` widgets (with their `.icon` and `.tonal`
+  forms) in one `Row` or `Wrap` when their fill colours differ. An explicit
+  `backgroundColor` beside a default fill counts as different. Two equal fills
+  are not reported. The `TextStyle` and filled button rules come from the Hard
+  Eng UI quality plan.
+- Add `test/ui_quality_fixture_test.dart`: one red card and one fixed card must
+  fail and pass the four Flutter accessibility guidelines
+  (`textContrastGuideline`, `labeledTapTargetGuideline`, `iOSTapTargetGuideline`,
+  `androidTapTargetGuideline`) at 390, 768 and 1280 logical pixels, and the two
+  new rules must report the red card only. The test builds a temporary Flutter
+  app, so it needs `flutter` on the path; the test job of the CI now sets up
+  Flutter.
+- Correct the 0.15.0 wording for `avoid_provider_turn_hop`: a static method of
+  the same class is followed like an instance method, and a tear-off is also
+  followed when it is passed to the `overrideWith` of a provider.
+
 ## [0.15.1] - 2026-11-17
 
 - Publish the 0.15.0 changes. The v0.15.0 tag was made, but its publish job stopped before pub.dev, so 0.15.0 was never released. The publish job now runs the tests with coverage before Dart Decimate.
@@ -40,7 +86,8 @@
   `onError` callback, in `avoid_sync_notifier_state_read`.
 - Add the diagnostic `avoid_provider_turn_hop` to the same rule. A provider body
   (`@riverpod` function, sync or async, a classic `Provider((ref) { ... })`, a
-  top-level function passed to a provider constructor as a tear-off, or the `build` method of
+  top-level function passed as a tear-off to a provider constructor or to the
+  `overrideWith` of a provider, or the `build` method of
   a `@riverpod` class or a `Notifier`, `AsyncNotifier` or `StreamNotifier`
   subclass, sync or async), and any closure in it, must not hop a zero-delay
   turn. It reports
@@ -54,8 +101,8 @@
   `Completer` completed by a statement that always runs earlier in the same
   body, not one in a callback or a branch), `await` or `await for` of such a
   source or of `null`, and a call to a top-level helper in the same file, or to
-  an instance method of the same class (called with no target or `this`), whose
-  body holds one of these. A local variable counts as completed when the value
+  a static or instance method of the same class (called with no target or
+  `this`), whose body holds one of these. A local variable counts as completed when the value
   it holds at the await is a completed one; a branch, a callback or a loop that
   may change it makes it unknown. The `Duration` is judged by its value: a constant
   (`Duration.zero`, a `const` variable, `Duration(milliseconds: kMs)` with a
@@ -68,8 +115,8 @@
   helpers are followed one level. Known limits: a
   `Completer` is judged only inside the one body that creates it and by source
   order, and a provider tear-off is followed only when the function is a
-  top-level function in the same file passed to a Riverpod provider
-  constructor, and a conditional expression or short-circuit around a
+  top-level function in the same file passed to a Riverpod provider constructor
+  or to a provider's `overrideWith`, and a conditional expression or short-circuit around a
   `complete()` call is not told apart from a plain one.
   Return the value from the provider, or start the work from the event that
   causes it. This replaces the unreleased `avoid_provider_deferred_state_work`,

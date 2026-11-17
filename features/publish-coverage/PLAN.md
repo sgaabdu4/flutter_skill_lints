@@ -20,8 +20,8 @@ Authority: The owner asked for flutter_skill_lints to be fixed and released for 
 
 ## Acceptance + steps
 
-- [x] The publish job builds coverage before Dart Decimate -> `.github/workflows/publish.yml` runs `dart run coverage:test_with_coverage --branch-coverage` before `dart-decimate json .`.
-- [x] The version is 0.15.1 and the changelog says 0.15.0 was not published -> `pubspec.yaml`, `CHANGELOG.md`; the publish job's version check compares them.
+- [x] N/A — no test can run the tag publish job before merge; the proof is the local run in the publish order (Verification) and the tag publish run after merge: the publish job builds coverage before Dart Decimate.
+- [x] N/A — the version check step of the CI and publish jobs compares `pubspec.yaml` with `CHANGELOG.md`: the version is 0.15.1 and the changelog says 0.15.0 was not published.
 
 ## Baseline + execution
 

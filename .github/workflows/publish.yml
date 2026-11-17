@@ -66,14 +66,14 @@ jobs:
           runtime: node@latest
           install: false
 
+      - name: Run tests with coverage
+        run: dart run coverage:test_with_coverage --branch-coverage
+
       - name: Run Dart Decimate
         run: pnpm dlx --config.ignore-scripts=false --allow-build=dart-decimate dart-decimate@latest json .
 
       - name: Publish dry run
         run: dart pub publish --dry-run
-
-      - name: Run tests
-        run: dart test --reporter expanded
 
       - name: Run real analyzer-server smoke
         run: dart test integration_test/plugin_smoke_test.dart --reporter expanded

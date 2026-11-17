@@ -117,15 +117,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   String? _styleFill(Expression style, int depth) {
     if (style is NullLiteral) return '';
     if (style is ParenthesizedExpression) return _styleFill(style.expression, depth);
-    final arguments = switch (style) {
-      InstanceCreationExpression(:final argumentList, :final constructorName)
-          when constructorName.type.name.lexeme == 'ButtonStyle' =>
-        argumentList,
-      MethodInvocation(:final argumentList, :final methodName)
-          when methodName.name == 'styleFrom' =>
-        argumentList,
-      _ => null,
-    };
+    final arguments = _styleArguments(style);
     if (arguments != null) {
       final color = namedArgumentExpression(arguments, 'backgroundColor');
       if (color == null || color is NullLiteral) return '';
@@ -142,6 +134,15 @@ final class _Visitor extends SimpleAstVisitor<void> {
     final initializer = _initializerOf(identifier.element, style.root);
     return initializer == null ? null : _styleFill(initializer, depth + 1);
   }
+
+  ArgumentList? _styleArguments(Expression style) => switch (style) {
+    InstanceCreationExpression(:final argumentList, :final constructorName)
+        when constructorName.type.name.lexeme == 'ButtonStyle' =>
+      argumentList,
+    MethodInvocation(:final argumentList, :final methodName) when methodName.name == 'styleFrom' =>
+      argumentList,
+    _ => null,
+  };
 
   bool _isButtonTheme(Expression style) {
     final target = switch (style) {

@@ -23,6 +23,7 @@ void main() {
           t._reportsLabelledEyeButtonThatSetsTheFlag(),
       'reportsCupertinoEyeSolid': (t) => t._reportsCupertinoEyeSolid(),
       'allowsSwitchNamedVisibility': (t) => t._allowsSwitchNamedVisibility(),
+      'reportsIconDataFromAnotherIconClass': (t) => t._reportsIconDataFromAnotherIconClass(),
       'allowsShowMoreButton': (t) => t._allowsShowMoreButton(),
       'allowsHelpText': (t) => t._allowsHelpText(),
       'allowsDecorativeIcon': (t) => t._allowsDecorativeIcon(),
@@ -46,16 +47,25 @@ abstract class Widget {
   const Widget();
 }
 
+class IconData {
+  const IconData(this.code);
+  final int code;
+}
+
 class Icons {
-  static const Object visibility = 1;
-  static const Object visibilityOff = 2;
-  static const Object lock = 3;
-  static const Object visibilityNote = 4;
-  static const Object visibilityOffOutlined = 5;
+  static const IconData visibility = IconData(1);
+  static const IconData visibilityOff = IconData(2);
+  static const IconData lock = IconData(3);
+  static const IconData visibilityNote = IconData(4);
+  static const IconData visibilityOffOutlined = IconData(5);
+}
+
+class Symbols {
+  static const IconData visibility = IconData(7);
 }
 
 class CupertinoIcons {
-  static const Object eye_solid = 6;
+  static const IconData eye_solid = IconData(6);
 }
 
 class Switch extends Widget {
@@ -366,6 +376,20 @@ Widget build(bool visibility, void Function(bool) set) => Row(
   ],
 );
 """);
+  }
+
+  Future<void> _reportsIconDataFromAnotherIconClass() async {
+    const source = r"""
+import 'package:flutter/material.dart';
+
+Widget build(void Function() flip) => Row(
+  children: [
+    TextField(obscureText: true),
+    IconButton(onPressed: flip, icon: Icon(Symbols.visibility)),
+  ],
+);
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('TextField'), 'TextField'.length)]);
   }
 
   Future<void> _allowsShowMoreButton() async {

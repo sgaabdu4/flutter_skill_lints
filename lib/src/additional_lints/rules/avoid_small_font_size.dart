@@ -77,10 +77,14 @@ final class _Visitor extends SimpleAstVisitor<void> {
   void _checkApply(Expression target, MethodInvocation node) {
     if (!_textStyleChecker.isExactlyType(target.staticType!)) return;
     final factor = namedArgumentExpression(node.argumentList, 'fontSizeFactor');
-    final scale = factor == null ? null : _numberOf(factor);
+    final delta = namedArgumentExpression(node.argumentList, 'fontSizeDelta');
     final size = _sizeOf(target);
-    if (scale != null && size != null && size * scale < AvoidSmallFontSize.minimumFontSize) {
-      rule.reportAtNode(factor!);
+    if (size == null || size <= 0 || (factor == null && delta == null)) return;
+    final scale = factor == null ? 1.0 : _numberOf(factor);
+    final shift = delta == null ? 0.0 : _numberOf(delta);
+    if (scale == null || shift == null) return;
+    if (size * scale + shift < AvoidSmallFontSize.minimumFontSize) {
+      rule.reportAtNode((factor ?? delta)!);
     }
   }
 
@@ -114,9 +118,18 @@ final class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  bool _isComparison(Expression node) =>
-      node.parent is BinaryExpression &&
-      const {'==', '!='}.contains((node.parent! as BinaryExpression).operator.lexeme);
+  bool _isComparison(Expression node) {
+    AstNode child = node;
+    while (child.parent is ParenthesizedExpression) {
+      child = child.parent!;
+    }
+    return switch (child.parent) {
+      BinaryExpression(:final operator) => const {'==', '!='}.contains(operator.lexeme),
+      ConstantPattern() => true,
+      ArgumentList(parent: MethodInvocation(:final methodName)) => methodName.name == 'identical',
+      _ => false,
+    };
+  }
 
   bool _isScalerMember(Element? element) {
     final owner = element?.enclosingElement;

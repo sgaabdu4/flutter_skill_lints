@@ -27,9 +27,11 @@ not reported. Test files and generated files are skipped. `Timer`,
 (and above 0) passed as `fontSize` to a resolved Flutter `TextStyle` constructor,
 a dot shorthand constructor or `copyWith`. The value is evaluated as a constant,
 so `kTiny`, `AppSizes.caption`, `(12)` and `10 + 2` report. It also reports
-`apply(fontSizeFactor:)` when the known size times the factor is under 11,
+`apply` when the known size times `fontSizeFactor` plus `fontSizeDelta` is under
+11 (a base of 0 or less is clean),
 `TextScaler.linear(...)` with a value under 1, and `TextScaler.noScaling` unless
-it is compared with `==` or `!=`. A size read from a variable that is not constant, `null`,
+it is compared with `==` or `!=`, passed to `identical` or matched in a switch
+pattern. A size read from a variable that is not constant, `null`,
 `0` and a same-named class in app code are not reported. The floor is 11 because Flutter's Material 3 `typography.dart` sets `labelSmall`
 to 11.0 (and `bodySmall` to 12.0) and Apple's Human Interface Guidelines
 (Accessibility) give 11 pt as the iOS minimum. The theme and type scale files

@@ -1,6 +1,10 @@
 # Changelog
 
-## [0.15.0] - 2026-11-16
+## [0.15.1] - 2026-11-17
+
+- Publish the 0.15.0 changes. The v0.15.0 tag was made, but its publish job stopped before pub.dev, so 0.15.0 was never released. The publish job now runs the tests with coverage before Dart Decimate.
+
+## [0.15.0] - 2026-11-16 (not published)
 
 - Remove `avoid_banned_types`. It reported the same `dynamic` sites as
   `avoid_dynamic_except_json_maps`, so every finding counted twice. Use

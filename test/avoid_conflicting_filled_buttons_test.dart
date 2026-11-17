@@ -18,7 +18,8 @@ void main() {
           t._reportsDefaultFilledBesideDefaultElevated(),
       'reportsButtonsInsideCollectionIf': (t) => t._reportsButtonsInsideCollectionIf(),
       'reportsStyleVariableWithDifferentFill': (t) => t._reportsStyleVariableWithDifferentFill(),
-      'reportsStyleFromOtherFile': (t) => t._reportsStyleFromOtherFile(),
+      'allowsOtherFileFillBesideDefault': (t) => t._allowsOtherFileFillBesideDefault(),
+      'allowsTwoOtherFileStylesRedAndBlue': (t) => t._allowsTwoOtherFileStylesRedAndBlue(),
       'allowsStyleVariableWithoutFill': (t) => t._allowsStyleVariableWithoutFill(),
       'allowsThemeStyleBesideDefault': (t) => t._allowsThemeStyleBesideDefault(),
       'allowsStyleVariableWithEqualFill': (t) => t._allowsStyleVariableWithEqualFill(),
@@ -27,7 +28,7 @@ void main() {
       'allowsEqualFillFromThemeFile': (t) => t._allowsEqualFillFromThemeFile(),
       'allowsEqualFillFromOtherFile': (t) => t._allowsEqualFillFromOtherFile(),
       'allowsEqualFillFromOtherPackage': (t) => t._allowsEqualFillFromOtherPackage(),
-      'reportsOtherPackageFillBesideDefault': (t) => t._reportsOtherPackageFillBesideDefault(),
+      'allowsOtherPackageFillBesideDefault': (t) => t._allowsOtherPackageFillBesideDefault(),
       'allowsResolveWithClosuresWithOtherParameterNames': (t) =>
           t._allowsResolveWithClosuresWithOtherParameterNames(),
       'allowsDefaultBesideColorSchemePrimary': (t) => t._allowsDefaultBesideColorSchemePrimary(),
@@ -368,7 +369,7 @@ Widget build() => Row(
     await assertDiagnostics(source, [lint(source.indexOf('Row('), 'Row'.length)]);
   }
 
-  Future<void> _reportsStyleFromOtherFile() async {
+  Future<void> _allowsOtherFileFillBesideDefault() async {
     newFile('$testPackageLibPath/styles.dart', r"""
 import 'package:flutter/material.dart';
 
@@ -385,7 +386,7 @@ Widget build() => Row(
   ],
 );
 """;
-    await assertDiagnostics(source, [lint(source.indexOf('Row('), 'Row'.length)]);
+    await assertNoDiagnostics(source);
   }
 
   Future<void> _allowsStyleVariableWithoutFill() async {
@@ -498,7 +499,7 @@ Widget build() => Row(
     await assertNoDiagnosticsInFile(path);
   }
 
-  Future<void> _assertForeignFill(String foreign, String inline, {bool reports = false}) async {
+  Future<void> _assertForeignFill(String foreign, String inline) async {
     final source =
         """
 import 'package:flutter/material.dart';
@@ -511,11 +512,7 @@ Widget build() => Row(
   ],
 );
 """;
-    if (reports) {
-      await assertDiagnostics(source, [lint(source.indexOf('Row('), 'Row'.length)]);
-    } else {
-      await assertNoDiagnostics(source);
-    }
+    await assertNoDiagnostics(source);
   }
 
   static const _inlineBrand =
@@ -546,12 +543,36 @@ final ButtonStyle foreignStyle = FilledButton.styleFrom(backgroundColor: Colors.
     await _assertForeignFill('package:other_pkg/styles.dart', _inlineRed);
   }
 
-  Future<void> _reportsOtherPackageFillBesideDefault() async {
+  Future<void> _allowsOtherPackageFillBesideDefault() async {
     await _assertForeignFill(
       'package:other_pkg/styles.dart',
       "FilledButton(onPressed: null, child: Text('B')),",
-      reports: true,
     );
+  }
+
+  Future<void> _allowsTwoOtherFileStylesRedAndBlue() async {
+    newFile('$testPackageLibPath/red.dart', r"""
+import 'package:flutter/material.dart';
+
+final ButtonStyle redStyle = FilledButton.styleFrom(backgroundColor: Colors.green);
+""");
+    newFile('$testPackageLibPath/blue.dart', r"""
+import 'package:flutter/material.dart';
+
+final ButtonStyle blueStyle = FilledButton.styleFrom(backgroundColor: Colors.brown);
+""");
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+import 'red.dart';
+import 'blue.dart';
+
+Widget build() => Row(
+  children: [
+    FilledButton(onPressed: null, style: redStyle, child: Text('A')),
+    FilledButton(onPressed: null, style: blueStyle, child: Text('B')),
+  ],
+);
+""");
   }
 
   Future<void> _allowsResolveWithClosuresWithOtherParameterNames() async {

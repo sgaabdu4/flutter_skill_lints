@@ -70,8 +70,9 @@ values are equal, or when their source text is equal. A style held in a
 variable, field or other file is read through its definition; a style with no
 fill and `filledButtonTheme.style` are the default, and a style that cannot be
 read skips the button. Two or more fills that differ report at the
-`Row` or `Wrap`. A fill read from another file has no resolved colour: it matches
-any one explicit fill and still differs from a default fill. Accepted gaps: a
+`Row` or `Wrap`. Stated gap: fills from other files are not compared. A group with a button whose
+style comes from another file or package is skipped, because that fill has no
+resolved colour. Accepted gaps: a
 fill from a getter, a function or `copyWith`, and a button in a nested `Row`
 (each `Row` is judged alone) are not read. Buttons in a `Column`, buttons in separate rows, outlined and
 text buttons, and same-named classes in app code are not reported.

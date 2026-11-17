@@ -83,8 +83,10 @@ final class _Visitor extends SimpleAstVisitor<void> {
     final scale = factor == null ? 1.0 : _numberOf(factor);
     final shift = delta == null ? 0.0 : _numberOf(delta);
     if (scale == null || shift == null) return;
-    if (size * scale + shift < AvoidSmallFontSize.minimumFontSize) {
+    if (size * scale < AvoidSmallFontSize.minimumFontSize) {
       rule.reportAtNode((factor ?? delta)!);
+    } else if (delta != null && size * scale + shift < AvoidSmallFontSize.minimumFontSize) {
+      rule.reportAtNode(delta);
     }
   }
 
@@ -126,6 +128,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     return switch (child.parent) {
       BinaryExpression(:final operator) => const {'==', '!='}.contains(operator.lexeme),
       ConstantPattern() => true,
+      RelationalPattern(:final operator) => const {'==', '!='}.contains(operator.lexeme),
       ArgumentList(parent: MethodInvocation(:final methodName)) => methodName.name == 'identical',
       _ => false,
     };

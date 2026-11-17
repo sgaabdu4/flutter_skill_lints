@@ -36,7 +36,10 @@ void main() {
           t._allowsDefaultBesideSchemeVariablePrimary(),
       'allowsDefaultBesideParameterPrimary': (t) => t._allowsDefaultBesideParameterPrimary(),
       'allowsFilledAndElevatedBothPrimary': (t) => t._allowsFilledAndElevatedBothPrimary(),
-      'allowsDefaultElevatedBesidePrimary': (t) => t._allowsDefaultElevatedBesidePrimary(),
+      'reportsDefaultElevatedBesideElevatedPrimary': (t) =>
+          t._reportsDefaultElevatedBesideElevatedPrimary(),
+      'reportsDefaultElevatedBesideFilledPrimary': (t) =>
+          t._reportsDefaultElevatedBesideFilledPrimary(),
       'reportsLookalikePrimaryText': (t) => t._reportsLookalikePrimaryText(),
       'allowsEqualDefaultButtons': (t) => t._allowsEqualDefaultButtons(),
       'skipsGeneratedFiles': (t) => t._skipsGeneratedFiles(),
@@ -677,8 +680,8 @@ Widget build(ColorScheme cs) => Row(
 """);
   }
 
-  Future<void> _allowsDefaultElevatedBesidePrimary() async {
-    await assertNoDiagnostics(r"""
+  Future<void> _reportsDefaultElevatedBesideElevatedPrimary() async {
+    const source = r"""
 import 'package:flutter/material.dart';
 
 Widget build(ColorScheme cs) => Row(
@@ -691,7 +694,26 @@ Widget build(ColorScheme cs) => Row(
     ),
   ],
 );
-""");
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('Row('), 'Row'.length)]);
+  }
+
+  Future<void> _reportsDefaultElevatedBesideFilledPrimary() async {
+    const source = r"""
+import 'package:flutter/material.dart';
+
+Widget build(ColorScheme cs) => Row(
+  children: [
+    ElevatedButton(onPressed: null, child: Text('A')),
+    FilledButton(
+      onPressed: null,
+      style: FilledButton.styleFrom(backgroundColor: cs.primary),
+      child: Text('B'),
+    ),
+  ],
+);
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('Row('), 'Row'.length)]);
   }
 
   Future<void> _reportsLookalikePrimaryText() async {

@@ -73,15 +73,10 @@ final class _Visitor extends SimpleAstVisitor<void> {
         fills.add(fill);
       }
     }
-    if (buttons >= 2 && !fills.contains(_foreign) && _distinct(fills) > 1) {
+    if (buttons >= 2 && !fills.contains(_foreign) && fills.length > 1) {
       rule.reportAtNode(node.constructorName);
     }
   }
-
-  /// The scheme primary is the Material 3 default fill, so it does not differ from a default.
-  int _distinct(Set<String> fills) => fills.any((fill) => fill.startsWith('default:'))
-      ? fills.length - (fills.contains(_primaryFill) ? 1 : 0)
-      : fills.length;
 
   Iterable<InstanceCreationExpression> _buttonsIn(CollectionElement element) sync* {
     switch (element) {
@@ -121,6 +116,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     return switch (fill) {
       null => null,
       '' => 'default:$kind',
+      _primaryFill => 'default:filled',
       _ => fill,
     };
   }

@@ -58,7 +58,8 @@
   with no fill, or a button theme style, is the default fill, and a style that
   cannot be read skips that button. Buttons in a collection `if` are included.
   The `primary` colour of Flutter's `ColorScheme`, however the scheme is reached,
-  is the Material 3 default fill, so it does not differ from a default button.
+  is the Material 3 default fill of `FilledButton`, so it does not differ from a
+  default `FilledButton`; the default `ElevatedButton` fill is `surfaceContainerLow`.
   Two equal fills are not reported. The `TextStyle` and filled button rules come from the Hard
   Eng UI quality plan.
 - Close three gaps in the token rules. `style_raw_text_style` now also reports a

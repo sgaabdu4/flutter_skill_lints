@@ -9,7 +9,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Refuses a literal font size under 14 logical pixels in a `TextStyle`.
+/// Refuses a font size under 11 logical pixels in a `TextStyle`.
 final class AvoidSmallFontSize extends AnalysisRule {
   static const double minimumFontSize = 11;
 

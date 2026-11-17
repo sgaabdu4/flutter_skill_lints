@@ -1,4 +1,5 @@
 import 'provider_turn_hop_more_rows.dart';
+import 'provider_turn_hop_state_rows.dart';
 
 export 'provider_turn_hop_more_rows.dart';
 
@@ -6,6 +7,7 @@ final allProviderTurnHopRows = [
   ...providerTurnHopRows,
   ...providerTurnHopMoreRows,
   ...providerTurnHopFlowRows,
+  ...providerTurnHopStateRows,
 ];
 
 const providerTurnHopFlowRows = <TurnHopRow>[

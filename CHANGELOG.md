@@ -28,8 +28,12 @@
   stored through `copyWith`, and a call to a service that is not UI are still
   not reported. A name that starts with `debug`, such as `debugLabel` on a
   `GlobalKey` or `FocusNode`, is not user-facing and is not reported. A value with no spaces that reads as a key or path (`level_low`, `start-cta`, `/settings`) is not reported either; prose and single words such as `Cancel` still are.
-- Add `avoid_small_font_size`, which reports a literal `fontSize` under 14 in a
-  `TextStyle` constructor, a dot shorthand constructor or `copyWith`.
+- Add `avoid_small_font_size`, which reports a `fontSize` under 14 in a
+  `TextStyle` constructor, a dot shorthand constructor or `copyWith`. The value
+  is evaluated, so a constant (local, top level or class static), `(12)` and
+  `10 + 2` report. `apply(fontSizeFactor:)` and `TextScaler.linear(...)` under 1,
+  and `TextScaler.noScaling`, also report. `fontSize: 0` does not. The floor
+  applies in the theme and type scale files too.
 - Add `avoid_detached_field_toggle`, which reports a `TextField` or
   `TextFormField` with `obscureText` whose show or hide control is a sibling
   control in the same `Row`, `Column`, `Wrap` or `Stack`, or a text label such as

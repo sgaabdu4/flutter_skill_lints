@@ -173,7 +173,16 @@ final class _DotShorthandTextStyleVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
-const _geometryTypeNames = {'EdgeInsets', 'BorderRadius', 'Radius', 'SizedBox'};
+const _geometryTypeNames = {
+  'EdgeInsets',
+  'EdgeInsetsGeometry',
+  'EdgeInsetsDirectional',
+  'BorderRadius',
+  'BorderRadiusGeometry',
+  'BorderRadiusDirectional',
+  'Radius',
+  'SizedBox',
+};
 const _arithmeticOperators = {'+', '-', '*', '/', '~/', '%'};
 
 /// A non-zero numeric literal passed as [name], optionally negated.

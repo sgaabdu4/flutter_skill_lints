@@ -49,6 +49,8 @@ final class _Visitor extends SimpleAstVisitor<void> {
   static const _propertyAllNames = {'WidgetStatePropertyAll', 'MaterialStatePropertyAll'};
   static const _maxWrapperDepth = 4;
   static const _maxStyleDepth = 3;
+
+  /// A fill from another file has no resolved colour, so its group is not compared.
   static const _foreign = 'foreign';
   static const _primaryFill = 'color:primary';
 
@@ -70,14 +72,9 @@ final class _Visitor extends SimpleAstVisitor<void> {
         fills.add(fill);
       }
     }
-    if (buttons >= 2 && _conflicts(fills)) rule.reportAtNode(node.constructorName);
-  }
-
-  /// A fill read from another file has no resolved colour, so it matches any one explicit fill.
-  bool _conflicts(Set<String> fills) {
-    if (!fills.contains(_foreign)) return fills.length > 1;
-    final others = fills.difference({_foreign});
-    return others.any((fill) => fill.startsWith('default:')) || others.length > 1;
+    if (buttons >= 2 && !fills.contains(_foreign) && fills.length > 1) {
+      rule.reportAtNode(node.constructorName);
+    }
   }
 
   Iterable<InstanceCreationExpression> _buttonsIn(CollectionElement element) sync* {

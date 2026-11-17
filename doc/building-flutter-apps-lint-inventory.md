@@ -284,6 +284,7 @@ avoid_continue
 avoid_contradictory_expressions
 avoid_default_tostring
 avoid_dependency_overrides
+avoid_detached_field_toggle
 avoid_disposing_late_fields
 avoid_double_slash_imports
 avoid_duplicate_cascades

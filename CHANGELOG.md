@@ -29,6 +29,10 @@
   not reported.
 - Add `avoid_small_font_size`, which reports a literal `fontSize` under 14 in a
   `TextStyle` constructor, a dot shorthand constructor or `copyWith`.
+- Add `avoid_detached_field_toggle`, which reports a `TextField` or
+  `TextFormField` with `obscureText` whose show or hide control is a sibling
+  widget in the same `Row`, `Column`, `Wrap` or `Stack`, or a text label such as
+  "Show", instead of an `IconButton` in the `suffixIcon`.
 - Add `avoid_conflicting_filled_buttons`, which reports two or more
   `FilledButton` or `ElevatedButton` widgets (with their `.icon` and `.tonal`
   forms) in one `Row` or `Wrap` when their fill colours differ. An explicit

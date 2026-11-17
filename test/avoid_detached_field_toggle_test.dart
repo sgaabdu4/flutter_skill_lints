@@ -1,0 +1,262 @@
+import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_detached_field_toggle.dart';
+
+import 'analysis_rule_suite.dart';
+
+void main() {
+  analysisRuleSuite<_AvoidDetachedFieldToggleTest>(
+    'AvoidDetachedFieldToggleTest',
+    _AvoidDetachedFieldToggleTest.new,
+    {
+      'reportsTextButtonBesideField': (t) => t._reportsTextButtonBesideField(),
+      'reportsIconButtonBesideFormField': (t) => t._reportsIconButtonBesideFormField(),
+      'reportsToggleThatWritesTheObscureState': (t) => t._reportsToggleThatWritesTheObscureState(),
+      'reportsToggleInsideExpandedSibling': (t) => t._reportsToggleInsideExpandedSibling(),
+      'reportsTextLabelAsSuffix': (t) => t._reportsTextLabelAsSuffix(),
+      'allowsSuffixIconButton': (t) => t._allowsSuffixIconButton(),
+      'allowsFieldWithoutToggle': (t) => t._allowsFieldWithoutToggle(),
+      'allowsUnrelatedButtonInRow': (t) => t._allowsUnrelatedButtonInRow(),
+      'allowsFieldThatIsNotObscured': (t) => t._allowsFieldThatIsNotObscured(),
+      'allowsLookalikeField': (t) => t._allowsLookalikeField(),
+      'skipsTestFiles': (t) => t._skipsTestFiles(),
+    },
+  );
+}
+
+const _flutterLibrary = r'''
+abstract class Widget {
+  const Widget();
+}
+
+class Icons {
+  static const Object visibility = 1;
+  static const Object visibilityOff = 2;
+  static const Object lock = 3;
+}
+
+class Icon extends Widget {
+  const Icon(this.icon);
+  final Object icon;
+}
+
+class Text extends Widget {
+  const Text(this.data);
+  final String data;
+}
+
+class IconButton extends Widget {
+  const IconButton({required this.onPressed, required this.icon, this.tooltip});
+  final void Function()? onPressed;
+  final Widget icon;
+  final String? tooltip;
+}
+
+class TextButton extends Widget {
+  const TextButton({required this.onPressed, required this.child});
+  final void Function()? onPressed;
+  final Widget child;
+}
+
+class InputDecoration {
+  const InputDecoration({this.suffixIcon, this.suffix, this.labelText});
+  final Widget? suffixIcon;
+  final Widget? suffix;
+  final String? labelText;
+}
+
+class TextField extends Widget {
+  const TextField({this.obscureText = false, this.decoration});
+  final bool obscureText;
+  final InputDecoration? decoration;
+}
+
+class TextFormField extends Widget {
+  const TextFormField({this.obscureText = false, this.decoration});
+  final bool obscureText;
+  final InputDecoration? decoration;
+}
+
+class Expanded extends Widget {
+  const Expanded({required this.child});
+  final Widget child;
+}
+
+class Row extends Widget {
+  const Row({this.children = const <Widget>[]});
+  final List<Widget> children;
+}
+''';
+
+final class _AvoidDetachedFieldToggleTest extends AnalysisRuleTest {
+  @override
+  void setUp() {
+    newPackage('flutter').addFile('lib/material.dart', _flutterLibrary);
+    rule = AvoidDetachedFieldToggle();
+    super.setUp();
+  }
+
+  Future<void> _reportsTextButtonBesideField() async {
+    const source = r'''
+import 'package:flutter/material.dart';
+
+Widget build(bool hidden, void Function() flip) => Row(
+  children: [
+    Expanded(child: TextField(obscureText: hidden)),
+    TextButton(onPressed: flip, child: Text('Show')),
+  ],
+);
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('TextField'), 'TextField'.length)]);
+  }
+
+  Future<void> _reportsIconButtonBesideFormField() async {
+    const source = r'''
+import 'package:flutter/material.dart';
+
+Widget build(bool hidden, void Function() flip) => Row(
+  children: [
+    TextFormField(obscureText: true),
+    IconButton(onPressed: flip, icon: Icon(Icons.visibilityOff)),
+  ],
+);
+''';
+    await assertDiagnostics(source, [
+      lint(source.indexOf('TextFormField'), 'TextFormField'.length),
+    ]);
+  }
+
+  Future<void> _reportsToggleThatWritesTheObscureState() async {
+    const source = r'''
+import 'package:flutter/material.dart';
+
+class Form1 {
+  bool hidden = true;
+
+  Widget build() => Row(
+    children: [
+      TextField(obscureText: hidden),
+      TextButton(onPressed: () => hidden = !hidden, child: Text('Toggle')),
+    ],
+  );
+}
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('TextField'), 'TextField'.length)]);
+  }
+
+  Future<void> _reportsToggleInsideExpandedSibling() async {
+    const source = r'''
+import 'package:flutter/material.dart';
+
+Widget build(void Function() flip) => Row(
+  children: [
+    TextField(obscureText: true),
+    Expanded(child: TextButton(onPressed: flip, child: Text('Hide'))),
+  ],
+);
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('TextField'), 'TextField'.length)]);
+  }
+
+  Future<void> _reportsTextLabelAsSuffix() async {
+    const source = r'''
+import 'package:flutter/material.dart';
+
+Widget build(void Function() flip) => TextField(
+  obscureText: true,
+  decoration: InputDecoration(
+    suffixIcon: TextButton(onPressed: flip, child: Text('Show')),
+  ),
+);
+''';
+    await assertDiagnostics(source, [lint(source.indexOf('TextField'), 'TextField'.length)]);
+  }
+
+  Future<void> _allowsSuffixIconButton() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/material.dart';
+
+Widget build(bool hidden, void Function() flip) => TextField(
+  obscureText: hidden,
+  decoration: InputDecoration(
+    suffixIcon: IconButton(
+      onPressed: flip,
+      tooltip: 'Show password',
+      icon: Icon(Icons.visibility),
+    ),
+  ),
+);
+''');
+  }
+
+  Future<void> _allowsFieldWithoutToggle() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/material.dart';
+
+Widget build() => Row(
+  children: [
+    Expanded(child: TextField(obscureText: true)),
+  ],
+);
+''');
+  }
+
+  Future<void> _allowsUnrelatedButtonInRow() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/material.dart';
+
+Widget build(void Function() submit) => Row(
+  children: [
+    Expanded(child: TextField(obscureText: true)),
+    TextButton(onPressed: submit, child: Text('Forgot password?')),
+    IconButton(onPressed: submit, tooltip: 'Help', icon: Icon(Icons.lock)),
+  ],
+);
+''');
+  }
+
+  Future<void> _allowsFieldThatIsNotObscured() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/material.dart';
+
+Widget build(void Function() flip) => Row(
+  children: [
+    TextField(),
+    TextButton(onPressed: flip, child: Text('Show')),
+  ],
+);
+''');
+  }
+
+  Future<void> _allowsLookalikeField() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/material.dart' show Row, Widget, TextButton, Text;
+
+class TextField extends Widget {
+  const TextField({this.obscureText = false});
+  final bool obscureText;
+}
+
+Widget build(void Function() flip) => Row(
+  children: [
+    TextField(obscureText: true),
+    TextButton(onPressed: flip, child: Text('Show')),
+  ],
+);
+''');
+  }
+
+  Future<void> _skipsTestFiles() async {
+    final path = '$testPackageRootPath/test/widget_test.dart';
+    newFile(path, r'''
+import 'package:flutter/material.dart';
+
+Widget build(void Function() flip) => Row(
+  children: [
+    TextField(obscureText: true),
+    TextButton(onPressed: flip, child: Text('Show')),
+  ],
+);
+''');
+    await assertNoDiagnosticsInFile(path);
+  }
+}

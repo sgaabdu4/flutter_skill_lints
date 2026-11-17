@@ -4,8 +4,8 @@ This audit covers both plugin surfaces:
 
 - `lib/src/rules/**`: 228 registered `building-flutter-apps` warning rules.
 - `lib/src/rules/**`: 237 `building-flutter-apps` diagnostic codes.
-- `lib/src/additional_lints/rules/**`: 275 additional diagnostics.
-- Total unique diagnostics: 510.
+- `lib/src/additional_lints/rules/**`: 276 additional diagnostics.
+- Total unique diagnostics: 511.
 
 ## Full Rule Inventory
 
@@ -48,6 +48,21 @@ values are equal, or when their source text is equal. A style held in a
 variable counts as its own fill. Two or more fills that differ report at the
 `Row` or `Wrap`. Buttons in a `Column`, buttons in separate rows, outlined and
 text buttons, and same-named classes in app code are not reported.
+
+## `avoid_detached_field_toggle` field boundary
+
+`avoid_detached_field_toggle` reports at error severity, at a resolved Flutter
+`TextField` or `TextFormField` whose `obscureText` is not the literal `false`.
+With no `suffixIcon` or `suffix` in its `decoration`, it looks at the other
+children of the `Row`, `Column`, `Wrap` or `Stack` that holds the field (through
+wrappers such as `Expanded`). A sibling is a toggle when it holds a `Text` that
+starts with "Show" or "Hide", an eye icon (`visibility`, `visibilityOff`), or a
+closure that reads or writes the variable named in `obscureText`. When the
+decoration has a `suffixIcon` or `suffix`, only a `Text` label that starts with
+"Show" or "Hide" inside it is reported, so an `IconButton` with a tooltip passes.
+An unrelated button, a field that is not obscured, a same-named class in app code
+and test files are not reported. A toggle placed anywhere other than a sibling in
+the same list, and a missing tooltip, are not judged.
 
 ## `avoid_throw` typed-failure boundary
 

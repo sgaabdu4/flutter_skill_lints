@@ -26,7 +26,8 @@
   such a name (an enum label, an extension getter) in a file that imports
   Flutter UI. A literal passed to a model constructor by position, a literal
   stored through `copyWith`, and a call to a service that is not UI are still
-  not reported.
+  not reported. A name that starts with `debug`, such as `debugLabel` on a
+  `GlobalKey` or `FocusNode`, is not user-facing and is not reported.
 - Add `avoid_small_font_size`, which reports a literal `fontSize` under 14 in a
   `TextStyle` constructor, a dot shorthand constructor or `copyWith`.
 - Add `avoid_detached_field_toggle`, which reports a `TextField` or

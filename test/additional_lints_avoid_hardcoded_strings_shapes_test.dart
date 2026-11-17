@@ -22,6 +22,7 @@ final class _AvoidHardcodedStringsShapesTest extends AnalysisRuleTest {
           'test_switchExpressionInText_lint': (t) => t._switchExpressionInTextLint(),
           'test_conditionalInLabelArgument_lint': (t) => t._conditionalInLabelArgumentLint(),
           'test_interpolationInLabelArgument_lint': (t) => t._interpolationInLabelArgumentLint(),
+          'test_debugLabel_noLint': (t) => t._debugLabelNoLint(),
           'test_compoundLabelNameLiteral_lint': (t) => t._compoundLabelNameLiteralLint(),
           'test_constructorDefaultLabel_lint': (t) => t._constructorDefaultLabelLint(),
           'test_constructorInitializerAndFieldLabel_lint': (t) =>
@@ -129,6 +130,20 @@ class Banner extends Widget {
   final String? context;
 }
 ''';
+
+  Future<void> _debugLabelNoLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class Gate extends Widget {
+  const Gate({this.debugLabel = 'gate', this.title});
+  final String? debugLabel;
+  final String? title;
+}
+
+Widget build() => const Gate(debugLabel: 'root');
+''');
+  }
 
   Future<void> _compoundLabelNameLiteralLint() async {
     const source =

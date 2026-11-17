@@ -1,14 +1,12 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/instance_creation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Refuses filled buttons with different fill colours in one `Row` or `Wrap`.
-final class AvoidConflictingFilledButtons extends AnalysisRule {
+final class AvoidConflictingFilledButtons extends InstanceCreationRule {
   static const LintCode code = LintCode(
     'avoid_conflicting_filled_buttons',
     'Filled buttons with different fill colours compete for attention in one Row or Wrap.',
@@ -30,10 +28,7 @@ final class AvoidConflictingFilledButtons extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (isGeneratedRuleContext(context) || isTestSourceContext(context)) return;
-    registry.addInstanceCreationExpression(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {

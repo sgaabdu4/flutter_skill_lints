@@ -1,15 +1,13 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/instance_creation_rule.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
 /// Refuses a show or hide control for an obscured field that sits beside the field.
-final class AvoidDetachedFieldToggle extends AnalysisRule {
+final class AvoidDetachedFieldToggle extends InstanceCreationRule {
   static const LintCode code = LintCode(
     'avoid_detached_field_toggle',
     'The show or hide control of an obscured field belongs inside the field.',
@@ -31,10 +29,7 @@ final class AvoidDetachedFieldToggle extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
-    if (isGeneratedRuleContext(context) || isTestSourceContext(context)) return;
-    registry.addInstanceCreationExpression(this, _Visitor(this));
-  }
+  AstVisitor<void> createVisitor() => _Visitor(this);
 }
 
 final class _Visitor extends SimpleAstVisitor<void> {

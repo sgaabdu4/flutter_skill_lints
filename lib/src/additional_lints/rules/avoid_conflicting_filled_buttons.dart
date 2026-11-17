@@ -51,7 +51,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
   static const _maxWrapperDepth = 4;
   static const _maxStyleDepth = 3;
 
-  /// A fill from another file has no resolved colour, so its group is not compared.
+  /// A fill from another file has no resolved colour, so it is left out of the comparison.
   static const _foreign = 'foreign';
   static const _primaryFill = 'color:primary';
 
@@ -73,7 +73,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
         fills.add(fill);
       }
     }
-    if (buttons >= 2 && !fills.contains(_foreign) && fills.length > 1) {
+    if (buttons >= 2 && fills.difference({_foreign}).length > 1) {
       rule.reportAtNode(node.constructorName);
     }
   }

@@ -30,6 +30,7 @@ Authority: The owner asked for flutter_skill_lints fixes and new Flutter best-pr
 - [x] A literal `fontSize` under 14 in a `TextStyle`, a dot shorthand or `copyWith` reports; 14 and a non-literal do not → `test/avoid_small_font_size_test.dart::reportsIntegerLiteralUnderFourteen` and `test/avoid_small_font_size_test.dart::allowsNonLiteralSizes`
 - [x] Filled buttons with different fills in one `Row` or `Wrap` report; equal fills do not → `test/avoid_conflicting_filled_buttons_test.dart::reportsExplicitColourBesideDefaultFill` and `test/avoid_conflicting_filled_buttons_test.dart::allowsSameExplicitColour`
 - [x] The red card fails the four guidelines and the fixed card passes at 390, 768 and 1280 px, and the two rules report the red card only → `integration_test/ui_quality_fixture_test.dart::red card fails and fixed card passes`
+- [x] A show or hide control beside an obscured field, or a text label as the suffix, reports; the suffix icon form, a field with no toggle and an unrelated button stay clean → `test/avoid_detached_field_toggle_test.dart::reportsTextButtonBesideField`, `test/avoid_detached_field_toggle_test.dart::allowsSuffixIconButton`, `test/avoid_detached_field_toggle_test.dart::allowsFieldWithoutToggle` and `test/avoid_detached_field_toggle_test.dart::allowsUnrelatedButtonInRow`
 - [x] The rule count, the inventory and the version agree → `test/plugin_registration_test.dart::registers every additional analyzer rule file` and the CI version check
 
 ## Baseline + execution

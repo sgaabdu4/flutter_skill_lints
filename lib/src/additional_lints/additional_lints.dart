@@ -106,6 +106,7 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_constant_sw
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_continue.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_contradictory_expressions.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_default_tostring.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_detached_field_toggle.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_disposing_late_fields.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_double_slash_imports.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_duplicate_cascades.dart';
@@ -334,6 +335,7 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidCallingNotifierMembersInsideBuild());
     registry.registerWarningRule(AvoidCommentedOutCode());
     registry.registerWarningRule(AvoidComplexConditions());
+    registry.registerWarningRule(AvoidDetachedFieldToggle());
     registry.registerWarningRule(AvoidDisposingLateFields());
     registry.registerWarningRule(AvoidDuplicateCascades());
     registry.registerWarningRule(AvoidDuplicateCollectionElements());

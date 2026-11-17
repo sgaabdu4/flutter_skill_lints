@@ -23,9 +23,9 @@ Designed for Riverpod + codegen Flutter apps.
 | --- | ---: |
 | Flutter skill warning rules | 228 |
 | Flutter skill diagnostic codes | 237 |
-| Additional Dart/Flutter warning rules | 238 |
-| Additional Dart/Flutter diagnostic codes | 275 |
-| Total unique diagnostic codes | 510 |
+| Additional Dart/Flutter warning rules | 239 |
+| Additional Dart/Flutter diagnostic codes | 276 |
+| Total unique diagnostic codes | 511 |
 | Quick fixes | 63 |
 | Assists | 1 |
 
@@ -226,6 +226,21 @@ or a style from the text theme.
 
 ```dart
 const TextStyle(fontSize: 12); // avoid_small_font_size
+```
+
+`avoid_detached_field_toggle` refuses a `TextField` or `TextFormField` with
+`obscureText` whose show or hide control sits beside it, for example a
+`TextButton` or `IconButton` in the same `Row`, or is a text label such as
+"Show". Put an `IconButton` with a tooltip or semantic label in the
+`suffixIcon` of the `InputDecoration` instead.
+
+```dart
+Row(
+  children: [
+    Expanded(child: TextField(obscureText: hidden)), // avoid_detached_field_toggle
+    TextButton(onPressed: toggle, child: const Text('Show')),
+  ],
+);
 ```
 
 `avoid_conflicting_filled_buttons` refuses two or more `FilledButton` or

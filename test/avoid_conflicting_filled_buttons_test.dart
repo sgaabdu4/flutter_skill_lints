@@ -32,6 +32,12 @@ void main() {
       'allowsResolveWithClosuresWithOtherParameterNames': (t) =>
           t._allowsResolveWithClosuresWithOtherParameterNames(),
       'allowsDefaultBesideColorSchemePrimary': (t) => t._allowsDefaultBesideColorSchemePrimary(),
+      'allowsDefaultBesideSchemeVariablePrimary': (t) =>
+          t._allowsDefaultBesideSchemeVariablePrimary(),
+      'allowsDefaultBesideParameterPrimary': (t) => t._allowsDefaultBesideParameterPrimary(),
+      'allowsFilledAndElevatedBothPrimary': (t) => t._allowsFilledAndElevatedBothPrimary(),
+      'allowsDefaultElevatedBesidePrimary': (t) => t._allowsDefaultElevatedBesidePrimary(),
+      'reportsLookalikePrimaryText': (t) => t._reportsLookalikePrimaryText(),
       'allowsEqualDefaultButtons': (t) => t._allowsEqualDefaultButtons(),
       'skipsGeneratedFiles': (t) => t._skipsGeneratedFiles(),
       'allowsSameExplicitColour': (t) => t._allowsSameExplicitColour(),
@@ -611,6 +617,103 @@ Widget build(Object context) => Row(
   ],
 );
 """);
+  }
+
+  Future<void> _allowsDefaultBesideSchemeVariablePrimary() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+Widget build(Object context) {
+  final scheme = Theme.of(context).colorScheme;
+  return Row(
+    children: [
+      FilledButton(onPressed: null, child: Text('A')),
+      FilledButton(
+        onPressed: null,
+        style: FilledButton.styleFrom(backgroundColor: scheme.primary),
+        child: Text('B'),
+      ),
+    ],
+  );
+}
+""");
+  }
+
+  Future<void> _allowsDefaultBesideParameterPrimary() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+Widget build(ColorScheme cs) => Row(
+  children: [
+    FilledButton(onPressed: null, child: Text('A')),
+    FilledButton(
+      onPressed: null,
+      style: FilledButton.styleFrom(backgroundColor: cs.primary),
+      child: Text('B'),
+    ),
+  ],
+);
+""");
+  }
+
+  Future<void> _allowsFilledAndElevatedBothPrimary() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+Widget build(ColorScheme cs) => Row(
+  children: [
+    FilledButton(
+      onPressed: null,
+      style: FilledButton.styleFrom(backgroundColor: cs.primary),
+      child: Text('A'),
+    ),
+    ElevatedButton(
+      onPressed: null,
+      style: ElevatedButton.styleFrom(backgroundColor: cs.primary),
+      child: Text('B'),
+    ),
+  ],
+);
+""");
+  }
+
+  Future<void> _allowsDefaultElevatedBesidePrimary() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+Widget build(ColorScheme cs) => Row(
+  children: [
+    ElevatedButton(onPressed: null, child: Text('A')),
+    ElevatedButton(
+      onPressed: null,
+      style: ElevatedButton.styleFrom(backgroundColor: cs.primary),
+      child: Text('B'),
+    ),
+  ],
+);
+""");
+  }
+
+  Future<void> _reportsLookalikePrimaryText() async {
+    const source = r"""
+import 'package:flutter/material.dart';
+
+class Palette {
+  Color get primary => const Color(9);
+}
+
+Widget build(Palette colorScheme) => Row(
+  children: [
+    FilledButton(onPressed: null, child: Text('A')),
+    FilledButton(
+      onPressed: null,
+      style: FilledButton.styleFrom(backgroundColor: colorScheme.primary),
+      child: Text('B'),
+    ),
+  ],
+);
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('Row('), 'Row'.length)]);
   }
 
   Future<void> _allowsEqualDefaultButtons() async {

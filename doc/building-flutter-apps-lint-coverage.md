@@ -70,7 +70,9 @@ values are equal, or when their source text is equal. A style held in a
 variable, field or other file is read through its definition; a style with no
 fill and `filledButtonTheme.style` are the default, and a style that cannot be
 read skips the button. Two or more fills that differ report at the
-`Row` or `Wrap`. Stated gap: fills from other files are not compared. A group with a button whose
+`Row` or `Wrap`. The `primary` getter of Flutter's `ColorScheme` (found by its element, so
+`scheme.primary` and `cs.primary` count) is the Material 3 default fill and does
+not differ from a default button of either kind. Stated gap: fills from other files are not compared. A group with a button whose
 style comes from another file or package is skipped, because that fill has no
 resolved colour. Accepted gaps: a
 fill from a getter, a function or `copyWith`, and a button in a nested `Row`

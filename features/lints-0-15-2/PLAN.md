@@ -60,7 +60,7 @@ Sources: the 0.15.0 round six review list, the Hard Eng builder list of text sha
 ## Verification
 
 Result: Passed
-Evidence: `dart run coverage:test_with_coverage --branch-coverage` passed 3,515 tests (exit 0). `dart-decimate json .` (0.0.75) gave verdict pass with 0 findings. `dart analyze --fatal-infos .`, `dart format --set-exit-if-changed .` and `dart pub publish --dry-run` (0 warnings) were clean. The Flutter plugin smoke test passed on 0.15.1 and on 0.15.2. The analyzer output of its app has no changed result for any file that both versions analyze (0 removed, 0 added); the 19 new files are the new rows. Every new test was seen failing before its fix: 11 turn hop rows and 9 text cases failed on the old rules, and the card test failed on the first card.
+Evidence: `dart run coverage:test_with_coverage --branch-coverage` passed 3,569 tests (exit 0). `dart-decimate json .` gave verdict pass with 0 findings. `dart analyze --fatal-infos .`, `dart format --set-exit-if-changed .` and `dart pub publish --dry-run` (0 warnings) were clean. Every new test was seen failing before its fix, and mutants of the button fill, toggle read, dot shorthand method and generated file guards each fail a row. Reach on 10 apps is in the PR body.
 E2E: N/A — no user journey; the real analyzer server run is the Flutter plugin smoke test and the fixture test.
 Retro: (1) the 0.15.0 review found six async cases that no row covered -> the first four Acceptance rows; (2) the first gate run refused three complex functions and a test file over 1000 lines -> None — the gate caught both before the push, and each repair has its own commit.
 

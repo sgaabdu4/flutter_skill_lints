@@ -8,8 +8,8 @@ void main() {
     'AvoidSmallFontSizeTest',
     _AvoidSmallFontSizeTest.new,
     {
-      'reportsIntegerLiteralUnderFourteen': (t) => t._reportsIntegerLiteralUnderFourteen(),
-      'reportsDecimalLiteralUnderFourteen': (t) => t._reportsDecimalLiteralUnderFourteen(),
+      'reportsIntegerLiteralUnderEleven': (t) => t._reportsIntegerLiteralUnderEleven(),
+      'reportsDecimalLiteralUnderEleven': (t) => t._reportsDecimalLiteralUnderEleven(),
       'reportsConstTextStyle': (t) => t._reportsConstTextStyle(),
       'reportsCopyWith': (t) => t._reportsCopyWith(),
       'reportsDotShorthandConstructor': (t) => t._reportsDotShorthandConstructor(),
@@ -64,7 +64,7 @@ final class _AvoidSmallFontSizeTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> _reportsIntegerLiteralUnderFourteen() async {
+  Future<void> _reportsIntegerLiteralUnderEleven() async {
     const source = r'''
 import 'package:flutter/painting.dart';
 
@@ -74,7 +74,7 @@ final style = TextStyle(fontSize: 10);
     await assertDiagnostics(source, [lint(source.indexOf('10'), '10'.length)]);
   }
 
-  Future<void> _reportsDecimalLiteralUnderFourteen() async {
+  Future<void> _reportsDecimalLiteralUnderEleven() async {
     const source = r'''
 import 'package:flutter/painting.dart';
 

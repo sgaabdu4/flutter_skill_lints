@@ -39,6 +39,14 @@
   `backgroundColor` beside a default fill counts as different. Two equal fills
   are not reported. The `TextStyle` and filled button rules come from the Hard
   Eng UI quality plan.
+- Close three gaps in the token rules. `style_raw_text_style` now also reports a
+  dot shorthand constructor of `TextStyle` such as `.new(fontSize: 18)`.
+  `style_raw_token` now reports a non-zero literal in the dot shorthand forms
+  `.symmetric`, `.only`, `.all`, `.fromLTRB` and `.circular` where the type is
+  `EdgeInsets`, `BorderRadius`, `Radius` or `SizedBox`. It also reports a literal
+  `fontSize` option on any call that is not a `TextStyle` constructor, for
+  example `Badge(fontSize: 13)`. Other size options keep following the spacing
+  rules.
 - Add `integration_test/ui_quality_fixture_test.dart`: one red card and one fixed card must
   fail and pass the four Flutter accessibility guidelines
   (`textContrastGuideline`, `labeledTapTargetGuideline`, `iOSTapTargetGuideline`,

@@ -49,6 +49,11 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
           reporter.report(context, i, line.indexOf('TextStyle'));
         }
       }
+      final shorthand = _DotShorthandTextStyleVisitor();
+      context.unit.accept(shorthand);
+      for (final offset in shorthand.offsets) {
+        reporter.reportOffset(context, offset);
+      }
     },
   ),
 

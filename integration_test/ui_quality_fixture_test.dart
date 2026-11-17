@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
-import 'support/ui_quality_fixture_sources.dart';
+import '../test/support/ui_quality_fixture_sources.dart';
 
 void main() {
   test('red card fails and fixed card passes', () async {
@@ -22,10 +22,10 @@ void main() {
       final pubGet = await _run('flutter', ['pub', 'get'], app);
       expect(pubGet.exitCode, 0, reason: '${pubGet.stdout}\n${pubGet.stderr}');
 
-      final guidelines = await _run('flutter', [
-        'test',
-        'test/item_card_guidelines_test.dart',
-      ], app);
+      final (guidelines, analyze) = await (
+        _run('flutter', ['test', 'test/item_card_guidelines_test.dart'], app),
+        _run('dart', ['analyze'], app),
+      ).wait;
       expect(
         guidelines.exitCode,
         0,
@@ -34,7 +34,6 @@ void main() {
             'and 1280 px:\n${guidelines.stdout}\n${guidelines.stderr}',
       );
 
-      final analyze = await _run('dart', ['analyze'], app);
       final output = '${analyze.stdout}\n${analyze.stderr}';
       expect(output, isNot(contains('server.pluginError')));
 

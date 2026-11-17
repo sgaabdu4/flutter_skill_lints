@@ -24,6 +24,8 @@ final class _AvoidHardcodedStringsShapesTest extends AnalysisRuleTest {
           'test_interpolationInLabelArgument_lint': (t) => t._interpolationInLabelArgumentLint(),
           'test_debugLabel_noLint': (t) => t._debugLabelNoLint(),
           'test_keyAndPathValues_noLint': (t) => t._keyAndPathValuesNoLint(),
+          'test_hyphenatedAndSlashedTextArgument_lint': (t) =>
+              t._hyphenatedAndSlashedTextArgumentLint(),
           'test_singleCapitalisedWord_lint': (t) => t._singleCapitalisedWordLint(),
           'test_compoundLabelNameLiteral_lint': (t) => t._compoundLabelNameLiteralLint(),
           'test_constructorDefaultLabel_lint': (t) => t._constructorDefaultLabelLint(),
@@ -167,6 +169,28 @@ class Probe extends Widget {
 
 Widget build() => const Probe(ctaLabel: 'start-cta', heroTitle: '/home/start');
 """);
+  }
+
+  Future<void> _hyphenatedAndSlashedTextArgumentLint() async {
+    const source = r"""
+import 'package:flutter/widgets.dart';
+
+class Tooltip extends Widget {
+  const Tooltip({this.message});
+  final String? message;
+}
+
+List<Widget> build() => [
+  Text('sign-in'),
+  Text('/month'),
+  Text('wi-fi'),
+  Tooltip(message: 'e-mail'),
+];
+""";
+    await assertDiagnostics(source, [
+      for (final text in ["'sign-in'", "'/month'", "'wi-fi'", "'e-mail'"])
+        lint(source.indexOf(text), text.length),
+    ]);
   }
 
   Future<void> _singleCapitalisedWordLint() async {

@@ -27,7 +27,7 @@
   Flutter UI. A literal passed to a model constructor by position, a literal
   stored through `copyWith`, and a call to a service that is not UI are still
   not reported. A name that starts with `debug`, such as `debugLabel` on a
-  `GlobalKey` or `FocusNode`, is not user-facing and is not reported. A value with no spaces that reads as a key or path (`level_low`, `start-cta`, `/settings`) is not reported either; prose and single words such as `Cancel` still are.
+  `GlobalKey` or `FocusNode`, is not user-facing and is not reported. In the name check only (widget defaults, initializers, fields, getters, and arguments with a compound name such as `ctaLabel`), a value with no spaces that reads as a key or path (`level_low`, `start-cta`, `/settings`) is not reported either. `Text('sign-in')`, `Text('/month')` and `Tooltip(message: 'e-mail')` still report; prose and single words such as `Cancel` still are.
 - Add `avoid_small_font_size`, which reports a `fontSize` under 14 in a
   `TextStyle` constructor, a dot shorthand constructor or `copyWith`. The value
   is evaluated, so a constant (local, top level or class static), `(12)` and

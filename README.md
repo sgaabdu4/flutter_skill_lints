@@ -23,9 +23,9 @@ Designed for Riverpod + codegen Flutter apps.
 | --- | ---: |
 | Flutter skill warning rules | 228 |
 | Flutter skill diagnostic codes | 237 |
-| Additional Dart/Flutter warning rules | 236 |
-| Additional Dart/Flutter diagnostic codes | 273 |
-| Total unique diagnostic codes | 508 |
+| Additional Dart/Flutter warning rules | 238 |
+| Additional Dart/Flutter diagnostic codes | 275 |
+| Total unique diagnostic codes | 510 |
 | Quick fixes | 63 |
 | Assists | 1 |
 
@@ -218,6 +218,38 @@ void initState() {
   super.initState();
   WidgetsBinding.instance.addPostFrameCallback((_) {}); // avoid_frame_deferral
 }
+```
+
+`avoid_small_font_size` refuses a literal `fontSize` under 14 in a `TextStyle`
+constructor, a dot shorthand constructor or a `copyWith` call. Use 14 or more,
+or a style from the text theme.
+
+```dart
+const TextStyle(fontSize: 12); // avoid_small_font_size
+```
+
+`avoid_conflicting_filled_buttons` refuses two or more `FilledButton` or
+`ElevatedButton` widgets (with their `.icon` and `.tonal` forms) in one `Row`
+or `Wrap` when their fill colours differ. An explicit `backgroundColor` beside
+a default fill counts as different. Two equal buttons, for an equal choice, are
+not reported. Use one filled button for the main action and an outlined, text
+or tonal button for the others.
+
+```dart
+Row(
+  children: [
+    FilledButton(
+      onPressed: approve,
+      style: FilledButton.styleFrom(backgroundColor: Colors.green),
+      child: const Text('Approve'),
+    ),
+    FilledButton(
+      onPressed: decline,
+      style: FilledButton.styleFrom(backgroundColor: Colors.brown),
+      child: const Text('Decline'),
+    ),
+  ],
+); // avoid_conflicting_filled_buttons
 ```
 
 ## Configuration

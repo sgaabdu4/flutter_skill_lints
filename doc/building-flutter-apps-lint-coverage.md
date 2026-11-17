@@ -4,8 +4,8 @@ This audit covers both plugin surfaces:
 
 - `lib/src/rules/**`: 228 registered `building-flutter-apps` warning rules.
 - `lib/src/rules/**`: 237 `building-flutter-apps` diagnostic codes.
-- `lib/src/additional_lints/rules/**`: 273 additional diagnostics.
-- Total unique diagnostics: 508.
+- `lib/src/additional_lints/rules/**`: 275 additional diagnostics.
+- Total unique diagnostics: 510.
 
 ## Full Rule Inventory
 
@@ -20,6 +20,34 @@ element and reports `addPostFrameCallback`, `scheduleFrameCallback`,
 name in app code, and `PlatformDispatcher.scheduleFrame` from `dart:ui`, are
 not reported. Test files and generated files are skipped. `Timer`,
 `Future.delayed` and microtasks are not frame calls and stay out of scope.
+
+## `avoid_small_font_size` text floor
+
+`avoid_small_font_size` reports at error severity. It reports a numeric literal
+under 14 passed as `fontSize` to a resolved Flutter `TextStyle` constructor, a
+dot shorthand constructor or `copyWith`. A size read from a constant or a
+variable, `null`, and a same-named class in app code are not reported. Test
+files and generated files are skipped. It does not replace `style_raw_token`
+and `style_raw_text_style`, which report a raw `fontSize` or a raw `TextStyle` as
+a design token miss in app files that are not theme files. A literal under 14 in
+a `TextStyle` can report all of them: the token rules say where the value must
+live, and this rule says the value is too small.
+
+## `avoid_conflicting_filled_buttons` filled button boundary
+
+`avoid_conflicting_filled_buttons` reports at error severity, once for each
+`Row` or `Wrap` of Flutter. It looks at the `children` list, and through
+wrappers that pass a single `child` (such as `Expanded` or `Padding`), for
+`FilledButton` and `ElevatedButton` constructors, with their `.icon` and
+`.tonal` forms. The fill is the `backgroundColor` of `styleFrom(...)` or
+`ButtonStyle(...)`, also inside `WidgetStatePropertyAll` or
+`WidgetStateProperty.all`. A button with no `backgroundColor` has the default
+fill, and every default fill counts as one fill, so `FilledButton` beside
+`FilledButton.tonal` is not reported. Colours are equal when their constant
+values are equal, or when their source text is equal. A style held in a
+variable counts as its own fill. Two or more fills that differ report at the
+`Row` or `Wrap`. Buttons in a `Column`, buttons in separate rows, outlined and
+text buttons, and same-named classes in app code are not reported.
 
 ## `avoid_throw` typed-failure boundary
 

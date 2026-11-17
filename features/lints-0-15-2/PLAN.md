@@ -42,12 +42,12 @@ Authority: The owner asked for flutter_skill_lints fixes and new Flutter best-pr
 ## Baseline + execution
 
 Result: Passed
-Evidence: `dart run coverage:test_with_coverage --branch-coverage` passed 3,569 tests (exit 0). `dart-decimate json .` gave verdict pass with 0 findings. `dart analyze --fatal-infos .`, `dart format --set-exit-if-changed .` and `dart pub publish --dry-run` (0 warnings) were clean. Every new test was seen failing before its fix, and mutants of the button fill, toggle read, dot shorthand method and generated file guards each fail a row. Reach on 10 apps is in the PR body.
+Evidence: On main 8b05a79 the full `dart test` run passed (exit 0) before any edit.
 Execution: One builder; one commit for each of the async rows, the text shapes, each rule, the token gaps, each review fix and the fixture.
 
 ## Risks + recovery
 
-Risk: the wider text rule adds findings in projects that use label getters or compound label names. Recovery: those findings point at real user text; fix the project. Risk: the test job now needs Flutter and runs longer. Recovery: revert the workflow step and the fixture test.
+Risk: the wider text rule adds findings in projects that use label getters or compound label names. Recovery: those findings point at real user text; fix the project. Risk: the new rules and token forms report in projects that have the shapes (see the reach counts in the PR body). Recovery: fix the project code. Risk: the fixture test needs Flutter and runs in the smoke job. Recovery: revert the workflow step and the fixture test.
 
 ## ux_reference
 

@@ -21,6 +21,8 @@ void main() {
       'reportsOutlinedEyeIconButton': (t) => t._reportsOutlinedEyeIconButton(),
       'reportsLabelledEyeButtonThatSetsTheFlag': (t) =>
           t._reportsLabelledEyeButtonThatSetsTheFlag(),
+      'reportsCupertinoEyeSolid': (t) => t._reportsCupertinoEyeSolid(),
+      'allowsSwitchNamedVisibility': (t) => t._allowsSwitchNamedVisibility(),
       'allowsShowMoreButton': (t) => t._allowsShowMoreButton(),
       'allowsHelpText': (t) => t._allowsHelpText(),
       'allowsDecorativeIcon': (t) => t._allowsDecorativeIcon(),
@@ -50,6 +52,16 @@ class Icons {
   static const Object lock = 3;
   static const Object visibilityNote = 4;
   static const Object visibilityOffOutlined = 5;
+}
+
+class CupertinoIcons {
+  static const Object eye_solid = 6;
+}
+
+class Switch extends Widget {
+  const Switch({required this.value, required this.onChanged});
+  final bool value;
+  final void Function(bool)? onChanged;
 }
 
 class Icon extends Widget {
@@ -327,6 +339,33 @@ class Form1 {
 }
 """;
     await assertDiagnostics(source, [lint(source.indexOf('TextField'), 'TextField'.length)]);
+  }
+
+  Future<void> _reportsCupertinoEyeSolid() async {
+    const source = r"""
+import 'package:flutter/material.dart';
+
+Widget build(void Function() flip) => Row(
+  children: [
+    TextField(obscureText: true),
+    IconButton(onPressed: flip, icon: Icon(CupertinoIcons.eye_solid)),
+  ],
+);
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('TextField'), 'TextField'.length)]);
+  }
+
+  Future<void> _allowsSwitchNamedVisibility() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+Widget build(bool visibility, void Function(bool) set) => Row(
+  children: [
+    TextField(obscureText: true),
+    Switch(value: visibility, onChanged: set),
+  ],
+);
+""");
   }
 
   Future<void> _allowsShowMoreButton() async {

@@ -14,7 +14,18 @@ void main() {
       'reportsMixedFilledKindsInWrap': (t) => t._reportsMixedFilledKindsInWrap(),
       'reportsButtonsInsideWrappers': (t) => t._reportsButtonsInsideWrappers(),
       'reportsOnceForThreeButtons': (t) => t._reportsOnceForThreeButtons(),
+      'reportsDefaultFilledBesideDefaultElevated': (t) =>
+          t._reportsDefaultFilledBesideDefaultElevated(),
+      'reportsButtonsInsideCollectionIf': (t) => t._reportsButtonsInsideCollectionIf(),
+      'reportsStyleVariableWithDifferentFill': (t) => t._reportsStyleVariableWithDifferentFill(),
+      'reportsStyleFromOtherFile': (t) => t._reportsStyleFromOtherFile(),
+      'allowsStyleVariableWithoutFill': (t) => t._allowsStyleVariableWithoutFill(),
+      'allowsThemeStyleBesideDefault': (t) => t._allowsThemeStyleBesideDefault(),
+      'allowsStyleVariableWithEqualFill': (t) => t._allowsStyleVariableWithEqualFill(),
+      'allowsUnreadableStyle': (t) => t._allowsUnreadableStyle(),
+      'allowsOneColourWrittenTwoWays': (t) => t._allowsOneColourWrittenTwoWays(),
       'allowsEqualDefaultButtons': (t) => t._allowsEqualDefaultButtons(),
+      'skipsGeneratedFiles': (t) => t._skipsGeneratedFiles(),
       'allowsSameExplicitColour': (t) => t._allowsSameExplicitColour(),
       'allowsDefaultFilledBesideDefaultTonal': (t) => t._allowsDefaultFilledBesideDefaultTonal(),
       'allowsFilledBesideOutlinedAndText': (t) => t._allowsFilledBesideOutlinedAndText(),
@@ -31,6 +42,20 @@ const _flutterLibrary = r'''
 class Color {
   const Color(this.value);
   final int value;
+}
+
+class ThemeData {
+  const ThemeData();
+  FilledButtonThemeData get filledButtonTheme => const FilledButtonThemeData();
+}
+
+class FilledButtonThemeData {
+  const FilledButtonThemeData();
+  ButtonStyle? get style => null;
+}
+
+class Theme {
+  static ThemeData of(Object context) => const ThemeData();
 }
 
 class Colors {
@@ -268,6 +293,195 @@ Widget build() => Row(
     await assertDiagnostics(source, [lint(source.indexOf('Row('), 'Row'.length)]);
   }
 
+  Future<void> _reportsDefaultFilledBesideDefaultElevated() async {
+    const source = r"""
+import 'package:flutter/material.dart';
+
+Widget build() => Row(
+  children: [
+    FilledButton(onPressed: null, child: Text('Yes')),
+    ElevatedButton(onPressed: null, child: Text('No')),
+  ],
+);
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('Row('), 'Row'.length)]);
+  }
+
+  Future<void> _reportsButtonsInsideCollectionIf() async {
+    const source = r"""
+import 'package:flutter/material.dart';
+
+Widget build(bool on) => Row(
+  children: [
+    FilledButton(onPressed: null, child: Text('Yes')),
+    if (on)
+      FilledButton(
+        onPressed: null,
+        style: FilledButton.styleFrom(backgroundColor: Colors.brown),
+        child: Text('No'),
+      ),
+  ],
+);
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('Row('), 'Row'.length)]);
+  }
+
+  Future<void> _reportsStyleVariableWithDifferentFill() async {
+    const source = r"""
+import 'package:flutter/material.dart';
+
+abstract final class Styles {
+  static final ButtonStyle danger = FilledButton.styleFrom(backgroundColor: Colors.brown);
+}
+
+Widget build() => Row(
+  children: [
+    FilledButton(
+      onPressed: null,
+      style: FilledButton.styleFrom(backgroundColor: Colors.green),
+      child: Text('Yes'),
+    ),
+    FilledButton(onPressed: null, style: Styles.danger, child: Text('No')),
+  ],
+);
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('Row('), 'Row'.length)]);
+  }
+
+  Future<void> _reportsStyleFromOtherFile() async {
+    newFile('$testPackageLibPath/styles.dart', r"""
+import 'package:flutter/material.dart';
+
+final ButtonStyle dangerStyle = FilledButton.styleFrom(backgroundColor: Colors.brown);
+""");
+    const source = r"""
+import 'package:flutter/material.dart';
+import 'styles.dart';
+
+Widget build() => Row(
+  children: [
+    FilledButton(
+      onPressed: null,
+      style: FilledButton.styleFrom(backgroundColor: Colors.green),
+      child: Text('Yes'),
+    ),
+    FilledButton(onPressed: null, style: dangerStyle, child: Text('No')),
+  ],
+);
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('Row('), 'Row'.length)]);
+  }
+
+  Future<void> _allowsStyleVariableWithoutFill() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+abstract final class Styles {
+  static final ButtonStyle rounded = FilledButton.styleFrom(foregroundColor: Colors.brown);
+}
+
+Widget build() => Row(
+  children: [
+    FilledButton(onPressed: null, child: Text('Yes')),
+    FilledButton(onPressed: null, style: Styles.rounded, child: Text('No')),
+  ],
+);
+""");
+  }
+
+  Future<void> _allowsThemeStyleBesideDefault() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+Widget build(Object context) => Row(
+  children: [
+    FilledButton(onPressed: null, child: Text('Yes')),
+    FilledButton(
+      onPressed: null,
+      style: Theme.of(context).filledButtonTheme.style,
+      child: Text('No'),
+    ),
+  ],
+);
+""");
+  }
+
+  Future<void> _allowsStyleVariableWithEqualFill() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+const ButtonStyle same = ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.green));
+
+Widget build() => Row(
+  children: [
+    FilledButton(onPressed: null, style: same, child: Text('Yes')),
+    FilledButton(
+      onPressed: null,
+      style: FilledButton.styleFrom(backgroundColor: Colors.green),
+      child: Text('No'),
+    ),
+  ],
+);
+""");
+  }
+
+  Future<void> _allowsUnreadableStyle() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+ButtonStyle pick(bool on) => FilledButton.styleFrom(backgroundColor: on ? Colors.green : Colors.brown);
+
+Widget build(bool on) => Row(
+  children: [
+    FilledButton(onPressed: null, child: Text('Yes')),
+    FilledButton(onPressed: null, style: pick(on), child: Text('No')),
+  ],
+);
+""");
+  }
+
+  Future<void> _allowsOneColourWrittenTwoWays() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+const Color kBrand = Color(7);
+
+Widget build() => Row(
+  children: [
+    FilledButton(
+      onPressed: null,
+      style: FilledButton.styleFrom(backgroundColor: kBrand),
+      child: Text('Yes'),
+    ),
+    FilledButton(
+      onPressed: null,
+      style: FilledButton.styleFrom(backgroundColor: const Color(7)),
+      child: Text('No'),
+    ),
+  ],
+);
+""");
+  }
+
+  Future<void> _skipsGeneratedFiles() async {
+    final path = '$testPackageLibPath/widget.g.dart';
+    newFile(path, r"""
+import 'package:flutter/material.dart';
+
+Widget build() => Row(
+  children: [
+    FilledButton(onPressed: null, child: Text('One')),
+    FilledButton(
+      onPressed: null,
+      style: FilledButton.styleFrom(backgroundColor: Colors.brown),
+      child: Text('Two'),
+    ),
+  ],
+);
+""");
+    await assertNoDiagnosticsInFile(path);
+  }
+
   Future<void> _allowsEqualDefaultButtons() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/material.dart';
@@ -275,7 +489,7 @@ import 'package:flutter/material.dart';
 Widget build() => Row(
   children: [
     FilledButton(onPressed: null, child: Text('Yes')),
-    ElevatedButton(onPressed: null, child: Text('No')),
+    FilledButton(onPressed: null, child: Text('No')),
   ],
 );
 ''');

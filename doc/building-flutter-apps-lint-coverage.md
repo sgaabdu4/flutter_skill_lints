@@ -68,7 +68,10 @@ values are equal, or when their source text is equal. A style held in a
 variable, field or other file is read through its definition; a style with no
 fill and `filledButtonTheme.style` are the default, and a style that cannot be
 read skips the button. Two or more fills that differ report at the
-`Row` or `Wrap`. Buttons in a `Column`, buttons in separate rows, outlined and
+`Row` or `Wrap`. A fill read from another file has no resolved colour: it matches
+any one explicit fill and still differs from a default fill. Accepted gaps: a
+fill from a getter, a function or `copyWith`, and a button in a nested `Row`
+(each `Row` is judged alone) are not read. Buttons in a `Column`, buttons in separate rows, outlined and
 text buttons, and same-named classes in app code are not reported.
 
 ## `avoid_detached_field_toggle` field boundary
@@ -87,7 +90,8 @@ decoration has a `suffixIcon` or `suffix`, only a `Text` label that is "Show" or
 "Hide" inside it is reported, so an `IconButton` with a tooltip passes.
 An unrelated button, a field that is not obscured, a same-named class in app code
 and test files are not reported. A toggle placed anywhere other than a sibling in
-the same list, and a missing tooltip, are not judged.
+the same list, and a missing tooltip, are not judged. Accepted gap: a field that sits inside
+two or more wrapper widgets before its `Row` or `Column` is not matched to its siblings.
 
 ## `avoid_throw` typed-failure boundary
 

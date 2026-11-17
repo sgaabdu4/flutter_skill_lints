@@ -221,8 +221,9 @@ void initState() {
 ```
 
 `avoid_small_font_size` refuses a `fontSize` under 11 in a `TextStyle`
-constructor, a dot shorthand constructor or a `copyWith` call. 11 is the Apple
-minimum and the Material 3 `labelSmall` size. Use 11 or more, or a style from the
+constructor, a dot shorthand constructor or a `copyWith` call. 11 is the iOS minimum in
+Apple's Human Interface Guidelines and the Material 3 `labelSmall` size in
+Flutter's `typography.dart`. Use 11 or more, or a style from the
 text theme.
 
 ```dart

@@ -74,58 +74,38 @@ final class ProviderTurnHopVisitor extends RecursiveAstVisitor<void> {
   bool _isCompletedVariable(SimpleIdentifier usage) {
     final element = usage.element;
     if (element is! LocalVariableElement) return false;
-    final finder = _ValueFinder(element);
-    _body.accept(finder);
-    Expression? held = finder.initializer;
-    var known = true;
-    for (final assignment in finder.assignments) {
-      if (assignment.offset > usage.offset) {
-        if (_sharesLoop(usage, assignment)) return false;
-        continue;
-      }
-      if (!_runsBefore(assignment, usage)) return false;
-      final operator = assignment.operator.type;
-      if (operator == TokenType.EQ) {
-        held = assignment.rightHandSide;
-        known = true;
-      } else if (operator == TokenType.QUESTION_QUESTION_EQ) {
-        if (known && (held == null || held is NullLiteral)) {
-          held = assignment.rightHandSide;
-        } else if (!known || !_isCompletedCreation(held)) {
-          known = false;
-        }
-      } else {
-        known = false;
-      }
-    }
-    return known && _isCompletedCreation(held);
+    final value = _valueAt(element, usage);
+    return value != null && value.known && _isCompletedCreation(value.held);
   }
 
   bool _isCompletedCompleter(Expression? holder, Expression usage) {
     final unwrapped = _withoutBang(holder);
     final element = unwrapped is SimpleIdentifier ? unwrapped.element : null;
     if (element is! LocalVariableElement) return false;
-    final finder = _ValueFinder(element);
-    _body.accept(finder);
-    Expression? held = finder.initializer;
-    var since = 0;
-    for (final assignment in finder.assignments) {
-      if (assignment.offset > usage.offset) {
-        if (_sharesLoop(usage, assignment)) return false;
-        continue;
-      }
-      if (assignment.operator.type != TokenType.EQ || !_runsBefore(assignment, usage)) {
-        return false;
-      }
-      held = assignment.rightHandSide;
-      since = assignment.end;
-    }
-    final creation = held is CascadeExpression ? held.target : held;
-    if (!_isCompleterCreation(creation)) return false;
+    final value = _valueAt(element, usage);
+    if (value == null || !value.known) return false;
+    final held = value.held;
+    if (!_isCompleterCreation(held is CascadeExpression ? held.target : held)) return false;
     if (held is CascadeExpression && held.cascadeSections.any(_isCompleteCall)) return true;
-    final calls = _CompleteCallFinder(element, usage, since);
+    final calls = _CompleteCallFinder(element, usage, value.since);
     _body.accept(calls);
     return calls.found;
+  }
+
+  _HeldValue? _valueAt(LocalVariableElement element, AstNode usage) {
+    final finder = _ValueFinder(element);
+    _body.accept(finder);
+    var value = (held: finder.initializer, since: 0, known: true);
+    for (final assignment in finder.assignments) {
+      if (assignment.offset > usage.offset) {
+        if (_sharesLoop(usage, assignment)) return null;
+      } else if (_runsBefore(assignment, usage)) {
+        value = _afterAssignment(value, assignment);
+      } else {
+        return null;
+      }
+    }
+    return value;
   }
 
   @override
@@ -172,24 +152,21 @@ final class ProviderTurnHopVisitor extends RecursiveAstVisitor<void> {
 
   FunctionBody? _memberBody(ExecutableElement element) {
     final unit = _body.thisOrAncestorOfType<CompilationUnit>();
-    for (final declaration in unit?.declarations ?? const <CompilationUnitMember>[]) {
-      final members = switch (declaration) {
-        ClassDeclaration(:final body) => body is BlockClassBody ? body.members : null,
-        MixinDeclaration(:final body) => body.members,
-        ExtensionDeclaration(:final body) => body is BlockClassBody ? body.members : null,
-        EnumDeclaration(:final body) => body.members,
-        _ => null,
-      };
-      for (final member in members ?? const <ClassMember>[]) {
-        if (member is MethodDeclaration &&
-            member.declaredFragment?.element.baseElement == element.baseElement) {
-          return member.body;
-        }
-      }
+    final members = (unit?.declarations ?? const <CompilationUnitMember>[]).expand(_membersOf);
+    for (final member in members.whereType<MethodDeclaration>()) {
+      if (member.declaredFragment?.element.baseElement == element.baseElement) return member.body;
     }
     return null;
   }
 }
+
+List<ClassMember> _membersOf(CompilationUnitMember declaration) => switch (declaration) {
+  ClassDeclaration(:final body) => body is BlockClassBody ? body.members : const [],
+  MixinDeclaration(:final body) => body.members,
+  ExtensionDeclaration(:final body) => body is BlockClassBody ? body.members : const [],
+  EnumDeclaration(:final body) => body.members,
+  _ => const [],
+};
 
 FunctionDeclaration? topLevelFunctionOf(AstNode from, Element? element) {
   final unit = from.thisOrAncestorOfType<CompilationUnit>();
@@ -214,6 +191,20 @@ Expression? _withoutBang(Expression? expression) {
   }
 }
 
+typedef _HeldValue = ({Expression? held, int since, bool known});
+
+_HeldValue _afterAssignment(_HeldValue value, AssignmentExpression assignment) {
+  final operator = assignment.operator.type;
+  final right = assignment.rightHandSide;
+  if (operator == TokenType.EQ) return (held: right, since: assignment.end, known: true);
+  if (operator != TokenType.QUESTION_QUESTION_EQ || !value.known) {
+    return (held: value.held, since: value.since, known: false);
+  }
+  final held = value.held;
+  if (held == null || held is NullLiteral) return (held: right, since: assignment.end, known: true);
+  return (held: held, since: value.since, known: _isCompletedCreation(held));
+}
+
 bool _runsBefore(AstNode earlier, AstNode usage) {
   if (earlier.offset >= usage.offset) return false;
   if (earlier.thisOrAncestorOfType<FunctionBody>() != usage.thisOrAncestorOfType<FunctionBody>()) {
@@ -222,25 +213,26 @@ bool _runsBefore(AstNode earlier, AstNode usage) {
   AstNode? node = earlier;
   var leftFinally = false;
   while (node != null) {
-    if (!leftFinally &&
-        node is Statement &&
-        node is! ExpressionStatement &&
-        node is! VariableDeclarationStatement) {
-      return false;
-    }
+    if (!leftFinally && _isBranching(node)) return false;
     leftFinally = false;
     final parent = node.parent;
     if (parent is Block) {
       if (parent.offset <= usage.offset && usage.end <= parent.end) return true;
-      final owner = parent.parent;
-      if (owner is! TryStatement || owner.finallyBlock != parent) return false;
-      node = owner;
+      node = _finallyOwner(parent);
       leftFinally = true;
     } else {
       node = parent;
     }
   }
   return false;
+}
+
+bool _isBranching(AstNode node) =>
+    node is Statement && node is! ExpressionStatement && node is! VariableDeclarationStatement;
+
+TryStatement? _finallyOwner(Block block) {
+  final owner = block.parent;
+  return owner is TryStatement && owner.finallyBlock == block ? owner : null;
 }
 
 bool _sharesLoop(AstNode usage, AstNode other) {

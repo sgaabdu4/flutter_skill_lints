@@ -49,6 +49,8 @@ final class _Visitor extends SimpleAstVisitor<void> {
   static const _propertyAllNames = {'WidgetStatePropertyAll', 'MaterialStatePropertyAll'};
   static const _maxWrapperDepth = 4;
   static const _maxStyleDepth = 3;
+  static const _foreign = 'foreign';
+  static const _primaryFill = 'color:primary';
 
   final AvoidConflictingFilledButtons rule;
 
@@ -68,7 +70,14 @@ final class _Visitor extends SimpleAstVisitor<void> {
         fills.add(fill);
       }
     }
-    if (buttons >= 2 && fills.length > 1) rule.reportAtNode(node.constructorName);
+    if (buttons >= 2 && _conflicts(fills)) rule.reportAtNode(node.constructorName);
+  }
+
+  /// A fill read from another file has no resolved colour, so it matches any one explicit fill.
+  bool _conflicts(Set<String> fills) {
+    if (!fills.contains(_foreign)) return fills.length > 1;
+    final others = fills.difference({_foreign});
+    return others.any((fill) => fill.startsWith('default:')) || others.length > 1;
   }
 
   Iterable<InstanceCreationExpression> _buttonsIn(CollectionElement element) sync* {
@@ -109,6 +118,7 @@ final class _Visitor extends SimpleAstVisitor<void> {
     return switch (fill) {
       null => null,
       '' => 'default:$kind',
+      _primaryFill when kind == 'filled' => 'default:filled',
       _ => fill,
     };
   }
@@ -132,7 +142,9 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (identifier == null || depth > _maxStyleDepth) return null;
     if (identifier.name == 'style' && _isButtonTheme(style)) return '';
     final initializer = _initializerOf(identifier.element, style.root);
-    return initializer == null ? null : _styleFill(initializer, depth + 1);
+    if (initializer == null) return null;
+    final fill = _styleFill(initializer, depth + 1);
+    return initializer.staticType == null && fill != null && fill.isNotEmpty ? _foreign : fill;
   }
 
   ArgumentList? _styleArguments(Expression style) => switch (style) {
@@ -199,11 +211,33 @@ final class _Visitor extends SimpleAstVisitor<void> {
   }
 
   String _colourKey(Expression color) {
-    try {
-      return color.computeConstantValue()?.value?.toString() ?? color.toSource();
-    } on ArgumentError {
-      return color.toSource();
+    final source = color.toSource();
+    if (source.endsWith('colorScheme.primary')) return 'primary';
+    if (color
+        case MethodInvocation(
+          methodName: SimpleIdentifier(name: 'resolveWith'),
+          :final argumentList,
+        )
+        when argumentList.arguments.firstOrNull?.argumentExpression is FunctionExpression) {
+      return _withoutParameterNames(source, argumentList.arguments.first.argumentExpression);
     }
+    try {
+      return color.computeConstantValue()?.value?.toString() ?? source;
+    } on ArgumentError {
+      return source;
+    }
+  }
+
+  String _withoutParameterNames(String source, Expression closure) {
+    var result = source;
+    final names = (closure as FunctionExpression).parameters?.parameters.map(
+      (parameter) => parameter.name?.lexeme,
+    );
+    var index = 0;
+    for (final name in names ?? const <String?>[]) {
+      if (name != null) result = result.replaceAll(RegExp('\\b$name\\b'), 'p${index++}');
+    }
+    return result;
   }
 }
 

@@ -24,6 +24,13 @@ void main() {
       'allowsStyleVariableWithEqualFill': (t) => t._allowsStyleVariableWithEqualFill(),
       'allowsUnreadableStyle': (t) => t._allowsUnreadableStyle(),
       'allowsOneColourWrittenTwoWays': (t) => t._allowsOneColourWrittenTwoWays(),
+      'allowsEqualFillFromThemeFile': (t) => t._allowsEqualFillFromThemeFile(),
+      'allowsEqualFillFromOtherFile': (t) => t._allowsEqualFillFromOtherFile(),
+      'allowsEqualFillFromOtherPackage': (t) => t._allowsEqualFillFromOtherPackage(),
+      'reportsOtherPackageFillBesideDefault': (t) => t._reportsOtherPackageFillBesideDefault(),
+      'allowsResolveWithClosuresWithOtherParameterNames': (t) =>
+          t._allowsResolveWithClosuresWithOtherParameterNames(),
+      'allowsDefaultBesideColorSchemePrimary': (t) => t._allowsDefaultBesideColorSchemePrimary(),
       'allowsEqualDefaultButtons': (t) => t._allowsEqualDefaultButtons(),
       'skipsGeneratedFiles': (t) => t._skipsGeneratedFiles(),
       'allowsSameExplicitColour': (t) => t._allowsSameExplicitColour(),
@@ -44,8 +51,14 @@ class Color {
   final int value;
 }
 
+class ColorScheme {
+  const ColorScheme();
+  Color get primary => const Color(1);
+}
+
 class ThemeData {
   const ThemeData();
+  ColorScheme get colorScheme => const ColorScheme();
   FilledButtonThemeData get filledButtonTheme => const FilledButtonThemeData();
 }
 
@@ -69,6 +82,8 @@ abstract class Widget {
 
 abstract class WidgetStateProperty<T> {
   const WidgetStateProperty();
+  static WidgetStateProperty<T> resolveWith<T>(T Function(Set<Object> states) callback) =>
+      throw UnimplementedError();
   static WidgetStateProperty<T> all<T>(T value) => WidgetStatePropertyAll<T>(value);
 }
 
@@ -157,6 +172,11 @@ final class _AvoidConflictingFilledButtonsTest extends AnalysisRuleTest {
   @override
   void setUp() {
     newPackage('flutter').addFile('lib/material.dart', _flutterLibrary);
+    newPackage('other_pkg').addFile('lib/styles.dart', r"""
+import 'package:flutter/material.dart';
+
+final ButtonStyle foreignStyle = FilledButton.styleFrom(backgroundColor: Colors.green);
+""");
     rule = AvoidConflictingFilledButtons();
     super.setUp();
   }
@@ -360,11 +380,7 @@ import 'styles.dart';
 
 Widget build() => Row(
   children: [
-    FilledButton(
-      onPressed: null,
-      style: FilledButton.styleFrom(backgroundColor: Colors.green),
-      child: Text('Yes'),
-    ),
+    FilledButton(onPressed: null, child: Text('Yes')),
     FilledButton(onPressed: null, style: dangerStyle, child: Text('No')),
   ],
 );
@@ -480,6 +496,100 @@ Widget build() => Row(
 );
 """);
     await assertNoDiagnosticsInFile(path);
+  }
+
+  Future<void> _assertForeignFill(String foreign, String inline, {bool reports = false}) async {
+    final source =
+        """
+import 'package:flutter/material.dart';
+import '$foreign';
+
+Widget build() => Row(
+  children: [
+    FilledButton(onPressed: null, style: foreignStyle, child: Text('A')),
+    $inline
+  ],
+);
+""";
+    if (reports) {
+      await assertDiagnostics(source, [lint(source.indexOf('Row('), 'Row'.length)]);
+    } else {
+      await assertNoDiagnostics(source);
+    }
+  }
+
+  static const _inlineBrand =
+      "FilledButton(onPressed: null, style: FilledButton.styleFrom(backgroundColor: const Color(7)), child: Text('B')),";
+  static const _inlineRed =
+      "FilledButton(onPressed: null, style: FilledButton.styleFrom(backgroundColor: Colors.green), child: Text('B')),";
+
+  Future<void> _allowsEqualFillFromThemeFile() async {
+    newFile('$testPackageLibPath/theme.dart', r"""
+import 'package:flutter/material.dart';
+
+const Color kBrand = Color(7);
+final ButtonStyle foreignStyle = FilledButton.styleFrom(backgroundColor: kBrand);
+""");
+    await _assertForeignFill('theme.dart', _inlineBrand);
+  }
+
+  Future<void> _allowsEqualFillFromOtherFile() async {
+    newFile('$testPackageLibPath/styles.dart', r"""
+import 'package:flutter/material.dart';
+
+final ButtonStyle foreignStyle = FilledButton.styleFrom(backgroundColor: Colors.green);
+""");
+    await _assertForeignFill('styles.dart', _inlineRed);
+  }
+
+  Future<void> _allowsEqualFillFromOtherPackage() async {
+    await _assertForeignFill('package:other_pkg/styles.dart', _inlineRed);
+  }
+
+  Future<void> _reportsOtherPackageFillBesideDefault() async {
+    await _assertForeignFill(
+      'package:other_pkg/styles.dart',
+      "FilledButton(onPressed: null, child: Text('B')),",
+      reports: true,
+    );
+  }
+
+  Future<void> _allowsResolveWithClosuresWithOtherParameterNames() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+Widget build() => Row(
+  children: [
+    FilledButton(
+      onPressed: null,
+      style: ButtonStyle(backgroundColor: WidgetStateProperty.resolveWith((states) => Colors.green)),
+      child: Text('A'),
+    ),
+    FilledButton(
+      onPressed: null,
+      style: ButtonStyle(backgroundColor: WidgetStateProperty.resolveWith((s) => Colors.green)),
+      child: Text('B'),
+    ),
+  ],
+);
+""");
+  }
+
+  Future<void> _allowsDefaultBesideColorSchemePrimary() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+Widget build(Object context) => Row(
+  children: [
+    FilledButton(onPressed: null, child: Text('A')),
+    FilledButton(
+      onPressed: null,
+      style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
+      child: Text('B'),
+    ),
+  ],
+);
+""");
   }
 
   Future<void> _allowsEqualDefaultButtons() async {

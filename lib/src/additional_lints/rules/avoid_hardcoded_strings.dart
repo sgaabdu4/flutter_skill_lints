@@ -70,9 +70,9 @@ final class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  void _reportCopy(Expression expression) {
+  void _reportCopy(Expression expression, {bool skipKeys = false}) {
     for (final copy in _copyLeaves(expression)) {
-      if (_isUserFacingCopy(copy)) rule.reportAtNode(copy);
+      if (_isUserFacingCopy(copy, skipKeys: skipKeys)) rule.reportAtNode(copy);
     }
   }
 
@@ -82,11 +82,11 @@ final class _Visitor extends SimpleAstVisitor<void> {
     for (final parameter in node.parameters.parameters) {
       final name = parameter.name?.lexeme;
       final value = parameter.defaultClause?.value;
-      if (name != null && value != null && _isLabelName(name)) _reportCopy(value);
+      if (name != null && value != null && _isLabelName(name)) _reportCopy(value, skipKeys: true);
     }
     for (final initializer in node.initializers) {
       if (initializer is ConstructorFieldInitializer && _isLabelName(initializer.fieldName.name)) {
-        _reportCopy(initializer.expression);
+        _reportCopy(initializer.expression, skipKeys: true);
       }
     }
   }
@@ -96,7 +96,9 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (!isEnclosedClassAssignableTo(node, _widgetOrStateChecker)) return;
     for (final variable in node.fields.variables) {
       final initializer = variable.initializer;
-      if (initializer != null && _isLabelName(variable.name.lexeme)) _reportCopy(initializer);
+      if (initializer != null && _isLabelName(variable.name.lexeme)) {
+        _reportCopy(initializer, skipKeys: true);
+      }
     }
   }
 
@@ -108,9 +110,9 @@ final class _Visitor extends SimpleAstVisitor<void> {
     if (enclosingWidgetPreview(node) != null) return;
     final body = node.body;
     if (body is ExpressionFunctionBody) {
-      _reportCopy(body.expression);
+      _reportCopy(body.expression, skipKeys: true);
     } else {
-      body.accept(_ReturnedCopyVisitor(_reportCopy));
+      body.accept(_ReturnedCopyVisitor((copy) => _reportCopy(copy, skipKeys: true)));
     }
   }
 
@@ -133,7 +135,10 @@ final class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitNamedArgument(NamedArgument node) {
     if (!_isLabelName(node.name.lexeme)) return;
-    final copies = _copyLeaves(node.argumentExpression).where(_isUserFacingCopy).toList();
+    final skipKeys = !isUserFacingLabel(node.name.lexeme);
+    final copies = _copyLeaves(node.argumentExpression)
+        .where((copy) => _isUserFacingCopy(copy, skipKeys: skipKeys))
+        .toList();
     if (copies.isEmpty) return;
     if (enclosingWidgetPreview(node) != null || !_isUiCall(node)) return;
     copies.forEach(rule.reportAtNode);
@@ -225,7 +230,7 @@ bool _importsFlutterUi(LibraryElement library) =>
 
 bool _isUserFacingLiteral(Expression expression) {
   final text = stringLiteralText(expression) ?? _constantStringText(expression);
-  return text != null && hasLetter(text) && !_isKeyOrPath(text);
+  return text != null && hasLetter(text);
 }
 
 /// A value without spaces that reads as an identifier or route: `snake_case`, `kebab-case` or `/path`.
@@ -233,8 +238,12 @@ bool _isKeyOrPath(String text) => _keyOrPath.hasMatch(text);
 
 final RegExp _keyOrPath = RegExp(r'^(?:/\S*|[a-z][a-z0-9]*(?:[_-][a-z0-9]+)+)$');
 
-bool _isUserFacingCopy(Expression expression) =>
-    _isUserFacingLiteral(expression) || _isConstantListLookup(expression);
+bool _isUserFacingCopy(Expression expression, {bool skipKeys = false}) {
+  if (_isConstantListLookup(expression)) return true;
+  if (!_isUserFacingLiteral(expression)) return false;
+  final text = stringLiteralText(expression) ?? _constantStringText(expression);
+  return !(skipKeys && text != null && _isKeyOrPath(text));
+}
 
 /// The values the expression can take: each branch of a conditional or switch, without parentheses.
 Iterable<Expression> _copyLeaves(Expression expression) sync* {

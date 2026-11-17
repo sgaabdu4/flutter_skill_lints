@@ -99,6 +99,7 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_commented_o
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_complex_conditions.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_conditional_hooks.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_conditions_with_boolean_literals.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_conflicting_filled_buttons.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_constant_assert_conditions.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_constant_conditions.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_constant_switches.dart';
@@ -200,6 +201,7 @@ import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_self_compar
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_shrink_wrap_in_lists.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_single_child_in_multi_child_widgets.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_single_field_destructuring.dart';
+import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_small_font_size.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_state_constructors.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_stateless_widget_initialized_fields.dart';
 import 'package:flutter_skill_lints/src/additional_lints/rules/avoid_stream_tostring.dart';
@@ -344,6 +346,7 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidExtensionsOnRecords());
     registry.registerWarningRule(AvoidConstantConditions());
     registry.registerWarningRule(AvoidConstantSwitches());
+    registry.registerWarningRule(AvoidConflictingFilledButtons());
     registry.registerWarningRule(AvoidContradictoryExpressions());
     registry.registerWarningRule(AvoidAccessingCollectionsByConstantIndex());
     registry.registerWarningRule(AvoidFunctionTypeInRecords());
@@ -450,6 +453,7 @@ class AdditionalLintsPlugin extends Plugin {
     registry.registerWarningRule(UseExistingDestructuring());
     registry.registerWarningRule(UseExistingVariable());
     registry.registerWarningRule(AvoidSingleFieldDestructuring());
+    registry.registerWarningRule(AvoidSmallFontSize());
     registry.registerWarningRule(AvoidBorderAll());
     registry.registerWarningRule(AvoidExpandedAsSpacer());
     registry.registerWarningRule(AvoidGlobalState());

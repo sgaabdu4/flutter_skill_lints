@@ -276,6 +276,7 @@ avoid_commented_out_code
 avoid_complex_conditions
 avoid_conditional_hooks
 avoid_conditions_with_boolean_literals
+avoid_conflicting_filled_buttons
 avoid_constant_assert_conditions
 avoid_constant_conditions
 avoid_constant_switches
@@ -394,6 +395,7 @@ avoid_single_child_column_or_row
 avoid_single_child_in_multi_child_widgets
 avoid_single_field_destructuring
 avoid_slow_collection_methods
+avoid_small_font_size
 avoid_state_constructors
 avoid_stateless_widget_initialized_fields
 avoid_stream_tostring

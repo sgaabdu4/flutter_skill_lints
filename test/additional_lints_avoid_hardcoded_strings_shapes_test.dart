@@ -23,6 +23,8 @@ final class _AvoidHardcodedStringsShapesTest extends AnalysisRuleTest {
           'test_conditionalInLabelArgument_lint': (t) => t._conditionalInLabelArgumentLint(),
           'test_interpolationInLabelArgument_lint': (t) => t._interpolationInLabelArgumentLint(),
           'test_debugLabel_noLint': (t) => t._debugLabelNoLint(),
+          'test_keyAndPathValues_noLint': (t) => t._keyAndPathValuesNoLint(),
+          'test_singleCapitalisedWord_lint': (t) => t._singleCapitalisedWordLint(),
           'test_compoundLabelNameLiteral_lint': (t) => t._compoundLabelNameLiteralLint(),
           'test_constructorDefaultLabel_lint': (t) => t._constructorDefaultLabelLint(),
           'test_constructorInitializerAndFieldLabel_lint': (t) =>
@@ -143,6 +145,45 @@ class Gate extends Widget {
 
 Widget build() => const Gate(debugLabel: 'root');
 ''');
+  }
+
+  Future<void> _keyAndPathValuesNoLint() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/widgets.dart';
+
+enum Level {
+  low;
+
+  String get analyticsLabel => 'level_low';
+}
+
+class Probe extends Widget {
+  const Probe({this.logMessage = 'probe_opened', this.ctaLabel, this.heroTitle});
+  final String logMessage;
+  final String? ctaLabel;
+  final String? heroTitle;
+  static const _routeTitle = '/settings';
+}
+
+Widget build() => const Probe(ctaLabel: 'start-cta', heroTitle: '/home/start');
+""");
+  }
+
+  Future<void> _singleCapitalisedWordLint() async {
+    const source = r"""
+import 'package:flutter/widgets.dart';
+
+class Probe extends Widget {
+  const Probe({this.cancelLabel = 'Cancel', this.ctaLabel});
+  final String cancelLabel;
+  final String? ctaLabel;
+}
+
+Widget build() => const Probe(ctaLabel: 'Start now');
+""";
+    await assertDiagnostics(source, [
+      for (final text in ["'Cancel'", "'Start now'"]) lint(source.indexOf(text), text.length),
+    ]);
   }
 
   Future<void> _compoundLabelNameLiteralLint() async {

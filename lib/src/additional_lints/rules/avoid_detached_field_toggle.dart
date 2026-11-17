@@ -56,14 +56,16 @@ final class _Visitor extends SimpleAstVisitor<void> {
     final obscure = namedArgumentExpression(node.argumentList, 'obscureText');
     if (obscure == null || (obscure is BooleanLiteral && !obscure.value)) return;
     final suffixes = _suffixes(node);
-    final toggle = _ToggleFinder(_stateName(obscure));
+    final state = _stateName(obscure);
     if (suffixes.isNotEmpty) {
+      final label = _ToggleFinder(state, false);
       for (final suffix in suffixes) {
-        suffix.accept(toggle);
+        suffix.accept(label);
       }
-      if (toggle.labelFound) rule.reportAtNode(node.constructorName);
+      if (label.labelFound) rule.reportAtNode(node.constructorName);
       return;
     }
+    final toggle = _ToggleFinder(state, true);
     for (final sibling in _siblings(node)) {
       sibling.accept(toggle);
     }
@@ -124,43 +126,137 @@ final class _Visitor extends SimpleAstVisitor<void> {
 }
 
 final class _ToggleFinder extends RecursiveAstVisitor<void> {
-  _ToggleFinder(this._stateName);
+  _ToggleFinder(this._stateName, this._siblingMode);
 
   static const _textChecker = TypeChecker.fromName('Text', packageName: 'flutter');
-  static final _showHide = RegExp(r'^\s*(show|hide)\b', caseSensitive: false);
+  static const _fieldChecker = TypeChecker.any([
+    TypeChecker.fromName('TextField', packageName: 'flutter'),
+    TypeChecker.fromName('TextFormField', packageName: 'flutter'),
+  ]);
+  static const _callbackNames = {'onPressed', 'onChanged', 'onTap'};
+  static final _showHide = RegExp(
+    r'^\s*(show|hide)(\s+(password|pass|pin|text|it|characters|secret|code))?\s*[.!]?\s*$',
+    caseSensitive: false,
+  );
   static final _eyeIcon = RegExp(
     r'^(visibility|visibilityOff|visibility_off|removeRedEye|remove_red_eye|eye|eyeSlash|eye_slash)',
   );
 
   final String? _stateName;
+  final bool _siblingMode;
   bool labelFound = false;
-  bool _stateFound = false;
-  bool _iconFound = false;
-  int _functionDepth = 0;
-
-  bool get found => labelFound || _iconFound || _stateFound;
+  bool found = false;
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     final type = node.staticType;
-    if (type != null && _textChecker.isExactlyType(type)) {
+    if (type != null && _fieldChecker.isExactlyType(type)) return;
+    if (!_siblingMode) {
+      if (_isShowHideText(node)) labelFound = true;
+      super.visitInstanceCreationExpression(node);
+      return;
+    }
+    final callbacks = [
+      for (final argument in node.argumentList.arguments)
+        if (argument is NamedArgument && _callbackNames.contains(argument.name.lexeme)) argument,
+    ];
+    if (callbacks.isEmpty) {
+      super.visitInstanceCreationExpression(node);
+      return;
+    }
+    final own = _OwnControl();
+    for (final argument in node.argumentList.arguments) {
+      if (!callbacks.contains(argument)) argument.accept(own);
+    }
+    if (own.found || callbacks.any((argument) => _writesState(argument.argumentExpression, node))) {
+      found = true;
+    }
+  }
+
+  bool _isShowHideText(InstanceCreationExpression node) {
+    final type = node.staticType;
+    if (type == null || !_textChecker.isExactlyType(type)) return false;
+    final text = node.argumentList.arguments.firstOrNull?.argumentExpression;
+    final value = text == null ? null : stringLiteralText(text);
+    return value != null && _showHide.hasMatch(value);
+  }
+
+  bool _writesState(Expression callback, AstNode from) {
+    final state = _stateName;
+    if (state == null) return false;
+    final body = switch (callback) {
+      FunctionExpression() => callback,
+      SimpleIdentifier(:final name) => _namedFunction(from.root, name),
+      _ => null,
+    };
+    if (body == null) return false;
+    final writes = _StateWrite(state);
+    body.accept(writes);
+    return writes.found;
+  }
+
+  AstNode? _namedFunction(AstNode root, String name) {
+    final finder = _NamedFunction(name);
+    root.accept(finder);
+    return finder.found;
+  }
+}
+
+final class _OwnControl extends RecursiveAstVisitor<void> {
+  bool found = false;
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final type = node.staticType;
+    if (type != null && _ToggleFinder._textChecker.isExactlyType(type)) {
       final text = node.argumentList.arguments.firstOrNull?.argumentExpression;
       final value = text == null ? null : stringLiteralText(text);
-      if (value != null && _showHide.hasMatch(value)) labelFound = true;
+      if (value != null && _ToggleFinder._showHide.hasMatch(value)) found = true;
     }
     super.visitInstanceCreationExpression(node);
   }
 
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
-    if (_eyeIcon.hasMatch(node.name)) _iconFound = true;
-    if (_functionDepth > 0 && _stateName != null && node.name == _stateName) _stateFound = true;
+    if (_ToggleFinder._eyeIcon.hasMatch(node.name)) found = true;
+  }
+}
+
+final class _StateWrite extends RecursiveAstVisitor<void> {
+  _StateWrite(this._state);
+
+  final String _state;
+  bool found = false;
+
+  @override
+  void visitAssignmentExpression(AssignmentExpression node) {
+    final target = node.leftHandSide;
+    final name = switch (target) {
+      SimpleIdentifier(:final name) => name,
+      PrefixedIdentifier(:final identifier) => identifier.name,
+      PropertyAccess(:final propertyName) => propertyName.name,
+      _ => null,
+    };
+    if (name == _state) found = true;
+    super.visitAssignmentExpression(node);
+  }
+}
+
+final class _NamedFunction extends RecursiveAstVisitor<void> {
+  _NamedFunction(this._name);
+
+  final String _name;
+  AstNode? found;
+
+  @override
+  void visitMethodDeclaration(MethodDeclaration node) {
+    if (node.name.lexeme == _name) found = node;
+    super.visitMethodDeclaration(node);
   }
 
   @override
-  void visitFunctionExpression(FunctionExpression node) {
-    _functionDepth++;
-    super.visitFunctionExpression(node);
-    _functionDepth--;
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    if (node.name.lexeme == _name) found = node;
+    super.visitFunctionDeclaration(node);
   }
 }

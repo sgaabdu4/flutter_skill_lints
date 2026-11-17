@@ -13,6 +13,15 @@ void main() {
       'reportsToggleThatWritesTheObscureState': (t) => t._reportsToggleThatWritesTheObscureState(),
       'reportsToggleInsideExpandedSibling': (t) => t._reportsToggleInsideExpandedSibling(),
       'reportsTextLabelAsSuffix': (t) => t._reportsTextLabelAsSuffix(),
+      'reportsShowPasswordCheckbox': (t) => t._reportsShowPasswordCheckbox(),
+      'reportsEyeButtonInStack': (t) => t._reportsEyeButtonInStack(),
+      'reportsToggleMethodTearOff': (t) => t._reportsToggleMethodTearOff(),
+      'allowsShowMoreButton': (t) => t._allowsShowMoreButton(),
+      'allowsHelpText': (t) => t._allowsHelpText(),
+      'allowsDecorativeIcon': (t) => t._allowsDecorativeIcon(),
+      'allowsSubmitThatOnlyReadsTheFlag': (t) => t._allowsSubmitThatOnlyReadsTheFlag(),
+      'allowsSecondFieldWithOwnSuffixToggle': (t) => t._allowsSecondFieldWithOwnSuffixToggle(),
+      'skipsGeneratedFiles': (t) => t._skipsGeneratedFiles(),
       'allowsSuffixIconButton': (t) => t._allowsSuffixIconButton(),
       'allowsFieldWithoutToggle': (t) => t._allowsFieldWithoutToggle(),
       'allowsUnrelatedButtonInRow': (t) => t._allowsUnrelatedButtonInRow(),
@@ -51,6 +60,12 @@ class IconButton extends Widget {
   final String? tooltip;
 }
 
+class FilledButton extends Widget {
+  const FilledButton({required this.onPressed, required this.child});
+  final void Function()? onPressed;
+  final Widget child;
+}
+
 class TextButton extends Widget {
   const TextButton({required this.onPressed, required this.child});
   final void Function()? onPressed;
@@ -74,6 +89,22 @@ class TextFormField extends Widget {
   const TextFormField({this.obscureText = false, this.decoration});
   final bool obscureText;
   final InputDecoration? decoration;
+}
+
+class Checkbox extends Widget {
+  const Checkbox({required this.value, required this.onChanged});
+  final bool value;
+  final void Function(bool?)? onChanged;
+}
+
+class Column extends Widget {
+  const Column({this.children = const <Widget>[]});
+  final List<Widget> children;
+}
+
+class Stack extends Widget {
+  const Stack({this.children = const <Widget>[]});
+  final List<Widget> children;
 }
 
 class Expanded extends Widget {
@@ -169,6 +200,155 @@ Widget build(void Function() flip) => TextField(
 );
 ''';
     await assertDiagnostics(source, [lint(source.indexOf('TextField'), 'TextField'.length)]);
+  }
+
+  Future<void> _reportsShowPasswordCheckbox() async {
+    const source = r"""
+import 'package:flutter/material.dart';
+
+class Form1 {
+  bool hidden = true;
+
+  Widget build() => Column(
+    children: [
+      TextField(obscureText: hidden),
+      Checkbox(value: !hidden, onChanged: (value) => hidden = !(value ?? false)),
+    ],
+  );
+}
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('TextField'), 'TextField'.length)]);
+  }
+
+  Future<void> _reportsEyeButtonInStack() async {
+    const source = r"""
+import 'package:flutter/material.dart';
+
+Widget build(void Function() flip) => Stack(
+  children: [
+    TextField(obscureText: true),
+    IconButton(onPressed: flip, icon: Icon(Icons.visibilityOff)),
+  ],
+);
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('TextField'), 'TextField'.length)]);
+  }
+
+  Future<void> _reportsToggleMethodTearOff() async {
+    const source = r"""
+import 'package:flutter/material.dart';
+
+class Form1 {
+  bool hidden = true;
+
+  void toggle() {
+    hidden = !hidden;
+  }
+
+  Widget build() => Row(
+    children: [
+      TextField(obscureText: hidden),
+      TextButton(onPressed: toggle, child: Text('Switch')),
+    ],
+  );
+}
+""";
+    await assertDiagnostics(source, [lint(source.indexOf('TextField'), 'TextField'.length)]);
+  }
+
+  Future<void> _allowsShowMoreButton() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+Widget build(void Function() more) => Row(
+  children: [
+    TextField(obscureText: true),
+    TextButton(onPressed: more, child: Text('Show more options')),
+  ],
+);
+""");
+  }
+
+  Future<void> _allowsHelpText() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+Widget build() => Column(
+  children: [
+    TextField(obscureText: true),
+    Text('Show your ID at the desk'),
+  ],
+);
+""");
+  }
+
+  Future<void> _allowsDecorativeIcon() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+Widget build() => Row(
+  children: [
+    Icon(Icons.visibilityOff),
+    Expanded(child: TextField(obscureText: true)),
+  ],
+);
+""");
+  }
+
+  Future<void> _allowsSubmitThatOnlyReadsTheFlag() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+class Form1 {
+  bool hidden = true;
+
+  Widget build(void Function(bool) send) => Column(
+    children: [
+      TextField(obscureText: hidden),
+      FilledButton(onPressed: () => send(hidden), child: Text('Submit')),
+    ],
+  );
+}
+""");
+  }
+
+  Future<void> _allowsSecondFieldWithOwnSuffixToggle() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+class Form1 {
+  bool hidden = true;
+  bool hiddenAgain = true;
+
+  Widget build() => Column(
+    children: [
+      TextField(obscureText: hidden),
+      TextField(obscureText: hiddenAgain, decoration: InputDecoration(
+        suffixIcon: IconButton(
+          onPressed: () => hiddenAgain = !hiddenAgain,
+          tooltip: 'Show password',
+          icon: Icon(Icons.visibility),
+        ),
+      )),
+    ],
+  );
+}
+""");
+  }
+
+  Future<void> _skipsGeneratedFiles() async {
+    final path = '$testPackageLibPath/widget.g.dart';
+    newFile(path, r"""
+import 'package:flutter/material.dart';
+
+Widget build(void Function() flip) => Row(
+  children: [
+    TextField(obscureText: true),
+    TextButton(onPressed: flip, child: Text('Show')),
+  ],
+);
+""");
+    await assertNoDiagnosticsInFile(path);
   }
 
   Future<void> _allowsSuffixIconButton() async {

@@ -32,8 +32,13 @@
   `TextStyle` constructor, a dot shorthand constructor or `copyWith`.
 - Add `avoid_detached_field_toggle`, which reports a `TextField` or
   `TextFormField` with `obscureText` whose show or hide control is a sibling
-  widget in the same `Row`, `Column`, `Wrap` or `Stack`, or a text label such as
-  "Show", instead of an `IconButton` in the `suffixIcon`.
+  control in the same `Row`, `Column`, `Wrap` or `Stack`, or a text label such as
+  "Show", instead of an `IconButton` in the `suffixIcon`. A sibling counts only
+  when it is a button, checkbox or switch (a widget with `onPressed`,
+  `onChanged` or `onTap`) whose own label or eye icon is the show or hide
+  control, or whose callback writes the `obscureText` variable. Text, a
+  decorative icon, a submit button that only reads the variable, and another
+  field with its own toggle are not reported.
 - Add `avoid_conflicting_filled_buttons`, which reports two or more
   `FilledButton` or `ElevatedButton` widgets (with their `.icon` and `.tonal`
   forms) in one `Row` or `Wrap` when their fill colours differ. An explicit

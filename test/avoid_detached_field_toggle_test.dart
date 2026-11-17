@@ -20,6 +20,8 @@ void main() {
       'allowsHelpText': (t) => t._allowsHelpText(),
       'allowsDecorativeIcon': (t) => t._allowsDecorativeIcon(),
       'allowsSubmitThatOnlyReadsTheFlag': (t) => t._allowsSubmitThatOnlyReadsTheFlag(),
+      'allowsControlThatReadsTheFlagOutsideAClosure': (t) =>
+          t._allowsControlThatReadsTheFlagOutsideAClosure(),
       'allowsSecondFieldWithOwnSuffixToggle': (t) => t._allowsSecondFieldWithOwnSuffixToggle(),
       'skipsGeneratedFiles': (t) => t._skipsGeneratedFiles(),
       'allowsSuffixIconButton': (t) => t._allowsSuffixIconButton(),
@@ -306,6 +308,24 @@ class Form1 {
     children: [
       TextField(obscureText: hidden),
       FilledButton(onPressed: () => send(hidden), child: Text('Submit')),
+    ],
+  );
+}
+""");
+  }
+
+  Future<void> _allowsControlThatReadsTheFlagOutsideAClosure() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/material.dart';
+
+class Form1 {
+  bool hidden = true;
+
+  Widget build(void Function(bool?) send) => Column(
+    children: [
+      TextField(obscureText: hidden),
+      Text(hidden ? 'Hidden' : 'Visible'),
+      Checkbox(value: hidden, onChanged: send),
     ],
   );
 }

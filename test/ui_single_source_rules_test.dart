@@ -11,6 +11,9 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.allowsInsideTheDefaultLibrary());
     await _run(_BaseControlsTest.new, (t) => t.readsLibraryPathsFromTheGatesFile());
     await _run(_BaseControlsTest.new, (t) => t.fallsBackWhenTheKeyIsMissing());
+    for (final value in ['[]', '[1]', '["lib/ui/*", 2]', '"lib/ui/*"']) {
+      await _run(_BaseControlsTest.new, (t) => t.fallsBackWhenTheListIsEmptyOrInvalid(value));
+    }
     await _run(_RawTokenTest.new, (t) => t.reportsRawValuesOutsideThemeFiles());
     await _run(_RawTokenTest.new, (t) => t.allowsRawValuesInThemeFiles());
     await _run(_RawTextStyleTest.new, (t) => t.reportsAndAllowsDotShorthandTextStyle());
@@ -134,6 +137,11 @@ final class _BaseControlsTest extends _UiRuleTest {
       _controls,
       from: ['ElevatedButton', 'TextField', 'DropdownButton', 'AlertDialog', 'SearchBar'],
     );
+  }
+
+  Future<void> fallsBackWhenTheListIsEmptyOrInvalid(String value) async {
+    writeGates('{"version": 1, "shipping": {"ui_library": $value}}');
+    await assertClean('$testPackageLibPath/core/widgets/atoms/app_controls.dart', _controls);
   }
 
   Future<void> fallsBackWhenTheKeyIsMissing() async {

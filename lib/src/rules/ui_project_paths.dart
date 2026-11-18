@@ -84,7 +84,8 @@ List<RegExp>? _parseLibrary(String text) {
     final shipping = decoded is Map ? decoded['shipping'] : null;
     final entries = shipping is Map ? shipping['ui_library'] : null;
     if (entries is! List || entries.isEmpty) return null;
-    return [for (final entry in entries.whereType<String>()) _fnmatch(entry)];
+    if (entries.any((entry) => entry is! String || entry.trim().isEmpty)) return null;
+    return [for (final entry in entries.cast<String>()) _fnmatch(entry)];
   } on FormatException {
     return null;
   }

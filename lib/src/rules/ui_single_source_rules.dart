@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
@@ -64,5 +65,19 @@ final class _BaseControlVisitor extends RecursiveAstVisitor<void> {
       offsets.add(node.constructorName.offset);
     }
     super.visitInstanceCreationExpression(node);
+  }
+
+  @override
+  void visitDotShorthandConstructorInvocation(DotShorthandConstructorInvocation node) {
+    final type = node.staticType;
+    final element = type is InterfaceType ? type.element : null;
+    final uri = element?.library.identifier;
+    if (element != null &&
+        _baseControls.contains(element.name) &&
+        uri != null &&
+        isFlutterUiLibraryUri(uri)) {
+      offsets.add(node.offset);
+    }
+    super.visitDotShorthandConstructorInvocation(node);
   }
 }

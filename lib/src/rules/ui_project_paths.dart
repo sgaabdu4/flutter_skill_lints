@@ -90,33 +90,11 @@ List<RegExp>? _parseLibrary(String text) {
   }
 }
 
-/// Python `fnmatch` rules, which Hard Eng uses on these entries: `*` crosses `/`.
+/// Python `fnmatch` rules for `*` and `?`, which Hard Eng uses on these entries: `*` crosses `/`.
 RegExp _fnmatch(String pattern) {
-  final out = StringBuffer('^');
-  var i = 0;
-  while (i < pattern.length) {
-    final char = pattern[i++];
-    if (char == '*') {
-      out.write('.*');
-    } else if (char == '?') {
-      out.write('.');
-    } else if (char == '[') {
-      var end = i;
-      if (end < pattern.length && pattern[end] == '!') end++;
-      if (end < pattern.length && pattern[end] == ']') end++;
-      while (end < pattern.length && pattern[end] != ']') {
-        end++;
-      }
-      if (end >= pattern.length) {
-        out.write(r'\[');
-      } else {
-        final body = pattern.substring(i, end).replaceAll(r'\', r'\\');
-        out.write(body.startsWith('!') ? '[^${body.substring(1)}]' : '[$body]');
-        i = end + 1;
-      }
-    } else {
-      out.write(RegExp.escape(char));
-    }
-  }
-  return RegExp('$out\$', dotAll: true);
+  final body = pattern
+      .split('*')
+      .map((part) => part.split('?').map(RegExp.escape).join('.'))
+      .join('.*');
+  return RegExp('^$body\$', dotAll: true);
 }

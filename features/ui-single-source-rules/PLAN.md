@@ -45,10 +45,10 @@ Sources: the Hard Eng UI single source plan rows for the lint plugin, Hard Eng's
 
 ## Verification
 
-Result: Pending
-Evidence: Pending the final run.
-E2E: N/A — no user journey; the real analyzer server run is the timing run below.
-Retro: Pending.
+Result: Passed
+Evidence: `dart test` passed 3,597 tests (exit 0). `dart analyze --fatal-infos .`, `dart format --set-exit-if-changed .` and `dart pub publish --dry-run` (0 warnings) were clean. The new test failed before the rule existed, and failed on the `palette/` and `colors/` rows with the old theme test restored. On a copy of a real Flutter app, `dart analyze` with the new plugin adds only 9 `ui_base_control_outside_library` errors (one scratch file, 8 real controls) and no other change; CPU time (user plus sys) on the least loaded pair was 83.3 s before and 85.1 s after, and the other pairs differ by less than the noise of a loaded machine.
+E2E: N/A — no user journey; the real analyzer server run on the app copy is the timing run above.
+Retro: (1) the rule count test pinned two counts, and the first run found only one -> None — the full run found the second before the push, and the repair has its own commit; (2) the theme case file the plan names does not exist -> the case file test is out of scope here and follows in its own change.
 
 Delivery target: PR
-Delivery: Pending.
+Delivery: PR open, checks pending, not merged; merge waits for the owner.

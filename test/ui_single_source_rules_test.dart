@@ -1,0 +1,172 @@
+import 'dart:math' as math;
+
+import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'package:flutter_skill_lints/src/rules/ui_single_source_rules.dart';
+import 'package:flutter_skill_lints/src/rules/ui_source_rules.dart';
+import 'package:test/test.dart';
+
+void main() {
+  test('base controls and raw values outside the library and theme are reported', () async {
+    await _run(_BaseControlsTest.new, (t) => t.reportsOutsideTheDefaultLibrary());
+    await _run(_BaseControlsTest.new, (t) => t.allowsInsideTheDefaultLibrary());
+    await _run(_BaseControlsTest.new, (t) => t.readsLibraryPathsFromTheGatesFile());
+    await _run(_BaseControlsTest.new, (t) => t.fallsBackWhenTheKeyIsMissing());
+    await _run(_RawTokenTest.new, (t) => t.reportsRawValuesOutsideThemeFiles());
+    await _run(_RawTokenTest.new, (t) => t.allowsRawValuesInThemeFiles());
+    await _run(_RawTextStyleTest.new, (t) => t.reportsAndAllowsDotShorthandTextStyle());
+  });
+}
+
+Future<void> _run<T extends _UiRuleTest>(T Function() create, Future<void> Function(T) body) async {
+  final fixture = create()..setUp();
+  try {
+    await body(fixture);
+  } finally {
+    await fixture.tearDown();
+  }
+}
+
+const _flutterLibrary = r'''
+class Widget {
+  const Widget();
+}
+
+class ElevatedButton extends Widget {
+  const ElevatedButton();
+}
+
+class TextField extends Widget {
+  const TextField();
+}
+
+class DropdownButton extends Widget {
+  const DropdownButton();
+}
+
+class AlertDialog extends Widget {
+  const AlertDialog();
+}
+
+class SearchBar extends Widget {
+  const SearchBar();
+}
+
+class TextStyle {
+  const TextStyle({double? fontSize});
+}
+
+class EdgeInsets {
+  const EdgeInsets.symmetric({double vertical = 0, double horizontal = 0});
+}
+
+class Pill extends Widget {
+  const Pill({double? fontSize});
+}
+''';
+
+const _import = "import 'package:flutter/material.dart';";
+
+abstract class _UiRuleTest extends AnalysisRuleTest {
+  String get ruleName;
+
+  @override
+  void setUp() {
+    rule = uiSingleSourceRules
+        .followedBy(uiSourceRules)
+        .singleWhere((rule) => rule.name == ruleName);
+    newPackage('flutter').addFile('lib/material.dart', _flutterLibrary);
+    super.setUp();
+  }
+
+  String get _gatesPath => '$testPackageRootPath/hard-eng.gates.json';
+
+  void writeGates(String body) => newFile(_gatesPath, body);
+
+  Future<void> assertReported(String path, List<String> lines, {List<String>? from}) async {
+    final source = '$_import\n\n${lines.join('\n')}\n';
+    newFile(path, source);
+    await assertDiagnosticsInFile(path, [
+      for (var i = 0; i < lines.length; i++) _lintAt(source, lines[i], from?[i] ?? ''),
+    ]);
+  }
+
+  Future<void> assertClean(String path, List<String> lines) async {
+    newFile(path, '$_import\n\n${lines.join('\n')}\n');
+    await assertNoDiagnosticsInFile(path);
+  }
+
+  T _lintAt<T>(String source, String line, String from) {
+    final start = source.indexOf(line);
+    if (start < 0) throw StateError('Line not found: $line');
+    final offset = start + line.indexOf(from);
+    final lineEnd = source.indexOf('\n', offset);
+    final end = lineEnd < 0 ? source.length : lineEnd;
+    return lint(offset, math.max(1, end - offset), name: rule.name) as T;
+  }
+}
+
+final class _BaseControlsTest extends _UiRuleTest {
+  @override
+  String get ruleName => 'ui_base_control_outside_library';
+
+  static const _controls = [
+    'Widget a = ElevatedButton();',
+    'Widget b = TextField();',
+    'Widget c = DropdownButton();',
+    'Widget d = AlertDialog();',
+    'Widget e = SearchBar();',
+  ];
+
+  Future<void> reportsOutsideTheDefaultLibrary() => assertReported(
+    '$testPackageLibPath/features/home/home_screen.dart',
+    _controls,
+    from: ['ElevatedButton', 'TextField', 'DropdownButton', 'AlertDialog', 'SearchBar'],
+  );
+
+  Future<void> allowsInsideTheDefaultLibrary() =>
+      assertClean('$testPackageLibPath/core/widgets/atoms/app_controls.dart', _controls);
+
+  Future<void> readsLibraryPathsFromTheGatesFile() async {
+    writeGates('{"version": 1, "shipping": {"ui_library": ["lib/ui/*"]}}');
+    await assertClean('$testPackageLibPath/ui/app_controls.dart', _controls);
+    await assertReported(
+      '$testPackageLibPath/core/widgets/atoms/app_controls.dart',
+      _controls,
+      from: ['ElevatedButton', 'TextField', 'DropdownButton', 'AlertDialog', 'SearchBar'],
+    );
+  }
+
+  Future<void> fallsBackWhenTheKeyIsMissing() async {
+    writeGates('{"version": 1, "shipping": {"ui_paths": []}}');
+    await assertClean('$testPackageLibPath/core/widgets/atoms/app_controls.dart', _controls);
+  }
+}
+
+final class _RawTokenTest extends _UiRuleTest {
+  @override
+  String get ruleName => 'style_raw_token';
+
+  static const _raw = ['EdgeInsets a = .symmetric(vertical: 2);', 'Widget b = Pill(fontSize: 13);'];
+
+  Future<void> reportsRawValuesOutsideThemeFiles() async {
+    await assertReported('$testPackageLibPath/features/home/home_screen.dart', _raw);
+    await assertReported('$testPackageLibPath/features/home/theme_data.dart', _raw);
+  }
+
+  Future<void> allowsRawValuesInThemeFiles() async {
+    await assertClean('$testPackageLibPath/palette/spacing.dart', _raw);
+    await assertClean('$testPackageLibPath/core/theme/spacing.dart', _raw);
+    await assertClean('$testPackageLibPath/features/home/app_tokens.dart', _raw);
+  }
+}
+
+final class _RawTextStyleTest extends _UiRuleTest {
+  @override
+  String get ruleName => 'style_raw_text_style';
+
+  Future<void> reportsAndAllowsDotShorthandTextStyle() async {
+    const lines = ['TextStyle a = .new(fontSize: 18);'];
+    await assertReported('$testPackageLibPath/features/home/home_screen.dart', lines, from: ['.']);
+    await assertClean('$testPackageLibPath/colors/text_styles.dart', lines);
+  }
+}

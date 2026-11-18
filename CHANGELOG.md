@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.16.0] - 2026-11-18
+
+- Add `ui_base_control_outside_library`, at error severity. A base button, text
+  field, dropdown, dialog or search widget (`ElevatedButton`, `TextField`,
+  `DropdownButton`, `AlertDialog`, `SearchBar` and their relatives) built in a
+  `lib/` file outside the shared UI library is reported. The library is the
+  `shipping.ui_library` list of the nearest `hard-eng.gates.json`; when the file
+  or the key is missing it is `lib/core/widgets/`. The correction is Hard Eng's:
+  make it a part of the shared library and use that part.
+- Judge a theme or token file as Hard Eng does, for `style_raw_token` and
+  `style_raw_text_style`: a folder named `theme`, `token`, `color`, `colour` or
+  `palette` (or the plural), a file whose last name word is one of them, or
+  `tailwind.config.*`, on the path from the folder of the nearest
+  `hard-eng.gates.json`. A `palette/` or `colors/` folder now counts as a theme
+  folder; `app_theme.dart` and `*_tokens.dart` still do. A file such as
+  `lib/theme/x.dart` outside `core/` now counts too.
+
 ## [0.15.2] - 2026-11-17
 
 - Fix `avoid_provider_turn_hop`. A `??=` fallback no longer reports: a local

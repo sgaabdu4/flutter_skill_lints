@@ -34,6 +34,7 @@ import 'package:flutter_skill_lints/src/rules/services_extended_source_rules.dar
 import 'package:flutter_skill_lints/src/rules/services_mixins_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/state_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/test_source_rules.dart';
+import 'package:flutter_skill_lints/src/rules/ui_single_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/ui_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/use_context_mounted_after_await.dart';
 import 'package:flutter_skill_lints/src/rules/use_ref_invalidate.dart';
@@ -68,6 +69,7 @@ final List<AbstractAnalysisRule> flutterSkillRules = [
   ...architectureSourceRules,
   ...architectureExtendedSourceRules,
   ...uiSourceRules,
+  ...uiSingleSourceRules,
   ...materialSourceRules,
   ...flutterOptimizationSourceRules,
   ...layoutDiagnosticsRules,

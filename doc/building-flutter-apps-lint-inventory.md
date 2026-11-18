@@ -218,6 +218,7 @@ test_text_label_selector
 test_uncontrolled_scope
 text_field_on_changed_no_debounce
 typed_id_raw_id
+ui_base_control_outside_library
 ui_snackbar_boundary
 unguarded_fire_and_forget_platform_command
 use_context_mounted_after_await

@@ -2,7 +2,7 @@
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 228 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 229 registered `building-flutter-apps` warning rules.
 - `lib/src/rules/**`: 237 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 276 additional diagnostics.
 - Total unique diagnostics: 511.
@@ -55,6 +55,27 @@ checked. It also reports a literal `fontSize` option on any call other than a
 `TextStyle` constructor (a `TextStyle` has its own rule). A zero, a token and
 other size options such as `gap` are not reported; an `iconSize` follows the
 existing icon size rule.
+
+A theme or token file is judged by Hard Eng's rule, on the path from the folder
+of the nearest `hard-eng.gates.json` (or from `lib/` when there is none): a
+folder named `theme`, `token`, `color`, `colour` or `palette` (or the plural), a
+file whose last name word is one of them, or `tailwind.config.*`.
+
+## `ui_base_control_outside_library` base control boundary
+
+`ui_base_control_outside_library` reports at error severity a base button, text
+field, dropdown, dialog or search widget built in a `lib/` file outside the
+shared library: `ElevatedButton`, `FilledButton`, `OutlinedButton`, `TextButton`,
+`IconButton`, `CupertinoButton`, `TextField`, `TextFormField`,
+`CupertinoTextField`, `CupertinoTextFormFieldRow`, `DropdownButton`,
+`DropdownButtonFormField`, `DropdownMenu`, `AlertDialog`, `SimpleDialog`,
+`Dialog`, `CupertinoAlertDialog`, `SearchBar`, `SearchAnchor` and
+`CupertinoSearchTextField`, with their named constructors. A `styleFrom` style
+call and a class that merely wraps one of these by name are not reported. The
+library is the `shipping.ui_library` list of the nearest `hard-eng.gates.json`
+(glob entries from that folder, `*` crossing `/`, as Hard Eng reads them); when
+the file or the key is missing, the library is `lib/core/widgets/`. Test files
+are skipped.
 
 ## `avoid_conflicting_filled_buttons` filled button boundary
 
@@ -248,7 +269,7 @@ Core skill rules already covered before this pass:
   `l10n_context_direct_access`, `l10n_string_concatenation`,
   `l10n_notifier_localized_copy`, `widget_preview_import_leak`,
   `widget_preview_platform_dependency`, `widget_preview_screen`,
-  `ui_snackbar_boundary`,
+  `ui_snackbar_boundary`, `ui_base_control_outside_library`,
   `widget_material_boundary` (raw `Material` / `Ink` / `InkWell` outside owners),
   `a11y_text_scale_clamp`, `datetime_now_requires_timezone_intent`,
   `ad_hoc_intl_format`, `inline_num_clamp`, `record_use_outside_ffi`,

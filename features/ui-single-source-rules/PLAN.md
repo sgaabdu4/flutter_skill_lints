@@ -29,7 +29,7 @@ Authority: Standing approval of 2026-11-15 for this package, and the Hard Eng UI
 ## Baseline + execution
 
 Result: Passed
-Evidence: On main 8b1d029 the new test failed because the rule did not exist, and with the old theme test restored the `palette/` and `colors/` rows failed. After the change the full `dart test` run failed only the two registration rows (rule count, rule docs), which the count, inventory and doc comment then fixed.
+Evidence: On main 8b1d029 the new test failed because the rule did not exist, and with the old theme test restored the `palette/` and `colors/` rows failed. After the change the full `dart test` run failed only the registration rows (rule count, diagnostic count, rule docs), which the counts, inventory and doc comment then fixed.
 Execution: One builder; one commit for the rule, the theme path port and the plan.
 
 ## Risks + recovery

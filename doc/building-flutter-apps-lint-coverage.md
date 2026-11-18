@@ -70,8 +70,9 @@ shared library: `ElevatedButton`, `FilledButton`, `OutlinedButton`, `TextButton`
 `CupertinoTextField`, `CupertinoTextFormFieldRow`, `DropdownButton`,
 `DropdownButtonFormField`, `DropdownMenu`, `AlertDialog`, `SimpleDialog`,
 `Dialog`, `CupertinoAlertDialog`, `SearchBar`, `SearchAnchor` and
-`CupertinoSearchTextField`, with their named constructors. A `styleFrom` style
-call and a class that merely wraps one of these by name are not reported. The
+`CupertinoSearchTextField`, with their named constructors, with or without type arguments. Only a
+constructor that resolves to a Flutter, Material or Cupertino class is reported: a
+`styleFrom` call and a project class of the same name are not. The
 library is the `shipping.ui_library` list of the nearest `hard-eng.gates.json`
 (glob entries from that folder, `*` crossing `/`, as Hard Eng reads them); when
 the file or the key is missing, the library is `lib/core/widgets/`. Test files

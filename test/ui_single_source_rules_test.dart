@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
+import 'package:analyzer/file_system/memory_file_system.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'package:flutter_skill_lints/src/rules/ui_project_paths.dart';
 import 'package:flutter_skill_lints/src/rules/ui_single_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/ui_source_rules.dart';
 import 'package:test/test.dart';
@@ -10,6 +12,7 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.reportsOutsideTheDefaultLibrary());
     await _run(_BaseControlsTest.new, (t) => t.allowsInsideTheDefaultLibrary());
     await _run(_BaseControlsTest.new, (t) => t.reportsControlsWithTypeArguments());
+    await _run(_BaseControlsTest.new, (t) => t.reportsOnlyFlutterControls());
     await _run(_BaseControlsTest.new, (t) => t.readsLibraryPathsFromTheGatesFile());
     await _run(_BaseControlsTest.new, (t) => t.readsCharacterSetsInLibraryPaths('[u]', true));
     await _run(_BaseControlsTest.new, (t) => t.readsCharacterSetsInLibraryPaths('[!u]', false));
@@ -21,7 +24,24 @@ void main() {
     await _run(_RawTokenTest.new, (t) => t.allowsRawValuesInThemeFiles());
     await _run(_RawTextStyleTest.new, (t) => t.reportsAndAllowsDotShorthandTextStyle());
   });
+
+  test('a changed or removed gates file is seen after the cache warmed', () {
+    final provider = MemoryResourceProvider();
+    final gates = provider.newFile('/proj/hard-eng.gates.json', _gatesWith('lib/a/*'));
+    final source = provider.newFile('/proj/lib/a/x.dart', '');
+    bool inLibrary() => resolveUiProjectPaths(source, 'lib/a/x.dart').isInLibrary;
+
+    expect(inLibrary(), isTrue);
+    expect(inLibrary(), isTrue);
+    gates.writeAsStringSync(_gatesWith('lib/b/*'));
+    expect(inLibrary(), isFalse);
+    gates.delete();
+    expect(inLibrary(), isFalse);
+    expect(resolveUiProjectPaths(source, 'lib/core/widgets/x.dart').isInLibrary, isTrue);
+  });
 }
+
+String _gatesWith(String entry) => '{"version": 1, "shipping": {"ui_library": ["$entry"]}}';
 
 Future<void> _run<T extends _UiRuleTest>(T Function() create, Future<void> Function(T) body) async {
   final fixture = create()..setUp();
@@ -104,8 +124,8 @@ abstract class _UiRuleTest extends AnalysisRuleTest {
     ]);
   }
 
-  Future<void> assertClean(String path, List<String> lines) async {
-    newFile(path, '$_import\n\n${lines.join('\n')}\n');
+  Future<void> assertClean(String path, List<String> lines, {bool withImport = true}) async {
+    newFile(path, '${withImport ? '$_import\n\n' : ''}${lines.join('\n')}\n');
     await assertNoDiagnosticsInFile(path);
   }
 
@@ -139,6 +159,23 @@ final class _BaseControlsTest extends _UiRuleTest {
 
   Future<void> allowsInsideTheDefaultLibrary() =>
       assertClean('$testPackageLibPath/core/widgets/atoms/app_controls.dart', _controls);
+
+  Future<void> reportsOnlyFlutterControls() async {
+    await assertClean('$testPackageLibPath/features/own_search.dart', [
+      'class Widget {',
+      '  const Widget();',
+      '}',
+      'class SearchBar extends Widget {',
+      '  const SearchBar();',
+      '}',
+      'Widget a = SearchBar();',
+    ], withImport: false);
+    await assertReported(
+      '$testPackageLibPath/features/home/split.dart',
+      ['Widget a = DropdownButton<\n  String\n>();'],
+      from: ['DropdownButton'],
+    );
+  }
 
   Future<void> reportsControlsWithTypeArguments() => assertReported(
     '$testPackageLibPath/features/home/home_screen.dart',

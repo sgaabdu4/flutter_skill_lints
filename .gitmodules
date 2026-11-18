@@ -1,0 +1,3 @@
+[submodule "test/skill_source"]
+	path = test/skill_source
+	url = https://github.com/sgaabdu4/building-flutter-apps.git

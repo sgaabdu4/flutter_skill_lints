@@ -4,7 +4,7 @@ Status: Complete
 
 ## Outcome + scope
 
-`dart analyze` reports base buttons, text fields, dropdowns, dialogs and search widgets built outside the shared UI library, reads the library paths from `hard-eng.gates.json`, and judges a theme or token file the way Hard Eng does. Out of scope: the theme path case file in the Flutter skill repository (it does not exist yet), a pub.dev release, and the string rule `avoid_magic_literals`, which keeps its own `/core/theme/` test. The case file test follows in its own change once the Flutter skill repository holds the file.
+`dart analyze` reports base buttons, text fields, dropdowns, dialogs and search widgets built outside the shared UI library, reads the library paths from `hard-eng.gates.json`, and judges a theme or token file the way Hard Eng does. Out of scope: a pub.dev release, and the string rule `avoid_magic_literals`, which keeps its own `/core/theme/` test.
 
 ## Repository context
 
@@ -24,6 +24,7 @@ Authority: Standing approval of 2026-11-15 for this package, and the Hard Eng UI
 - [x] A `.symmetric(vertical: 2)`, a `.new(fontSize: 18)` and a widget option `fontSize: 13` report outside theme files, and a `palette/` or `colors/` folder is a theme folder → `test/ui_single_source_rules_test.dart::base controls and raw values outside the library and theme are reported`
 - [x] Library paths come from `shipping.ui_library` of the nearest `hard-eng.gates.json`, with `lib/core/widgets/` when the file or the key is missing → `test/ui_single_source_rules_test.dart::base controls and raw values outside the library and theme are reported`
 - [x] A real analyzer server run reads the nearest `hard-eng.gates.json`: a control in the listed library is clean and one outside it reports once → `integration_test/plugin_smoke_test.dart::loads canonical configuration with riverpod_lint in a real Flutter analysis server run`
+- [x] The theme path function answers all 94 rows of the Flutter skill's case file, read through the test-only submodule `test/skill_source` at the revision Hard Eng pins; a missing file fails the test → `test/theme_path_cases_test.dart::theme path function answers every case of the Flutter skill case file`
 - [x] The rule count, the inventory and the version agree → `test/plugin_registration_test.dart::registers every rule once` and the CI version check
 
 ## Baseline + execution
@@ -47,9 +48,9 @@ Sources: the Hard Eng UI single source plan rows for the lint plugin, Hard Eng's
 ## Verification
 
 Result: Passed
-Evidence: `dart test` passed 3,597 tests (exit 0). `dart analyze --fatal-infos .`, `dart format --set-exit-if-changed .` and `dart pub publish --dry-run` (0 warnings) were clean. The new test failed before the rule existed, and failed on the `palette/` and `colors/` rows with the old theme test restored. On a copy of a real Flutter app, `dart analyze` with the new plugin adds only 9 `ui_base_control_outside_library` errors (one scratch file, 8 real controls) and no other change; CPU time (user plus sys) on the least loaded pair was 83.3 s before and 85.1 s after, and the other pairs differ by less than the noise of a loaded machine.
+Evidence: `dart test` passed 3,598 tests (exit 0). `dart analyze --fatal-infos .`, `dart format --set-exit-if-changed .` and `dart pub publish --dry-run` (0 warnings) were clean. The new test failed before the rule existed, and failed on the `palette/` and `colors/` rows with the old theme test restored. On a copy of a real Flutter app, `dart analyze` with the new plugin adds only 9 `ui_base_control_outside_library` errors (one scratch file, 8 real controls) and no other change; CPU time (user plus sys) on the least loaded pair was 83.3 s before and 85.1 s after, and the other pairs differ by less than the noise of a loaded machine.
 E2E: N/A — no user journey; the real analyzer server run on the app copy is the timing run above.
-Retro: (1) the rule count test pinned two counts, and the first run found only one -> None — the full run found the second before the push, and the repair has its own commit; (2) the theme case file the plan names does not exist -> the case file test is out of scope here and follows in its own change.
+Retro: (1) the rule count test pinned two counts, and the first run found only one -> None — the full run found the second before the push, and the repair has its own commit; (2) the theme case file the plan names did not exist at first -> the test was added once the skill repository held it, and the pub package keeps the submodule out through `.pubignore`.
 
 Delivery target: PR
 Delivery: PR open, checks pending, not merged; merge waits for the owner.

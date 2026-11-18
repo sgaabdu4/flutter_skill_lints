@@ -129,7 +129,7 @@ String _charSet(String body) {
   final members = (negate ? body.substring(1) : body)
       .replaceAll(r'\', r'\\')
       .replaceAll('[', r'\[')
-      .replaceAll(']', r'\]')
-      .replaceFirstMapped(RegExp(r'^\^'), (_) => r'\^');
-  return negate ? '[^$members]' : '[$members]';
+      .replaceAll(']', r'\]');
+  if (negate) return '[^$members]';
+  return members.startsWith('^') ? '[\\$members]' : '[$members]';
 }

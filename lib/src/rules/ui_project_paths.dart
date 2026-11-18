@@ -91,11 +91,45 @@ List<RegExp>? _parseLibrary(String text) {
   }
 }
 
-/// Python `fnmatch` rules for `*` and `?`, which Hard Eng uses on these entries: `*` crosses `/`.
+/// Python `fnmatch` rules, which Hard Eng uses on these entries: `*` crosses `/`, and `[...]` and `[!...]` are sets.
 RegExp _fnmatch(String pattern) {
-  final body = pattern
-      .split('*')
-      .map((part) => part.split('?').map(RegExp.escape).join('.'))
-      .join('.*');
-  return RegExp('^$body\$', dotAll: true);
+  final out = StringBuffer('^');
+  var i = 0;
+  while (i < pattern.length) {
+    final char = pattern[i++];
+    if (char == '*') {
+      out.write('.*');
+    } else if (char == '?') {
+      out.write('.');
+    } else if (char == '[') {
+      final end = _setEnd(pattern, i);
+      if (end == null) {
+        out.write(r'\[');
+      } else {
+        out.write(_charSet(pattern.substring(i, end)));
+        i = end + 1;
+      }
+    } else {
+      out.write(RegExp.escape(char));
+    }
+  }
+  return RegExp('$out\$', dotAll: true);
+}
+
+int? _setEnd(String pattern, int start) {
+  var end = start;
+  if (end < pattern.length && pattern[end] == '!') end++;
+  if (end < pattern.length && pattern[end] == ']') end++;
+  final close = pattern.indexOf(']', end);
+  return close < 0 ? null : close;
+}
+
+String _charSet(String body) {
+  final negate = body.startsWith('!');
+  final members = (negate ? body.substring(1) : body)
+      .replaceAll(r'\', r'\\')
+      .replaceAll('[', r'\[')
+      .replaceAll(']', r'\]')
+      .replaceFirstMapped(RegExp(r'^\^'), (_) => r'\^');
+  return negate ? '[^$members]' : '[$members]';
 }

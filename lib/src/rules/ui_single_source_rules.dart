@@ -34,5 +34,6 @@ final _baseControl = RegExp(
   r'|DropdownButton|DropdownButtonFormField|DropdownMenu'
   r'|AlertDialog|SimpleDialog|Dialog|CupertinoAlertDialog'
   r'|SearchBar|SearchAnchor|CupertinoSearchTextField)'
+  r'(?:\s*<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?'
   r'(?:\s*\.\s*(?!styleFrom\b|defaultStyleOf\b|allOf\b)\w+)?\s*\(',
 );

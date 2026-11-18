@@ -9,7 +9,10 @@ void main() {
   test('base controls and raw values outside the library and theme are reported', () async {
     await _run(_BaseControlsTest.new, (t) => t.reportsOutsideTheDefaultLibrary());
     await _run(_BaseControlsTest.new, (t) => t.allowsInsideTheDefaultLibrary());
+    await _run(_BaseControlsTest.new, (t) => t.reportsControlsWithTypeArguments());
     await _run(_BaseControlsTest.new, (t) => t.readsLibraryPathsFromTheGatesFile());
+    await _run(_BaseControlsTest.new, (t) => t.readsCharacterSetsInLibraryPaths('[u]', true));
+    await _run(_BaseControlsTest.new, (t) => t.readsCharacterSetsInLibraryPaths('[!u]', false));
     await _run(_BaseControlsTest.new, (t) => t.fallsBackWhenTheKeyIsMissing());
     for (final value in ['[]', '[1]', '["lib/ui/*", 2]', '"lib/ui/*"']) {
       await _run(_BaseControlsTest.new, (t) => t.fallsBackWhenTheListIsEmptyOrInvalid(value));
@@ -42,8 +45,16 @@ class TextField extends Widget {
   const TextField();
 }
 
-class DropdownButton extends Widget {
+class DropdownButton<T> extends Widget {
   const DropdownButton();
+}
+
+class DropdownButtonFormField<T> extends Widget {
+  const DropdownButtonFormField();
+}
+
+class DropdownMenu<T> extends Widget {
+  const DropdownMenu();
 }
 
 class AlertDialog extends Widget {
@@ -128,6 +139,30 @@ final class _BaseControlsTest extends _UiRuleTest {
 
   Future<void> allowsInsideTheDefaultLibrary() =>
       assertClean('$testPackageLibPath/core/widgets/atoms/app_controls.dart', _controls);
+
+  Future<void> reportsControlsWithTypeArguments() => assertReported(
+    '$testPackageLibPath/features/home/home_screen.dart',
+    [
+      'Widget a = DropdownButton<String>();',
+      'Widget b = DropdownButtonFormField<int>();',
+      'Widget c = DropdownMenu<Map<String, int>>();',
+    ],
+    from: ['DropdownButton', 'DropdownButtonFormField', 'DropdownMenu'],
+  );
+
+  Future<void> readsCharacterSetsInLibraryPaths(String set, bool inside) async {
+    writeGates('{"version": 1, "shipping": {"ui_library": ["lib/${set}i/*"]}}');
+    final path = '$testPackageLibPath/ui/app_controls.dart';
+    if (inside) {
+      await assertClean(path, _controls);
+    } else {
+      await assertReported(
+        path,
+        _controls,
+        from: ['ElevatedButton', 'TextField', 'DropdownButton', 'AlertDialog', 'SearchBar'],
+      );
+    }
+  }
 
   Future<void> readsLibraryPathsFromTheGatesFile() async {
     writeGates('{"version": 1, "shipping": {"ui_library": ["lib/ui/*"]}}');

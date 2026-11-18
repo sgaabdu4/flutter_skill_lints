@@ -24,7 +24,8 @@ Authority: Standing approval of 2026-11-15 for this package, and the Hard Eng UI
 - [x] A `.symmetric(vertical: 2)`, a `.new(fontSize: 18)` and a widget option `fontSize: 13` report outside theme files, and a `palette/` or `colors/` folder is a theme folder → `test/ui_single_source_rules_test.dart::base controls and raw values outside the library and theme are reported`
 - [x] Library paths come from `shipping.ui_library` of the nearest `hard-eng.gates.json`, with `lib/core/widgets/` when the file or the key is missing → `test/ui_single_source_rules_test.dart::base controls and raw values outside the library and theme are reported`
 - [x] A real analyzer server run reads the nearest `hard-eng.gates.json`: a control in the listed library is clean and one outside it reports once → `integration_test/plugin_smoke_test.dart::loads canonical configuration with riverpod_lint in a real Flutter analysis server run`
-- [x] The theme path function answers all 94 rows of the Flutter skill's case file, read through the test-only submodule `fixtures/building-flutter-apps` at the revision Hard Eng pins; a missing file fails the test → `test/theme_path_cases_test.dart::theme path function answers every case of the Flutter skill case file`
+- [x] The theme path function answers all 94 rows of the Flutter skill's case file, fetched at the revision in `test/theme_paths_revision.txt` (no submodule, so the published repo tree holds no gitlink); a failed fetch fails the test → `test/theme_path_cases_test.dart::theme path function answers every case of the Flutter skill case file`
+- [x] A base control with type arguments (`DropdownButton<Map<String, int>>`) reports, and a `[...]` or `[!...]` set in a library path reads as Python `fnmatch` does → `test/ui_single_source_rules_test.dart::base controls and raw values outside the library and theme are reported`
 - [x] The rule count, the inventory and the version agree → `test/plugin_registration_test.dart::registers every rule once` and the CI version check
 
 ## Baseline + execution
@@ -50,7 +51,7 @@ Sources: the Hard Eng UI single source plan rows for the lint plugin, Hard Eng's
 Result: Passed
 Evidence: `dart test` passed 3,598 tests (exit 0). `dart analyze --fatal-infos .`, `dart format --set-exit-if-changed .` and `dart pub publish --dry-run` (0 warnings) were clean. The new test failed before the rule existed, and failed on the `palette/` and `colors/` rows with the old theme test restored. On a copy of a real Flutter app, `dart analyze` with the new plugin adds only 9 `ui_base_control_outside_library` errors (one scratch file, 8 real controls) and no other change; CPU time (user plus sys) on the least loaded pair was 83.3 s before and 85.1 s after, and the other pairs differ by less than the noise of a loaded machine.
 E2E: N/A — no user journey; the real analyzer server run on the app copy is the timing run above.
-Retro: (1) the rule count test pinned two counts, and the first run found only one -> None — the full run found the second before the push, and the repair has its own commit; (2) the theme case file the plan names did not exist at first -> the test was added once the skill repository held it, and the pub package keeps the submodule out through `.pubignore`.
+Retro: (1) the rule count test pinned two counts, and the first run found only one -> None — the full run found the second before the push, and the repair has its own commit; (2) the theme case file the plan names did not exist at first -> the test was added once the skill repository held it,, and it is fetched by the test, not held as a submodule, so the publish workflow needs no submodule checkout.
 
 Delivery target: PR
 Delivery: PR open, checks pending, not merged; merge waits for the owner.

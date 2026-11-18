@@ -175,6 +175,11 @@ final class _BaseControlsTest extends _UiRuleTest {
       ['Widget a = DropdownButton<\n  String\n>();'],
       from: ['DropdownButton'],
     );
+    await assertReported(
+      '$testPackageLibPath/features/home/shorthand.dart',
+      ['TextField a = .new();'],
+      from: ['.'],
+    );
   }
 
   Future<void> reportsControlsWithTypeArguments() => assertReported(

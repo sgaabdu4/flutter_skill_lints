@@ -444,6 +444,21 @@ class FormView extends ConsumerWidget {
 }
 ''');
 
+      await _writeFile('${app.path}/hard-eng.gates.json', r'''
+{"version": 1, "shipping": {"ui_library": ["lib/*"]}}
+''');
+      await _writeFile('${app.path}/lib/screens/hard-eng.gates.json', r'''
+{"version": 1, "shipping": {"ui_library": ["library/*"]}}
+''');
+      await _writeFile('${app.path}/lib/screens/screen.dart', r'''
+import 'package:flutter/material.dart';
+Widget screenButton() => const ElevatedButton(onPressed: null, child: SizedBox());
+''');
+      await _writeFile('${app.path}/lib/screens/library/shared_button.dart', r'''
+import 'package:flutter/material.dart';
+Widget sharedButton() => const ElevatedButton(onPressed: null, child: SizedBox());
+''');
+
       await _writeFile('${app.path}/lib/audit_notifier.dart', r'''
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -708,6 +723,12 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
         ),
         isEmpty,
       );
+
+      final baseControls = output
+          .split('\n')
+          .where((line) => line.contains('ui_base_control_outside_library'));
+      expect(baseControls, hasLength(1), reason: output);
+      expect(baseControls.single, contains('lib/screens/screen.dart:2:'));
 
       final families = output.split('\n').where((line) => line.contains('family_boundaries.dart'));
       final keptFamilies = families.where((line) => line.contains('riverpod_keepalive_family'));

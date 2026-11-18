@@ -23,6 +23,7 @@ Authority: Standing approval of 2026-11-15 for this package, and the Hard Eng UI
 - [x] Base buttons, text fields, dropdowns, dialogs and search widgets outside the library report; inside it none → `test/ui_single_source_rules_test.dart::base controls and raw values outside the library and theme are reported`
 - [x] A `.symmetric(vertical: 2)`, a `.new(fontSize: 18)` and a widget option `fontSize: 13` report outside theme files, and a `palette/` or `colors/` folder is a theme folder → `test/ui_single_source_rules_test.dart::base controls and raw values outside the library and theme are reported`
 - [x] Library paths come from `shipping.ui_library` of the nearest `hard-eng.gates.json`, with `lib/core/widgets/` when the file or the key is missing → `test/ui_single_source_rules_test.dart::base controls and raw values outside the library and theme are reported`
+- [x] A real analyzer server run reads the nearest `hard-eng.gates.json`: a control in the listed library is clean and one outside it reports once → `integration_test/plugin_smoke_test.dart::loads canonical configuration with riverpod_lint in a real Flutter analysis server run`
 - [x] The rule count, the inventory and the version agree → `test/plugin_registration_test.dart::registers every rule once` and the CI version check
 
 ## Baseline + execution

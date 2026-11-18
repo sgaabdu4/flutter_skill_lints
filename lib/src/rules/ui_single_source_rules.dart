@@ -1,4 +1,7 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> uiSingleSourceRules = [
@@ -13,27 +16,53 @@ final List<ScannerRule> uiSingleSourceRules = [
     description: 'Flags base buttons, text fields, dropdowns, dialogs and search widgets built outside the ui_library paths of hard-eng.gates.json (lib/core/widgets/ when it lists none).',
     scan: (reporter, context) {
       if (!context.path.startsWith('lib/') || context.isTestFile) return;
+      if (!context.source.masked.any(_baseControlName.hasMatch)) return;
 
-      final hits = <(int, int)>[];
-      for (var i = 0; i < context.source.length; i++) {
-        for (final match in _baseControl.allMatches(context.source.masked[i])) {
-          hits.add((i, match.start));
-        }
-      }
-      if (hits.isEmpty || context.isUiLibraryFile) return;
-      for (final (line, column) in hits) {
-        reporter.report(context, line, column);
+      final visitor = _BaseControlVisitor();
+      context.unit.accept(visitor);
+      if (visitor.offsets.isEmpty || context.isUiLibraryFile) return;
+      for (final offset in visitor.offsets) {
+        reporter.reportOffset(context, offset);
       }
     },
   ),
 ];
 
-final _baseControl = RegExp(
-  r'\b(?:ElevatedButton|FilledButton|OutlinedButton|TextButton|IconButton|CupertinoButton'
-  r'|TextField|TextFormField|CupertinoTextField|CupertinoTextFormFieldRow'
-  r'|DropdownButton|DropdownButtonFormField|DropdownMenu'
-  r'|AlertDialog|SimpleDialog|Dialog|CupertinoAlertDialog'
-  r'|SearchBar|SearchAnchor|CupertinoSearchTextField)'
-  r'(?:\s*<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?'
-  r'(?:\s*\.\s*(?!styleFrom\b|defaultStyleOf\b|allOf\b)\w+)?\s*\(',
-);
+const _baseControls = {
+  'ElevatedButton',
+  'FilledButton',
+  'OutlinedButton',
+  'TextButton',
+  'IconButton',
+  'CupertinoButton',
+  'TextField',
+  'TextFormField',
+  'CupertinoTextField',
+  'CupertinoTextFormFieldRow',
+  'DropdownButton',
+  'DropdownButtonFormField',
+  'DropdownMenu',
+  'AlertDialog',
+  'SimpleDialog',
+  'Dialog',
+  'CupertinoAlertDialog',
+  'SearchBar',
+  'SearchAnchor',
+  'CupertinoSearchTextField',
+};
+
+final _baseControlName = RegExp('\\b(?:${_baseControls.join('|')})\\b');
+
+final class _BaseControlVisitor extends RecursiveAstVisitor<void> {
+  final offsets = <int>[];
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final type = node.constructorName.type;
+    final uri = type.element?.library?.identifier;
+    if (_baseControls.contains(type.name.lexeme) && uri != null && isFlutterUiLibraryUri(uri)) {
+      offsets.add(node.constructorName.offset);
+    }
+    super.visitInstanceCreationExpression(node);
+  }
+}

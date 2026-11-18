@@ -51,30 +51,73 @@ final class UiProjectPaths {
 }
 
 UiProjectPaths resolveUiProjectPaths(File file, String packagePath) {
-  Folder folder = file.parent;
-  while (true) {
-    final gates = folder.getFile(_gatesFileName);
-    if (gates.exists) {
-      final relative = file.provider.pathContext
-          .relative(file.path, from: folder.path)
-          .replaceAll('\\', '/');
-      return UiProjectPaths(
-        path: relative,
-        packagePath: packagePath,
-        library: _libraryGlobs(gates),
-      );
-    }
-    if (folder.isRoot) break;
-    folder = folder.parent;
+  final cache = _caches[file.provider] ??= _GatesCache();
+  final gates = cache.gatesFileFor(file.parent);
+  if (gates == null) {
+    return UiProjectPaths(path: packagePath, packagePath: packagePath, library: null);
   }
-  return UiProjectPaths(path: packagePath, packagePath: packagePath, library: null);
+  final relative = file.provider.pathContext
+      .relative(file.path, from: gates.parent.path)
+      .replaceAll('\\', '/');
+  return UiProjectPaths(path: relative, packagePath: packagePath, library: cache.libraryOf(gates));
 }
 
-List<RegExp>? _libraryGlobs(File gates) {
-  try {
-    return _parseLibrary(gates.readAsStringSync());
-  } on FileSystemException {
-    return null;
+final _caches = Expando<_GatesCache>('flutter_skill_lints_gates_cache');
+const _walkTtl = Duration(seconds: 10);
+
+/// Per analysis process: the gates file each folder resolves to (a folder with none included, rechecked after [_walkTtl] so a new file is found), and each gates file parsed once for its modification stamp and size.
+final class _GatesCache {
+  final _folders = <String, ({String? gates, Duration at})>{};
+  final _parsed = <String, ({int stamp, int length, List<RegExp>? library})>{};
+  final _clock = Stopwatch()..start();
+
+  File? gatesFileFor(Folder start) {
+    final cached = _folders[start.path];
+    if (cached != null && _clock.elapsed - cached.at < _walkTtl) {
+      final path = cached.gates;
+      if (path == null) return null;
+      final gates = start.provider.getFile(path);
+      if (gates.exists) return gates;
+    }
+    return _walk(start);
+  }
+
+  File? _walk(Folder start) {
+    final visited = <String>[];
+    File? found;
+    Folder folder = start;
+    while (true) {
+      visited.add(folder.path);
+      final gates = folder.getFile(_gatesFileName);
+      if (gates.exists) {
+        found = gates;
+        break;
+      }
+      if (folder.isRoot) break;
+      folder = folder.parent;
+    }
+    final at = _clock.elapsed;
+    for (final path in visited) {
+      _folders[path] = (gates: found?.path, at: at);
+    }
+    return found;
+  }
+
+  List<RegExp>? libraryOf(File gates) {
+    try {
+      final stamp = gates.modificationStamp;
+      final length = gates.lengthSync;
+      final cached = _parsed[gates.path];
+      if (cached != null && cached.stamp == stamp && cached.length == length) {
+        return cached.library;
+      }
+      final library = _parseLibrary(gates.readAsStringSync());
+      _parsed[gates.path] = (stamp: stamp, length: length, library: library);
+      return library;
+    } on FileSystemException {
+      _parsed.remove(gates.path);
+      return null;
+    }
   }
 }
 

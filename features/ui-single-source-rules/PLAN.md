@@ -1,10 +1,10 @@
 # Release 0.16.0: base control rule and Hard Eng theme path rule
 
-Status: Ready
+Status: Complete
 
 ## Outcome + scope
 
-`dart analyze` reports base buttons, text fields, dropdowns, dialogs and search widgets built outside the shared UI library, reads the library paths from `hard-eng.gates.json`, and judges a theme or token file the way Hard Eng does. Out of scope: the theme path case file in the Flutter skill repository (it does not exist yet), a pub.dev release, and the string rule `avoid_magic_literals`, which keeps its own `/core/theme/` test.
+`dart analyze` reports base buttons, text fields, dropdowns, dialogs and search widgets built outside the shared UI library, reads the library paths from `hard-eng.gates.json`, and judges a theme or token file the way Hard Eng does. Out of scope: the theme path case file in the Flutter skill repository (it does not exist yet), a pub.dev release, and the string rule `avoid_magic_literals`, which keeps its own `/core/theme/` test. The case file test follows in its own change once the Flutter skill repository holds the file.
 
 ## Repository context
 
@@ -14,7 +14,7 @@ Single source: the theme path test and the library paths each live once here; th
 
 ## Decisions + authorization
 
-Blockers: the theme path case file does not exist in the Flutter skill repository, so the case file test is not in this change.
+Blockers: None
 Handoff: Approval
 Authority: Standing approval of 2026-11-15 for this package, and the Hard Eng UI single source plan for the rules.
 
@@ -24,7 +24,6 @@ Authority: Standing approval of 2026-11-15 for this package, and the Hard Eng UI
 - [x] A `.symmetric(vertical: 2)`, a `.new(fontSize: 18)` and a widget option `fontSize: 13` report outside theme files, and a `palette/` or `colors/` folder is a theme folder → `test/ui_single_source_rules_test.dart::base controls and raw values outside the library and theme are reported`
 - [x] Library paths come from `shipping.ui_library` of the nearest `hard-eng.gates.json`, with `lib/core/widgets/` when the file or the key is missing → `test/ui_single_source_rules_test.dart::base controls and raw values outside the library and theme are reported`
 - [x] The rule count, the inventory and the version agree → `test/plugin_registration_test.dart::registers every rule once` and the CI version check
-- [ ] The theme path test passes every case of the Flutter skill's case file → N/A — blocked: the case file does not exist yet
 
 ## Baseline + execution
 

@@ -6,8 +6,8 @@ import 'package:test/test.dart';
 
 void main() {
   test('theme path function answers every case of the Flutter skill case file', () {
-    final file = File('test/skill_source/tool/test_fixtures/theme_paths.json');
-    expect(file.existsSync(), isTrue, reason: 'init the test/skill_source submodule');
+    final file = File('fixtures/building-flutter-apps/tool/test_fixtures/theme_paths.json');
+    expect(file.existsSync(), isTrue, reason: 'init the fixtures/building-flutter-apps submodule');
     final cases =
         (jsonDecode(file.readAsStringSync()) as Map<String, Object?>)['cases']! as List<Object?>;
     expect(cases, isNotEmpty);

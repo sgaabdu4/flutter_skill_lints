@@ -19,9 +19,10 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     ),
     description: 'Flags raw visual constants instead of design tokens so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      if (context.isThemeDefFile || context.isTestFile) return;
+      if (context.isTestFile) return;
 
       final rawLines = _rawStyleTokenLines(context);
+      if (rawLines.isEmpty || context.isThemeDefFile) return;
       for (var i = 0; i < context.source.length; i++) {
         if (rawLines.contains(i)) {
           reporter.report(context, i, 0);
@@ -41,16 +42,19 @@ final List<ScannerRule> _uiSourceRulesPart1 = [
     description:
         'Flags raw TextStyle construction so the Flutter skill violation is shown during analysis.',
     scan: (reporter, context) {
-      if (context.isThemeDefFile || context.isTestFile) return;
+      if (context.isTestFile) return;
 
+      final lineHits = <(int, int)>[];
       for (var i = 0; i < context.source.length; i++) {
         final line = context.source.masked[i];
-        if (_textStylePattern.hasMatch(line)) {
-          reporter.report(context, i, line.indexOf('TextStyle'));
-        }
+        if (_textStylePattern.hasMatch(line)) lineHits.add((i, line.indexOf('TextStyle')));
       }
       final shorthand = _DotShorthandTextStyleVisitor();
       context.unit.accept(shorthand);
+      if ((lineHits.isEmpty && shorthand.offsets.isEmpty) || context.isThemeDefFile) return;
+      for (final (line, column) in lineHits) {
+        reporter.report(context, line, column);
+      }
       for (final offset in shorthand.offsets) {
         reporter.reportOffset(context, offset);
       }

@@ -107,18 +107,26 @@ const uiBaseControlClasses = {
   'CupertinoSearchTextField',
 };
 
+const uiConditionalControlClasses = {'Chip': 'onDeleted'};
+
 final class _BaseControlVisitor extends RecursiveAstVisitor<void> {
   final offsets = <int>[];
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    if (_isBaseControl(node.staticType)) offsets.add(node.constructorName.offset);
+    final type = node.staticType;
+    if (_isBaseControl(type) || _isConditionalControl(type, node.argumentList)) {
+      offsets.add(node.constructorName.offset);
+    }
     super.visitInstanceCreationExpression(node);
   }
 
   @override
   void visitDotShorthandConstructorInvocation(DotShorthandConstructorInvocation node) {
-    if (_isBaseControl(node.staticType)) offsets.add(node.offset);
+    final type = node.staticType;
+    if (_isBaseControl(type) || _isConditionalControl(type, node.argumentList)) {
+      offsets.add(node.offset);
+    }
     super.visitDotShorthandConstructorInvocation(node);
   }
 
@@ -141,6 +149,16 @@ final class _BaseControlVisitor extends RecursiveAstVisitor<void> {
       offsets.add(node.constructorName.offset);
     }
     super.visitConstructorReference(node);
+  }
+
+  static bool _isConditionalControl(DartType? type, ArgumentList arguments) {
+    final element = type is InterfaceType ? type.element : null;
+    final callback = element == null ? null : uiConditionalControlClasses[element.name];
+    final uri = element?.library.identifier;
+    if (callback == null || uri == null || !isFlutterUiLibraryUri(uri)) return false;
+    return arguments.arguments.whereType<NamedArgument>().any(
+      (argument) => argument.name.lexeme == callback && argument.argumentExpression is! NullLiteral,
+    );
   }
 
   static bool _isBaseControl(DartType? type) {

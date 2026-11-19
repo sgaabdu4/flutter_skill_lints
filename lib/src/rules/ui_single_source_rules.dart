@@ -34,6 +34,8 @@ const _baseControls = {
   'OutlinedButton',
   'TextButton',
   'IconButton',
+  'MaterialButton',
+  'Autocomplete',
   'FloatingActionButton',
   'SegmentedButton',
   'ToggleButtons',

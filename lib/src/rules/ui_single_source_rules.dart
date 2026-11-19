@@ -76,29 +76,22 @@ final class _BaseControlVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    final type = node.staticType;
-    final element = type is InterfaceType ? type.element : null;
-    final uri = element?.library.identifier;
-    if (element != null &&
-        _baseControls.contains(element.name) &&
-        uri != null &&
-        isFlutterUiLibraryUri(uri)) {
-      offsets.add(node.constructorName.offset);
-    }
+    if (_isBaseControl(node.staticType)) offsets.add(node.constructorName.offset);
     super.visitInstanceCreationExpression(node);
   }
 
   @override
   void visitDotShorthandConstructorInvocation(DotShorthandConstructorInvocation node) {
-    final type = node.staticType;
+    if (_isBaseControl(node.staticType)) offsets.add(node.offset);
+    super.visitDotShorthandConstructorInvocation(node);
+  }
+
+  static bool _isBaseControl(DartType? type) {
     final element = type is InterfaceType ? type.element : null;
     final uri = element?.library.identifier;
-    if (element != null &&
+    return element != null &&
         _baseControls.contains(element.name) &&
         uri != null &&
-        isFlutterUiLibraryUri(uri)) {
-      offsets.add(node.offset);
-    }
-    super.visitDotShorthandConstructorInvocation(node);
+        isFlutterUiLibraryUri(uri);
   }
 }

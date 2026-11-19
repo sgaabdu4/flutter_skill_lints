@@ -25,7 +25,7 @@ Authority: Standing approval of 2026-11-15 for this package, and the Hard Eng UI
 - [x] The shared UI library is `lib/core/widgets/`; a `shipping.ui_library` key is ignored → `test/ui_single_source_rules_test.dart::base controls and raw values outside the library and theme are reported`
 - [x] A real analyzer server run: a control in `lib/core/widgets/` is clean and one in `lib/screens/` reports once → `integration_test/plugin_smoke_test.dart::loads canonical configuration with riverpod_lint in a real Flutter analysis server run`
 - [x] The theme path function answers all 94 rows of the Flutter skill's case file, fetched at the revision in `test/theme_paths_revision.txt` (no submodule, so the published repo tree holds no gitlink); a failed fetch fails the test → `test/theme_path_cases_test.dart::theme path function answers every case of the Flutter skill case file`
-- [x] A base control with type arguments (`DropdownButton<Map<String, int>>`) reports, and a `[...]` or `[!...]` set in a library path reads as Python `fnmatch` does → `test/ui_single_source_rules_test.dart::base controls and raw values outside the library and theme are reported`
+- [x] A base control with type arguments (`DropdownButton<Map<String, int>>`) reports → `test/ui_single_source_rules_test.dart::base controls and raw values outside the library and theme are reported`
 - [x] The rule count, the inventory and the version agree → `test/plugin_registration_test.dart::registers every rule once` and the CI version check
 
 ## Baseline + execution

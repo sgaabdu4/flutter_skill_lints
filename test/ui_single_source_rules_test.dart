@@ -455,6 +455,14 @@ final class _BaseControlsTest extends _UiRuleTest {
       ['Widget a = Chip(onDeleted: () {});'],
       from: ['Chip'],
     );
+    await assertReported(
+      '$testPackageLibPath/features/home/chip_forms.dart',
+      [
+        'Widget Function({void Function()? onDeleted}) a = Chip.new;',
+        'class Deletable extends Chip { const Deletable(); }',
+      ],
+      from: ['Chip', 'Chip'],
+    );
     await assertClean('$testPackageLibPath/features/home/chips_clean.dart', [
       'Widget a = Chip();',
       'Widget c = Chip(onDeleted: null);',

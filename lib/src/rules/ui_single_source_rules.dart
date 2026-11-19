@@ -137,20 +137,20 @@ final class _BaseControlVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitExtendsClause(ExtendsClause node) {
-    if (_isBaseControl(node.superclass.type)) offsets.add(node.superclass.offset);
+    if (_isControlClass(node.superclass.type)) offsets.add(node.superclass.offset);
     super.visitExtendsClause(node);
   }
 
   @override
   void visitClassTypeAlias(ClassTypeAlias node) {
-    if (_isBaseControl(node.superclass.type)) offsets.add(node.superclass.offset);
+    if (_isControlClass(node.superclass.type)) offsets.add(node.superclass.offset);
     super.visitClassTypeAlias(node);
   }
 
   @override
   void visitConstructorReference(ConstructorReference node) {
     final type = node.staticType;
-    if (type is FunctionType && _isBaseControl(type.returnType)) {
+    if (type is FunctionType && _isControlClass(type.returnType)) {
       offsets.add(node.constructorName.offset);
     }
     super.visitConstructorReference(node);
@@ -164,6 +164,14 @@ final class _BaseControlVisitor extends RecursiveAstVisitor<void> {
     return arguments.arguments.whereType<NamedArgument>().any(
       (argument) => argument.name.lexeme == callback && argument.argumentExpression is! NullLiteral,
     );
+  }
+
+  static bool _isControlClass(DartType? type) {
+    final element = type is InterfaceType ? type.element : null;
+    return _isBaseControl(type) ||
+        (element != null &&
+            uiConditionalControlClasses.containsKey(element.name) &&
+            isFlutterUiLibraryUri(element.library.identifier));
   }
 
   static bool _isBaseControl(DartType? type) {

@@ -54,7 +54,7 @@ E2E: N/A — no user journey; the real analyzer server run on the app copy is th
 Retro: (1) the rule count test pinned two counts, and the first run found only one -> None — the full run found the second before the push, and the repair has its own commit; (2) the theme case file the plan names did not exist at first -> the test was added once the skill repository held it,, and it is fetched by the test, not held as a submodule, so the publish workflow needs no submodule checkout.
 
 Review declined: A gates file added next to a source folder is ignored for up to ten seconds :: The analyzer does not re-run analysis when a non-Dart file changes, with or without the cache, and the ten second recheck of an empty lookup is the agreed trade-off for the cache.
-Review declined: A `typedef AppField = TextField` from another file escapes the control rule :: The rule misses it: the alias declaration is not reported and the screen never names the control. Aliasing a Flutter base control in one file and building it in another is far-fetched, and a check on every constructor would add time to every file.
+Review fixed: a `typedef AppField = TextField` from another file, and a control whose type comes from context such as `acceptField(.new())`, escaped the rule :: both are reported now; the rule resolves the built class and no longer skips a file that never names a control.
 
 Delivery target: PR
 Delivery: PR open, checks pending, not merged; merge waits for the owner.

@@ -14,6 +14,7 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.reportsControlsWithTypeArguments());
     await _run(_BaseControlsTest.new, (t) => t.reportsOnlyFlutterControls());
     await _run(_BaseControlsTest.new, (t) => t.reportsTheWholeButtonFamily());
+    await _run(_BaseControlsTest.new, (t) => t.reportsMaterialButtonAndAutocomplete());
     await _run(_BaseControlsTest.new, (t) => t.reportsAConstructorTearOff());
     await _run(_BaseControlsTest.new, (t) => t.reportsTogglesAndSliders());
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlInferredFromAnotherFile());
@@ -118,6 +119,14 @@ class PopupMenuButton<T> extends Widget {
 
 class DropdownMenuFormField<T> extends Widget {
   const DropdownMenuFormField();
+}
+
+class MaterialButton extends Widget {
+  const MaterialButton();
+}
+
+class Autocomplete<T> extends Widget {
+  const Autocomplete();
 }
 
 class CupertinoSegmentedControl<T> extends Widget {
@@ -314,6 +323,12 @@ final class _BaseControlsTest extends _UiRuleTest {
     );
     await assertClean('$testPackageLibPath/features/home/toggle.dart', ['Widget a = Icon();']);
   }
+
+  Future<void> reportsMaterialButtonAndAutocomplete() => assertReported(
+    '$testPackageLibPath/features/home/legacy.dart',
+    ['Widget a = MaterialButton();', 'Widget b = Autocomplete<int>();'],
+    from: ['MaterialButton', 'Autocomplete'],
+  );
 
   Future<void> reportsAConstructorTearOff() async {
     writeFieldHelpers();

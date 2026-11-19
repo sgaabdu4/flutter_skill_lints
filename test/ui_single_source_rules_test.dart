@@ -126,6 +126,14 @@ class MaterialButton extends Widget {
   const MaterialButton();
 }
 
+class RawMaterialButton extends Widget {
+  const RawMaterialButton();
+}
+
+class RawAutocomplete<T> extends Widget {
+  const RawAutocomplete();
+}
+
 class Autocomplete<T> extends Widget {
   const Autocomplete();
 }
@@ -327,8 +335,13 @@ final class _BaseControlsTest extends _UiRuleTest {
 
   Future<void> reportsMaterialButtonAndAutocomplete() => assertReported(
     '$testPackageLibPath/features/home/legacy.dart',
-    ['Widget a = MaterialButton();', 'Widget b = Autocomplete<int>();'],
-    from: ['MaterialButton', 'Autocomplete'],
+    [
+      'Widget a = MaterialButton();',
+      'Widget b = Autocomplete<int>();',
+      'Widget c = RawMaterialButton();',
+      'Widget d = RawAutocomplete<int>();',
+    ],
+    from: ['MaterialButton', 'Autocomplete', 'RawMaterialButton', 'RawAutocomplete'],
   );
 
   Future<void> reportsASubclassOfABaseControl() async {

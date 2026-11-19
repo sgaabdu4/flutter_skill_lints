@@ -56,9 +56,13 @@ final class _BaseControlVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    final type = node.constructorName.type;
-    final uri = type.element?.library?.identifier;
-    if (_baseControls.contains(type.name.lexeme) && uri != null && isFlutterUiLibraryUri(uri)) {
+    final type = node.staticType;
+    final element = type is InterfaceType ? type.element : null;
+    final uri = element?.library.identifier;
+    if (element != null &&
+        _baseControls.contains(element.name) &&
+        uri != null &&
+        isFlutterUiLibraryUri(uri)) {
       offsets.add(node.constructorName.offset);
     }
     super.visitInstanceCreationExpression(node);

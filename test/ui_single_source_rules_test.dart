@@ -14,6 +14,7 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.reportsControlsWithTypeArguments());
     await _run(_BaseControlsTest.new, (t) => t.reportsOnlyFlutterControls());
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlInferredFromAnotherFile());
+    await _run(_BaseControlsTest.new, (t) => t.reportsAControlBuiltThroughAnAlias());
     await _run(_BaseControlsTest.new, (t) => t.ignoresAShorthandOnAnotherType());
     await _run(_BaseControlsTest.new, (t) => t.readsLibraryPathsFromTheGatesFile());
     await _run(_BaseControlsTest.new, (t) => t.readsCharacterSetsInLibraryPaths('[u]', true));
@@ -205,6 +206,16 @@ Widget acceptField(TextField field) => field;
       ['Object a = acceptField(.new());'],
       imports: ["import '../fields.dart';"],
       from: ['.new'],
+    );
+  }
+
+  Future<void> reportsAControlBuiltThroughAnAlias() async {
+    writeFieldHelpers();
+    await assertReported(
+      '$testPackageLibPath/features/home/aliased.dart',
+      ['Object a = AppField();'],
+      imports: ["import '../fields.dart';"],
+      from: ['AppField'],
     );
   }
 

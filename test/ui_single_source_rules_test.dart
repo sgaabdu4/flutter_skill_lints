@@ -15,6 +15,7 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.reportsOnlyFlutterControls());
     await _run(_BaseControlsTest.new, (t) => t.reportsTheWholeButtonFamily());
     await _run(_BaseControlsTest.new, (t) => t.reportsMaterialButtonAndAutocomplete());
+    await _run(_BaseControlsTest.new, (t) => t.reportsASubclassOfABaseControl());
     await _run(_BaseControlsTest.new, (t) => t.reportsAConstructorTearOff());
     await _run(_BaseControlsTest.new, (t) => t.reportsTogglesAndSliders());
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlInferredFromAnotherFile());
@@ -329,6 +330,17 @@ final class _BaseControlsTest extends _UiRuleTest {
     ['Widget a = MaterialButton();', 'Widget b = Autocomplete<int>();'],
     from: ['MaterialButton', 'Autocomplete'],
   );
+
+  Future<void> reportsASubclassOfABaseControl() async {
+    await assertReported(
+      '$testPackageLibPath/features/home/subclass.dart',
+      ['class SearchField extends TextField { const SearchField(); }'],
+      from: ['TextField'],
+    );
+    await assertClean('$testPackageLibPath/features/home/subclass_clean.dart', [
+      'class Badge extends Icon { const Badge(); }',
+    ]);
+  }
 
   Future<void> reportsAConstructorTearOff() async {
     writeFieldHelpers();

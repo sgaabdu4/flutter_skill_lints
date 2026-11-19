@@ -39,7 +39,7 @@ Designed for Riverpod + codegen Flutter apps.
 
    plugins:
      riverpod_lint: ^3.1.9
-     flutter_skill_lints: ^0.15.0
+     flutter_skill_lints: ^0.16.0
 
    analyzer:
      exclude:

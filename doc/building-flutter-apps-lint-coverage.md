@@ -66,7 +66,7 @@ file whose last name word is one of them, or `tailwind.config.*`.
 `ui_base_control_outside_library` reports at error severity a base button, text
 field, dropdown, dialog, search widget, checkbox, radio, switch or slider built in a `lib/` file outside the
 shared library: `ElevatedButton`, `FilledButton`, `OutlinedButton`, `TextButton`,
-`IconButton`, `MaterialButton`, `Autocomplete`, `FloatingActionButton`, `SegmentedButton`, `ToggleButtons`,
+`IconButton`, `MaterialButton`, `RawMaterialButton`, `Autocomplete`, `RawAutocomplete`, `FloatingActionButton`, `SegmentedButton`, `ToggleButtons`,
 `MenuItemButton`, `SubmenuButton`, `CupertinoSegmentedControl`, `CupertinoSlidingSegmentedControl`,
 `PopupMenuButton`, `CupertinoButton`, `TextField`, `TextFormField`,
 `CupertinoTextField`, `CupertinoTextFormFieldRow`, `DropdownButton`,

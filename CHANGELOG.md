@@ -16,7 +16,8 @@
   constant, an argument or a map value no longer reports.
 - Add `ui_base_control_outside_library`, at error severity. A base button, text
   field, dropdown, dialog or search widget (`ElevatedButton`, `TextField`,
-  `DropdownButton`, `AlertDialog`, `SearchBar` and their relatives) built in a
+  `DropdownButton`, `FloatingActionButton`, `SegmentedButton`, `PopupMenuButton`,
+  `AlertDialog`, `SearchBar` and their relatives) built in a
   `lib/` file outside the shared UI library is reported. The library is the
   `shipping.ui_library` list of the nearest `hard-eng.gates.json`; when the file
   or the key is missing it is `lib/core/widgets/`. The correction is Hard Eng's:

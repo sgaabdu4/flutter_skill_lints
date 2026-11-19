@@ -13,6 +13,7 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.allowsInsideTheDefaultLibrary());
     await _run(_BaseControlsTest.new, (t) => t.reportsControlsWithTypeArguments());
     await _run(_BaseControlsTest.new, (t) => t.reportsOnlyFlutterControls());
+    await _run(_BaseControlsTest.new, (t) => t.reportsTheWholeButtonFamily());
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlInferredFromAnotherFile());
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlBuiltThroughAnAlias());
     await _run(_BaseControlsTest.new, (t) => t.ignoresAShorthandOnAnotherType());
@@ -86,6 +87,43 @@ class AlertDialog extends Widget {
 
 class SearchBar extends Widget {
   const SearchBar();
+}
+
+class FloatingActionButton extends Widget {
+  const FloatingActionButton();
+  const FloatingActionButton.extended();
+}
+
+class SegmentedButton<T> extends Widget {
+  const SegmentedButton();
+}
+
+class ToggleButtons extends Widget {
+  const ToggleButtons();
+}
+
+class MenuItemButton extends Widget {
+  const MenuItemButton();
+}
+
+class SubmenuButton extends Widget {
+  const SubmenuButton();
+}
+
+class PopupMenuButton<T> extends Widget {
+  const PopupMenuButton();
+}
+
+class DropdownMenuFormField<T> extends Widget {
+  const DropdownMenuFormField();
+}
+
+class CupertinoSlidingSegmentedControl<T> extends Widget {
+  const CupertinoSlidingSegmentedControl();
+}
+
+class Checkbox extends Widget {
+  const Checkbox();
 }
 
 class TextStyle {
@@ -189,6 +227,35 @@ final class _BaseControlsTest extends _UiRuleTest {
       ['TextField a = .new();'],
       from: ['.'],
     );
+  }
+
+  Future<void> reportsTheWholeButtonFamily() async {
+    await assertReported(
+      '$testPackageLibPath/features/home/family.dart',
+      [
+        'Widget a = FloatingActionButton();',
+        'Widget b = FloatingActionButton.extended();',
+        'Widget c = SegmentedButton<int>();',
+        'Widget d = ToggleButtons();',
+        'Widget e = MenuItemButton();',
+        'Widget f = SubmenuButton();',
+        'Widget g = PopupMenuButton<int>();',
+        'Widget h = DropdownMenuFormField<int>();',
+        'Widget i = CupertinoSlidingSegmentedControl<int>();',
+      ],
+      from: [
+        'FloatingActionButton',
+        'FloatingActionButton.extended',
+        'SegmentedButton',
+        'ToggleButtons',
+        'MenuItemButton',
+        'SubmenuButton',
+        'PopupMenuButton',
+        'DropdownMenuFormField',
+        'CupertinoSlidingSegmentedControl',
+      ],
+    );
+    await assertClean('$testPackageLibPath/features/home/toggle.dart', ['Widget a = Checkbox();']);
   }
 
   void writeFieldHelpers() => newFile('$testPackageLibPath/features/fields.dart', '''

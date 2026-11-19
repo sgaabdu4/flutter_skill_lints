@@ -6,8 +6,10 @@
   which `prefer_function_declarations_over_variables` reports, as a target. It
   now says to move the callback body to a named method.
 - Fix the `avoid_nullable_async_value_pattern` correction: `AsyncData(:final
-  value)` drops the shown data during a reload and on an error after data.
-  The correction now suggests `AsyncValue<T>(:final T value)`, which keeps it.
+  value)` drops the shown data during a reload and on an error after data. The
+  correction now suggests `AsyncValue(hasValue: true, :final value)`, which keeps
+  that data and never matches a fresh loading state, for nullable and
+  non-nullable values.
 - Narrow `avoid_adjacent_strings` to adjacent string literals that are elements
   of a list or set literal, where a missing comma hides a mistake. Effective Dart
   says to use adjacent strings to concatenate string literals, so `'a' 'b'` as a

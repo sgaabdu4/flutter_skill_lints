@@ -98,6 +98,12 @@ final class _BaseControlVisitor extends RecursiveAstVisitor<void> {
   }
 
   @override
+  void visitClassTypeAlias(ClassTypeAlias node) {
+    if (_isBaseControl(node.superclass.type)) offsets.add(node.superclass.offset);
+    super.visitClassTypeAlias(node);
+  }
+
+  @override
   void visitConstructorReference(ConstructorReference node) {
     final type = node.staticType;
     if (type is FunctionType && _isBaseControl(type.returnType)) {

@@ -2,6 +2,9 @@
 
 ## [0.16.0] - 2026-11-18
 
+- Fix the `prefer_extracting_callbacks` correction: it named a local variable,
+  which `prefer_function_declarations_over_variables` reports, as a target. It
+  now says to move the callback body to a named method.
 - Narrow `avoid_adjacent_strings` to adjacent string literals that are elements
   of a list or set literal, where a missing comma hides a mistake. Effective Dart
   says to use adjacent strings to concatenate string literals, so `'a' 'b'` as a

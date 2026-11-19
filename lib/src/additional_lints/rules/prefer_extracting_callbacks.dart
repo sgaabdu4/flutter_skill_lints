@@ -9,7 +9,7 @@ final class PreferExtractingCallbacks extends InstanceCreationExpressionRule {
   static const LintCode code = LintCode(
     'prefer_extracting_callbacks',
     'Extract non-trivial widget callbacks.',
-    correctionMessage: 'Move the callback body to a named method or local variable.',
+    correctionMessage: 'Move the callback body to a named method.',
   );
 
   PreferExtractingCallbacks()

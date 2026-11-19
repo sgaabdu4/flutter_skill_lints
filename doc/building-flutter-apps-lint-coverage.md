@@ -63,20 +63,22 @@ file whose last name word is one of them, or `tailwind.config.*`.
 
 ## `ui_base_control_outside_library` base control boundary
 
-`ui_base_control_outside_library` reports at error severity a base button, text
-field, dropdown, dialog, search widget, checkbox, radio, switch or slider built in a `lib/` file outside the
-shared library: `ElevatedButton`, `FilledButton`, `OutlinedButton`, `TextButton`,
-`IconButton`, `MaterialButton`, `RawMaterialButton`, `BackButton`, `CloseButton`,
-`DrawerButton`, `EndDrawerButton`, `Autocomplete`, `RawAutocomplete`, `FloatingActionButton`, `SegmentedButton`, `ToggleButtons`,
-`MenuItemButton`, `SubmenuButton`, `CupertinoSegmentedControl`, `CupertinoSlidingSegmentedControl`,
-`PopupMenuButton`, `CupertinoButton`, `TextField`, `TextFormField`,
-`CupertinoTextField`, `CupertinoTextFormFieldRow`, `DropdownButton`,
-`DropdownButtonFormField`, `DropdownMenu`, `DropdownMenuFormField`, `AlertDialog`, `SimpleDialog`, `DatePickerDialog`, `TimePickerDialog`,
-`DateRangePickerDialog`,
-`Dialog`, `CupertinoAlertDialog`, `SearchBar`, `SearchAnchor`,
-`CupertinoSearchTextField`, `Checkbox`, `CheckboxListTile`, `Radio`, `RadioListTile`,
-`Switch`, `SwitchListTile`, `Slider`, `RangeSlider`, `CupertinoCheckbox`,
-`CupertinoRadio`, `CupertinoSwitch` and `CupertinoSlider`, with their named constructors, with or without type arguments. Only a
+`ui_base_control_outside_library` reports at error severity every Flutter input
+control built in a `lib/` file outside the shared library. A class is an input
+control when a person presses, types in, picks or toggles it to give the app
+input, or when it is a dialog or sheet that asks the person to choose or
+confirm; layout, text and image display, theme, animation, scrolling, navigation
+bars and tabs, gesture primitives, and entries that only exist inside a reported
+control (a dropdown or popup menu item) are not. Buttons, chips, text and search
+fields, dropdowns, menus, checkboxes, radios, switches, sliders, segmented
+controls, pickers, dialogs, sheets and their action buttons are in. The list is
+`uiBaseControlClasses` in the rule; the test
+`integration_test/flutter_widget_classes_test.dart` reads every widget class that
+Flutter's material and cupertino libraries export and fails on a class that is in
+neither that list nor the not-control list, so a new Flutter class has to be
+judged. The rule reports the constructor, with its named constructors and type
+arguments, a constructor tear-off, a dot shorthand, a type alias, and a class
+that extends or mixes in a control. Only a
 constructor that resolves to a Flutter, Material or Cupertino class is reported: a
 `styleFrom` call and a project class of the same name are not. The
 library is the `shipping.ui_library` list of the nearest `hard-eng.gates.json`

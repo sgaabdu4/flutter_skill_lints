@@ -19,7 +19,10 @@
   (`Checkbox`, `Switch`, `Slider` and their Cupertino forms included; `ElevatedButton`, `TextField`,
   `DropdownButton`, `FloatingActionButton`, `SegmentedButton`, `PopupMenuButton`,
   `AlertDialog`, `SearchBar` and their relatives) built in a
-  `lib/` file outside the shared UI library is reported. The library is the
+  `lib/` file outside the shared UI library is reported. The criterion: a
+  widget a person presses, types in, picks or toggles, or a dialog or sheet that
+  asks the person to choose. A test judges every widget class of Flutter's
+  material and cupertino libraries against it. The library is the
   `shipping.ui_library` list of the nearest `hard-eng.gates.json`; when the file
   or the key is missing it is `lib/core/widgets/`. The correction is Hard Eng's:
   make it a part of the shared library and use that part. Only a constructor

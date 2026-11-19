@@ -16,6 +16,7 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.reportsTheWholeButtonFamily());
     await _run(_BaseControlsTest.new, (t) => t.reportsMaterialButtonAndAutocomplete());
     await _run(_BaseControlsTest.new, (t) => t.reportsASubclassOfABaseControl());
+    await _run(_BaseControlsTest.new, (t) => t.reportsSheetsDialogsAndTheirActions());
     await _run(_BaseControlsTest.new, (t) => t.reportsAConstructorTearOff());
     await _run(_BaseControlsTest.new, (t) => t.reportsTogglesAndSliders());
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlInferredFromAnotherFile());
@@ -160,6 +161,22 @@ class TimePickerDialog extends Widget {
 
 class DateRangePickerDialog extends Widget {
   const DateRangePickerDialog();
+}
+
+class AboutDialog extends Widget {
+  const AboutDialog();
+}
+
+class CupertinoActionSheet extends Widget {
+  const CupertinoActionSheet();
+}
+
+class CupertinoActionSheetAction extends Widget {
+  const CupertinoActionSheetAction();
+}
+
+class CupertinoDialogAction extends Widget {
+  const CupertinoDialogAction();
 }
 
 class Autocomplete<T> extends Widget {
@@ -406,6 +423,22 @@ final class _BaseControlsTest extends _UiRuleTest {
       'class Badge extends Icon { const Badge(); }',
     ]);
   }
+
+  Future<void> reportsSheetsDialogsAndTheirActions() => assertReported(
+    '$testPackageLibPath/features/home/sheets.dart',
+    [
+      'Widget a = AboutDialog();',
+      'Widget b = CupertinoActionSheet();',
+      'Widget c = CupertinoActionSheetAction();',
+      'Widget d = CupertinoDialogAction();',
+    ],
+    from: [
+      'AboutDialog',
+      'CupertinoActionSheet',
+      'CupertinoActionSheetAction',
+      'CupertinoDialogAction',
+    ],
+  );
 
   Future<void> reportsAConstructorTearOff() async {
     writeFieldHelpers();

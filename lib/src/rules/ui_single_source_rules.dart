@@ -39,6 +39,7 @@ const _baseControls = {
   'ToggleButtons',
   'MenuItemButton',
   'SubmenuButton',
+  'CupertinoSegmentedControl',
   'CupertinoSlidingSegmentedControl',
   'CupertinoButton',
   'TextField',

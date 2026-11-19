@@ -2,6 +2,10 @@
 
 ## [0.16.0] - 2026-11-18
 
+- Narrow `avoid_adjacent_strings` to adjacent string literals that are elements
+  of a list or set literal, where a missing comma hides a mistake. Effective Dart
+  says to use adjacent strings to concatenate string literals, so `'a' 'b'` as a
+  constant, an argument or a map value no longer reports.
 - Add `ui_base_control_outside_library`, at error severity. A base button, text
   field, dropdown, dialog or search widget (`ElevatedButton`, `TextField`,
   `DropdownButton`, `AlertDialog`, `SearchBar` and their relatives) built in a

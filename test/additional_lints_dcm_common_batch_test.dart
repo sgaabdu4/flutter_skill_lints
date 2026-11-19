@@ -40,7 +40,18 @@ final class _AvoidAdjacentStringsTest extends AnalysisRuleTest {
       caseSet<_AvoidAdjacentStringsTest>(
         parent: const {},
         own: {
-          'test_adjacentStringLiterals_lint': (t) => t._adjacentStringLiteralsLint(),
+          'test_adjacentStringLiteralsInList_lint': (t) => t._adjacentStringLiteralsInListLint(),
+          'test_adjacentStringLiteralsInConditionalElement_lint': (t) =>
+              t._adjacentStringLiteralsInConditionalElementLint(),
+          'test_adjacentStringLiteralsInConditionExpression_noLint': (t) =>
+              t._adjacentStringLiteralsInConditionExpressionNoLint(),
+          'test_adjacentStringLiteralsInSet_lint': (t) => t._adjacentStringLiteralsInSetLint(),
+          'test_adjacentStringLiteralsConcatenation_noLint': (t) =>
+              t._adjacentStringLiteralsConcatenationNoLint(),
+          'test_adjacentStringLiteralsArgument_noLint': (t) =>
+              t._adjacentStringLiteralsArgumentNoLint(),
+          'test_adjacentStringLiteralsMapValue_noLint': (t) =>
+              t._adjacentStringLiteralsMapValueNoLint(),
           'test_singleStringLiteral_noLint': (t) => t._singleStringLiteralNoLint(),
           'test_generatedLocalizationAdjacentStrings_noLint': (t) =>
               t._generatedLocalizationAdjacentStringsNoLint(),
@@ -53,12 +64,64 @@ final class _AvoidAdjacentStringsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> _adjacentStringLiteralsLint() async {
+  Future<void> _adjacentStringLiteralsInListLint() async {
     const source = r'''
-const message = 'hello ' 'world';
+final items = <String>['first' 'second', 'third'];
 ''';
 
-    await assertDiagnostics(source, [lint(source.indexOf("'hello '"), "'hello ' 'world'".length)]);
+    await assertDiagnostics(source, [
+      lint(
+        source.indexOf("'first'"),
+        "'first' 'second'".length,
+        messageContainsAll: ['missing comma'],
+      ),
+    ]);
+  }
+
+  Future<void> _adjacentStringLiteralsInConditionalElementLint() async {
+    const source = r'''
+List<String> build(bool advanced) => ['basic', if (advanced) 'archived' 'active'];
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf("'archived'"), "'archived' 'active'".length),
+    ]);
+  }
+
+  Future<void> _adjacentStringLiteralsInConditionExpressionNoLint() async {
+    await assertNoDiagnostics(r'''
+List<int> build(String name) => [if (name == 'a' 'b') 1];
+''');
+  }
+
+  Future<void> _adjacentStringLiteralsInSetLint() async {
+    const source = r'''
+final items = <String>{'first' 'second', 'third'};
+''';
+
+    await assertDiagnostics(source, [lint(source.indexOf("'first'"), "'first' 'second'".length)]);
+  }
+
+  Future<void> _adjacentStringLiteralsConcatenationNoLint() async {
+    await assertNoDiagnostics(r'''
+const message = 'hello ' 'world';
+''');
+  }
+
+  Future<void> _adjacentStringLiteralsArgumentNoLint() async {
+    await assertNoDiagnostics(r'''
+void show(String text) {}
+
+void run() {
+  show('hello ' 'world');
+}
+''');
+  }
+
+  Future<void> _adjacentStringLiteralsMapValueNoLint() async {
+    await assertNoDiagnostics(r'''
+final labels = <String, String>{'greeting': 'hello ' 'world'};
+''');
   }
 
   Future<void> _singleStringLiteralNoLint() async {

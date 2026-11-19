@@ -6,18 +6,18 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
 
-/// Warns when string literals are placed next to each other.
+/// Warns when adjacent string literals are elements of a list or set literal.
 class AvoidAdjacentStrings extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_adjacent_strings',
-    'Avoid adjacent string literals.',
-    correctionMessage: 'Use one string literal or explicit interpolation.',
+    'Adjacent string literals in a collection can hide a missing comma.',
+    correctionMessage: 'Add the missing comma, or join the strings into one literal.',
   );
 
   AvoidAdjacentStrings()
     : super(
         name: 'avoid_adjacent_strings',
-        description: 'Warns when adjacent string literals are used.',
+        description: 'Warns when adjacent string literals are elements of a list or set literal.',
       );
 
   @override
@@ -37,6 +37,17 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitAdjacentStrings(AdjacentStrings node) {
-    rule.reportAtNode(node);
+    if (_isCollectionElement(node)) rule.reportAtNode(node);
+  }
+
+  static bool _isCollectionElement(AstNode node) {
+    var child = node;
+    var parent = node.parent;
+    while ((parent is IfElement && (parent.thenElement == child || parent.elseElement == child)) ||
+        (parent is ForElement && parent.body == child)) {
+      child = parent!;
+      parent = parent.parent;
+    }
+    return parent is ListLiteral || (parent is SetOrMapLiteral && parent.isSet);
   }
 }

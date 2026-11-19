@@ -4,7 +4,9 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:analyzer/file_system/file_system.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
+import 'package:flutter_skill_lints/src/rules/ui_theme_paths.dart';
 part 'source_scanner_rule/source_scanner_source.dart';
 
 typedef ScannerRuleCallback = void Function(
@@ -245,6 +247,7 @@ final _contextStringNavigationPattern = RegExp(
 final class SourceScannerContext {
   SourceScannerContext._({
     required this.path,
+    required this.file,
     required this.unit,
     required this.source,
     required this.classes,
@@ -271,6 +274,7 @@ final class SourceScannerContext {
 
     return SourceScannerContext._(
       path: _relativePath(unit.file.path),
+      file: unit.file,
       unit: unit.unit,
       source: source,
       classes: classes,
@@ -283,6 +287,7 @@ final class SourceScannerContext {
   );
 
   final String path;
+  final File file;
   final CompilationUnit unit;
   final SourceScannerSource source;
   final List<ScannerClassSpan> classes;
@@ -516,10 +521,9 @@ final class SourceScannerContext {
 
   bool get isTestFile => path.startsWith('test/') || path.endsWith('_test.dart');
 
-  bool get isThemeDefFile =>
-      path.contains('/core/theme/') ||
-      path.endsWith('_tokens.dart') ||
-      path.endsWith('_theme.dart');
+  bool get isThemeDefFile => isThemePath(path);
+
+  bool get isUiLibraryFile => path.replaceAll('\\', '/').startsWith('lib/core/widgets/');
 
   bool get isKeyRegistryFile {
     final normalized = path.replaceAll('\\', '/').toLowerCase();

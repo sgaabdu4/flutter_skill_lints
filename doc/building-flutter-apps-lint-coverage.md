@@ -77,7 +77,7 @@ controls, pickers, dialogs, sheets and their action buttons are in. The list is
 Flutter's material and cupertino libraries export and fails on a class that is in
 neither that list nor the not-control list, so a new Flutter class has to be
 judged. The rule reports the constructor, with its named constructors and type
-arguments, a constructor tear-off, a dot shorthand, a type alias, and a class
+arguments, a `Chip` only when it is given an `onDeleted` callback, a constructor tear-off, a dot shorthand, a type alias, and a class
 that extends or mixes in a control. Only a
 constructor that resolves to a Flutter, Material or Cupertino class is reported: a
 `styleFrom` call and a project class of the same name are not. The

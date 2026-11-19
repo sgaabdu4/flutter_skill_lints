@@ -53,7 +53,7 @@ Evidence: `dart test` passed 3,607 tests (exit 0). `dart analyze --fatal-infos .
 E2E: N/A — no user journey; the real analyzer server run on the app copy is the timing run above.
 Retro: (1) the rule count test pinned two counts, and the first run found only one -> None — the full run found the second before the push, and the repair has its own commit; (2) the theme case file the plan names did not exist at first -> the test was added once the skill repository held it,, and it is fetched by the test, not held as a submodule, so the publish workflow needs no submodule checkout.
 
-Review declined: A gates file added next to a source folder is ignored for up to ten seconds :: The analyzer does not re-run analysis when a non-Dart file changes, with or without the cache. The stale result stays until the next edit. This is open, and the owner accepted it.
+Review declined: A gates file added next to a source folder is ignored for up to ten seconds :: The analyzer does not re-run analysis when a non-Dart file changes, with or without the cache. The stale result stays until the next edit. This is open.
 Review fixed: a `typedef AppField = TextField` from another file, and a control whose type comes from context such as `acceptField(.new())`, escaped the rule :: both are reported now; the rule resolves the built class and no longer skips a file that never names a control.
 
 Delivery target: PR

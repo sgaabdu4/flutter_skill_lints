@@ -119,6 +119,10 @@ class DropdownMenuFormField<T> extends Widget {
   const DropdownMenuFormField();
 }
 
+class CupertinoSegmentedControl<T> extends Widget {
+  const CupertinoSegmentedControl();
+}
+
 class CupertinoSlidingSegmentedControl<T> extends Widget {
   const CupertinoSlidingSegmentedControl();
 }
@@ -292,6 +296,7 @@ final class _BaseControlsTest extends _UiRuleTest {
         'Widget g = PopupMenuButton<int>();',
         'Widget h = DropdownMenuFormField<int>();',
         'Widget i = CupertinoSlidingSegmentedControl<int>();',
+        'Widget j = CupertinoSegmentedControl<int>();',
       ],
       from: [
         'FloatingActionButton',
@@ -303,6 +308,7 @@ final class _BaseControlsTest extends _UiRuleTest {
         'PopupMenuButton',
         'DropdownMenuFormField',
         'CupertinoSlidingSegmentedControl',
+        'CupertinoSegmentedControl',
       ],
     );
     await assertClean('$testPackageLibPath/features/home/toggle.dart', ['Widget a = Icon();']);

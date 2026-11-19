@@ -67,7 +67,7 @@ file whose last name word is one of them, or `tailwind.config.*`.
 field, dropdown, dialog, search widget, checkbox, radio, switch or slider built in a `lib/` file outside the
 shared library: `ElevatedButton`, `FilledButton`, `OutlinedButton`, `TextButton`,
 `IconButton`, `FloatingActionButton`, `SegmentedButton`, `ToggleButtons`,
-`MenuItemButton`, `SubmenuButton`, `CupertinoSlidingSegmentedControl`,
+`MenuItemButton`, `SubmenuButton`, `CupertinoSegmentedControl`, `CupertinoSlidingSegmentedControl`,
 `PopupMenuButton`, `CupertinoButton`, `TextField`, `TextFormField`,
 `CupertinoTextField`, `CupertinoTextFormFieldRow`, `DropdownButton`,
 `DropdownButtonFormField`, `DropdownMenu`, `DropdownMenuFormField`, `AlertDialog`, `SimpleDialog`,

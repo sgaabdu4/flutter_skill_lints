@@ -14,6 +14,7 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.reportsControlsWithTypeArguments());
     await _run(_BaseControlsTest.new, (t) => t.reportsOnlyFlutterControls());
     await _run(_BaseControlsTest.new, (t) => t.reportsTheWholeButtonFamily());
+    await _run(_BaseControlsTest.new, (t) => t.reportsTogglesAndSliders());
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlInferredFromAnotherFile());
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlBuiltThroughAnAlias());
     await _run(_BaseControlsTest.new, (t) => t.ignoresAShorthandOnAnotherType());
@@ -124,6 +125,55 @@ class CupertinoSlidingSegmentedControl<T> extends Widget {
 
 class Checkbox extends Widget {
   const Checkbox();
+}
+
+class CheckboxListTile extends Widget {
+  const CheckboxListTile();
+}
+
+class Radio<T> extends Widget {
+  const Radio();
+}
+
+class RadioListTile<T> extends Widget {
+  const RadioListTile();
+}
+
+class Switch extends Widget {
+  const Switch();
+  const Switch.adaptive();
+}
+
+class SwitchListTile extends Widget {
+  const SwitchListTile();
+}
+
+class Slider extends Widget {
+  const Slider();
+}
+
+class RangeSlider extends Widget {
+  const RangeSlider();
+}
+
+class CupertinoCheckbox extends Widget {
+  const CupertinoCheckbox();
+}
+
+class CupertinoRadio<T> extends Widget {
+  const CupertinoRadio();
+}
+
+class CupertinoSwitch extends Widget {
+  const CupertinoSwitch();
+}
+
+class CupertinoSlider extends Widget {
+  const CupertinoSlider();
+}
+
+class Icon extends Widget {
+  const Icon();
 }
 
 class TextStyle {
@@ -255,8 +305,40 @@ final class _BaseControlsTest extends _UiRuleTest {
         'CupertinoSlidingSegmentedControl',
       ],
     );
-    await assertClean('$testPackageLibPath/features/home/toggle.dart', ['Widget a = Checkbox();']);
+    await assertClean('$testPackageLibPath/features/home/toggle.dart', ['Widget a = Icon();']);
   }
+
+  Future<void> reportsTogglesAndSliders() => assertReported(
+    '$testPackageLibPath/features/home/toggles.dart',
+    [
+      'Widget a = Checkbox();',
+      'Widget b = CheckboxListTile();',
+      'Widget c = Radio<int>();',
+      'Widget d = RadioListTile<int>();',
+      'Widget e = Switch.adaptive();',
+      'Widget f = SwitchListTile();',
+      'Widget g = Slider();',
+      'Widget h = RangeSlider();',
+      'Widget i = CupertinoCheckbox();',
+      'Widget j = CupertinoRadio<int>();',
+      'Widget k = CupertinoSwitch();',
+      'Widget l = CupertinoSlider();',
+    ],
+    from: [
+      'Checkbox',
+      'CheckboxListTile',
+      'Radio',
+      'RadioListTile',
+      'Switch',
+      'SwitchListTile',
+      'Slider',
+      'RangeSlider',
+      'CupertinoCheckbox',
+      'CupertinoRadio',
+      'CupertinoSwitch',
+      'CupertinoSlider',
+    ],
+  );
 
   void writeFieldHelpers() => newFile('$testPackageLibPath/features/fields.dart', '''
 $_import

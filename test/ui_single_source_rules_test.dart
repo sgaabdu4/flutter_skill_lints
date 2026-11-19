@@ -134,6 +134,22 @@ class RawAutocomplete<T> extends Widget {
   const RawAutocomplete();
 }
 
+class BackButton extends Widget {
+  const BackButton();
+}
+
+class CloseButton extends Widget {
+  const CloseButton();
+}
+
+class DrawerButton extends Widget {
+  const DrawerButton();
+}
+
+class EndDrawerButton extends Widget {
+  const EndDrawerButton();
+}
+
 class Autocomplete<T> extends Widget {
   const Autocomplete();
 }
@@ -340,8 +356,21 @@ final class _BaseControlsTest extends _UiRuleTest {
       'Widget b = Autocomplete<int>();',
       'Widget c = RawMaterialButton();',
       'Widget d = RawAutocomplete<int>();',
+      'Widget e = BackButton();',
+      'Widget f = CloseButton();',
+      'Widget g = DrawerButton();',
+      'Widget h = EndDrawerButton();',
     ],
-    from: ['MaterialButton', 'Autocomplete', 'RawMaterialButton', 'RawAutocomplete'],
+    from: [
+      'MaterialButton',
+      'Autocomplete',
+      'RawMaterialButton',
+      'RawAutocomplete',
+      'BackButton',
+      'CloseButton',
+      'DrawerButton',
+      'EndDrawerButton',
+    ],
   );
 
   Future<void> reportsASubclassOfABaseControl() async {

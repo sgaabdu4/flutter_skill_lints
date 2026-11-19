@@ -7,7 +7,7 @@
   now says to move the callback body to a named method.
 - Fix the `avoid_nullable_async_value_pattern` correction: `AsyncData(:final
   value)` drops the shown data during a reload and on an error after data. The
-  correction now suggests `AsyncValue(hasValue: true, :final value)`, which keeps
+  correction now suggests `AsyncValue(hasValue: true, :final requireValue)`, which keeps
   that data and never matches a fresh loading state, for nullable and
   non-nullable values.
 - Narrow `avoid_adjacent_strings` to adjacent string literals that are elements

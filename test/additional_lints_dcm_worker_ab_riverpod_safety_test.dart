@@ -307,6 +307,8 @@ final class _AvoidNullableAsyncValuePatternTest extends _RiverpodSafetyRuleTest 
         own: {
           'test_asyncValueNullableValuePattern_lint': (t) =>
               t._asyncValueNullableValuePatternLint(),
+          'test_nullableValueCorrection_keepsDataDuringReload': (t) =>
+              t._nullableValueCorrectionKeepsDataDuringReload(),
           'test_asyncDataPattern_noLint': (t) => t._asyncDataPatternNoLint(),
           'test_unrelatedValuePattern_noLint': (t) => t._unrelatedValuePatternNoLint(),
         },
@@ -331,6 +333,29 @@ String label(AsyncValue<String> value) {
 ''';
 
     await assertDiagnostics(source, [lint(source.indexOf('final value?'), 'final value?'.length)]);
+  }
+
+  Future<void> _nullableValueCorrectionKeepsDataDuringReload() async {
+    const source = r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+String label(AsyncValue<String> value) {
+  return switch (value) {
+    AsyncValue(:final value?) => value,
+    _ => '',
+  };
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(
+        source.indexOf('final value?'),
+        'final value?'.length,
+        correctionContains:
+            'Use AsyncValue<T>(:final T value) to keep data during a reload, '
+            'or handle AsyncLoading and AsyncError branches explicitly.',
+      ),
+    ]);
   }
 
   Future<void> _asyncDataPatternNoLint() async {

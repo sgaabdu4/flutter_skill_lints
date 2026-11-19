@@ -15,6 +15,7 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.reportsMaterialButtonAndAutocomplete());
     await _run(_BaseControlsTest.new, (t) => t.reportsASubclassOfABaseControl());
     await _run(_BaseControlsTest.new, (t) => t.reportsSheetsDialogsAndTheirActions());
+    await _run(_BaseControlsTest.new, (t) => t.reportsAChipOnlyWithADeleteCallback());
     await _run(_BaseControlsTest.new, (t) => t.reportsAConstructorTearOff());
     await _run(_BaseControlsTest.new, (t) => t.reportsTogglesAndSliders());
     await _run(_BaseControlsTest.new, (t) => t.ignoresALibraryKeyInTheGatesFile());
@@ -152,6 +153,14 @@ class CupertinoActionSheetAction extends Widget {
 
 class CupertinoDialogAction extends Widget {
   const CupertinoDialogAction();
+}
+
+class Chip extends Widget {
+  const Chip({void Function()? onDeleted});
+}
+
+class ListTile extends Widget {
+  const ListTile({void Function()? onTap});
 }
 
 class Autocomplete<T> extends Widget {
@@ -423,6 +432,19 @@ final class _BaseControlsTest extends _UiRuleTest {
       from: ['TextField'],
     );
     await assertClean('$testPackageLibPath/core/widgets/atoms/app_controls.dart', _controls);
+  }
+
+  Future<void> reportsAChipOnlyWithADeleteCallback() async {
+    await assertReported(
+      '$testPackageLibPath/features/home/chips.dart',
+      ['Widget a = Chip(onDeleted: () {});'],
+      from: ['Chip'],
+    );
+    await assertClean('$testPackageLibPath/features/home/chips_clean.dart', [
+      'Widget a = Chip();',
+      'Widget c = Chip(onDeleted: null);',
+      'Widget b = ListTile(onTap: () {});',
+    ]);
   }
 
   Future<void> reportsAConstructorTearOff() async {

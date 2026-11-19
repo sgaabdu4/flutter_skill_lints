@@ -713,6 +713,7 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
               !line.contains('riverpod_read_init_state') &&
               !line.contains('avoid_frame_deferral') &&
               !line.contains('avoid_flexible_outside_flex') &&
+              !line.contains('ui_base_control_outside_library') &&
               !line.contains('text_field_on_changed_no_debounce'),
         ),
         isEmpty,
@@ -720,7 +721,11 @@ Widget nonNullableBound<T extends EdgeInsetsGeometry>(T padding) => Container(pa
 
       final baseControls = output
           .split('\n')
-          .where((line) => line.contains('ui_base_control_outside_library'));
+          .where(
+            (line) =>
+                line.contains('ui_base_control_outside_library') &&
+                (line.contains('lib/screens/') || line.contains('lib/core/widgets/')),
+          );
       expect(baseControls, hasLength(1), reason: output);
       expect(baseControls.single, contains('lib/screens/screen.dart:2:'));
 

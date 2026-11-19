@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter_skill_lints/src/rules/ui_project_paths.dart';
+import 'package:flutter_skill_lints/src/rules/ui_theme_paths.dart';
 import 'package:test/test.dart';
 
 const _revisionFile = 'test/theme_paths_revision.txt';

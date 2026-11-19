@@ -1,8 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:analyzer/file_system/memory_file_system.dart';
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
-import 'package:flutter_skill_lints/src/rules/ui_project_paths.dart';
 import 'package:flutter_skill_lints/src/rules/ui_single_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/ui_source_rules.dart';
 import 'package:test/test.dart';
@@ -19,38 +17,15 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.reportsSheetsDialogsAndTheirActions());
     await _run(_BaseControlsTest.new, (t) => t.reportsAConstructorTearOff());
     await _run(_BaseControlsTest.new, (t) => t.reportsTogglesAndSliders());
+    await _run(_BaseControlsTest.new, (t) => t.ignoresALibraryKeyInTheGatesFile());
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlInferredFromAnotherFile());
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlBuiltThroughAnAlias());
     await _run(_BaseControlsTest.new, (t) => t.ignoresAShorthandOnAnotherType());
-    await _run(_BaseControlsTest.new, (t) => t.readsLibraryPathsFromTheGatesFile());
-    await _run(_BaseControlsTest.new, (t) => t.readsCharacterSetsInLibraryPaths('[u]', true));
-    await _run(_BaseControlsTest.new, (t) => t.readsCharacterSetsInLibraryPaths('[!u]', false));
-    await _run(_BaseControlsTest.new, (t) => t.fallsBackWhenTheKeyIsMissing());
-    for (final value in ['[]', '[1]', '["lib/ui/*", 2]', '"lib/ui/*"']) {
-      await _run(_BaseControlsTest.new, (t) => t.fallsBackWhenTheListIsEmptyOrInvalid(value));
-    }
     await _run(_RawTokenTest.new, (t) => t.reportsRawValuesOutsideThemeFiles());
     await _run(_RawTokenTest.new, (t) => t.allowsRawValuesInThemeFiles());
     await _run(_RawTextStyleTest.new, (t) => t.reportsAndAllowsDotShorthandTextStyle());
   });
-
-  test('a changed or removed gates file is seen after the cache warmed', () {
-    final provider = MemoryResourceProvider();
-    final gates = provider.newFile('/proj/hard-eng.gates.json', _gatesWith('lib/a/*'));
-    final source = provider.newFile('/proj/lib/a/x.dart', '');
-    bool inLibrary() => resolveUiProjectPaths(source, 'lib/a/x.dart').isInLibrary;
-
-    expect(inLibrary(), isTrue);
-    expect(inLibrary(), isTrue);
-    gates.writeAsStringSync(_gatesWith('lib/b/*'));
-    expect(inLibrary(), isFalse);
-    gates.delete();
-    expect(inLibrary(), isFalse);
-    expect(resolveUiProjectPaths(source, 'lib/core/widgets/x.dart').isInLibrary, isTrue);
-  });
 }
-
-String _gatesWith(String entry) => '{"version": 1, "shipping": {"ui_library": ["$entry"]}}';
 
 Future<void> _run<T extends _UiRuleTest>(T Function() create, Future<void> Function(T) body) async {
   final fixture = create()..setUp();
@@ -440,6 +415,16 @@ final class _BaseControlsTest extends _UiRuleTest {
     ],
   );
 
+  Future<void> ignoresALibraryKeyInTheGatesFile() async {
+    writeGates('{"version": 1, "shipping": {"ui_library": ["lib/ui/*"]}}');
+    await assertReported(
+      '$testPackageLibPath/ui/app_controls.dart',
+      ['Widget a = TextField();'],
+      from: ['TextField'],
+    );
+    await assertClean('$testPackageLibPath/core/widgets/atoms/app_controls.dart', _controls);
+  }
+
   Future<void> reportsAConstructorTearOff() async {
     writeFieldHelpers();
     await assertReported(
@@ -527,40 +512,6 @@ Widget acceptField(TextField field) => field;
     ],
     from: ['DropdownButton', 'DropdownButtonFormField', 'DropdownMenu'],
   );
-
-  Future<void> readsCharacterSetsInLibraryPaths(String set, bool inside) async {
-    writeGates('{"version": 1, "shipping": {"ui_library": ["lib/${set}i/*"]}}');
-    final path = '$testPackageLibPath/ui/app_controls.dart';
-    if (inside) {
-      await assertClean(path, _controls);
-    } else {
-      await assertReported(
-        path,
-        _controls,
-        from: ['ElevatedButton', 'TextField', 'DropdownButton', 'AlertDialog', 'SearchBar'],
-      );
-    }
-  }
-
-  Future<void> readsLibraryPathsFromTheGatesFile() async {
-    writeGates('{"version": 1, "shipping": {"ui_library": ["lib/ui/*"]}}');
-    await assertClean('$testPackageLibPath/ui/app_controls.dart', _controls);
-    await assertReported(
-      '$testPackageLibPath/core/widgets/atoms/app_controls.dart',
-      _controls,
-      from: ['ElevatedButton', 'TextField', 'DropdownButton', 'AlertDialog', 'SearchBar'],
-    );
-  }
-
-  Future<void> fallsBackWhenTheListIsEmptyOrInvalid(String value) async {
-    writeGates('{"version": 1, "shipping": {"ui_library": $value}}');
-    await assertClean('$testPackageLibPath/core/widgets/atoms/app_controls.dart', _controls);
-  }
-
-  Future<void> fallsBackWhenTheKeyIsMissing() async {
-    writeGates('{"version": 1, "shipping": {"ui_paths": []}}');
-    await assertClean('$testPackageLibPath/core/widgets/atoms/app_controls.dart', _controls);
-  }
 }
 
 final class _RawTokenTest extends _UiRuleTest {

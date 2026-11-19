@@ -56,8 +56,8 @@ checked. It also reports a literal `fontSize` option on any call other than a
 other size options such as `gap` are not reported; an `iconSize` follows the
 existing icon size rule.
 
-A theme or token file is judged by Hard Eng's rule, on the path from the folder
-of the nearest `hard-eng.gates.json` (or from `lib/` when there is none): a
+A theme or token file is judged by Hard Eng's rule, on the path from the package
+root: a
 folder named `theme`, `token`, `color`, `colour` or `palette` (or the plural), a
 file whose last name word is one of them, or `tailwind.config.*`.
 
@@ -81,10 +81,8 @@ arguments, a constructor tear-off, a dot shorthand, a type alias, and a class
 that extends or mixes in a control. Only a
 constructor that resolves to a Flutter, Material or Cupertino class is reported: a
 `styleFrom` call and a project class of the same name are not. The
-library is the `shipping.ui_library` list of the nearest `hard-eng.gates.json`
-(glob entries from that folder, `*` crossing `/`, as Hard Eng reads them); when
-the file or the key is missing, the library is `lib/core/widgets/`. Test files
-are skipped.
+library is `lib/core/widgets/`, where the Flutter skill puts shared widgets. Test
+files are skipped.
 
 ## `avoid_conflicting_filled_buttons` filled button boundary
 

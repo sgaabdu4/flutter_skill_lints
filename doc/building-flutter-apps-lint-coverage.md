@@ -64,15 +64,17 @@ file whose last name word is one of them, or `tailwind.config.*`.
 ## `ui_base_control_outside_library` base control boundary
 
 `ui_base_control_outside_library` reports at error severity a base button, text
-field, dropdown, dialog or search widget built in a `lib/` file outside the
+field, dropdown, dialog, search widget, checkbox, radio, switch or slider built in a `lib/` file outside the
 shared library: `ElevatedButton`, `FilledButton`, `OutlinedButton`, `TextButton`,
 `IconButton`, `FloatingActionButton`, `SegmentedButton`, `ToggleButtons`,
 `MenuItemButton`, `SubmenuButton`, `CupertinoSlidingSegmentedControl`,
 `PopupMenuButton`, `CupertinoButton`, `TextField`, `TextFormField`,
 `CupertinoTextField`, `CupertinoTextFormFieldRow`, `DropdownButton`,
 `DropdownButtonFormField`, `DropdownMenu`, `DropdownMenuFormField`, `AlertDialog`, `SimpleDialog`,
-`Dialog`, `CupertinoAlertDialog`, `SearchBar`, `SearchAnchor` and
-`CupertinoSearchTextField`, with their named constructors, with or without type arguments. Only a
+`Dialog`, `CupertinoAlertDialog`, `SearchBar`, `SearchAnchor`,
+`CupertinoSearchTextField`, `Checkbox`, `CheckboxListTile`, `Radio`, `RadioListTile`,
+`Switch`, `SwitchListTile`, `Slider`, `RangeSlider`, `CupertinoCheckbox`,
+`CupertinoRadio`, `CupertinoSwitch` and `CupertinoSlider`, with their named constructors, with or without type arguments. Only a
 constructor that resolves to a Flutter, Material or Cupertino class is reported: a
 `styleFrom` call and a project class of the same name are not. The
 library is the `shipping.ui_library` list of the nearest `hard-eng.gates.json`

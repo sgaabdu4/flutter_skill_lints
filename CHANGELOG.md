@@ -15,7 +15,8 @@
   says to use adjacent strings to concatenate string literals, so `'a' 'b'` as a
   constant, an argument or a map value no longer reports.
 - Add `ui_base_control_outside_library`, at error severity. A base button, text
-  field, dropdown, dialog or search widget (`ElevatedButton`, `TextField`,
+  field, dropdown, dialog, search widget, checkbox, radio, switch or slider
+  (`Checkbox`, `Switch`, `Slider` and their Cupertino forms included; `ElevatedButton`, `TextField`,
   `DropdownButton`, `FloatingActionButton`, `SegmentedButton`, `PopupMenuButton`,
   `AlertDialog`, `SearchBar` and their relatives) built in a
   `lib/` file outside the shared UI library is reported. The library is the

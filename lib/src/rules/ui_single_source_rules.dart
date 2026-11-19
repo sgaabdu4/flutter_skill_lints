@@ -14,7 +14,7 @@ final List<ScannerRule> uiSingleSourceRules = [
       correctionMessage: 'Make it a part of the shared library and use that part',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags base buttons, text fields, dropdowns, dialogs and search widgets built outside the ui_library paths of hard-eng.gates.json (lib/core/widgets/ when it lists none).',
+    description: 'Flags base buttons, text fields, dropdowns, dialogs, search widgets, checkboxes, radios, switches and sliders built outside the ui_library paths of hard-eng.gates.json (lib/core/widgets/ when it lists none).',
     scan: (reporter, context) {
       if (!context.path.startsWith('lib/') || context.isTestFile) return;
 
@@ -56,6 +56,18 @@ const _baseControls = {
   'CupertinoAlertDialog',
   'SearchBar',
   'SearchAnchor',
+  'Checkbox',
+  'CheckboxListTile',
+  'Radio',
+  'RadioListTile',
+  'Switch',
+  'SwitchListTile',
+  'Slider',
+  'RangeSlider',
+  'CupertinoCheckbox',
+  'CupertinoRadio',
+  'CupertinoSwitch',
+  'CupertinoSlider',
   'CupertinoSearchTextField',
 };
 

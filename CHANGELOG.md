@@ -24,8 +24,9 @@
   or the key is missing it is `lib/core/widgets/`. The correction is Hard Eng's:
   make it a part of the shared library and use that part. Only a constructor
   that resolves to a Flutter, Material or Cupertino class reports. A control
-  built through a type alias, or by a dot shorthand whose type comes from
-  context (`acceptField(.new())`), reports too, even when the file never spells
+  built through a type alias, by a dot shorthand whose type comes from
+  context (`acceptField(.new())`) or by a constructor tear-off (`TextField.new`),
+  reports too, even when the file never spells
   the control name.
 - Judge a theme or token file as Hard Eng does, for `style_raw_token` and
   `style_raw_text_style`: a folder named `theme`, `token`, `color`, `colour` or

@@ -19,7 +19,10 @@
   `shipping.ui_library` list of the nearest `hard-eng.gates.json`; when the file
   or the key is missing it is `lib/core/widgets/`. The correction is Hard Eng's:
   make it a part of the shared library and use that part. Only a constructor
-  that resolves to a Flutter, Material or Cupertino class reports.
+  that resolves to a Flutter, Material or Cupertino class reports. A control
+  built through a type alias, or by a dot shorthand whose type comes from
+  context (`acceptField(.new())`), reports too, even when the file never spells
+  the control name.
 - Judge a theme or token file as Hard Eng does, for `style_raw_token` and
   `style_raw_text_style`: a folder named `theme`, `token`, `color`, `colour` or
   `palette` (or the plural), a file whose last name word is one of them, or

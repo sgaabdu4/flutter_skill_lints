@@ -22,9 +22,8 @@
   `lib/` file outside the shared UI library is reported. The criterion: a
   widget a person presses, types in, picks or toggles, or a dialog or sheet that
   asks the person to choose. A test judges every widget class of Flutter's
-  material and cupertino libraries against it. The library is the
-  `shipping.ui_library` list of the nearest `hard-eng.gates.json`; when the file
-  or the key is missing it is `lib/core/widgets/`. The correction is Hard Eng's:
+  material and cupertino libraries against it. The library is
+  `lib/core/widgets/`, where the Flutter skill puts shared widgets. The correction is Hard Eng's:
   make it a part of the shared library and use that part. Only a constructor
   that resolves to a Flutter, Material or Cupertino class reports. A control
   built through a type alias, by a dot shorthand whose type comes from
@@ -34,8 +33,7 @@
 - Judge a theme or token file as Hard Eng does, for `style_raw_token` and
   `style_raw_text_style`: a folder named `theme`, `token`, `color`, `colour` or
   `palette` (or the plural), a file whose last name word is one of them, or
-  `tailwind.config.*`, on the path from the folder of the nearest
-  `hard-eng.gates.json`. A `palette/` or `colors/` folder now counts as a theme
+  `tailwind.config.*`. A `palette/` or `colors/` folder now counts as a theme
   folder; `app_theme.dart` and `*_tokens.dart` still do. A file such as
   `lib/theme/x.dart` outside `core/` now counts too.
 

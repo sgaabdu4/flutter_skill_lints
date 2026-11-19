@@ -444,17 +444,11 @@ class FormView extends ConsumerWidget {
 }
 ''');
 
-      await _writeFile('${app.path}/hard-eng.gates.json', r'''
-{"version": 1, "shipping": {"ui_library": ["lib/*"]}}
-''');
-      await _writeFile('${app.path}/lib/screens/hard-eng.gates.json', r'''
-{"version": 1, "shipping": {"ui_library": ["library/*"]}}
-''');
       await _writeFile('${app.path}/lib/screens/screen.dart', r'''
 import 'package:flutter/material.dart';
 Widget screenButton() => const ElevatedButton(onPressed: null, child: SizedBox());
 ''');
-      await _writeFile('${app.path}/lib/screens/library/shared_button.dart', r'''
+      await _writeFile('${app.path}/lib/core/widgets/shared_button.dart', r'''
 import 'package:flutter/material.dart';
 Widget sharedButton() => const ElevatedButton(onPressed: null, child: SizedBox());
 ''');

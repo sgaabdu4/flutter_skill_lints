@@ -6,7 +6,7 @@ import 'package:flutter_skill_lints/src/additional_lints/type_checker.dart';
 import 'package:flutter_skill_lints/src/rules/source_scanner_rule.dart';
 
 final List<ScannerRule> uiSingleSourceRules = [
-  /// Base controls belong to the shared UI library listed in hard-eng.gates.json.
+  /// Base controls belong to the shared UI library, lib/core/widgets/.
   scannerRule(
     code: const LintCode(
       'ui_base_control_outside_library',
@@ -14,7 +14,7 @@ final List<ScannerRule> uiSingleSourceRules = [
       correctionMessage: 'Make it a part of the shared library and use that part',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags input controls (a widget a person presses, types in, picks or toggles, and the dialogs and sheets that ask the person to choose) built outside the ui_library paths of hard-eng.gates.json (lib/core/widgets/ when it lists none).',
+    description: 'Flags input controls (a widget a person presses, types in, picks or toggles, and the dialogs and sheets that ask the person to choose) built outside lib/core/widgets/.',
     scan: (reporter, context) {
       if (!context.path.startsWith('lib/') || context.isTestFile) return;
 

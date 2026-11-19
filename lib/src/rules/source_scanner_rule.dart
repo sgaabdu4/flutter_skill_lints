@@ -6,7 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer/file_system/file_system.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
-import 'package:flutter_skill_lints/src/rules/ui_project_paths.dart';
+import 'package:flutter_skill_lints/src/rules/ui_theme_paths.dart';
 part 'source_scanner_rule/source_scanner_source.dart';
 
 typedef ScannerRuleCallback = void Function(
@@ -521,11 +521,9 @@ final class SourceScannerContext {
 
   bool get isTestFile => path.startsWith('test/') || path.endsWith('_test.dart');
 
-  late final UiProjectPaths _projectPaths = resolveUiProjectPaths(file, path);
+  bool get isThemeDefFile => isThemePath(path);
 
-  bool get isThemeDefFile => isThemePath(_projectPaths.path);
-
-  bool get isUiLibraryFile => _projectPaths.isInLibrary;
+  bool get isUiLibraryFile => path.replaceAll('\\', '/').startsWith('lib/core/widgets/');
 
   bool get isKeyRegistryFile {
     final normalized = path.replaceAll('\\', '/').toLowerCase();

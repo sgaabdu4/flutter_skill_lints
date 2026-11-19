@@ -14,7 +14,7 @@ final List<ScannerRule> uiSingleSourceRules = [
       correctionMessage: 'Make it a part of the shared library and use that part',
       severity: DiagnosticSeverity.ERROR,
     ),
-    description: 'Flags base buttons, text fields, dropdowns, dialogs, search widgets, checkboxes, radios, switches and sliders built outside the ui_library paths of hard-eng.gates.json (lib/core/widgets/ when it lists none).',
+    description: 'Flags input controls (a widget a person presses, types in, picks or toggles, and the dialogs and sheets that ask the person to choose) built outside the ui_library paths of hard-eng.gates.json (lib/core/widgets/ when it lists none).',
     scan: (reporter, context) {
       if (!context.path.startsWith('lib/') || context.isTestFile) return;
 
@@ -28,7 +28,31 @@ final List<ScannerRule> uiSingleSourceRules = [
   ),
 ];
 
-const _baseControls = {
+const uiBaseControlClasses = {
+  'AboutDialog',
+  'CupertinoActionSheet',
+  'CupertinoActionSheetAction',
+  'CupertinoDialogAction',
+  'SimpleDialogOption',
+  'CupertinoContextMenuAction',
+  'CupertinoNavigationBarBackButton',
+  'ActionChip',
+  'ChoiceChip',
+  'FilterChip',
+  'InputChip',
+  'RawChip',
+  'CheckboxMenuButton',
+  'RadioMenuButton',
+  'CupertinoDatePicker',
+  'CupertinoTimerPicker',
+  'CupertinoPicker',
+  'CalendarDatePicker',
+  'YearPicker',
+  'InputDatePickerFormField',
+  'RawRadio',
+  'EditableText',
+  'SnackBarAction',
+  'CupertinoMenuItem',
   'ElevatedButton',
   'FilledButton',
   'OutlinedButton',
@@ -123,7 +147,7 @@ final class _BaseControlVisitor extends RecursiveAstVisitor<void> {
     final element = type is InterfaceType ? type.element : null;
     final uri = element?.library.identifier;
     return element != null &&
-        _baseControls.contains(element.name) &&
+        uiBaseControlClasses.contains(element.name) &&
         uri != null &&
         isFlutterUiLibraryUri(uri);
   }

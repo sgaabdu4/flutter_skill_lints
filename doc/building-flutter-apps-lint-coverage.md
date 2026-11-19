@@ -66,9 +66,11 @@ file whose last name word is one of them, or `tailwind.config.*`.
 `ui_base_control_outside_library` reports at error severity a base button, text
 field, dropdown, dialog or search widget built in a `lib/` file outside the
 shared library: `ElevatedButton`, `FilledButton`, `OutlinedButton`, `TextButton`,
-`IconButton`, `CupertinoButton`, `TextField`, `TextFormField`,
+`IconButton`, `FloatingActionButton`, `SegmentedButton`, `ToggleButtons`,
+`MenuItemButton`, `SubmenuButton`, `CupertinoSlidingSegmentedControl`,
+`PopupMenuButton`, `CupertinoButton`, `TextField`, `TextFormField`,
 `CupertinoTextField`, `CupertinoTextFormFieldRow`, `DropdownButton`,
-`DropdownButtonFormField`, `DropdownMenu`, `AlertDialog`, `SimpleDialog`,
+`DropdownButtonFormField`, `DropdownMenu`, `DropdownMenuFormField`, `AlertDialog`, `SimpleDialog`,
 `Dialog`, `CupertinoAlertDialog`, `SearchBar`, `SearchAnchor` and
 `CupertinoSearchTextField`, with their named constructors, with or without type arguments. Only a
 constructor that resolves to a Flutter, Material or Cupertino class is reported: a

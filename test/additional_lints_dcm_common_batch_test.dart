@@ -41,6 +41,10 @@ final class _AvoidAdjacentStringsTest extends AnalysisRuleTest {
         parent: const {},
         own: {
           'test_adjacentStringLiteralsInList_lint': (t) => t._adjacentStringLiteralsInListLint(),
+          'test_adjacentStringLiteralsInConditionalElement_lint': (t) =>
+              t._adjacentStringLiteralsInConditionalElementLint(),
+          'test_adjacentStringLiteralsInConditionExpression_noLint': (t) =>
+              t._adjacentStringLiteralsInConditionExpressionNoLint(),
           'test_adjacentStringLiteralsInSet_lint': (t) => t._adjacentStringLiteralsInSetLint(),
           'test_adjacentStringLiteralsConcatenation_noLint': (t) =>
               t._adjacentStringLiteralsConcatenationNoLint(),
@@ -72,6 +76,22 @@ final items = <String>['first' 'second', 'third'];
         messageContainsAll: ['missing comma'],
       ),
     ]);
+  }
+
+  Future<void> _adjacentStringLiteralsInConditionalElementLint() async {
+    const source = r'''
+List<String> build(bool advanced) => ['basic', if (advanced) 'archived' 'active'];
+''';
+
+    await assertDiagnostics(source, [
+      lint(source.indexOf("'archived'"), "'archived' 'active'".length),
+    ]);
+  }
+
+  Future<void> _adjacentStringLiteralsInConditionExpressionNoLint() async {
+    await assertNoDiagnostics(r'''
+List<int> build(String name) => [if (name == 'a' 'b') 1];
+''');
   }
 
   Future<void> _adjacentStringLiteralsInSetLint() async {

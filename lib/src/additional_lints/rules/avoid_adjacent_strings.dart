@@ -37,9 +37,17 @@ final class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitAdjacentStrings(AdjacentStrings node) {
-    final parent = node.parent;
-    final isCollectionElement =
-        parent is ListLiteral || (parent is SetOrMapLiteral && parent.isSet);
-    if (isCollectionElement) rule.reportAtNode(node);
+    if (_isCollectionElement(node)) rule.reportAtNode(node);
+  }
+
+  static bool _isCollectionElement(AstNode node) {
+    var child = node;
+    var parent = node.parent;
+    while ((parent is IfElement && (parent.thenElement == child || parent.elseElement == child)) ||
+        (parent is ForElement && parent.body == child)) {
+      child = parent!;
+      parent = parent.parent;
+    }
+    return parent is ListLiteral || (parent is SetOrMapLiteral && parent.isSet);
   }
 }

@@ -13,6 +13,8 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.allowsInsideTheDefaultLibrary());
     await _run(_BaseControlsTest.new, (t) => t.reportsControlsWithTypeArguments());
     await _run(_BaseControlsTest.new, (t) => t.reportsOnlyFlutterControls());
+    await _run(_BaseControlsTest.new, (t) => t.reportsAControlInferredFromAnotherFile());
+    await _run(_BaseControlsTest.new, (t) => t.ignoresAShorthandOnAnotherType());
     await _run(_BaseControlsTest.new, (t) => t.readsLibraryPathsFromTheGatesFile());
     await _run(_BaseControlsTest.new, (t) => t.readsCharacterSetsInLibraryPaths('[u]', true));
     await _run(_BaseControlsTest.new, (t) => t.readsCharacterSetsInLibraryPaths('[!u]', false));
@@ -116,8 +118,14 @@ abstract class _UiRuleTest extends AnalysisRuleTest {
 
   void writeGates(String body) => newFile(_gatesPath, body);
 
-  Future<void> assertReported(String path, List<String> lines, {List<String>? from}) async {
-    final source = '$_import\n\n${lines.join('\n')}\n';
+  Future<void> assertReported(
+    String path,
+    List<String> lines, {
+    List<String>? from,
+    List<String>? imports,
+  }) async {
+    final head = imports == null ? _import : imports.join('\n');
+    final source = '$head\n\n${lines.join('\n')}\n';
     newFile(path, source);
     await assertDiagnosticsInFile(path, [
       for (var i = 0; i < lines.length; i++) _lintAt(source, lines[i], from?[i] ?? ''),
@@ -180,6 +188,29 @@ final class _BaseControlsTest extends _UiRuleTest {
       ['TextField a = .new();'],
       from: ['.'],
     );
+  }
+
+  void writeFieldHelpers() => newFile('$testPackageLibPath/features/fields.dart', '''
+$_import
+
+typedef AppField = TextField;
+
+Widget acceptField(TextField field) => field;
+''');
+
+  Future<void> reportsAControlInferredFromAnotherFile() async {
+    writeFieldHelpers();
+    await assertReported(
+      '$testPackageLibPath/features/home/inferred.dart',
+      ['Object a = acceptField(.new());'],
+      imports: ["import '../fields.dart';"],
+      from: ['.new'],
+    );
+  }
+
+  Future<void> ignoresAShorthandOnAnotherType() async {
+    newFile('$testPackageLibPath/features/home/zero.dart', 'Duration a = .zero;\n');
+    await assertNoDiagnosticsInFile('$testPackageLibPath/features/home/zero.dart');
   }
 
   Future<void> reportsControlsWithTypeArguments() => assertReported(

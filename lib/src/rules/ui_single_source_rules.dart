@@ -17,7 +17,6 @@ final List<ScannerRule> uiSingleSourceRules = [
     description: 'Flags base buttons, text fields, dropdowns, dialogs and search widgets built outside the ui_library paths of hard-eng.gates.json (lib/core/widgets/ when it lists none).',
     scan: (reporter, context) {
       if (!context.path.startsWith('lib/') || context.isTestFile) return;
-      if (!context.source.masked.any(_baseControlName.hasMatch)) return;
 
       final visitor = _BaseControlVisitor();
       context.unit.accept(visitor);
@@ -51,8 +50,6 @@ const _baseControls = {
   'SearchAnchor',
   'CupertinoSearchTextField',
 };
-
-final _baseControlName = RegExp('\\b(?:${_baseControls.join('|')})\\b');
 
 final class _BaseControlVisitor extends RecursiveAstVisitor<void> {
   final offsets = <int>[];

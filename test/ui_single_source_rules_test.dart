@@ -15,6 +15,7 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.reportsMaterialButtonAndAutocomplete());
     await _run(_BaseControlsTest.new, (t) => t.reportsASubclassOfABaseControl());
     await _run(_BaseControlsTest.new, (t) => t.reportsSheetsDialogsAndTheirActions());
+    await _run(_BaseControlsTest.new, (t) => t.reportsButtonsThatDrawTheirOwnIconButton());
     await _run(_BaseControlsTest.new, (t) => t.reportsAChipOnlyWithADeleteCallback());
     await _run(_BaseControlsTest.new, (t) => t.reportsAConstructorTearOff());
     await _run(_BaseControlsTest.new, (t) => t.reportsTogglesAndSliders());
@@ -161,6 +162,14 @@ class Chip extends Widget {
 
 class ListTile extends Widget {
   const ListTile({void Function()? onTap});
+}
+
+class ExpandIcon extends Widget {
+  const ExpandIcon({void Function(bool)? onPressed});
+}
+
+class TextSelectionToolbarTextButton extends Widget {
+  const TextSelectionToolbarTextButton();
 }
 
 class Autocomplete<T> extends Widget {
@@ -433,6 +442,12 @@ final class _BaseControlsTest extends _UiRuleTest {
     );
     await assertClean('$testPackageLibPath/core/widgets/atoms/app_controls.dart', _controls);
   }
+
+  Future<void> reportsButtonsThatDrawTheirOwnIconButton() => assertReported(
+    '$testPackageLibPath/features/home/icon_buttons.dart',
+    ['Widget a = ExpandIcon(onPressed: null);', 'Widget b = TextSelectionToolbarTextButton();'],
+    from: ['ExpandIcon', 'TextSelectionToolbarTextButton'],
+  );
 
   Future<void> reportsAChipOnlyWithADeleteCallback() async {
     await assertReported(

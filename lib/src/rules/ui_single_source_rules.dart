@@ -29,6 +29,11 @@ final List<ScannerRule> uiSingleSourceRules = [
 ];
 
 const uiBaseControlClasses = {
+  'ExpandIcon',
+  'TextSelectionToolbarTextButton',
+  'DesktopTextSelectionToolbarButton',
+  'CupertinoTextSelectionToolbarButton',
+  'CupertinoDesktopTextSelectionToolbarButton',
   'AboutDialog',
   'CupertinoActionSheet',
   'CupertinoActionSheetAction',

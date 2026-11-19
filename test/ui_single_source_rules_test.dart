@@ -150,6 +150,18 @@ class EndDrawerButton extends Widget {
   const EndDrawerButton();
 }
 
+class DatePickerDialog extends Widget {
+  const DatePickerDialog();
+}
+
+class TimePickerDialog extends Widget {
+  const TimePickerDialog();
+}
+
+class DateRangePickerDialog extends Widget {
+  const DateRangePickerDialog();
+}
+
 class Autocomplete<T> extends Widget {
   const Autocomplete();
 }
@@ -360,6 +372,9 @@ final class _BaseControlsTest extends _UiRuleTest {
       'Widget f = CloseButton();',
       'Widget g = DrawerButton();',
       'Widget h = EndDrawerButton();',
+      'Widget i = DatePickerDialog();',
+      'Widget j = TimePickerDialog();',
+      'Widget k = DateRangePickerDialog();',
     ],
     from: [
       'MaterialButton',
@@ -370,6 +385,9 @@ final class _BaseControlsTest extends _UiRuleTest {
       'CloseButton',
       'DrawerButton',
       'EndDrawerButton',
+      'DatePickerDialog',
+      'TimePickerDialog',
+      'DateRangePickerDialog',
     ],
   );
 

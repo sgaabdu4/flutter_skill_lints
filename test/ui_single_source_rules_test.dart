@@ -350,6 +350,11 @@ final class _BaseControlsTest extends _UiRuleTest {
       ['class SearchField extends TextField { const SearchField(); }'],
       from: ['TextField'],
     );
+    await assertReported(
+      '$testPackageLibPath/features/home/mixin_alias.dart',
+      ['mixin Tracked {} class TrackedField = TextField with Tracked;'],
+      from: ['TextField'],
+    );
     await assertClean('$testPackageLibPath/features/home/subclass_clean.dart', [
       'class Badge extends Icon { const Badge(); }',
     ]);

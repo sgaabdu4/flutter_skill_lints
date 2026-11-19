@@ -14,6 +14,7 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.reportsControlsWithTypeArguments());
     await _run(_BaseControlsTest.new, (t) => t.reportsOnlyFlutterControls());
     await _run(_BaseControlsTest.new, (t) => t.reportsTheWholeButtonFamily());
+    await _run(_BaseControlsTest.new, (t) => t.reportsAConstructorTearOff());
     await _run(_BaseControlsTest.new, (t) => t.reportsTogglesAndSliders());
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlInferredFromAnotherFile());
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlBuiltThroughAnAlias());
@@ -312,6 +313,19 @@ final class _BaseControlsTest extends _UiRuleTest {
       ],
     );
     await assertClean('$testPackageLibPath/features/home/toggle.dart', ['Widget a = Icon();']);
+  }
+
+  Future<void> reportsAConstructorTearOff() async {
+    writeFieldHelpers();
+    await assertReported(
+      '$testPackageLibPath/features/home/tearoff.dart',
+      ['Widget Function() a = TextField.new;', 'Widget Function() b = AppField.new;'],
+      imports: ["import '../fields.dart';", _import],
+      from: ['TextField', 'AppField'],
+    );
+    await assertClean('$testPackageLibPath/features/home/tearoff_clean.dart', [
+      'Widget Function() a = Icon.new;',
+    ]);
   }
 
   Future<void> reportsTogglesAndSliders() => assertReported(

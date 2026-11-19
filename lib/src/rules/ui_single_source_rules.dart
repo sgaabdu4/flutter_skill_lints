@@ -87,6 +87,15 @@ final class _BaseControlVisitor extends RecursiveAstVisitor<void> {
     super.visitDotShorthandConstructorInvocation(node);
   }
 
+  @override
+  void visitConstructorReference(ConstructorReference node) {
+    final type = node.staticType;
+    if (type is FunctionType && _isBaseControl(type.returnType)) {
+      offsets.add(node.constructorName.offset);
+    }
+    super.visitConstructorReference(node);
+  }
+
   static bool _isBaseControl(DartType? type) {
     final element = type is InterfaceType ? type.element : null;
     final uri = element?.library.identifier;

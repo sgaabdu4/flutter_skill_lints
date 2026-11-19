@@ -49,11 +49,11 @@ Sources: the Hard Eng UI single source plan rows for the lint plugin, Hard Eng's
 ## Verification
 
 Result: Passed
-Evidence: `dart test` passed 3,598 tests (exit 0). `dart analyze --fatal-infos .`, `dart format --set-exit-if-changed .` and `dart pub publish --dry-run` (0 warnings) were clean. The new test failed before the rule existed, and failed on the `palette/` and `colors/` rows with the old theme test restored. On a copy of a real Flutter app, `dart analyze` with the new plugin adds only 9 `ui_base_control_outside_library` errors (one scratch file, 8 real controls) and no other change; CPU time (user plus sys) on the least loaded pair was 83.3 s before and 85.1 s after, and the other pairs differ by less than the noise of a loaded machine.
+Evidence: `dart test` passed 3,607 tests (exit 0). `dart analyze --fatal-infos .`, `dart format --set-exit-if-changed .` and `dart pub publish --dry-run` (0 warnings) were clean. The new test failed before the rule existed, and failed on the `palette/` and `colors/` rows with the old theme test restored. On a copy of a real Flutter app, `dart analyze` with the new plugin adds only 9 `ui_base_control_outside_library` errors (one scratch file, 8 real controls) and no other change; CPU time (user plus sys) on the least loaded pair was 83.3 s before and 85.1 s after, and the other pairs differ by less than the noise of a loaded machine.
 E2E: N/A — no user journey; the real analyzer server run on the app copy is the timing run above.
 Retro: (1) the rule count test pinned two counts, and the first run found only one -> None — the full run found the second before the push, and the repair has its own commit; (2) the theme case file the plan names did not exist at first -> the test was added once the skill repository held it,, and it is fetched by the test, not held as a submodule, so the publish workflow needs no submodule checkout.
 
-Review declined: A gates file added next to a source folder is ignored for up to ten seconds :: The analyzer does not re-run analysis when a non-Dart file changes, with or without the cache, and the ten second recheck of an empty lookup is the agreed trade-off for the cache.
+Review declined: A gates file added next to a source folder is ignored for up to ten seconds :: The analyzer does not re-run analysis when a non-Dart file changes, with or without the cache. The stale result stays until the next edit. This is open, and the owner accepted it.
 Review fixed: a `typedef AppField = TextField` from another file, and a control whose type comes from context such as `acceptField(.new())`, escaped the rule :: both are reported now; the rule resolves the built class and no longer skips a file that never names a control.
 
 Delivery target: PR

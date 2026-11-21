@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Use the bundled recorder + review scripts for both routes; conversion belongs to video delivery. Recording changes pacing and may bridge reload paint: raw rendering or timing claims need separate evidence. [E2E](../e2e/SKILL.md#prove-the-journey) owns product assertions, durable-state proof + defect reopening.
 
-Load matching README sections; commands run from this skill's directory.
+Load matching README sections; scripts run by path from any directory (`bun <skill>/scripts/<name>.mjs`; `<skill>` = this skill's directory).
 
 ```mermaid
 flowchart LR
@@ -21,5 +21,7 @@ flowchart LR
   click V "README.md#video-delivery"
   click C "README.md#important-configuration"
 ```
+
+Video delivery for a client, in a task with a plan = name the video on the plan's `Deliverables:` line first; HE-SOURCE-COVERAGE says when you may make it.
 
 Completion = selected route's [completion gate](README.md#completion-gate) on the exact reviewed artifact. Mechanical success without actual visual review remains incomplete.

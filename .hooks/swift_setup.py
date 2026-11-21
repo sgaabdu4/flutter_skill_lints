@@ -11,10 +11,10 @@ from typing import NamedTuple
 from gate_config import (
     GateConfig,
     Group,
-    generated_sources,
     package_manifests,
     repository_files,
 )
+from generated_marks import generated_sources
 from project_files import read_project_file
 
 WHITESPACE_RUN = re.compile(r"\s+")
@@ -31,6 +31,7 @@ TEST_FLAGS = (
     "-skip-test-configuration",
     "-testPlan",
 )
+SERIAL_TESTS = "-parallel-testing-enabled NO"
 STARTER_NAMES = {
     "AppDelegate.swift",
     "SceneDelegate.swift",
@@ -287,6 +288,18 @@ def require_swift_groups(root: Path, config: GateConfig, files: list[Path]) -> N
             raise ValueError(
                 f"{path}: a Podfile needs the pods-locked gate (`pod install --deployment`) "
                 "before the tests; add it as a lockfiles check"
+            )
+        if Path(path).name == "ios" and any(
+            "xcodebuild" in script and SERIAL_TESTS not in script
+            for script in (
+                " ".join(gate["command"])
+                for gate in group["checks"]
+                if gate.get("role") == "tests"
+            )
+        ):
+            raise ValueError(
+                f"{path}: the tests command must pass `{SERIAL_TESTS}` to `xcodebuild "
+                "test`, or Xcode starts a new copy of the simulator for each run"
             )
         if folders := unscanned(declared[path], project):
             raise ValueError(

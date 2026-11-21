@@ -60,6 +60,7 @@ PACKAGES = {
     "jscpd": "npm:jscpd",
     "lhci": "npm:@lhci/cli",
     "k6": "aqua:grafana/k6",
+    "agent-browser": "npm:agent-browser",
 }
 MANAGED_PYTHON_SCANNERS = {"ruff", "pyrefly", "vulture", "semgrep", "zizmor", "poetry"}
 ROLE_TOOLS: dict[str, dict[str, tuple[str, ...]]] = {
@@ -76,6 +77,7 @@ ROLE_TOOLS: dict[str, dict[str, tuple[str, ...]]] = {
         "focused-tests": ("biome", "lint"),
         "typing-style": ("biome", "lint"),
         "types": ("tsc",),
+        "dead-code-duplicates": ("fallow",),
     },
     "dart": {"format": ("dart", "format"), "types": ("dart", "analyze")},
     "swift": {"format-lint": ("swift", "format", "lint")},
@@ -114,6 +116,20 @@ def quick_mode() -> bool:
     return "--quick" in sys.argv
 
 
+def yaml_python(*arguments: str) -> list[str]:
+    return [
+        "uv",
+        "run",
+        "--no-project",
+        "--with",
+        "pyyaml",
+        "--python",
+        sys.executable,
+        "python",
+        *arguments,
+    ]
+
+
 def ensure_python_runtime() -> None:
     """Run the installed CLI with its YAML dependency without changing host Python."""
     if os.environ.pop(RESTARTED, None):
@@ -122,20 +138,7 @@ def ensure_python_runtime() -> None:
     if importlib.util.find_spec("yaml") is None:
         os.environ[RESTARTED] = "1"
         try:
-            os.execvp(
-                "uv",
-                [
-                    "uv",
-                    "run",
-                    "--no-project",
-                    "--with",
-                    "pyyaml",
-                    "--python",
-                    sys.executable,
-                    "python",
-                    *sys.argv,
-                ],
-            )
+            os.execvp("uv", yaml_python(*sys.argv))
         except FileNotFoundError as error:
             raise FileNotFoundError(
                 "uv is not on PATH; Hard Eng needs it. Install uv, then run again."
@@ -146,9 +149,7 @@ def require_shared_roles(
     root: Path, config: GateConfig, files: list[Path], secrets: bool
 ) -> set[str]:
     """Files decide the mandatory shared roles; a gate that names a role's tool fills it."""
-    required = {"secrets-files"} if secrets else set()
-    if secrets and config.get("scan_git_history", True):
-        required.add("secrets-history")
+    required = {"secrets-files", "secrets-history"} if secrets else set()
     if has_workflows(root, files):
         required.update({"workflows", "ci-security"})
     if next(project_shell_scripts(root, files), None) is not None:
@@ -203,7 +204,7 @@ def require_role_tool(language: str, gate: Gate, command: list[str]) -> None:
     """A required check that writes no report proves itself only by the tool it names."""
     role = str(gate.get("role"))
     tool = ROLE_TOOLS.get(language, {}).get(role)
-    if tool is None or gate.get("report"):
+    if tool is None:
         return
     words = [
         Path(word.strip("'\"();")).name.split("@", 1)[0]
@@ -218,6 +219,11 @@ def require_role_tool(language: str, gate: Gate, command: list[str]) -> None:
         raise ValueError(
             f"{gate['name']}: the {gate['role']} check must run `{' '.join(tool)}`; "
             f"this command does not name it: {' '.join(gate['command'])}"
+        )
+    if (language, role) == ("javascript", "dead-code-duplicates") and "audit" in words:
+        raise ValueError(
+            f"{gate['name']}: the {role} check must run the combined scan, not `fallow audit`, "
+            "which finds its own base and judges only the changed files"
         )
 
 
@@ -277,6 +283,27 @@ def managed_scanner_command(command: list[str], directory: Path) -> list[str]:
             )
         return invocation
     return command
+
+
+def gate_scanner(group: Group, gate: Gate, scanner: str | None) -> str | None:
+    scanner = {
+        "secrets-files": "gitleaks",
+        "secrets-history": "gitleaks",
+        "security": "semgrep",
+        "vulnerabilities": "osv",
+        "freshness": "freshness",
+        "container-vulnerabilities": "osv-image",
+        "react": "react-doctor",
+        "deployment": "trivy",
+    }.get(gate.get("role", ""), scanner)
+    return {
+        ("python", "imports"): "import-linter",
+        ("python", "dependencies"): "deptry",
+        ("python", "duplicates"): "jscpd",
+        ("swift", "duplicates"): "jscpd",
+        ("dart", "dead-code-duplicates"): "dart-decimate",
+        ("javascript", "dead-code-duplicates"): "fallow",
+    }.get((group.get("language", ""), gate.get("role", "")), scanner)
 
 
 def provision_tools(root: Path, groups: list[Group], timeout: float) -> None:
@@ -409,7 +436,9 @@ def tool_name(tool: str) -> str:
     return TOOL_BRACKETS_OR_LATEST.sub("", tool)
 
 
-def provision_batch(batch: list[str], timeout: float) -> None:
+def provision_batch(
+    batch: list[str], timeout: float, offline: bool | None = None
+) -> None:
     # Two days avoids newly broken releases.
     batch = [bun_age(tool, RELEASE_AGE_SECONDS) for tool in batch]
     shared = shared_tool_folder()
@@ -429,7 +458,7 @@ def provision_batch(batch: list[str], timeout: float) -> None:
             "MISE_GITHUB_CREDENTIAL_COMMAND",
             'gh auth token --hostname "$MISE_CREDENTIAL_HOST"',
         )
-    if quick_mode():
+    if quick_mode() if offline is None else offline:
         try:
             if use_installed_tools(batch, storage, environment, timeout):
                 return

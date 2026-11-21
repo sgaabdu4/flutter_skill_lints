@@ -52,7 +52,7 @@ Prerequisite = `uv` installed (`uvx` on PATH) + API key with the scopes every in
 
 1. Create one tracked executable repository launcher (`scripts/appwrite-mcp`).
 2. Resolve the repository root from the script's own path; MCP clients do not guarantee the launch working directory.
-3. Source the repository's existing gitignored Appwrite env file; keep one secret owner.
+3. Read the repository's existing gitignored Appwrite env file with a plain loop that exports only the three names below and sources nothing, so no ShellCheck directive is needed; keep one secret owner.
 4. Fail before exec with a stderr message when the env file or any of `APPWRITE_ENDPOINT` + `APPWRITE_PROJECT_ID` + `APPWRITE_API_KEY` is missing.
 5. End with `exec uvx mcp-server-appwrite "$@"` so the ambient environment passes through.
 6. Read `uvx mcp-server-appwrite --help` before adding arguments. Published docs list per-service flags (`--tablesdb`, `--users`, `--storage`); current releases ignore them with a warning and register services automatically; pass none.
@@ -66,10 +66,15 @@ env_file="${APPWRITE_ENV_FILE:-$repo_root/.env.appwrite.local}"
 
 [[ -f "$env_file" ]] || { echo "appwrite-mcp: missing $env_file" >&2; exit 1; }
 
-set -a
-# shellcheck source=/dev/null
-source "$env_file"
-set +a
+while IFS='=' read -r key value || [[ -n "$key" ]]; do
+  value="${value%$'\r'}"
+  case "$value" in
+    \"?*\" | \'?*\') value="${value:1:${#value}-2}" ;;
+  esac
+  case "$key" in
+    APPWRITE_ENDPOINT | APPWRITE_PROJECT_ID | APPWRITE_API_KEY) export "$key=$value" ;;
+  esac
+done < "$env_file"
 
 for name in APPWRITE_ENDPOINT APPWRITE_PROJECT_ID APPWRITE_API_KEY; do
   [[ -n "${!name:-}" ]] || { echo "appwrite-mcp: $name is not set in $env_file" >&2; exit 1; }

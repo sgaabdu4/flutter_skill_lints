@@ -3980,14 +3980,17 @@ rules:
       - pattern-not-inside: if (<... await $E ...>) { ... throw $T; }
       - pattern-not-inside: if (<... await $E ...>) throw $T;
       - pattern-not-inside: for ($I in $C) { ... await Future.delayed(...); }
+      - pattern-not-inside: for ($I in $C) { ... await Future<$T>.delayed(...); }
       - pattern-not-inside: for (...; ...; ...) { ... break; }
       - pattern-not-inside: for (...; ...; ...) { ... return; }
       - pattern-not-inside: for (...; ...; ...) { ... return $R; }
       - pattern-not-inside: for (...; ...; ...) { ... await Future.delayed(...); }
+      - pattern-not-inside: for (...; ...; ...) { ... await Future<$T>.delayed(...); }
       - pattern-not-inside: while ($C) { ... break; }
       - pattern-not-inside: while ($C) { ... return; }
       - pattern-not-inside: while ($C) { ... return $R; }
       - pattern-not-inside: while ($C) { ... await Future.delayed(...); }
+      - pattern-not-inside: while ($C) { ... await Future<$T>.delayed(...); }
       - pattern-not-inside: do { ... break; } while ($C);
       - pattern-not-inside: do { ... return; } while ($C);
       - pattern-not-inside: do { ... return $R; } while ($C);
@@ -8753,7 +8756,7 @@ rules:
       - dart
     paths: *paths
     severity: ERROR
-    message: The second call does not use the first result. Start both together with Future.wait or a record's .wait.
+    message: "The second call does not use the first result. Start both and join them with one await of the project's `waitBoth` helper (add it if missing): `final (a, b) = await waitBoth(readA(), readB());`. The helper awaits `Future.wait<void>([first, second], eagerError: true)`, then returns `(await first, await second)`. Do not use a record's .wait or a Future.wait without eagerError: these two forms wait for every call before they throw, and a record's .wait throws ParallelWaitError in place of the original error."
     patterns:
       - pattern-regex: (?m)^[ \t]*(?:final|var|[A-Z]\w*(?:<[^=;\n]*>)?\??)\s+(\w+)\s*=\s*await\s+(?>((?:[a-z]\w*?(?=[A-Z])|\w*_)?(?i:session|connection|conn|transaction|cursor|readline|reader|writer|socket|dialog|lock|mutex|queue|channel|tx|trx|rl|ws|page)(?![a-z])\w*)\b|\w+)(?:[^;(){}\[\]]|(?<g>\((?:[^()]|(?&g))*+\)|\{(?:[^{}]|(?&g))*+\}|\[(?:[^\[\]]|(?&g))*+\]))*+;[ \t]*\n[ \t]*(?:final|var|[A-Z]\w*(?:<[^=;\n]*>)?\??)\s+\w+\s*=\s*await\s+(?!\2\b)(?:(?!\b\1\b)[^;(){}\[\]]|(?<h>\((?:(?!\b\1\b)[^()]|(?&h))*+\)|\{(?:(?!\b\1\b)[^{}]|(?&h))*+\}|\[(?:(?!\b\1\b)[^\[\]]|(?&h))*+\]))*+;
   - id: in-order-needs-reason-dart
@@ -10059,3 +10062,73 @@ rules:
             - metavariable-regex:
                 metavariable: $REASON
                 regex: (?s)^["'](?=(?:(?:["']\s*\+\s*["'])*(?:\\.|[^"'$\\])){20})(?!.*\\\()(?=.*(?:[^\s"'$+]\s+[^\s"'$+]|[^\s"'$+]\s*["']\s*\+\s*["']\s+[^\s"'$+]|[^\s"'$+]\s+["']\s*\+\s*["'][^\s"'$+]))(?:\\.|[^"'$\\]|["']\s*\+\s*["'])*["']$
+  - id: next-frame-call-javascript
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      Zero-delay or next-frame call. Fix the order of events at its cause: run the work from the event, ref
+      callback, layout effect or animation that owns it. A delay of 17 ms or more is no fix for an order fault.
+    paths: *paths
+    pattern-either:
+      - pattern: setTimeout($F)
+      - pattern: setTimeout($F, 0)
+      - patterns:
+          - pattern: setTimeout($F, $D, ...)
+          - metavariable-comparison:
+              metavariable: $D
+              comparison: $D < 17
+      - patterns:
+          - pattern-either:
+              - pattern: $G.setTimeout($F)
+              - pattern: $G.setTimeout($F, 0)
+              - patterns:
+                  - pattern: $G.setTimeout($F, $D, ...)
+                  - metavariable-comparison:
+                      metavariable: $D
+                      comparison: $D < 17
+              - pattern: $G.setImmediate(...)
+              - pattern: $G.requestAnimationFrame(...)
+              - pattern: $G.requestIdleCallback(...)
+              - pattern: $G.queueMicrotask(...)
+          - metavariable-regex:
+              metavariable: $G
+              regex: ^(window|globalThis|self|global)$
+      - pattern: setImmediate(...)
+      - pattern: requestAnimationFrame(...)
+      - pattern: requestIdleCallback(...)
+      - pattern: queueMicrotask(...)
+      - pattern: process.nextTick(...)
+      - pattern: Promise.resolve().then(...)
+      - pattern: await Promise.resolve()
+      - pattern: await null
+  - id: next-frame-call-dart
+    languages: [dart]
+    severity: ERROR
+    message: >-
+      Zero-delay or next-frame call. Fix the order of events at its cause: run the work from the event,
+      listener, provider or animation that owns it. A delay of 17 ms or more is no fix for an order fault.
+    paths: *paths
+    pattern-either:
+      - pattern: scheduleMicrotask(...)
+      - pattern: Timer.run(...)
+      - pattern: Future(...)
+      - pattern: Future<$T>(...)
+      - pattern: await null
+      - patterns:
+          - pattern: $C(...)
+          - metavariable-regex:
+              metavariable: $C
+              regex: ^Future\s*(<[^()]*>)?\s*\.\s*microtask$
+      - patterns:
+          - pattern: $C($A, ...)
+          - metavariable-regex:
+              metavariable: $C
+              regex: ^(Future\s*(<[^()]*>)?)?\s*\.\s*delayed$
+          - metavariable-regex:
+              metavariable: $A
+              regex: ^(const\s+)?Duration\s*(\.\s*zero|\(\s*\)|\(\s*(milliseconds|microseconds)\s*:\s*(\d|1[0-6])\s*\))$
+      - patterns:
+          - pattern: Timer($A, ...)
+          - metavariable-regex:
+              metavariable: $A
+              regex: ^(const\s+)?Duration\s*(\.\s*zero|\(\s*\)|\(\s*(milliseconds|microseconds)\s*:\s*(\d|1[0-6])\s*\))$

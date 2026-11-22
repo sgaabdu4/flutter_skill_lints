@@ -13,8 +13,9 @@ class AvoidNullableAsyncValuePattern extends AnalysisRule {
     'avoid_nullable_async_value_pattern',
     'Avoid nullable AsyncValue value patterns.',
     correctionMessage:
-        'Use AsyncData(:final value), or handle AsyncLoading and AsyncError '
-        'branches explicitly.',
+        'Use AsyncValue(hasValue: true, :final requireValue) '
+        '(or :final requireValue? for nullable T) to keep data during a reload, '
+        'or handle AsyncLoading and AsyncError branches explicitly.',
   );
 
   AvoidNullableAsyncValuePattern()

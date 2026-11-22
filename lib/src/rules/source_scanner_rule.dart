@@ -4,7 +4,9 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:analyzer/file_system/file_system.dart';
 import 'package:flutter_skill_lints/src/ast_utils.dart';
+import 'package:flutter_skill_lints/src/rules/ui_theme_paths.dart';
 part 'source_scanner_rule/source_scanner_source.dart';
 
 typedef ScannerRuleCallback = void Function(
@@ -245,6 +247,8 @@ final _contextStringNavigationPattern = RegExp(
 final class SourceScannerContext {
   SourceScannerContext._({
     required this.path,
+    required this.themePath,
+    required this.file,
     required this.unit,
     required this.source,
     required this.classes,
@@ -256,21 +260,27 @@ final class SourceScannerContext {
     final cached = _contextCache[unit];
     if (cached != null) return cached;
 
-    final scannerContext = SourceScannerContext._fromUnit(unit);
+    final scannerContext = SourceScannerContext._fromUnit(
+      unit,
+      packageRoot: context.package?.root.path,
+    );
     _contextCache[unit] = scannerContext;
     return scannerContext;
   }
 
-  factory SourceScannerContext._fromUnit(RuleContextUnit unit) {
+  factory SourceScannerContext._fromUnit(RuleContextUnit unit, {String? packageRoot}) {
     final source = SourceScannerSource(unit.content);
     final classes = _classes(source);
     final methods = <ScannerMethodSpan>[];
     for (final classSpan in classes) {
       methods.addAll(_methods(source, classSpan));
     }
+    final repoRoot = _gitRootPath(unit.file.parent);
 
     return SourceScannerContext._(
-      path: _relativePath(unit.file.path),
+      path: _relativePath(unit.file.path, packageRoot: packageRoot),
+      themePath: _relativePath(unit.file.path, packageRoot: repoRoot ?? packageRoot),
+      file: unit.file,
       unit: unit.unit,
       source: source,
       classes: classes,
@@ -283,6 +293,8 @@ final class SourceScannerContext {
   );
 
   final String path;
+  final String themePath;
+  final File file;
   final CompilationUnit unit;
   final SourceScannerSource source;
   final List<ScannerClassSpan> classes;
@@ -507,19 +519,27 @@ final class SourceScannerContext {
   }
 
   bool get isAppRootFile {
+    if (isTestFile) return false;
     final normalized = path.replaceAll('\\', '/');
     return normalized == 'lib/main.dart' ||
+        normalized.endsWith('/lib/main.dart') ||
         normalized == 'lib/app.dart' ||
         normalized.endsWith('/app.dart') ||
         normalized.endsWith('/app_root.dart');
   }
 
-  bool get isTestFile => path.startsWith('test/') || path.endsWith('_test.dart');
+  bool get isTestFile {
+    final normalized = path.replaceAll('\\', '/');
+    if (normalized.endsWith('_test.dart')) return true;
+    if (normalized.startsWith('lib/')) return false;
+    final beforeLib = normalized.split('/lib/').first;
+    final segments = beforeLib.split('/');
+    return segments.contains('test') || segments.contains('integration_test');
+  }
 
-  bool get isThemeDefFile =>
-      path.contains('/core/theme/') ||
-      path.endsWith('_tokens.dart') ||
-      path.endsWith('_theme.dart');
+  bool get isThemeDefFile => isThemePath(themePath);
+
+  bool get isUiLibraryFile => path.replaceAll('\\', '/').startsWith('lib/core/widgets/');
 
   bool get isKeyRegistryFile {
     final normalized = path.replaceAll('\\', '/').toLowerCase();
@@ -649,8 +669,27 @@ final class SourceScannerContext {
     return count;
   }
 
-  static String _relativePath(String path) {
+  static String? _gitRootPath(Folder start) {
+    Folder? current = start;
+    while (current != null) {
+      if (current.getChild('.git').exists) return current.path;
+      final parent = current.parent;
+      if (parent.path == current.path) break;
+      current = parent;
+    }
+    return null;
+  }
+
+  static String _relativePath(String path, {String? packageRoot}) {
     final normalized = path.replaceAll('\\', '/');
+    if (packageRoot != null && packageRoot.isNotEmpty) {
+      var root = packageRoot.replaceAll('\\', '/');
+      if (root.endsWith('/')) root = root.substring(0, root.length - 1);
+      final prefix = '$root/';
+      if (normalized.startsWith(prefix)) {
+        return normalized.substring(prefix.length);
+      }
+    }
     for (final marker in ['/lib/', '/test/', '/test_driver/', '/integration_test/']) {
       final index = normalized.lastIndexOf(marker);
       if (index >= 0) return normalized.substring(index + 1);

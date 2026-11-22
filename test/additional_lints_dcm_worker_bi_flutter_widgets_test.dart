@@ -131,6 +131,8 @@ final class _PreferExtractingCallbacksTest extends _FlutterRuleTest {
         own: {
           'test_blockCallbackWithTwoStatements_lint': (t) =>
               t._blockCallbackWithTwoStatementsLint(),
+          'test_inlineCallbackCorrection_namesOnlyMethod': (t) =>
+              t._inlineCallbackCorrectionNamesOnlyMethod(),
           'test_callbackWithControlFlow_lint': (t) => t._callbackWithControlFlowLint(),
           'test_trivialExpressionCallback_noLint': (t) => t._trivialExpressionCallbackNoLint(),
           'test_callbackReference_noLint': (t) => t._callbackReferenceNoLint(),
@@ -163,6 +165,30 @@ Widget build() {
 
     await assertDiagnostics(source, [
       lint(source.indexOf('() {', source.indexOf('onPressed')), '()'.length),
+    ]);
+  }
+
+  Future<void> _inlineCallbackCorrectionNamesOnlyMethod() async {
+    const source = r'''
+import 'package:flutter/widgets.dart';
+
+void a() {}
+void b() {}
+
+Widget build() {
+  return TextButton(
+    onPressed: () { a(); b(); },
+    child: const SizedBox(),
+  );
+}
+''';
+
+    await assertDiagnostics(source, [
+      lint(
+        source.indexOf('() {', source.indexOf('onPressed')),
+        '()'.length,
+        correctionContains: 'Move the callback body to a named method.',
+      ),
     ]);
   }
 

@@ -2,10 +2,10 @@
 
 This audit covers both plugin surfaces:
 
-- `lib/src/rules/**`: 228 registered `building-flutter-apps` warning rules.
-- `lib/src/rules/**`: 237 `building-flutter-apps` diagnostic codes.
+- `lib/src/rules/**`: 229 registered `building-flutter-apps` warning rules.
+- `lib/src/rules/**`: 238 `building-flutter-apps` diagnostic codes.
 - `lib/src/additional_lints/rules/**`: 276 additional diagnostics.
-- Total unique diagnostics: 511.
+- Total unique diagnostics: 512.
 
 ## Full Rule Inventory
 
@@ -55,6 +55,34 @@ checked. It also reports a literal `fontSize` option on any call other than a
 `TextStyle` constructor (a `TextStyle` has its own rule). A zero, a token and
 other size options such as `gap` are not reported; an `iconSize` follows the
 existing icon size rule.
+
+A theme or token file is judged by Hard Eng's rule, on the path from the repository
+root (falling back to the package root outside a Git checkout): a
+folder named `theme`, `token`, `color`, `colour` or `palette` (or the plural), a
+file whose last name word is one of them, or `tailwind.config.*`.
+
+## `ui_base_control_outside_library` base control boundary
+
+`ui_base_control_outside_library` reports at error severity every Flutter input
+control built in a `lib/` file outside the shared library. A class is an input
+control when a person presses, types in, picks or toggles it to give the app
+input, or when it is a dialog or sheet that asks the person to choose or
+confirm; layout, text and image display, theme, animation, scrolling, navigation
+bars and tabs, gesture primitives, and entries that only exist inside a reported
+control (a dropdown or popup menu item) are not. Buttons, chips, text and search
+fields, dropdowns, menus, checkboxes, radios, switches, sliders, segmented
+controls, pickers, dialogs, sheets and their action buttons are in. The list is
+`uiBaseControlClasses` in the rule; the test
+`integration_test/flutter_widget_classes_test.dart` reads every widget class that
+Flutter's material and cupertino libraries export and fails on a class that is in
+neither that list nor the not-control list, so a new Flutter class has to be
+judged. The rule reports the constructor, with its named constructors and type
+arguments, a `Chip` only when it is given an `onDeleted` callback, a constructor tear-off, a dot shorthand, a type alias, and a class
+that extends or mixes in a control. Only a
+constructor that resolves to a Flutter, Material or Cupertino class is reported: a
+`styleFrom` call and a project class of the same name are not. The
+library is `lib/core/widgets/`, where the Flutter skill puts shared widgets. Test
+files are skipped.
 
 ## `avoid_conflicting_filled_buttons` filled button boundary
 
@@ -248,7 +276,7 @@ Core skill rules already covered before this pass:
   `l10n_context_direct_access`, `l10n_string_concatenation`,
   `l10n_notifier_localized_copy`, `widget_preview_import_leak`,
   `widget_preview_platform_dependency`, `widget_preview_screen`,
-  `ui_snackbar_boundary`,
+  `ui_snackbar_boundary`, `ui_base_control_outside_library`,
   `widget_material_boundary` (raw `Material` / `Ink` / `InkWell` outside owners),
   `a11y_text_scale_clamp`, `datetime_now_requires_timezone_intent`,
   `ad_hoc_intl_format`, `inline_num_clamp`, `record_use_outside_ffi`,

@@ -1,5 +1,43 @@
 # Changelog
 
+## [0.16.0] - 2026-11-18
+
+- Fix the `prefer_extracting_callbacks` correction: it named a local variable,
+  which `prefer_function_declarations_over_variables` reports, as a target. It
+  now says to move the callback body to a named method.
+- Fix the `avoid_nullable_async_value_pattern` correction: `AsyncData(:final
+  value)` drops the shown data during a reload and on an error after data. The
+  correction now suggests `AsyncValue(hasValue: true, :final requireValue)`, which keeps
+  that data and never matches a fresh loading state, for nullable and
+  non-nullable values.
+- Narrow `avoid_adjacent_strings` to adjacent string literals that are elements
+  of a list or set literal, where a missing comma hides a mistake. Effective Dart
+  says to use adjacent strings to concatenate string literals, so `'a' 'b'` as a
+  constant, an argument or a map value no longer reports.
+- Add `ui_base_control_outside_library`, at error severity. A base button, text
+  field, dropdown, dialog, search widget, checkbox, radio, switch or slider
+  (`Checkbox`, `Switch`, `Slider` and their Cupertino forms included; `ElevatedButton`, `TextField`,
+  `DropdownButton`, `FloatingActionButton`, `SegmentedButton`, `PopupMenuButton`,
+  `AlertDialog`, `SearchBar` and their relatives) built in a
+  `lib/` file outside the shared UI library is reported. A `Chip` reports only when
+  it has an `onDeleted` callback. The criterion: a
+  widget a person presses, types in, picks or toggles, or a dialog or sheet that
+  asks the person to choose. A test judges every widget class of Flutter's
+  material and cupertino libraries against it. The library is
+  `lib/core/widgets/`, where the Flutter skill puts shared widgets. The correction is Hard Eng's:
+  make it a part of the shared library and use that part. Only a constructor
+  that resolves to a Flutter, Material or Cupertino class reports. A control
+  built through a type alias, by a dot shorthand whose type comes from
+  context (`acceptField(.new())`), by a constructor tear-off (`TextField.new`) or by a class that extends a base
+  control, reports too, even when the file never spells
+  the control name.
+- Judge a theme or token file as Hard Eng does, for `style_raw_token` and
+  `style_raw_text_style`: a folder named `theme`, `token`, `color`, `colour` or
+  `palette` (or the plural), a file whose last name word is one of them, or
+  `tailwind.config.*`. A `palette/` or `colors/` folder now counts as a theme
+  folder; `app_theme.dart` and `*_tokens.dart` still do. A file such as
+  `lib/theme/x.dart` outside `core/` now counts too.
+
 ## [0.15.2] - 2026-11-17
 
 - Fix `avoid_provider_turn_hop`. A `??=` fallback no longer reports: a local

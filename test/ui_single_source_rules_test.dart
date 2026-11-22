@@ -33,7 +33,12 @@ void main() {
     await _run(_RawTextStyleTest.new, (t) => t.reportsAndAllowsDotShorthandTextStyle());
     await _run(_RawTextStyleTest.new, (t) => t.allowsNestedExampleTestHelper());
     await _run(_AppRootTextScaleTest.new, (t) => t.reportsInNestedExampleMain());
+    await _run(_AppRootTextScaleTest.new, (t) => t.reportsInExampleTestFeatureApp());
     await _run(_AppRootTextScaleTest.new, (t) => t.ignoresTestFixtureMain());
+    await _run(
+      _SelfContainedTestFixtureAppRootTest.new,
+      (t) => t.ignoresSelfContainedTestFixtureMain(),
+    );
   });
 }
 
@@ -641,11 +646,34 @@ final class _AppRootTextScaleTest extends _UiRuleTest {
     from: ['final'],
   );
 
+  Future<void> reportsInExampleTestFeatureApp() => assertReported(
+    '$testPackageRootPath/example/lib/features/test/app.dart',
+    ['final x = TextScaler.linear(1.0);'],
+    imports: ['class TextScaler { const TextScaler.linear(double factor); }'],
+    from: ['final'],
+  );
+
   Future<void> ignoresTestFixtureMain() =>
       assertClean('$testPackageRootPath/test/fixtures/sample/lib/main.dart', [
         'class TextScaler { const TextScaler.linear(double factor); }',
         'final x = TextScaler.linear(1.0);',
       ], withImport: false);
+}
+
+final class _SelfContainedTestFixtureAppRootTest extends _UiRuleTest {
+  @override
+  String get ruleName => 'a11y_text_scale_clamp';
+
+  @override
+  String get testPackageRootPath => '/home/repo/test/fixtures/sample';
+
+  Future<void> ignoresSelfContainedTestFixtureMain() async {
+    newFolder('/home/repo/.git');
+    await assertClean('$testPackageLibPath/main.dart', [
+      'class TextScaler { const TextScaler.linear(double factor); }',
+      'final x = TextScaler.linear(1.0);',
+    ], withImport: false);
+  }
 }
 
 final class _RawTextStyleTest extends _UiRuleTest {

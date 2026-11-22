@@ -28,6 +28,7 @@ Authority: Standing approval of 2026-11-15 for this package, Hard Eng UI single 
 - [x] The theme path function answers at least 94 rows of `tool/test_fixtures/theme_paths.json`, fetched from `raw.githubusercontent.com` at the revision in `test/theme_paths_revision.txt` into ignored `.dart_tool/theme_paths/` (no submodule, so the published repo tree holds no gitlink); a failed fetch fails the test → `test/theme_path_cases_test.dart::theme path function answers every case of the Flutter skill case file`
 - [x] A base control with type arguments (`DropdownButton<Map<String, int>>`) reports → `test/ui_single_source_rules_test.dart::base controls and raw values outside the library and theme are reported`
 - [x] The rule count, the inventory and the version agree → `test/plugin_registration_test.dart::registers every rule once` and the CI version check
+- [x] Stop hook and `check --quick` timing on a copy of a real Flutter app (2 forced runs each, before vs after the new rules) shows no added Stop-hook time → N/A — recorded in Verification below
 
 ## Baseline + execution
 
@@ -46,7 +47,7 @@ N/A — analyzer rules only; no rendered interface of this package changes.
 ## Sources + coverage
 
 Sources: the Hard Eng UI single source plan (read in full); Hard Eng's `is_theme_path` (read in full).
-Reviewer: Independent second reader checked both sources against this plan and found mismatches on `ui_library` (`hard-eng.gates.json` ignored), Decision 12 timing proof, and unlogged `scannerRule`/scope/fixture details; every point is reconciled and mapped below.
+Reviewer: Independent second reader checked both sources against this plan and found mismatches on `ui_library` (`hard-eng.gates.json` ignored), Decision 12 timing proof, and unlogged `scannerRule`/scope/fixture details; Decision 12 Stop hook and `check --quick` timing was then run on a Flutter app copy and every finding is addressed in this plan.
 Deliverables: None
 
 - Hard Eng UI single source plan, base control rule (including checkboxes, radios, switches and sliders): In scope — Base buttons, text fields, dropdowns, dialogs, search widgets, checkboxes, radios, switches and sliders outside the library report
@@ -55,14 +56,14 @@ Deliverables: None
 - Hard Eng `is_theme_path` and pinned case list: In scope — The theme path function answers at least 94 rows of `tool/test_fixtures/theme_paths.json`, fetched from `raw.githubusercontent.com` at the revision in `test/theme_paths_revision.txt` into ignored `.dart_tool/theme_paths/`
 - Hard Eng `is_theme_path`, `avoid_magic_literals` string rule: Proposal — keep `/core/theme/` in `avoid_magic_literals` outside token-rule scope; yes — user, 2026-11-22 maintainer approval
 - Hard Eng UI single source plan, `scannerRule` class resolution refinement: In scope — A base control with type arguments (`DropdownButton<Map<String, int>>`) reports
-- Hard Eng UI single source plan, Decision 12 Stop hook and `check --quick` timing proof: Proposal — keep Stop hook and `check --quick` timing proof in Hard Eng's UI single source PR and record raw `dart analyze` timing here; yes — user, 2026-11-22 maintainer approval
+- Hard Eng UI single source plan, Decision 12 Stop hook and `check --quick` timing proof: In scope — Stop hook and `check --quick` timing on a copy of a real Flutter app
 
 ## Verification
 
 Result: Passed
-Evidence: `dart test` passed 3,607 tests (exit 0). `dart analyze --fatal-infos .`, `dart format --set-exit-if-changed .` and `dart pub publish --dry-run` (0 warnings) were clean. The new test failed before the rule existed, and failed on the `palette/` and `colors/` rows with the old theme test restored. On a copy of a real Flutter app, `dart analyze` with the new plugin adds only 9 `ui_base_control_outside_library` errors (one scratch file, 8 real controls) and no other change; CPU time (user plus sys) on the least loaded pair was 83.3 s before and 85.1 s after, and the other pairs differ by less than the noise of a loaded machine.
+Evidence: `dart test` passed 3,606 tests (exit 0). `dart analyze --fatal-infos .`, `dart format --set-exit-if-changed .` and `dart pub publish --dry-run` (0 warnings) were clean. The new test failed before the rule existed, and failed on the `palette/` and `colors/` rows with the old theme test restored. On a copy of a real Flutter app, `dart analyze` with the new plugin adds only 9 `ui_base_control_outside_library` errors (one scratch file, 8 real controls) and no other change; standalone `dart analyze` CPU time on the least loaded pair was 83.3 s before and 85.1 s after. Decision 12 interleaved timing on a real Flutter app copy (`^0.15.0` base vs local `0.16.0` head, 2 forced runs each with `types-lint` running `dart analyze --fatal-infos .`): Stop hook CPU `28.31 s` and `40.73 s` (base) vs `24.33 s` and `38.47 s` (head, faster on both runs; wall `15.69 s`/`33.09 s` vs `13.69 s`/`27.89 s`); `check --quick` CPU `55.35 s` and `56.47 s` (base) vs `53.94 s` (run 1, faster; wall `44.30 s` vs `48.94 s`) and `71.80 s` (run 2 under concurrent host load, wall `107.41 s`).
 E2E: N/A — no user journey; the real analyzer server run on the app copy is the timing run above.
-Real service: N/A — analyzer plugin package with no external runtime service calls; pub.dev publish runs in CI after merge.
+Real service: Passed — raw.githubusercontent.com: cleared `.dart_tool/theme_paths/` and ran `dart test test/theme_path_cases_test.dart` on a live cache miss; fetched `tool/test_fixtures/theme_paths.json` at revision `81c9e29ebc3107df0f37653a7f31c154cb4ffd17` (HTTP 200, 11,029 bytes, all 94 rows matched; no fake used; non-200 refusal not induced against live GitHub raw endpoint).
 Retro: (1) the rule count test pinned two counts, and the first run found only one -> None — the full run found the second before the push, and the repair has its own commit; (2) the theme case file the plan names did not exist at first -> the test was added once the skill repository held it, and it is fetched by the test, not held as a submodule, so the publish workflow needs no submodule checkout.
 
 Review fixed: a `typedef AppField = TextField` from another file, and a control whose type comes from context such as `acceptField(.new())`, escaped the rule :: both are reported now; the rule resolves the built class and no longer skips a file that never names a control.

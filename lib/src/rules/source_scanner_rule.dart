@@ -528,10 +528,15 @@ final class SourceScannerContext {
         normalized.endsWith('/app_root.dart');
   }
 
-  bool get isTestFile {
-    if (path.endsWith('_test.dart')) return true;
-    if (path.startsWith('lib/')) return false;
-    return path.startsWith('test/') || path.contains('/test/');
+  bool get isTestFile => _isTestPath(path) || _isTestPath(themePath);
+
+  static bool _isTestPath(String rawPath) {
+    final normalized = rawPath.replaceAll('\\', '/');
+    if (normalized.endsWith('_test.dart')) return true;
+    if (normalized.startsWith('lib/')) return false;
+    final beforeLib = normalized.split('/lib/').first;
+    final segments = beforeLib.split('/');
+    return segments.contains('test') || segments.contains('integration_test');
   }
 
   bool get isThemeDefFile => isThemePath(themePath);

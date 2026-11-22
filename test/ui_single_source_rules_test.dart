@@ -28,7 +28,10 @@ void main() {
     await _run(_RawTokenTest.new, (t) => t.reportsRawValuesOutsideThemeFiles());
     await _run(_RawTokenTest.new, (t) => t.allowsRawValuesInThemeFiles());
     await _run(_ThemeNamedCheckoutRawTokenTest.new, (t) => t.reportsInThemeNamedCheckout());
+    await _run(_NestedThemePackageRawTokenTest.new, (t) => t.allowsInNestedThemePackageRepo());
     await _run(_RawTextStyleTest.new, (t) => t.reportsAndAllowsDotShorthandTextStyle());
+    await _run(_RawTextStyleTest.new, (t) => t.allowsNestedExampleTestHelper());
+    await _run(_AppRootTextScaleTest.new, (t) => t.reportsInNestedExampleMain());
   });
 }
 
@@ -606,6 +609,31 @@ final class _ThemeNamedCheckoutRawTokenTest extends _UiRuleTest {
       assertReported('$testPackageRootPath/example/demo.dart', _RawTokenTest._raw);
 }
 
+final class _NestedThemePackageRawTokenTest extends _UiRuleTest {
+  @override
+  String get ruleName => 'style_raw_token';
+
+  @override
+  String get testPackageRootPath => '/home/repo/packages/theme';
+
+  Future<void> allowsInNestedThemePackageRepo() async {
+    newFolder('/home/repo/.git');
+    await assertClean('$testPackageRootPath/example/demo.dart', _RawTokenTest._raw);
+  }
+}
+
+final class _AppRootTextScaleTest extends _UiRuleTest {
+  @override
+  String get ruleName => 'a11y_text_scale_clamp';
+
+  Future<void> reportsInNestedExampleMain() => assertReported(
+    '$testPackageRootPath/example/lib/main.dart',
+    ['final x = TextScaler.linear(1.0);'],
+    imports: ['class TextScaler { const TextScaler.linear(double factor); }'],
+    from: ['final'],
+  );
+}
+
 final class _RawTextStyleTest extends _UiRuleTest {
   @override
   String get ruleName => 'style_raw_text_style';
@@ -615,4 +643,9 @@ final class _RawTextStyleTest extends _UiRuleTest {
     await assertReported('$testPackageLibPath/features/home/home_screen.dart', lines, from: ['.']);
     await assertClean('$testPackageLibPath/colors/text_styles.dart', lines);
   }
+
+  Future<void> allowsNestedExampleTestHelper() => assertClean(
+    '$testPackageRootPath/example/test/support/fixtures.dart',
+    ['TextStyle a = .new(fontSize: 18);'],
+  );
 }

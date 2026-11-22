@@ -247,6 +247,7 @@ final _contextStringNavigationPattern = RegExp(
 final class SourceScannerContext {
   SourceScannerContext._({
     required this.path,
+    required this.themePath,
     required this.file,
     required this.unit,
     required this.source,
@@ -274,9 +275,11 @@ final class SourceScannerContext {
     for (final classSpan in classes) {
       methods.addAll(_methods(source, classSpan));
     }
+    final repoRoot = _gitRootPath(unit.file.parent);
 
     return SourceScannerContext._(
       path: _relativePath(unit.file.path, packageRoot: packageRoot),
+      themePath: _relativePath(unit.file.path, packageRoot: repoRoot ?? packageRoot),
       file: unit.file,
       unit: unit.unit,
       source: source,
@@ -290,6 +293,7 @@ final class SourceScannerContext {
   );
 
   final String path;
+  final String themePath;
   final File file;
   final CompilationUnit unit;
   final SourceScannerSource source;
@@ -517,14 +521,16 @@ final class SourceScannerContext {
   bool get isAppRootFile {
     final normalized = path.replaceAll('\\', '/');
     return normalized == 'lib/main.dart' ||
+        normalized.endsWith('/lib/main.dart') ||
         normalized == 'lib/app.dart' ||
         normalized.endsWith('/app.dart') ||
         normalized.endsWith('/app_root.dart');
   }
 
-  bool get isTestFile => path.startsWith('test/') || path.endsWith('_test.dart');
+  bool get isTestFile =>
+      path.startsWith('test/') || path.contains('/test/') || path.endsWith('_test.dart');
 
-  bool get isThemeDefFile => isThemePath(path);
+  bool get isThemeDefFile => isThemePath(themePath);
 
   bool get isUiLibraryFile => path.replaceAll('\\', '/').startsWith('lib/core/widgets/');
 
@@ -654,6 +660,17 @@ final class SourceScannerContext {
       if (text[i] == char) count++;
     }
     return count;
+  }
+
+  static String? _gitRootPath(Folder start) {
+    Folder? current = start;
+    while (current != null) {
+      if (current.getChild('.git').exists) return current.path;
+      final parent = current.parent;
+      if (parent.path == current.path) break;
+      current = parent;
+    }
+    return null;
   }
 
   static String _relativePath(String path, {String? packageRoot}) {

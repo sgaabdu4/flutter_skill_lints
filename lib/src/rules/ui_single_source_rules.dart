@@ -16,11 +16,11 @@ final List<ScannerRule> uiSingleSourceRules = [
     ),
     description: 'Flags input controls (a widget a person presses, types in, picks or toggles, and the dialogs and sheets that ask the person to choose) built outside lib/core/widgets/.',
     scan: (reporter, context) {
-      if (!context.path.startsWith('lib/') || context.isTestFile) return;
+      if (!context.path.startsWith('lib/') || context.isTestFile || context.isUiLibraryFile) return;
 
       final visitor = _BaseControlVisitor();
       context.unit.accept(visitor);
-      if (visitor.offsets.isEmpty || context.isUiLibraryFile) return;
+      if (visitor.offsets.isEmpty) return;
       for (final offset in visitor.offsets) {
         reporter.reportOffset(context, offset);
       }

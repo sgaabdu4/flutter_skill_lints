@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'package:flutter_skill_lints/src/rules/test_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/ui_single_source_rules.dart';
 import 'package:flutter_skill_lints/src/rules/ui_source_rules.dart';
 import 'package:test/test.dart';
@@ -36,8 +37,8 @@ void main() {
     await _run(_AppRootTextScaleTest.new, (t) => t.reportsInExampleTestFeatureApp());
     await _run(_AppRootTextScaleTest.new, (t) => t.ignoresTestFixtureMain());
     await _run(
-      _SelfContainedTestFixtureAppRootTest.new,
-      (t) => t.ignoresSelfContainedTestFixtureMain(),
+      _SelfContainedTestFixtureScopeTest.new,
+      (t) => t.allowsProviderScopeInSelfContainedFixtureMain(),
     );
   });
 }
@@ -276,6 +277,7 @@ abstract class _UiRuleTest extends AnalysisRuleTest {
   void setUp() {
     rule = uiSingleSourceRules
         .followedBy(uiSourceRules)
+        .followedBy(testSourceRules)
         .singleWhere((rule) => rule.name == ruleName);
     newPackage('flutter').addFile('lib/material.dart', _flutterLibrary);
     super.setUp();
@@ -660,18 +662,19 @@ final class _AppRootTextScaleTest extends _UiRuleTest {
       ], withImport: false);
 }
 
-final class _SelfContainedTestFixtureAppRootTest extends _UiRuleTest {
+final class _SelfContainedTestFixtureScopeTest extends _UiRuleTest {
   @override
-  String get ruleName => 'a11y_text_scale_clamp';
+  String get ruleName => 'test_uncontrolled_scope';
 
   @override
   String get testPackageRootPath => '/home/repo/test/fixtures/sample';
 
-  Future<void> ignoresSelfContainedTestFixtureMain() async {
+  Future<void> allowsProviderScopeInSelfContainedFixtureMain() async {
     newFolder('/home/repo/.git');
     await assertClean('$testPackageLibPath/main.dart', [
-      'class TextScaler { const TextScaler.linear(double factor); }',
-      'final x = TextScaler.linear(1.0);',
+      'class ProviderScope { const ProviderScope(); }',
+      'void runApp(Object app) {}',
+      'void main() { runApp(const ProviderScope()); }',
     ], withImport: false);
   }
 }

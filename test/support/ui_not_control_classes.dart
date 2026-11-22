@@ -85,7 +85,6 @@ const uiNotControlClasses = <String>{
   'CupertinoActivityIndicator',
   'CupertinoAdaptiveTextSelectionToolbar',
   'CupertinoApp',
-  'CupertinoContextMenu',
   'CupertinoDesktopTextSelectionToolbar',
   'CupertinoExpansionTile',
   'CupertinoFocusHalo',

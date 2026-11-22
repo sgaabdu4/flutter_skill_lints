@@ -23,8 +23,11 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlInferredFromAnotherFile());
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlBuiltThroughAnAlias());
     await _run(_BaseControlsTest.new, (t) => t.ignoresAShorthandOnAnotherType());
+    await _run(_BaseControlsTest.new, (t) => t.ignoresControlsInTestFixtureLibFolders());
+    await _run(_BaseControlsTest.new, (t) => t.reportsCupertinoContextMenu());
     await _run(_RawTokenTest.new, (t) => t.reportsRawValuesOutsideThemeFiles());
     await _run(_RawTokenTest.new, (t) => t.allowsRawValuesInThemeFiles());
+    await _run(_ThemeNamedCheckoutRawTokenTest.new, (t) => t.reportsInThemeNamedCheckout());
     await _run(_RawTextStyleTest.new, (t) => t.reportsAndAllowsDotShorthandTextStyle());
   });
 }
@@ -150,6 +153,10 @@ class CupertinoActionSheet extends Widget {
 
 class CupertinoActionSheetAction extends Widget {
   const CupertinoActionSheetAction();
+}
+
+class CupertinoContextMenu extends Widget {
+  const CupertinoContextMenu();
 }
 
 class CupertinoDialogAction extends Widget {
@@ -548,6 +555,17 @@ Widget acceptField(TextField field) => field;
     await assertNoDiagnosticsInFile('$testPackageLibPath/features/home/zero.dart');
   }
 
+  Future<void> ignoresControlsInTestFixtureLibFolders() => assertClean(
+    '$testPackageRootPath/test/fixtures/lib/controls.dart',
+    ['Widget a = TextField();'],
+  );
+
+  Future<void> reportsCupertinoContextMenu() => assertReported(
+    '$testPackageLibPath/features/home/context_menu.dart',
+    ['Widget a = CupertinoContextMenu();'],
+    from: ['CupertinoContextMenu'],
+  );
+
   Future<void> reportsControlsWithTypeArguments() => assertReported(
     '$testPackageLibPath/features/home/home_screen.dart',
     [
@@ -575,6 +593,17 @@ final class _RawTokenTest extends _UiRuleTest {
     await assertClean('$testPackageLibPath/core/theme/spacing.dart', _raw);
     await assertClean('$testPackageLibPath/features/home/app_tokens.dart', _raw);
   }
+}
+
+final class _ThemeNamedCheckoutRawTokenTest extends _UiRuleTest {
+  @override
+  String get ruleName => 'style_raw_token';
+
+  @override
+  String get testPackageRootPath => '/home/theme';
+
+  Future<void> reportsInThemeNamedCheckout() =>
+      assertReported('$testPackageRootPath/example/demo.dart', _RawTokenTest._raw);
 }
 
 final class _RawTextStyleTest extends _UiRuleTest {

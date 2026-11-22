@@ -39,6 +39,7 @@ const uiBaseControlClasses = {
   'CupertinoActionSheetAction',
   'CupertinoDialogAction',
   'SimpleDialogOption',
+  'CupertinoContextMenu',
   'CupertinoContextMenuAction',
   'CupertinoNavigationBarBackButton',
   'ActionChip',

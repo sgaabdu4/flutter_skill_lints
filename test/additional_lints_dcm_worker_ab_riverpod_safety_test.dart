@@ -352,7 +352,8 @@ String label(AsyncValue<String> value) {
         source.indexOf('final value?'),
         'final value?'.length,
         correctionContains:
-            'Use AsyncValue(hasValue: true, :final requireValue) to keep data during a reload, '
+            'Use AsyncValue(hasValue: true, :final requireValue) '
+            '(or :final requireValue? for nullable T) to keep data during a reload, '
             'or handle AsyncLoading and AsyncError branches explicitly.',
       ),
     ]);

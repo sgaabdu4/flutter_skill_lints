@@ -259,12 +259,15 @@ final class SourceScannerContext {
     final cached = _contextCache[unit];
     if (cached != null) return cached;
 
-    final scannerContext = SourceScannerContext._fromUnit(unit);
+    final scannerContext = SourceScannerContext._fromUnit(
+      unit,
+      packageRoot: context.package?.root.path,
+    );
     _contextCache[unit] = scannerContext;
     return scannerContext;
   }
 
-  factory SourceScannerContext._fromUnit(RuleContextUnit unit) {
+  factory SourceScannerContext._fromUnit(RuleContextUnit unit, {String? packageRoot}) {
     final source = SourceScannerSource(unit.content);
     final classes = _classes(source);
     final methods = <ScannerMethodSpan>[];
@@ -273,7 +276,7 @@ final class SourceScannerContext {
     }
 
     return SourceScannerContext._(
-      path: _relativePath(unit.file.path),
+      path: _relativePath(unit.file.path, packageRoot: packageRoot),
       file: unit.file,
       unit: unit.unit,
       source: source,
@@ -653,8 +656,16 @@ final class SourceScannerContext {
     return count;
   }
 
-  static String _relativePath(String path) {
+  static String _relativePath(String path, {String? packageRoot}) {
     final normalized = path.replaceAll('\\', '/');
+    if (packageRoot != null && packageRoot.isNotEmpty) {
+      var root = packageRoot.replaceAll('\\', '/');
+      if (root.endsWith('/')) root = root.substring(0, root.length - 1);
+      final prefix = '$root/';
+      if (normalized.startsWith(prefix)) {
+        return normalized.substring(prefix.length);
+      }
+    }
     for (final marker in ['/lib/', '/test/', '/test_driver/', '/integration_test/']) {
       final index = normalized.lastIndexOf(marker);
       if (index >= 0) return normalized.substring(index + 1);

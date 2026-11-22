@@ -4,7 +4,7 @@ Status: Complete
 
 ## Outcome + scope
 
-`dart analyze` reports base buttons, text fields, dropdowns, dialogs, search widgets, checkboxes, radios, switches and sliders built outside the shared UI library, treats `lib/core/widgets/` as the shared UI library, and judges a theme or token file the way Hard Eng does. Out of scope: a pub.dev release, and the string rule `avoid_magic_literals`, which keeps its own `/core/theme/` test.
+`dart analyze` reports base buttons, text fields, dropdowns, dialogs, search widgets, checkboxes, radios, switches and sliders built outside the shared UI library, treats `lib/core/widgets/` as the shared UI library, and judges a theme or token file the way Hard Eng does. Out of scope: the string rule `avoid_magic_literals`, which keeps its own `/core/theme/` test.
 
 ## Repository context
 
@@ -16,7 +16,7 @@ Single source: the theme path test and the library paths each live once here; th
 
 Blockers: None
 Handoff: Approval
-Authority: Standing approval of 2026-11-15 for this package, and the Hard Eng UI single source plan for the rules.
+Authority: Standing approval of 2026-11-15 for this package, Hard Eng UI single source plan, and maintainer approval on 2026-11-22 to publish `0.16.0` and run the UI single source rollout.
 
 ## Acceptance + steps
 
@@ -51,9 +51,9 @@ Sources: the Hard Eng UI single source plan rows for the lint plugin, Hard Eng's
 Result: Passed
 Evidence: `dart test` passed 3,607 tests (exit 0). `dart analyze --fatal-infos .`, `dart format --set-exit-if-changed .` and `dart pub publish --dry-run` (0 warnings) were clean. The new test failed before the rule existed, and failed on the `palette/` and `colors/` rows with the old theme test restored. On a copy of a real Flutter app, `dart analyze` with the new plugin adds only 9 `ui_base_control_outside_library` errors (one scratch file, 8 real controls) and no other change; CPU time (user plus sys) on the least loaded pair was 83.3 s before and 85.1 s after, and the other pairs differ by less than the noise of a loaded machine.
 E2E: N/A — no user journey; the real analyzer server run on the app copy is the timing run above.
-Retro: (1) the rule count test pinned two counts, and the first run found only one -> None — the full run found the second before the push, and the repair has its own commit; (2) the theme case file the plan names did not exist at first -> the test was added once the skill repository held it,, and it is fetched by the test, not held as a submodule, so the publish workflow needs no submodule checkout.
+Retro: (1) the rule count test pinned two counts, and the first run found only one -> None — the full run found the second before the push, and the repair has its own commit; (2) the theme case file the plan names did not exist at first -> the test was added once the skill repository held it, and it is fetched by the test, not held as a submodule, so the publish workflow needs no submodule checkout.
 
 Review fixed: a `typedef AppField = TextField` from another file, and a control whose type comes from context such as `acceptField(.new())`, escaped the rule :: both are reported now; the rule resolves the built class and no longer skips a file that never names a control.
 
-Delivery target: PR
-Delivery: PR open, checks pending, not merged; merge waits for the owner.
+Delivery target: Merge
+Delivery: Pending — required remote proof.

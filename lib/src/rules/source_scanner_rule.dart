@@ -519,6 +519,7 @@ final class SourceScannerContext {
   }
 
   bool get isAppRootFile {
+    if (isTestFile) return false;
     final normalized = path.replaceAll('\\', '/');
     return normalized == 'lib/main.dart' ||
         normalized.endsWith('/lib/main.dart') ||
@@ -527,8 +528,11 @@ final class SourceScannerContext {
         normalized.endsWith('/app_root.dart');
   }
 
-  bool get isTestFile =>
-      path.startsWith('test/') || path.contains('/test/') || path.endsWith('_test.dart');
+  bool get isTestFile {
+    if (path.endsWith('_test.dart')) return true;
+    if (path.startsWith('lib/')) return false;
+    return path.startsWith('test/') || path.contains('/test/');
+  }
 
   bool get isThemeDefFile => isThemePath(themePath);
 

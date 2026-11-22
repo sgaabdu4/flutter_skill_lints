@@ -56,8 +56,8 @@ checked. It also reports a literal `fontSize` option on any call other than a
 other size options such as `gap` are not reported; an `iconSize` follows the
 existing icon size rule.
 
-A theme or token file is judged by Hard Eng's rule, on the path from the package
-root: a
+A theme or token file is judged by Hard Eng's rule, on the path from the repository
+root (falling back to the package root outside a Git checkout): a
 folder named `theme`, `token`, `color`, `colour` or `palette` (or the plural), a
 file whose last name word is one of them, or `tailwind.config.*`.
 

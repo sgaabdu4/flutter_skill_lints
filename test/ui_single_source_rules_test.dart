@@ -24,6 +24,7 @@ void main() {
     await _run(_BaseControlsTest.new, (t) => t.reportsAControlBuiltThroughAnAlias());
     await _run(_BaseControlsTest.new, (t) => t.ignoresAShorthandOnAnotherType());
     await _run(_BaseControlsTest.new, (t) => t.ignoresControlsInTestFixtureLibFolders());
+    await _run(_BaseControlsTest.new, (t) => t.reportsControlsUnderLibTestFeatureFolder());
     await _run(_BaseControlsTest.new, (t) => t.reportsCupertinoContextMenu());
     await _run(_RawTokenTest.new, (t) => t.reportsRawValuesOutsideThemeFiles());
     await _run(_RawTokenTest.new, (t) => t.allowsRawValuesInThemeFiles());
@@ -32,6 +33,7 @@ void main() {
     await _run(_RawTextStyleTest.new, (t) => t.reportsAndAllowsDotShorthandTextStyle());
     await _run(_RawTextStyleTest.new, (t) => t.allowsNestedExampleTestHelper());
     await _run(_AppRootTextScaleTest.new, (t) => t.reportsInNestedExampleMain());
+    await _run(_AppRootTextScaleTest.new, (t) => t.ignoresTestFixtureMain());
   });
 }
 
@@ -563,6 +565,12 @@ Widget acceptField(TextField field) => field;
     ['Widget a = TextField();'],
   );
 
+  Future<void> reportsControlsUnderLibTestFeatureFolder() => assertReported(
+    '$testPackageLibPath/features/test/presentation/screens/assessment_screen.dart',
+    ['Widget a = TextField();'],
+    from: ['TextField'],
+  );
+
   Future<void> reportsCupertinoContextMenu() => assertReported(
     '$testPackageLibPath/features/home/context_menu.dart',
     ['Widget a = CupertinoContextMenu();'],
@@ -632,6 +640,12 @@ final class _AppRootTextScaleTest extends _UiRuleTest {
     imports: ['class TextScaler { const TextScaler.linear(double factor); }'],
     from: ['final'],
   );
+
+  Future<void> ignoresTestFixtureMain() =>
+      assertClean('$testPackageRootPath/test/fixtures/sample/lib/main.dart', [
+        'class TextScaler { const TextScaler.linear(double factor); }',
+        'final x = TextScaler.linear(1.0);',
+      ], withImport: false);
 }
 
 final class _RawTextStyleTest extends _UiRuleTest {
